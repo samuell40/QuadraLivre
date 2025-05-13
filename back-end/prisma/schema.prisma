@@ -3,44 +3,44 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model Usuario {
-  id          Int        @id @default(autoincrement())
+  id          String     @id @default(auto()) @map("_id") // MongoDB usa ObjectId como padrão
   nome        String
   email       String     @unique
   senha       String
-  permissaoId Int
+  permissaoId String
   foto        String?    @db.VarChar(2048)
-  quadraId    Int
+  quadraId    String
   quadra      Quadra     @relation(fields: [quadraId], references: [id])
   permissao   Permissao  @relation(fields: [permissaoId], references: [id])
   agendamentos Agendamento[]
 }
 
 model Quadra {
-  id        Int       @id @default(autoincrement())
+  id        String   @id @default(auto()) @map("_id")
   nome      String
-  foto      String?   @db.VarChar(2048)
+  foto      String?  @db.VarChar(2048)
   descricao String
   usuarios  Usuario[]
 }
 
 model Agendamento {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(auto()) @map("_id")
   dia       Int
   mes       Int
   ano       Int
   hora      Int
   status    Boolean
-  usuarioId Int?
+  usuarioId String?
   usuario   Usuario? @relation(fields: [usuarioId], references: [id])
 }
 
 model Placar {
-  id           Int    @id @default(autoincrement())
+  id           String @id @default(auto()) @map("_id")
   time         String
   pontuacao    Int
   vitorias     Int
@@ -50,7 +50,7 @@ model Placar {
 }
 
 model Permissao {
-  id       Int       @id @default(autoincrement())
+  id       String   @id @default(auto()) @map("_id")
   nome     String
   usuarios Usuario[]
 }
