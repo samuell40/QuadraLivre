@@ -12,7 +12,9 @@ async function postUsuario(user) {
             senha: senha_user,
             foto: user.usuario.foto,
             permissaoId: 1,
-            quadraId: user.usuario.quadraId
+            //quadraId: user.usuario.quadraId,
+            quadraId: Number(user.usuario.quadraId),
+
         },
     });
 

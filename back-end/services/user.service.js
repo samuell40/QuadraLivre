@@ -4,7 +4,6 @@ const bcrypt = require('../utils/bcrypt.utils');
 const config = require('../config/app.config');
 require('dotenv').config();
 
-// services/user.service.js
 async function LoginUser({ email, senha }) {
     const user = await prisma.Usuario.findFirst({
         where: { email }
