@@ -61,15 +61,16 @@ export default {
   color: #ffffff;
   font-size: 20px;
   white-space: nowrap;
+  margin-left: 90px
 }
 
-/* Links */
 .nav-links {
   list-style: none;
   display: flex;
   gap: 40px;
   margin: 0;
   padding: 0;
+   margin-right: 90px; 
 }
 
 .nav-links li a {
@@ -84,7 +85,6 @@ export default {
   border-radius: 30px;
 }
 
-/* Hamburger */
 .hamburger {
   display: none;
   flex-direction: column;
@@ -99,7 +99,6 @@ export default {
   transition: 0.3s;
 }
 
-/* Menu mobile ativo */
 .nav-links.active {
   display: flex;
   flex-direction: column;
@@ -115,6 +114,10 @@ export default {
 @media (max-width: 768px) {
   .nav-links {
     display: none;
+    margin-right: 0;
+  }
+  .logo{
+    margin-left: 0;
   }
 
   .hamburger {
