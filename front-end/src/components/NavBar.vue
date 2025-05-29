@@ -1,29 +1,29 @@
 <template>
-  <div>
-    <nav class="navbar-custom">
+   <nav class="navbar-custom">
       <div class="navbar-container">
-        <div class="logo">Quadra Livre</div>
-
-        <div class="hamburger" @click="toggleMenu">
-          <span :class="{ open: isMenuOpen }"></span>
-          <span :class="{ open: isMenuOpen }"></span>
-          <span :class="{ open: isMenuOpen }"></span>
+        <div class="esquerda-section">
+          <div class="hamburger" @click="toggleMenu">
+            <span :class="{ open: isMenuOpen }"></span>
+            <span :class="{ open: isMenuOpen }"></span>
+            <span :class="{ open: isMenuOpen }"></span>
+          </div>
+          <div class="logo">Quadra Livre</div>
         </div>
 
         <ul class="nav-links" :class="{ active: isMenuOpen }">
-          <li><a href="/quadra">Quadras</a></li>
-          <li><a href="/horarios">Horários</a></li>
-          <li><a href="/placar">Placar</a></li>
-          <li><a href="/login" class="login">Login</a></li>
+          <li><a href="/quadra">Agendar Quadra</a></li>
+          <li><a href="/horarios">Meus Agendamentos</a></li>
+          <li class="sair-item"><a href="/sair" class="sair">Sair</a></li>
         </ul>
+
+        <a href="/sair" class="sair-btn-mobile">Sair</a>
       </div>
     </nav>
-  </div>
 </template>
 
 <script>
 export default {
-  name: 'NavBar',
+  name: 'HomeView',
   data() {
     return {
       isMenuOpen: false,
@@ -55,13 +55,20 @@ export default {
   justify-content: space-between;
   padding: 0 30px;
   height: 100%;
+  position: relative;
+}
+
+.esquerda-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 .logo {
   color: #ffffff;
   font-size: 20px;
   white-space: nowrap;
-  margin-left: 90px
+  margin-left: 80px;
 }
 
 .nav-links {
@@ -70,7 +77,8 @@ export default {
   gap: 40px;
   margin: 0;
   padding: 0;
-   margin-right: 90px; 
+  align-items: center;
+  margin-right: 80px;
 }
 
 .nav-links li a {
@@ -79,10 +87,12 @@ export default {
   font-weight: 500;
 }
 
-.nav-links .login {
+.sair {
   background-color: #1E3A8A;
   padding: 6px 16px;
   border-radius: 30px;
+  color: white;
+  font-weight: 500;
 }
 
 .hamburger {
@@ -111,17 +121,54 @@ export default {
   gap: 20px;
 }
 
+.sair-btn-mobile {
+  display: none;
+}
 @media (max-width: 768px) {
+  .logo {
+    margin-left: 0;
+  }
+
   .nav-links {
     display: none;
-    margin-right: 0;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin-right: 0; /* Remove margin no mobile */
+    padding: 0; /* Remove padding se houver */
   }
-  .logo{
-    margin-left: 0;
+
+  .nav-links.active {
+    display: flex;
+    position: absolute;
+    top: 70px;
+    right: 0;
+    width: 100vw; /* Usa a largura total da viewport */
+    background-color: #152147;
+    padding: 20px 0;
+    gap: 20px;
+    box-sizing: border-box; /* garante que padding não ultrapasse a largura */
   }
 
   .hamburger {
     display: flex;
+  }
+
+  .sair-item {
+    display: none;
+  }
+
+  .sair-btn-mobile {
+    display: block;
+    position: absolute;
+    right: 30px;
+    top: 18px;
+    background-color: #1E3A8A;
+    padding: 6px 16px;
+    border-radius: 30px;
+    color: white;
+    font-weight: 500;
+    text-decoration: none;
   }
 }
 </style>
