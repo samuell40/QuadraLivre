@@ -1,13 +1,13 @@
 <template>
     <div class="agendamento">
-        <NavBar />
+        <SideBar />
     </div>
 </template>
 
 <script>
-import NavBar from '@/components/NavBar.vue';
+import SideBar from '@/components/SideBar.vue';
 export default {
   name: 'AgendamentoView',
-  components: { NavBar },
+  components: { SideBar },
 };
 </script>
