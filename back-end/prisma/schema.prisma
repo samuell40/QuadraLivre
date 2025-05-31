@@ -25,6 +25,7 @@ model Quadra {
   nome      String
   foto      String?   @db.VarChar(2048)
   descricao String
+  endereco  String?
   usuarios  Usuario[]
 }
 

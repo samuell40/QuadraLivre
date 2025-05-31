@@ -11,12 +11,12 @@
         </div>
 
         <ul class="nav-links" :class="{ active: isMenuOpen }">
-          <li><a href="/quadra">Agendar Quadra</a></li>
-          <li><a href="/horarios">Meus Agendamentos</a></li>
-          <li class="sair-item"><a href="/sair" class="sair">Sair</a></li>
+          <li><a href="/">Agendar Quadra</a></li>
+          <li><a href="/">Meus Agendamentos</a></li>
+          <li class="sair-item"><a href="/" class="sair">Sair</a></li>
         </ul>
 
-        <a href="/sair" class="sair-btn-mobile">Sair</a>
+        <a href="/" class="sair-btn-mobile">Sair</a>
       </div>
     </nav>
 </template>
