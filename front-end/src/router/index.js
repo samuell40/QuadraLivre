@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import AgendamentoView from '../views/AgendamentoView.vue';
+import LoginView from '../views/LoginView.vue';
 
 const routes = [
   {
@@ -11,8 +12,13 @@ const routes = [
 
     {
     path: '/agendamento',
-    name: 'agendamento',
+    name: 'Agendamento',
     component: AgendamentoView,
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: LoginView,
   },
 ];
 
