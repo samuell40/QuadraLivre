@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import AgendamentoView from '../views/AgendamentoView.vue';
+import CadastrarQuadraView from '../views/CadastrarQuadraView.vue'
 
 const routes = [
   {
@@ -13,6 +14,11 @@ const routes = [
     path: '/agendamento',
     name: 'agendamento',
     component: AgendamentoView,
+  },
+  {
+    path: '/cadastrarquadra',
+    name: 'cadastrar_quadra',
+    component: CadastrarQuadraView,
   },
 ];
 
