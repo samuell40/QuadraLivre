@@ -75,8 +75,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     try {
         await s3.send(new PutObjectCommand(params));
 
-        const fileUrl = `${process.env.URL_PUBLICA}.r2.dev/uploads/${fileName}`;
-        console.log("Arquivo enviado:", fileUrl);
+        const fileUrl = `${process.env.URL_PUBLICA}/uploads/${fileName}`;
         res.status(200).json({ fileUrl });
     } catch (error) {
         console.error("Erro no upload:", error);

@@ -7,10 +7,14 @@ async function criarQuadra(dados){
             nome: dados.nome,
             descricao: dados.descricao,
             endereco: dados.endereco,
-            foto: dados.foto, // aqui é a URL da imagem já pronta
+            foto: dados.foto, 
         },
     });
     return quadra;
 };
 
-module.exports = { criarQuadra };
+async function getQuadras(){
+    return await prisma.quadra.findMany()
+}
+
+module.exports = { criarQuadra, getQuadras };

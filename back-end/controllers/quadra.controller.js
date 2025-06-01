@@ -1,8 +1,8 @@
-const { criarQuadra } = require('../services/quadra.service');
+const { criarQuadra, getQuadras } = require('../services/quadra.service');
 
 async function adicionarQuadra(req, res) {
     try {
-        const dadosQuadra = req.body; // já com foto = URL da imagem
+        const dadosQuadra = req.body; 
         const novaQuadra = await criarQuadra(dadosQuadra);
         res.status(201).json(novaQuadra);
     } catch (erro) {
@@ -11,4 +11,14 @@ async function adicionarQuadra(req, res) {
     }
 };
 
-module.exports = { adicionarQuadra };
+async function getQuadra(req, res) {
+    try{
+        const quadras = await getQuadras()
+        res.status(200).json(quadras)
+    } catch(error){
+        console.error('Erro ao buscar quadras:', error);
+        res.status(500).json({ error: 'Erro ao buscar as qaudras'})
+    }
+}
+
+module.exports = { adicionarQuadra, getQuadra };

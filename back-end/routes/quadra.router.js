@@ -4,4 +4,6 @@ const controller = require('../controllers/quadra.controller');
 
 router.post('/quadra', controller.adicionarQuadra);
 
+router.get('/quadra', controller.getQuadra)
+
 module.exports = router;

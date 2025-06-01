@@ -35,7 +35,7 @@
         <p>Com poucos cliques, encontre e reserve a quadra ideal para o seu jogo.</p>
       </div>
     </section>
-    <h3 class="tit_horario"> Quadras Disponiveis</h3>
+    <h3 class="tit_horario"> Quadras Disponíveis</h3>
     <section class="agendamento">
       <button class="btn-prev" @click="prev">&lt;</button>
       <Carousel ref="carousel" :itemsToShow="1" :wrapAround="true" :mouseDrag="true" :breakpoints="{
@@ -43,12 +43,15 @@
           itemsToShow: 3
         }
       }" class="carousel">
-        <Slide v-for="(imagem, index) in images" :key="index">
+        <Slide v-for="(quadra, index) in quadras" :key="index">
           <div class="card">
-            <img :src="imagem.src" :alt="imagem.alt" class="imagem" />
+            <img :src="quadra.foto || 'https://via.placeholder.com/800x400?text=Sem+Imagem'" :alt="quadra.nome"
+              class="imagem" />
             <div class="info">
-              <h3>{{ imagem.alt }}</h3>
-              <button class="btn-agendar">Agendar</button>
+              <h3>{{ quadra.nome }}</h3>
+              <p class="descricao">{{ quadra.descricao }}</p>
+              <p class="endereco">{{ quadra.endereco }}</p>
+              <button class="btn-agendar" @click="clicarAgendar(quadra)">Agendar</button>
             </div>
           </div>
         </Slide>
@@ -68,17 +71,14 @@ export default {
   data() {
     return {
       isMenuOpen: false,
-      images: [
-        { src: require('@/assets/metodao.png'), alt: 'Ginásio de Esportes O Metodão' },
-        { src: require('@/assets/futibinha.png'), alt: 'Quadra de Areia Juarez Valdivino' },
-        { src: require('@/assets/areninha.jpg'), alt: 'Quadra de Areia Juarez Valdivino' },
-      ],
+      quadras: [],
       carousel: null,
     }
   },
   mounted() {
     this.carousel = this.$refs.carousel
     window.addEventListener('resize', this.updateSlideWidth)
+    this.carregarQuadras()
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.updateSlideWidth)
@@ -87,20 +87,30 @@ export default {
     toggleMenu() {
       this.isMenuOpen = !this.isMenuOpen
     },
-    updateSlideWidth() {
-    },
+    updateSlideWidth() { },
     prev() {
       this.carousel?.prev()
     },
     next() {
       this.carousel?.next()
     },
+    async carregarQuadras() {
+      try {
+        const res = await fetch('http://localhost:3000/quadra')
+        const data = await res.json()
+        this.quadras = data
+      } catch (err) {
+        console.error('Erro ao carregar quadras:', err)
+      }
+    },
+    clicarAgendar(quadra) {
+      console.log('Quadra selecionada para agendamento:', quadra)
+    }
   }
 }
 </script>
 
 <style scoped>
-/* Geral */
 .navbar-custom {
   position: fixed;
   top: 0;
@@ -226,6 +236,7 @@ h3 {
   font-family: "Montserrat";
   font-weight: bold;
   margin-bottom: 16px;
+  color:#050B2C
 }
 
 p {
@@ -238,7 +249,7 @@ p {
   color: #7E7E7E;
   margin-top: 40px;
   text-align: center;
-  font-weight: bold; 
+  font-weight: bold;
 }
 
 .destaque_sublinhado {
@@ -288,21 +299,21 @@ p {
 }
 
 .card {
-  position: relative; 
+  position: relative;
   border-radius: 12px;
   overflow: hidden;
-  height: 300px; 
+  height: 300px;
 }
 
 .imagem {
   width: 100%;
-  height: 100%;       
+  height: 100%;
   object-fit: cover;
   display: block;
 }
 
 .info {
-   position: absolute;
+  position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
@@ -323,6 +334,13 @@ p {
   border-radius: 5px;
   cursor: pointer;
   margin-top: 6px;
+}
+
+.descricao, .endereco {
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.2;
+  color:#fff
 }
 
 @media (max-width: 768px) {
@@ -399,5 +417,4 @@ p {
     margin-left: -11px;
   }
 }
-
 </style>
