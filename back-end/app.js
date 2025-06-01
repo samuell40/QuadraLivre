@@ -10,7 +10,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 const userRouter = require('./routes/user.router');
 const usuario = require('./routes/usuario.router');
-
+const quadra = require('./routes/quadra.router');
 
 app.use(cors({
     origin: '*',
@@ -23,6 +23,7 @@ app.use(cors({
 app.use(express.json());
 app.use(userRouter)
 app.use(usuario)
+app.use(quadra)
 
 // Inicializar o Prisma
 const prisma = new PrismaClient();
