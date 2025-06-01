@@ -2,6 +2,8 @@ const Usuario = require('../services/usuario.service');
 
 async function postUsuario(req, res, next) {
     try {
+  const fileUrl = req.file ? req.file.originalname : "https://via.placeholder.com/150";
+
         const userData = {
             usuario: {
                 nome: req.body.nome,
