@@ -11,21 +11,33 @@
         </div>
 
         <div class="form-body">
-            <div class="input-group">
+          <div class="input-group">
+            <label>Nome</label>
+            <input type="text" id="name" v-model="text" placeholder="Digite seu nome" required />
+          </div>
+
+          <div class="data-container">
+            <div class="data-group">
               <label>E-mail</label>
               <input type="email" id="email" v-model="email" placeholder="Digite seu e-mail" required />
             </div>
 
-            <div class="input-group">
-            <label>Senha</label>
+            <div class="data-group">
+              <label>Senha</label>
               <input type="password" id="password" v-model="password" placeholder="Digite sua senha" required />
             </div>
+          </div>
 
-            <button type="submit" class="cadastro-button">Realizar Cadastro</button>
+          <div class="input-group">
+            <label>Foto</label>
+            <input type="file" id="photo" />
+          </div>
 
-            <div class="links-group">
-              <a href="/login">Já tem uma conta?</a>
-            </div>
+          <button type="submit" class="cadastro-button">Realizar Cadastro</button>
+
+          <div class="links-group">
+            <a href="/login">Já tem uma conta?</a>
+          </div>
         </div>
       </form>
     </div>
@@ -95,15 +107,25 @@
   justify-content: center;
 }
 
+.title-container {
+  width: 90%;
+  display: flex;
+  justify-content: flex-start;
+  padding-left: 5%;
+  box-sizing: border-box;
+}
+
 .form-title {
   font-size: 28px;
   font-weight: bold;
+  margin: 0;
 }
 
 .input-group {
   display: flex;
   flex-direction: column;
   width: 90%;
+  margin-bottom: 2rem;
 }
 
 .input-group label {
@@ -118,7 +140,6 @@
   border-radius: 5px !important;
   border: 1px solid #3B82F6;
   color: white;
-  margin-bottom: 2rem;
   width: 100%;
   box-sizing: border-box;
 }
@@ -132,15 +153,64 @@
   opacity: 1;
 }
 
+.input-group input[type="file"] {
+  text-align: right;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+
+.data-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2rem;
+  width: 90%;
+  margin-bottom: 2rem;
+}
+
+.data-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.data-group label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  box-sizing: border-box;
+}
+
+.data-group input {
+  background-color: #0F1835;
+  padding: 10px;
+  border-radius: 5px !important;
+  border: 1px solid #3B82F6;
+  color: white;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.data-group input:hover {
+  background-color: #172144;
+}
+
+.data-group input::placeholder {
+  color: white;
+  opacity: 1;
+}
+
 .cadastro-button {
   background-color: #1E3A8A;
   padding: 10px;
-  width: 80%;
+  width: 90%;
   color: white;
   font-weight: bold;
   border: 0;
   border-radius: 5px;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .cadastro-button:hover {
