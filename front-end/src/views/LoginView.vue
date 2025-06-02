@@ -6,7 +6,7 @@
     </div>
 
     <div class="form-container">
-      <form class="form-menu">
+      <form class="form-menu" @submit.prevent="loginUsuario">
         <div class="form-header">
           <label class="form-title">Quadra Livre</label>
         </div>
@@ -37,6 +37,7 @@
 </template>
 
 <script>
+import axios from 'axios';
 import backgroundLogin from '@/assets/backgroundLogin.png';
 
 export default {
@@ -44,7 +45,33 @@ export default {
   data() {
     return {
       backgroundLogin,
+      email: '',
+      password: '',
+      errorMessage: '',
     };
+  },
+  methods: {
+    async loginUsuario() {
+      try {
+        this.errorMessage = '';
+
+        const response = await axios.post('http://localhost:3000/login', {
+          email: this.email,
+          senha: this.password,
+        });
+
+        const usuario = response.data.usuario;
+
+        console.log('Usuário logado:', usuario);
+
+        localStorage.setItem('usuario', JSON.stringify(usuario));
+
+        this.$router.push('/dashboard');
+      } catch (error) {
+        this.errorMessage = error.response?.data?.erro || 'Erro ao fazer login';
+        console.error('Erro no login:', error);
+      }
+    },
   },
 };
 </script>
@@ -183,6 +210,27 @@ export default {
 
 .links-group span {
   color: white;
+}
+
+@media (max-width: 768px) {
+  .login {
+    flex-direction: column;
+  }
+
+  .img-container {
+    width: 100%;
+    height: 200px;
+  }
+
+  .form-container {
+    width: 100%;
+    height: auto;
+    padding: 2rem 0;
+  }
+
+  .form-menu {
+    width: 90%;
+  }
 }
 
 </style>
