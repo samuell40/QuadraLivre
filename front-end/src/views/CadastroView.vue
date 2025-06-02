@@ -1,11 +1,11 @@
 <template>
   <div class="cadastro">
-
     <div class="form-container">
-      <form class="form-menu">
+      <form class="form-menu" @submit.prevent="handleSubmit">
         <div class="form-header">
           <label class="header-title">Quadra Livre</label>
         </div>
+
         <div class="title-container">
           <label class="form-title">Cadastrar-se</label>
         </div>
@@ -13,24 +13,29 @@
         <div class="form-body">
           <div class="input-group">
             <label>Nome</label>
-            <input type="text" id="name" v-model="text" placeholder="Digite seu nome" required />
+            <input type="text" v-model="nome" placeholder="Digite seu nome" required />
           </div>
 
           <div class="data-container">
             <div class="data-group">
               <label>E-mail</label>
-              <input type="email" id="email" v-model="email" placeholder="Digite seu e-mail" required />
+              <input type="email" v-model="email" placeholder="Digite seu e-mail" required />
             </div>
 
             <div class="data-group">
               <label>Senha</label>
-              <input type="password" id="password" v-model="password" placeholder="Digite sua senha" required />
+              <input type="password" v-model="senha" placeholder="Digite sua senha" required />
             </div>
           </div>
 
           <div class="input-group">
             <label>Foto</label>
-            <input type="file" id="photo" />
+            <input type="file" @change="handleFileChange" />
+          </div>
+
+          <div class="input-group">
+            <label>ID da Quadra</label>
+            <input type="number" v-model="quadraId" placeholder="Digite o ID da quadra" required />
           </div>
 
           <button type="submit" class="cadastro-button">Realizar Cadastro</button>
@@ -41,13 +46,79 @@
         </div>
       </form>
     </div>
-
   </div>
 </template>
 
 <script>
+import Swal from 'sweetalert2';
 
+export default {
+  data() {
+    return {
+      nome: "",
+      email: "",
+      senha: "",
+      quadraId: "",
+      file: null
+    };
+  },
+  methods: {
+    handleFileChange(event) {
+      this.file = event.target.files[0];
+    },
+    async handleSubmit() {
+      try {
+        const formData = new FormData();
+        formData.append("nome", this.nome);
+        formData.append("email", this.email);
+        formData.append("senha", this.senha);
+        formData.append("quadraId", this.quadraId);
+        if (this.file) {
+          formData.append("file", this.file);
+        }
+
+        const response = await fetch("http://localhost:3000/cadastrar/usuario", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Erro ao cadastrar',
+            text: data.message || "Erro desconhecido!",
+          });
+          return;
+        }
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Cadastro realizado!',
+          text: 'Usuário cadastrado com sucesso.',
+        });
+
+        // Limpar os campos
+        this.nome = "";
+        this.email = "";
+        this.senha = "";
+        this.quadraId = "";
+        this.file = null;
+
+      } catch (error) {
+        console.error("Erro ao enviar dados:", error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Erro de conexão',
+          text: 'Não foi possível conectar ao servidor.',
+        });
+      }
+    }
+  }
+};
 </script>
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');

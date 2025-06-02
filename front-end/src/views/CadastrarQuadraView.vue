@@ -96,7 +96,6 @@ export default {
 
         const data = await response.json();
 
-        // Usando SweetAlert2 para sucesso
         Swal.fire({
           icon: 'success',
           title: 'Sucesso!',
@@ -107,7 +106,6 @@ export default {
 
         console.log(data);
 
-        // Limpa o formulário
         this.form = {
           nome: '',
           descricao: '',
@@ -120,7 +118,6 @@ export default {
       } catch (error) {
         console.error('Erro ao cadastrar quadra:', error);
 
-        // Usando SweetAlert2 para erro
         Swal.fire({
           icon: 'error',
           title: 'Erro',

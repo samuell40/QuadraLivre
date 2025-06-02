@@ -83,7 +83,6 @@
         </tbody>
       </table>
     </div>
-     <h3 class="tit_horario"> Placar Virtual</h3>
   </div>
 </template>
 
@@ -184,7 +183,6 @@ export default {
   }
 }
 </script>
-
 
 <style scoped>
 .navbar-custom {
@@ -543,7 +541,6 @@ p {
     display: none;
   }
 
-
   .login-btn-mobile {
     display: block;
     position: absolute;
@@ -557,7 +554,6 @@ p {
     text-decoration: none;
   }
 
-
   .tit_horario {
     font-size: 30px;
     margin-top: 40px;
@@ -565,12 +561,10 @@ p {
     font-weight: bold;
   }
 
-
   .imagem {
     height: 400px;
     width: 100%;
   }
-
 
   .btn-prev,
   .btn-next {
@@ -579,11 +573,9 @@ p {
     font-size: 30px;
   }
 
-
   .btn-prev {
     margin-right: -11px;
   }
-
 
   .btn-next {
     margin-left: -11px;
@@ -593,7 +585,6 @@ p {
     min-width: unset;
   }
 
-
   .placar th,
   .placar td {
     padding: 6px;
@@ -601,4 +592,3 @@ p {
   }
 }
 </style>
-

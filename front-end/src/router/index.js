@@ -4,6 +4,7 @@ import AgendamentoView from '../views/AgendamentoView.vue';
 import LoginView from '../views/LoginView.vue';
 import CadastroView from '../views/CadastroView.vue';
 import CadastrarQuadraView from '../views/CadastrarQuadraView.vue';
+import ControlePlacarView from '../views/ControlePlacarView';
 
 const routes = [
   {
@@ -30,6 +31,11 @@ const routes = [
     path: '/cadastrarquadra',
     name: 'cadastrar_quadra',
     component: CadastrarQuadraView,
+  },
+   {
+    path: '/controleplacar',
+    name: 'controle_placar',
+    component: ControlePlacarView,
   },
 ];
 
