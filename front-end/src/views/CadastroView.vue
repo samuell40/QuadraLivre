@@ -1,34 +1,31 @@
 <template>
-  <div class="login">
-
-    <div class="img-container">
-      <img :src="backgroundLogin" class="background-img" alt="Imagem de fundo">
-    </div>
+  <div class="cadastro">
 
     <div class="form-container">
       <form class="form-menu">
         <div class="form-header">
-          <label class="form-title">Quadra Livre</label>
+          <label class="header-title">Quadra Livre</label>
+        </div>
+        <div class="title-container">
+          <label class="form-title">Cadastrar-se</label>
         </div>
 
         <div class="form-body">
-          <div class="input-group">
-            <label>E-mail</label>
-            <input type="email" id="email" v-model="email" placeholder="Digite seu e-mail" required />
-          </div>
+            <div class="input-group">
+              <label>E-mail</label>
+              <input type="email" id="email" v-model="email" placeholder="Digite seu e-mail" required />
+            </div>
 
-          <div class="input-group">
+            <div class="input-group">
             <label>Senha</label>
-            <input type="password" id="password" v-model="password" placeholder="Digite sua senha" required />
-          </div>
+              <input type="password" id="password" v-model="password" placeholder="Digite sua senha" required />
+            </div>
 
-          <button type="submit" class="login-button">Entrar</button>
+            <button type="submit" class="cadastro-button">Realizar Cadastro</button>
 
-          <div class="links-group">
-            <a href="/recuperar-senha">Esqueceu a senha?</a>
-            <span>|</span>
-            <a href="/cadastro">Criar conta</a>
-          </div>
+            <div class="links-group">
+              <a href="/login">Já tem uma conta?</a>
+            </div>
         </div>
       </form>
     </div>
@@ -37,22 +34,13 @@
 </template>
 
 <script>
-import backgroundLogin from '@/assets/backgroundLogin.png';
 
-export default {
-  name: 'LoginView',
-  data() {
-    return {
-      backgroundLogin,
-    };
-  },
-};
 </script>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
 
-.login {
+.cadastro {
   display: flex;
   width: 100%;
   height: 100vh;
@@ -61,19 +49,8 @@ export default {
   color: white;
 }
 
-.img-container {
-  width: 50%;
-  margin: 0;
-}
-
-.background-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .form-container {
-  width: 50%;
+  width: 100%;
   height: 100vh;
   margin: 0;
   background-color: #0B132B;
@@ -82,8 +59,8 @@ export default {
 }
 
 .form-menu {
-  width: 80%;
-  height: 70vh;
+  width: 90%;
+  height: 80vh;
   background-color: #0F1835;
   border-radius: 15px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
@@ -102,6 +79,12 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.header-title {
+  font-size: 28px;
+  font-weight: bold;
 }
 
 .form-body {
@@ -115,12 +98,12 @@ export default {
 .form-title {
   font-size: 28px;
   font-weight: bold;
-}   
+}
 
 .input-group {
   display: flex;
   flex-direction: column;
-  width: 80%;
+  width: 90%;
 }
 
 .input-group label {
@@ -149,7 +132,7 @@ export default {
   opacity: 1;
 }
 
-.login-button {
+.cadastro-button {
   background-color: #1E3A8A;
   padding: 10px;
   width: 80%;
@@ -160,7 +143,7 @@ export default {
   margin-bottom: 2rem;
 }
 
-.login-button:hover {
+.cadastro-button:hover {
   background-color: #2C4FAA;
 }
 
@@ -177,7 +160,7 @@ export default {
   font-weight: bold;
 }
 
-.links-group a:hover {
+.links-group:hover {
   text-decoration: underline;
 }
 
