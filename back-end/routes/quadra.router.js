@@ -6,4 +6,6 @@ router.post('/quadra', controller.adicionarQuadra);
 
 router.get('/quadra', controller.getQuadra)
 
+router.get('/times', controller.nomeTime);
+
 module.exports = router;

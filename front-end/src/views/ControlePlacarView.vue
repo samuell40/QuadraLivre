@@ -4,12 +4,15 @@
     <div class="layout"> 
       <div class="header">
         <h1 class="title">Placar</h1>
-        <button class="btn-add" @click="addGame">Adicionar Time</button>
       </div>
 
-      <div class="game" v-for="(jogo, index) in jogos" :key="index">
+      <div class="game">
         <div class="team">
-          <h2>Time</h2>
+          <select v-model="jogo.timeA.nome" class="dropdown">
+            <option disabled value="">Selecione um time</option>
+            <option v-for="(time, i) in times" :key="i" :value="time">{{ time }}</option>
+          </select>
+
           <div class="box">
             <p>Gols Marcados</p>
             <div class="controls">
@@ -18,6 +21,7 @@
               <button @click="increment(jogo.timeA.gols)">+</button>
             </div>
           </div>
+
           <div
             class="box-small"
             v-for="(item, key) in atributosTimeA(jogo)"
@@ -30,13 +34,11 @@
               <button @click="increment(item)">+</button>
             </div>
           </div>
-          <button class="btn-remove" @click="removerJogo(index)">Remover</button>
         </div>
       </div>
     </div>
   </div>
 </template>
-
 
 <script>
 import SideBar from '@/components/SideBar.vue';
@@ -48,12 +50,26 @@ export default {
   },
   data() {
     return {
-      jogos: [this.criarNovoJogo()]
+      jogo: this.criarNovoJogo(), 
+      times: [] 
     };
   },
+  mounted() {
+    this.carregarTimes();
+  },
   methods: {
+    async carregarTimes() {
+      try {
+        const response = await fetch('http://localhost:3000/times'); 
+        const data = await response.json();
+        this.times = data.times;
+      } catch (error) {
+        console.error('Erro ao carregar times:', error);
+      }
+    },
     criarNovoJogo() {
       const criarStats = () => ({
+        nome: "", 
         gols: { valor: 0 },
         pts: { valor: 0 },
         empates: { valor: 0 },
@@ -70,26 +86,20 @@ export default {
     decrement(item) {
       if (item.valor > 0) item.valor--;
     },
-    addGame() {
-      this.jogos.push(this.criarNovoJogo());
-    },
-    removerJogo(index) {
-      this.jogos.splice(index, 1);
-    },
     capitalize(str) {
       return str.charAt(0).toUpperCase() + str.slice(1);
     },
     atributosTimeA(jogo) {
       return Object.fromEntries(
-        Object.entries(jogo.timeA).filter(([key]) => key !== "gols")
+        Object.entries(jogo.timeA).filter(([key]) => key !== "gols" && key !== "nome")
       );
-    },
     }
   }
+};
 </script>
 
 <style scoped>
-.conteiner {
+.container {
   display: flex;
   height: 100vh; 
   background: #f9fafb;
@@ -137,12 +147,13 @@ export default {
   margin-left: 20%;
 }
 
-.team h2 {
-  text-align: center;
-  margin-bottom: 15px;
-  background: #f3f3f3;
+.dropdown {
+  width: 100%;
   padding: 10px;
+  margin-bottom: 15px;
   border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 16px;
 }
 
 .box, .box-small {
@@ -173,17 +184,6 @@ export default {
 
 .controls button:last-child {
   background-color: #3b82f6;
-}
-
-.btn-remove {
-  width: 100%;
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  padding: 10px;
-  margin-top: 15px;
-  border-radius: 6px;
-  cursor: pointer;
 }
 
 </style>

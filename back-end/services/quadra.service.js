@@ -17,4 +17,32 @@ async function getQuadras(){
     return await prisma.quadra.findMany()
 }
 
-module.exports = { criarQuadra, getQuadras };
+async function getNomesTimes() {
+  try {
+    const placares = await prisma.placar.findMany({
+      select: {
+        time: true
+      },
+      distinct: ['time']
+    });
+
+    return placares.map(p => p.time);
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function atualizarTime(nome, dados){
+  return await prisma.time.update({
+    where: { nome },
+    data: {
+      gols: dados.gols,
+      pts: dados.pts,
+      empates: dados.empates,
+      vitorias: dados.vitorias,
+      derrotas: dados.derrotas
+    }
+  });
+};
+
+module.exports = { criarQuadra, getQuadras, getNomesTimes, atualizarTime};
