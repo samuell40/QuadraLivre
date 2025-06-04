@@ -32,17 +32,17 @@ async function getNomesTimes() {
   }
 }
 
-async function atualizarTime(nome, dados){
-  return await prisma.time.update({
-    where: { nome },
+async function atualizarTime(nome, dados) {
+  return await prisma.placar.update({
+    where: { time: nome },
     data: {
-      gols: dados.gols,
-      pts: dados.pts,
+      golsMarcados: dados.gols,
+      pontuacao: dados.pts,
       empates: dados.empates,
       vitorias: dados.vitorias,
       derrotas: dados.derrotas
     }
   });
-};
+}
 
 module.exports = { criarQuadra, getQuadras, getNomesTimes, atualizarTime};

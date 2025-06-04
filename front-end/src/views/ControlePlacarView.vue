@@ -1,7 +1,7 @@
 <template>
-  <div class="container"> 
+  <div class="container">
     <SideBar />
-    <div class="layout"> 
+    <div class="layout">
       <div class="header">
         <h1 class="title">Placar</h1>
       </div>
@@ -13,28 +13,60 @@
             <option v-for="(time, i) in times" :key="i" :value="time">{{ time }}</option>
           </select>
 
-          <div class="box">
-            <p>Gols Marcados</p>
-            <div class="controls">
-              <button @click="decrement(jogo.timeA.gols)">−</button>
-              <span>{{ jogo.timeA.gols.valor }}</span>
-              <button @click="increment(jogo.timeA.gols)">+</button>
+          <div class="line">
+            <div class="box-small">
+              <p>Pontos</p>
+              <div class="controls espacamento">
+                <button @click="decrement(jogo.timeA.pts)">−</button>
+                <span>{{ jogo.timeA.pts.valor }}</span>
+                <button @click="increment(jogo.timeA.pts)">+</button>
+              </div>
             </div>
           </div>
 
-          <div
-            class="box-small"
-            v-for="(item, key) in atributosTimeA(jogo)"
-            :key="key"
-          >
-            <p>{{ capitalize(key) }}</p>
-            <div class="controls">
-              <button @click="decrement(item)">−</button>
-              <span>{{ item.valor }}</span>
-              <button @click="increment(item)">+</button>
+          <div class="line">
+            <div class="box-small">
+              <p>Gols Marcados</p>
+              <div class="controls">
+                <button @click="decrement(jogo.timeA.gols)">−</button>
+                <span>{{ jogo.timeA.gols.valor }}</span>
+                <button @click="increment(jogo.timeA.gols)">+</button>
+              </div>
+            </div>
+
+            <div class="box-small">
+              <p>Empates</p>
+              <div class="controls">
+                <button @click="decrement(jogo.timeA.empates)">−</button>
+                <span>{{ jogo.timeA.empates.valor }}</span>
+                <button @click="increment(jogo.timeA.empates)">+</button>
+              </div>
             </div>
           </div>
+
+          <div class="line">
+            <div class="box-small">
+              <p>Vitórias</p>
+              <div class="controls">
+                <button @click="decrement(jogo.timeA.vitorias)">−</button>
+                <span>{{ jogo.timeA.vitorias.valor }}</span>
+                <button @click="increment(jogo.timeA.vitorias)">+</button>
+              </div>
+            </div>
+
+            <div class="box-small">
+              <p>Derrotas</p>
+              <div class="controls">
+                <button @click="decrement(jogo.timeA.derrotas)">−</button>
+                <span>{{ jogo.timeA.derrotas.valor }}</span>
+                <button @click="increment(jogo.timeA.derrotas)">+</button>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-save" @click="salvarPlacar">Salvar</button>
         </div>
+
       </div>
     </div>
   </div>
@@ -42,6 +74,7 @@
 
 <script>
 import SideBar from '@/components/SideBar.vue';
+import Swal from 'sweetalert2';
 
 export default {
   name: "ControlePlacarView",
@@ -50,8 +83,8 @@ export default {
   },
   data() {
     return {
-      jogo: this.criarNovoJogo(), 
-      times: [] 
+      jogo: this.criarNovoJogo(),
+      times: []
     };
   },
   mounted() {
@@ -60,16 +93,16 @@ export default {
   methods: {
     async carregarTimes() {
       try {
-        const response = await fetch('http://localhost:3000/times'); 
+        const response = await fetch('http://localhost:3000/times');
         const data = await response.json();
         this.times = data.times;
       } catch (error) {
-        console.error('Erro ao carregar times:', error);
+        Swal.fire('Erro', 'Erro ao carregar os times.', 'error');
       }
     },
     criarNovoJogo() {
       const criarStats = () => ({
-        nome: "", 
+        nome: "",
         gols: { valor: 0 },
         pts: { valor: 0 },
         empates: { valor: 0 },
@@ -93,7 +126,49 @@ export default {
       return Object.fromEntries(
         Object.entries(jogo.timeA).filter(([key]) => key !== "gols" && key !== "nome")
       );
+    },
+    async salvarPlacar() {
+      const nome = this.jogo.timeA.nome;
+
+      if (!nome) {
+        Swal.fire('Atenção', 'Selecione um time antes de salvar.', 'warning');
+        return;
+      }
+
+      const payload = {
+        gols: this.jogo.timeA.gols.valor,
+        pts: this.jogo.timeA.pts.valor,
+        empates: this.jogo.timeA.empates.valor,
+        vitorias: this.jogo.timeA.vitorias.valor,
+        derrotas: this.jogo.timeA.derrotas.valor
+      };
+
+      try {
+        const response = await fetch(`http://localhost:3000/placar/${encodeURIComponent(nome)}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro ao atualizar placar');
+        }
+
+        Swal.fire('Sucesso', 'Placar atualizado com sucesso!', 'success');
+      } catch (error) {
+        Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
+      }
+    },
+    atualizarPontos() {
+      const { vitorias, empates, pts } = this.jogo.timeA;
+      pts.valor = (vitorias.valor * 3) + (empates.valor * 1);
     }
+  },
+  watch: {
+    'jogo.timeA.vitorias.valor': 'atualizarPontos',
+    'jogo.timeA.empates.valor': 'atualizarPontos',
   }
 };
 </script>
@@ -101,8 +176,7 @@ export default {
 <style scoped>
 .container {
   display: flex;
-  height: 100vh; 
-  background: #f9fafb;
+  margin-top: 20px;
 }
 
 .layout {
@@ -116,6 +190,17 @@ export default {
   align-items: center;
   margin-bottom: 20px;
 }
+
+.line {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.box-small {
+  flex: 1;
+}
+
 .title {
   color: #2563eb;
   font-size: 28px;
@@ -143,7 +228,7 @@ export default {
   background: white;
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   margin-left: 20%;
 }
 
@@ -156,7 +241,8 @@ export default {
   font-size: 16px;
 }
 
-.box, .box-small {
+.box,
+.box-small {
   background: #f1f1f1;
   padding: 12px;
   margin: 10px 0;
@@ -182,8 +268,22 @@ export default {
   cursor: pointer;
 }
 
+.espacamento {
+  gap: 27%;
+}
+
 .controls button:last-child {
   background-color: #3b82f6;
 }
 
+.btn-save {
+  background-color: #3b82f6;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  margin-top: 20px;
+  width: 100%;
+}
 </style>

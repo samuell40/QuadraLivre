@@ -8,4 +8,6 @@ router.get('/quadra', controller.getQuadra)
 
 router.get('/times', controller.nomeTime);
 
+router.put('/placar/:nome', controller.atualizarPlacar);
+
 module.exports = router;

@@ -42,7 +42,7 @@ model Agendamento {
 
 model Placar {
   id           Int    @id @default(autoincrement())
-  time         String
+  time         String @unique
   pontuacao    Int
   vitorias     Int
   derrotas     Int
