@@ -275,11 +275,35 @@ export default {
     atualizarPontos() {
       const { vitorias, empates, pts } = this.jogo.timeA;
       pts.valor = (vitorias.valor * 3) + (empates.valor * 1);
+    },
+    async carregarDadosTimeSelecionado(nomeTime) {
+      try {
+        const response = await fetch(`http://localhost:3000/times/${encodeURIComponent(nomeTime)}`);
+        if (!response.ok) {
+          throw new Error('Erro ao buscar dados do time');
+        }
+
+        const time = await response.json();
+
+        this.jogo.timeA.gols.valor = time.golsMarcados || 0;
+        this.jogo.timeA.pts.valor = (time.vitorias * 3) + (time.empates || 0);
+        this.jogo.timeA.empates.valor = time.empates || 0;
+        this.jogo.timeA.vitorias.valor = time.vitorias || 0;
+        this.jogo.timeA.derrotas.valor = time.derrotas || 0;
+      } catch (error) {
+        console.error('Erro ao carregar dados do time:', error);
+        Swal.fire('Erro', 'Erro ao carregar dados do time selecionado.', 'error');
+      }
     }
   },
   watch: {
     'jogo.timeA.vitorias.valor': 'atualizarPontos',
     'jogo.timeA.empates.valor': 'atualizarPontos',
+    'jogo.timeA.nome'(novoNome) {
+      if (novoNome) {
+        this.carregarDadosTimeSelecionado(novoNome);
+      }
+    }
   }
 };
 </script>

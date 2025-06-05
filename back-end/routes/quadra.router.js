@@ -10,6 +10,8 @@ router.post('/times',  controller.criarTime);;
 
 router.get('/times', controller.nomeTime);
 
+router.get('/times/:nome', controller.getTimeNome);
+
 router.put('/placar/:nome', controller.atualizarPlacar);
 
 router.get('/placar', controller.getPlacar);

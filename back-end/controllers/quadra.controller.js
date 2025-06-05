@@ -1,4 +1,4 @@
-const { criarQuadra, getQuadras,criarTimeService,  getNomesTimes, atualizarTime, listarPlacar} = require('../services/quadra.service');
+const { criarQuadra, getQuadras,criarTimeService,  getNomesTimes, buscarTimeNome, atualizarTime, listarPlacar} = require('../services/quadra.service');
 
 async function adicionarQuadra(req, res) {
     try {
@@ -42,6 +42,23 @@ async function nomeTime(req, res) {
   }
 }
 
+async function getTimeNome(req, res) {
+  const nome = req.params.nome;
+
+  try {
+    const time = await buscarTimeNome(nome);
+
+    if (!time) {
+      return res.status(404).json({ error: 'Time não encontrado' });
+    }
+
+    res.json(time);
+  } catch (error) {
+    console.error('Erro ao buscar time por nome:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+}
+
 async function atualizarPlacar(req, res){
   const { nome } = req.params;
   const dados = req.body;
@@ -65,4 +82,4 @@ async function getPlacar(req, res){
   }
 };
 
-module.exports = { adicionarQuadra, getQuadra, criarTime, nomeTime, atualizarPlacar, getPlacar};
+module.exports = { adicionarQuadra, getQuadra, criarTime, nomeTime,getTimeNome, atualizarPlacar, getPlacar};

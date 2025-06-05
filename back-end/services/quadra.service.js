@@ -48,6 +48,13 @@ async function getNomesTimes() {
   }
 }
 
+async function buscarTimeNome(nome) {
+   const time = await prisma.placar.findUnique({
+      where: { time: nome }
+    });
+    return time;
+}
+
 async function atualizarTime(nome, dados) {
   return await prisma.placar.update({
     where: { time: nome },
@@ -67,4 +74,4 @@ async function listarPlacar(){
   });
 }
 
-module.exports = { criarQuadra, getQuadras, criarTimeService, getNomesTimes, atualizarTime, listarPlacar};
+module.exports = { criarQuadra, getQuadras, criarTimeService, getNomesTimes, buscarTimeNome, atualizarTime, listarPlacar};
