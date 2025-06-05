@@ -17,6 +17,22 @@ async function getQuadras(){
     return await prisma.quadra.findMany()
 }
 
+async function criarTimeService(dados) {
+   console.log('Dados recebidos:', dados);
+  const placar = await prisma.placar.create({
+    data: {
+      time: dados.time,
+      foto: dados.foto,
+      pontuacao: 0,
+      vitorias: 0,
+      derrotas: 0,
+      empates: 0,
+      golsMarcados: 0,
+    }
+  });
+  return placar;
+}
+
 async function getNomesTimes() {
   try {
     const placares = await prisma.placar.findMany({
@@ -45,4 +61,10 @@ async function atualizarTime(nome, dados) {
   });
 }
 
-module.exports = { criarQuadra, getQuadras, getNomesTimes, atualizarTime};
+async function listarPlacar(){
+  return await prisma.placar.findMany({
+    orderBy: { pontuacao: 'desc' },
+  });
+}
+
+module.exports = { criarQuadra, getQuadras, criarTimeService, getNomesTimes, atualizarTime, listarPlacar};

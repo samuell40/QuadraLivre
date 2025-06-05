@@ -35,13 +35,12 @@
         <p>Com poucos cliques, encontre e reserve a quadra ideal para o seu jogo.</p>
       </div>
     </section>
+
     <h3 class="tit_horario"> Quadras Disponíveis</h3>
     <section class="agendamento">
       <button class="btn-prev" @click="prev">&lt;</button>
       <Carousel ref="carousel" :itemsToShow="1" :wrapAround="true" :mouseDrag="true" :breakpoints="{
-        768: {
-          itemsToShow: 3
-        }
+        768: { itemsToShow: 3 }
       }" class="carousel">
         <Slide v-for="(quadra, index) in quadras" :key="index">
           <div class="card">
@@ -49,7 +48,6 @@
               class="imagem" />
             <div class="info">
               <h3>{{ quadra.nome }}</h3>
-              <!-- <p class="descricao">{{ quadra.descricao }}</p> -->
               <p class="endereco">{{ quadra.endereco }}</p>
               <button class="btn-agendar" @click="clicarAgendar(quadra)">Agendar</button>
             </div>
@@ -58,6 +56,7 @@
       </Carousel>
       <button class="btn-next" @click="next">&gt;</button>
     </section>
+
     <h3 class="tit_horario"> Placar Virtual</h3>
     <div class="placar">
       <table>
@@ -73,12 +72,12 @@
         </thead>
         <tbody>
           <tr v-for="(time, index) in times" :key="index">
-            <td>{{ time.nome }}</td>
-            <td>{{ time.pontos }}</td>
+            <td>{{ time.time }}</td>
+            <td>{{ time.pontuacao }}</td>
             <td>{{ time.vitorias }}</td>
             <td>{{ time.empates }}</td>
             <td>{{ time.derrotas }}</td>
-            <td>{{ time.gols }}</td>
+            <td>{{ time.golsMarcados }}</td>
           </tr>
         </tbody>
       </table>
@@ -100,55 +99,15 @@ export default {
     return {
       isMenuOpen: false,
       quadras: [],
-      carousel: null,
-      times: [
-        {
-          nome: 'Leões FC',
-          pontos: 15,
-          vitorias: 5,
-          empates: 1,
-          derrotas: 1,
-          gols: 2
-        },
-        {
-          nome: 'Águias do Sul',
-          pontos: 12,
-          vitorias: 4,
-          empates: 1,
-          derrotas: 2,
-          gols: 2
-        },
-        {
-          nome: 'Caçarola Urbanos',
-          pontos: 10,
-          vitorias: 3,
-          empates: 1,  
-          derrotas: 2,
-          gols: 2
-        },
-        {
-          nome: 'Flaflu',
-          pontos: 8,
-          vitorias: 2,
-          empates: 1,  
-          derrotas: 2,
-          gols: 2
-        },
-        {
-          nome: 'Panteras Negras',
-          pontos: 6,
-          vitorias: 2,
-          empates: 1,  
-          derrotas: 4,
-          gols: 2
-        },
-      ]
+      times: [],
+      carousel: null
     }
   },
   mounted() {
     this.carousel = this.$refs.carousel
     window.addEventListener('resize', this.updateSlideWidth)
     this.carregarQuadras()
+    this.carregarPlacar()
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.updateSlideWidth)
@@ -159,14 +118,10 @@ export default {
     },
     updateSlideWidth() {},
     next() {
-      if (this.carousel) {
-        this.carousel.next()
-      }
+      if (this.carousel) this.carousel.next()
     },
     prev() {
-      if (this.carousel) {
-        this.carousel.prev()
-      }
+      if (this.carousel) this.carousel.prev()
     },
     async carregarQuadras() {
       try {
@@ -175,6 +130,15 @@ export default {
         this.quadras = data
       } catch (err) {
         console.error('Erro ao carregar quadras:', err)
+      }
+    },
+    async carregarPlacar() {
+      try {
+        const res = await fetch('http://localhost:3000/placar')
+        const data = await res.json()
+        this.times = data
+      } catch (err) {
+        console.error('Erro ao carregar placar:', err)
       }
     },
     clicarAgendar(quadra) {

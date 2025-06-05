@@ -13,6 +13,7 @@ const app = express();
 const userRouter = require('./routes/user.router');
 const usuario = require('./routes/usuario.router');
 const quadra = require('./routes/quadra.router');
+const times = require('./routes/quadra.router');
 
 // Configurações
 app.use(cors({
@@ -31,6 +32,7 @@ const prisma = new PrismaClient();
 app.use(userRouter);
 app.use(usuario);
 app.use(quadra);
+app.use(times);
 
 // Teste de rota base
 app.get('/', (req, res) => {
