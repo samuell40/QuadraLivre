@@ -6,48 +6,52 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const multer = require("multer");
 const dotenv = require("dotenv");
 dotenv.config();
-
-const app = express();
-
+const session = require("express-session");
+const passport = require("./auth/passport"); 
 // Rotas
+const authRoutes = require("./routes/auth.router");
 const userRouter = require('./routes/user.router');
 const usuario = require('./routes/usuario.router');
 const quadra = require('./routes/quadra.router');
-const times = require('./routes/quadra.router');
 
-// Configurações
+// Inicialização
+const app = express();
+const server = http.createServer(app);
+const prisma = new PrismaClient();
+
+// Middlewares globais
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Authorization', 'Content-Type'],
     exposedHeaders: ['Authorization']
 }));
-
 app.use(express.json());
 
-// Prisma
-const prisma = new PrismaClient();
+// Session + Passport
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
-// Uso das rotas
+// Rotas
+app.use("/auth", authRoutes);
 app.use(userRouter);
 app.use(usuario);
 app.use(quadra);
-app.use(times);
 
-// Teste de rota base
+// Rota base
 app.get('/', (req, res) => {
   res.send('API QuadraLivre funcionando!');
 });
 
-// Configuração do servidor
-const PORT = 3000;
-const server = http.createServer(app);
-
-// Configuração do Multer (armazenamento em memória)
+// Cloudflare R2 + Multer para upload de arquivos
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// Configuração do Cliente S3 (Cloudflare R2)
 const s3 = new S3Client({
     region: "auto",
     endpoint: process.env.CLOUDFLARE_R2_ENDPOINT,
@@ -57,26 +61,20 @@ const s3 = new S3Client({
     },
 });
 
-// Rota de Upload
 app.post("/upload", upload.single("file"), async (req, res) => {
-    if (!req.file) {
-        return res.status(400).send("Nenhum arquivo enviado.");
-    }
+    if (!req.file) return res.status(400).send("Nenhum arquivo enviado.");
 
     const fileName = `${Date.now()}_${req.file.originalname}`;
-    const fileContent = req.file.buffer;
-
     const params = {
         Bucket: process.env.CLOUDFLARE_R2_BUCKET,
         Key: `uploads/${fileName}`,
-        Body: fileContent,
+        Body: req.file.buffer,
         ContentType: req.file.mimetype,
         ACL: "public-read",
     };
 
     try {
         await s3.send(new PutObjectCommand(params));
-
         const fileUrl = `${process.env.URL_PUBLICA}/uploads/${fileName}`;
         res.status(200).json({ fileUrl });
     } catch (error) {
@@ -86,6 +84,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 });
 
 // Inicializa o servidor
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
 });

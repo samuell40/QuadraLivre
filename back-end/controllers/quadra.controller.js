@@ -44,14 +44,11 @@ async function nomeTime(req, res) {
 
 async function getTimeNome(req, res) {
   const nome = req.params.nome;
-
   try {
     const time = await buscarTimeNome(nome);
-
     if (!time) {
       return res.status(404).json({ error: 'Time não encontrado' });
     }
-
     res.json(time);
   } catch (error) {
     console.error('Erro ao buscar time por nome:', error);

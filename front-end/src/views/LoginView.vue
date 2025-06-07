@@ -1,78 +1,70 @@
 <template>
   <div class="login">
-
     <div class="img-container">
-      <img :src="backgroundLogin" class="background-img" alt="Imagem de fundo">
+      <img :src="backgroundLogin" class="background-img" alt="Imagem de fundo" />
     </div>
 
     <div class="form-container">
-      <form class="form-menu" @submit.prevent="loginUsuario">
+      <form class="form-menu" @submit.prevent>
         <div class="form-header">
           <label class="form-title">Quadra Livre</label>
         </div>
 
         <div class="form-body">
           <div class="input-group">
-            <label>E-mail</label>
-            <input type="email" id="email" v-model="email" placeholder="Digite seu e-mail" required />
+            <label>Login:</label>
           </div>
-
-          <div class="input-group">
-            <label>Senha</label>
-            <input type="password" id="password" v-model="password" placeholder="Digite sua senha" required />
-          </div>
-
-          <button type="submit" class="login-button">Entrar</button>
+          <button type="button" class="google-button" @click="loginComGoogle">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-google"
+              viewBox="0 0 16 16">
+              <path
+                d="M15.545 6.558a9.4 9.4 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.7 7.7 0 0 1 5.352 2.082l-2.284 2.284A4.35 4.35 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.8 4.8 0 0 0 0 3.063h.003c.635 1.893 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.7 3.7 0 0 0 1.599-2.431H8v-3.08z" />
+            </svg>
+            <a>Google</a>
+          </button>
 
           <div class="links-group">
-            <a href="/recuperar-senha">Esqueceu a senha?</a>
-            <span>|</span>
-            <a href="/cadastro">Criar conta</a>
+            <a>Novo no Quadra Livre?</a>
+            <a class="cadastra-se" href="/cadastro">Cadastre-se!</a>
           </div>
         </div>
       </form>
     </div>
-
   </div>
 </template>
 
 <script>
-import axios from 'axios';
 import backgroundLogin from '@/assets/backgroundLogin.png';
+import Swal from 'sweetalert2';
 
 export default {
   name: 'LoginView',
   data() {
     return {
       backgroundLogin,
-      email: '',
-      password: '',
-      errorMessage: '',
     };
   },
   methods: {
-    async loginUsuario() {
-      try {
-        this.errorMessage = '';
-
-        const response = await axios.post('http://localhost:3000/login', {
-          email: this.email,
-          senha: this.password,
-        });
-
-        const usuario = response.data.usuario;
-
-        console.log('Usuário logado:', usuario);
-
-        localStorage.setItem('usuario', JSON.stringify(usuario));
-
-        this.$router.push('/dashboard');
-      } catch (error) {
-        this.errorMessage = error.response?.data?.erro || 'Erro ao fazer login';
-        console.error('Erro no login:', error);
-      }
+    loginComGoogle() {
+      window.location.href = 'http://localhost:3000/auth/google';
     },
+    verificarErroLogin() {
+      const erro = localStorage.getItem('erroLogin');
+
+      if (erro === 'usuario_nao_cadastrado') {
+        Swal.fire({
+          icon: 'error',
+          title: 'Acesso negado',
+          text: 'Você não possui cadastro!',
+          confirmButtonColor: '#1E3A8A',
+        });
+        localStorage.removeItem('erroLogin');
+      }
+    }
   },
+  mounted() {
+    this.verificarErroLogin();
+  }
 };
 </script>
 
@@ -89,8 +81,8 @@ export default {
 }
 
 .img-container {
-  width: 50%;
-  margin: 0;
+  width: 100%;
+  height: 100vh;
 }
 
 .background-img {
@@ -100,23 +92,27 @@ export default {
 }
 
 .form-container {
-  width: 50%;
+  width: 67%;
   height: 100vh;
-  margin: 0;
   background-color: #0B132B;
   align-content: center;
   justify-items: center;
 }
 
 .form-menu {
-  width: 80%;
-  height: 70vh;
+  position: absolute;
+  top: 50%;
+  right: 5%;
+  transform: translateY(-50%);
+  width: 30%;
+  height: 40vh;
   background-color: #0F1835;
   border-radius: 15px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  z-index: 10;
 }
 
 .form-header {
@@ -124,7 +120,6 @@ export default {
   height: 66px;
   background-color: #152147;
   border-radius: 15px 15px 0 0;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   text-align: center;
   display: flex;
   align-items: center;
@@ -142,7 +137,7 @@ export default {
 .form-title {
   font-size: 28px;
   font-weight: bold;
-}   
+}
 
 .input-group {
   display: flex;
@@ -153,42 +148,6 @@ export default {
 .input-group label {
   font-weight: bold;
   margin-bottom: 5px;
-  box-sizing: border-box;
-}
-
-.input-group input {
-  background-color: #0F1835;
-  padding: 10px;
-  border-radius: 5px !important;
-  border: 1px solid #3B82F6;
-  color: white;
-  margin-bottom: 2rem;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.input-group input:hover {
-  background-color: #172144;
-}
-
-.input-group input::placeholder {
-  color: white;
-  opacity: 1;
-}
-
-.login-button {
-  background-color: #1E3A8A;
-  padding: 10px;
-  width: 80%;
-  color: white;
-  font-weight: bold;
-  border: 0;
-  border-radius: 5px;
-  margin-bottom: 2rem;
-}
-
-.login-button:hover {
-  background-color: #2C4FAA;
 }
 
 .links-group {
@@ -208,8 +167,24 @@ export default {
   text-decoration: underline;
 }
 
-.links-group span {
-  color: white;
+.links-group a.cadastra-se {
+  color: #3B82F6;
+}
+
+.google-button {
+  background-color: #1E3A8A;
+  color: #ffffff;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 80%;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  margin: 1rem 0;
+  cursor: pointer;
 }
 
 @media (max-width: 768px) {
@@ -232,5 +207,4 @@ export default {
     width: 90%;
   }
 }
-
 </style>
