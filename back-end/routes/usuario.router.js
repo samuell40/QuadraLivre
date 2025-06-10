@@ -1,14 +1,9 @@
 const express = require('express')
-const router = express.Router()
-const multer = require('multer');
 const controller = require('../controllers/usuario.controller.js')
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
-//const validarJWT = require('../middlewares/auth.js')
+const permission = require('../services/permissions/permissions.usuario.service.js')
+const router = express.Router()
 
-//router.post('/cadastrar/usuario',upload.single("file"), controller.postUsuario);
-//router.post('/cadastrar/usuario', [validarJWT], controller.postUsuario);
-
-router.post('/cadastrar/usuario', controller.postUsuario);
+router.post('/cadastrar/usuario', [permission.postUsuario], controller.postUsuario);
+router.put('/editar/usuario', [permission.postUsuario], controller.updateUsuario);
 
 module.exports = router;

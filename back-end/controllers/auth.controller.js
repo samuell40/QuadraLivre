@@ -47,12 +47,7 @@ function loginFalhou(req, res) {
   const errorMessage = req.authInfo?.message;
 
   if (errorMessage === 'usuario_nao_cadastrado') {
-    return res.send(`
-      <script>
-        localStorage.setItem('erroLogin', 'usuario_nao_cadastrado');
-        window.location.href = 'http://localhost:8080/login';
-      </script>
-    `);
+    return res.redirect('http://localhost:8080/login?erro=usuario_nao_cadastrado');
   }
 
   res.redirect('http://localhost:8080/login');

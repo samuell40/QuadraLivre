@@ -295,12 +295,12 @@ h3 {
   font-family: "Montserrat";
   font-weight: bold;
   margin-bottom: 16px;
-  color: #050B2C
+  color: #ffff;
 }
 
 
 p {
-  color: #ccc;
+  color: #888;
   font-size: 18px;
 }
 

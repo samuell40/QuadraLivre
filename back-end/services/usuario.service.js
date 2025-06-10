@@ -1,25 +1,33 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient()
-const bcryptUtil = require("../utils/bcrypt.utils");
 
-async function postUsuario(user) {
 
-    let senha_user = bcryptUtil.hash(user.usuario.senha, 10);
+async function postUsuario(user){
     const cadastro = await prisma.Usuario.create({
         data: {
             nome: user.usuario.nome,
             email: user.usuario.email,
-            senha: senha_user,
             foto: user.usuario.foto,
-            permissaoId: 1,
-            //quadraId: user.usuario.quadraId,
-            quadraId: Number(user.usuario.quadraId),
-
+            permissaoId: user.usuario.permissaoId,
+            funcao: user.usuario.funcao
         },
-    });
-
-    return cadastro;
+    })
+      return cadastro;
 }
 
+async function updateUsuario(user){
+    const usuarioAtualizado = await prisma.Usuario.update({
+        where: { email: user.email},
+        data: {
+            email: user.email_novo,
+            nome: user.nome,
+            telefone: user.telefone,
+            foto: user.foto,
+            permissaoId: user.permissaoId,
+            funcao: user.funcao
+        },
+    });
+    return usuarioAtualizado;
+}
 
-module.exports = { postUsuario };
+module.exports = { postUsuario, updateUsuario };

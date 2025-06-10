@@ -49,7 +49,8 @@ export default {
       window.location.href = 'http://localhost:3000/auth/google';
     },
     verificarErroLogin() {
-      const erro = localStorage.getItem('erroLogin');
+      const params = new URLSearchParams(window.location.search);
+      const erro = params.get('erro');
 
       if (erro === 'usuario_nao_cadastrado') {
         Swal.fire({
@@ -58,7 +59,6 @@ export default {
           text: 'Você não possui cadastro!',
           confirmButtonColor: '#1E3A8A',
         });
-        localStorage.removeItem('erroLogin');
       }
     }
   },
@@ -67,6 +67,7 @@ export default {
   }
 };
 </script>
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');

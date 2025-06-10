@@ -10,7 +10,6 @@ const session = require("express-session");
 const passport = require("./auth/passport"); 
 // Rotas
 const authRoutes = require("./routes/auth.router");
-const userRouter = require('./routes/user.router');
 const usuario = require('./routes/usuario.router');
 const quadra = require('./routes/quadra.router');
 
@@ -39,7 +38,6 @@ app.use(passport.session());
 
 // Rotas
 app.use("/auth", authRoutes);
-app.use(userRouter);
 app.use(usuario);
 app.use(quadra);
 

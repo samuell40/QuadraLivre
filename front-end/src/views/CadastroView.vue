@@ -33,10 +33,6 @@
             <input type="file" @change="handleFileChange" />
           </div>
 
-          <div class="input-group">
-            <label>ID da Quadra</label>
-            <input type="number" v-model="quadraId" placeholder="Digite o ID da quadra" required />
-          </div>
 
           <button type="submit" class="cadastro-button">Realizar Cadastro</button>
 
@@ -58,7 +54,6 @@ export default {
       nome: "",
       email: "",
       senha: "",
-      quadraId: "",
       file: null
     };
   },
@@ -72,7 +67,6 @@ export default {
         formData.append("nome", this.nome);
         formData.append("email", this.email);
         formData.append("senha", this.senha);
-        formData.append("quadraId", this.quadraId);
         if (this.file) {
           formData.append("file", this.file);
         }
@@ -103,7 +97,6 @@ export default {
         this.nome = "";
         this.email = "";
         this.senha = "";
-        this.quadraId = "";
         this.file = null;
 
       } catch (error) {
