@@ -18,9 +18,9 @@
             <div class="box-small">
               <p>Pontos</p>
               <div class="controls espacamento">
-                <button @click="decrement(jogo.timeA.pts)">−</button>
+                <button @click="decrement(jogo.timeA.pts)" :disabled="!jogo.timeA.nome">−</button>
                 <span>{{ jogo.timeA.pts.valor }}</span>
-                <button @click="increment(jogo.timeA.pts)">+</button>
+                <button @click="increment(jogo.timeA.pts)" :disabled="!jogo.timeA.nome">+</button>
               </div>
             </div>
           </div>
@@ -29,18 +29,18 @@
             <div class="box-small">
               <p>Gols Marcados</p>
               <div class="controls">
-                <button @click="decrement(jogo.timeA.gols)">−</button>
+                <button @click="decrement(jogo.timeA.gols)" :disabled="!jogo.timeA.nome">−</button>
                 <span>{{ jogo.timeA.gols.valor }}</span>
-                <button @click="increment(jogo.timeA.gols)">+</button>
+                <button @click="increment(jogo.timeA.gols)" :disabled="!jogo.timeA.nome">+</button>
               </div>
             </div>
 
             <div class="box-small">
               <p>Empates</p>
               <div class="controls">
-                <button @click="decrement(jogo.timeA.empates)">−</button>
+                <button @click="decrement(jogo.timeA.empates)" :disabled="!jogo.timeA.nome">−</button>
                 <span>{{ jogo.timeA.empates.valor }}</span>
-                <button @click="increment(jogo.timeA.empates)">+</button>
+                <button @click="increment(jogo.timeA.empates)" :disabled="!jogo.timeA.nome">+</button>
               </div>
             </div>
           </div>
@@ -49,18 +49,18 @@
             <div class="box-small">
               <p>Vitórias</p>
               <div class="controls">
-                <button @click="decrement(jogo.timeA.vitorias)">−</button>
+                <button @click="decrement(jogo.timeA.vitorias)" :disabled="!jogo.timeA.nome">−</button>
                 <span>{{ jogo.timeA.vitorias.valor }}</span>
-                <button @click="increment(jogo.timeA.vitorias)">+</button>
+                <button @click="increment(jogo.timeA.vitorias)" :disabled="!jogo.timeA.nome">+</button>
               </div>
             </div>
 
             <div class="box-small">
               <p>Derrotas</p>
               <div class="controls">
-                <button @click="decrement(jogo.timeA.derrotas)">−</button>
+                <button @click="decrement(jogo.timeA.derrotas)" :disabled="!jogo.timeA.nome">−</button>
                 <span>{{ jogo.timeA.derrotas.valor }}</span>
-                <button @click="increment(jogo.timeA.derrotas)">+</button>
+                <button @click="increment(jogo.timeA.derrotas)" :disabled="!jogo.timeA.nome">+</button>
               </div>
             </div>
           </div>
@@ -70,7 +70,6 @@
       </div>
     </div>
 
-    <!-- Modal -->
     <div v-if="modalAberto" class="modal-overlay" @click.self="fecharModal">
       <div class="modal-content">
         <h2>Adicionar Time</h2>
@@ -171,9 +170,6 @@ export default {
           throw new Error('Erro ao cadastrar time');
         }
 
-        const data = await response.json();
-        console.log(data);
-
         Swal.fire({
           icon: 'success',
           title: 'Sucesso!',
@@ -182,7 +178,7 @@ export default {
           showConfirmButton: false,
         });
 
-        this.carregarTimes(); 
+        this.carregarTimes();
         this.fecharModal();
       } catch (error) {
         console.error('Erro ao cadastrar time:', error);
@@ -230,13 +226,9 @@ export default {
     decrement(item) {
       if (item.valor > 0) item.valor--;
     },
-    capitalize(str) {
-      return str.charAt(0).toUpperCase() + str.slice(1);
-    },
-    atributosTimeA(jogo) {
-      return Object.fromEntries(
-        Object.entries(jogo.timeA).filter(([key]) => key !== "gols" && key !== "nome")
-      );
+    atualizarPontos() {
+      const { vitorias, empates, pts } = this.jogo.timeA;
+      pts.valor = (vitorias.valor * 3) + (empates.valor * 1);
     },
     async salvarPlacar() {
       const nome = this.jogo.timeA.nome;
@@ -271,10 +263,6 @@ export default {
       } catch (error) {
         Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
       }
-    },
-    atualizarPontos() {
-      const { vitorias, empates, pts } = this.jogo.timeA;
-      pts.valor = (vitorias.valor * 3) + (empates.valor * 1);
     },
     async carregarDadosTimeSelecionado(nomeTime) {
       try {
@@ -316,7 +304,8 @@ export default {
 
 .layout {
   flex: 1;
-  padding: 20px 30px;
+  padding: 20px 10px;
+  width: 100%;
 }
 
 .header {
@@ -327,9 +316,10 @@ export default {
 }
 
 .line {
-  display: flex;
-  gap: 10px;
+ display: flex;
+  gap: 20px;
   justify-content: space-between;
+  margin-bottom: 30px; /* Adiciona espaço entre os blocos */
 }
 
 .box-small {
@@ -339,7 +329,7 @@ export default {
 .title {
   color: #3b82f6;
   font-size: 28px;
-  margin-left: 20%;
+  margin-left: 15%;
 }
 
 .btn-add {
@@ -349,22 +339,14 @@ export default {
   border: none;
   border-radius: 20px;
   cursor: pointer;
+  margin-right: -5%;
 }
 
 .game {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 30px;
-  gap: 30px;
-}
-
-.team {
-  flex: 1;
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  margin-left: 20%;
+  flex-direction: column;
+  width: 90%;
+  margin-left: 15%;
 }
 
 .dropdown {
@@ -374,6 +356,7 @@ export default {
   border-radius: 6px;
   border: 1px solid #ccc;
   font-size: 16px;
+   margin-bottom: 32px;
 }
 
 .box,

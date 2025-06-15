@@ -34,7 +34,7 @@ function callbackLoginGoogle(req, res, next) {
     if (!user) {
       const email = info?.email || null;
 
-      return res.redirect(`http://localhost:8080/login?erro=usuario_nao_cadastrado${email ? `&email=${encodeURIComponent(email)}` : ''}`);
+      return res.redirect(`http://localhost:8080/login?erro=usuario_nao_cadastrado`);
     }
 
     req.logIn(user, (err) => {
@@ -59,7 +59,7 @@ function callbackLoginGoogle(req, res, next) {
 function loginFalhou(req, res) {
   if (!user) {
   if (info && info.message === 'usuario_nao_cadastrado' && info.email) {
-    return res.redirect(`http://localhost:8080/login?erro=usuario_nao_cadastrado&email=${encodeURIComponent(info.email)}`);
+    return res.redirect(`http://localhost:8080/login?erro=usuario_nao_cadastrado`);
   }
 
   return res.redirect('http://localhost:8080/login?erro=usuario_nao_cadastrado');
