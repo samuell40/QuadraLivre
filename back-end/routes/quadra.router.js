@@ -1,6 +1,6 @@
 const express = require('express');
-const router = express.Router();
 const controller = require('../controllers/quadra.controller');
+const router = express.Router();
 
 router.post('/quadra', controller.adicionarQuadra);
 

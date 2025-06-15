@@ -12,8 +12,8 @@ model Usuario {
   nome        String
   email       String     @unique
   telefone    String?
-  funcao      String
-  permissaoId Int
+  funcao      String   
+  permissaoId Int  
   foto        String?    @db.VarChar(2048)
   quadraId    Int?
   quadra      Quadra?  @relation(fields: [quadraId], references: [id])

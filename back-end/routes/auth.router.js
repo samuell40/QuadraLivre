@@ -1,7 +1,7 @@
 const express = require('express');
 const passport = require('passport');
-const router = express.Router();
 const controller = require('../controllers/auth.controller');
+const router = express.Router();
 
 router.get('/google', controller.iniciarLoginGoogle);
 

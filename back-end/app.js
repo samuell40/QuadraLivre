@@ -12,6 +12,7 @@ const passport = require("./auth/passport");
 const authRoutes = require("./routes/auth.router");
 const usuario = require('./routes/usuario.router');
 const quadra = require('./routes/quadra.router');
+const { FirstRun } = require('./firstRun');
 
 // Inicialização
 const app = express();
@@ -40,6 +41,7 @@ app.use(passport.session());
 app.use("/auth", authRoutes);
 app.use(usuario);
 app.use(quadra);
+FirstRun();
 
 // Rota base
 app.get('/', (req, res) => {

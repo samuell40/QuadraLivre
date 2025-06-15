@@ -1,9 +1,13 @@
 const express = require('express')
 const controller = require('../controllers/usuario.controller.js')
-const permission = require('../services/permissions/permissions.usuario.service.js')
+const permission = require('../services/usuario.service.js')
+const validarJWT = require('../middlewares/auth.js');
+
 const router = express.Router()
 
-router.post('/cadastrar/usuario', [permission.postUsuario], controller.postUsuario);
-router.put('/editar/usuario', [permission.postUsuario], controller.updateUsuario);
+router.post('/cadastrar/usuario', controller.postUsuario);
+
+
+router.put('/editar/usuario', validarJWT, [permission.postUsuario], controller.updateUsuario);
 
 module.exports = router;

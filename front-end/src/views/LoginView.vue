@@ -52,7 +52,7 @@ export default {
       const params = new URLSearchParams(window.location.search);
       const erro = params.get('erro');
 
-      if (erro === 'usuario_nao_cadastrado') {
+      if (erro === 'usuario_nao_cadastrado') {  
         Swal.fire({
           icon: 'error',
           title: 'Acesso negado',

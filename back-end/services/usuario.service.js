@@ -5,11 +5,12 @@ const prisma = new PrismaClient()
 async function postUsuario(user){
     const cadastro = await prisma.Usuario.create({
         data: {
-            nome: user.usuario.nome,
-            email: user.usuario.email,
-            foto: user.usuario.foto,
-            permissaoId: user.usuario.permissaoId,
-            funcao: user.usuario.funcao
+            nome: user.nome,
+            email: user.email,
+            telefone: user.telefone,
+            funcao: "Usuario",
+            foto: user.foto,
+            permissaoId: 1,
         },
     })
       return cadastro;

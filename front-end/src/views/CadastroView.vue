@@ -1,7 +1,7 @@
 <template>
   <div class="cadastro">
     <div class="form-container">
-      <form class="form-menu" @submit.prevent="handleSubmit">
+      <form class="form-menu" @submit.prevent="cadastrarUsuario">
         <div class="form-header">
           <label class="header-title">Quadra Livre</label>
         </div>
@@ -13,26 +13,23 @@
         <div class="form-body">
           <div class="input-group">
             <label>Nome</label>
-            <input type="text" v-model="nome" placeholder="Digite seu nome" required />
+            <input type="text" v-model="form.nome" placeholder="Digite seu nome" required />
           </div>
 
-          <div class="data-container">
-            <div class="data-group">
-              <label>E-mail</label>
-              <input type="email" v-model="email" placeholder="Digite seu e-mail" required />
-            </div>
+          <div class="input-group">
+            <label>Email</label>
+            <input type="email" v-model="form.email" placeholder="Digite seu e-mail" required />
+          </div>
 
-            <div class="data-group">
-              <label>Senha</label>
-              <input type="password" v-model="senha" placeholder="Digite sua senha" required />
-            </div>
+          <div class="input-group">
+            <label>Telefone</label>
+            <input type="tel" v-model="form.telefone" placeholder="Digite seu telefone" />
           </div>
 
           <div class="input-group">
             <label>Foto</label>
-            <input type="file" @change="handleFileChange" />
+            <input type="file" id="imagem" @change="handleFileChange" />
           </div>
-
 
           <button type="submit" class="cadastro-button">Realizar Cadastro</button>
 
@@ -51,64 +48,84 @@ import Swal from 'sweetalert2';
 export default {
   data() {
     return {
-      nome: "",
-      email: "",
-      senha: "",
-      file: null
+      form: {
+        nome: '',
+        email: '',
+        telefone: '',
+        imagem: null,
+      },
     };
   },
   methods: {
-    handleFileChange(event) {
-      this.file = event.target.files[0];
-    },
-    async handleSubmit() {
+    async cadastrarUsuario() {
       try {
-        const formData = new FormData();
-        formData.append("nome", this.nome);
-        formData.append("email", this.email);
-        formData.append("senha", this.senha);
-        if (this.file) {
-          formData.append("file", this.file);
+        let urlImagem = null;
+
+        if (this.form.imagem) {
+          const formData = new FormData();
+          formData.append('file', this.form.imagem);
+
+          const uploadResponse = await fetch('http://localhost:3000/upload', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!uploadResponse.ok) {
+            throw new Error('Erro ao enviar imagem');
+          }
+
+          const uploadData = await uploadResponse.json();
+          urlImagem = uploadData.fileUrl;
         }
 
-        const response = await fetch("http://localhost:3000/cadastrar/usuario", {
-          method: "POST",
-          body: formData
+        const response = await fetch('http://localhost:3000/cadastrar/usuario', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            nome: this.form.nome,
+            email: this.form.email,
+            telefone: this.form.telefone,
+            foto: urlImagem,
+          }),
         });
 
-        const data = await response.json();
-
         if (!response.ok) {
-          Swal.fire({
-            icon: 'error',
-            title: 'Erro ao cadastrar',
-            text: data.message || "Erro desconhecido!",
-          });
-          return;
+          throw new Error('Erro ao cadastrar usuário');
         }
 
         Swal.fire({
           icon: 'success',
-          title: 'Cadastro realizado!',
-          text: 'Usuário cadastrado com sucesso.',
+          title: 'Sucesso!',
+          text: 'Usuário cadastrado com sucesso!',
+          timer: 2000,
+          showConfirmButton: false,
         });
 
-        // Limpar os campos
-        this.nome = "";
-        this.email = "";
-        this.senha = "";
-        this.file = null;
+        this.form = {
+          nome: '',
+          email: '',
+          telefone: '',
+          imagem: null,
+        };
+        document.getElementById('imagem').value;
 
       } catch (error) {
-        console.error("Erro ao enviar dados:", error);
+        console.error('Erro ao cadastrar usuário:', error);
+
         Swal.fire({
           icon: 'error',
-          title: 'Erro de conexão',
-          text: 'Não foi possível conectar ao servidor.',
+          title: 'Erro',
+          text: 'Erro ao cadastrar usuário. Tente novamente.',
         });
       }
-    }
-  }
+    },
+
+    handleFileChange(event) {
+      this.form.imagem = event.target.files[0];
+    },
+  },
 };
 </script>
 
@@ -301,5 +318,4 @@ export default {
 .links-group span {
   color: white;
 }
-
 </style>
