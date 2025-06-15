@@ -25,7 +25,7 @@
 
           <div class="links-group">
             <a>Novo no Quadra Livre?</a>
-            <a class="cadastra-se" href="/cadastro">Cadastre-se!</a>
+            <a class="cadastra-se" href="/cadastro2">Cadastre-se!</a>
           </div>
         </div>
       </form>
@@ -49,18 +49,25 @@ export default {
       window.location.href = 'http://localhost:3000/auth/google';
     },
     verificarErroLogin() {
-      const params = new URLSearchParams(window.location.search);
-      const erro = params.get('erro');
+  const params = new URLSearchParams(window.location.search);
+  const erro = params.get('erro');
 
-      if (erro === 'usuario_nao_cadastrado') {  
-        Swal.fire({
-          icon: 'error',
-          title: 'Acesso negado',
-          text: 'Você não possui cadastro!',
-          confirmButtonColor: '#1E3A8A',
-        });
-      }
-    }
+  if (erro === 'usuario_nao_cadastrado') {
+    Swal.fire({
+      icon: 'error',
+      title: 'Conta não encontrada!',
+      text: 'Redirecionando para a tela de cadastro...',
+      timer: 3000,
+      timerProgressBar: true,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    }).then(() => {
+      window.location.href = '/cadastro';
+    });
+  }
+}
   },
   mounted() {
     this.verificarErroLogin();

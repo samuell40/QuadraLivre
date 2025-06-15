@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue';
 import AgendamentoView from '../views/AgendamentoView.vue';
 import LoginView from '../views/LoginView.vue';
 import CadastroView from '../views/CadastroView.vue';
+import Cadastro2View from '../views/Cadastro2View.vue';
 import CadastrarQuadraView from '../views/CadastrarQuadraView.vue';
 import ControlePlacarView from '../views/ControlePlacarView';
 
@@ -27,6 +28,13 @@ const routes = [
     name: 'Cadastro',
     component: CadastroView,
   },
+
+ {
+    path: '/cadastro2',
+    name: 'Cadastro2',
+    component: Cadastro2View,
+  },
+
   {
     path: '/cadastrarquadra',
     name: 'cadastrar_quadra',

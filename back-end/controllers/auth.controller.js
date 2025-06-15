@@ -13,7 +13,6 @@ async function verificarUsuario(req, accessToken, refreshToken, profile, done) {
     const user = await findUserByEmail(email);
 
     if (!user) {
-      // envia email junto para o redirect
       return done(null, false, { message: 'usuario_nao_cadastrado', email });
     }
 
@@ -33,19 +32,9 @@ function callbackLoginGoogle(req, res, next) {
   passport.authenticate('google', { failureRedirect: '/auth/login/failure' }, (err, user, info) => {
     if (err) return next(err);
     if (!user) {
-      // aqui pega o email do profile da requisição (se possível)
-      const email = req.user?.email || (req.authInfo && req.authInfo.email) || null;
+      const email = info?.email || null;
 
-      // Como provavelmente não tem, tente pegar do req ou info
-      // Se não conseguir pegar, altere a função verificarUsuario para passar email no info
-
-      // Redireciona para cadastro passando o email na query string
-      if (info && info.message === 'usuario_nao_cadastrado' && info.email) {
-        return res.redirect(`http://localhost:8080/cadastro?email=${encodeURIComponent(info.email)}`);
-      }
-
-      // Caso não tenha o email, redirecione só pra cadastro sem email
-      return res.redirect('http://localhost:8080/cadastro');
+      return res.redirect(`http://localhost:8080/login?erro=usuario_nao_cadastrado${email ? `&email=${encodeURIComponent(email)}` : ''}`);
     }
 
     req.logIn(user, (err) => {
@@ -67,12 +56,14 @@ function callbackLoginGoogle(req, res, next) {
   })(req, res, next);
 }
 
-
 function loginFalhou(req, res) {
-  const errorMessage = req.authInfo?.message;
-  if (errorMessage === 'usuario_nao_cadastrado') {
-    return res.redirect('http://localhost:8080/cadastro');
+  if (!user) {
+  if (info && info.message === 'usuario_nao_cadastrado' && info.email) {
+    return res.redirect(`http://localhost:8080/login?erro=usuario_nao_cadastrado&email=${encodeURIComponent(info.email)}`);
   }
+
+  return res.redirect('http://localhost:8080/login?erro=usuario_nao_cadastrado');
+}
 }
 
 module.exports = {
