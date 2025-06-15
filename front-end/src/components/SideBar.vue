@@ -132,6 +132,7 @@ body {
     padding-top: 20px;
     text-align: center;
     box-shadow: 0 4px 10px -1px rgba(0, 0, 0, 0.10);
+     z-index: 10;
 }
 
 .sidebar img {

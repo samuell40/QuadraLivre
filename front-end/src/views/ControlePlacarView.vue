@@ -4,7 +4,10 @@
     <div class="layout">
       <div class="header">
         <h1 class="title">Placar</h1>
-        <button class="btn-add" @click="abrirModal">Adicionar Time</button>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-add" @click="abrirModal">Adicionar Time</button>
+          <button class="btn-rm" @click="abrirModalRemover">Remover Time</button>
+        </div>
       </div>
 
       <div class="game">
@@ -70,6 +73,7 @@
       </div>
     </div>
 
+    <!-- Modal Adicionar -->
     <div v-if="modalAberto" class="modal-overlay" @click.self="fecharModal">
       <div class="modal-content">
         <h2>Adicionar Time</h2>
@@ -91,6 +95,27 @@
         </form>
       </div>
     </div>
+
+    <!-- Modal Remover -->
+    <div v-if="modalRemoverAberto" class="modal-overlay" @click.self="fecharModalRemover">
+      <div class="modal-content">
+        <h2>Remover Time</h2>
+        <form @submit.prevent="removerTime">
+          <div class="form-group">
+            <label for="timeRemover">Selecione o Time</label>
+            <select v-model="timeSelecionadoRemover" required>
+              <option disabled value="">Selecione um time</option>
+              <option v-for="(time, i) in times" :key="i" :value="time">{{ time }}</option>
+            </select>
+          </div>
+
+          <div class="buttons">
+            <button type="submit" class="btn-save">Excluir</button>
+            <button type="button" class="btn-cancel" @click="fecharModalRemover">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -108,6 +133,8 @@ export default {
       jogo: this.criarNovoJogo(),
       times: [],
       modalAberto: false,
+      modalRemoverAberto: false,
+      timeSelecionadoRemover: '',
       form: {
         nome: '',
         imagem: null
@@ -124,6 +151,13 @@ export default {
     fecharModal() {
       this.modalAberto = false;
       this.limparForm();
+    },
+    abrirModalRemover() {
+      this.modalRemoverAberto = true;
+    },
+    fecharModalRemover() {
+      this.modalRemoverAberto = false;
+      this.timeSelecionadoRemover = '';
     },
     onFileChange(event) {
       const file = event.target.files[0];
@@ -142,9 +176,7 @@ export default {
             body: formData,
           });
 
-          if (!uploadResponse.ok) {
-            throw new Error('Erro ao enviar imagem');
-          }
+          if (!uploadResponse.ok) throw new Error('Erro ao enviar imagem');
 
           const uploadData = await uploadResponse.json();
           urlImagem = uploadData.fileUrl;
@@ -152,9 +184,7 @@ export default {
 
         const response = await fetch('http://localhost:3000/times', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             time: this.form.nome,
             foto: urlImagem,
@@ -166,35 +196,36 @@ export default {
           }),
         });
 
-        if (!response.ok) {
-          throw new Error('Erro ao cadastrar time');
-        }
+        if (!response.ok) throw new Error('Erro ao cadastrar time');
 
-        Swal.fire({
-          icon: 'success',
-          title: 'Sucesso!',
-          text: 'Time cadastrado com sucesso!',
-          timer: 2000,
-          showConfirmButton: false,
-        });
-
+        Swal.fire('Sucesso!', 'Time cadastrado com sucesso!', 'success');
         this.carregarTimes();
         this.fecharModal();
       } catch (error) {
         console.error('Erro ao cadastrar time:', error);
+        Swal.fire('Erro', 'Erro ao cadastrar time. Tente novamente.', 'error');
+      }
+    },
+    async removerTime() {
+      if (!this.timeSelecionadoRemover) return;
 
-        Swal.fire({
-          icon: 'error',
-          title: 'Erro',
-          text: 'Erro ao cadastrar time. Tente novamente.',
+      try {
+        const response = await fetch(`http://localhost:3000/times/${encodeURIComponent(this.timeSelecionadoRemover)}`, {
+          method: 'DELETE'
         });
+
+        if (!response.ok) throw new Error('Erro ao remover time');
+
+        Swal.fire('Sucesso!', 'Time removido com sucesso!', 'success');
+        this.carregarTimes();
+        this.fecharModalRemover();
+      } catch (error) {
+        console.error('Erro ao remover time:', error);
+        Swal.fire('Erro', 'Erro ao remover time. Tente novamente.', 'error');
       }
     },
     limparForm() {
-      this.form = {
-        nome: '',
-        imagem: null
-      };
+      this.form = { nome: '', imagem: null };
       const inputImagem = document.getElementById('imagem');
       if (inputImagem) inputImagem.value = null;
     },
@@ -232,7 +263,6 @@ export default {
     },
     async salvarPlacar() {
       const nome = this.jogo.timeA.nome;
-
       if (!nome) {
         Swal.fire('Atenção', 'Selecione um time antes de salvar.', 'warning');
         return;
@@ -249,15 +279,11 @@ export default {
       try {
         const response = await fetch(`http://localhost:3000/placar/${encodeURIComponent(nome)}`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
 
-        if (!response.ok) {
-          throw new Error('Erro ao atualizar placar');
-        }
+        if (!response.ok) throw new Error('Erro ao atualizar placar');
 
         Swal.fire('Sucesso', 'Placar atualizado com sucesso!', 'success');
       } catch (error) {
@@ -267,9 +293,7 @@ export default {
     async carregarDadosTimeSelecionado(nomeTime) {
       try {
         const response = await fetch(`http://localhost:3000/times/${encodeURIComponent(nomeTime)}`);
-        if (!response.ok) {
-          throw new Error('Erro ao buscar dados do time');
-        }
+        if (!response.ok) throw new Error('Erro ao buscar dados do time');
 
         const time = await response.json();
 
@@ -300,6 +324,7 @@ export default {
 .container {
   display: flex;
   margin-top: 20px;
+  flex-direction: row;
 }
 
 .layout {
@@ -312,18 +337,21 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 35px;
+  flex-wrap: wrap;
 }
 
 .line {
- display: flex;
+  display: flex;
   gap: 20px;
   justify-content: space-between;
-  margin-bottom: 30px; /* Adiciona espaço entre os blocos */
+  margin-bottom: 40px;
+  flex-wrap: wrap;
 }
 
 .box-small {
   flex: 1;
+  min-width: 150px;
 }
 
 .title {
@@ -332,14 +360,18 @@ export default {
   margin-left: 15%;
 }
 
-.btn-add {
+.btn-add, .btn-rm {
   background-color: #3b82f6;
   color: white;
   padding: 8px 14px;
   border: none;
   border-radius: 20px;
   cursor: pointer;
-  margin-right: -5%;
+}
+
+.btn-rm {
+  background-color: #1E3A8A;
+  margin-right: -66px;
 }
 
 .game {
@@ -352,18 +384,15 @@ export default {
 .dropdown {
   width: 100%;
   padding: 10px;
-  margin-bottom: 15px;
   border-radius: 6px;
   border: 1px solid #ccc;
   font-size: 16px;
-   margin-bottom: 32px;
+  margin-bottom: 40px;
 }
 
-.box,
-.box-small {
+.box, .box-small {
   background: #f1f1f1;
   padding: 12px;
-  margin: 10px 0;
   border-radius: 8px;
   text-align: center;
 }
@@ -386,20 +415,21 @@ export default {
   cursor: pointer;
 }
 
+.controls button:last-child {
+  background-color: #3b82f6;
+}
+
 .espacamento {
   gap: 27%;
 }
 
-.controls button:last-child {
-  background-color: #3b82f6;
-}
 .buttons {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
 }
 
-.btn-save{
+.btn-save {
   background-color: #3b82f6;
   color: white;
   padding: 10px 16px;
@@ -412,7 +442,7 @@ export default {
 
 .btn-cancel {
   background-color: #7E7E7E;
-  color:white;
+  color: white;
   padding: 10px 16px;
   border: none;
   border-radius: 20px;
@@ -431,7 +461,6 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
 }
 
 .modal-content {
@@ -464,6 +493,36 @@ export default {
   border-radius: 6px;
   border: 1px solid #ccc;
   font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .header {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .title {
+    margin-left: 0;
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+
+  .btn-add, .btn-rm {
+    margin-right: 20px;
+    padding: 9px 38px; 
+    border-radius: 30px; 
+    font-size: 16px; 
+  }
+
+  .game {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .line {
+    margin-bottom: 6%;
+  }
 }
 
 </style>
