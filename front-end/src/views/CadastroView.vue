@@ -11,14 +11,14 @@
         </div>
 
         <div class="form-body">
-          <div class="input-group">
-            <label>Nome</label>
-            <input type="text" v-model="form.nome" placeholder="Digite seu nome" required />
+           <div class="input-group">
+            <label>Email</label>
+            <div class="email">{{ form.email }}</div>
           </div>
 
           <div class="input-group">
-            <label>Email</label>
-            <input type="email" v-model="form.email" placeholder="Digite seu e-mail" required />
+            <label>Nome</label>
+            <input type="text" v-model="form.nome" placeholder="Digite seu nome" required />
           </div>
 
           <div class="input-group">
@@ -56,6 +56,19 @@ export default {
       },
     };
   },
+  mounted() {
+    const emailFromQuery = this.$route.query.email;
+
+    if (emailFromQuery) {
+      this.form.email = emailFromQuery;
+      localStorage.setItem('emailCadastro', emailFromQuery);
+    } else {
+      const emailSalvo = localStorage.getItem('emailCadastro');
+      if (emailSalvo) {
+        this.form.email = emailSalvo;
+      }
+    }
+  },
   methods: {
     async cadastrarUsuario() {
       try {
@@ -85,7 +98,7 @@ export default {
           },
           body: JSON.stringify({
             nome: this.form.nome,
-            email: this.form.email,
+            email: this.form.email, // envia o email preenchido automaticamente
             telefone: this.form.telefone,
             foto: urlImagem,
           }),
@@ -109,7 +122,9 @@ export default {
           telefone: '',
           imagem: null,
         };
-        document.getElementById('imagem').value;
+
+        document.getElementById('imagem').value = null;
+        localStorage.removeItem('emailCadastro'); // limpa o email após cadastro
 
       } catch (error) {
         console.error('Erro ao cadastrar usuário:', error);
@@ -128,7 +143,6 @@ export default {
   },
 };
 </script>
-
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
@@ -153,7 +167,7 @@ export default {
 
 .form-menu {
   width: 90%;
-  height: 80vh;
+  height: 95vh;
   background-color: #0F1835;
   border-radius: 15px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
@@ -194,6 +208,7 @@ export default {
   justify-content: flex-start;
   padding-left: 5%;
   box-sizing: border-box;
+    margin-top: -20px; 
 }
 
 .form-title {
@@ -212,6 +227,16 @@ export default {
 .input-group label {
   font-weight: bold;
   margin-bottom: 5px;
+  box-sizing: border-box;
+}
+
+.email{
+  background-color: #0F1835;
+  padding: 10px;
+  border-radius: 5px !important;
+  border: 1px solid #3B82F6;
+  color: white;
+  width: 100%;
   box-sizing: border-box;
 }
 

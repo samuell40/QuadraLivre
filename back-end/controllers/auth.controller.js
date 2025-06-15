@@ -13,7 +13,8 @@ async function verificarUsuario(req, accessToken, refreshToken, profile, done) {
     const user = await findUserByEmail(email);
 
     if (!user) {
-      return done(null, false, { message: 'usuario_nao_cadastrado' });
+      // envia email junto para o redirect
+      return done(null, false, { message: 'usuario_nao_cadastrado', email });
     }
 
     return done(null, user);
@@ -23,6 +24,7 @@ async function verificarUsuario(req, accessToken, refreshToken, profile, done) {
   }
 }
 
+
 function iniciarLoginGoogle(req, res, next) {
   passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
 }
@@ -31,31 +33,40 @@ function callbackLoginGoogle(req, res, next) {
   passport.authenticate('google', { failureRedirect: '/auth/login/failure' }, (err, user, info) => {
     if (err) return next(err);
     if (!user) {
-      req.authInfo = info;
-      return loginFalhou(req, res);
+      // aqui pega o email do profile da requisição (se possível)
+      const email = req.user?.email || (req.authInfo && req.authInfo.email) || null;
+
+      // Como provavelmente não tem, tente pegar do req ou info
+      // Se não conseguir pegar, altere a função verificarUsuario para passar email no info
+
+      // Redireciona para cadastro passando o email na query string
+      if (info && info.message === 'usuario_nao_cadastrado' && info.email) {
+        return res.redirect(`http://localhost:8080/cadastro?email=${encodeURIComponent(info.email)}`);
+      }
+
+      // Caso não tenha o email, redirecione só pra cadastro sem email
+      return res.redirect('http://localhost:8080/cadastro');
     }
 
     req.logIn(user, (err) => {
       if (err) return next(err);
 
-      // 🔥 Gerar Token JWT
       const token = jwt.sign(
         {
           id: user.id,
           email: user.email,
           nome: user.nome,
-          permissao: user.permissaoId, // 🔥 Importante para permissões
+          permissao: user.permissaoId,
         },
         config.jwtSecret,
         { expiresIn: '8h' }
       );
 
-      // 🔥 Retornar o token no front
-      //res.redirect(`http://localhost:8080/token=${token}`);
       res.redirect(`http://localhost:8080/`);
     });
   })(req, res, next);
 }
+
 
 function loginFalhou(req, res) {
   const errorMessage = req.authInfo?.message;
