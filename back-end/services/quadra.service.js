@@ -19,7 +19,6 @@ async function getQuadras(){
 }
 
 async function criarTimeService(dados) {
-   console.log('Dados recebidos:', dados);
   const placar = await prisma.placar.create({
     data: {
       time: dados.time,

@@ -44,7 +44,7 @@
       }" class="carousel">
         <Slide v-for="(quadra, index) in quadras" :key="index">
           <div class="card">
-            <img :src="quadra.foto || 'https://via.placeholder.com/800x400?text=Sem+Imagem'" :alt="quadra.nome"
+            <img :src="quadra.foto" alt="quadra.nome"
               class="imagem" />
             <div class="info">
               <h3>{{ quadra.nome }}</h3>
@@ -57,31 +57,39 @@
       <button class="btn-next" @click="next">&gt;</button>
     </section>
 
-    <h3 class="tit_horario"> Placar Virtual</h3>
-    <div class="placar">
-      <table>
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Pontos</th>
-            <th>Vitórias</th>
-            <th>Empates</th>
-            <th>Derrotas</th>
-            <th>Gols</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(time, index) in times" :key="index">
-            <td>{{ time.time }}</td>
-            <td>{{ time.pontuacao }}</td>
-            <td>{{ time.vitorias }}</td>
-            <td>{{ time.empates }}</td>
-            <td>{{ time.derrotas }}</td>
-            <td>{{ time.golsMarcados }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+ <h3 class="tit_horario"> Placar Virtual</h3>
+<div class="placar">
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Pontos</th>
+        <th>Vitórias</th>
+        <th>Empates</th>
+        <th>Derrotas</th>
+        <th>Gols</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="(time, index) in times" :key="index">
+        <td class="time-info">
+          <img 
+            :src="time.foto || 'https://via.placeholder.com/40x40?text=+T'" 
+            alt="Foto do time" 
+            class="time-image"
+          />
+          <span>{{ time.time }}</span>
+        </td>
+        <td>{{ time.pontuacao }}</td>
+        <td>{{ time.vitorias }}</td>
+        <td>{{ time.empates }}</td>
+        <td>{{ time.derrotas }}</td>
+        <td>{{ time.golsMarcados }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
   </div>
 </template>
 
@@ -466,6 +474,20 @@ p {
 .placar tbody tr:last-child td {
   border-bottom: none;
 }
+.time-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.time-image {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+}
+
 
 @media (max-width: 768px) {
   .logo {
