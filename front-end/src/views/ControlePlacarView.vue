@@ -3,7 +3,7 @@
     <SideBar />
     <div class="layout">
       <div class="header">
-        <h1 class="title">Placar</h1>
+        <h1 class="title">Controle Placar</h1>
         <div style="display: flex; gap: 10px;">
           <button class="btn-add" @click="abrirModal">Adicionar Time</button>
           <button class="btn-rm" @click="abrirModalRemover">Remover Time</button>
@@ -210,7 +210,7 @@ export default {
       if (!this.timeSelecionadoRemover) return;
 
       try {
-        const response = await fetch(`http://localhost:3000/times/${encodeURIComponent(this.timeSelecionadoRemover)}`, {
+        const response = await fetch(`http://localhost:3000/placar/${encodeURIComponent(this.timeSelecionadoRemover)}`, {
           method: 'DELETE'
         });
 
@@ -360,7 +360,8 @@ export default {
   margin-left: 15%;
 }
 
-.btn-add, .btn-rm {
+.btn-add,
+.btn-rm {
   background-color: #3b82f6;
   color: white;
   padding: 8px 14px;
@@ -390,7 +391,8 @@ export default {
   margin-bottom: 40px;
 }
 
-.box, .box-small {
+.box,
+.box-small {
   background: #f1f1f1;
   padding: 12px;
   border-radius: 8px;
@@ -508,11 +510,12 @@ export default {
     margin-bottom: 10px;
   }
 
-  .btn-add, .btn-rm {
+  .btn-add,
+  .btn-rm {
     margin-right: 20px;
-    padding: 9px 38px; 
-    border-radius: 30px; 
-    font-size: 16px; 
+    padding: 9px 38px;
+    border-radius: 30px;
+    font-size: 16px;
   }
 
   .game {
@@ -524,5 +527,4 @@ export default {
     margin-bottom: 6%;
   }
 }
-
 </style>

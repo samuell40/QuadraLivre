@@ -8,6 +8,8 @@ router.get('/quadra', controller.getQuadra)
 
 router.post('/times',  controller.criarTime);;
 
+router.delete('/placar/:nome', controller.deletarTimeNome);
+
 router.get('/times', controller.nomeTime);
 
 router.get('/times/:nome', controller.getTimeNome);

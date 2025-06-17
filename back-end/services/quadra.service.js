@@ -34,6 +34,16 @@ async function criarTimeService(dados) {
   return placar;
 }
 
+ async function deletarTime(nome) {
+    const time = await prisma.placar.findUnique({
+      where: { time: nome }
+    });
+    await prisma.placar.delete({
+      where: { time: nome }
+    });
+    return { message: 'Time removido com sucesso' };
+  }
+
 async function getNomesTimes() {
   try {
     const placares = await prisma.placar.findMany({
@@ -77,4 +87,4 @@ async function listarPlacar(){
   return listar;
 }
 
-module.exports = { criarQuadra, getQuadras, criarTimeService, getNomesTimes, buscarTimeNome, atualizarTime, listarPlacar};
+module.exports = { criarQuadra, getQuadras, criarTimeService, deletarTime, getNomesTimes, buscarTimeNome, atualizarTime, listarPlacar};
