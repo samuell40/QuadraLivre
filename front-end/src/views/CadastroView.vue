@@ -11,7 +11,7 @@
         </div>
 
         <div class="form-body">
-           <div class="input-group">
+          <div class="input-group">
             <label>Email</label>
             <div class="email">{{ form.email }}</div>
           </div>
@@ -89,6 +89,8 @@ export default {
 
           const uploadData = await uploadResponse.json();
           urlImagem = uploadData.fileUrl;
+        } else {
+          urlImagem = 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/Imagem%20padrao.png';
         }
 
         const response = await fetch('http://localhost:3000/cadastrar/usuario', {
@@ -114,6 +116,8 @@ export default {
           text: 'Usuário cadastrado com sucesso!',
           timer: 2000,
           showConfirmButton: false,
+        }).then(() => {
+          this.$router.push('/controleplacar'); 
         });
 
         this.form = {
@@ -143,6 +147,7 @@ export default {
   },
 };
 </script>
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
@@ -208,7 +213,7 @@ export default {
   justify-content: flex-start;
   padding-left: 5%;
   box-sizing: border-box;
-    margin-top: -20px; 
+  margin-top: -20px;
 }
 
 .form-title {
@@ -230,7 +235,7 @@ export default {
   box-sizing: border-box;
 }
 
-.email{
+.email {
   background-color: #0F1835;
   padding: 10px;
   border-radius: 5px !important;

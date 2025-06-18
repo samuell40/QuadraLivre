@@ -49,32 +49,33 @@ export default {
       window.location.href = 'http://localhost:3000/auth/google';
     },
     verificarErroLogin() {
-  const params = new URLSearchParams(window.location.search);
-  const erro = params.get('erro');
+      const params = new URLSearchParams(window.location.search);
+      const erro = params.get('erro');
+      const email = params.get('email');
 
-  if (erro === 'usuario_nao_cadastrado') {
-    Swal.fire({
-      icon: 'error',
-      title: 'Conta não encontrada!',
-      text: 'Redirecionando para a tela de cadastro...',
-      timer: 3000,
-      timerProgressBar: true,
-      showConfirmButton: false,
-      didOpen: () => {
-        Swal.showLoading();
-      },
-    }).then(() => {
-      window.location.href = '/cadastro';
-    });
-  }
-}
+      if (erro === 'usuario_nao_cadastrado') {
+        Swal.fire({
+          icon: 'error',
+          title: 'Conta não encontrada!',
+          text: 'Redirecionando para a tela de cadastro...',
+          timer: 3000,
+          timerProgressBar: true,
+          showConfirmButton: false,
+          didOpen: () => {
+            Swal.showLoading();
+          },
+        }).then(() => {
+          window.location.href = `/cadastro?email=${encodeURIComponent(email)}`;
+        });
+      }
+    }
+
   },
   mounted() {
     this.verificarErroLogin();
   }
 };
 </script>
-
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');

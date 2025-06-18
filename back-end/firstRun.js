@@ -71,7 +71,7 @@ async function criarUsuarioAdmin(quadraId) {
       email: 'admin@quadra.com',
       telefone: '84999999999',
       funcao: 'Administrador do Sistema',
-      foto: 'https://example.com/admin.png',
+      foto: 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/Imagem%20padrao.png',
       permissaoId: permissao.id,
       quadraId: quadraId,
     },

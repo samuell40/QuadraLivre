@@ -6,6 +6,7 @@ import CadastroView from '../views/CadastroView.vue';
 import Cadastro2View from '../views/Cadastro2View.vue';
 import CadastrarQuadraView from '../views/CadastrarQuadraView.vue';
 import ControlePlacarView from '../views/ControlePlacarView';
+import UsuariosView from '../views/UsuariosView';
 
 const routes = [
   {
@@ -44,6 +45,11 @@ const routes = [
     path: '/controleplacar',
     name: 'controle_placar',
     component: ControlePlacarView,
+  },
+  {
+    path: '/usuarios',
+    name: 'usuarios',
+    component: UsuariosView,
   },
 ];
 

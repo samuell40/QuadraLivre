@@ -10,4 +10,7 @@ router.post('/cadastrar/usuario', controller.postUsuario);
 
 router.put('/editar/usuario', validarJWT, [permission.postUsuario], controller.updateUsuario);
 
+
+router.get('/usuarios', controller.getUsuarios);
+
 module.exports = router;

@@ -23,22 +23,28 @@ async function verificarUsuario(req, accessToken, refreshToken, profile, done) {
   }
 }
 
-
 function iniciarLoginGoogle(req, res, next) {
   passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
 }
 
 function callbackLoginGoogle(req, res, next) {
-  passport.authenticate('google', { failureRedirect: '/auth/login/failure' }, (err, user, info) => {
-    if (err) return next(err);
-    if (!user) {
-      const email = info?.email || null;
+  passport.authenticate('google', (err, user, info) => {
+    if (err) {
+      console.error('Erro na autenticação:', err);
+      return next(err);
+    }
 
-      return res.redirect(`http://localhost:8080/login?erro=usuario_nao_cadastrado`);
+    if (!user) {
+      const email = info?.email || '';
+
+      return res.redirect(`http://localhost:8080/login?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`);
     }
 
     req.logIn(user, (err) => {
-      if (err) return next(err);
+      if (err) {
+        console.error('Erro no login:', err);
+        return next(err);
+      }
 
       const token = jwt.sign(
         {
@@ -51,19 +57,19 @@ function callbackLoginGoogle(req, res, next) {
         { expiresIn: '8h' }
       );
 
-      res.redirect(`http://localhost:8080/`);
+      res.redirect(`http://localhost:8080/?token=${token}`);
     });
   })(req, res, next);
 }
 
 function loginFalhou(req, res) {
-  if (!user) {
-  if (info && info.message === 'usuario_nao_cadastrado' && info.email) {
-    return res.redirect(`http://localhost:8080/login?erro=usuario_nao_cadastrado`);
+  const { email, erro } = req.query;
+
+  if (erro === 'usuario_nao_cadastrado' && email) {
+    return res.redirect(`http://localhost:8080/login?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`);
   }
 
   return res.redirect('http://localhost:8080/login?erro=usuario_nao_cadastrado');
-}
 }
 
 module.exports = {
