@@ -75,8 +75,8 @@
     </div>
 
     <!-- Modal Adicionar -->
-    <div v-if="modalAberto" class="modal-overlay" @click.self="fecharModal">
-      <div class="modal-content">
+    <div v-if="modalAberto" class="modal" @click.self="fecharModal">
+      <div class="modal-conteudo">
         <h2>Adicionar Time</h2>
         <form @submit.prevent="adicionarTime">
           <div class="form-group">
@@ -98,8 +98,8 @@
     </div>
 
     <!-- Modal Remover -->
-    <div v-if="modalRemoverAberto" class="modal-overlay" @click.self="fecharModalRemover">
-      <div class="modal-content">
+    <div v-if="modalRemoverAberto" class="modal" @click.self="fecharModalRemover">
+      <div class="modal-conteudo">
         <h2>Remover Time</h2>
         <form @submit.prevent="removerTime">
           <div class="form-group">
@@ -121,14 +121,13 @@
 
     <!-- Modal Placar -->
     <div v-if="modalPlacarAberto" class="modalPlacarPai" @click.self="fecharModalPlacar">
-      <div class="modal-content modal-placar">
+      <div class="modal-conteudo modal-placar">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
           <h3 class="title_placar">Placar Virtual</h3>
           <button class="btn-reset" @click="resetarPlacar">Resetar Placar</button>
         </div>
-
-        <div class="placar">
-          <table>
+        <div class="placar-table">
+          <table class="placar">
             <thead>
               <tr>
                 <th>Time</th>
@@ -154,7 +153,6 @@
             </tbody>
           </table>
         </div>
-
         <div class="buttons">
           <button class="btn-cancel-placar" @click="fecharModalPlacar">Fechar</button>
         </div>
@@ -218,72 +216,68 @@ export default {
       this.form.imagem = file;
     },
 
-    async adicionarTime() {
-      if (!this.form.nome) {
-        Swal.fire('Atenção', 'Preencha o nome do time.', 'warning');
-        return;
-      }
+    adicionarTime() {
+      let urlImagem = null;
 
-      try {
-        let urlImagem = null;
+      let uploadPromise = Promise.resolve();
 
-        if (this.form.imagem) {
-          const formData = new FormData();
-          formData.append('file', this.form.imagem);
+      if (this.form.imagem) {
+        const formData = new FormData();
+        formData.append('file', this.form.imagem);
 
-          const uploadResponse = await fetch('http://localhost:3000/upload', {
-            method: 'POST',
-            body: formData,
-          });
-
-          if (!uploadResponse.ok) throw new Error('Erro ao enviar imagem');
-
-          const uploadData = await uploadResponse.json();
-          urlImagem = uploadData.fileUrl;
-        }
-
-        const response = await fetch('http://localhost:3000/times', {
+        uploadPromise = fetch('http://localhost:3000/upload', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            time: this.form.nome,
-            foto: urlImagem,
-            pontuacao: 0,
-            vitorias: 0,
-            derrotas: 0,
-            empates: 0,
-            golsMarcados: 0
-          }),
-        });
-
-        if (!response.ok) throw new Error('Erro ao cadastrar time');
-
-        Swal.fire('Sucesso!', 'Time cadastrado com sucesso!', 'success');
-        this.carregarTimes();
-        this.fecharModal();
-      } catch (error) {
-        console.error('Erro ao cadastrar time:', error);
-        Swal.fire('Erro', 'Erro ao cadastrar time. Tente novamente.', 'error');
+          body: formData,
+        })
+          .then(uploadResponse => {
+            if (!uploadResponse.ok) throw new Error('Erro ao enviar imagem');
+            return uploadResponse.json();
+          })
+          .then(uploadData => {
+            urlImagem = uploadData.fileUrl;
+          });
       }
+
+      uploadPromise
+        .then(() => {
+          return fetch('http://localhost:3000/times', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              time: this.form.nome,
+              foto: urlImagem,
+              pontuacao: 0,
+              vitorias: 0,
+              derrotas: 0,
+              empates: 0,
+              golsMarcados: 0
+            }),
+          });
+        })
+        .then(() => {
+          Swal.fire('Sucesso!', 'Time cadastrado com sucesso!', 'success');
+          this.carregarTimes();
+          this.fecharModal();
+        })
+        .catch(error => {
+          console.error('Erro ao cadastrar time:', error);
+          Swal.fire('Erro', 'Erro ao cadastrar time. Tente novamente.', 'error');
+        });
     },
 
-    async removerTime() {
-      if (!this.timeSelecionadoRemover) return;
-
-      try {
-        const response = await fetch(`http://localhost:3000/times/${encodeURIComponent(this.timeSelecionadoRemover)}`, {
-          method: 'DELETE'
+    removerTime() {
+      fetch(`http://localhost:3000/placar/${encodeURIComponent(this.timeSelecionadoRemover)}`, {
+        method: 'DELETE'
+      })
+        .then(() => {
+          Swal.fire('Sucesso!', 'Time removido com sucesso!', 'success');
+          this.carregarTimes();
+          this.fecharModalRemover();
+        })
+        .catch(error => {
+          console.error('Erro ao remover time:', error);
+          Swal.fire('Erro', 'Erro ao remover time. Tente novamente.', 'error');
         });
-
-        if (!response.ok) throw new Error('Erro ao remover time');
-
-        Swal.fire('Sucesso!', 'Time removido com sucesso!', 'success');
-        this.carregarTimes();
-        this.fecharModalRemover();
-      } catch (error) {
-        console.error('Erro ao remover time:', error);
-        Swal.fire('Erro', 'Erro ao remover time. Tente novamente.', 'error');
-      }
     },
 
     limparForm() {
@@ -292,16 +286,16 @@ export default {
       if (inputImagem) inputImagem.value = null;
     },
 
-    async carregarTimes() {
-      try {
-        const response = await fetch('http://localhost:3000/times');
-        const data = await response.json();
-        this.listaTimes = data.times;
-
-      } catch (error) {
-        console.error('Erro ao carregar os times:', error);
-        Swal.fire('Erro', 'Erro ao carregar os times.', 'error');
-      }
+    carregarTimes() {
+      fetch('http://localhost:3000/times')
+        .then(response => response.json())
+        .then(data => {
+          this.listaTimes = data.times;
+        })
+        .catch(error => {
+          console.error('Erro ao carregar os times:', error);
+          Swal.fire('Erro', 'Erro ao carregar os times.', 'error');
+        });
     },
 
     criarNovoJogo() {
@@ -330,12 +324,8 @@ export default {
       pts.valor = (vitorias.valor * 3) + (empates.valor * 1);
     },
 
-    async salvarPlacar() {
+    salvarPlacar() {
       const nome = this.jogo.timeA.nome;
-      if (!nome) {
-        Swal.fire('Atenção', 'Selecione um time antes de salvar.', 'warning');
-        return;
-      }
 
       const payload = {
         gols: this.jogo.timeA.gols.valor,
@@ -345,61 +335,58 @@ export default {
         derrotas: this.jogo.timeA.derrotas.valor
       };
 
-      try {
-        const response = await fetch(`http://localhost:3000/placar/${encodeURIComponent(nome)}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+      fetch(`http://localhost:3000/placar/${encodeURIComponent(nome)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(() => {
+          Swal.fire('Sucesso', 'Placar atualizado com sucesso!', 'success');
+          this.carregarPlacar();
+        })
+        .catch(() => {
+          Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
         });
-
-        if (!response.ok) throw new Error('Erro ao atualizar placar');
-
-        Swal.fire('Sucesso', 'Placar atualizado com sucesso!', 'success');
-        this.carregarPlacar();
-      } catch (error) {
-        Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
-      }
     },
 
-    async carregarDadosTimeSelecionado(nomeTime) {
-      try {
-        const response = await fetch(`http://localhost:3000/times/${encodeURIComponent(nomeTime)}`);
-        if (!response.ok) throw new Error('Erro ao buscar dados do time');
-
-        const time = await response.json();
-
-        this.jogo.timeA.gols.valor = time.golsMarcados || 0;
-        this.jogo.timeA.pts.valor = (time.vitorias * 3) + (time.empates || 0);
-        this.jogo.timeA.empates.valor = time.empates || 0;
-        this.jogo.timeA.vitorias.valor = time.vitorias || 0;
-        this.jogo.timeA.derrotas.valor = time.derrotas || 0;
-      } catch (error) {
-        console.error('Erro ao carregar dados do time:', error);
-        Swal.fire('Erro', 'Erro ao carregar dados do time selecionado.', 'error');
-      }
-    },
-    async carregarPlacar() {
-      try {
-        const res = await fetch('http://localhost:3000/placar');
-        const data = await res.json();
-        this.times = data;
-      } catch (err) {
-        console.error('Erro ao carregar placar:', err);
-      }
-    },
-    async resetarPlacar() {
-      try {
-        const response = await fetch('http://localhost:3000/reset', {
-          method: 'PUT'  
+    carregarDadosTimeSelecionado(nomeTime) {
+      fetch(`http://localhost:3000/times/${encodeURIComponent(nomeTime)}`)
+        .then(response => response.json())
+        .then(time => {
+          this.jogo.timeA.gols.valor = time.golsMarcados || 0;
+          this.jogo.timeA.pts.valor = (time.vitorias * 3) + (time.empates || 0);
+          this.jogo.timeA.empates.valor = time.empates || 0;
+          this.jogo.timeA.vitorias.valor = time.vitorias || 0;
+          this.jogo.timeA.derrotas.valor = time.derrotas || 0;
+        })
+        .catch(error => {
+          console.error('Erro ao carregar dados do time:', error);
+          Swal.fire('Erro', 'Erro ao carregar dados do time selecionado.', 'error');
         });
+    },
 
-        if (!response.ok) throw new Error(`Erro: ${response.status}`);
+    carregarPlacar() {
+      fetch('http://localhost:3000/placar')
+        .then(res => res.json())
+        .then(data => {
+          this.times = data;
+        })
+        .catch(err => {
+          console.error('Erro ao carregar placar:', err);
+        });
+    },
 
-        Swal.fire('Sucesso', 'Placar resetado com sucesso!', 'success');
-        this.carregarPlacar();
-      } catch (error) {
-        Swal.fire('Erro', 'Não foi possível resetar o placar.', 'error');
-      }
+    resetarPlacar() {
+      fetch('http://localhost:3000/reset', {
+        method: 'PUT'
+      })
+        .then(() => {
+          Swal.fire('Sucesso', 'Placar resetado com sucesso!', 'success');
+          this.carregarPlacar();
+        })
+        .catch(() => {
+          Swal.fire('Erro', 'Não foi possível resetar o placar.', 'error');
+        });
     }
   },
   watch: {
@@ -413,7 +400,6 @@ export default {
   }
 };
 </script>
-
 
 <style scoped>
 .container {
@@ -553,7 +539,7 @@ export default {
   width: 100%;
 }
 
-.modal-overlay {
+.modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -565,7 +551,7 @@ export default {
   align-items: center;
 }
 
-.modal-content {
+.modal-conteudo {
   background: white;
   padding: 30px 40px;
   border-radius: 10px;
@@ -573,7 +559,7 @@ export default {
   max-width: 90%;
 }
 
-.modal-content h2 {
+.modal-conteudo h2 {
   margin-bottom: 20px;
   color: #3b82f6;
 }
@@ -610,29 +596,36 @@ export default {
   padding: 20px;
 }
 
-.modal-content.modal-placar {
+.modal-conteudo.modal-placar {
   background-color: #fff;
   border-radius: 12px;
-  max-width: 720px;
-  width: 100%;
+  width: 800px;
+  height: 600px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   padding: 30px 40px;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  overflow: hidden;
+}
+
+.placar-table {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-radius: 12px;
+  background-color: white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.placar {
+  width: 100%;
+  border-collapse: collapse;
 }
 
 .title_placar {
   color: #3b82f6;
   font-size: 28px;
-}
-
-.placar table {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  background-color: white;
-  width: 100%;
 }
 
 .placar thead th {
@@ -649,11 +642,9 @@ export default {
   transition: background-color 0.2s;
 }
 
-
 .placar tbody tr:hover {
   background-color: #f3f4f6;
 }
-
 
 .placar tbody td {
   color: #4b5563;
@@ -661,7 +652,6 @@ export default {
   font-size: 15px;
   border-bottom: 1px solid #e5e7eb;
 }
-
 
 .placar tbody tr:last-child td {
   border-bottom: none;
@@ -699,37 +689,75 @@ export default {
   border: none;
   border-radius: 20px;
   cursor: pointer;
-
 }
 
 @media (max-width: 768px) {
-  .header {
+  .title {
+    margin-left: 0;
+    font-size: 24px;
+    text-align: center;
     width: 100%;
+  }
+
+  .header {
+    width: 95%;
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .title {
-    margin-left: 0;
-    font-size: 24px;
-    margin-bottom: 10px;
-  }
-
   .btn-add,
-  .btn-rm {
-    margin-right: 20px;
-    padding: 9px 38px;
-    border-radius: 30px;
+  .btn-rm,
+  .btn-placar {
+    width: 100%;
+    max-width: 250px;
     font-size: 16px;
+    padding: 4px 7px;
+    margin-right: 0;
+    border-radius: 30px;
   }
 
   .game {
-    margin-left: 0;
     width: 100%;
+    margin-left: 0;
+    padding: 0 10px;
+  }
+
+  .dropdown {
+    max-width: 100%;
+  }
+
+  .controls button {
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+  }
+
+  .placar {
+    min-width: 100%;
+    font-size: 14px;
   }
 
   .line {
-    margin-bottom: 6%;
+    gap: 15px;
+    margin-bottom: 25px;
+  }
+
+  .modal-conteudo.modal-placar {
+    width: 90vw;
+    height: 80vh;
+    overflow: auto;
+    padding: 20px;
+  }
+
+  .placar-table {
+    overflow-y: auto;
+    overflow-x: auto;
+  }
+
+  .placar {
+    width: 100%;
+    min-width: 700px;
+    border-collapse: collapse;
   }
 }
 </style>

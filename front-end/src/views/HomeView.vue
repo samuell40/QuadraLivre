@@ -14,7 +14,7 @@
         <ul class="nav-links" :class="{ active: isMenuOpen }">
           <li><a href="/quadra">Quadras</a></li>
           <li><a href="/horarios">Horários</a></li>
-          <li><a href="/placar">Placar</a></li>
+          <li><a href="/controleplacar">Placar</a></li>
           <li class="login-item"><a href="/login" class="login">Login</a></li>
         </ul>
 
@@ -36,60 +36,64 @@
       </div>
     </section>
 
-    <h3 class="tit_horario"> Quadras Disponíveis</h3>
+    <h3 class="tit_horario">Quadras Disponíveis</h3>
     <section class="agendamento">
-      <button class="btn-prev" @click="prev">&lt;</button>
-      <Carousel ref="carousel" :itemsToShow="1" :wrapAround="true" :mouseDrag="true" :breakpoints="{
-        768: { itemsToShow: 3 }
-      }" class="carousel">
-        <Slide v-for="(quadra, index) in quadras" :key="index">
-          <div class="card">
-            <img :src="quadra.foto" alt="quadra.nome"
-              class="imagem" />
-            <div class="info">
-              <h3>{{ quadra.nome }}</h3>
-              <p class="endereco">{{ quadra.endereco }}</p>
-              <button class="btn-agendar" @click="clicarAgendar(quadra)">Agendar</button>
+      <template v-if="isLoadingQuadras">
+        <div class="loader"></div>
+      </template>
+      <template v-else>
+        <button class="btn-prev" @click="prev">&lt;</button>
+        <Carousel ref="carousel" :itemsToShow="1" :wrapAround="true" :mouseDrag="true" :breakpoints="{
+          768: { itemsToShow: 3 }
+        }" class="carousel">
+          <Slide v-for="(quadra, index) in quadras" :key="index">
+            <div class="card">
+              <img :src="quadra.foto" :alt="quadra.nome" class="imagem" />
+              <div class="info">
+                <h3>{{ quadra.nome }}</h3>
+                <p class="endereco">{{ quadra.endereco }}</p>
+                <button class="btn-agendar" @click="clicarAgendar(quadra)">Agendar</button>
+              </div>
             </div>
-          </div>
-        </Slide>
-      </Carousel>
-      <button class="btn-next" @click="next">&gt;</button>
+          </Slide>
+        </Carousel>
+        <button class="btn-next" @click="next">&gt;</button>
+      </template>
     </section>
 
- <h3 class="tit_horario"> Placar Virtual</h3>
-<div class="placar">
-  <table>
-    <thead>
-      <tr>
-        <th>Time</th>
-        <th>Pontos</th>
-        <th>Vitórias</th>
-        <th>Empates</th>
-        <th>Derrotas</th>
-        <th>Gols</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="(time, index) in times" :key="index">
-        <td class="time-info">
-          <img 
-            :src="time.foto" 
-            alt="Foto do time" 
-            class="time-image"
-          />
-          <span>{{ time.time }}</span>
-        </td>
-        <td>{{ time.pontuacao }}</td>
-        <td>{{ time.vitorias }}</td>
-        <td>{{ time.empates }}</td>
-        <td>{{ time.derrotas }}</td>
-        <td>{{ time.golsMarcados }}</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
+    <h3 class="tit_horario">Placar Virtual</h3>
+    <div class="placar">
+      <template v-if="isLoadingPlacar">
+        <div class="loader"></div>
+      </template>
+      <template v-else>
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Pontos</th>
+              <th>Vitórias</th>
+              <th>Empates</th>
+              <th>Derrotas</th>
+              <th>Gols</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(time, index) in times" :key="index">
+              <td class="time-info">
+                <img :src="time.foto" alt="Foto do time" class="time-image" />
+                <span>{{ time.time }}</span>
+              </td>
+              <td>{{ time.pontuacao }}</td>
+              <td>{{ time.vitorias }}</td>
+              <td>{{ time.empates }}</td>
+              <td>{{ time.derrotas }}</td>
+              <td>{{ time.golsMarcados }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </template>
+    </div>
   </div>
 </template>
 
@@ -108,45 +112,50 @@ export default {
       isMenuOpen: false,
       quadras: [],
       times: [],
-      carousel: null
+      isLoadingQuadras: true,
+      isLoadingPlacar: true
     }
   },
   mounted() {
-    this.carousel = this.$refs.carousel
-    window.addEventListener('resize', this.updateSlideWidth)
     this.carregarQuadras()
     this.carregarPlacar()
-  },
-  beforeUnmount() {
-    window.removeEventListener('resize', this.updateSlideWidth)
   },
   methods: {
     toggleMenu() {
       this.isMenuOpen = !this.isMenuOpen
     },
-    updateSlideWidth() {},
     next() {
-      if (this.carousel) this.carousel.next()
+      if (this.$refs.carousel) {
+        this.$refs.carousel.next();  
+      }
     },
     prev() {
-      if (this.carousel) this.carousel.prev()
+      if (this.$refs.carousel) {
+        this.$refs.carousel.prev(); 
+      }
     },
     async carregarQuadras() {
+      this.isLoadingQuadras = true
       try {
         const res = await fetch('http://localhost:3000/quadra')
         const data = await res.json()
         this.quadras = data
       } catch (err) {
         console.error('Erro ao carregar quadras:', err)
+      } finally {
+        this.isLoadingQuadras = false
       }
     },
     async carregarPlacar() {
+      this.isLoadingPlacar = true
       try {
         const res = await fetch('http://localhost:3000/placar')
         const data = await res.json()
         this.times = data
       } catch (err) {
         console.error('Erro ao carregar placar:', err)
+      } finally {
+        this.isLoadingPlacar = false
       }
     },
     clicarAgendar(quadra) {
@@ -155,6 +164,7 @@ export default {
   }
 }
 </script>
+
 
 <style scoped>
 .navbar-custom {
@@ -178,6 +188,25 @@ export default {
   position: relative;
 }
 
+.loader {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #3b82f6;
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  animation: spin 1s linear infinite;
+  margin: 40px auto;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
 
 .esquerda-section {
   display: flex;
@@ -262,13 +291,13 @@ export default {
   margin-top: 70px;
   display: flex;
   justify-content: center;
-    width: 100%;
+  width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
   padding: 16px;
 
 
-}  
+}
 
 .texto {
   font-size: 40px;
@@ -326,7 +355,6 @@ p {
   color: #3B82F6;
 }
 
-/* Carrossel */
 .agendamento {
   position: relative;
   width: 100%;
@@ -474,6 +502,7 @@ p {
 .placar tbody tr:last-child td {
   border-bottom: none;
 }
+
 .time-info {
   display: flex;
   align-items: center;
@@ -566,7 +595,8 @@ p {
   .btn-next {
     margin-left: -11px;
   }
-   .placar table {
+
+  .placar table {
     font-size: 12px;
     min-width: unset;
   }
