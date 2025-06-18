@@ -5,6 +5,7 @@
       <div class="header">
         <h1 class="title">Controle Placar</h1>
         <div style="display: flex; gap: 10px;">
+          <button class="btn-placar" @click="abrirModalPlacar">Visualizar Placar</button>
           <button class="btn-add" @click="abrirModal">Adicionar Time</button>
           <button class="btn-rm" @click="abrirModalRemover">Remover Time</button>
         </div>
@@ -14,7 +15,7 @@
         <div class="team">
           <select v-model="jogo.timeA.nome" class="dropdown">
             <option disabled value="">Selecione um time</option>
-            <option v-for="(time, i) in times" :key="i" :value="time">{{ time }}</option>
+            <option v-for="(time, i) in listaTimes" :key="i" :value="time">{{ time }}</option>
           </select>
 
           <div class="line">
@@ -105,8 +106,9 @@
             <label for="timeRemover">Selecione o Time</label>
             <select v-model="timeSelecionadoRemover" required>
               <option disabled value="">Selecione um time</option>
-              <option v-for="(time, i) in times" :key="i" :value="time">{{ time }}</option>
+              <option v-for="(time, i) in listaTimes" :key="i" :value="time">{{ time }}</option>
             </select>
+
           </div>
 
           <div class="buttons">
@@ -114,6 +116,48 @@
             <button type="button" class="btn-cancel" @click="fecharModalRemover">Cancelar</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Modal Placar -->
+    <div v-if="modalPlacarAberto" class="modalPlacarPai" @click.self="fecharModalPlacar">
+      <div class="modal-content modal-placar">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+          <h3 class="title_placar">Placar Virtual</h3>
+          <button class="btn-reset" @click="resetarPlacar">Resetar Placar</button>
+        </div>
+
+        <div class="placar">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Pontos</th>
+                <th>Vitórias</th>
+                <th>Empates</th>
+                <th>Derrotas</th>
+                <th>Gols</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(placar, index) in times" :key="index">
+                <td class="time-info">
+                  <img :src="placar.foto" alt="Foto do time" class="time-image" />
+                  <span>{{ placar.time }}</span>
+                </td>
+                <td>{{ placar.pontuacao }}</td>
+                <td>{{ placar.vitorias }}</td>
+                <td>{{ placar.empates }}</td>
+                <td>{{ placar.derrotas }}</td>
+                <td>{{ placar.golsMarcados }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="buttons">
+          <button class="btn-cancel-placar" @click="fecharModalPlacar">Fechar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -132,8 +176,10 @@ export default {
     return {
       jogo: this.criarNovoJogo(),
       times: [],
+      listaTimes: [],
       modalAberto: false,
       modalRemoverAberto: false,
+      modalPlacarAberto: false,
       timeSelecionadoRemover: '',
       form: {
         nome: '',
@@ -143,6 +189,7 @@ export default {
   },
   mounted() {
     this.carregarTimes();
+    this.carregarPlacar();
   },
   methods: {
     abrirModal() {
@@ -159,11 +206,24 @@ export default {
       this.modalRemoverAberto = false;
       this.timeSelecionadoRemover = '';
     },
+    abrirModalPlacar() {
+      this.modalPlacarAberto = true;
+    },
+    fecharModalPlacar() {
+      this.modalPlacarAberto = false;
+    },
+
     onFileChange(event) {
       const file = event.target.files[0];
       this.form.imagem = file;
     },
+
     async adicionarTime() {
+      if (!this.form.nome) {
+        Swal.fire('Atenção', 'Preencha o nome do time.', 'warning');
+        return;
+      }
+
       try {
         let urlImagem = null;
 
@@ -206,11 +266,12 @@ export default {
         Swal.fire('Erro', 'Erro ao cadastrar time. Tente novamente.', 'error');
       }
     },
+
     async removerTime() {
       if (!this.timeSelecionadoRemover) return;
 
       try {
-        const response = await fetch(`http://localhost:3000/placar/${encodeURIComponent(this.timeSelecionadoRemover)}`, {
+        const response = await fetch(`http://localhost:3000/times/${encodeURIComponent(this.timeSelecionadoRemover)}`, {
           method: 'DELETE'
         });
 
@@ -224,20 +285,25 @@ export default {
         Swal.fire('Erro', 'Erro ao remover time. Tente novamente.', 'error');
       }
     },
+
     limparForm() {
       this.form = { nome: '', imagem: null };
       const inputImagem = document.getElementById('imagem');
       if (inputImagem) inputImagem.value = null;
     },
+
     async carregarTimes() {
       try {
         const response = await fetch('http://localhost:3000/times');
         const data = await response.json();
-        this.times = data.times;
+        this.listaTimes = data.times;
+
       } catch (error) {
+        console.error('Erro ao carregar os times:', error);
         Swal.fire('Erro', 'Erro ao carregar os times.', 'error');
       }
     },
+
     criarNovoJogo() {
       const criarStats = () => ({
         nome: "",
@@ -251,16 +317,19 @@ export default {
         timeA: criarStats()
       };
     },
+
     increment(item) {
       item.valor++;
     },
     decrement(item) {
       if (item.valor > 0) item.valor--;
     },
+
     atualizarPontos() {
       const { vitorias, empates, pts } = this.jogo.timeA;
       pts.valor = (vitorias.valor * 3) + (empates.valor * 1);
     },
+
     async salvarPlacar() {
       const nome = this.jogo.timeA.nome;
       if (!nome) {
@@ -286,10 +355,12 @@ export default {
         if (!response.ok) throw new Error('Erro ao atualizar placar');
 
         Swal.fire('Sucesso', 'Placar atualizado com sucesso!', 'success');
+        this.carregarPlacar();
       } catch (error) {
         Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
       }
     },
+
     async carregarDadosTimeSelecionado(nomeTime) {
       try {
         const response = await fetch(`http://localhost:3000/times/${encodeURIComponent(nomeTime)}`);
@@ -306,6 +377,29 @@ export default {
         console.error('Erro ao carregar dados do time:', error);
         Swal.fire('Erro', 'Erro ao carregar dados do time selecionado.', 'error');
       }
+    },
+    async carregarPlacar() {
+      try {
+        const res = await fetch('http://localhost:3000/placar');
+        const data = await res.json();
+        this.times = data;
+      } catch (err) {
+        console.error('Erro ao carregar placar:', err);
+      }
+    },
+    async resetarPlacar() {
+      try {
+        const response = await fetch('http://localhost:3000/reset', {
+          method: 'PUT'  
+        });
+
+        if (!response.ok) throw new Error(`Erro: ${response.status}`);
+
+        Swal.fire('Sucesso', 'Placar resetado com sucesso!', 'success');
+        this.carregarPlacar();
+      } catch (error) {
+        Swal.fire('Erro', 'Não foi possível resetar o placar.', 'error');
+      }
     }
   },
   watch: {
@@ -319,6 +413,7 @@ export default {
   }
 };
 </script>
+
 
 <style scoped>
 .container {
@@ -361,7 +456,8 @@ export default {
 }
 
 .btn-add,
-.btn-rm {
+.btn-rm,
+.btn-placar {
   background-color: #3b82f6;
   color: white;
   padding: 8px 14px;
@@ -373,6 +469,10 @@ export default {
 .btn-rm {
   background-color: #1E3A8A;
   margin-right: -66px;
+}
+
+.btn-placar {
+  background-color: #7b7979;
 }
 
 .game {
@@ -495,6 +595,111 @@ export default {
   border-radius: 6px;
   border: 1px solid #ccc;
   font-size: 16px;
+}
+
+.modalPlacarPai {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.modal-content.modal-placar {
+  background-color: #fff;
+  border-radius: 12px;
+  max-width: 720px;
+  width: 100%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 30px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.title_placar {
+  color: #3b82f6;
+  font-size: 28px;
+}
+
+.placar table {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  width: 100%;
+}
+
+.placar thead th {
+  background-color: #1e3a8a;
+  color: white;
+  font-weight: bold;
+  padding: 14px 12px;
+  font-size: 16px;
+  text-align: left;
+}
+
+.placar tbody tr {
+  background-color: white;
+  transition: background-color 0.2s;
+}
+
+
+.placar tbody tr:hover {
+  background-color: #f3f4f6;
+}
+
+
+.placar tbody td {
+  color: #4b5563;
+  padding: 12px;
+  font-size: 15px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+
+.placar tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.time-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.time-image {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+}
+
+.btn-cancel-placar {
+  background-color: #3b82f6;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.btn-reset {
+  background-color: #7E7E7E;
+  color: white;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+
 }
 
 @media (max-width: 768px) {

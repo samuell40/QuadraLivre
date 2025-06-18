@@ -18,4 +18,6 @@ router.put('/placar/:nome', controller.atualizarPlacar);
 
 router.get('/placar', controller.getPlacar);
 
+router.put('/reset', controller.resetarPlacarController);
+
 module.exports = router;

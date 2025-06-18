@@ -1,4 +1,4 @@
-const { criarQuadra, getQuadras,criarTimeService, deletarTime, getNomesTimes, buscarTimeNome, atualizarTime, listarPlacar} = require('../services/quadra.service');
+const { criarQuadra, getQuadras,criarTimeService, deletarTime, getNomesTimes, buscarTimeNome, atualizarTime, listarPlacar, resetarPlacar} = require('../services/quadra.service');
 
 async function adicionarQuadra(req, res) {
     try {
@@ -91,4 +91,14 @@ async function getPlacar(req, res){
   }
 };
 
-module.exports = { adicionarQuadra, getQuadra, criarTime, deletarTimeNome, nomeTime,getTimeNome, atualizarPlacar, getPlacar};
+async function resetarPlacarController(req, res) {
+  try {
+    await resetarPlacar();
+    res.status(200).json({ message: 'Placar resetado com sucesso' });
+  } catch (error) {
+    console.error('Erro ao resetar placar:', error);
+    res.status(500).json({ error: 'Erro ao resetar placar' });
+  }
+}
+
+module.exports = { adicionarQuadra, getQuadra, criarTime, deletarTimeNome, nomeTime,getTimeNome, atualizarPlacar, getPlacar, resetarPlacarController};

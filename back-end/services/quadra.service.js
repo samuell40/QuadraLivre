@@ -86,4 +86,16 @@ async function listarPlacar(){
   return listar;
 }
 
-module.exports = { criarQuadra, getQuadras, criarTimeService, deletarTime, getNomesTimes, buscarTimeNome, atualizarTime, listarPlacar};
+async function resetarPlacar() {
+  await prisma.placar.updateMany({
+    data: {
+      pontuacao: 0,
+      vitorias: 0,
+      derrotas: 0,
+      empates: 0,
+      golsMarcados: 0
+    }
+  });
+}
+
+module.exports = { criarQuadra, getQuadras, criarTimeService, deletarTime, getNomesTimes, buscarTimeNome, atualizarTime, listarPlacar, resetarPlacar};

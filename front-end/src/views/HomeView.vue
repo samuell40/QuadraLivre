@@ -74,7 +74,7 @@
       <tr v-for="(time, index) in times" :key="index">
         <td class="time-info">
           <img 
-            :src="time.foto || 'https://via.placeholder.com/40x40?text=+T'" 
+            :src="time.foto" 
             alt="Foto do time" 
             class="time-image"
           />
