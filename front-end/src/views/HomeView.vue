@@ -61,15 +61,18 @@
       </template>
     </section>
 
+    <!-- Placar Futebol -->
     <h3 class="tit_horario">Placar Virtual</h3>
+    <h4 class="tit_campeonato">Campeonato Futebol</h4>
     <div class="placar">
-      <template v-if="isLoadingPlacar">
+      <template v-if="isLoadingPlacarFutebol">
         <div class="loader"></div>
       </template>
       <template v-else>
         <table>
           <thead>
             <tr>
+              <th>Posição</th>
               <th>Time</th>
               <th>Pontos</th>
               <th>Vitórias</th>
@@ -79,7 +82,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(time, index) in times" :key="index">
+            <tr v-for="(time) in timesFutebolComPosicao" :key="time.time">
+              <td>{{ time.posicao }}</td>
               <td class="time-info">
                 <img :src="time.foto" alt="Foto do time" class="time-image" />
                 <span>{{ time.time }}</span>
@@ -94,6 +98,42 @@
         </table>
       </template>
     </div>
+
+    <!-- Placar Vôlei -->
+    <h4 class="tit_campeonato"> Campeonato Vôlei</h4>
+    <div class="placar">
+      <template v-if="isLoadingPlacarVolei">
+        <div class="loader"></div>
+      </template>
+      <template v-else>
+        <table>
+          <thead>
+            <tr>
+              <th>Posição</th>
+              <th>Time</th>
+              <th>Pontos</th>
+              <th>Vitórias</th>
+              <th>Derrotas</th>
+              <th>Sets Vencidos</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(time) in timesVoleiComPosicao" :key="time.time">
+              <td>{{ time.posicao }}</td>
+              <td class="time-info">
+                <img :src="time.foto" alt="Foto do time" class="time-image" />
+                <span>{{ time.time }}</span>
+              </td>
+              <td>{{ time.pontuacao }}</td>
+              <td>{{ time.vitorias }}</td>
+              <td>{{ time.derrotas }}</td>
+              <td>{{ time.setsVencidos || 0 }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </template>
+    </div>
+
   </div>
 </template>
 
@@ -111,14 +151,33 @@ export default {
     return {
       isMenuOpen: false,
       quadras: [],
-      times: [],
+      times: [],            // Todos os times
+      timesVolei: [],       // Times vôlei
       isLoadingQuadras: true,
-      isLoadingPlacar: true
+      isLoadingPlacarFutebol: true,
+      isLoadingPlacarVolei: true
+    }
+  },
+  computed: {
+    timesFutebol() {
+      // Filtra os times para modalidade futebol
+      return this.times.filter(time => time.modalidade === 'futebol')
+    },
+    timesFutebolComPosicao() {
+      // Ordena pelo pontuacao decrescente e adiciona posição
+      const sorted = [...this.timesFutebol].sort((a, b) => b.pontuacao - a.pontuacao)
+      return sorted.map((time, idx) => ({ ...time, posicao: idx + 1 }))
+    },
+    timesVoleiComPosicao() {
+      // Ordena pelo pontuacao decrescente e adiciona posição
+      const sorted = [...this.timesVolei].sort((a, b) => b.pontuacao - a.pontuacao)
+      return sorted.map((time, idx) => ({ ...time, posicao: idx + 1 }))
     }
   },
   mounted() {
     this.carregarQuadras()
-    this.carregarPlacar()
+    this.carregarPlacarFutebol()
+    this.carregarPlacarVolei()
   },
   methods: {
     toggleMenu() {
@@ -126,12 +185,12 @@ export default {
     },
     next() {
       if (this.$refs.carousel) {
-        this.$refs.carousel.next();  
+        this.$refs.carousel.next()
       }
     },
     prev() {
       if (this.$refs.carousel) {
-        this.$refs.carousel.prev(); 
+        this.$refs.carousel.prev()
       }
     },
     async carregarQuadras() {
@@ -146,16 +205,30 @@ export default {
         this.isLoadingQuadras = false
       }
     },
-    async carregarPlacar() {
-      this.isLoadingPlacar = true
+    async carregarPlacarFutebol() {
+      this.isLoadingPlacarFutebol = true;
       try {
-        const res = await fetch('http://localhost:3000/placar')
-        const data = await res.json()
-        this.times = data
+        const res = await fetch(`http://localhost:3000/placar/futebol`);
+        if (!res.ok) throw new Error('Erro na resposta do servidor');
+        const data = await res.json();
+        this.times = data;
       } catch (err) {
-        console.error('Erro ao carregar placar:', err)
+        console.error('Erro ao carregar placar futebol:', err);
       } finally {
-        this.isLoadingPlacar = false
+        this.isLoadingPlacarFutebol = false;
+      }
+    },
+    async carregarPlacarVolei() {
+      this.isLoadingPlacarVolei = true;
+      try {
+        const res = await fetch(`http://localhost:3000/placar/volei`);
+        if (!res.ok) throw new Error('Erro na resposta do servidor');
+        const data = await res.json();
+        this.timesVolei = data;
+      } catch (err) {
+        console.error('Erro ao carregar placar vôlei:', err);
+      } finally {
+        this.isLoadingPlacarVolei = false;
       }
     },
     clicarAgendar(quadra) {
@@ -164,7 +237,6 @@ export default {
   }
 }
 </script>
-
 
 <style scoped>
 .navbar-custom {
@@ -199,8 +271,13 @@ export default {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .esquerda-section {
@@ -343,6 +420,13 @@ p {
   margin-top: 40px;
   text-align: center;
   font-weight: bold;
+}
+
+.tit_campeonato{
+  font-size: 20px;
+  color: #7E7E7E;
+  font-weight: bold;
+  margin-left: 8%;
 }
 
 .destaque_sublinhado {

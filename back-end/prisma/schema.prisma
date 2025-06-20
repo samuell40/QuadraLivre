@@ -43,13 +43,20 @@ model Agendamento {
 
 model Placar {
   id           Int    @id @default(autoincrement())
+  modalidade   String 
   time         String @unique
   foto         String? 
+
+  posicao      Int
   pontuacao    Int
   vitorias     Int
   derrotas     Int
-  empates      Int
-  golsMarcados Int
+  
+  empates      Int?
+  golsMarcados Int?
+  setsVencidos Int? 
+
+  @@unique([modalidade, time]) //para permitir que um time possa ter o mesmo nome
 }
 
 model Permissao {

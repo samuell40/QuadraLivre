@@ -6,18 +6,4 @@ router.post('/quadra', controller.adicionarQuadra);
 
 router.get('/quadra', controller.getQuadra)
 
-router.post('/times',  controller.criarTime);;
-
-router.delete('/placar/:nome', controller.deletarTimeNome);
-
-router.get('/times', controller.nomeTime);
-
-router.get('/times/:nome', controller.getTimeNome);
-
-router.put('/placar/:nome', controller.atualizarPlacar);
-
-router.get('/placar', controller.getPlacar);
-
-router.put('/reset', controller.resetarPlacarController);
-
 module.exports = router;
