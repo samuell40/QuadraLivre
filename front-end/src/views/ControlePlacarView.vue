@@ -6,8 +6,8 @@
         <h1 class="title">Placar</h1>
         <div class="botoes">
           <button class="btn-placar" @click="abrirModalPlacar">Visualizar Placar</button>
-          <button class="btn-add" @click="abrirModal">Adicionar Time</button>
-          <button class="btn-rm" @click="abrirModalRemover">Remover Time</button>
+          <button @click="abrirModalGerenciarModalidade" class="btn-modalidade">Gerenciar Modalidades</button>
+          <button class="btn-add" @click="abrirModalGerenciarTime">Gerenciar Times</button>
         </div>
       </div>
 
@@ -17,8 +17,9 @@
           <p>Modalidade:</p>
           <select id="modalidade" v-model="modalidadeSelecionada" @change="carregarTimes" class="dropdown">
             <option disabled value="">Selecione uma modalidade</option>
-            <option value="futebol">Futebol</option>
-            <option value="volei">Vôlei</option>
+            <option v-for="(modalidade, i) in modalidadesDisponiveis" :key="i" :value="modalidade.nome">
+              {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
+            </option>
           </select>
         </div>
 
@@ -34,8 +35,8 @@
       </div>
 
       <!-- Placar Futebol -->
-      <div class="game" v-if="modalidadeSelecionada === 'futebol'">
-        <div class="team">
+      <div class="game">
+        <div class="team" v-if="modalidadeSelecionada === 'futebol'">
           <div class="line">
             <div class="box-small">
               <p>Pontos</p>
@@ -60,9 +61,9 @@
             <div class="box-small">
               <p>Empates</p>
               <div class="controls">
-                <button @click="decrement(jogo.timeA.empates)" :disabled="!jogo.timeA.nome">−</button>
+                <button @click="decrement(jogo.timeA.empates, 'empate')" :disabled="!jogo.timeA.nome">−</button>
                 <span>{{ jogo.timeA.empates.valor }}</span>
-                <button @click="increment(jogo.timeA.empates)" :disabled="!jogo.timeA.nome">+</button>
+                <button @click="increment(jogo.timeA.empates, 'empate')" :disabled="!jogo.timeA.nome">+</button>
               </div>
             </div>
           </div>
@@ -71,9 +72,9 @@
             <div class="box-small">
               <p>Vitórias</p>
               <div class="controls">
-                <button @click="decrement(jogo.timeA.vitorias)" :disabled="!jogo.timeA.nome">−</button>
+                <button @click="decrement(jogo.timeA.vitorias, 'vitoria')" :disabled="!jogo.timeA.nome">−</button>
                 <span>{{ jogo.timeA.vitorias.valor }}</span>
-                <button @click="increment(jogo.timeA.vitorias)" :disabled="!jogo.timeA.nome">+</button>
+                <button @click="increment(jogo.timeA.vitorias, 'vitoria')" :disabled="!jogo.timeA.nome">+</button>
               </div>
             </div>
 
@@ -89,11 +90,9 @@
 
           <button class="btn-save1" @click="salvarPlacar">Salvar</button>
         </div>
-      </div>
 
-      <!-- Placar Vôlei -->
-      <div class="game" v-if="modalidadeSelecionada === 'volei'">
-        <div class="team">
+        <!-- Placar Vôlei -->
+        <div class="team" v-else-if="modalidadeSelecionada === 'volei'">
           <div class="line">
             <div class="box-small">
               <p>Pontos</p>
@@ -139,465 +138,636 @@
           <button class="btn-save1" @click="salvarPlacarVolei">Salvar</button>
         </div>
       </div>
-    </div>
 
-    <!-- Modal adicionar time -->
-    <div v-if="modalAberto" class="modal-overlay" @click.self="fecharModal">
-      <div class="modal-content">
-        <h2>Adicionar Time</h2>
-        <form @submit.prevent="adicionarTime">
-          <div class="form-group">
-            <label for="nome">Nome do Time</label>
-            <input type="text" id="nome" v-model="form.nome" required />
-          </div>
-
-          <div class="form-group">
-            <label for="modalidade">Modalidade</label>
-            <select v-model="form.modalidade" required class="dropdown">
-              <option disabled value="">Selecione</option>
-              <option value="futebol">Futebol</option>
-              <option value="volei">Vôlei</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="imagem">Foto do Time</label>
-            <input type="file" id="imagem" @change="onFileChange" accept="image/*" />
-          </div>
-
-          <div class="buttons">
-            <button type="submit" class="btn-save">Salvar</button>
-            <button type="button" class="btn-cancel" @click="fecharModal">Cancelar</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- Modal Remover Time -->
-    <div v-if="modalRemoverAberto" class="modal-overlay" @click.self="fecharModalRemover">
-      <div class="modal-content">
-        <h2>Remover Time</h2>
-
-        <div class="form-group">
-          <label for="modalidadeRemover">Modalidade:</label>
-          <select v-model="modalidadeSelecionada" @change="carregarTimes" class="dropdown">
-            <option disabled value="">Selecione uma modalidade</option>
-            <option value="futebol">Futebol</option>
-            <option value="volei">Vôlei</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="timeRemover">Time:</label>
-          <select v-model="timeSelecionado" class="dropdown">
-            <option disabled value="">Selecione um time</option>
-            <option v-for="(time, i) in times" :key="i" :value="time">{{ time }}</option>
-          </select>
-        </div>
-
-        <div class="buttons">
-          <button @click="removerTime" class="btn-save">Remover</button>
-          <button @click="fecharModalRemover" class="btn-cancel">Cancelar</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal Placar -->
-    <div v-if="modalPlacarAberto" class="modalPlacarPai" @click.self="fecharModalPlacar">
-      <div class="modal-conteudo modal-placar">
-        <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
+      <!-- Modal Visualizar Placar -->
+      <div v-if="modalPlacarAberto" class="modalPlacarPai">
+        <div class="modal-conteudo modal-placar">
           <div class="header-placar">
-            <h3 class="title_placar">Placar Virtual</h3>
-            <button class="btn-reset" @click="abrirModalResetar">Resetar Placar</button>
+            <h2 class="title_placar">Visualizar Placar</h2>
+            <button class="btn-reset" @click="abrirModalResetarPlacar">Resetar Placar</button>
           </div>
 
-          <div style="margin-top: 10px; margin-bottom: 10px;">
-            <label for="modalidadePlacar" style="margin-right: 10px;">Modalidade:</label>
-            <select id="modalidadePlacar" v-model="modalidadePlacarSelecionada" @change="carregarPlacar"
+          <div>
+            <label for="modalidade-placar">Escolha a modalidade:</label>
+            <select id="modalidade-placar" v-model="modalidadePlacarSelecionada" @change="carregarPlacarModalidade"
               class="dropdown">
-              <option disabled value="">Selecione uma modalidade</option>
-              <option value="futebol">Futebol</option>
-              <option value="volei">Vôlei</option>
+              <option disabled value="">Selecione</option>
+              <option v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" :value="modalidade.nome">
+                {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
+              </option>
             </select>
           </div>
-        </div>
 
-        <div class="placar-table">
-          <table class="placar">
-            <thead>
-              <tr>
-                <th>Posição</th>
-                <th>Time</th>
-                <th>Pontos</th>
-                <th>Vitórias</th>
-                <th v-if="modalidadePlacarSelecionada === 'futebol'">Empates</th>
-                <th>Derrotas</th>
-                <th v-if="modalidadePlacarSelecionada === 'futebol'">Gols</th>
-                <th v-if="modalidadePlacarSelecionada === 'volei'">Sets Vencidos</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(placar, index) in timesPlacar" :key="index">
-                <td>{{ index + 1 }}</td>
-                <td class="time-info">
-                  <img :src="placar.foto" alt="Foto do time" class="time-image" />
-                  <span>{{ placar.time }}</span>
-                </td>
-                <td>{{ placar.pontuacao || placar.pts || 0 }}</td>
-                <td>{{ placar.vitorias || 0 }}</td>
-                <td v-if="modalidadePlacarSelecionada === 'futebol'">{{ placar.empates || 0 }}</td>
-                <td>{{ placar.derrotas || 0 }}</td>
-                <td v-if="modalidadePlacarSelecionada === 'futebol'">{{ placar.golsMarcados || 0 }}</td>
-                <td v-if="modalidadePlacarSelecionada === 'volei'">{{ placar.setsVencidos || 0 }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+          <div class="placar-table">
+            <!-- TABELA FUTEBOL -->
+            <table class="placar" v-if="modalidadePlacarSelecionada === 'futebol' || !modalidadePlacarSelecionada">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Pontos</th>
+                  <th>Gols Marcados</th>
+                  <th>Empates</th>
+                  <th>Vitórias</th>
+                  <th>Derrotas</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="timesPlacar.length === 0">
+                  <td colspan="6" style="text-align: center;">Nenhum time encontrado.</td>
+                </tr>
+                <tr v-else v-for="time in timesPlacar" :key="time.id">
+                  <td class="time-info">
+                    <img v-if="time.foto" :src="time.foto" alt="Foto do time" class="time-image" />
+                    {{ time.time }}
+                  </td>
+                  <td>{{ time.pontuacao }}</td>
+                  <td>{{ time.golsMarcados }}</td>
+                  <td>{{ time.empates }}</td>
+                  <td>{{ time.vitorias }}</td>
+                  <td>{{ time.derrotas }}</td>
+                </tr>
+              </tbody>
+            </table>
 
-        <div class="buttons">
+            <!-- TABELA VOLEI -->
+            <table class="placar" v-if="modalidadePlacarSelecionada === 'volei'">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Pontos</th>
+                  <th>Vitórias</th>
+                  <th>Derrotas</th>
+                  <th>Sets Vencidos</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="timesPlacar.length === 0">
+                  <td colspan="5" style="text-align: center;">Nenhum time encontrado.</td>
+                </tr>
+                <tr v-else v-for="time in timesPlacar" :key="time.id">
+                  <td class="time-info">
+                    <img v-if="time.foto" :src="time.foto" alt="Foto do time" class="time-image" />
+                    {{ time.time }}
+                  </td>
+                  <td>{{ time.pontuacao }}</td>
+                  <td>{{ time.vitorias }}</td>
+                  <td>{{ time.derrotas }}</td>
+                  <td>{{ time.setsVencidos }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
           <button class="btn-cancel-placar" @click="fecharModalPlacar">Fechar</button>
         </div>
       </div>
-    </div>
-    <!-- Modal Resetar Placar -->
-    <div v-if="modalResetAberto" class="modal-overlay" @click.self="fecharModalResetar">
-      <div class="modal-content">
-        <h2>Resetar Placar</h2>
-
-        <div class="form-group">
-          <label for="modalidadeResetar">Modalidade:</label>
-          <select v-model="modalidadeParaReset" class="dropdown">
-            <option disabled value="">Selecione uma modalidade</option>
-            <option value="futebol">Futebol</option>
-            <option value="volei">Vôlei</option>
+      <!-- Modal de Resetar Placar -->
+      <div v-if="modalResetarPlacarAberto" class="modal-overlay">
+        <div class="modal-content modal-placar">
+          <h2>Resetar Placar</h2>
+          <label for="modalidade-resetar">Escolha a modalidade:</label>
+          <select id="modalidade-resetar" v-model="modalidadeParaResetar" class="dropdown">
+            <option disabled value="">Selecione</option>
+            <option v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" :value="modalidade.nome">
+              {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
+            </option>
           </select>
-        </div>
-
-        <div class="buttons">
-          <button class="btn-save" @click="resetarPlacarPorModalidade">Resetar</button>
-          <button class="btn-cancel" @click="fecharModalResetar">Cancelar</button>
+          <div class="botoes" style="margin-top: 1rem;">
+            <button class="btn-save1" @click="confirmarResetarPlacar">Confirmar</button>
+            <button class="btn-cancel-placar" @click="fecharModalResetarPlacar">Cancelar</button>
+          </div>
         </div>
       </div>
-    </div>
+      <!-- Modal Gerenciar Modalidade -->
+      <div v-if="modalGerenciarModalidadeAberto" class="modal-overlay" @click.self="fecharModalGerenciarModalidade">
+        <div class="modal-content">
+          <h2>Gerenciar Modalidades</h2>
+          <div class="form-group">
+            <label for="acaoGerenciarModalidade">Escolha a ação:</label>
+            <select id="acaoGerenciarModalidade" v-model="acaoGerenciarModalidade" class="dropdown">
+              <option disabled value="">Selecione uma opção</option>
+              <option value="adicionar">Adicionar Modalidade</option>
+              <option value="remover">Remover Modalidade</option>
+            </select>
+          </div>
 
+          <div class="buttons">
+            <button :disabled="!acaoGerenciarModalidade" @click="confirmarAcaoGerenciarModalidade" class="btn-save">
+              Continuar
+            </button>
+            <button class="btn-cancel" @click="fecharModalGerenciarModalidade">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Adicionar Modalidade -->
+      <div v-if="modalModalidadeAberto" class="modal-overlay" @click.self="fecharModalModalidade">
+        <div class="modal-content">
+          <h2>Adicionar Modalidade</h2>
+          <form @submit.prevent="cadastrarModalidade">
+            <div class="form-group">
+              <label for="novaModalidade">Nome da Modalidade</label>
+              <input type="text" id="novaModalidade" v-model="novaModalidade" required />
+            </div>
+            <div class="buttons">
+              <button type="submit" class="btn-save">Cadastrar</button>
+              <button type="button" class="btn-cancel" @click="fecharModalModalidade">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Modal Remover Modalidade -->
+      <div v-if="modalRemoverModalidadeAberto" class="modal-overlay" @click.self="fecharModalRemoverModalidade">
+        <div class="modal-content">
+          <h2>Remover Modalidade</h2>
+
+          <div class="form-group">
+            <label for="modalidadeRemover">Selecione a Modalidade:</label>
+            <select id="modalidadeRemover" v-model="modalidadeParaRemover" class="dropdown">
+              <option disabled value="">Selecione uma modalidade</option>
+              <option v-for="(modalidade, i) in modalidadesDisponiveis" :key="i" :value="modalidade.nome">
+                {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
+              </option>
+            </select>
+          </div>
+
+          <div class="buttons">
+            <button class="btn-save" @click="removerModalidade">Remover</button>
+            <button class="btn-cancel" @click="fecharModalRemoverModalidade">Cancelar</button>
+          </div>
+        </div>
+      </div>
+      <div v-if="modalGerenciarTimeAberto" class="modal-overlay" @click.self="fecharModalGerenciarTime">
+        <div class="modal-content">
+          <h2>Gerenciar Times</h2>
+          <div class="form-group">
+            <label for="acaoGerenciarTime">Escolha a ação:</label>
+            <select id="acaoGerenciarTime" v-model="acaoGerenciarTime" class="dropdown">
+              <option disabled value="">Selecione uma opção</option>
+              <option value="adicionar">Adicionar Time</option>
+              <option value="remover">Remover Time</option>
+            </select>
+          </div>
+
+          <div class="buttons">
+            <button :disabled="!acaoGerenciarTime" @click="confirmarAcaoGerenciarTime" class="btn-save">
+              Continuar
+            </button>
+            <button class="btn-cancel" @click="fecharModalGerenciarTime">Cancelar</button>
+          </div>
+        </div>
+      </div>
+      <div v-if="modalAdicionarTimeAberto" class="modal-overlay" @click.self="fecharModalAdicionarTime">
+        <div class="modal-content">
+          <h2>Adicionar Time</h2>
+          <form @submit.prevent="adicionarTime">
+            <div class="form-group">
+              <label for="modalidade-add-time">Modalidade:</label>
+              <select id="modalidade-add-time" v-model="modalidadeSelecionada" required class="dropdown">
+                <option disabled value="">Selecione uma modalidade</option>
+                <option v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" :value="modalidade.nome">
+                  {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="novoTime">Nome do Time:</label>
+              <input type="text" id="novoTime" v-model="timeParaAdicionar" required />
+            </div>
+
+            <div class="form-group">
+              <label for="fotoTime">Foto (opcional):</label>
+              <input type="file" id="fotoTime" @change="handleImagemUpload" accept="image/*" />
+            </div>
+
+            <div class="buttons">
+              <button type="submit" class="btn-save">Cadastrar</button>
+              <button type="button" class="btn-cancel" @click="fecharModalAdicionarTime">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div v-if="modalRemoverTimeAberto" class="modal-overlay" @click.self="fecharModalRemoverTime">
+        <div class="modal-content">
+          <h2>Remover Time</h2>
+
+          <div class="form-group">
+            <label for="modalidade-remover-time">Modalidade:</label>
+            <select id="modalidade-remover-time" v-model="modalidadeSelecionada" @change="carregarTimes"
+              class="dropdown">
+              <option disabled value="">Selecione uma modalidade</option>
+              <option v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" :value="modalidade.nome">
+                {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="removerTime">Selecione o Time:</label>
+            <select id="removerTime" v-model="timeParaRemover" class="dropdown">
+              <option disabled value="">Selecione</option>
+              <option v-for="(time, i) in times" :key="i" :value="time">
+                {{ time }}
+              </option>
+            </select>
+          </div>
+
+          <div class="buttons">
+            <button class="btn-save" @click="removerTime">Remover</button>
+            <button class="btn-cancel" @click="fecharModalRemoverTime">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 </template>
 
 <script>
 import SideBar from '@/components/SideBar.vue';
+import axios from 'axios';
 import Swal from 'sweetalert2';
 
 export default {
-  name: "ControlePlacarView",
+  name: 'ControlePlacarView',
   components: { SideBar },
   data() {
     return {
-      modalidadeSelecionada: 'futebol',
-      modalidadePlacarSelecionada: 'futebol',
-      jogo: this.criarNovoJogo(),
-      jogoVolei: this.criarNovoJogoVolei(),
+      modalidadesDisponiveis: [],
+      modalidadeSelecionada: '',
+      timeSelecionado: '',
       times: [],
       timesPlacar: [],
-      modalAberto: false,
+      jogo: {
+        timeA: {
+          nome: '',
+          pts: { valor: 0 },
+          gols: { valor: 0 },
+          empates: { valor: 0 },
+          vitorias: { valor: 0 },
+          derrotas: { valor: 0 },
+        },
+      },
+      jogoVolei: {
+        timeA: {
+          nome: '',
+          pts: { valor: 0 },
+          vitorias: { valor: 0 },
+          derrotas: { valor: 0 },
+          setsVencidos: { valor: 0 },
+        },
+      },
+      modalGerenciarModalidadeAberto: false,
+      modalModalidadeAberto: false,
+      modalRemoverModalidadeAberto: false,
       modalPlacarAberto: false,
-      modalRemoverAberto: false,
-      modalResetAberto: false,
-      modalidadeParaReset: '',
-      form: {
-        nome: '',
-        imagem: null,
-        modalidade: ''
-      }
+      modalResetarPlacarAberto: false,
+      acaoGerenciarModalidade: '',
+      novaModalidade: '',
+      modalidadeParaRemover: '',
+      modalidadePlacarSelecionada: '',
+      modalidadeParaResetar: '',
+      modalGerenciarTimeAberto: false,
+      acaoGerenciarTime: '',
+      modalAdicionarTimeAberto: false,
+      modalRemoverTimeAberto: false,
+      timeParaAdicionar: '',
+      timeParaRemover: '',
+      fotoTime: '',
     };
   },
-
   mounted() {
-    this.carregarTimes();
+    this.carregarModalidades().then(() => {
+      const futebol = this.modalidadesDisponiveis.find(m => m.nome === 'futebol');
+      if (futebol) {
+        this.modalidadeSelecionada = 'futebol';
+        this.carregarTimes();
+      }
+    });
   },
-
   watch: {
-    timeSelecionado(novoNome) {
-      if (novoNome) {
-        this.carregarDadosTimeSelecionado(novoNome);
+    modalidadeSelecionada(newVal) {
+      this.timeSelecionado = '';
+      this.times = [];
+      this.limparDadosJogo();
+      if (newVal) {
+        this.carregarTimes();
       }
     },
-    'jogo.timeA.vitorias.valor': 'atualizarPontos',
-    'jogo.timeA.empates.valor': 'atualizarPontos'
-  },
-
-  computed: {
-    timeSelecionado: {
-      get() {
-        return this.modalidadeSelecionada === 'futebol'
-          ? this.jogo.timeA.nome
-          : this.jogoVolei.timeA.nome;
-      },
-      set(valor) {
-        if (this.modalidadeSelecionada === 'futebol') {
-          this.jogo.timeA.nome = valor;
-        } else {
-          this.jogoVolei.timeA.nome = valor;
-        }
-      }
+    timeSelecionado(newVal) {
+      if (newVal) this.carregarPlacarTime();
+      else this.limparDadosJogo();
     }
   },
-
   methods: {
-    abrirModal() {
-      this.modalAberto = true;
-    },
-    fecharModal() {
-      this.modalAberto = false;
-      this.limparForm();
-    },
-    abrirModalPlacar() {
-      this.modalPlacarAberto = true;
-      this.modalidadePlacarSelecionada = this.modalidadeSelecionada;
-      this.carregarPlacar();
-    },
-    fecharModalPlacar() {
-      this.modalPlacarAberto = false;
-      this.timesPlacar = [];
-    },
-    abrirModalRemover() {
-      this.modalRemoverAberto = true;
-    },
-    fecharModalRemover() {
-      this.modalRemoverAberto = false;
-    },
-    abrirModalResetar() {
-      this.modalResetAberto = true;
-      this.modalidadeParaReset = this.modalidadeSelecionada;
-    },
-    fecharModalResetar() {
-      this.modalResetAberto = false;
-      this.modalidadeParaReset = '';
-    },
-    async resetarPlacarPorModalidade() {
-      if (!this.modalidadeParaReset) {
-        Swal.fire('Atenção', 'Selecione uma modalidade.', 'warning');
-        return;
+    handleImagemUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          this.fotoTime = reader.result;
+        };
+        reader.readAsDataURL(file);
       }
+    },
 
+    abrirModalGerenciarTime() {
+      this.modalGerenciarTimeAberto = true;
+      this.acaoGerenciarTime = '';
+    },
+
+    fecharModalGerenciarTime() {
+      this.modalGerenciarTimeAberto = false;
+    },
+
+    confirmarAcaoGerenciarTime() {
+      if (this.acaoGerenciarTime === 'adicionar') {
+        this.modalAdicionarTimeAberto = true;
+      } else if (this.acaoGerenciarTime === 'remover') {
+        this.modalRemoverTimeAberto = true;
+        this.carregarTimes();
+      }
+      this.fecharModalGerenciarTime();
+    },
+
+    fecharModalAdicionarTime() {
+      this.modalAdicionarTimeAberto = false;
+      this.timeParaAdicionar = '';
+      this.fotoTime = '';
+    },
+
+    fecharModalRemoverTime() {
+      this.modalRemoverTimeAberto = false;
+      this.timeParaRemover = '';
+    },
+
+    abrirModalGerenciarModalidade() {
+      this.modalGerenciarModalidadeAberto = true;
+      this.acaoGerenciarModalidade = '';
+      this.novaModalidade = '';
+      this.modalidadeParaRemover = '';
+      this.carregarModalidades();
+    },
+
+    fecharModalGerenciarModalidade() {
+      this.modalGerenciarModalidadeAberto = false;
+      this.acaoGerenciarModalidade = '';
+    },
+
+    confirmarAcaoGerenciarModalidade() {
+      if (!this.acaoGerenciarModalidade) return;
+
+      this.modalGerenciarModalidadeAberto = false;
+
+      if (this.acaoGerenciarModalidade === 'adicionar') {
+        this.modalModalidadeAberto = true;
+      } else if (this.acaoGerenciarModalidade === 'remover') {
+        this.modalRemoverModalidadeAberto = true;
+      }
+    },
+
+    fecharModalModalidade() {
+      this.modalModalidadeAberto = false;
+      this.novaModalidade = '';
+    },
+
+    fecharModalRemoverModalidade() {
+      this.modalRemoverModalidadeAberto = false;
+      this.modalidadeParaRemover = '';
+    },
+
+    async adicionarTime() {
       try {
-        await fetch('http://localhost:3000/placar/reset', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ modalidade: this.modalidadeParaReset })
-        });
+        const payload = {
+          modalidade: this.modalidadeSelecionada,
+          time: this.timeParaAdicionar.trim(),
+          foto: this.fotoTime || null,
+        };
 
-        Swal.fire('Sucesso', `Placar da modalidade "${this.modalidadeParaReset}" resetado com sucesso!`, 'success');
-        this.fecharModalResetar();
-        this.carregarPlacar();
+        await axios.post('http://localhost:3000/times', payload);
+
+        Swal.fire('Sucesso', 'Time adicionado com sucesso!', 'success');
+        this.fecharModalAdicionarTime();
+        this.carregarTimes();
       } catch (error) {
-        console.error('Erro ao resetar placar:', error);
-        Swal.fire('Erro', 'Erro ao resetar placar.', 'error');
+        console.error('Erro ao adicionar time:', error);
+        Swal.fire('Erro', error.response?.data?.error || 'Erro ao adicionar time.', 'error');
       }
     },
+
     async removerTime() {
-      if (!this.modalidadeSelecionada || !this.timeSelecionado) {
-        Swal.fire('Atenção', 'Selecione a modalidade e o time.', 'warning');
-        return;
-      }
-
       try {
-        await fetch(`http://localhost:3000/placar/${this.modalidadeSelecionada}/${encodeURIComponent(this.timeSelecionado)}`, {
-          method: 'DELETE'
-        });
+        await axios.delete(`http://localhost:3000/placar/${this.modalidadeSelecionada}/${this.timeParaRemover}`);
 
-        Swal.fire('Removido!', 'Time removido com sucesso.', 'success');
-        this.fecharModalRemover();
+        Swal.fire('Sucesso', 'Time removido com sucesso!', 'success');
+        this.fecharModalRemoverTime();
         this.carregarTimes();
       } catch (error) {
         console.error('Erro ao remover time:', error);
-        Swal.fire('Erro', error.message || 'Erro ao remover time.', 'error');
+        Swal.fire('Erro', error.response?.data?.error || 'Erro ao remover time.', 'error');
       }
     },
-    onFileChange(event) {
-      this.form.imagem = event.target.files[0];
-    },
-    async carregarPlacar() {
-      try {
-        const response = await fetch(`http://localhost:3000/placar/${this.modalidadePlacarSelecionada}`);
-        const data = await response.json();
-        this.timesPlacar = data;
-      } catch {
-        Swal.fire('Erro', 'Erro ao carregar placar.', 'error');
-      }
-    },
-    async adicionarTime() {
-      let urlImagem = null;
-      try {
-        if (this.form.imagem) {
-          const formData = new FormData();
-          formData.append('file', this.form.imagem);
-          const uploadRes = await fetch('http://localhost:3000/upload', { method: 'POST', body: formData });
-          const uploadData = await uploadRes.json();
-          urlImagem = uploadData.fileUrl;
-        }
 
-        await fetch('http://localhost:3000/times', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            time: this.form.nome,
-            foto: urlImagem,
-            modalidade: this.form.modalidade
-          })
-        });
-
-        Swal.fire('Sucesso!', 'Time cadastrado com sucesso!', 'success');
-        this.carregarTimes();
-        this.fecharModal();
+    async carregarModalidades() {
+      try {
+        const res = await axios.get('http://localhost:3000/modalidade');
+        this.modalidadesDisponiveis = res.data;
       } catch (error) {
-        Swal.fire('Erro', error.message || 'Erro ao cadastrar time.', 'error');
+        console.error('Erro ao carregar modalidades:', error);
+        Swal.fire('Erro', 'Não foi possível carregar as modalidades.', 'error');
       }
     },
-    limparForm() {
-      this.form = { nome: '', imagem: null, modalidade: '' };
-      const inputImagem = document.getElementById('imagem');
-      if (inputImagem) inputImagem.value = null;
+
+    async cadastrarModalidade() {
+      const nome = this.novaModalidade.trim();
+      if (!nome) {
+        Swal.fire('Atenção', 'Informe o nome da modalidade.', 'warning');
+        return;
+      }
+      try {
+        await axios.post('http://localhost:3000/modalidade', { nome });
+        Swal.fire('Sucesso', 'Modalidade cadastrada com sucesso!', 'success');
+        this.novaModalidade = '';
+        this.modalModalidadeAberto = false;
+        this.carregarModalidades();
+      } catch (error) {
+        Swal.fire('Erro', error.response?.data?.error || 'Erro ao cadastrar modalidade.', 'error');
+      }
     },
-    criarNovoJogo() {
-      const criarStats = () => ({
+
+    async removerModalidade() {
+      try {
+        await axios.delete(`http://localhost:3000/modalidade/${this.modalidadeParaRemover}`);
+        Swal.fire('Sucesso', 'Modalidade removida com sucesso!', 'success');
+        this.modalidadeParaRemover = '';
+        this.modalRemoverModalidadeAberto = false;
+        this.carregarModalidades();
+
+        if (this.modalidadeSelecionada === this.modalidadeParaRemover) {
+          this.modalidadeSelecionada = '';
+          this.timeSelecionado = '';
+          this.times = [];
+          this.limparDadosJogo();
+        }
+      } catch (error) {
+        Swal.fire('Erro', error.response?.data?.error || 'Erro ao remover modalidade.', 'error');
+      }
+    },
+
+    async carregarTimes() {
+      if (!this.modalidadeSelecionada) return;
+      try {
+        const res = await axios.get(`http://localhost:3000/times/${this.modalidadeSelecionada}`);
+        this.times = res.data.map(t => t.time);
+      } catch (error) {
+        console.error('Erro ao carregar times:', error);
+        Swal.fire('Erro', 'Não foi possível carregar os times.', 'error');
+      }
+    },
+
+    async carregarPlacarTime() {
+      if (!this.modalidadeSelecionada || !this.timeSelecionado) return;
+      try {
+        const res = await axios.get(`http://localhost:3000/times/${this.modalidadeSelecionada}/${this.timeSelecionado}`);
+        const dados = res.data;
+
+        if (this.modalidadeSelecionada === 'futebol') {
+          this.jogo.timeA.nome = dados.time;
+          this.jogo.timeA.pts.valor = dados.pontuacao || 0;
+          this.jogo.timeA.gols.valor = dados.golsMarcados || 0;
+          this.jogo.timeA.empates.valor = dados.empates || 0;
+          this.jogo.timeA.vitorias.valor = dados.vitorias || 0;
+          this.jogo.timeA.derrotas.valor = dados.derrotas || 0;
+        } else if (this.modalidadeSelecionada === 'volei') {
+          this.jogoVolei.timeA.nome = dados.time;
+          this.jogoVolei.timeA.pts.valor = dados.pontuacao || 0;
+          this.jogoVolei.timeA.vitorias.valor = dados.vitorias || 0;
+          this.jogoVolei.timeA.derrotas.valor = dados.derrotas || 0;
+          this.jogoVolei.timeA.setsVencidos.valor = dados.setsVencidos || 0;
+        }
+      } catch (error) {
+        console.error('Erro ao carregar placar do time:', error);
+        Swal.fire('Erro', 'Não foi possível carregar o placar do time.', 'error');
+      }
+    },
+
+    limparDadosJogo() {
+      this.jogo.timeA = {
         nome: '',
-        gols: { valor: 0 },
         pts: { valor: 0 },
+        gols: { valor: 0 },
         empates: { valor: 0 },
         vitorias: { valor: 0 },
-        derrotas: { valor: 0 }
-      });
-      return { timeA: criarStats() };
-    },
-    criarNovoJogoVolei() {
-      const criarStats = () => ({
+        derrotas: { valor: 0 },
+      };
+      this.jogoVolei.timeA = {
         nome: '',
         pts: { valor: 0 },
         vitorias: { valor: 0 },
         derrotas: { valor: 0 },
-        setsVencidos: { valor: 0 }
-      });
-      return { timeA: criarStats() };
+        setsVencidos: { valor: 0 },
+      };
     },
-    increment(item) {
-      item.valor++;
-    },
-    decrement(item) {
-      if (item.valor > 0) item.valor--;
-    },
-    atualizarPontos() {
-      const { vitorias, empates, pts } = this.jogo.timeA;
-      pts.valor = (vitorias.valor * 3) + (empates.valor * 1);
-    },
-    async carregarTimes() {
-      if (!this.modalidadeSelecionada) return;
-      try {
-        const response = await fetch(`http://localhost:3000/times/${this.modalidadeSelecionada}`);
-        const data = await response.json();
-        this.times = data.times;
-      } catch {
-        Swal.fire('Erro', 'Erro ao carregar times.', 'error');
-        this.times = [];
-      }
-    },
-    async salvarPlacar() {
-      const nome = this.jogo.timeA.nome;
-      if (!nome) {
-        Swal.fire('Atenção', 'Selecione um time.', 'warning');
-        return;
-      }
 
-      const payload = {
-        modalidade: 'futebol',
-        nome: nome,
-        dados: {
+    increment(obj, tipo = '') {
+      obj.valor++;
+      if (this.modalidadeSelecionada === 'futebol') {
+        if (tipo === 'vitoria') this.jogo.timeA.pts.valor += 3;
+        else if (tipo === 'empate') this.jogo.timeA.pts.valor += 1;
+      }
+    },
+
+    decrement(obj, tipo = '') {
+      if (obj.valor > 0) {
+        obj.valor--;
+        if (this.modalidadeSelecionada === 'futebol') {
+          if (tipo === 'vitoria' && this.jogo.timeA.pts.valor >= 3) this.jogo.timeA.pts.valor -= 3;
+          else if (tipo === 'empate' && this.jogo.timeA.pts.valor >= 1) this.jogo.timeA.pts.valor -= 1;
+        }
+      }
+    },
+
+    async salvarPlacar() {
+      try {
+        const dadosParaSalvar = {
           gols: this.jogo.timeA.gols.valor,
           pts: this.jogo.timeA.pts.valor,
           empates: this.jogo.timeA.empates.valor,
           vitorias: this.jogo.timeA.vitorias.valor,
-          derrotas: this.jogo.timeA.derrotas.valor
-        }
-      };
-
-      try {
-        await fetch(`http://localhost:3000/placar/${encodeURIComponent(nome)}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        Swal.fire('Sucesso', 'Placar atualizado!', 'success');
-        this.resetarPlacarFutebol();
-        this.limparForm();
-      } catch {
-        Swal.fire('Erro', 'Erro ao atualizar placar.', 'error');
+          derrotas: this.jogo.timeA.derrotas.valor,
+        };
+        await axios.put(`http://localhost:3000/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
+        Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
+        this.limparDadosJogo();
+      } catch (error) {
+        Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
       }
     },
-    async salvarPlacarVolei() {
-      const nome = this.jogoVolei.timeA.nome;
-      if (!nome) {
-        Swal.fire('Atenção', 'Selecione um time.', 'warning');
-        return;
-      }
 
-      const payload = {
-        modalidade: 'volei',
-        nome: nome,
-        dados: {
+    async salvarPlacarVolei() {
+      try {
+        const dados = {
           pts: this.jogoVolei.timeA.pts.valor,
           vitorias: this.jogoVolei.timeA.vitorias.valor,
           derrotas: this.jogoVolei.timeA.derrotas.valor,
-          setsVencidos: this.jogoVolei.timeA.setsVencidos.valor
-        }
-      };
-
-      try {
-        await fetch(`http://localhost:3000/placar/${encodeURIComponent(nome)}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        Swal.fire('Sucesso', 'Placar atualizado!', 'success');
-        this.resetarPlacarVolei();
-        this.limparForm();
-      } catch {
-        Swal.fire('Erro', 'Erro ao atualizar placar.', 'error');
+          setsVencidos: this.jogoVolei.timeA.setsVencidos.valor,
+        };
+        await axios.put(`http://localhost:3000/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dados);
+        Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
+        this.limparDadosJogo();
+      } catch (error) {
+        Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
       }
     },
-    carregarDadosTimeSelecionado(nomeTime) {
-      const modalidade = this.modalidadeSelecionada;
 
-      fetch(`http://localhost:3000/times/${modalidade}/${encodeURIComponent(nomeTime)}`)
-        .then(response => response.json())
-        .then(time => {
-          console.log('Time carregado:', time);
+    abrirModalPlacar() {
+      this.modalPlacarAberto = true;
+      this.modalidadePlacarSelecionada = '';
+      this.timesPlacar = [];
+    },
 
-          if (modalidade === 'futebol') {
-            this.jogo.timeA.nome = time.time;
-            this.jogo.timeA.pts.valor = time.pontuacao || 0;
-            this.jogo.timeA.gols.valor = time.golsMarcados || 0;
-            this.jogo.timeA.empates.valor = time.empates || 0;
-            this.jogo.timeA.vitorias.valor = time.vitorias || 0;
-            this.jogo.timeA.derrotas.valor = time.derrotas || 0;
-          } else if (modalidade === 'volei') {
-            this.jogoVolei.timeA.nome = time.time;
-            this.jogoVolei.timeA.pts.valor = time.pontuacao || 0;
-            this.jogoVolei.timeA.vitorias.valor = time.vitorias || 0;
-            this.jogoVolei.timeA.derrotas.valor = time.derrotas || 0;
-            this.jogoVolei.timeA.setsVencidos.valor = time.setsVencidos || 0;
-          }
-        })
-        .catch(error => {
-          console.error('Erro ao carregar dados do time:', error);
-          Swal.fire('Erro', 'Erro ao carregar dados do time selecionado.', 'error');
-        });
+    fecharModalPlacar() {
+      this.modalPlacarAberto = false;
+      this.modalidadePlacarSelecionada = '';
+      this.timesPlacar = [];
     },
-    resetarPlacarFutebol() {
-      this.jogo = this.criarNovoJogo();
+
+    async carregarPlacarModalidade() {
+      if (!this.modalidadePlacarSelecionada) {
+        this.timesPlacar = [];
+        return;
+      }
+      try {
+        const res = await axios.get(`http://localhost:3000/placar/${this.modalidadePlacarSelecionada}`);
+        this.timesPlacar = res.data;
+      } catch (error) {
+        Swal.fire('Erro', 'Erro ao carregar placar.', 'error');
+      }
     },
-    resetarPlacarVolei() {
-      this.jogoVolei = this.criarNovoJogoVolei();
+
+    abrirModalResetarPlacar() {
+      this.modalResetarPlacarAberto = true;
+      this.fecharModalPlacar();
+      this.modalidadeParaResetar = '';
+    },
+
+    fecharModalResetarPlacar() {
+      this.modalResetarPlacarAberto = false;
+      this.modalidadeParaResetar = '';
+    },
+
+    async confirmarResetarPlacar() {
+      try {
+        await axios.put('http://localhost:3000/reset', { modalidade: this.modalidadeParaResetar });
+        Swal.fire('Sucesso', 'Placar resetado com sucesso!', 'success');
+        this.modalResetarPlacarAberto = false;
+        this.modalidadeParaResetar = '';
+      } catch (error) {
+        console.error('Erro ao resetar placar:', error);
+        Swal.fire('Erro', 'Erro ao resetar placar.', 'error');
+      }
     }
   }
 };
@@ -609,11 +779,13 @@ export default {
   margin-top: 20px;
 }
 
+
 .layout {
   flex: 1;
   padding: 20px 10px;
   width: 100%;
 }
+
 
 .header {
   display: flex;
@@ -622,6 +794,7 @@ export default {
   margin-bottom: 20px;
 }
 
+
 .line {
   display: flex;
   gap: 20px;
@@ -629,15 +802,18 @@ export default {
   margin-bottom: 20px;
 }
 
+
 .box-small {
   flex: 1;
 }
+
 
 .title {
   color: #3b82f6;
   font-size: 28px;
   margin-left: 15%;
 }
+
 
 .botoes {
   display: flex;
@@ -646,17 +822,9 @@ export default {
   margin-right: -5%;
 }
 
-.btn-add {
-  background-color: #3b82f6;
-  color: white;
-  padding: 8px 14px;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-}
 
 .btn-placar {
-  background-color: #7b7979;
+  background-color: #7E7E7E;
   color: white;
   padding: 8px 14px;
   border: none;
@@ -664,8 +832,19 @@ export default {
   cursor: pointer;
 }
 
-.btn-rm {
-  background-color: #1E3A8A;
+
+.btn-modalidade {
+  background-color: #3B82F6;
+  color: white;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+
+.btn-add {
+  background-color: #1E3A8a;
   color: white;
   padding: 8px 14px;
   border: none;
@@ -680,6 +859,7 @@ export default {
   margin-left: 15%;
 }
 
+
 .dropdown {
   width: 100%;
   padding: 10px;
@@ -690,6 +870,7 @@ export default {
   margin-bottom: 10px;
 }
 
+
 .dropdown-row {
   display: flex;
   gap: 20px;
@@ -697,9 +878,11 @@ export default {
   margin-left: 15%;
 }
 
+
 .dropdown-row .team {
   flex: 1;
 }
+
 
 .box,
 .box-small {
@@ -710,12 +893,14 @@ export default {
   text-align: center;
 }
 
+
 .controls {
   display: flex;
   align-items: center;
   justify-content: space-around;
   margin-top: 20px;
 }
+
 
 .controls button {
   background-color: #1e3a8a;
@@ -728,19 +913,23 @@ export default {
   cursor: pointer;
 }
 
+
 .espacamento {
   gap: 27%;
 }
 
+
 .controls button:last-child {
   background-color: #3b82f6;
 }
+
 
 .buttons {
   display: flex;
   justify-content: flex-end;
   gap: 5px;
 }
+
 
 .btn-cancel {
   background-color: #7E7E7E;
@@ -750,6 +939,7 @@ export default {
   cursor: pointer;
   color: white;
 }
+
 
 .btn-save {
   background-color: #3b82f6;
@@ -761,6 +951,7 @@ export default {
   color: white;
 }
 
+
 .btn-save1 {
   background-color: #3b82f6;
   color: white;
@@ -771,6 +962,7 @@ export default {
   margin-top: 20px;
   width: 100%;
 }
+
 
 .modal-overlay {
   position: fixed;
@@ -785,6 +977,7 @@ export default {
   z-index: 1000;
 }
 
+
 .modal-content {
   background: white;
   padding: 30px 40px;
@@ -793,10 +986,12 @@ export default {
   max-width: 90%;
 }
 
+
 .modal-content h2 {
   margin-bottom: 20px;
   color: #3b82f6;
 }
+
 
 .form-group {
   margin-bottom: 20px;
@@ -804,10 +999,12 @@ export default {
   flex-direction: column;
 }
 
+
 .form-group label {
   margin-bottom: 8px;
   font-weight: 600;
 }
+
 
 .form-group input[type="text"],
 .form-group input[type="file"] {
@@ -816,6 +1013,7 @@ export default {
   border: 1px solid #ccc;
   font-size: 16px;
 }
+
 
 .modalPlacarPai {
   position: fixed;
@@ -830,6 +1028,7 @@ export default {
   padding: 20px;
 }
 
+
 .modal-conteudo.modal-placar {
   background-color: #fff;
   border-radius: 12px;
@@ -843,6 +1042,7 @@ export default {
   overflow: hidden;
 }
 
+
 .placar-table {
   flex: 1;
   overflow-y: auto;
@@ -852,15 +1052,18 @@ export default {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
+
 .placar {
   width: 100%;
   border-collapse: collapse;
 }
 
+
 .title_placar {
   color: #3b82f6;
   font-size: 28px;
 }
+
 
 .placar thead th {
   background-color: #1e3a8a;
@@ -871,14 +1074,17 @@ export default {
   text-align: left;
 }
 
+
 .placar tbody tr {
   background-color: white;
   transition: background-color 0.2s;
 }
 
+
 .placar tbody tr:hover {
   background-color: #f3f4f6;
 }
+
 
 .placar tbody td {
   color: #4b5563;
@@ -887,15 +1093,18 @@ export default {
   border-bottom: 1px solid #e5e7eb;
 }
 
+
 .placar tbody tr:last-child td {
   border-bottom: none;
 }
+
 
 .time-info {
   display: flex;
   align-items: center;
   gap: 8px;
 }
+
 
 .time-image {
   width: 40px;
@@ -904,6 +1113,7 @@ export default {
   border-radius: 50%;
   border: 1px solid #ccc;
 }
+
 
 .btn-cancel-placar {
   background-color: #3b82f6;
@@ -915,12 +1125,15 @@ export default {
   margin-top: 20px;
   width: 100%;
 }
+
+
 .header-placar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
 }
+
 
 .btn-reset {
   background-color: #7E7E7E;
@@ -932,6 +1145,11 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    margin-top: 10px;
+  }
+
   .title {
     margin-left: 0;
     font-size: 24px;
@@ -944,10 +1162,28 @@ export default {
     align-items: flex-start;
   }
 
+  .botoes {
+    margin-right: 0;
+    width: 100%;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
   .game {
     width: 100%;
     margin-left: 0;
     padding: 0 10px;
+  }
+
+  .dropdown-row {
+    flex-direction: column;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .dropdown-row .team {
+    width: 100%;
+    flex: none;
   }
 
   .controls button {
@@ -969,23 +1205,22 @@ export default {
   .modal-conteudo.modal-placar {
     width: 90vw;
     height: 80vh;
-    overflow: hidden; 
+    overflow: hidden;
     padding: 20px;
   }
 
   .placar-table {
     overflow-x: auto;
     overflow-y: auto;
-    max-height: calc(80vh - 100px); 
+    max-height: calc(80vh - 100px);
     border-radius: 12px;
     background-color: white;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   }
 
   .placar {
-    min-width: 700px; 
+    min-width: 700px;
     border-collapse: collapse;
   }
 }
-
 </style>

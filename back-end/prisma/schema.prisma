@@ -41,22 +41,27 @@ model Agendamento {
   usuario   Usuario? @relation(fields: [usuarioId], references: [id])
 }
 
-model Placar {
-  id           Int    @id @default(autoincrement())
-  modalidade   String 
-  time         String @unique
-  foto         String? 
+model Modalidade {
+  id      Int      @id @default(autoincrement())
+  nome    String   @unique
+  placares Placar[] 
+}
 
+model Placar {
+  id           Int     @id @default(autoincrement())
+  modalidadeId Int
+  time         String
+  foto         String?
   posicao      Int
   pontuacao    Int
   vitorias     Int
   derrotas     Int
-  
   empates      Int?
   golsMarcados Int?
-  setsVencidos Int? 
+  setsVencidos Int?
 
-  @@unique([modalidade, time]) //para permitir que um time possa ter o mesmo nome
+  @@unique([modalidadeId, time]) 
+  modalidade   Modalidade @relation(fields: [modalidadeId], references: [id])
 }
 
 model Permissao {

@@ -1,7 +1,7 @@
-const {  criarTimeService, deletarTime, getNomesTimes, buscarTimeNome, atualizarTime, listarPlacar, resetarPlacarPorModalidade, adicionarModalidade } = require('../services/placar.service');
+const { criarTimeService, deletarTime, listarTimesPorModalidade, buscarTimeNome, atualizarTime, listarPlacar, resetarPlacarPorModalidade, cadastrarModalidade, removerModalidade, listarModalidades } = require('../services/placar.service');
 
 async function criarTime(req, res) {
-   const { modalidade, time, foto } = req.body;
+  const { modalidade, time, foto } = req.body;
   try {
     const novoTime = await criarTimeService({ modalidade, time, foto });
     return res.status(201).json(novoTime);
@@ -14,8 +14,8 @@ async function criarTime(req, res) {
 async function deletarTimeNome(req, res) {
   const { nome, modalidade } = req.params;
   try {
-    const resultado = await deletarTime(nome, modalidade);
-    return res.status(200).json(resultado);
+    await deletarTime(nome, modalidade);
+    return res.status(200).json({ mensagem: 'Time deletado com sucesso.' });
   } catch (error) {
     console.error('Erro ao deletar time:', error);
     return res.status(404).json({ error: error.message });
@@ -25,8 +25,8 @@ async function deletarTimeNome(req, res) {
 async function nomeTime(req, res) {
   const { modalidade } = req.params;
   try {
-    const nomes = await getNomesTimes(modalidade);
-    return res.status(200).json({ times: nomes });
+    const nomes = await listarTimesPorModalidade(modalidade);
+    return res.status(200).json(nomes); 
   } catch (error) {
     console.error('Erro ao buscar nomes dos times:', error);
     return res.status(500).json({ error: 'Erro interno no servidor.' });
@@ -37,9 +37,6 @@ async function buscarTime(req, res) {
   const { modalidade, nome } = req.params;
   try {
     const time = await buscarTimeNome(modalidade, nome);
-    if (!time) {
-      return res.status(404).json({ mensagem: 'Time não encontrado.' });
-    }
     return res.status(200).json(time);
   } catch (error) {
     console.error('Erro ao buscar time:', error);
@@ -48,7 +45,9 @@ async function buscarTime(req, res) {
 }
 
 async function atualizarPlacar(req, res) {
-  const { modalidade, nome, dados } = req.body;
+  const { modalidade, nome } = req.params;
+  const dados = req.body;
+
   try {
     const resultado = await atualizarTime(modalidade, nome, dados);
     return res.status(200).json(resultado);
@@ -70,7 +69,7 @@ async function getPlacar(req, res) {
 }
 
 async function resetarPlacar(req, res) {
-  console.log('Modalidade recebida:', modalidade);
+  const { modalidade } = req.body;
   try {
     await resetarPlacarPorModalidade(modalidade);
     res.status(200).json({ message: `Placar da modalidade "${modalidade}" resetado com sucesso` });
@@ -80,13 +79,36 @@ async function resetarPlacar(req, res) {
   }
 }
 
-async function adicionarModalidadeController(req, res) {
+async function cadastrarModalidadeController(req, res) {
+  const { nome } = req.body;
   try {
-    const novoPlacar = await adicionarModalidade.adicionarModalidadeController(req.body);
-    res.status(201).json(novoPlacar);
+    const novaModalidade = await cadastrarModalidade(nome);
+    res.status(201).json(novaModalidade);
   } catch (error) {
-    res.status(400).json({ erro: error.message });
+    console.error('Erro ao cadastrar modalidade:', error);
+    res.status(409).json({ error: 'Modalidade já cadastrada.' });
   }
 }
 
-module.exports = { criarTime, deletarTimeNome, nomeTime,  buscarTime,atualizarPlacar, getPlacar, resetarPlacar, adicionarModalidadeController};
+async function removerModalidadeController(req, res) {
+  const { nome } = req.params;
+  try {
+    const resultado = await removerModalidade(nome);
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error('Erro ao remover modalidade:', error);
+    return res.status(404).json({ error: error.message });
+  }
+}
+
+async function getModalidadesController(req, res) {
+  try {
+    const modalidades = await listarModalidades();
+    res.status(200).json(modalidades);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao buscar modalidades.' });
+  }
+}
+
+module.exports = { criarTime, deletarTimeNome, nomeTime,buscarTime, atualizarPlacar, getPlacar, resetarPlacar, cadastrarModalidadeController, removerModalidadeController, getModalidadesController};

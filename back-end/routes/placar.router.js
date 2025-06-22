@@ -3,19 +3,17 @@ const controller = require('../controllers/placar.controller');
 const router = express.Router();
 
 router.post('/times', controller.criarTime);
-
+router.get('/times/:modalidade', controller.nomeTime);
+router.get('/times/:modalidade/:nome', controller.buscarTime);
 router.delete('/placar/:modalidade/:nome', controller.deletarTimeNome);
 
-router.get('/times/:modalidade', controller.nomeTime);
-
-router.get('/times/:modalidade/:nome', controller.buscarTime); 
-
-router.put('/placar/:nome', controller.atualizarPlacar);
+router.put('/placar/:modalidade/:nome', controller.atualizarPlacar);
 
 router.get('/placar/:modalidade', controller.getPlacar);
-
-router.post('/placar', controller.adicionarModalidadeController);
-
 router.put('/reset', controller.resetarPlacar);
+
+router.post('/modalidade', controller.cadastrarModalidadeController);
+router.get('/modalidade', controller.getModalidadesController);
+router.delete('/modalidade/:nome', controller.removerModalidadeController);
 
 module.exports = router;

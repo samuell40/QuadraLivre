@@ -151,8 +151,8 @@ export default {
     return {
       isMenuOpen: false,
       quadras: [],
-      times: [],            // Todos os times
-      timesVolei: [],       // Times vôlei
+      times: [],            
+      timesVolei: [],      
       isLoadingQuadras: true,
       isLoadingPlacarFutebol: true,
       isLoadingPlacarVolei: true
@@ -160,49 +160,46 @@ export default {
   },
   computed: {
     timesFutebol() {
-      // Filtra os times para modalidade futebol
-      return this.times.filter(time => time.modalidade === 'futebol')
+      return this.times;
     },
     timesFutebolComPosicao() {
-      // Ordena pelo pontuacao decrescente e adiciona posição
-      const sorted = [...this.timesFutebol].sort((a, b) => b.pontuacao - a.pontuacao)
-      return sorted.map((time, idx) => ({ ...time, posicao: idx + 1 }))
+      const sorted = [...this.timesFutebol].sort((a, b) => b.pontuacao - a.pontuacao);
+      return sorted.map((time, idx) => ({ ...time, posicao: idx + 1 }));
     },
     timesVoleiComPosicao() {
-      // Ordena pelo pontuacao decrescente e adiciona posição
-      const sorted = [...this.timesVolei].sort((a, b) => b.pontuacao - a.pontuacao)
-      return sorted.map((time, idx) => ({ ...time, posicao: idx + 1 }))
+      const sorted = [...this.timesVolei].sort((a, b) => b.pontuacao - a.pontuacao);
+      return sorted.map((time, idx) => ({ ...time, posicao: idx + 1 }));
     }
   },
   mounted() {
-    this.carregarQuadras()
-    this.carregarPlacarFutebol()
-    this.carregarPlacarVolei()
+    this.carregarQuadras();
+    this.carregarPlacarFutebol();
+    this.carregarPlacarVolei();
   },
   methods: {
     toggleMenu() {
-      this.isMenuOpen = !this.isMenuOpen
+      this.isMenuOpen = !this.isMenuOpen;
     },
     next() {
       if (this.$refs.carousel) {
-        this.$refs.carousel.next()
+        this.$refs.carousel.next();
       }
     },
     prev() {
       if (this.$refs.carousel) {
-        this.$refs.carousel.prev()
+        this.$refs.carousel.prev();
       }
     },
     async carregarQuadras() {
-      this.isLoadingQuadras = true
+      this.isLoadingQuadras = true;
       try {
-        const res = await fetch('http://localhost:3000/quadra')
-        const data = await res.json()
-        this.quadras = data
+        const res = await fetch('http://localhost:3000/quadra');
+        const data = await res.json();
+        this.quadras = data;
       } catch (err) {
-        console.error('Erro ao carregar quadras:', err)
+        console.error('Erro ao carregar quadras:', err);
       } finally {
-        this.isLoadingQuadras = false
+        this.isLoadingQuadras = false;
       }
     },
     async carregarPlacarFutebol() {
@@ -232,7 +229,7 @@ export default {
       }
     },
     clicarAgendar(quadra) {
-      console.log('Quadra selecionada para agendamento:', quadra)
+      console.log('Quadra selecionada para agendamento:', quadra);
     }
   }
 }

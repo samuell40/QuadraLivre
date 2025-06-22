@@ -1,14 +1,56 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-async function criarTimeService(dados) {
-  const count = await prisma.placar.count({
-    where: { modalidade: dados.modalidade },
+async function buscarModalidadeId(nome) {
+  let modalidade = await prisma.modalidade.findUnique({
+    where: { nome },
   });
+
+  if (!modalidade) {
+    modalidade = await prisma.modalidade.create({
+      data: { nome },
+    });
+  }
+
+  return modalidade.id;
+}
+
+async function cadastrarModalidade(nome) {
+  const novaModalidade = await prisma.modalidade.create({
+    data: { nome },
+  });
+
+  return novaModalidade;
+}
+
+async function removerModalidade(nome) {
+  const modalidade = await prisma.modalidade.findUnique({
+    where: { nome },
+  });
+
+  await prisma.placar.deleteMany({
+    where: { modalidadeId: modalidade.id },
+  });
+
+  await prisma.modalidade.delete({
+    where: { id: modalidade.id },
+  });
+
+  return modalidade;
+}
+
+async function listarModalidades() {
+  return await prisma.modalidade.findMany({
+    orderBy: { nome: 'asc' },
+  });
+}
+
+async function criarTimeService(dados) {
+  const modalidadeId = await buscarModalidadeId(dados.modalidade);
 
   const placar = await prisma.placar.create({
     data: {
-      modalidade: dados.modalidade,
+      modalidadeId,
       time: dados.time,
       foto: dados.foto,
       posicao: 0,
@@ -20,55 +62,66 @@ async function criarTimeService(dados) {
       setsVencidos: 0,
     },
   });
+
   return placar;
 }
 
 async function deletarTime(nome, modalidade) {
-  const time = await prisma.placar.findUnique({
-    where: {
-      modalidade_time: {
-        modalidade: modalidade,
-        time: nome
-      }
-    }
-  });
+  const modalidadeId = await buscarModalidadeId(modalidade);
 
   await prisma.placar.delete({
     where: {
-      modalidade_time: {
-        modalidade: modalidade,
-        time: nome
-      }
-    }
-  });
-}
-
-async function getNomesTimes(modalidade) {
-  const placares = await prisma.placar.findMany({
-    where: { modalidade: modalidade },
-    select: { time: true },
-  });
-
-  return placares.map((p) => p.time);
-}
-
-async function buscarTimeNome(modalidade, nome) {
-  const time = await prisma.placar.findUnique({
-    where: {
-      modalidade_time: {
-        modalidade: modalidade,
+      modalidadeId_time: {
+        modalidadeId,
         time: nome,
       },
     },
   });
-  return time;
+}
+
+async function listarTimesPorModalidade(modalidade) {
+  const modalidadeId = await buscarModalidadeId(modalidade);
+
+  const times = await prisma.placar.findMany({
+    where: { modalidadeId },
+    select: {
+      time: true,
+      foto: true,
+      posicao: true,
+      pontuacao: true,
+      vitorias: true,
+      derrotas: true,
+      empates: true,
+      golsMarcados: true,
+      setsVencidos: true,
+    },
+    orderBy: { posicao: 'asc' },
+  });
+
+  return times.map(t => ({ ...t, modalidade }));
+}
+
+
+async function buscarTimeNome(modalidade, nome) {
+  const modalidadeId = await buscarModalidadeId(modalidade);
+
+  return await prisma.placar.findUnique({
+    where: {
+      modalidadeId_time: {
+        modalidadeId,
+        time: nome,
+      },
+    },
+  });
 }
 
 async function atualizarTime(modalidade, nome, dados) {
-  const atualizar = await prisma.placar.update({
+  const modalidadeId = await buscarModalidadeId(modalidade);
+
+  return await prisma.placar.update({
     where: {
-      modalidade_time: {
-        modalidade: modalidade,
+      modalidadeId_time: {
+        modalidadeId,
         time: nome,
       },
     },
@@ -81,51 +134,31 @@ async function atualizarTime(modalidade, nome, dados) {
       setsVencidos: dados.setsVencidos,
     },
   });
-  return atualizar;
 }
 
 async function listarPlacar(modalidade) {
-  const listar = await prisma.placar.findMany({
-    where: { modalidade: modalidade },
+  const modalidadeId = await buscarModalidadeId(modalidade);
+
+  return await prisma.placar.findMany({
+    where: { modalidadeId },
     orderBy: { pontuacao: 'desc' },
   });
-  return listar;
 }
 
 async function resetarPlacarPorModalidade(modalidade) {
+  const modalidadeId = await buscarModalidadeId(modalidade);
+
   await prisma.placar.updateMany({
-    where: { modalidade: modalidade },
+    where: { modalidadeId },
     data: {
       pontuacao: 0,
       vitorias: 0,
       derrotas: 0,
       empates: 0,
       golsMarcados: 0,
-      setsVencidos: 0
-    }
-  });
-}
-
-async function adicionarModalidade(dados) {
-  const { modalidade, time, foto, posicao, pontuacao, vitorias, derrotas, empates, golsMarcados, setsVencidos } = dados;
-
-  const novoPlacar = await prisma.placar.create({
-    data: {
-      modalidade,
-      time,
-      foto,
-      posicao,
-      pontuacao,
-      vitorias,
-      derrotas,
-      empates,
-      golsMarcados,
-      setsVencidos,
+      setsVencidos: 0,
     },
   });
-
-  return novoPlacar;
 }
 
-module.exports = {
-  criarTimeService, deletarTime, getNomesTimes, buscarTimeNome, atualizarTime, listarPlacar, resetarPlacarPorModalidade, adicionarModalidade};
+module.exports = {  buscarModalidadeId, criarTimeService, deletarTime, listarTimesPorModalidade, buscarTimeNome, atualizarTime, listarPlacar, resetarPlacarPorModalidade, cadastrarModalidade, removerModalidade, listarModalidades };
