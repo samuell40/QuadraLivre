@@ -7,6 +7,7 @@ import Cadastro2View from '../views/Cadastro2View.vue';
 import CadastrarQuadraView from '../views/CadastrarQuadraView.vue';
 import ControlePlacarView from '../views/ControlePlacarView';
 import UsuariosView from '../views/UsuariosView';
+import MeusAgendamentosView from '../views/MeusAgendamentosView'
 
 const routes = [
   {
@@ -45,6 +46,11 @@ const routes = [
     path: '/controleplacar',
     name: 'controle_placar',
     component: ControlePlacarView,
+  },
+  {
+    path: '/meusagendamentos',
+    name: 'meus_agendamentos',
+    component: MeusAgendamentosView,
   },
   {
     path: '/usuarios',
