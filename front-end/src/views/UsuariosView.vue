@@ -8,10 +8,9 @@
           :disabled="isLoading" />
       </div>
 
-      <template v-if="isLoading">
-        <div class="loader"></div>
-      </template>
-      <template v-else>
+      <div v-if="isLoading" class="loader"></div>
+
+      <div v-else>
         <div class="usuarios" v-if="usuariosFiltrados.length > 0">
           <div class="card" v-for="usuario in usuariosFiltrados" :key="usuario.id">
             <div class="foto">
@@ -21,15 +20,60 @@
               <h2>{{ usuario.nome }}</h2>
               <p>{{ usuario.funcao }}</p>
               <p>{{ usuario.email }}</p>
-              <p>
-                Total de Agendamentos:
-                <b>{{ usuario.totalAgendamentos }}</b>
-              </p>
+
+              <div class="botoes">
+                <button class="btn-editar" @click="editarUsuario(usuario)">Editar</button>
+                <button class="btn-detalhar" @click="detalhesUsuario(usuario)">Detalhar</button>
+              </div>
             </div>
           </div>
         </div>
+
         <p v-else class="sem-resultados">Nenhum usuário encontrado.</p>
-      </template>
+      </div>
+    </div>
+    <!-- Modal de detalhar-->
+    <div v-if="mostrarDetalhes" class="modal-overlay">
+      <div class="modal-content">
+        <h2>Detalhes do Usuário</h2>
+        <div class="topo-detalhes">
+          <div class="detalhe-foto">
+            <img :src="usuarioSelecionado.foto" alt="Foto do usuário" />
+          </div>
+          <div class="detalhe-info">
+            <div class="campo">
+              <strong>Nome:</strong>
+              <p class="detalhe">{{ usuarioSelecionado.nome }}</p>
+            </div>
+            <div class="campo">
+              <strong>Email:</strong>
+              <p class="detalhe">{{ usuarioSelecionado.email }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="campo">
+          <strong>Telefone:</strong>
+          <p class="detalhe">{{ usuarioSelecionado.telefone || 'Não informado' }}</p>
+        </div>
+
+        <div class="campo">
+          <strong>Função:</strong>
+          <p class="detalhe">{{ usuarioSelecionado.funcao }}</p>
+        </div>
+
+        <div class="campo">
+          <strong>Quadra:</strong>
+          <p class="detalhe">{{ usuarioSelecionado.quadra || 'Nenhuma' }}</p>
+        </div>
+
+        <div class="campo">
+          <strong>Total de Agendamentos:</strong>
+          <p class="detalhe">{{ usuarioSelecionado.totalAgendamentos }}</p>
+        </div>
+
+        <button class="btn-fechar" @click="fecharDetalhes">Fechar</button>
+      </div>
     </div>
   </div>
 </template>
@@ -48,6 +92,8 @@ export default {
       usuarios: [],
       busca: '',
       isLoading: true,
+      mostrarDetalhes: false,
+      usuarioSelecionado: {},
     };
   },
   computed: {
@@ -72,6 +118,18 @@ export default {
         this.isLoading = false;
       }
     },
+    detalhesUsuario(usuario) {
+      console.log('Detalhes do usuário:', usuario);
+      this.usuarioSelecionado = usuario;
+      this.mostrarDetalhes = true;
+      console.log('mostrarDetalhes:', this.mostrarDetalhes);
+    },
+    fecharDetalhes() {
+      this.mostrarDetalhes = false;
+    },
+    editarUsuario(usuario) {
+      alert(`Função editar usuário: ${usuario.nome}`);
+    },
   },
 };
 </script>
@@ -83,10 +141,10 @@ export default {
 
 .layout {
   flex: 1;
-  padding: 20px;    
+  padding: 20px;
   min-height: 100vh;
-  margin-left: 180px;   
-  margin-right: -70px;   
+  margin-left: 180px;
+  margin-right: -70px;
 }
 
 .header {
@@ -191,29 +249,147 @@ export default {
   color: #333;
 }
 
+.botoes {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.btn-editar,
+.btn-detalhar {
+  flex: 1;
+  padding: 5px 0;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-editar {
+  background-color: #1e3a8a;
+  color: white;
+}
+
+.btn-detalhar {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px 40px;
+  border-radius: 10px;
+  width: 800px;
+  max-width: 90%;
+}
+
+.modal-content h2 {
+  margin-bottom: 20px;
+  color: #3b82f6;
+}
+
+.btn-fechar {
+  margin-top: 15px;
+  background-color: #3b82f6;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+}
+
+.campo strong {
+  color: #2d3748;
+  font-size: 14px;
+}
+
+.detalhe {
+  padding: 5px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
+  font-size: 15px;
+  color: #333;
+}
+
+.topo-detalhes {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.detalhe-foto img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #276ef1;
+}
+
+.detalhe-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 @media (max-width: 768px) {
   .container {
     flex-direction: column;
   }
 
+  .usuarios {
+    grid-template-columns: 1fr !important;
+  }
+
   .layout {
     margin-left: 0;
+    margin-right: 0;
     padding: 15px 10px;
   }
 
-  .usuarios {
-    grid-template-columns: 1fr;
+  .input-busca {
+    width: 100%;
   }
 
   .card {
     flex-direction: column;
     align-items: flex-start;
     padding: 15px;
+    max-width: 450px;
   }
 
-  .foto {
-    flex: 0 0 auto;
-    margin-bottom: 15px;
+  .foto img {
+    width: 80px;
+    height: 80px;
+  }
+
+  .btn-fechar {
+    width: 100%;
+  }
+  
+  .detalhe-foto {
+    display: none;
   }
 }
+
 </style>

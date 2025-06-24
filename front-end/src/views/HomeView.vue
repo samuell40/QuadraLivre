@@ -61,79 +61,73 @@
       </template>
     </section>
 
+
     <!-- Placar Futebol -->
     <h3 class="tit_horario">Placar Virtual</h3>
     <h4 class="tit_campeonato">Campeonato Futebol</h4>
     <div class="placar">
-      <template v-if="isLoadingPlacarFutebol">
-        <div class="loader"></div>
-      </template>
-      <template v-else>
-        <table>
-          <thead>
-            <tr>
-              <th>Posição</th>
-              <th>Time</th>
-              <th>Pontos</th>
-              <th>Vitórias</th>
-              <th>Empates</th>
-              <th>Derrotas</th>
-              <th>Gols</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(time) in timesFutebolComPosicao" :key="time.time">
-              <td>{{ time.posicao }}</td>
-              <td class="time-info">
-                <img :src="time.foto" alt="Foto do time" class="time-image" />
-                <span>{{ time.time }}</span>
-              </td>
-              <td>{{ time.pontuacao }}</td>
-              <td>{{ time.vitorias }}</td>
-              <td>{{ time.empates }}</td>
-              <td>{{ time.derrotas }}</td>
-              <td>{{ time.golsMarcados }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </template>
+      <div class="loader" v-if="isLoadingPlacarFutebol"></div>
+
+      <table v-else>
+        <thead>
+          <tr>
+            <th>Posição</th>
+            <th>Time</th>
+            <th>Pontos</th>
+            <th>Vitórias</th>
+            <th>Empates</th>
+            <th>Derrotas</th>
+            <th>Gols</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(time) in timesFutebolComPosicao" :key="time.time">
+            <td>{{ time.posicao }}º</td>
+            <td class="time-info">
+              <img :src="time.foto" alt="Foto do time" class="time-image" />
+              <span>{{ time.time }}</span>
+            </td>
+            <td>{{ time.pontuacao }}</td>
+            <td>{{ time.vitorias }}</td>
+            <td>{{ time.empates }}</td>
+            <td>{{ time.derrotas }}</td>
+            <td>{{ time.golsMarcados }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- Placar Vôlei -->
-    <h4 class="tit_campeonato"> Campeonato Vôlei</h4>
+    <h4 class="tit_campeonato">Campeonato Vôlei</h4>
     <div class="placar">
-      <template v-if="isLoadingPlacarVolei">
-        <div class="loader"></div>
-      </template>
-      <template v-else>
-        <table>
-          <thead>
-            <tr>
-              <th>Posição</th>
-              <th>Time</th>
-              <th>Pontos</th>
-              <th>Vitórias</th>
-              <th>Derrotas</th>
-              <th>Sets Vencidos</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(time) in timesVoleiComPosicao" :key="time.time">
-              <td>{{ time.posicao }}</td>
-              <td class="time-info">
-                <img :src="time.foto" alt="Foto do time" class="time-image" />
-                <span>{{ time.time }}</span>
-              </td>
-              <td>{{ time.pontuacao }}</td>
-              <td>{{ time.vitorias }}</td>
-              <td>{{ time.derrotas }}</td>
-              <td>{{ time.setsVencidos || 0 }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </template>
-    </div>
+      <div class="loader" v-if="isLoadingPlacarVolei"></div>
 
+      <table v-else>
+        <thead>
+          <tr>
+            <th>Posição</th>
+            <th>Time</th>
+            <th>Pontos</th>
+            <th>Vitórias</th>
+            <th>Derrotas</th>
+            <th>Sets Vencidos</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(time) in timesVoleiComPosicao" :key="time.time">
+            <td>{{ time.posicao }}º</td>
+            <td class="time-info">
+              <img :src="time.foto" alt="Foto do time" class="time-image" />
+              <span>{{ time.time }}</span>
+            </td>
+            <td>{{ time.pontuacao }}</td>
+            <td>{{ time.vitorias }}</td>
+            <td>{{ time.derrotas }}</td>
+            <td>{{ time.setsVencidos }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -151,8 +145,8 @@ export default {
     return {
       isMenuOpen: false,
       quadras: [],
-      times: [],            
-      timesVolei: [],      
+      times: [],
+      timesVolei: [],
       isLoadingQuadras: true,
       isLoadingPlacarFutebol: true,
       isLoadingPlacarVolei: true

@@ -195,6 +195,20 @@ export default {
   margin: 1rem 0;
   cursor: pointer;
 }
+.alerta-sucesso {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #22c55e;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  z-index: 9999;
+  font-weight: 600;
+  font-family: 'Montserrat', sans-serif;
+}
 
 @media (max-width: 768px) {
   .login {

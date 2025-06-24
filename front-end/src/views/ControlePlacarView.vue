@@ -163,6 +163,7 @@
             <table class="placar" v-if="modalidadePlacarSelecionada === 'futebol' || !modalidadePlacarSelecionada">
               <thead>
                 <tr>
+                  <th>Posição</th>
                   <th>Time</th>
                   <th>Pontos</th>
                   <th>Gols Marcados</th>
@@ -172,10 +173,8 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-if="timesPlacar.length === 0">
-                  <td colspan="6" style="text-align: center;">Nenhum time encontrado.</td>
-                </tr>
-                <tr v-else v-for="time in timesPlacar" :key="time.id">
+                <tr v-for="(time, index) in timesPlacar" :key="time.id">
+                  <td>{{ index + 1 }}º</td>
                   <td class="time-info">
                     <img v-if="time.foto" :src="time.foto" alt="Foto do time" class="time-image" />
                     {{ time.time }}
@@ -193,6 +192,7 @@
             <table class="placar" v-if="modalidadePlacarSelecionada === 'volei'">
               <thead>
                 <tr>
+                  <th>Posição</th>
                   <th>Time</th>
                   <th>Pontos</th>
                   <th>Vitórias</th>
@@ -201,10 +201,8 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-if="timesPlacar.length === 0">
-                  <td colspan="5" style="text-align: center;">Nenhum time encontrado.</td>
-                </tr>
-                <tr v-else v-for="time in timesPlacar" :key="time.id">
+                <tr v-for="(time, index) in timesPlacar" :key="time.id">
+                  <td>{{ index + 1 }}º</td>
                   <td class="time-info">
                     <img v-if="time.foto" :src="time.foto" alt="Foto do time" class="time-image" />
                     {{ time.time }}
@@ -221,6 +219,7 @@
           <button class="btn-cancel-placar" @click="fecharModalPlacar">Fechar</button>
         </div>
       </div>
+
       <!-- Modal de Resetar Placar -->
       <div v-if="modalResetarPlacarAberto" class="modal-overlay">
         <div class="modal-content modal-placar">
@@ -844,7 +843,7 @@ export default {
 
 
 .btn-add {
-  background-color: #1E3A8a;
+  background-color:#152147;
   color: white;
   padding: 8px 14px;
   border: none;

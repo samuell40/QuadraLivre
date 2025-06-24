@@ -4,7 +4,7 @@
 
     <div class="conteudo">
       <div class="topo">
-        <h1>Meus Agendamentos</h1>
+        <h1 class="title">Meus Agendamentos</h1>
         <div class="usuario">
           <img class="foto" src="@/assets/Logo1.jpg" alt="Foto de Perfil" />
           <span class="nome">João Silva</span>
@@ -70,9 +70,9 @@ const agendamentos = [
   align-items: center;
 }
 
-h1 {
-  color: #3b82f6;
-  font-weight: bold;
+.title{
+   color: #3b82f6;
+  font-size: 28px;
 }
 
 .usuario {

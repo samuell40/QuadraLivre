@@ -144,7 +144,7 @@ form {
 
 .cadastro_quadra {
   margin-left: 250px;
-  padding: 20px;
+  padding: 20px 55px; 
   border-radius: 20px;
 }
 
@@ -154,8 +154,8 @@ h1 {
   font-weight: bold;
   margin-bottom: 50px;
   margin-top: 20px;
-  margin-left: 7px;
-  color: #152147;
+  margin-left: 2px;
+  color: #3B82F6;
 }
 
 form {
@@ -189,7 +189,7 @@ textarea {
 
 .btn_cadastrarquadra {
   padding: 10px;
-  background-color: #152147;
+  background-color: #3B82F6;
   border: none;
   border-radius: 4px;
   color: white;
@@ -198,10 +198,6 @@ textarea {
   cursor: pointer;
   width: 100%;
   margin-top: 10px;
-}
-
-.btn_cadastrarprofissional:hover {
-  background-color: #9B287B;
 }
 
 input[type="file"] {
@@ -214,13 +210,6 @@ input[type="file"] {
 
 #adicionar_imagem {
   grid-column: 1 / -1;
-}
-
-@media (max-width: 1024px) {
-  .cadastro_quadra {
-    margin-left: 0;
-    padding: 15px;
-  }
 }
 
 @media (max-width: 768px) {

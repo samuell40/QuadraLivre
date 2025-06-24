@@ -32,23 +32,24 @@ async function updateUsuario(user) {
 }
 
 async function getUsuarios() {
-  const usuarios = await prisma.usuario.findMany({
-    include: {
-      agendamentos: true,
-    },
-  });
+ const usuarios = await prisma.usuario.findMany({
+  include: {
+    agendamentos: true,
+    quadra: true, 
+  },
+});
 
-  const usuariosFormatados = usuarios.map((user) => ({
-    id: user.id,
-    nome: user.nome,
-    email: user.email,
-    foto: user.foto,
-    funcao: user.funcao,
-    totalAgendamentos: user.agendamentos.length,
-  }));
-
+const usuariosFormatados = usuarios.map((user) => ({
+  id: user.id,
+  nome: user.nome,
+  email: user.email,
+  telefone: user.telefone,
+  foto: user.foto,
+  funcao: user.funcao,
+  quadra: user.quadra ? user.quadra.nome : null, 
+  totalAgendamentos: user.agendamentos.length,
+}));
   return usuariosFormatados;
 };
-
 
 module.exports = { postUsuario, updateUsuario, getUsuarios };
