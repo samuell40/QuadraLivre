@@ -2,7 +2,6 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function FirstRun() {
-
   await criarPermissoes();
   const quadra = await criarQuadra();
   await criarUsuarioAdmin(quadra.id);
@@ -17,8 +16,9 @@ async function criarPermissoes() {
 
   await prisma.permissao.createMany({
     data: [
-      { descricao: 'Admin' },
-      { descricao: 'Usuario' },
+      { descricao: 'ADMIN' },
+      { descricao: 'ADMINISTRADOR' },
+      { descricao: 'USUARIO' },
     ],
   });
 
@@ -43,12 +43,14 @@ async function criarQuadra() {
       endereco: 'Rua das Quadras, 123',
     },
   });
+
+  console.log('Quadra criada');
   return quadra;
 }
 
 async function criarUsuarioAdmin(quadraId) {
   const existe = await prisma.usuario.findFirst({
-    where: { email: 'admin@quadra.com' },
+    where: { email: 'samuelpc4567@gmail.com' },
   });
 
   if (existe) {
@@ -57,7 +59,7 @@ async function criarUsuarioAdmin(quadraId) {
   }
 
   const permissao = await prisma.permissao.findFirst({
-    where: { descricao: 'Admin' },
+    where: { descricao: 'ADMIN' },
   });
 
   if (!permissao) {
@@ -67,10 +69,10 @@ async function criarUsuarioAdmin(quadraId) {
 
   await prisma.usuario.create({
     data: {
-      nome: 'Administrador',
-      email: 'admin@quadra.com',
+      nome: 'Samuel',
+      email: 'samuelpc4567@gmail.com',
       telefone: '84999999999',
-      funcao: 'Administrador do Sistema',
+      funcao: 'usuario',
       foto: 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/Imagem%20padrao.png',
       permissaoId: permissao.id,
       quadraId: quadraId,
@@ -78,6 +80,18 @@ async function criarUsuarioAdmin(quadraId) {
   });
 
   console.log('Usuário admin criado');
+}
+
+if (require.main === module) {
+  FirstRun()
+    .then(() => {
+      console.log('Setup inicial concluído!');
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error('Erro no setup inicial:', error);
+      process.exit(1);
+    });
 }
 
 module.exports = { FirstRun };

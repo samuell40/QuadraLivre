@@ -1,9 +1,9 @@
 const permissoes = {
     TODOS: [1, 2, 3],
-    ADMIN_E_ADMIN_SISTEMAS: [1, 2],
-    ADMIN_SISTEMAS: [1],
+    ADMIN_E_ADMINISTRADOR: [1, 2],
+    ADMIN: [1],
     ADMINISTRADOR: [2],
-    USUARIO_COMUM: [3],
+    USUARIO: [3],
 };
 
 module.exports = permissoes;

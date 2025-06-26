@@ -7,10 +7,10 @@ const router = express.Router()
 
 router.post('/cadastrar/usuario', controller.postUsuario);
 
-
-router.put('/editar/usuario', validarJWT, [permission.postUsuario], controller.updateUsuario);
-
+router.put('/editar/usuario', controller.updateUsuario);
 
 router.get('/usuarios', controller.getUsuarios);
+
+router.get('/permissoes', controller.getPermissoes);
 
 module.exports = router;

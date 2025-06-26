@@ -12,7 +12,7 @@ async function postUsuario(req, res) {
 
 async function updateUsuario(req, res) {
   try {
-    const editar = await Usuario.updateProfissional(req.body); 
+    const editar = await Usuario.updateUsuario(req.body); 
     res.status(200).json({ editar });
   } catch (err) {
     console.error(err);
@@ -30,4 +30,14 @@ async function getUsuarios(req, res){
   }
 };
 
-module.exports = { postUsuario, updateUsuario, getUsuarios };
+async function getPermissoes(req, res) {
+  try {
+    const permissoes = await Usuario.listarPermissoes();
+    res.status(200).json(permissoes);
+  } catch (err) {
+    console.error('Erro ao buscar permissões:', err);
+    res.status(500).json({ error: 'Erro ao buscar permissões.' });
+  }
+}
+
+module.exports = { postUsuario, updateUsuario, getUsuarios, getPermissoes };

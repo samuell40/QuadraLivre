@@ -32,7 +32,8 @@
         <p v-else class="sem-resultados">Nenhum usuário encontrado.</p>
       </div>
     </div>
-    <!-- Modal de detalhar-->
+
+    <!-- Modal de detalhar -->
     <div v-if="mostrarDetalhes" class="modal-overlay">
       <div class="modal-content">
         <h2>Detalhes do Usuário</h2>
@@ -75,12 +76,45 @@
         <button class="btn-fechar" @click="fecharDetalhes">Fechar</button>
       </div>
     </div>
+
+    <!-- Modal de edição -->
+    <div v-if="mostrarEditar" class="modal-overlay">
+      <div class="modal-content">
+        <h2>Editar Usuário</h2>
+
+        <div class="campo">
+          <strong>Função:</strong>
+          <select v-model="form.funcao">
+            <option disabled value="">Selecione a função</option>
+            <option v-for="p in permissoes" :key="p.id" :value="p.descricao">
+              {{ p.descricao }}
+            </option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <strong>Quadra:</strong>
+          <select v-model="form.quadra">
+            <option disabled value="">Selecione a quadra</option>
+            <option v-for="q in quadras" :key="q.id" :value="q.nome">
+              {{ q.nome }}
+            </option>
+          </select>
+        </div>
+
+        <div class="botoes" style="margin-top: 20px;">
+          <button class="btn-salvarEdicao" @click="salvarEdicao">Salvar</button>
+          <button class="btn-fecharEdicao" @click="fecharEditar">Cancelar</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import SideBar from '@/components/SideBar.vue';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 export default {
   name: 'UsuariosView',
@@ -93,7 +127,15 @@ export default {
       busca: '',
       isLoading: true,
       mostrarDetalhes: false,
+      mostrarEditar: false,
       usuarioSelecionado: {},
+      permissoes: [],
+      quadras: [],
+      form: {
+        email: '',
+        funcao: '',
+        quadra: '',
+      },
     };
   },
   computed: {
@@ -114,21 +156,98 @@ export default {
         this.usuarios = response.data;
       } catch (error) {
         console.error('Erro ao carregar usuários:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Erro',
+          text: 'Falha ao carregar usuários.',
+        });
       } finally {
         this.isLoading = false;
       }
     },
+
     detalhesUsuario(usuario) {
-      console.log('Detalhes do usuário:', usuario);
       this.usuarioSelecionado = usuario;
       this.mostrarDetalhes = true;
-      console.log('mostrarDetalhes:', this.mostrarDetalhes);
     },
+
     fecharDetalhes() {
       this.mostrarDetalhes = false;
     },
-    editarUsuario(usuario) {
-      alert(`Função editar usuário: ${usuario.nome}`);
+
+    async listarPermissoes() {
+      try {
+        const resPerm = await axios.get('http://localhost:3000/permissoes');
+        this.permissoes = resPerm.data;
+      } catch (err) {
+        console.error('Erro ao carregar permissões', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Erro',
+          text: 'Falha ao carregar permissões.',
+        });
+      }
+    },
+
+    async listarQuadras() {
+      try {
+        const resQuadra = await axios.get('http://localhost:3000/quadra');
+        this.quadras = resQuadra.data;
+      } catch (err) {
+        console.error('Erro ao carregar quadras', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Erro',
+          text: 'Falha ao carregar quadras.',
+        });
+      }
+    },
+
+    async editarUsuario(usuario) {
+      this.usuarioSelecionado = usuario;
+      this.form.email = usuario.email;
+      this.form.funcao = '';
+      this.form.quadra = '';
+      this.mostrarEditar = true;
+
+      await Promise.all([this.listarPermissoes(), this.listarQuadras()]);
+    },
+    async salvarEdicao() {
+      try {
+        if (!this.form.funcao) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Atenção',
+            text: 'Selecione uma função válida antes de salvar.',
+          });
+          return;
+        }
+
+        await axios.put('http://localhost:3000/editar/usuario', {
+          email: this.form.email,
+          funcao: this.form.funcao,       
+          quadra: this.form.quadra,
+        });
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Sucesso',
+          text: 'Usuário atualizado com sucesso!',
+        });
+
+        this.mostrarEditar = false;
+        this.carregarUsuarios(); 
+      } catch (err) {
+        console.error('Erro ao salvar edição:', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Erro',
+          text: 'Falha ao salvar edição do usuário.',
+        });
+      }
+    },
+    fecharEditar() {
+      this.mostrarEditar = false;
     },
   },
 };
@@ -275,6 +394,48 @@ export default {
   color: white;
 }
 
+.btn-salvarEdicao {
+  background-color: #3b82f6;
+  color: white;
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-fecharEdicao {
+  background-color: #7E7E7E;
+  color: white;
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-cancel {
+  background-color: #7E7E7E;
+  flex: 1;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  color: white;
+}
+
+
+.btn-save {
+  background-color: #3b82f6;
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  color: white;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -352,6 +513,14 @@ export default {
   gap: 12px;
 }
 
+select {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 15px;
+  margin-top: 5px;
+}
+
 @media (max-width: 768px) {
   .container {
     flex-direction: column;
@@ -386,10 +555,9 @@ export default {
   .btn-fechar {
     width: 100%;
   }
-  
+
   .detalhe-foto {
     display: none;
   }
 }
-
 </style>
