@@ -76,7 +76,6 @@
         <button class="btn-fechar" @click="fecharDetalhes">Fechar</button>
       </div>
     </div>
-
     <!-- Modal de edição -->
     <div v-if="mostrarEditar" class="modal-overlay">
       <div class="modal-content">
@@ -92,7 +91,8 @@
           </select>
         </div>
 
-        <div class="campo">
+        <!-- Não mostrar quadra para DESENVOLVEDOR_DE_SISTEMA e USUARIO -->
+        <div class="campo" v-if="form.funcao !== 'DESENVOLVEDOR_DE_SISTEMA' && form.funcao !== 'USUARIO'">
           <strong>Quadra:</strong>
           <select v-model="form.quadra">
             <option disabled value="">Selecione a quadra</option>
@@ -225,7 +225,7 @@ export default {
 
         await axios.put('http://localhost:3000/editar/usuario', {
           email: this.form.email,
-          funcao: this.form.funcao,       
+          funcao: this.form.funcao,
           quadra: this.form.quadra,
         });
 
@@ -236,7 +236,7 @@ export default {
         });
 
         this.mostrarEditar = false;
-        this.carregarUsuarios(); 
+        this.carregarUsuarios();
       } catch (err) {
         console.error('Erro ao salvar edição:', err);
         Swal.fire({

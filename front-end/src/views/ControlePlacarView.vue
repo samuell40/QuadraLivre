@@ -741,11 +741,11 @@ export default {
       this.jogo.timeA.pts.valor = dados.pontuacao;
       this.jogo.timeA.pj.valor = dados.jogos;
       this.jogo.timeA.golspro.valor = dados.golsPro;
-      this.jogo.timeA.golsofridos.valor = dados.golsSofrido;
+      this.jogo.timeA.golsofridos.valor = dados.golsSofridos;
       this.jogo.timeA.empates.valor = dados.empates;
       this.jogo.timeA.vitorias.valor = dados.vitorias;
       this.jogo.timeA.derrotas.valor = dados.derrotas;
-      this.jogo.timeA.cartaoamarelo.valor = dados.cartoesAmarelo;
+      this.jogo.timeA.cartaoamarelo.valor = dados.cartoesAmarelos;
       this.jogo.timeA.cartaovermelho.valor = dados.cartoesVermelhos;
 
     } else if (this.modalidadeSelecionada === 'volei') {

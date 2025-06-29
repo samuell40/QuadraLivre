@@ -14,24 +14,32 @@ async function postUsuario(user) {
   })
   return cadastro;
 }
-
 async function updateUsuario(user) {
-  const quadra = await prisma.quadra.findFirst({
-    where: { nome: user.quadra },
-  });
-
   const permissao = await prisma.permissao.findFirst({
     where: { descricao: user.funcao },
   });
 
+  let dadosAtualizados = {
+    permissaoId: permissao.id,
+    funcao: permissao.descricao,
+  };
+
+  // Se a permissão NÃO for DESENVOLVEDOR_DE_SISTEMA nem USUARIO, atualiza quadraId
+  if (permissao.descricao !== 'DESENVOLVEDOR_DE_SISTEMA' && permissao.descricao !== 'USUARIO') {
+    const quadra = await prisma.quadra.findFirst({
+      where: { nome: user.quadra },
+    });
+
+    dadosAtualizados.quadraId = quadra.id;
+  } else {
+    dadosAtualizados.quadraId = null; 
+  }
+
   const usuarioAtualizado = await prisma.usuario.update({
     where: { email: user.email },
-    data: {
-      quadraId: quadra.id,
-      permissaoId: permissao.id,
-      funcao:permissao.descricao,
-    },
+    data: dadosAtualizados,
   });
+
   return usuarioAtualizado;
 }
 
@@ -58,13 +66,7 @@ async function getUsuarios() {
 }
 
 async function listarPermissoes() {
-  return await prisma.permissao.findMany({
-    where: {
-      descricao: {
-        in: ['ADMINISTRADOR', 'DESENVOLVEDOR_DE_SISTEMA'], 
-      },
-    },
-  });
+  return await prisma.permissao.findMany();
 }
 
 module.exports = { postUsuario, updateUsuario, getUsuarios, listarPermissoes};
