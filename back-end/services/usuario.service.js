@@ -58,7 +58,13 @@ async function getUsuarios() {
 }
 
 async function listarPermissoes() {
-  return await prisma.permissao.findMany();
+  return await prisma.permissao.findMany({
+    where: {
+      descricao: {
+        in: ['ADMINISTRADOR', 'DESENVOLVEDOR_DE_SISTEMA'], 
+      },
+    },
+  });
 }
 
 module.exports = { postUsuario, updateUsuario, getUsuarios, listarPermissoes};

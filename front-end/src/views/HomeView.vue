@@ -73,29 +73,40 @@
           <tr>
             <th>Posição</th>
             <th>Time</th>
-            <th>Pontos</th>
-            <th>Vitórias</th>
-            <th>Empates</th>
-            <th>Derrotas</th>
-            <th>Gols</th>
+            <th>Pts</th>
+            <th>PJ</th>
+            <th>VIT</th>
+            <th>E</th>
+            <th>DER</th>
+            <th>GM</th>
+            <th>GS</th>
+            <th>SG</th>
+            <th>Amarelos</th>
+            <th>Vermelhos</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(time) in timesFutebolComPosicao" :key="time.time">
+          <tr v-for="time in times" :key="time.time">
             <td>{{ time.posicao }}º</td>
             <td class="time-info">
               <img :src="time.foto" alt="Foto do time" class="time-image" />
               <span>{{ time.time }}</span>
             </td>
             <td>{{ time.pontuacao }}</td>
+            <td>{{ time.jogos }}</td>
             <td>{{ time.vitorias }}</td>
             <td>{{ time.empates }}</td>
             <td>{{ time.derrotas }}</td>
-            <td>{{ time.golsMarcados }}</td>
+            <td>{{ time.golsPro }}</td>
+            <td>{{ time.golsSofridos }}</td>
+            <td>{{ time.saldoDeGols }}</td>
+            <td>{{ time.cartoesAmarelos }}</td>
+            <td>{{ time.cartoesVermelhos }}</td>
           </tr>
         </tbody>
       </table>
     </div>
+
 
     <!-- Placar Vôlei -->
     <h4 class="tit_campeonato">Campeonato Vôlei</h4>
@@ -107,23 +118,35 @@
           <tr>
             <th>Posição</th>
             <th>Time</th>
-            <th>Pontos</th>
-            <th>Vitórias</th>
-            <th>Derrotas</th>
-            <th>Sets Vencidos</th>
+            <th>PTS</th>
+            <th>J</th>
+            <th>VIT</th>
+            <th>DER</th>
+            <th>STG</th>
+            <th>2x0</th>
+            <th>2x1</th>
+            <th>1x2</th>
+            <th>0x2</th>
+            <th>WO</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(time) in timesVoleiComPosicao" :key="time.time">
+          <tr v-for="time in timesVolei" :key="time.time">
             <td>{{ time.posicao }}º</td>
             <td class="time-info">
               <img :src="time.foto" alt="Foto do time" class="time-image" />
               <span>{{ time.time }}</span>
             </td>
             <td>{{ time.pontuacao }}</td>
+            <td>{{ time.jogos }}</td>
             <td>{{ time.vitorias }}</td>
             <td>{{ time.derrotas }}</td>
             <td>{{ time.setsVencidos }}</td>
+            <td>{{ time.vitoria2x0 }}</td>
+            <td>{{ time.vitoria2x1 }}</td>
+            <td>{{ time.derrota2x1 }}</td>
+            <td>{{ time.derrota2x0 }}</td>
+            <td>{{ time.derrotaWo }}</td>
           </tr>
         </tbody>
       </table>
@@ -413,7 +436,7 @@ p {
   font-weight: bold;
 }
 
-.tit_campeonato{
+.tit_campeonato {
   font-size: 20px;
   color: #7E7E7E;
   font-weight: bold;

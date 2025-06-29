@@ -1,9 +1,22 @@
-const { criarTimeService, deletarTime, listarTimesPorModalidade, buscarTimeNome, atualizarTime, listarPlacar, resetarPlacarPorModalidade, cadastrarModalidade, removerModalidade, listarModalidades } = require('../services/placar.service');
+const {
+  criarTimeService,
+  deletarTime,
+  listarTimesPorModalidade,
+  buscarTimeNome,
+  atualizarTime,
+  listarPlacar,
+  resetarPlacarPorModalidade,
+  cadastrarModalidade,
+  removerModalidade,
+  listarModalidades,
+} = require('../services/placar.service');
 
 async function criarTime(req, res) {
   const { modalidade, time, foto } = req.body;
   try {
     const novoTime = await criarTimeService({ modalidade, time, foto });
+    await listarTimesPorModalidade(modalidade);
+    
     return res.status(201).json(novoTime);
   } catch (error) {
     console.error('Erro ao criar time:', error);
@@ -15,6 +28,8 @@ async function deletarTimeNome(req, res) {
   const { nome, modalidade } = req.params;
   try {
     await deletarTime(nome, modalidade);
+    await listarTimesPorModalidade(modalidade);
+
     return res.status(200).json({ mensagem: 'Time deletado com sucesso.' });
   } catch (error) {
     console.error('Erro ao deletar time:', error);
@@ -26,7 +41,7 @@ async function nomeTime(req, res) {
   const { modalidade } = req.params;
   try {
     const nomes = await listarTimesPorModalidade(modalidade);
-    return res.status(200).json(nomes); 
+    return res.status(200).json(nomes);
   } catch (error) {
     console.error('Erro ao buscar nomes dos times:', error);
     return res.status(500).json({ error: 'Erro interno no servidor.' });
@@ -60,7 +75,7 @@ async function atualizarPlacar(req, res) {
 async function getPlacar(req, res) {
   const { modalidade } = req.params;
   try {
-    const resultados = await listarPlacar(modalidade);
+    const resultados = await listarPlacar(modalidade); // já atualiza posições
     return res.status(200).json(resultados);
   } catch (error) {
     console.error('Erro ao buscar placar:', error);
@@ -111,4 +126,15 @@ async function getModalidadesController(req, res) {
   }
 }
 
-module.exports = { criarTime, deletarTimeNome, nomeTime,buscarTime, atualizarPlacar, getPlacar, resetarPlacar, cadastrarModalidadeController, removerModalidadeController, getModalidadesController};
+module.exports = {
+  criarTime,
+  deletarTimeNome,
+  nomeTime,
+  buscarTime,
+  atualizarPlacar,
+  getPlacar,
+  resetarPlacar,
+  cadastrarModalidadeController,
+  removerModalidadeController,
+  getModalidadesController,
+};

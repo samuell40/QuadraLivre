@@ -22,7 +22,6 @@
             </option>
           </select>
         </div>
-
         <div class="team">
           <p>Time:</p>
           <select v-model="timeSelecionado" class="dropdown">
@@ -37,6 +36,7 @@
       <!-- Placar Futebol -->
       <div class="game">
         <div class="team" v-if="modalidadeSelecionada === 'futebol'">
+          <!-- Linha: Pontos -->
           <div class="line">
             <div class="box-small">
               <p>Pontos</p>
@@ -48,26 +48,7 @@
             </div>
           </div>
 
-          <div class="line">
-            <div class="box-small">
-              <p>Gols Marcados</p>
-              <div class="controls">
-                <button @click="decrement(jogo.timeA.gols)" :disabled="!jogo.timeA.nome">−</button>
-                <span>{{ jogo.timeA.gols.valor }}</span>
-                <button @click="increment(jogo.timeA.gols)" :disabled="!jogo.timeA.nome">+</button>
-              </div>
-            </div>
-
-            <div class="box-small">
-              <p>Empates</p>
-              <div class="controls">
-                <button @click="decrement(jogo.timeA.empates, 'empate')" :disabled="!jogo.timeA.nome">−</button>
-                <span>{{ jogo.timeA.empates.valor }}</span>
-                <button @click="increment(jogo.timeA.empates, 'empate')" :disabled="!jogo.timeA.nome">+</button>
-              </div>
-            </div>
-          </div>
-
+          <!-- Vitórias, Empates, Derrotas -->
           <div class="line">
             <div class="box-small">
               <p>Vitórias</p>
@@ -77,7 +58,14 @@
                 <button @click="increment(jogo.timeA.vitorias, 'vitoria')" :disabled="!jogo.timeA.nome">+</button>
               </div>
             </div>
-
+            <div class="box-small">
+              <p>Empates</p>
+              <div class="controls">
+                <button @click="decrement(jogo.timeA.empates, 'empate')" :disabled="!jogo.timeA.nome">−</button>
+                <span>{{ jogo.timeA.empates.valor }}</span>
+                <button @click="increment(jogo.timeA.empates, 'empate')" :disabled="!jogo.timeA.nome">+</button>
+              </div>
+            </div>
             <div class="box-small">
               <p>Derrotas</p>
               <div class="controls">
@@ -88,8 +76,57 @@
             </div>
           </div>
 
+          <!--Jogadas -->
+          <div class="line">
+            <div class="box-small">
+              <p>Partidas Jogadas</p>
+              <div class="controls">
+                <button @click="decrement(jogo.timeA.pj)" :disabled="!jogo.timeA.nome">−</button>
+                <span>{{ jogo.timeA.pj.valor }}</span>
+                <button @click="increment(jogo.timeA.pj)" :disabled="!jogo.timeA.nome">+</button>
+              </div>
+            </div>
+            <div class="box-small">
+              <p>Gols Marcados</p>
+              <div class="controls">
+                <button @click="decrement(jogo.timeA.golspro)" :disabled="!jogo.timeA.nome">−</button>
+                <span>{{ jogo.timeA.golspro.valor }}</span>
+                <button @click="increment(jogo.timeA.golspro)" :disabled="!jogo.timeA.nome">+</button>
+              </div>
+            </div>
+            <div class="box-small">
+              <p>Gols Sofridos</p>
+              <div class="controls">
+                <button @click="decrement(jogo.timeA.golsofridos)" :disabled="!jogo.timeA.nome">−</button>
+                <span>{{ jogo.timeA.golsofridos.valor }}</span>
+                <button @click="increment(jogo.timeA.golsofridos)" :disabled="!jogo.timeA.nome">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!--Cartões Amarelos e Vermelhos -->
+          <div class="line">
+            <div class="box-small">
+              <p>Cartão amarelo</p>
+              <div class="controls">
+                <button @click="decrement(jogo.timeA.cartaoamarelo)" :disabled="!jogo.timeA.nome">−</button>
+                <span>{{ jogo.timeA.cartaoamarelo.valor }}</span>
+                <button @click="increment(jogo.timeA.cartaoamarelo)" :disabled="!jogo.timeA.nome">+</button>
+              </div>
+            </div>
+            <div class="box-small">
+              <p>Cartão Vermelho</p>
+              <div class="controls">
+                <button @click="decrement(jogo.timeA.cartaovermelho)" :disabled="!jogo.timeA.nome">−</button>
+                <span>{{ jogo.timeA.cartaovermelho.valor }}</span>
+                <button @click="increment(jogo.timeA.cartaovermelho)" :disabled="!jogo.timeA.nome">+</button>
+              </div>
+            </div>
+          </div>
+
           <button class="btn-save1" @click="salvarPlacar">Salvar</button>
         </div>
+
 
         <!-- Placar Vôlei -->
         <div class="team" v-else-if="modalidadeSelecionada === 'volei'">
@@ -97,29 +134,37 @@
             <div class="box-small">
               <p>Pontos</p>
               <div class="controls espacamento">
-                <button @click="decrement(jogoVolei.timeA.pts)" :disabled="!jogoVolei.timeA.nome">−</button>
-                <span>{{ jogoVolei.timeA.pts.valor }}</span>
-                <button @click="increment(jogoVolei.timeA.pts)" :disabled="!jogoVolei.timeA.nome">+</button>
+                <button @click="decrement(volei.timeA.pts)" :disabled="!volei.timeA.nome">−</button>
+                <span>{{ volei.timeA.pts.valor }}</span>
+                <button @click="increment(volei.timeA.pts)" :disabled="!volei.timeA.nome">+</button>
               </div>
             </div>
           </div>
 
           <div class="line">
             <div class="box-small">
+              <p>Partidas Jogadas</p>
+              <div class="controls">
+                <button @click="decrement(volei.timeA.pj)" :disabled="!volei.timeA.nome">−</button>
+                <span>{{ volei.timeA.pj.valor }}</span>
+                <button @click="increment(volei.timeA.pj)" :disabled="!volei.timeA.nome">+</button>
+              </div>
+            </div>
+            <div class="box-small">
               <p>Vitórias</p>
               <div class="controls">
-                <button @click="decrement(jogoVolei.timeA.vitorias)" :disabled="!jogoVolei.timeA.nome">−</button>
-                <span>{{ jogoVolei.timeA.vitorias.valor }}</span>
-                <button @click="increment(jogoVolei.timeA.vitorias)" :disabled="!jogoVolei.timeA.nome">+</button>
+                <button @click="decrement(volei.timeA.vitorias)" :disabled="!volei.timeA.nome">−</button>
+                <span>{{ volei.timeA.vitorias.valor }}</span>
+                <button @click="increment(volei.timeA.vitorias)" :disabled="!volei.timeA.nome">+</button>
               </div>
             </div>
 
             <div class="box-small">
               <p>Derrotas</p>
               <div class="controls">
-                <button @click="decrement(jogoVolei.timeA.derrotas)" :disabled="!jogoVolei.timeA.nome">−</button>
-                <span>{{ jogoVolei.timeA.derrotas.valor }}</span>
-                <button @click="increment(jogoVolei.timeA.derrotas)" :disabled="!jogoVolei.timeA.nome">+</button>
+                <button @click="decrement(volei.timeA.derrotas)" :disabled="!volei.timeA.nome">−</button>
+                <span>{{ volei.timeA.derrotas.valor }}</span>
+                <button @click="increment(volei.timeA.derrotas)" :disabled="!volei.timeA.nome">+</button>
               </div>
             </div>
           </div>
@@ -127,10 +172,53 @@
           <div class="line">
             <div class="box-small">
               <p>Sets Vencidos</p>
-              <div class="controls espacamento">
-                <button @click="decrement(jogoVolei.timeA.setsVencidos)" :disabled="!jogoVolei.timeA.nome">−</button>
-                <span>{{ jogoVolei.timeA.setsVencidos.valor }}</span>
-                <button @click="increment(jogoVolei.timeA.setsVencidos)" :disabled="!jogoVolei.timeA.nome">+</button>
+              <div class="controls">
+                <button @click="decrement(volei.timeA.setsVencidos)" :disabled="!volei.timeA.nome">−</button>
+                <span>{{ volei.timeA.setsVencidos.valor }}</span>
+                <button @click="increment(volei.timeA.setsVencidos)" :disabled="!volei.timeA.nome">+</button>
+              </div>
+            </div>
+            <div class="box-small">
+              <p>2x0</p>
+              <div class="controls">
+                <button @click="decrement(volei.timeA.doiszero)" :disabled="!volei.timeA.nome">−</button>
+                <span>{{ volei.timeA.doiszero.valor }}</span>
+                <button @click="increment(volei.timeA.doiszero)" :disabled="!volei.timeA.nome">+</button>
+              </div>
+            </div>
+            <div class="box-small">
+              <p>2x1</p>
+              <div class="controls">
+                <button @click="decrement(volei.timeA.doisum)" :disabled="!volei.timeA.nome">−</button>
+                <span>{{ volei.timeA.doisum.valor }}</span>
+                <button @click="increment(volei.timeA.doisum)" :disabled="!volei.timeA.nome">+</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="line">
+            <div class="box-small">
+              <p>1x2</p>
+              <div class="controls">
+                <button @click="decrement(volei.timeA.umdois)" :disabled="!volei.timeA.nome">−</button>
+                <span>{{ volei.timeA.umdois.valor }}</span>
+                <button @click="increment(volei.timeA.umdois)" :disabled="!volei.timeA.nome">+</button>
+              </div>
+            </div>
+            <div class="box-small">
+              <p>0x2</p>
+              <div class="controls">
+                <button @click="decrement(volei.timeA.zerodois)" :disabled="!volei.timeA.nome">−</button>
+                <span>{{ volei.timeA.zerodois.valor }}</span>
+                <button @click="increment(volei.timeA.zerodois)" :disabled="!volei.timeA.nome">+</button>
+              </div>
+            </div>
+            <div class="box-small">
+              <p>W.O</p>
+              <div class="controls">
+                <button @click="decrement(volei.timeA.wo)" :disabled="!volei.timeA.nome">−</button>
+                <span>{{ volei.timeA.wo.valor }}</span>
+                <button @click="increment(volei.timeA.wo)" :disabled="!volei.timeA.nome">+</button>
               </div>
             </div>
           </div>
@@ -138,7 +226,6 @@
           <button class="btn-save1" @click="salvarPlacarVolei">Salvar</button>
         </div>
       </div>
-
       <!-- Modal Visualizar Placar -->
       <div v-if="modalPlacarAberto" class="modalPlacarPai">
         <div class="modal-conteudo modal-placar">
@@ -159,31 +246,40 @@
           </div>
 
           <div class="placar-table">
-            <!-- TABELA FUTEBOL -->
-            <table class="placar" v-if="modalidadePlacarSelecionada === 'futebol' || !modalidadePlacarSelecionada">
+            <table class="placar" v-if="modalidadePlacarSelecionada === 'futebol'">
               <thead>
                 <tr>
                   <th>Posição</th>
                   <th>Time</th>
-                  <th>Pontos</th>
-                  <th>Gols Marcados</th>
-                  <th>Empates</th>
-                  <th>Vitórias</th>
-                  <th>Derrotas</th>
+                  <th>PTS</th>
+                  <th>J</th>
+                  <th>GM</th>
+                  <th>GS</th>
+                  <th>SG</th>
+                  <th>E</th>
+                  <th>VIT</th>
+                  <th>DER</th>
+                  <th>Amarelos</th>
+                  <th>Vermelhos</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(time, index) in timesPlacar" :key="time.id">
-                  <td>{{ index + 1 }}º</td>
+                  <td>{{ index + 1 }}</td>
                   <td class="time-info">
                     <img v-if="time.foto" :src="time.foto" alt="Foto do time" class="time-image" />
                     {{ time.time }}
                   </td>
                   <td>{{ time.pontuacao }}</td>
-                  <td>{{ time.golsMarcados }}</td>
+                  <td>{{ time.jogos }}</td>
+                  <td>{{ time.golsPro }}</td>
+                  <td>{{ time.golsSofridos }}</td>
+                  <td>{{ time.saldoDeGols }}</td>
                   <td>{{ time.empates }}</td>
                   <td>{{ time.vitorias }}</td>
                   <td>{{ time.derrotas }}</td>
+                  <td>{{ time.cartoesAmarelos }}</td>
+                  <td>{{ time.cartoesVermelhos }}</td>
                 </tr>
               </tbody>
             </table>
@@ -194,10 +290,16 @@
                 <tr>
                   <th>Posição</th>
                   <th>Time</th>
-                  <th>Pontos</th>
-                  <th>Vitórias</th>
-                  <th>Derrotas</th>
-                  <th>Sets Vencidos</th>
+                  <th>PTS</th>
+                  <th>J</th>
+                  <th>VIT</th>
+                  <th>DER</th>
+                  <th>STV</th>
+                  <th>2x0</th>
+                  <th>2x1</th>
+                  <th>1x2</th>
+                  <th>0x2</th>
+                  <th>W.O.</th>
                 </tr>
               </thead>
               <tbody>
@@ -208,178 +310,177 @@
                     {{ time.time }}
                   </td>
                   <td>{{ time.pontuacao }}</td>
+                  <td>{{ time.jogos }}</td>
                   <td>{{ time.vitorias }}</td>
                   <td>{{ time.derrotas }}</td>
                   <td>{{ time.setsVencidos }}</td>
+                  <td>{{ time.vitoria2x0 }}</td>
+                  <td>{{ time.vitoria2x1 }}</td>
+                  <td>{{ time.derrota2x1 }}</td>
+                  <td>{{ time.derrota2x0 }}</td>
+                  <td>{{ time.derrotaWo }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
+          <div v-if="timesPlacar.length === 0" class="sem-dados">Nenhum placar encontrado para essa modalidade.</div>
+
           <button class="btn-cancel-placar" @click="fecharModalPlacar">Fechar</button>
         </div>
       </div>
+    </div>
+    <!-- Modal de Resetar Placar -->
+    <div v-if="modalResetarPlacarAberto" class="modal-overlay">
+      <div class="modal-content modal-placar">
+        <h2>Resetar Placar</h2>
+        <label for="modalidade-resetar">Escolha a modalidade:</label>
+        <select id="modalidade-resetar" v-model="modalidadeParaResetar" class="dropdown">
+          <option disabled value="">Selecione</option>
+          <option v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" :value="modalidade.nome">
+            {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
+          </option>
+        </select>
+        <div class="botoes" style="margin-top: 1rem;">
+          <button class="btn-save1" @click="confirmarResetarPlacar">Confirmar</button>
+          <button class="btn-cancel-placar" @click="fecharModalResetarPlacar">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-      <!-- Modal de Resetar Placar -->
-      <div v-if="modalResetarPlacarAberto" class="modal-overlay">
-        <div class="modal-content modal-placar">
-          <h2>Resetar Placar</h2>
-          <label for="modalidade-resetar">Escolha a modalidade:</label>
-          <select id="modalidade-resetar" v-model="modalidadeParaResetar" class="dropdown">
-            <option disabled value="">Selecione</option>
+  <!-- Modal Gerenciar Modalidade -->
+  <div v-if="modalGerenciarModalidadeAberto" class="modal-overlay" @click.self="fecharModalGerenciarModalidade">
+    <div class="modal-content">
+      <h2>Gerenciar Modalidades</h2>
+      <div class="form-group">
+        <label for="acaoGerenciarModalidade">Escolha a ação:</label>
+        <select id="acaoGerenciarModalidade" v-model="acaoGerenciarModalidade" class="dropdown">
+          <option disabled value="">Selecione uma opção</option>
+          <option value="adicionar">Adicionar Modalidade</option>
+          <option value="remover">Remover Modalidade</option>
+        </select>
+      </div>
+      <div class="buttons">
+        <button :disabled="!acaoGerenciarModalidade" @click="confirmarAcaoGerenciarModalidade" class="btn-save">
+          Continuar
+        </button>
+        <button class="btn-cancel" @click="fecharModalGerenciarModalidade">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Adicionar Modalidade -->
+  <div v-if="modalModalidadeAberto" class="modal-overlay" @click.self="fecharModalModalidade">
+    <div class="modal-content">
+      <h2>Adicionar Modalidade</h2>
+      <form @submit.prevent="cadastrarModalidade">
+        <div class="form-group">
+          <label for="novaModalidade">Nome da Modalidade</label>
+          <input type="text" id="novaModalidade" v-model="novaModalidade" required />
+        </div>
+        <div class="buttons">
+          <button type="submit" class="btn-save">Cadastrar</button>
+          <button type="button" class="btn-cancel" @click="fecharModalModalidade">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Remover Modalidade -->
+  <div v-if="modalRemoverModalidadeAberto" class="modal-overlay" @click.self="fecharModalRemoverModalidade">
+    <div class="modal-content">
+      <h2>Remover Modalidade</h2>
+      <div class="form-group">
+        <label for="modalidadeRemover">Selecione a Modalidade:</label>
+        <select id="modalidadeRemover" v-model="modalidadeParaRemover" class="dropdown">
+          <option disabled value="">Selecione uma modalidade</option>
+          <option v-for="(modalidade, i) in modalidadesDisponiveis" :key="i" :value="modalidade.nome">
+            {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
+          </option>
+        </select>
+      </div>
+      <div class="buttons">
+        <button class="btn-save" @click="removerModalidade">Remover</button>
+        <button class="btn-cancel" @click="fecharModalRemoverModalidade">Cancelar</button>
+      </div>
+    </div>
+  </div>
+  <div v-if="modalGerenciarTimeAberto" class="modal-overlay" @click.self="fecharModalGerenciarTime">
+    <div class="modal-content">
+      <h2>Gerenciar Times</h2>
+      <div class="form-group">
+        <label for="acaoGerenciarTime">Escolha a ação:</label>
+        <select id="acaoGerenciarTime" v-model="acaoGerenciarTime" class="dropdown">
+          <option disabled value="">Selecione uma opção</option>
+          <option value="adicionar">Adicionar Time</option>
+          <option value="remover">Remover Time</option>
+        </select>
+      </div>
+      <div class="buttons">
+        <button :disabled="!acaoGerenciarTime" @click="confirmarAcaoGerenciarTime" class="btn-save">
+          Continuar
+        </button>
+        <button class="btn-cancel" @click="fecharModalGerenciarTime">Cancelar</button>
+      </div>
+    </div>
+  </div>
+  <div v-if="modalAdicionarTimeAberto" class="modal-overlay" @click.self="fecharModalAdicionarTime">
+    <div class="modal-content">
+      <h2>Adicionar Time</h2>
+      <form @submit.prevent="adicionarTime">
+        <div class="form-group">
+          <label for="modalidade-add-time">Modalidade:</label>
+          <select id="modalidade-add-time" v-model="modalidadeSelecionada" required class="dropdown">
+            <option disabled value="">Selecione uma modalidade</option>
             <option v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" :value="modalidade.nome">
               {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
             </option>
           </select>
-          <div class="botoes" style="margin-top: 1rem;">
-            <button class="btn-save1" @click="confirmarResetarPlacar">Confirmar</button>
-            <button class="btn-cancel-placar" @click="fecharModalResetarPlacar">Cancelar</button>
-          </div>
         </div>
-      </div>
-      <!-- Modal Gerenciar Modalidade -->
-      <div v-if="modalGerenciarModalidadeAberto" class="modal-overlay" @click.self="fecharModalGerenciarModalidade">
-        <div class="modal-content">
-          <h2>Gerenciar Modalidades</h2>
-          <div class="form-group">
-            <label for="acaoGerenciarModalidade">Escolha a ação:</label>
-            <select id="acaoGerenciarModalidade" v-model="acaoGerenciarModalidade" class="dropdown">
-              <option disabled value="">Selecione uma opção</option>
-              <option value="adicionar">Adicionar Modalidade</option>
-              <option value="remover">Remover Modalidade</option>
-            </select>
-          </div>
+        <div class="form-group">
+          <label for="novoTime">Nome do Time:</label>
+          <input type="text" id="novoTime" v-model="timeParaAdicionar" required />
+        </div>
+        <div class="form-group">
+          <label for="fotoTime">Foto (opcional):</label>
+          <input type="file" id="fotoTime" @change="handleImagemUpload" accept="image/*" />
+        </div>
+        <div class="buttons">
+          <button type="submit" class="btn-save">Cadastrar</button>
+          <button type="button" class="btn-cancel" @click="fecharModalAdicionarTime">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-          <div class="buttons">
-            <button :disabled="!acaoGerenciarModalidade" @click="confirmarAcaoGerenciarModalidade" class="btn-save">
-              Continuar
-            </button>
-            <button class="btn-cancel" @click="fecharModalGerenciarModalidade">Cancelar</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Adicionar Modalidade -->
-      <div v-if="modalModalidadeAberto" class="modal-overlay" @click.self="fecharModalModalidade">
-        <div class="modal-content">
-          <h2>Adicionar Modalidade</h2>
-          <form @submit.prevent="cadastrarModalidade">
-            <div class="form-group">
-              <label for="novaModalidade">Nome da Modalidade</label>
-              <input type="text" id="novaModalidade" v-model="novaModalidade" required />
-            </div>
-            <div class="buttons">
-              <button type="submit" class="btn-save">Cadastrar</button>
-              <button type="button" class="btn-cancel" @click="fecharModalModalidade">Cancelar</button>
-            </div>
-          </form>
-        </div>
+  <div v-if="modalRemoverTimeAberto" class="modal-overlay" @click.self="fecharModalRemoverTime">
+    <div class="modal-content">
+      <h2>Remover Time</h2>
+      <div class="form-group">
+        <label for="modalidade-remover-time">Modalidade:</label>
+        <select id="modalidade-remover-time" v-model="modalidadeSelecionada" @change="carregarTimes" class="dropdown">
+          <option disabled value="">Selecione uma modalidade</option>
+          <option v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" :value="modalidade.nome">
+            {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
+          </option>
+        </select>
       </div>
 
-      <!-- Modal Remover Modalidade -->
-      <div v-if="modalRemoverModalidadeAberto" class="modal-overlay" @click.self="fecharModalRemoverModalidade">
-        <div class="modal-content">
-          <h2>Remover Modalidade</h2>
-
-          <div class="form-group">
-            <label for="modalidadeRemover">Selecione a Modalidade:</label>
-            <select id="modalidadeRemover" v-model="modalidadeParaRemover" class="dropdown">
-              <option disabled value="">Selecione uma modalidade</option>
-              <option v-for="(modalidade, i) in modalidadesDisponiveis" :key="i" :value="modalidade.nome">
-                {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
-              </option>
-            </select>
-          </div>
-
-          <div class="buttons">
-            <button class="btn-save" @click="removerModalidade">Remover</button>
-            <button class="btn-cancel" @click="fecharModalRemoverModalidade">Cancelar</button>
-          </div>
-        </div>
-      </div>
-      <div v-if="modalGerenciarTimeAberto" class="modal-overlay" @click.self="fecharModalGerenciarTime">
-        <div class="modal-content">
-          <h2>Gerenciar Times</h2>
-          <div class="form-group">
-            <label for="acaoGerenciarTime">Escolha a ação:</label>
-            <select id="acaoGerenciarTime" v-model="acaoGerenciarTime" class="dropdown">
-              <option disabled value="">Selecione uma opção</option>
-              <option value="adicionar">Adicionar Time</option>
-              <option value="remover">Remover Time</option>
-            </select>
-          </div>
-
-          <div class="buttons">
-            <button :disabled="!acaoGerenciarTime" @click="confirmarAcaoGerenciarTime" class="btn-save">
-              Continuar
-            </button>
-            <button class="btn-cancel" @click="fecharModalGerenciarTime">Cancelar</button>
-          </div>
-        </div>
-      </div>
-      <div v-if="modalAdicionarTimeAberto" class="modal-overlay" @click.self="fecharModalAdicionarTime">
-        <div class="modal-content">
-          <h2>Adicionar Time</h2>
-          <form @submit.prevent="adicionarTime">
-            <div class="form-group">
-              <label for="modalidade-add-time">Modalidade:</label>
-              <select id="modalidade-add-time" v-model="modalidadeSelecionada" required class="dropdown">
-                <option disabled value="">Selecione uma modalidade</option>
-                <option v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" :value="modalidade.nome">
-                  {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
-                </option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="novoTime">Nome do Time:</label>
-              <input type="text" id="novoTime" v-model="timeParaAdicionar" required />
-            </div>
-
-            <div class="form-group">
-              <label for="fotoTime">Foto (opcional):</label>
-              <input type="file" id="fotoTime" @change="handleImagemUpload" accept="image/*" />
-            </div>
-
-            <div class="buttons">
-              <button type="submit" class="btn-save">Cadastrar</button>
-              <button type="button" class="btn-cancel" @click="fecharModalAdicionarTime">Cancelar</button>
-            </div>
-          </form>
-        </div>
-      </div>
-      <div v-if="modalRemoverTimeAberto" class="modal-overlay" @click.self="fecharModalRemoverTime">
-        <div class="modal-content">
-          <h2>Remover Time</h2>
-
-          <div class="form-group">
-            <label for="modalidade-remover-time">Modalidade:</label>
-            <select id="modalidade-remover-time" v-model="modalidadeSelecionada" @change="carregarTimes"
-              class="dropdown">
-              <option disabled value="">Selecione uma modalidade</option>
-              <option v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" :value="modalidade.nome">
-                {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
-              </option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="removerTime">Selecione o Time:</label>
-            <select id="removerTime" v-model="timeParaRemover" class="dropdown">
-              <option disabled value="">Selecione</option>
-              <option v-for="(time, i) in times" :key="i" :value="time">
-                {{ time }}
-              </option>
-            </select>
-          </div>
-
-          <div class="buttons">
-            <button class="btn-save" @click="removerTime">Remover</button>
-            <button class="btn-cancel" @click="fecharModalRemoverTime">Cancelar</button>
-          </div>
-        </div>
+      <div class="form-group">
+        <label for="removerTime">Selecione o Time:</label>
+        <select id="removerTime" v-model="timeParaRemover" class="dropdown">
+          <option disabled value="">Selecione</option>
+          <option v-for="(time, i) in times" :key="i" :value="time">
+            {{ time }}
+          </option>
+        </select>
       </div>
 
+      <div class="buttons">
+        <button class="btn-save" @click="removerTime">Remover</button>
+        <button class="btn-cancel" @click="fecharModalRemoverTime">Cancelar</button>
+      </div>
     </div>
   </div>
 </template>
@@ -403,19 +504,29 @@ export default {
         timeA: {
           nome: '',
           pts: { valor: 0 },
-          gols: { valor: 0 },
+          pj: { valor: 0 },
+          golspro: { valor: 0 },
+          golsofridos: { valor: 0 },
           empates: { valor: 0 },
           vitorias: { valor: 0 },
           derrotas: { valor: 0 },
+          cartaoamarelo: { valor: 0 },
+          cartaovermelho: { valor: 0 },
         },
       },
-      jogoVolei: {
+      volei: {
         timeA: {
           nome: '',
           pts: { valor: 0 },
+          pj: { valor: 0 },
           vitorias: { valor: 0 },
           derrotas: { valor: 0 },
           setsVencidos: { valor: 0 },
+          doiszero: { valor: 0 },
+          doisum: { valor: 0 },
+          umdois: { valor: 0 },
+          zerodois: { valor: 0 },
+          wo: { valor: 0 },
         },
       },
       modalGerenciarModalidadeAberto: false,
@@ -458,7 +569,7 @@ export default {
     timeSelecionado(newVal) {
       if (newVal) this.carregarPlacarTime();
       else this.limparDadosJogo();
-    }
+    },
   },
   methods: {
     handleImagemUpload(event) {
@@ -517,9 +628,7 @@ export default {
 
     confirmarAcaoGerenciarModalidade() {
       if (!this.acaoGerenciarModalidade) return;
-
       this.modalGerenciarModalidadeAberto = false;
-
       if (this.acaoGerenciarModalidade === 'adicionar') {
         this.modalModalidadeAberto = true;
       } else if (this.acaoGerenciarModalidade === 'remover') {
@@ -544,9 +653,7 @@ export default {
           time: this.timeParaAdicionar.trim(),
           foto: this.fotoTime || null,
         };
-
         await axios.post('http://localhost:3000/times', payload);
-
         Swal.fire('Sucesso', 'Time adicionado com sucesso!', 'success');
         this.fecharModalAdicionarTime();
         this.carregarTimes();
@@ -555,11 +662,9 @@ export default {
         Swal.fire('Erro', error.response?.data?.error || 'Erro ao adicionar time.', 'error');
       }
     },
-
     async removerTime() {
       try {
         await axios.delete(`http://localhost:3000/placar/${this.modalidadeSelecionada}/${this.timeParaRemover}`);
-
         Swal.fire('Sucesso', 'Time removido com sucesso!', 'success');
         this.fecharModalRemoverTime();
         this.carregarTimes();
@@ -603,7 +708,6 @@ export default {
         this.modalidadeParaRemover = '';
         this.modalRemoverModalidadeAberto = false;
         this.carregarModalidades();
-
         if (this.modalidadeSelecionada === this.modalidadeParaRemover) {
           this.modalidadeSelecionada = '';
           this.timeSelecionado = '';
@@ -625,48 +729,69 @@ export default {
         Swal.fire('Erro', 'Não foi possível carregar os times.', 'error');
       }
     },
+  async carregarPlacarTime() {
+  if (!this.modalidadeSelecionada || !this.timeSelecionado) return;
 
-    async carregarPlacarTime() {
-      if (!this.modalidadeSelecionada || !this.timeSelecionado) return;
-      try {
-        const res = await axios.get(`http://localhost:3000/times/${this.modalidadeSelecionada}/${this.timeSelecionado}`);
-        const dados = res.data;
+  try {
+    const res = await axios.get(`http://localhost:3000/times/${this.modalidadeSelecionada}/${this.timeSelecionado}`);
+    const dados = res.data;
 
-        if (this.modalidadeSelecionada === 'futebol') {
-          this.jogo.timeA.nome = dados.time;
-          this.jogo.timeA.pts.valor = dados.pontuacao || 0;
-          this.jogo.timeA.gols.valor = dados.golsMarcados || 0;
-          this.jogo.timeA.empates.valor = dados.empates || 0;
-          this.jogo.timeA.vitorias.valor = dados.vitorias || 0;
-          this.jogo.timeA.derrotas.valor = dados.derrotas || 0;
-        } else if (this.modalidadeSelecionada === 'volei') {
-          this.jogoVolei.timeA.nome = dados.time;
-          this.jogoVolei.timeA.pts.valor = dados.pontuacao || 0;
-          this.jogoVolei.timeA.vitorias.valor = dados.vitorias || 0;
-          this.jogoVolei.timeA.derrotas.valor = dados.derrotas || 0;
-          this.jogoVolei.timeA.setsVencidos.valor = dados.setsVencidos || 0;
-        }
-      } catch (error) {
-        console.error('Erro ao carregar placar do time:', error);
-        Swal.fire('Erro', 'Não foi possível carregar o placar do time.', 'error');
-      }
-    },
+    if (this.modalidadeSelecionada === 'futebol') {
+      this.jogo.timeA.nome = dados.time || '';
+      this.jogo.timeA.pts.valor = dados.pontuacao;
+      this.jogo.timeA.pj.valor = dados.jogos;
+      this.jogo.timeA.golspro.valor = dados.golsPro;
+      this.jogo.timeA.golsofridos.valor = dados.golsSofrido;
+      this.jogo.timeA.empates.valor = dados.empates;
+      this.jogo.timeA.vitorias.valor = dados.vitorias;
+      this.jogo.timeA.derrotas.valor = dados.derrotas;
+      this.jogo.timeA.cartaoamarelo.valor = dados.cartoesAmarelo;
+      this.jogo.timeA.cartaovermelho.valor = dados.cartoesVermelhos;
 
+    } else if (this.modalidadeSelecionada === 'volei') {
+      this.volei.timeA.nome = dados.time || '';
+      this.volei.timeA.pts.valor = dados.pontuacao;
+      this.volei.timeA.pj.valor = dados.jogos;
+      this.volei.timeA.vitorias.valor = dados.vitorias;
+      this.volei.timeA.derrotas.valor = dados.derrotas;
+      this.volei.timeA.setsVencidos.valor = dados.setsVencidos;
+      this.volei.timeA.doiszero.valor = dados.vitoria2x0;
+      this.volei.timeA.doisum.valor = dados.vitoria2x1;
+      this.volei.timeA.umdois.valor = dados.derrota2x1;
+      this.volei.timeA.zerodois.valor = dados.derrota2x0;
+      this.volei.timeA.wo.valor = dados.derrotaWo;
+    }
+
+  } catch (error) {
+    console.error('Erro ao carregar placar do time:', error);
+    Swal.fire('Erro', 'Não foi possível carregar o placar do time.', 'error');
+  }
+},
     limparDadosJogo() {
       this.jogo.timeA = {
         nome: '',
         pts: { valor: 0 },
-        gols: { valor: 0 },
+        pj: { valor: 0 },
+        golspro: { valor: 0 },
+        golsofridos: { valor: 0 },
         empates: { valor: 0 },
         vitorias: { valor: 0 },
         derrotas: { valor: 0 },
+        cartaoamarelo: { valor: 0 },
+        cartaovermelho: { valor: 0 },
       };
-      this.jogoVolei.timeA = {
+      this.volei.timeA = {
         nome: '',
         pts: { valor: 0 },
+        pj: { valor: 0 },
         vitorias: { valor: 0 },
         derrotas: { valor: 0 },
         setsVencidos: { valor: 0 },
+        doiszero: { valor: 0 },
+        doisum: { valor: 0 },
+        umdois: { valor: 0 },
+        zerodois: { valor: 0 },
+        wo: { valor: 0 },
       };
     },
 
@@ -687,31 +812,47 @@ export default {
         }
       }
     },
-
     async salvarPlacar() {
       try {
+        let saldoDeGols = 0;
+        if (this.modalidadeSelecionada === 'futebol') {
+          saldoDeGols = this.jogo.timeA.golspro.valor - this.jogo.timeA.golsofridos.valor;
+        }
         const dadosParaSalvar = {
-          gols: this.jogo.timeA.gols.valor,
-          pts: this.jogo.timeA.pts.valor,
+          pontuacao: this.jogo.timeA.pts.valor,
+          jogos: this.jogo.timeA.pj.valor,
+          golsPro: this.jogo.timeA.golspro.valor,
+          golsSofridos: this.jogo.timeA.golsofridos.valor,
+          saldoDeGols: saldoDeGols,
           empates: this.jogo.timeA.empates.valor,
           vitorias: this.jogo.timeA.vitorias.valor,
           derrotas: this.jogo.timeA.derrotas.valor,
+          cartoesAmarelos: this.jogo.timeA.cartaoamarelo.valor,
+          cartoesVermelhos: this.jogo.timeA.cartaovermelho.valor,
         };
+
         await axios.put(`http://localhost:3000/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
+
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
         this.limparDadosJogo();
       } catch (error) {
+        console.error('Erro ao salvar placar:', error);
         Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
       }
     },
-
     async salvarPlacarVolei() {
       try {
         const dados = {
-          pts: this.jogoVolei.timeA.pts.valor,
-          vitorias: this.jogoVolei.timeA.vitorias.valor,
-          derrotas: this.jogoVolei.timeA.derrotas.valor,
-          setsVencidos: this.jogoVolei.timeA.setsVencidos.valor,
+          pontuacao: this.volei.timeA.pts.valor,
+          jogos: this.volei.timeA.pj.valor,
+          vitorias: this.volei.timeA.vitorias.valor,
+          derrotas: this.volei.timeA.derrotas.valor,
+          setsVencidos: this.volei.timeA.setsVencidos.valor,
+          vitoria2x0: this.volei.timeA.doiszero.valor,
+          vitoria2x1: this.volei.timeA.doisum.valor,
+          derrota2x1: this.volei.timeA.umdois.valor,
+          derrota2x0: this.volei.timeA.zerodois.valor,
+          derrotaWo: this.volei.timeA.wo.valor,
         };
         await axios.put(`http://localhost:3000/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dados);
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
@@ -720,6 +861,7 @@ export default {
         Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
       }
     },
+
 
     abrirModalPlacar() {
       this.modalPlacarAberto = true;
@@ -732,7 +874,6 @@ export default {
       this.modalidadePlacarSelecionada = '';
       this.timesPlacar = [];
     },
-
     async carregarPlacarModalidade() {
       if (!this.modalidadePlacarSelecionada) {
         this.timesPlacar = [];
@@ -745,7 +886,6 @@ export default {
         Swal.fire('Erro', 'Erro ao carregar placar.', 'error');
       }
     },
-
     abrirModalResetarPlacar() {
       this.modalResetarPlacarAberto = true;
       this.fecharModalPlacar();
@@ -767,9 +907,9 @@ export default {
         console.error('Erro ao resetar placar:', error);
         Swal.fire('Erro', 'Erro ao resetar placar.', 'error');
       }
-    }
+    },
   }
-};
+}
 </script>
 
 <style scoped>
@@ -777,7 +917,6 @@ export default {
   display: flex;
   margin-top: 20px;
 }
-
 
 .layout {
   flex: 1;
@@ -806,13 +945,11 @@ export default {
   flex: 1;
 }
 
-
 .title {
   color: #3b82f6;
   font-size: 28px;
   margin-left: 15%;
 }
-
 
 .botoes {
   display: flex;
@@ -820,7 +957,6 @@ export default {
   align-items: center;
   margin-right: -5%;
 }
-
 
 .btn-placar {
   background-color: #7E7E7E;
@@ -831,7 +967,6 @@ export default {
   cursor: pointer;
 }
 
-
 .btn-modalidade {
   background-color: #3B82F6;
   color: white;
@@ -841,9 +976,8 @@ export default {
   cursor: pointer;
 }
 
-
 .btn-add {
-  background-color:#152147;
+  background-color: #152147;
   color: white;
   padding: 8px 14px;
   border: none;
@@ -858,7 +992,6 @@ export default {
   margin-left: 15%;
 }
 
-
 .dropdown {
   width: 100%;
   padding: 10px;
@@ -869,7 +1002,6 @@ export default {
   margin-bottom: 10px;
 }
 
-
 .dropdown-row {
   display: flex;
   gap: 20px;
@@ -877,11 +1009,9 @@ export default {
   margin-left: 15%;
 }
 
-
 .dropdown-row .team {
   flex: 1;
 }
-
 
 .box,
 .box-small {
@@ -892,14 +1022,12 @@ export default {
   text-align: center;
 }
 
-
 .controls {
   display: flex;
   align-items: center;
   justify-content: space-around;
   margin-top: 20px;
 }
-
 
 .controls button {
   background-color: #1e3a8a;
@@ -1045,15 +1173,17 @@ export default {
 .placar-table {
   flex: 1;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
   border-radius: 12px;
   background-color: white;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  max-height: 100%;
 }
 
 
 .placar {
   width: 100%;
+  min-width: 1000px;
   border-collapse: collapse;
 }
 
@@ -1142,6 +1272,7 @@ export default {
   border-radius: 20px;
   cursor: pointer;
 }
+
 
 @media (max-width: 768px) {
   .container {

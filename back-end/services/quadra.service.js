@@ -18,5 +18,4 @@ async function getQuadras(){
   return buscarQuadras;
 }
 
-
 module.exports = { criarQuadra, getQuadras};

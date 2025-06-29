@@ -385,12 +385,12 @@ export default {
 }
 
 .btn-editar {
-  background-color: #1e3a8a;
+  background-color: #3b82f6;
   color: white;
 }
 
 .btn-detalhar {
-  background-color: #3b82f6;
+  background-color: #7E7E7E;
   color: white;
 }
 

@@ -48,20 +48,33 @@ model Modalidade {
 }
 
 model Placar {
-  id           Int     @id @default(autoincrement())
-  modalidadeId Int
-  time         String
-  foto         String?
-  posicao      Int
-  pontuacao    Int
-  vitorias     Int
-  derrotas     Int
-  empates      Int?
-  golsMarcados Int?
-  setsVencidos Int?
+  id                Int      @id @default(autoincrement())
+  modalidadeId      Int
+  time              String
+  foto              String?
+  jogos             Int
+  posicao           Int
+  pontuacao         Int
+  vitorias          Int
+  empates           Int?
+  derrotas          Int
 
-  @@unique([modalidadeId, time]) 
+  golsPro           Int?
+  golsSofridos      Int?
+  saldoDeGols       Int?
+
+  setsVencidos      Int?
+  vitoria2x0        Int?
+  vitoria2x1        Int?
+  derrota2x1        Int?
+  derrota2x0        Int?
+  derrotaWo         Int?
+
+  cartoesAmarelos   Int?
+  cartoesVermelhos  Int?
+
   modalidade   Modalidade @relation(fields: [modalidadeId], references: [id])
+  @@unique([modalidadeId, time]) 
 }
 
 model Permissao {
