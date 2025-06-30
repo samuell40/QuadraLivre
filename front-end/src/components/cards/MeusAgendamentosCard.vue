@@ -25,6 +25,7 @@ export default {
     agendamento: Object
   }
 }
+
 </script>
 
 <style scoped>

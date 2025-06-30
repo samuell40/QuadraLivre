@@ -283,7 +283,6 @@ export default {
       console.log('Data:',  data)
       console.log('Hora:',  hora)
 
-      alert(`Quadra ${quadra.nome} agendada para ${data} às ${hora}`)
       this.fecharModal
     }
   }

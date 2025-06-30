@@ -22,6 +22,29 @@
 import SideBar from '@/components/SideBar.vue'
 import MeusAgendamentoCard from '@/components/cards/MeusAgendamentosCard.vue'
 
+const agendamentos = [
+  {
+    id: 1,
+    quadra: 'Quadra Poliesportiva A',
+    data: '25/06/2025',
+    hora: '15:00',
+    status: 'pendente',
+  },
+  {
+    id: 2,
+    quadra: 'Quadra de Areia',
+    data: '26/06/2025',
+    hora: '18:30',
+    status: 'confirmado',
+  },
+  {
+    id: 3,
+    quadra: 'Quadra B',
+    data: '27/06/2025',
+    hora: '20:00',
+    status: 'negado',
+  },
+]
 </script>
 
 <style scoped>

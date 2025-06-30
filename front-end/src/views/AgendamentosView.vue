@@ -18,8 +18,25 @@
 
 <script setup>
 import SideBar from '@/components/SideBar.vue'
+import { ref } from 'vue'
 import AgendamentoCard from '@/components/cards/AgendamentoCard.vue'
 
+const agendamentos = ref([
+  {
+    id: 1,
+    quadra: 'Metodão',
+    usuario: 'João Silva',
+    data: '31/12/2025',
+    hora: '23:00',
+  },
+  {
+    id: 2,
+    quadra: 'Quadra de Areia',
+    usuario: 'Maria Oliveira',
+    data: '25/12/2025',
+    hora: '10:00',
+  }
+])
 </script>
 
 <style scoped>
