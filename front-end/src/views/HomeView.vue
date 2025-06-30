@@ -153,17 +153,27 @@
     </div>
   </div>
 
-  <AgendamentoModal
-  v-if="mostrarModal"
-  :quadra="quadraSelecionada"
-  @fechar="fecharModal"
-  @confirmar="confirmarAgendamento"
-/>
+  <AgendamentoFutebolModal
+    v-if="mostrarModal"
+    :quadra="quadraSelecionada"
+    @fechar="fecharModal"
+    @confirmar="confirmarAgendamento"
+  />
+
+  <AgendamentoVoleiModal
+    v-if="mostrarModalVolei"
+    :quadra="quadraSelecionada"
+    @fechar="fecharModal"
+    @confirmar="confirmarAgendamento"
+  />
+
+
 </template>
 
 <script>
 import { Carousel, Slide } from 'vue3-carousel'
-import AgendamentoModal from '@/components/modals/AgendModalFut.vue'
+import AgendamentoFutebolModal from '@/components/modals/AgendModalFut.vue'
+import AgendamentoVoleiModal from '@/components/modals/AgendModalVol.vue'
 import 'vue3-carousel/dist/carousel.css'
 
 export default {
@@ -171,7 +181,8 @@ export default {
   components: {
     Carousel,
     Slide,
-    AgendamentoModal
+    AgendamentoFutebolModal,
+    AgendamentoVoleiModal
   },
   data() {
     return {

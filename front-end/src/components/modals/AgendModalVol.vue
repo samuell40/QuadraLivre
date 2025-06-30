@@ -1,16 +1,31 @@
 <template>
   <div class="modal-overlay" @click.self="$emit('fechar')">
     <div class="modal-content">
-       <h2 class="title"><strong>{{ quadra?.nome }}</strong></h2>
-       
-       <label for="data"><strong>Escolha a data:</strong></label>
-        <input type="date" v-model="data" />
+      <h2 class="title"><strong>{{ quadra?.nome }}</strong></h2>
 
-        <label for="hora"><strong>Escolha a hora:</strong></label>
-        <input type="time" v-model="hora" />
-      
+      <label for="data"><strong>Escolha a data:</strong></label>
+      <input type="date" v-model="data" />
+
+      <label for="hora"><strong>Escolha a hora:</strong></label>
+      <div class="linha-horizontal">
+       <input type="time" v-model="hora" />
+
+       <select v-model="tempo" class="select-tempo">
+        <option disabled value="">Tempo</option>
+        <option value="1h">1 hora</option>
+        <option value="2h">2 horas</option>
+       </select>
+      </div>
+
+
       <div class="modal-actions">
-        <button @click="confirmar" class="btn-confirmar" :disabled="!data || !hora">Confirmar</button>
+        <button
+          @click="confirmar"
+          class="btn-confirmar"
+          :disabled="!data || !hora || !tempo"
+        >
+          Confirmar
+        </button>
         <button @click="$emit('fechar')" class="btn-cancelar">Cancelar</button>
       </div>
     </div>
@@ -19,14 +34,15 @@
 
 <script>
 export default {
-  name: 'AgendamentoFutebolModal',
+  name: 'AgendamentoVoleiModal',
   props: {
     quadra: Object
   },
   data() {
     return {
       data: '',
-      hora: ''
+      hora: '',
+      tempo: ''
     }
   },
   methods: {
@@ -34,7 +50,8 @@ export default {
       this.$emit('confirmar', {
         quadra: this.quadra,
         data: this.data,
-        hora: this.hora
+        hora: this.hora,
+        tempo: this.tempo
       })
     }
   }
@@ -62,32 +79,45 @@ export default {
   border-radius: 8px;
   max-width: 800px;
   width: 90%;
-  max-height: 500px;
-  height: 55%;
+  max-height: 550px;
+  height: 60%;
 }
 
-.modal-content input {
+.modal-content input,
+.select-tempo {
   color: #7E7E7E;
   height: 50px;
   padding: 10px;
   border: 1px solid #D9D9D9;
   border-radius: 4px;
-}
-
-.modal-content input:first-of-type {
-  margin-bottom: 20px;
-}
-
-.modal-content input:nth-of-type(2) {
+  width: 100%;
   margin-bottom: 24px;
 }
 
 .modal-content label {
   margin-bottom: 6px;
+  display: block;
 }
 
 .title {
- margin-bottom: 32px;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.linha-horizontal {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.linha-horizontal input,
+.linha-horizontal select {
+  flex: 1;
+  height: 50px;
+  padding: 10px;
+  border: 1px solid #D9D9D9;
+  border-radius: 4px;
+  color: #7E7E7E;
 }
 
 .modal-actions {
