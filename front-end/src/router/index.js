@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
-import AgendamentoView from '../views/AgendamentoView.vue';
+import AgendamentosView from '../views/AgendamentosView.vue';
 import LoginView from '../views/LoginView.vue';
 import CadastroView from '../views/CadastroView.vue';
 import Cadastro2View from '../views/Cadastro2View.vue';
@@ -16,9 +16,9 @@ const routes = [
     component: HomeView,
   },
   {
-    path: '/agendamento',
-    name: 'Agendamento',
-    component: AgendamentoView,
+    path: '/agendamentos',
+    name: 'Agendamentos',
+    component: AgendamentosView,
   },
   {
     path: '/login',

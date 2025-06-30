@@ -152,17 +152,26 @@
       </table>
     </div>
   </div>
+
+  <AgendamentoModal
+  v-if="mostrarModal"
+  :quadra="quadraSelecionada"
+  @fechar="fecharModal"
+  @confirmar="confirmarAgendamento"
+/>
 </template>
 
 <script>
 import { Carousel, Slide } from 'vue3-carousel'
+import AgendamentoModal from '@/components/modals/AgendModalFut.vue'
 import 'vue3-carousel/dist/carousel.css'
 
 export default {
   name: 'HomeView',
   components: {
     Carousel,
-    Slide
+    Slide,
+    AgendamentoModal
   },
   data() {
     return {
@@ -172,7 +181,10 @@ export default {
       timesVolei: [],
       isLoadingQuadras: true,
       isLoadingPlacarFutebol: true,
-      isLoadingPlacarVolei: true
+      isLoadingPlacarVolei: true,
+
+      mostrarModal: false,
+      quadraSelecionada: null
     }
   },
   computed: {
@@ -246,7 +258,22 @@ export default {
       }
     },
     clicarAgendar(quadra) {
-      console.log('Quadra selecionada para agendamento:', quadra);
+      this.quadraSelecionada = quadra
+      this.mostrarModal = true
+    },
+    fecharModal() {
+      this.mostrarModal = false
+      this.quadraSelecionada = null
+    },
+    confirmarAgendamento(payload) {
+      const { quadra, data, hora } = payload
+      console.log('Agendamento confirmado:')
+      console.log('Quadra:',  quadra)
+      console.log('Data:',  data)
+      console.log('Hora:',  hora)
+
+      alert(`Quadra ${quadra.nome} agendada para ${data} às ${hora}`)
+      this.fecharModal
     }
   }
 }
@@ -489,6 +516,11 @@ p {
   cursor: pointer;
 }
 
+.btn-prev:hover,
+.btn-next:hover {
+  background-color: #eee;
+}
+
 .card {
   position: relative;
   border-radius: 12px;
@@ -538,6 +570,10 @@ p {
   border-radius: 5px;
   cursor: pointer;
   margin-top: 6px;
+}
+
+.btn-agendar:hover {
+  background-color: #60a5fa;
 }
 
 .descricao,

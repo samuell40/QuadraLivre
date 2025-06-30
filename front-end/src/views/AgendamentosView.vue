@@ -18,25 +18,8 @@
 
 <script setup>
 import SideBar from '@/components/SideBar.vue'
-import AgendamentoCard from '@/components/AgendamentoCard.vue'
+import AgendamentoCard from '@/components/cards/AgendamentoCard.vue'
 
-// Dados mockados (somente para visualização)
-const agendamentos = [
-  {
-    id: 1,
-    quadra: 'Quadra de Areia Juarez Valdivino',
-    usuario: 'João Silva',
-    data: '23/06/2025',
-    hora: '14:00',
-  },
-  {
-    id: 2,
-    quadra: 'Quadra de Areia Juarez Valdivino',
-    usuario: 'Maria Oliveira',
-    data: '24/06/2025',
-    hora: '10:30',
-  }
-]
 </script>
 
 <style scoped>
