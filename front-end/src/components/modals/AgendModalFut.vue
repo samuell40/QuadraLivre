@@ -174,6 +174,7 @@ export default {
 
 .title {
   margin-bottom: 32px;
+  color: #3b82f6;
 }
 
 .modal-actions {
@@ -193,7 +194,6 @@ export default {
 
 .btn-confirmar {
   background-color: #1E3A8A;
-  color: #fff;
 }
 
 .btn-confirmar:disabled {
