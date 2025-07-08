@@ -12,9 +12,8 @@
         </div>
 
         <ul class="nav-links" :class="{ active: isMenuOpen }">
-          <li><a href="/quadra">Quadras</a></li>
           <li><a href="/horarios">Horários</a></li>
-          <li><a href="/controleplacar">Placar</a></li>
+          <li><a href="#placar-virtual">Placar</a></li>
           <li class="login-item"><a href="/login" class="login">Login</a></li>
         </ul>
 
@@ -61,117 +60,33 @@
       </template>
     </section>
 
+    <!-- Placares-->
+    <h3 v-if="exibirPlacarFutebol || exibirPlacarVolei" id="placar-virtual" class="tit_horario"> Placar Virtual</h3>
+    <div v-if="isLoadingPlacarFutebol || isLoadingPlacarVolei" class="loader"></div>
 
     <!-- Placar Futebol -->
-    <h3 class="tit_horario">Placar Virtual</h3>
-    <h4 class="tit_campeonato">Campeonato Futebol</h4>
-    <div class="placar">
-      <div class="loader" v-if="isLoadingPlacarFutebol"></div>
-
-      <table v-else>
-        <thead>
-          <tr>
-            <th>Posição</th>
-            <th>Time</th>
-            <th>Pts</th>
-            <th>PJ</th>
-            <th>VIT</th>
-            <th>E</th>
-            <th>DER</th>
-            <th>GM</th>
-            <th>GS</th>
-            <th>SG</th>
-            <th>Amarelos</th>
-            <th>Vermelhos</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="time in times" :key="time.time">
-            <td>{{ time.posicao }}º</td>
-            <td class="time-info">
-              <img :src="time.foto" alt="Foto do time" class="time-image" />
-              <span>{{ time.time }}</span>
-            </td>
-            <td>{{ time.pontuacao }}</td>
-            <td>{{ time.jogos }}</td>
-            <td>{{ time.vitorias }}</td>
-            <td>{{ time.empates }}</td>
-            <td>{{ time.derrotas }}</td>
-            <td>{{ time.golsPro }}</td>
-            <td>{{ time.golsSofridos }}</td>
-            <td>{{ time.saldoDeGols }}</td>
-            <td>{{ time.cartoesAmarelos }}</td>
-            <td>{{ time.cartoesVermelhos }}</td>
-          </tr>
-        </tbody>
-      </table>
+    <div v-if="exibirPlacarFutebol">
+      <PlacarFutebolHome v-show="!isLoadingPlacarFutebol" :times="timesFutebolComPosicao" />
     </div>
-
 
     <!-- Placar Vôlei -->
-    <h4 class="tit_campeonato">Campeonato Vôlei</h4>
-    <div class="placar">
-      <div class="loader" v-if="isLoadingPlacarVolei"></div>
-
-      <table v-else>
-        <thead>
-          <tr>
-            <th>Posição</th>
-            <th>Time</th>
-            <th>PTS</th>
-            <th>J</th>
-            <th>VIT</th>
-            <th>DER</th>
-            <th>STG</th>
-            <th>2x0</th>
-            <th>2x1</th>
-            <th>1x2</th>
-            <th>0x2</th>
-            <th>WO</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="time in timesVolei" :key="time.time">
-            <td>{{ time.posicao }}º</td>
-            <td class="time-info">
-              <img :src="time.foto" alt="Foto do time" class="time-image" />
-              <span>{{ time.time }}</span>
-            </td>
-            <td>{{ time.pontuacao }}</td>
-            <td>{{ time.jogos }}</td>
-            <td>{{ time.vitorias }}</td>
-            <td>{{ time.derrotas }}</td>
-            <td>{{ time.setsVencidos }}</td>
-            <td>{{ time.vitoria2x0 }}</td>
-            <td>{{ time.vitoria2x1 }}</td>
-            <td>{{ time.derrota2x1 }}</td>
-            <td>{{ time.derrota2x0 }}</td>
-            <td>{{ time.derrotaWo }}</td>
-          </tr>
-        </tbody>
-      </table>
+    <div v-if="exibirPlacarVolei">
+      <PlacarVoleihome v-show="!isLoadingPlacarVolei" :times="timesVoleiComPosicao" />
     </div>
+
+    <AgendamentoFutebolModal v-if="mostrarModal" :quadra="quadraSelecionada" @fechar="fecharModal"
+      @confirmar="confirmarAgendamento" />
+
+    <AgendamentoVoleiModal v-if="mostrarModalVolei" :quadra="quadraSelecionada" @fechar="fecharModal"
+      @confirmar="confirmarAgendamento" />
+
   </div>
-
-  <AgendamentoFutebolModal
-    v-if="mostrarModal"
-    :quadra="quadraSelecionada"
-    @fechar="fecharModal"
-    @confirmar="confirmarAgendamento"
-  />
-
-  <AgendamentoVoleiModal
-    v-if="mostrarModalVolei"
-    :quadra="quadraSelecionada"
-    @fechar="fecharModal"
-    @confirmar="confirmarAgendamento"
-  />
-
-
 </template>
 
 <script>
 import { Carousel, Slide } from 'vue3-carousel'
+import PlacarFutebolHome from '@/components/PlacarHome/PlacarFutebolHome.vue'
+import PlacarVoleihome from '@/components/PlacarHome/PlacarVoleiHome.vue'
 import AgendamentoFutebolModal from '@/components/modals/AgendModalFut.vue'
 import AgendamentoVoleiModal from '@/components/modals/AgendModalVol.vue'
 import 'vue3-carousel/dist/carousel.css'
@@ -181,6 +96,8 @@ export default {
   components: {
     Carousel,
     Slide,
+    PlacarFutebolHome,
+    PlacarVoleihome,
     AgendamentoFutebolModal,
     AgendamentoVoleiModal
   },
@@ -193,9 +110,10 @@ export default {
       isLoadingQuadras: true,
       isLoadingPlacarFutebol: true,
       isLoadingPlacarVolei: true,
-
       mostrarModal: false,
-      quadraSelecionada: null
+      quadraSelecionada: null,
+      exibirPlacarFutebol: true,
+      exibirPlacarVolei: true,
     }
   },
   computed: {
@@ -215,8 +133,17 @@ export default {
     this.carregarQuadras();
     this.carregarPlacarFutebol();
     this.carregarPlacarVolei();
+    this.atualizarVisibilidadePlacar();
+    window.addEventListener("storage", this.atualizarVisibilidadePlacar);
   },
   methods: {
+    atualizarVisibilidadePlacar() {
+      this.exibirPlacarFutebol = JSON.parse(localStorage.getItem("exibirPlacar_futebol") ?? "true");
+      this.exibirPlacarVolei = JSON.parse(localStorage.getItem("exibirPlacar_volei") ?? "true");
+    },
+    beforeUnmount() {
+      window.removeEventListener("storage", this.atualizarVisibilidadePlacar);
+    },
     toggleMenu() {
       this.isMenuOpen = !this.isMenuOpen;
     },
@@ -279,9 +206,9 @@ export default {
     confirmarAgendamento(payload) {
       const { quadra, data, hora } = payload
       console.log('Agendamento confirmado:')
-      console.log('Quadra:',  quadra)
-      console.log('Data:',  data)
-      console.log('Hora:',  hora)
+      console.log('Quadra:', quadra)
+      console.log('Data:', data)
+      console.log('Hora:', hora)
 
       this.fecharModal
     }
@@ -473,13 +400,6 @@ p {
   font-weight: bold;
 }
 
-.tit_campeonato {
-  font-size: 20px;
-  color: #7E7E7E;
-  font-weight: bold;
-  margin-left: 8%;
-}
-
 .destaque_sublinhado {
   text-decoration: underline;
   color: #3B82F6;
@@ -593,69 +513,6 @@ p {
   line-height: 1.2;
   color: #fff
 }
-
-.placar {
-  padding: 30px;
-  margin: 0 auto;
-  max-width: 1340px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.placar table {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  background-color: white;
-  width: 100%;
-}
-
-.placar thead th {
-  background-color: #1e3a8a;
-  color: white;
-  font-weight: bold;
-  padding: 14px 12px;
-  font-size: 16px;
-  text-align: left;
-}
-
-.placar tbody tr {
-  background-color: white;
-  transition: background-color 0.2s;
-}
-
-
-.placar tbody tr:hover {
-  background-color: #f3f4f6;
-}
-
-
-.placar tbody td {
-  color: #4b5563;
-  padding: 12px;
-  font-size: 15px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-
-.placar tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.time-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.time-image {
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
-  border-radius: 50%;
-  border: 1px solid #ccc;
-}
-
 
 @media (max-width: 768px) {
   .logo {

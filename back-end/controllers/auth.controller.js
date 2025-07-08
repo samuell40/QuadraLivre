@@ -57,7 +57,7 @@ function callbackLoginGoogle(req, res, next) {
         { expiresIn: '8h' }
       );
 
-      res.redirect(`http://localhost:8080/?token=${token}`);
+      res.redirect(`http://localhost:8080/meusagendamentos/?token=${token}`);
     });
   })(req, res, next);
 }

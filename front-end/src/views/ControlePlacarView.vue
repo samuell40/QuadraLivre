@@ -36,17 +36,37 @@
       <!-- Controles do Placar -->
       <div class="game">
         <PlacarFutebol v-if="modalidadeSelecionada === 'futebol'" :placar="jogo.timeA" :timeAtivo="true"
-          :increment="increment" :decrement="decrement" @salvar="salvarPlacar" />
+          @salvar="salvarPlacar" />
+
+        <PlacarFutebolAreia v-if="modalidadeSelecionada === 'futebol_de_areia'" :placar="futebol_de_areia.timeA"
+          :timeAtivo="true" @salvar="salvarPlacarFutebolAreia" />
+
+        <PlacarFutsal v-else-if="modalidadeSelecionada === 'futsal'" :placar="futsal.timeA" :timeAtivo="true"
+          @salvar="salvarPlacarFutsal" />
 
         <PlacarVolei v-else-if="modalidadeSelecionada === 'volei'" :placar="volei.timeA" :timeAtivo="true"
-          :increment="increment" :decrement="decrement" @salvar="salvarPlacarVolei" />
+          @salvar="salvarPlacarVolei" />
+
+        <PlacarVoleibol v-else-if="modalidadeSelecionada === 'voleibol'" :placar="voleibol.timeA" :timeAtivo="true"
+          @salvar="salvarPlacarVoleibol" />
+
+        <PlacarVoleiAreia v-else-if="modalidadeSelecionada === 'volei_de_areia'" :placar="volei_de_areia.timeA"
+          :timeAtivo="true" @salvar="salvarPlacarVoleiAreia" />
+
+        <PlacarFutevolei v-else-if="modalidadeSelecionada === 'futevolei'" :placar="futevolei.timeA" :timeAtivo="true"
+          @salvar="salvarPlacarFutevolei" />
+
+        <OcultarPlacar :aberto="modalControleVisibilidadeAberto" @fechar="modalControleVisibilidadeAberto = false" />
+
       </div>
 
-      <!-- Modal Visualizar Placar -->
+      <!--Modal de Visualizar Placar-->
       <VisualizarPlacarModal :modalPlacarAberto="modalPlacarAberto"
         :modalidadePlacarSelecionada="modalidadePlacarSelecionada" :modalidadesDisponiveis="modalidadesDisponiveis"
-        :timesPlacar="timesPlacar" @fechar="fecharModalPlacar" @abrir-modal-resetar="abrirModalResetarPlacar"
-        @carregar-placar="carregarPlacarModalidade" />
+        :timesPlacar="timesPlacar" :visibilidadeAberto="modalControleVisibilidadeAberto" @fechar="fecharModalPlacar"
+        @abrir-modal-resetar="abrirModalResetarPlacar" @carregar-placar="carregarPlacarModalidade"
+        @abrir-visibilidade="modalControleVisibilidadeAberto = true"
+        @fechar-visibilidade="modalControleVisibilidadeAberto = false" />
 
       <!-- Modal Resetar Placar -->
       <ResetarPlacarModal :aberto="modalResetarPlacarAberto" :modalidadesDisponiveis="modalidadesDisponiveis"
@@ -83,16 +103,22 @@
 
 <script>
 import SideBar from '@/components/SideBar.vue';
-import PlacarFutebol from '@/components/Placar/PlacarFutebol.vue';
-import PlacarVolei from '@/components/Placar/PlacarVolei.vue';
-import VisualizarPlacarModal from '@/components/modals/VisualizarPlacarModal.vue';
-import ResetarPlacarModal from '@/components/modals/ResetarPlacarModal.vue';
+import PlacarFutebol from '@/components/ControlesPlacar/PlacarFutebol.vue';
+import PlacarFutebolAreia from '@/components/ControlesPlacar/PlacarFutebolAreia.vue';
+import PlacarFutsal from '@/components/ControlesPlacar/PlacarFutsal.vue';
+import PlacarVolei from '@/components/ControlesPlacar/PlacarVolei.vue';
+import PlacarVoleibol from '@/components/ControlesPlacar/PlacarVoleibol.vue';
+import PlacarVoleiAreia from '@/components/ControlesPlacar/PlacarVoleiAreia.vue';
+import PlacarFutevolei from '@/components/ControlesPlacar/PlacarFutevolei.vue';
+import VisualizarPlacarModal from '@/components/modals/times/VisualizarPlacarModal.vue';
+import ResetarPlacarModal from '@/components/modals/times/ResetarPlacarModal.vue';
 import GerenciarModalidadesModal from '@/components/modals/modalidades/GerenciarModalidadesModal.vue';
 import AdicionarModalidadeModal from '@/components/modals/modalidades/AdicionarModalidadeModal.vue';
 import RemoverModalidadeModal from '@/components/modals/modalidades/RemoverModalidadeModal.vue';
 import GerenciarTimesModal from '@/components/modals/times/GerenciarTimesModal.vue';
 import AdicionarTimeModal from '@/components/modals/times/AdicionarTimesModal.vue';
 import RemoverTimeModal from '@/components/modals/times/RemoverTimesModal.vue';
+import OcultarPlacar from '@/components/PlacarHome/OcultarPlacar.vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
@@ -101,7 +127,12 @@ export default {
   components: {
     SideBar,
     PlacarFutebol,
+    PlacarFutebolAreia,
+    PlacarFutsal,
     PlacarVolei,
+    PlacarVoleibol,
+    PlacarVoleiAreia,
+    PlacarFutevolei,
     VisualizarPlacarModal,
     ResetarPlacarModal,
     GerenciarModalidadesModal,
@@ -109,7 +140,8 @@ export default {
     RemoverModalidadeModal,
     GerenciarTimesModal,
     AdicionarTimeModal,
-    RemoverTimeModal
+    RemoverTimeModal,
+    OcultarPlacar
   },
   data() {
     return {
@@ -119,7 +151,12 @@ export default {
       times: [],
       timesPlacar: [],
       jogo: { timeA: this.criarTimeFutebol() },
+      futebol_de_areia: { timeA: this.criarTimeFutebolAreia() },
+      futsal: { timeA: this.criarTimeFutsal() },
       volei: { timeA: this.criarTimeVolei() },
+      voleibol: { timeA: this.criarTimeVoleibol() },
+      volei_de_areia: { timeA: this.criarTimeVoleiAreia() },
+      futevolei: { timeA: this.criarTimeFutevolei() },
       modalGerenciarModalidadeAberto: false,
       modalResetarPlacarAberto: false,
       modalPlacarAberto: false,
@@ -128,6 +165,7 @@ export default {
       modalGerenciarTimeAberto: false,
       modalAdicionarTimeAberto: false,
       modalRemoverTimeAberto: false,
+      modalControleVisibilidadeAberto: false,
       acaoGerenciarModalidade: '',
       modalidadePlacarSelecionada: '',
       modalidadeParaResetar: '',
@@ -139,6 +177,7 @@ export default {
   mounted() {
     this.carregarModalidades().then(() => {
       const futebol = this.modalidadesDisponiveis.find(m => m.nome === 'futebol');
+      console.log(this.modalidadesDisponiveis);
       if (futebol) {
         this.modalidadeSelecionada = 'futebol';
         this.carregarTimes();
@@ -173,7 +212,34 @@ export default {
         cartaovermelho: { valor: 0 },
       };
     },
-
+    criarTimeFutebolAreia() {
+      return {
+        nome: '',
+        pts: { valor: 0 },
+        pj: { valor: 0 },
+        golspro: { valor: 0 },
+        golsofridos: { valor: 0 },
+        empates: { valor: 0 },
+        vitorias: { valor: 0 },
+        derrotas: { valor: 0 },
+        cartaoamarelo: { valor: 0 },
+        cartaovermelho: { valor: 0 },
+      };
+    },
+    criarTimeFutsal() {
+      return {
+        nome: '',
+        pts: { valor: 0 },
+        pj: { valor: 0 },
+        golspro: { valor: 0 },
+        golsofridos: { valor: 0 },
+        empates: { valor: 0 },
+        vitorias: { valor: 0 },
+        derrotas: { valor: 0 },
+        cartaoamarelo: { valor: 0 },
+        cartaovermelho: { valor: 0 },
+      };
+    },
     criarTimeVolei() {
       return {
         nome: '',
@@ -189,10 +255,59 @@ export default {
         wo: { valor: 0 },
       };
     },
-
+    criarTimeVoleibol() {
+      return {
+        nome: '',
+        pts: { valor: 0 },
+        pj: { valor: 0 },
+        vitorias: { valor: 0 },
+        derrotas: { valor: 0 },
+        setsVencidos: { valor: 0 },
+        doiszero: { valor: 0 },
+        doisum: { valor: 0 },
+        umdois: { valor: 0 },
+        zerodois: { valor: 0 },
+        wo: { valor: 0 },
+      };
+    },
+    criarTimeVoleiAreia() {
+      return {
+        nome: '',
+        pts: { valor: 0 },
+        pj: { valor: 0 },
+        vitorias: { valor: 0 },
+        derrotas: { valor: 0 },
+        setsVencidos: { valor: 0 },
+        doiszero: { valor: 0 },
+        doisum: { valor: 0 },
+        umdois: { valor: 0 },
+        zerodois: { valor: 0 },
+        wo: { valor: 0 },
+      };
+    },
+    criarTimeFutevolei() {
+      return {
+        nome: '',
+        pts: { valor: 0 },
+        pj: { valor: 0 },
+        vitorias: { valor: 0 },
+        derrotas: { valor: 0 },
+        setsVencidos: { valor: 0 },
+        doiszero: { valor: 0 },
+        doisum: { valor: 0 },
+        umdois: { valor: 0 },
+        zerodois: { valor: 0 },
+        wo: { valor: 0 },
+      };
+    },
     limparDadosJogo() {
       this.jogo.timeA = this.criarTimeFutebol();
+      this.futebol_de_areia.timeA = this.criarTimeFutebol();
+      this.futsal.timeA = this.criarTimeFutsal();
       this.volei.timeA = this.criarTimeVolei();
+      this.voleibol.timeA = this.criarTimeVoleibol();
+      this.volei_de_areia.timeA = this.criarTimeVoleiAreia();
+      this.futevolei.timeA = this.criarTimeFutevolei();
     },
 
     increment(placar) {
@@ -226,7 +341,7 @@ export default {
 
     abrirModalResetarPlacar() {
       this.modalResetarPlacarAberto = true;
-      this.fecharModalPlacar();
+      //this.fecharModalPlacar();
       this.modalidadeParaResetar = '';
     },
 
@@ -309,6 +424,11 @@ export default {
         this.abrirModalRemoverTime();
       }
       this.fecharModalGerenciarTime();
+
+    },
+      alternarVisibilidade(modalidade) {
+      this.visibilidadePlacar[modalidade] = !this.visibilidadePlacar[modalidade];
+      localStorage.setItem(`exibirPlacar_${modalidade}`, JSON.stringify(this.visibilidadePlacar[modalidade]));
     },
 
     async carregarModalidades() {
@@ -352,8 +472,76 @@ export default {
             cartaoamarelo: { valor: dados.cartoesAmarelos },
             cartaovermelho: { valor: dados.cartoesVermelhos },
           });
+        } else if (this.modalidadeSelecionada === 'futebol_de_areia') {
+          Object.assign(this.futebol_de_areia.timeA, {
+            nome: dados.time || '',
+            pts: { valor: dados.pontuacao },
+            pj: { valor: dados.jogos },
+            golspro: { valor: dados.golsPro },
+            golsofridos: { valor: dados.golsSofridos },
+            empates: { valor: dados.empates },
+            vitorias: { valor: dados.vitorias },
+            derrotas: { valor: dados.derrotas },
+            cartaoamarelo: { valor: dados.cartoesAmarelos },
+            cartaovermelho: { valor: dados.cartoesVermelhos },
+          });
+        } else if (this.modalidadeSelecionada === 'futsal') {
+          Object.assign(this.futsal.timeA, {
+            nome: dados.time || '',
+            pts: { valor: dados.pontuacao },
+            pj: { valor: dados.jogos },
+            golspro: { valor: dados.golsPro },
+            golsofridos: { valor: dados.golsSofridos },
+            empates: { valor: dados.empates },
+            vitorias: { valor: dados.vitorias },
+            derrotas: { valor: dados.derrotas },
+            cartaoamarelo: { valor: dados.cartoesAmarelos },
+            cartaovermelho: { valor: dados.cartoesVermelhos },
+          });
         } else if (this.modalidadeSelecionada === 'volei') {
           Object.assign(this.volei.timeA, {
+            nome: dados.time || '',
+            pts: { valor: dados.pontuacao },
+            pj: { valor: dados.jogos },
+            vitorias: { valor: dados.vitorias },
+            derrotas: { valor: dados.derrotas },
+            setsVencidos: { valor: dados.setsVencidos },
+            doiszero: { valor: dados.vitoria2x0 },
+            doisum: { valor: dados.vitoria2x1 },
+            umdois: { valor: dados.derrota2x1 },
+            zerodois: { valor: dados.derrota2x0 },
+            wo: { valor: dados.derrotaWo },
+          });
+        } else if (this.modalidadeSelecionada === 'voleibol') {
+          Object.assign(this.voleibol.timeA, {
+            nome: dados.time || '',
+            pts: { valor: dados.pontuacao },
+            pj: { valor: dados.jogos },
+            vitorias: { valor: dados.vitorias },
+            derrotas: { valor: dados.derrotas },
+            setsVencidos: { valor: dados.setsVencidos },
+            doiszero: { valor: dados.vitoria2x0 },
+            doisum: { valor: dados.vitoria2x1 },
+            umdois: { valor: dados.derrota2x1 },
+            zerodois: { valor: dados.derrota2x0 },
+            wo: { valor: dados.derrotaWo },
+          });
+        } else if (this.modalidadeSelecionada === 'volei_de_areia') {
+          Object.assign(this.volei_de_areia.timeA, {
+            nome: dados.time || '',
+            pts: { valor: dados.pontuacao },
+            pj: { valor: dados.jogos },
+            vitorias: { valor: dados.vitorias },
+            derrotas: { valor: dados.derrotas },
+            setsVencidos: { valor: dados.setsVencidos },
+            doiszero: { valor: dados.vitoria2x0 },
+            doisum: { valor: dados.vitoria2x1 },
+            umdois: { valor: dados.derrota2x1 },
+            zerodois: { valor: dados.derrota2x0 },
+            wo: { valor: dados.derrotaWo },
+          });
+        } else if (this.modalidadeSelecionada === 'futevolei') {
+          Object.assign(this.futevolei.timeA, {
             nome: dados.time || '',
             pts: { valor: dados.pontuacao },
             pj: { valor: dados.jogos },
@@ -381,7 +569,6 @@ export default {
         Swal.fire('Erro', 'Erro ao carregar placar.', 'error');
       }
     },
-
     async salvarPlacar(dadosParaSalvar) {
       try {
         if (this.modalidadeSelecionada === 'futebol') {
@@ -395,7 +582,32 @@ export default {
         Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
       }
     },
-
+    async salvarPlacarFutebolAreia(dadosParaSalvar) {
+      try {
+        if (this.modalidadeSelecionada === 'futebol_de_areia') {
+          dadosParaSalvar.saldoDeGols = dadosParaSalvar.golsPro - dadosParaSalvar.golsSofridos;
+        }
+        await axios.put(`http://localhost:3000/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
+        Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
+        this.limparDadosJogo();
+      } catch (error) {
+        console.error('Erro ao salvar placar:', error);
+        Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
+      }
+    },
+    async salvarPlacarFutsal(dadosParaSalvar) {
+      try {
+        if (this.modalidadeSelecionada === 'futsal') {
+          dadosParaSalvar.saldoDeGols = dadosParaSalvar.golsPro - dadosParaSalvar.golsSofridos;
+        }
+        await axios.put(`http://localhost:3000/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
+        Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
+        this.limparDadosJogo();
+      } catch (error) {
+        console.error('Erro ao salvar placar:', error);
+        Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
+      }
+    },
     async salvarPlacarVolei(dadosParaSalvar) {
       try {
         await axios.put(`http://localhost:3000/placar/volei/${this.timeSelecionado}`, dadosParaSalvar);
@@ -404,7 +616,35 @@ export default {
       } catch (error) {
         Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
       }
-    }
+    },
+    async salvarPlacarVoleibol(dadosParaSalvar) {
+      try {
+        await axios.put(`http://localhost:3000/placar/voleibol/${this.timeSelecionado}`, dadosParaSalvar);
+        Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
+        this.limparDadosJogo();
+      } catch (error) {
+        Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
+      }
+    },
+    async salvarPlacarVoleiAreia(dadosParaSalvar) {
+      try {
+        await axios.put(`http://localhost:3000/placar/volei_de_areia/${this.timeSelecionado}`, dadosParaSalvar);
+        Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
+        this.limparDadosJogo();
+      } catch (error) {
+        Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
+      }
+    },
+    async salvarPlacarFutevolei(dadosParaSalvar) {
+      try {
+        console.log('Dados que serão enviados:', dadosParaSalvar);
+        await axios.put(`http://localhost:3000/placar/futevolei/${this.timeSelecionado}`, dadosParaSalvar);
+        Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
+        this.limparDadosJogo();
+      } catch (error) {
+        Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
+      }
+    },
   },
 };
 </script>

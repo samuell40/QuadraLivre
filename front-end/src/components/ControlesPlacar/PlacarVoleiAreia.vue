@@ -93,14 +93,13 @@
         </div>
       </div>
     </div>
-
-    <button class="btn-save1" @click="$emit('salvar')">Salvar</button>
+      <button class="btn-save1" @click="salvar">Salvar</button>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'PlacarVolei',
+  name: 'PlacarVoleiAreia',
   props: {
     placar: {
       type: Object,

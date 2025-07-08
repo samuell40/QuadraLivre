@@ -37,7 +37,8 @@ export default {
     },
     methods: {
         async cadastrarModalidade() {
-            const nome = this.novaModalidade.trim();
+            const nome = this.novaModalidade.trim().toLowerCase();
+
             if (!nome) {
                 Swal.fire('Atenção', 'Informe o nome da modalidade.', 'warning');
                 return;
