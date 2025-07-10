@@ -57,7 +57,7 @@ function callbackLoginGoogle(req, res, next) {
         { expiresIn: '8h' }
       );
 
-      res.redirect(`https://quadra-livre-backend.onrender.com/meusagendamentos/?token=${token}`);
+      res.redirect(`http://localhost:3000/meusagendamentos/?token=${token}`);
     });
   })(req, res, next);
 }
