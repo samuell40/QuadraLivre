@@ -78,7 +78,7 @@ export default {
           const formData = new FormData();
           formData.append('file', this.form.imagem);
 
-          const uploadResponse = await fetch('http://localhost:3000/upload', {
+          const uploadResponse = await fetch('https://quadra-livre-backend.onrender.com/upload', {
             method: 'POST',
             body: formData,
           });
@@ -93,7 +93,7 @@ export default {
           urlImagem = 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/Imagem%20padrao.png';
         }
 
-        const response = await fetch('http://localhost:3000/cadastrar/usuario', {
+        const response = await fetch('https://quadra-livre-backend.onrender.com/cadastrar/usuario', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -152,7 +152,7 @@ export default {
     async carregarUsuarios() {
       this.isLoading = true;
       try {
-        const response = await axios.get('http://localhost:3000/usuarios');
+        const response = await axios.get('https://quadra-livre-backend.onrender.com/usuarios');
         this.usuarios = response.data;
       } catch (error) {
         console.error('Erro ao carregar usuários:', error);
@@ -177,7 +177,7 @@ export default {
 
     async listarPermissoes() {
       try {
-        const resPerm = await axios.get('http://localhost:3000/permissoes');
+        const resPerm = await axios.get('https://quadra-livre-backend.onrender.com/permissoes');
         this.permissoes = resPerm.data;
       } catch (err) {
         console.error('Erro ao carregar permissões', err);
@@ -191,7 +191,7 @@ export default {
 
     async listarQuadras() {
       try {
-        const resQuadra = await axios.get('http://localhost:3000/quadra');
+        const resQuadra = await axios.get('https://quadra-livre-backend.onrender.com/quadra');
         this.quadras = resQuadra.data;
       } catch (err) {
         console.error('Erro ao carregar quadras', err);
@@ -223,7 +223,7 @@ export default {
           return;
         }
 
-        await axios.put('http://localhost:3000/editar/usuario', {
+        await axios.put('https://quadra-livre-backend.onrender.com/editar/usuario', {
           email: this.form.email,
           funcao: this.form.funcao,
           quadra: this.form.quadra,

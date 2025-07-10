@@ -63,7 +63,7 @@ export default {
           formData.append('file', this.form.imagem);
 
           // Faz upload da imagem primeiro
-          const uploadResponse = await fetch('http://localhost:3000/upload', {
+          const uploadResponse = await fetch('https://quadra-livre-backend.onrender.com/upload', {
             method: 'POST',
             body: formData,
           });
@@ -77,7 +77,7 @@ export default {
         }
 
         // Agora cadastra a quadra com a URL da imagem
-        const response = await fetch('http://localhost:3000/quadra', {
+        const response = await fetch('https://quadra-livre-backend.onrender.com/quadra', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

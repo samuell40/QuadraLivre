@@ -441,7 +441,7 @@ export default {
 
     async carregarModalidades() {
       try {
-        const res = await axios.get('http://localhost:3000/modalidade');
+        const res = await axios.get('https://quadra-livre-backend.onrender.com/modalidade');
         this.modalidadesDisponiveis = res.data;
       } catch (error) {
         console.error('Erro ao carregar modalidades:', error);
@@ -452,7 +452,7 @@ export default {
     async carregarTimes() {
       if (!this.modalidadeSelecionada) return;
       try {
-        const res = await axios.get(`http://localhost:3000/times/${this.modalidadeSelecionada}`);
+        const res = await axios.get(`https://quadra-livre-backend.onrender.com/times/${this.modalidadeSelecionada}`);
         this.times = res.data.map(t => t.time);
       } catch (error) {
         console.error('Erro ao carregar times:', error);
@@ -464,7 +464,7 @@ export default {
       if (!this.modalidadeSelecionada || !this.timeSelecionado) return;
 
       try {
-        const res = await axios.get(`http://localhost:3000/times/${this.modalidadeSelecionada}/${this.timeSelecionado}`);
+        const res = await axios.get(`https://quadra-livre-backend.onrender.com/times/${this.modalidadeSelecionada}/${this.timeSelecionado}`);
         const dados = res.data;
 
         if (this.modalidadeSelecionada === 'futebol') {
@@ -571,7 +571,7 @@ export default {
     async carregarPlacarModalidade(modalidade) {
       this.modalidadePlacarSelecionada = modalidade;
       try {
-        const res = await axios.get(`http://localhost:3000/placar/${modalidade}`);
+        const res = await axios.get(`https://quadra-livre-backend.onrender.com/placar/${modalidade}`);
         this.timesPlacar = res.data;
       } catch (error) {
         Swal.fire('Erro', 'Erro ao carregar placar.', 'error');
@@ -586,7 +586,7 @@ export default {
         if (this.modalidadeSelecionada === 'futebol') {
           dadosParaSalvar.saldoDeGols = dadosParaSalvar.golsPro - dadosParaSalvar.golsSofridos;
         }
-        await axios.put(`http://localhost:3000/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
+        await axios.put(`https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
         this.limparDadosJogo();
       } catch (error) {
@@ -603,7 +603,7 @@ export default {
         if (this.modalidadeSelecionada === 'futebol_de_areia') {
           dadosParaSalvar.saldoDeGols = dadosParaSalvar.golsPro - dadosParaSalvar.golsSofridos;
         }
-        await axios.put(`http://localhost:3000/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
+        await axios.put(`https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
         this.limparDadosJogo();
       } catch (error) {
@@ -620,7 +620,7 @@ export default {
         if (this.modalidadeSelecionada === 'futsal') {
           dadosParaSalvar.saldoDeGols = dadosParaSalvar.golsPro - dadosParaSalvar.golsSofridos;
         }
-        await axios.put(`http://localhost:3000/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
+        await axios.put(`https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
         this.limparDadosJogo();
       } catch (error) {
@@ -634,7 +634,7 @@ export default {
         return;
       }
       try {
-        await axios.put(`http://localhost:3000/placar/volei/${this.timeSelecionado}`, dadosParaSalvar);
+        await axios.put(`https://quadra-livre-backend.onrender.com/placar/volei/${this.timeSelecionado}`, dadosParaSalvar);
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
         this.limparDadosJogo();
       } catch (error) {
@@ -647,7 +647,7 @@ export default {
         return;
       }
       try {
-        await axios.put(`http://localhost:3000/placar/voleibol/${this.timeSelecionado}`, dadosParaSalvar);
+        await axios.put(`https://quadra-livre-backend.onrender.com/placar/voleibol/${this.timeSelecionado}`, dadosParaSalvar);
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
         this.limparDadosJogo();
       } catch (error) {
@@ -660,7 +660,7 @@ export default {
         return;
       }
       try {
-        await axios.put(`http://localhost:3000/placar/volei_de_areia/${this.timeSelecionado}`, dadosParaSalvar);
+        await axios.put(`https://quadra-livre-backend.onrender.com/placar/volei_de_areia/${this.timeSelecionado}`, dadosParaSalvar);
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
         this.limparDadosJogo();
       } catch (error) {
@@ -674,7 +674,7 @@ export default {
       }
       try {
         console.log('Dados que serão enviados:', dadosParaSalvar);
-        await axios.put(`http://localhost:3000/placar/futevolei/${this.timeSelecionado}`, dadosParaSalvar);
+        await axios.put(`https://quadra-livre-backend.onrender.com/placar/futevolei/${this.timeSelecionado}`, dadosParaSalvar);
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
         this.limparDadosJogo();
       } catch (error) {

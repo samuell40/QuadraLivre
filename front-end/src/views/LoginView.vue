@@ -46,7 +46,7 @@ export default {
   },
   methods: {
     loginComGoogle() {
-      window.location.href = 'http://localhost:3000/auth/google';
+      window.location.href = 'https://quadra-livre-backend.onrender.com/auth/google';
     },
     verificarErroLogin() {
       const params = new URLSearchParams(window.location.search);
@@ -195,6 +195,7 @@ export default {
   margin: 1rem 0;
   cursor: pointer;
 }
+
 .alerta-sucesso {
   position: fixed;
   top: 10px;
@@ -204,7 +205,7 @@ export default {
   color: white;
   padding: 12px 24px;
   border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   z-index: 9999;
   font-weight: 600;
   font-family: 'Montserrat', sans-serif;

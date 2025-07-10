@@ -23,7 +23,7 @@ const uploadFile = async () => {
 
   try {
     // Enviando o arquivo para o backend
-    const response = await fetch("http://localhost:3000/upload", {
+    const response = await fetch("https://quadra-livre-backend.onrender.com/upload", {
       method: "POST",
       body: formData,
     });

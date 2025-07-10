@@ -160,7 +160,7 @@ export default {
     async carregarQuadras() {
       this.isLoadingQuadras = true;
       try {
-        const res = await fetch('http://localhost:3000/quadra');
+        const res = await fetch('https://quadra-livre-backend.onrender.com/quadra');
         const data = await res.json();
         this.quadras = data;
       } catch (err) {
@@ -172,7 +172,7 @@ export default {
     async carregarPlacarFutebol() {
       this.isLoadingPlacarFutebol = true;
       try {
-        const res = await fetch(`http://localhost:3000/placar/futebol`);
+        const res = await fetch(`https://quadra-livre-backend.onrender.com/placar/futebol`);
         if (!res.ok) throw new Error('Erro na resposta do servidor');
         const data = await res.json();
         this.times = data;
@@ -185,7 +185,7 @@ export default {
     async carregarPlacarVolei() {
       this.isLoadingPlacarVolei = true;
       try {
-        const res = await fetch(`http://localhost:3000/placar/volei`);
+        const res = await fetch(`https://quadra-livre-backend.onrender.com/placar/volei`);
         if (!res.ok) throw new Error('Erro na resposta do servidor');
         const data = await res.json();
         this.timesVolei = data;
