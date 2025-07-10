@@ -366,8 +366,9 @@ export default {
 
 .botoes {
   display: flex;
-  gap: 20px;
+  gap: 12px;
   align-items: center;
+  justify-content: flex-end;
 }
 
 .form-group {
@@ -535,4 +536,27 @@ export default {
 .dropdown-row .team {
   flex: 1;
 }
+@media (max-width: 768px) {
+ @media (max-width: 768px) {
+  .header-placar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .botoes {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  .btn-reset,
+  .btn-ocultar {
+    width: auto;
+    min-width: 120px;
+    text-align: center;
+  }
+}
+}
+
 </style>

@@ -213,17 +213,46 @@ input[type="file"] {
 }
 
 @media (max-width: 768px) {
+  @media (max-width: 768px) {
   .cadastro_quadra {
-    padding: 10px;
+    margin-left: 0;
+    padding: 20px 15px;
   }
 
-  h1 {
-    font-size: 24px;
-    text-align: center;
+  form {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .form-group label {
+    font-size: 14px;
+  }
+
+  .form-group input,
+  select,
+  textarea {
+    font-size: 14px;
+    padding: 6px 8px;
   }
 
   .btn_cadastrarquadra {
     font-size: 14px;
+    padding: 10px;
   }
+
+  #adicionar_imagem {
+    grid-column: auto;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
 }
 </style>

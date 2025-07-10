@@ -12,7 +12,7 @@
         </div>
 
         <ul class="nav-links" :class="{ active: isMenuOpen }">
-          <li><a href="/horarios">Horários</a></li>
+          <li><a href="">Horários</a></li>
           <li><a href="#placar-virtual">Placar</a></li>
           <li class="login-item"><a href="/login" class="login">Login</a></li>
         </ul>
@@ -87,8 +87,8 @@
 import { Carousel, Slide } from 'vue3-carousel'
 import PlacarFutebolHome from '@/components/PlacarHome/PlacarFutebolHome.vue'
 import PlacarVoleihome from '@/components/PlacarHome/PlacarVoleiHome.vue'
-import AgendamentoFutebolModal from '@/components/modals/AgendModalFut.vue'
-import AgendamentoVoleiModal from '@/components/modals/AgendModalVol.vue'
+import AgendamentoFutebolModal from '@/components/modals/Agendamentos/AgendModalFut.vue'
+import AgendamentoVoleiModal from '@/components/modals/Agendamentos/AgendModalVol.vue'
 import 'vue3-carousel/dist/carousel.css'
 
 export default {

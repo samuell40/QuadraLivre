@@ -196,6 +196,6 @@ export default {
   cursor: pointer;
   color: white;
   font-size: 16px;
-  background-color: #7e7e7e;
+  background-color: #3b82f6;
 }
 </style>

@@ -62,6 +62,7 @@ export default {
           modalidade: this.modalidadeSelecionada,
         });
         Swal.fire('Sucesso', 'Placar resetado com sucesso!', 'success');
+         this.$emit('confirmado');
         this.$emit('fechar');
         this.modalidadeSelecionada = '';
       } catch (error) {
