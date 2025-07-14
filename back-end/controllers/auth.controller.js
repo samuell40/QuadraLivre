@@ -36,8 +36,7 @@ function callbackLoginGoogle(req, res, next) {
 
     if (!user) {
       const email = info?.email || '';
-
-      return res.redirect(`http://localhost:8080/login?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`);
+      return res.redirect(`${config.frontendURL}/login?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`);
     }
 
     req.logIn(user, (err) => {
@@ -57,7 +56,7 @@ function callbackLoginGoogle(req, res, next) {
         { expiresIn: '8h' }
       );
 
-      res.redirect(`http://localhost:8080/meusagendamentos/?token=${token}`);
+      res.redirect(`${config.frontendURL}/meusagendamentos/?token=${token}`);
     });
   })(req, res, next);
 }
@@ -66,10 +65,10 @@ function loginFalhou(req, res) {
   const { email, erro } = req.query;
 
   if (erro === 'usuario_nao_cadastrado' && email) {
-    return res.redirect(`http://localhost:8080/login?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`);
+    return res.redirect(`${config.frontendURL}/login?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`);
   }
 
-  return res.redirect('http://localhost:8080/login?erro=usuario_nao_cadastrado');
+  return res.redirect(`${config.frontendURL}/login?erro=usuario_nao_cadastrado`);
 }
 
 module.exports = {
