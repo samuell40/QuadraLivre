@@ -34,13 +34,10 @@ function callbackLoginGoogle(req, res, next) {
       return next(err);
     }
 
-    const protocolo = req.protocol;
-    const host = req.headers.host;
-    const baseUrl = `${protocolo}://${host}`;
-
     if (!user) {
       const email = info?.email || '';
-      return res.redirect(`${baseUrl}/login?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`);
+
+      return res.redirect(`http://localhost:8080/login?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`);
     }
 
     req.logIn(user, (err) => {
@@ -60,23 +57,19 @@ function callbackLoginGoogle(req, res, next) {
         { expiresIn: '8h' }
       );
 
-      return res.redirect(`${baseUrl}/meusagendamentos/?token=${token}`);
+      res.redirect(`http://localhost:8080/meusagendamentos/?token=${token}`);
     });
   })(req, res, next);
 }
 
 function loginFalhou(req, res) {
-  const protocolo = req.protocol;
-  const host = req.headers.host;
-  const baseUrl = `${protocolo}://${host}`;
-
   const { email, erro } = req.query;
 
   if (erro === 'usuario_nao_cadastrado' && email) {
-    return res.redirect(`${baseUrl}/login?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`);
+    return res.redirect(`http://localhost:8080/login?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`);
   }
 
-  return res.redirect(`${baseUrl}/login?erro=usuario_nao_cadastrado`);
+  return res.redirect('http://localhost:8080/login?erro=usuario_nao_cadastrado');
 }
 
 module.exports = {
