@@ -37,7 +37,7 @@ function callbackLoginGoogle(req, res, next) {
     if (!user) {
       const email = info?.email || '';
 
-      return res.redirect(`https://quadra-livre-backend.onrender.com/login?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`);
+      return res.redirect(`http://localhost:8080/login?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`);
     }
 
     req.logIn(user, (err) => {
@@ -66,10 +66,10 @@ function loginFalhou(req, res) {
   const { email, erro } = req.query;
 
   if (erro === 'usuario_nao_cadastrado' && email) {
-    return res.redirect(`https://quadra-livre-backend.onrender.com/login?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`);
+    return res.redirect(`http://localhost:8080/login?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`);
   }
 
-  return res.redirect('https://quadra-livre-backend.onrender.com/login?erro=usuario_nao_cadastrado');
+  return res.redirect('http://localhost:8080/login?erro=usuario_nao_cadastrado');
 }
 
 module.exports = {
