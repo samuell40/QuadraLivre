@@ -6,12 +6,17 @@
       <h1>Agendar Quadra</h1>
     </div>
 
-    <!-- Lista de Quadras -->
-    <div class="quadras-grid">
-      <div class="card-quadra" v-for="n in 6" :key="n">
-        <img src="@/assets/futibinha.png" alt="Quadra" class="imagem-quadra" />
+    <div v-if="isLoadingQuadras" class="loader"></div>
+
+    <div v-else class="quadras-grid">
+      <div class="card-quadra" v-for="quadra in quadras" :key="quadra.id">
+        <img
+          :src="quadra.foto || require('@/assets/futibinha.png')"
+          :alt="quadra.nome"
+          class="imagem-quadra"
+        />
         <div class="overlay">
-          <h3 class="nome-quadra">Quadra {{ n }}</h3>
+          <h3 class="nome-quadra">{{ quadra.nome }}</h3>
           <button class="btn-agendar">Agendar</button>
         </div>
       </div>
@@ -25,9 +30,32 @@ import NavBar from '@/components/NavBar.vue';
 export default {
   name: 'AgendarQuadras',
   components: {
-   NavBar,
+    NavBar,
+  },
+  data() {
+    return {
+      quadras: [],
+      isLoadingQuadras: true,
+    };
+  },
+  mounted() {
+    this.carregarQuadras();
+  },
+  methods: {
+    async carregarQuadras() {
+      this.isLoadingQuadras = true;
+      try {
+        const res = await fetch('https://quadra-livre-backend.onrender.com/quadra');
+        const data = await res.json();
+        this.quadras = data;
+      } catch (err) {
+        console.error('Erro ao carregar quadras:', err);
+      } finally {
+        this.isLoadingQuadras = false;
+      }
+    }
   }
-}
+};
 </script>
 
 <style scoped>
@@ -66,15 +94,15 @@ body {
 .card-quadra {
   position: relative;
   max-width: 100%;
-  width: 400px;
-  border-radius: 12px;
+  width: 420px;
+  height: 240px;
+  border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 .imagem-quadra {
   width: 100%;
-  height: 220px;
   object-fit: cover;
 }
 
@@ -99,9 +127,9 @@ body {
 .btn-agendar {
   background-color: #3b82f6;
   border: none;
+  padding: 8px 12px;
   width: 120px;
   height: 40px;
-  padding: 8px 12px;
   border-radius: 6px;
   color: white;
   font-weight: bold;
