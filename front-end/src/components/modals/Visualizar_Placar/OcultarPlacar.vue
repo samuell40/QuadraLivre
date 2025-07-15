@@ -40,6 +40,7 @@
 
 <script>
 import axios from "axios";
+import Swal from "sweetalert2";
 
 export default {
   name: "OcultarPlacar",
@@ -57,7 +58,7 @@ export default {
   computed: {
     modalidadesVisiveis() {
       return Object.entries(this.visibilidade)
-        .filter(([, vis]) => vis) 
+        .filter(([, vis]) => vis)
         .map(([nome]) => nome);
     },
     modalidadesOcultas() {
@@ -65,7 +66,6 @@ export default {
         .filter(([, vis]) => !vis)
         .map(([nome]) => nome);
     },
-
   },
   watch: {
     aberto(novoValor) {
@@ -77,7 +77,7 @@ export default {
   methods: {
     async carregarModalidades() {
       try {
-        const res = await axios.get("http://localhost:3000/modalidade");
+        const res = await axios.get("http://quadra-livre-backend.onrender.com/modalidade");
         this.modalidadesDisponiveis = res.data;
 
         this.modalidadesDisponiveis.forEach(({ nome }) => {
@@ -100,9 +100,11 @@ export default {
           this.visibilidade[nome] = true;
           localStorage.setItem(`exibirPlacar_${nome}`, "true");
         });
+        Swal.fire("Sucesso!", "Todos os placares estão visíveis.", "success");
       } else {
         this.visibilidade[modalidade] = true;
         localStorage.setItem(`exibirPlacar_${modalidade}`, "true");
+        Swal.fire("Visível", `O placar de "${this.capitalizar(modalidade)}" está agora visível.`, "success");
       }
 
       this.modalidadeParaExibir = "";
@@ -115,9 +117,11 @@ export default {
           this.visibilidade[nome] = false;
           localStorage.setItem(`exibirPlacar_${nome}`, "false");
         });
+        Swal.fire("Ocultado", "Todos os placares foram ocultados.", "info");
       } else {
         this.visibilidade[modalidade] = false;
         localStorage.setItem(`exibirPlacar_${modalidade}`, "false");
+        Swal.fire("Ocultado", `O placar de "${this.capitalizar(modalidade)}" foi ocultado.`, "info");
       }
 
       this.modalidadeParaOcultar = "";
