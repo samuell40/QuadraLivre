@@ -75,7 +75,7 @@ body {
 }
 
 .titulo {
-  margin-top: 100px;
+  margin-top: 80px;
   margin-bottom: 32px;
 }
 
