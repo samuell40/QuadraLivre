@@ -77,7 +77,7 @@ export default {
   methods: {
     async carregarModalidades() {
       try {
-        const res = await axios.get("http://quadra-livre-backend.onrender.com/modalidade");
+        const res = await axios.get("https://quadra-livre-backend.onrender.com/modalidade");
         this.modalidadesDisponiveis = res.data;
 
         this.modalidadesDisponiveis.forEach(({ nome }) => {
