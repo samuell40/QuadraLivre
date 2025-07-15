@@ -51,7 +51,7 @@
               <div class="info">
                 <h3>{{ quadra.nome }}</h3>
                 <p class="endereco">{{ quadra.endereco }}</p>
-                <button class="btn-agendar" @click="clicarAgendar(quadra)">Agendar</button>
+                <button class="btn-agendar" @click="verificarLogin(quadra)">Agendar</button>
               </div>
             </div>
           </Slide>
@@ -73,23 +73,19 @@
     <div v-if="exibirPlacarVolei">
       <PlacarVoleihome v-show="!isLoadingPlacarVolei" :times="timesVoleiComPosicao" />
     </div>
-
-    <AgendamentoFutebolModal v-if="mostrarModal" :quadra="quadraSelecionada" @fechar="fecharModal"
-      @confirmar="confirmarAgendamento" />
-
-    <AgendamentoVoleiModal v-if="mostrarModalVolei" :quadra="quadraSelecionada" @fechar="fecharModal"
-      @confirmar="confirmarAgendamento" />
-
   </div>
+
+  <!-- Login Necessário -->
+   <VerificarLogin  v-if="mostrarModalLogin" @fechar="mostrarModalLogin = false" @irParaLogin="irParaLogin" />
+
 </template>
 
 <script>
 import { Carousel, Slide } from 'vue3-carousel'
 import PlacarFutebolHome from '@/components/PlacarHome/PlacarFutebolHome.vue'
 import PlacarVoleihome from '@/components/PlacarHome/PlacarVoleiHome.vue'
-import AgendamentoFutebolModal from '@/components/modals/Agendamentos/AgendModalFut.vue'
-import AgendamentoVoleiModal from '@/components/modals/Agendamentos/AgendModalVol.vue'
 import 'vue3-carousel/dist/carousel.css'
+import VerificarLogin from '@/components/modals/Alertas/verificarLogin.vue'
 
 export default {
   name: 'HomeView',
@@ -98,8 +94,7 @@ export default {
     Slide,
     PlacarFutebolHome,
     PlacarVoleihome,
-    AgendamentoFutebolModal,
-    AgendamentoVoleiModal
+    VerificarLogin
   },
   data() {
     return {
@@ -110,18 +105,14 @@ export default {
       isLoadingQuadras: true,
       isLoadingPlacarFutebol: true,
       isLoadingPlacarVolei: true,
-      mostrarModal: false,
-      quadraSelecionada: null,
       exibirPlacarFutebol: true,
       exibirPlacarVolei: true,
+      mostrarModalLogin: false
     }
   },
   computed: {
-    timesFutebol() {
-      return this.times;
-    },
     timesFutebolComPosicao() {
-      const sorted = [...this.timesFutebol].sort((a, b) => b.pontuacao - a.pontuacao);
+      const sorted = [...this.times].sort((a, b) => b.pontuacao - a.pontuacao);
       return sorted.map((time, idx) => ({ ...time, posicao: idx + 1 }));
     },
     timesVoleiComPosicao() {
@@ -136,13 +127,13 @@ export default {
     this.atualizarVisibilidadePlacar();
     window.addEventListener("storage", this.atualizarVisibilidadePlacar);
   },
+  beforeUnmount() {
+    window.removeEventListener("storage", this.atualizarVisibilidadePlacar);
+  },
   methods: {
     atualizarVisibilidadePlacar() {
       this.exibirPlacarFutebol = JSON.parse(localStorage.getItem("exibirPlacar_futebol") ?? "true");
       this.exibirPlacarVolei = JSON.parse(localStorage.getItem("exibirPlacar_volei") ?? "true");
-    },
-    beforeUnmount() {
-      window.removeEventListener("storage", this.atualizarVisibilidadePlacar);
     },
     toggleMenu() {
       this.isMenuOpen = !this.isMenuOpen;
@@ -173,7 +164,6 @@ export default {
       this.isLoadingPlacarFutebol = true;
       try {
         const res = await fetch(`https://quadra-livre-backend.onrender.com/placar/futebol`);
-        if (!res.ok) throw new Error('Erro na resposta do servidor');
         const data = await res.json();
         this.times = data;
       } catch (err) {
@@ -186,7 +176,6 @@ export default {
       this.isLoadingPlacarVolei = true;
       try {
         const res = await fetch(`https://quadra-livre-backend.onrender.com/placar/volei`);
-        if (!res.ok) throw new Error('Erro na resposta do servidor');
         const data = await res.json();
         this.timesVolei = data;
       } catch (err) {
@@ -195,22 +184,17 @@ export default {
         this.isLoadingPlacarVolei = false;
       }
     },
-    clicarAgendar(quadra) {
-      this.quadraSelecionada = quadra
-      this.mostrarModal = true
+    verificarLogin(quadra) {
+      const usuarioLogado = localStorage.getItem('usuario');
+      if (usuarioLogado) {
+        this.$router.push({ name: 'AgendarQuadra', query: { quadraId: quadra.id } });
+      } else {
+        this.mostrarModalLogin = true;
+      }
     },
-    fecharModal() {
-      this.mostrarModal = false
-      this.quadraSelecionada = null
-    },
-    confirmarAgendamento(payload) {
-      const { quadra, data, hora } = payload
-      console.log('Agendamento confirmado:')
-      console.log('Quadra:', quadra)
-      console.log('Data:', data)
-      console.log('Hora:', hora)
-
-      this.fecharModal
+    irParaLogin() {
+      this.mostrarModalLogin = false;
+      this.$router.push('/login');
     }
   }
 }
