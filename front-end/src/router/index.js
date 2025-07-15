@@ -8,6 +8,7 @@ import CadastrarQuadraView from '../views/CadastrarQuadraView.vue';
 import ControlePlacarView from '../views/ControlePlacarView';
 import UsuariosView from '../views/UsuariosView';
 import MeusAgendamentosView from '../views/MeusAgendamentosView'
+import AgendarQuadrasView from '@/views/AgendarQuadrasView.vue';
 
 const routes = [
   {
@@ -19,6 +20,11 @@ const routes = [
     path: '/agendamentos',
     name: 'Agendamentos',
     component: AgendamentosView,
+  },
+  {
+    path: '/agendarquadra',
+    name: 'agendar_quadra',
+    component: AgendarQuadrasView
   },
   {
     path: '/login',
