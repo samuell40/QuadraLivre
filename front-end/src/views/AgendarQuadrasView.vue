@@ -119,25 +119,42 @@ body {
 }
 
 .nome-quadra {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
   margin: 0;
 }
 
 .btn-agendar {
   background-color: #3b82f6;
+  color: white;
   border: none;
-  padding: 8px 12px;
-  width: 120px;
-  height: 40px;
+  padding: 6px 12px;
+  cursor: pointer;
+
+  width: 80px;
+  height: 36  px;
   border-radius: 6px;
   color: white;
-  font-weight: bold;
-  cursor: pointer;
+  font-size: 12px;
   transition: background-color 0.2s;
 }
 
 .btn-agendar:hover {
   background-color: #2563eb;
+}
+
+.loader {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #3b82f6;
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  animation: spin 1s linear infinite;
+  margin: 40px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>
