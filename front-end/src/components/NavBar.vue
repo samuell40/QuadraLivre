@@ -11,8 +11,8 @@
         </div>
 
         <ul class="nav-links" :class="{ active: isMenuOpen }">
-          <li><a href="/">Agendar Quadra</a></li>
-          <li><a href="/">Meus Agendamentos</a></li>
+          <li><a href="/agendarquadra">Agendar Quadra</a></li>
+          <li><a href="/meusagendamentos">Meus Agendamentos</a></li>
           <li class="sair-item"><a href="/" class="sair">Sair</a></li>
         </ul>
 

@@ -12,7 +12,7 @@
         </div>
 
         <ul class="nav-links" :class="{ active: isMenuOpen }">
-          <li><a href="">Horários</a></li>
+          <li><a href="#quadras-disponiveis">Quadras</a></li>
           <li><a href="#placar-virtual">Placar</a></li>
           <li class="login-item"><a href="/login" class="login">Login</a></li>
         </ul>
@@ -35,7 +35,7 @@
       </div>
     </section>
 
-    <h3 class="tit_horario">Quadras Disponíveis</h3>
+    <h3 id="quadras-disponiveis" class="tit_horario">Quadras Disponíveis</h3>
     <section class="agendamento">
       <template v-if="isLoadingQuadras">
         <div class="loader"></div>
@@ -76,7 +76,7 @@
   </div>
 
   <!-- Login Necessário -->
-   <VerificarLogin  v-if="mostrarModalLogin" @fechar="mostrarModalLogin = false" @irParaLogin="irParaLogin" />
+  <VerificarLogin v-if="mostrarModalLogin" @fechar="mostrarModalLogin = false" @irParaLogin="irParaLogin" />
 
 </template>
 
@@ -186,9 +186,14 @@ export default {
     },
     verificarLogin(quadra) {
       const usuarioLogado = localStorage.getItem('usuario');
-      if (usuarioLogado) {
-        this.$router.push({ name: 'AgendarQuadra', query: { quadraId: quadra.id } });
-      } else {
+      try {
+        const usuario = JSON.parse(usuarioLogado);
+        if (usuario && usuario.token) {
+          this.$router.push({ name: 'agendar_quadra', query: { quadraId: quadra.id } });
+        } else {
+          this.mostrarModalLogin = true;
+        }
+      } catch (erro) {
         this.mostrarModalLogin = true;
       }
     },
