@@ -30,7 +30,7 @@ export default {
 
 <style scoped>
 .card {
-  width: 95%;
+  width: 100%;
   background: white;
   border-radius: 12px;
   padding: 24px;

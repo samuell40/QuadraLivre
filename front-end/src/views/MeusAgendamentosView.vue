@@ -1,6 +1,6 @@
 <template>
   <div class="layout">
-    <SideBar />
+    <NavBar />
 
     <div class="conteudo">
       <div class="topo">
@@ -19,7 +19,7 @@
 </template>
 
 <script setup>
-import SideBar from '@/components/SideBar.vue'
+import NavBar from '@/components/NavBar.vue'
 import MeusAgendamentoCard from '@/components/cards/MeusAgendamentosCard.vue'
 
 const agendamentos = [
@@ -50,6 +50,7 @@ const agendamentos = [
 <style scoped>
 .layout {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
 }
 
@@ -57,7 +58,7 @@ const agendamentos = [
   flex: 1;
   padding: 32px;
   background-color: #f2f2f2;
-  margin-left: 250px;
+  margin-top: 60px;
 }
 
 .topo {
@@ -66,14 +67,10 @@ const agendamentos = [
   align-items: center;
 }
 
-.title{
-   color: #3b82f6;
+.title {
+  color: #3b82f6;
   font-size: 28px;
-}
-
-.usuario {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  font-weight: bold;
+  margin-bottom: 20px;
 }
 </style>
