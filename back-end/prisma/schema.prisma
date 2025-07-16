@@ -8,26 +8,27 @@ datasource db {
 }
 
 model Usuario {
-  id          Int        @id @default(autoincrement())
-  nome        String
-  email       String     @unique
-  telefone    String?
-  funcao      String   
-  permissaoId Int  
-  foto        String?    @db.VarChar(2048)
-  quadraId    Int?
-  quadra      Quadra?  @relation(fields: [quadraId], references: [id])
-  permissao   Permissao  @relation(fields: [permissaoId], references: [id])
+  id           Int           @id @default(autoincrement())
+  nome         String
+  email        String        @unique
+  telefone     String?
+  funcao       String
+  permissaoId  Int
+  foto         String?       @db.VarChar(2048)
+  quadraId     Int?
+  quadra       Quadra?       @relation(fields: [quadraId], references: [id])
+  permissao    Permissao     @relation(fields: [permissaoId], references: [id])
   agendamentos Agendamento[]
 }
 
 model Quadra {
-  id        Int       @id @default(autoincrement())
-  nome      String
-  foto      String?   @db.VarChar(2048)
-  descricao String
-  endereco  String?
-  usuarios  Usuario[]
+  id          Int          @id @default(autoincrement())
+  nome        String
+  foto        String?      @db.VarChar(2048)
+  descricao   String
+  endereco    String?
+  usuarios    Usuario[]
+  modalidades Modalidade[] @relation("QuadraModalidade")
 }
 
 model Agendamento {
@@ -42,43 +43,45 @@ model Agendamento {
 }
 
 model Modalidade {
-  id      Int      @id @default(autoincrement())
-  nome    String   @unique
-  placares Placar[] 
+  id       Int      @id @default(autoincrement())
+  nome     String   @unique
+  placares Placar[]
+  quadras  Quadra[] @relation("QuadraModalidade")
 }
 
 model Placar {
-  id                Int      @id @default(autoincrement())
-  modalidadeId      Int
-  time              String
-  foto              String?
-  jogos             Int
-  posicao           Int
-  pontuacao         Int
-  vitorias          Int
-  empates           Int?
-  derrotas          Int
+  id           Int     @id @default(autoincrement())
+  modalidadeId Int
+  time         String
+  foto         String?
+  jogos        Int
+  posicao      Int
+  pontuacao    Int
+  vitorias     Int
+  empates      Int?
+  derrotas     Int
 
-  golsPro           Int?
-  golsSofridos      Int?
-  saldoDeGols       Int?
+  golsPro      Int?
+  golsSofridos Int?
+  saldoDeGols  Int?
 
-  setsVencidos      Int?
-  vitoria2x0        Int?
-  vitoria2x1        Int?
-  derrota2x1        Int?
-  derrota2x0        Int?
-  derrotaWo         Int?
+  setsVencidos Int?
+  vitoria2x0   Int?
+  vitoria2x1   Int?
+  derrota2x1   Int?
+  derrota2x0   Int?
+  derrotaWo    Int?
 
-  cartoesAmarelos   Int?
-  cartoesVermelhos  Int?
+  cartoesAmarelos  Int?
+  cartoesVermelhos Int?
 
-  modalidade   Modalidade @relation(fields: [modalidadeId], references: [id])
-  @@unique([modalidadeId, time]) 
+  modalidade Modalidade @relation(fields: [modalidadeId], references: [id])
+
+  @@unique([modalidadeId, time])
 }
 
 model Permissao {
-  id            Int       @id @default(autoincrement())
-  descricao     String
-  usuarios      Usuario[]
+  id        Int       @id @default(autoincrement())
+  descricao String
+  usuarios  Usuario[]
 }
