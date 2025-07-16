@@ -17,45 +17,64 @@
         />
         <div class="overlay">
           <h3 class="nome-quadra">{{ quadra.nome }}</h3>
-          <button class="btn-agendar">Agendar</button>
+          <button class="btn-agendar" @click="abrirModal(quadra)">Agendar</button>
         </div>
       </div>
     </div>
+
+    <AgendamentoFutebolModal
+      v-if="mostrarModal"
+      :quadra="quadraSelecionada"
+      @fechar="mostrarModal = false"
+      @confirmar="confirmarAgendamento"
+    />
   </div>
 </template>
 
 <script>
-import NavBar from '@/components/NavBar.vue';
+import NavBar from '@/components/NavBar.vue'
+import AgendamentoFutebolModal from '@/components/modals/Agendamentos/AgendModalFut.vue'
 
 export default {
   name: 'AgendarQuadras',
   components: {
     NavBar,
+    AgendamentoFutebolModal
   },
   data() {
     return {
       quadras: [],
       isLoadingQuadras: true,
-    };
+      mostrarModal: false,
+      quadraSelecionada: null
+    }
   },
   mounted() {
-    this.carregarQuadras();
+    this.carregarQuadras()
   },
   methods: {
     async carregarQuadras() {
-      this.isLoadingQuadras = true;
+      this.isLoadingQuadras = true
       try {
-        const res = await fetch('https://quadra-livre-backend.onrender.com/quadra');
-        const data = await res.json();
-        this.quadras = data;
+        const res = await fetch('https://quadra-livre-backend.onrender.com/quadra')
+        const data = await res.json()
+        this.quadras = data
       } catch (err) {
-        console.error('Erro ao carregar quadras:', err);
+        console.error('Erro ao carregar quadras:', err)
       } finally {
-        this.isLoadingQuadras = false;
+        this.isLoadingQuadras = false
       }
+    },
+    abrirModal(quadra) {
+      this.quadraSelecionada = quadra
+      this.mostrarModal = true
+    },
+    confirmarAgendamento(agendamento) {
+      console.log('Agendamento confirmado:', agendamento)
+      this.mostrarModal = false
     }
   }
-};
+}
 </script>
 
 <style scoped>
@@ -128,7 +147,7 @@ body {
   background-color: #3b82f6;
   color: white;
   border: none;
-  padding: 6px 12px;
+  padding: 6px 8px;
   cursor: pointer;
 
   width: 80px;
@@ -136,6 +155,7 @@ body {
   border-radius: 6px;
   color: white;
   font-size: 12px;
+  font-weight: bold;
   transition: background-color 0.2s;
 }
 

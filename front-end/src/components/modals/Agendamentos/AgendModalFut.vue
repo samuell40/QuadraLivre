@@ -55,18 +55,17 @@ export default {
       const hoje = new Date()
       hoje.setHours(0, 0, 0, 0)
 
-      // Validação: data não pode ser no passado
+      // Validações
       if (dataSelecionada < hoje) {
         Swal.fire({
           icon: 'error',
           title: 'Data inválida',
-          text: 'Não é possível agendar para datas anteriores a hoje.',
+          text: 'Não é possível agendar para datas anteriores a atual.',
           confirmButtonColor: '#1E3A8A'
         })
         return
       }
 
-      // Validação: não pode agendar com mais de 1 ano de antecedência
       const limite = new Date()
       limite.setFullYear(limite.getFullYear() + 1)
       if (dataSelecionada > limite) {
@@ -79,7 +78,6 @@ export default {
         return
       }
 
-      // Validação: horário permitido (entre 07:00 e 00:00)
       const [h, m] = this.hora.split(':')
       const horaSelecionada = parseInt(h) * 60 + parseInt(m)
       const horaMin = 7 * 60
@@ -94,7 +92,6 @@ export default {
         return
       }
 
-      // Validação: com no mínimo 24h de antecedência
       const diffHoras = (dataSelecionada - agora) / (1000 * 60 * 60)
       if (diffHoras < 24) {
         Swal.fire({
@@ -194,6 +191,7 @@ export default {
 
 .btn-confirmar {
   background-color: #1E3A8A;
+  color: #fff;
 }
 
 .btn-confirmar:disabled {
@@ -205,6 +203,10 @@ export default {
 .btn-cancelar {
   background-color: #F7F9FC;
   color: #7E7E7E;
+}
+
+.btn-cancelar:hover, .btn-confirmar:hover {
+  opacity: 0.8;
 }
 
 input[type="time"]::-webkit-calendar-picker-indicator {
