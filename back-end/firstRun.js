@@ -38,7 +38,6 @@ async function criarQuadra() {
   const quadra = await prisma.quadra.create({
     data: {
       nome: 'Quadra Livre',
-      descricao: 'Quadra oficial do sistema',
       foto: 'https://example.com/foto.png',
       endereco: 'Rua das Quadras, 123',
     },
