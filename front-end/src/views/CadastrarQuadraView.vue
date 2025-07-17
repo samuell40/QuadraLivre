@@ -15,16 +15,17 @@
           <input type="text" id="endereco" v-model="form.endereco" required />
         </div>
 
-        <!-- Campo para selecionar modalidades -->
         <div class="form-group">
           <label>Modalidades:</label>
-          <div class="checkbox-list">
-            <div v-for="modalidade in modalidades" :key="modalidade.id" class="checkbox-item">
-              <input type="checkbox" :id="'modalidade-' + modalidade.id" :value="modalidade.id"
-                v-model="form.modalidadesSelecionadas" />
-              <label :for="'modalidade-' + modalidade.id">
-                {{ modalidade.nome }}
-              </label>
+          <div class="form-group modalidades-group">
+            <div class="checkbox-list">
+              <div v-for="modalidade in modalidades" :key="modalidade.id" class="checkbox-item">
+                <input type="checkbox" :id="'modalidade-' + modalidade.id" :value="modalidade.id"
+                  v-model="form.modalidadesSelecionadas" />
+                <label :for="'modalidade-' + modalidade.id">
+                  {{ formatarNomeModalidade(modalidade.nome) }}
+                </label>
+              </div>
             </div>
           </div>
         </div>
@@ -40,8 +41,6 @@
           Cadastrar Quadra
         </button>
       </form>
-
-      <img v-if="previewUrl" :src="previewUrl" alt="Prévia da imagem" style="max-width: 200px; margin-top: 10px;" />
     </div>
   </div>
 </template>
@@ -57,12 +56,12 @@ export default {
   },
   data() {
     return {
-      modalidades: [], // Modalidades carregadas da API
+      modalidades: [],
       form: {
         nome: '',
         endereco: '',
         imagem: null,
-        modalidadesSelecionadas: [], // Array com ids das modalidades selecionadas
+        modalidadesSelecionadas: [],
       },
       previewUrl: null,
     };
@@ -71,11 +70,12 @@ export default {
     this.carregarModalidades();
   },
   methods: {
-
     async carregarModalidades() {
       try {
-        const res = await axios.get('https://quadra-livre-backend.onrender.com/modalidade');
-        this.modalidadesDisponiveis = res.data;
+        const res = await axios.get(
+          'https://quadra-livre-backend.onrender.com/modalidade'
+        );
+        this.modalidades = res.data;
       } catch (error) {
         console.error('Erro ao carregar modalidades:', error);
         Swal.fire('Erro', 'Não foi possível carregar as modalidades.', 'error');
@@ -106,6 +106,8 @@ export default {
           urlImagem = uploadData.fileUrl;
         }
 
+        const modalidadesFormatadas = this.form.modalidadesSelecionadas.map(id => ({ id }));
+
         const response = await fetch(
           'https://quadra-livre-backend.onrender.com/quadra',
           {
@@ -117,7 +119,7 @@ export default {
               nome: this.form.nome,
               endereco: this.form.endereco,
               foto: urlImagem,
-              modalidades: this.form.modalidadesSelecionadas,
+              modalidades: modalidadesFormatadas,
             }),
           }
         );
@@ -136,7 +138,6 @@ export default {
           showConfirmButton: false,
         });
 
-        // Resetar formulário
         this.form = {
           nome: '',
           endereco: '',
@@ -162,6 +163,13 @@ export default {
         ? URL.createObjectURL(this.form.imagem)
         : null;
     },
+
+    formatarNomeModalidade(nome) {
+      return nome
+        .replace(/_/g, ' ')
+        .toLowerCase()
+        .replace(/\b\w/g, letra => letra.toUpperCase());
+    }
   },
 };
 </script>
@@ -170,7 +178,7 @@ export default {
 form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 15px;
 }
 
 .cadastro_quadra {
@@ -181,17 +189,17 @@ form {
 
 h1 {
   font-size: 30px;
-  font-family: "Montserrat", sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-weight: bold;
   margin-bottom: 50px;
   margin-top: 20px;
   margin-left: 2px;
-  color: #3B82F6;
+  color: #3b82f6;
 }
 
 form {
   display: grid;
-  gap: 25px;
+  gap: 10px;
   margin-top: 20px;
   align-items: start;
 }
@@ -199,7 +207,7 @@ form {
 .form-group {
   display: flex;
   flex-direction: column;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .form-group label {
@@ -220,7 +228,7 @@ textarea {
 
 .btn_cadastrarquadra {
   padding: 10px;
-  background-color: #3B82F6;
+  background-color: #3b82f6;
   border: none;
   border-radius: 4px;
   color: white;
@@ -231,7 +239,7 @@ textarea {
   margin-top: 10px;
 }
 
-input[type="file"] {
+input[type='file'] {
   font-size: 14px;
   padding: 8px;
   border: 1px solid #ccc;
@@ -241,61 +249,34 @@ input[type="file"] {
 
 #adicionar_imagem {
   grid-column: 1 / -1;
+  margin-top: -20px;
 }
 
 .checkbox-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px 15px;
 }
 
 .checkbox-item {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-direction: row-reverse;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 5px 8px;
+  cursor: pointer;
 }
 
-@media (max-width: 768px) {
-  @media (max-width: 768px) {
-    .cadastro_quadra {
-      margin-left: 0;
-      padding: 20px 15px;
-    }
-
-    form {
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
-
-    .form-group {
-      margin-bottom: 15px;
-    }
-
-    .form-group label {
-      font-size: 14px;
-    }
-
-    .form-group input,
-    select,
-    textarea {
-      font-size: 14px;
-      padding: 6px 8px;
-    }
-
-    .btn_cadastrarquadra {
-      font-size: 14px;
-      padding: 10px;
-    }
-
-    #adicionar_imagem {
-      grid-column: auto;
-    }
-
-    img {
-      max-width: 100%;
-      height: auto;
-    }
-  }
-
+.checkbox-item label {
+  width: 150px;
+  display: inline-block;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  word-break: break-word;
+  font-size: 14px;
+  font-family: 'Montserrat', sans-serif;
 }
 </style>
