@@ -56,7 +56,7 @@ const agendamentos = [
 
 .conteudo {
   flex: 1;
-  padding: 32px;
+ padding: 32px 75px;
   background-color: #f2f2f2;
   margin-top: 60px;
 }

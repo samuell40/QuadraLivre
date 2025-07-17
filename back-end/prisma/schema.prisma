@@ -25,7 +25,6 @@ model Quadra {
   id          Int          @id @default(autoincrement())
   nome        String
   foto        String?      @db.VarChar(2048)
-  descricao   String
   endereco    String?
   usuarios    Usuario[]
   modalidades Modalidade[] @relation("QuadraModalidade")

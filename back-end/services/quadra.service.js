@@ -5,7 +5,6 @@ async function criarQuadra(dados){
     const quadra = await prisma.quadra.create({
         data: {
             nome: dados.nome,
-            descricao: dados.descricao,
             endereco: dados.endereco,
             foto: dados.foto, 
         },
