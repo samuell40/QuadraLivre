@@ -1,4 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
+/* const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function FirstRun() {
@@ -93,4 +93,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { FirstRun };
+module.exports = { FirstRun }; */

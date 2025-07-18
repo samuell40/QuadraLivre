@@ -9,7 +9,7 @@
         </button>
 
         <div v-if="sidebarVisible" class="sidebar">
-            <img src="../assets/Logo1.jpg" alt="Logo"> 
+            <img src="../assets/QuadraLivre.png" alt="Logo"> 
             <a href="/cadastrarquadra">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 56 56">
                     <path fill="currentColor"

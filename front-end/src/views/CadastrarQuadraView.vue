@@ -18,7 +18,10 @@
         <div class="form-group">
           <label>Modalidades:</label>
           <div class="form-group modalidades-group">
-            <div class="checkbox-list">
+            <div v-if="modalidades.length === 0" class="mensagem-modalidade-vazia">
+              Nenhuma modalidade encontrada.
+            </div>
+            <div v-else class="checkbox-list">
               <div v-for="modalidade in modalidades" :key="modalidade.id" class="checkbox-item">
                 <input type="checkbox" :id="'modalidade-' + modalidade.id" :value="modalidade.id"
                   v-model="form.modalidadesSelecionadas" />
@@ -278,5 +281,32 @@ input[type='file'] {
   word-break: break-word;
   font-size: 14px;
   font-family: 'Montserrat', sans-serif;
+}
+
+.mensagem-modalidade-vazia {
+  font-size: 14px;
+  color: #777;
+  margin-top: 4px;
+  padding-left: 2px;
+  font-style: italic;
+}
+
+@media screen and (max-width: 768px) {
+  .cadastro_quadra {
+    margin-left: 0;
+    padding: 15px;
+  }
+
+  .container {
+    padding: 0;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  .checkbox-list {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
 }
 </style>

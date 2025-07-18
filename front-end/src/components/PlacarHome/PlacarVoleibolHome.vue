@@ -1,6 +1,10 @@
 <template>
   <div class="placar">
-    <h4 v-if="!isLoading && times.length" class="tit_campeonato">Campeonato Futebol de Areia</h4>
+    <!-- Título exibido somente após o carregamento e se houver dados -->
+    <h4 v-if="!isLoading && times.length" class="tit_campeonato">Campeonato Voleibol</h4>
+
+    <!-- Loader -->
+    <div class="loader" v-if="isLoading"></div>
 
     <!-- Tabela -->
     <table v-else>
@@ -11,9 +15,8 @@
           <th>Pts</th>
           <th>PJ</th>
           <th>VIT</th>
-          <th>E</th>
           <th>DER</th>
-          <th>SG</th>
+          <th>STG</th>
         </tr>
       </thead>
       <tbody>
@@ -26,9 +29,8 @@
           <td>{{ time.pontuacao }}</td>
           <td>{{ time.jogos }}</td>
           <td>{{ time.vitorias }}</td>
-          <td>{{ time.empates }}</td>
           <td>{{ time.derrotas }}</td>
-          <td>{{ time.saldoDeGols }}</td>
+          <td>{{ time.setsVencidos }}</td>
         </tr>
       </tbody>
     </table>
@@ -37,7 +39,7 @@
 
 <script>
 export default {
-  name: 'PlacarFutebolAreiaHome',
+  name: 'PlacarVoleibolHome',
   props: {
     times: {
       type: Array,

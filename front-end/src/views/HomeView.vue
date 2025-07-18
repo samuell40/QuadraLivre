@@ -69,9 +69,37 @@
       <PlacarFutebolHome v-show="!isLoadingPlacarFutebol" :times="timesFutebolComPosicao" />
     </div>
 
+    <!-- Placar Futebol de areia-->
+    <div v-if="exibirPlacarFutebolAreia">
+      <PlacarFutebolAreiaHome :times="timesFutebolAreiaComPosicao" :isLoading="isLoadingPlacarFutebolAreia" />
+    </div>
+
+    <!-- Placar Futsal-->
+    <div v-if="exibirPlacarFutsal">
+      <PlacarFutsalHome :times="timesFutsalComPosicao" :isLoading="isLoadingPlacarFutsal" />
+    </div>
+
     <!-- Placar Vôlei -->
     <div v-if="exibirPlacarVolei">
       <PlacarVoleihome v-show="!isLoadingPlacarVolei" :times="timesVoleiComPosicao" />
+    </div>
+
+    <!-- Placar Voleibol -->
+    <div v-if="exibirPlacarVoleibol">
+      <PlacarVoleibolHome v-show="!isLoadingPlacarVoleibol" :times="timesVoleibolComPosicao"
+        :isLoading="isLoadingPlacarVoleibol" />
+    </div>
+
+      <!-- Placar Volei de areia -->
+    <div v-if="exibirPlacarVoleiAreia">
+      <PlacarVoleiAreiaHome v-show="!isLoadingPlacarVoleiAreia" :times="timesVoleiAreiaComPosicao"
+        :isLoading="isLoadingPlacarVoleiAreia" />
+    </div>
+
+      <!-- Placar de futevolei-->
+    <div v-if="exibirPlacarFutevolei">
+      <PlacarFutevoleiHome v-show="!isLoadingPlacarFutevolei" :times="timesFutevoleiComPosicao"
+        :isLoading="isLoadingPlacarFutevolei" />
     </div>
   </div>
 
@@ -83,7 +111,12 @@
 <script>
 import { Carousel, Slide } from 'vue3-carousel'
 import PlacarFutebolHome from '@/components/PlacarHome/PlacarFutebolHome.vue'
+import PlacarFutebolAreiaHome from '@/components/PlacarHome/PlacarFutebolAreiaHome.vue'
+import PlacarFutsalHome from '@/components/PlacarHome/PlacarFutsalHome.vue'
 import PlacarVoleihome from '@/components/PlacarHome/PlacarVoleiHome.vue'
+import PlacarVoleibolHome from '@/components/PlacarHome/PlacarVoleibolHome.vue'
+import PlacarVoleiAreiaHome from '@/components/PlacarHome/PlacarVoleiAreiaHome.vue'
+import PlacarFutevoleiHome from '@/components/PlacarHome/PlacarFutevoleiHome.vue'
 import 'vue3-carousel/dist/carousel.css'
 import VerificarLogin from '@/components/modals/Alertas/verificarLogin.vue'
 
@@ -93,7 +126,12 @@ export default {
     Carousel,
     Slide,
     PlacarFutebolHome,
+    PlacarFutebolAreiaHome,
+    PlacarFutsalHome,
     PlacarVoleihome,
+    PlacarVoleibolHome,
+    PlacarVoleiAreiaHome,
+    PlacarFutevoleiHome,
     VerificarLogin
   },
   data() {
@@ -101,12 +139,27 @@ export default {
       isMenuOpen: false,
       quadras: [],
       times: [],
+      timesFutebolAreia: [],
+      timesFutsal: [],
       timesVolei: [],
+      timesVoleibol: [],
+      timesVoleiAreia: [],
+      timesFutevolei: [],
       isLoadingQuadras: true,
       isLoadingPlacarFutebol: true,
+      isLoadingPlacarFutebolAreia: true,
+      isLoadingPlacarFutsal: true,
       isLoadingPlacarVolei: true,
+      isLoadingPlacarVoleibol: true,
+      isLoadingPlacarVoleiAreia: true,
+      isLoadingPlacarFutevolei: true,
       exibirPlacarFutebol: true,
+      exibirPlacarFutebolAreia: true,
+      exibirPlacarFutsal: true,
       exibirPlacarVolei: true,
+      exibirPlacarVoleibol: true,
+      exibirPlacarVoleiAreia: true,
+      exibirPlacarFutevolei: true,
       mostrarModalLogin: false
     }
   },
@@ -115,15 +168,40 @@ export default {
       const sorted = [...this.times].sort((a, b) => b.pontuacao - a.pontuacao);
       return sorted.map((time, idx) => ({ ...time, posicao: idx + 1 }));
     },
+    timesFutebolAreiaComPosicao() {
+      const sorted = [...this.timesFutebolAreia].sort((a, b) => b.pontuacao - a.pontuacao);
+      return sorted.map((time, idx) => ({ ...time, posicao: idx + 1 }));
+    },
+    timesFutsalComPosicao() {
+      const sorted = [...this.timesFutsal].sort((a, b) => b.pontuacao - a.pontuacao);
+      return sorted.map((time, idx) => ({ ...time, posicao: idx + 1 }));
+    },
     timesVoleiComPosicao() {
       const sorted = [...this.timesVolei].sort((a, b) => b.pontuacao - a.pontuacao);
+      return sorted.map((time, idx) => ({ ...time, posicao: idx + 1 }));
+    },
+    timesVoleibolComPosicao() {
+      const sorted = [...this.timesVoleibol].sort((a, b) => b.pontuacao - a.pontuacao);
+      return sorted.map((time, idx) => ({ ...time, posicao: idx + 1 }));
+    },
+     timesVoleiAreiaComPosicao() {
+      const sorted = [...this.timesVoleiAreia].sort((a, b) => b.pontuacao - a.pontuacao);
+      return sorted.map((time, idx) => ({ ...time, posicao: idx + 1 }));
+    },
+     timesFutevoleiComPosicao() {
+      const sorted = [...this.timesFutevolei].sort((a, b) => b.pontuacao - a.pontuacao);
       return sorted.map((time, idx) => ({ ...time, posicao: idx + 1 }));
     }
   },
   mounted() {
     this.carregarQuadras();
     this.carregarPlacarFutebol();
+    this.carregarPlacarFutebolAreia();
+    this.carregarPlacarFutsal();
     this.carregarPlacarVolei();
+    this.carregarPlacarVoleibol();
+    this.carregarPlacarVoleiAreia();
+    this.carregarPlacarFutevolei();
     this.atualizarVisibilidadePlacar();
     window.addEventListener("storage", this.atualizarVisibilidadePlacar);
   },
@@ -133,7 +211,12 @@ export default {
   methods: {
     atualizarVisibilidadePlacar() {
       this.exibirPlacarFutebol = JSON.parse(localStorage.getItem("exibirPlacar_futebol") ?? "true");
+      this.exibirPlacarFutebolAreia = JSON.parse(localStorage.getItem("exibirPlacar_futebol de areia") ?? "true");
+      this.exibirPlacarFutsal = JSON.parse(localStorage.getItem("exibirPlacar_futsal") ?? "true");
       this.exibirPlacarVolei = JSON.parse(localStorage.getItem("exibirPlacar_volei") ?? "true");
+      this.exibirPlacarVoleibol = JSON.parse(localStorage.getItem("exibirPlacar_voleibol") ?? "true");
+      this.exibirPlacarVoleiAreia = JSON.parse(localStorage.getItem("exibirPlacar_volei de areia") ?? "true");
+      this.exibirPlacarFutevolei = JSON.parse(localStorage.getItem("exibirPlacar_futevolei") ?? "true");
     },
     toggleMenu() {
       this.isMenuOpen = !this.isMenuOpen;
@@ -172,6 +255,30 @@ export default {
         this.isLoadingPlacarFutebol = false;
       }
     },
+    async carregarPlacarFutebolAreia() {
+      this.isLoadingPlacarFutebolAreia = true;
+      try {
+        const res = await fetch(`https://quadra-livre-backend.onrender.com/placar/futebol de areia`);
+        const data = await res.json();
+        this.timesFutebolAreia = data;
+      } catch (err) {
+        console.error('Erro ao carregar placar futebol de areia:', err);
+      } finally {
+        this.isLoadingPlacarFutebolAreia = false;
+      }
+    },
+    async carregarPlacarFutsal() {
+      this.isLoadingPlacarFutsal = true;
+      try {
+        const res = await fetch(`https://quadra-livre-backend.onrender.com/placar/futsal`);
+        const data = await res.json();
+        this.timesFutsal = data;
+      } catch (err) {
+        console.error('Erro ao carregar placar de futsal:', err);
+      } finally {
+        this.isLoadingPlacarFutsal = false;
+      }
+    },
     async carregarPlacarVolei() {
       this.isLoadingPlacarVolei = true;
       try {
@@ -182,6 +289,42 @@ export default {
         console.error('Erro ao carregar placar vôlei:', err);
       } finally {
         this.isLoadingPlacarVolei = false;
+      }
+    },
+    async carregarPlacarVoleibol() {
+      this.isLoadingPlacarVoleibol = true;
+      try {
+        const res = await fetch(`https://quadra-livre-backend.onrender.com/placar/voleibol`);
+        const data = await res.json();
+        this.timesVoleibol = data;
+      } catch (err) {
+        console.error('Erro ao carregar placar vôlei:', err);
+      } finally {
+        this.isLoadingPlacarVoleibol = false;
+      }
+    },
+     async carregarPlacarVoleiAreia() {
+      this.isLoadingPlacarVoleiAreia = true;
+      try {
+        const res = await fetch(`https://quadra-livre-backend.onrender.com/placar/volei de areia`);
+        const data = await res.json();
+        this.timesVoleiAreia = data;
+      } catch (err) {
+        console.error('Erro ao carregar placar vôlei:', err);
+      } finally {
+        this.isLoadingPlacarVoleiAreia = false;
+      }
+    },
+       async carregarPlacarFutevolei() {
+      this.isLoadingPlacarFutevolei = true;
+      try {
+        const res = await fetch(`https://quadra-livre-backend.onrender.com/placar/futevolei`);
+        const data = await res.json();
+        this.timesFutevolei = data;
+      } catch (err) {
+        console.error('Erro ao carregar placar vôlei:', err);
+      } finally {
+        this.isLoadingPlacarFutevolei = false;
       }
     },
     verificarLogin(quadra) {

@@ -38,7 +38,7 @@
         <PlacarFutebol v-if="modalidadeSelecionada === 'futebol'" :placar="jogo.timeA" :timeAtivo="true"
           @salvar="salvarPlacar" />
 
-        <PlacarFutebolAreia v-if="modalidadeSelecionada === 'futebol_de_areia'" :placar="futebol_de_areia.timeA"
+        <PlacarFutebolAreia v-if="modalidadeSelecionada === 'futebol de areia'" :placar="futebol_de_areia.timeA"
           :timeAtivo="true" @salvar="salvarPlacarFutebolAreia" />
 
         <PlacarFutsal v-else-if="modalidadeSelecionada === 'futsal'" :placar="futsal.timeA" :timeAtivo="true"
@@ -50,7 +50,7 @@
         <PlacarVoleibol v-else-if="modalidadeSelecionada === 'voleibol'" :placar="voleibol.timeA" :timeAtivo="true"
           @salvar="salvarPlacarVoleibol" />
 
-        <PlacarVoleiAreia v-else-if="modalidadeSelecionada === 'volei_de_areia'" :placar="volei_de_areia.timeA"
+        <PlacarVoleiAreia v-else-if="modalidadeSelecionada === 'volei de areia'" :placar="volei_de_areia.timeA"
           :timeAtivo="true" @salvar="salvarPlacarVoleiAreia" />
 
         <PlacarFutevolei v-else-if="modalidadeSelecionada === 'futevolei'" :placar="futevolei.timeA" :timeAtivo="true"
@@ -534,7 +534,7 @@ export default {
             zerodois: { valor: dados.derrota2x0 },
             wo: { valor: dados.derrotaWo },
           });
-        } else if (this.modalidadeSelecionada === 'volei_de_areia') {
+        } else if (this.modalidadeSelecionada === 'volei de areia') {
           Object.assign(this.volei_de_areia.timeA, {
             nome: dados.time || '',
             pts: { valor: dados.pontuacao },
@@ -634,7 +634,7 @@ export default {
         return;
       }
       try {
-        await axios.put(`https://quadra-livre-backend.onrender.com/placar/volei/${this.timeSelecionado}`, dadosParaSalvar);
+        await axios.put(`https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
         this.limparDadosJogo();
       } catch (error) {
@@ -647,7 +647,7 @@ export default {
         return;
       }
       try {
-        await axios.put(`https://quadra-livre-backend.onrender.com/placar/voleibol/${this.timeSelecionado}`, dadosParaSalvar);
+        await axios.put(`https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
         this.limparDadosJogo();
       } catch (error) {
@@ -660,7 +660,7 @@ export default {
         return;
       }
       try {
-        await axios.put(`https://quadra-livre-backend.onrender.com/placar/volei_de_areia/${this.timeSelecionado}`, dadosParaSalvar);
+        await axios.put(`https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
         this.limparDadosJogo();
       } catch (error) {
@@ -674,7 +674,7 @@ export default {
       }
       try {
         console.log('Dados que serão enviados:', dadosParaSalvar);
-        await axios.put(`https://quadra-livre-backend.onrender.com/placar/futevolei/${this.timeSelecionado}`, dadosParaSalvar);
+        await axios.put(`https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
         this.limparDadosJogo();
       } catch (error) {

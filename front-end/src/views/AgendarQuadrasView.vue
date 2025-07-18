@@ -8,16 +8,23 @@
 
     <div v-if="isLoadingQuadras" class="loader"></div>
 
-    <div v-else class="quadras-grid">
-      <div class="card-quadra" v-for="quadra in quadras" :key="quadra.id">
-        <img
-          :src="quadra.foto || require('@/assets/futibinha.png')"
-          :alt="quadra.nome"
-          class="imagem-quadra"
-        />
-        <div class="overlay">
-          <h3 class="nome-quadra">{{ quadra.nome }}</h3>
-          <button class="btn-agendar" @click="abrirModal(quadra)">Agendar</button>
+    <div v-else>
+      <div v-if="quadras.length === 0" class="mensagem-nenhuma-quadra">
+        <p>Nenhuma quadra encontrada.</p>
+      </div>
+
+      <div v-else class="quadras-grid">
+        <div class="card-quadra" v-for="quadra in quadras" :key="quadra.id">
+          <img
+            :src="quadra.foto || require('@/assets/futibinha.png')"
+            :alt="quadra.nome"
+            class="imagem-quadra"
+          />
+          <div class="overlay">
+            <h3 class="nome-quadra">{{ quadra.nome }}</h3>
+            <h3 class="endereco">{{ quadra.endereco }}</h3>
+            <button class="btn-agendar" @click="abrirModal(quadra)">Agendar</button>
+          </div>
         </div>
       </div>
     </div>
@@ -104,6 +111,13 @@ body {
   color: #3B82F6;
 }
 
+.endereco {
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.2;
+  color: #fff
+}
+
 .quadras-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -171,6 +185,12 @@ body {
   height: 100px;
   animation: spin 1s linear infinite;
   margin: 40px auto;
+}
+
+.mensagem-nenhuma-quadra {
+  text-align: center;
+  font-style: italic;
+  color: #777;
 }
 
 @keyframes spin {

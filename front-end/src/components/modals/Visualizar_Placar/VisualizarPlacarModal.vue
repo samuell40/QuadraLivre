@@ -60,7 +60,7 @@
           </tbody>
         </table>
         <!-- Tabela Futebol De Areia-->
-        <table class="placar" v-if="modalidadePlacarSelecionadaLocal === 'futebol_de_areia'">
+        <table class="placar" v-if="modalidadePlacarSelecionadaLocal === 'futebol de areia'">
           <thead>
             <tr>
               <th>Posição</th>
@@ -177,7 +177,7 @@
         </table>
 
         <!-- Tabela Vôlei De Areia -->
-        <table class="placar" v-if="modalidadePlacarSelecionadaLocal === 'volei_de_areia'">
+        <table class="placar" v-if="modalidadePlacarSelecionadaLocal === 'volei de areia'">
           <thead>
             <tr>
               <th>Posição</th>
