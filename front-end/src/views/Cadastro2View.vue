@@ -28,7 +28,7 @@
 
           <div class="input-group">
             <label>Foto</label>
-            <input type="file" id="imagem" @change="handleFileChange" />
+            <input type="file" id="imagem" @change="handleFileChange" accept=".jpg, .jpeg, .png"/>
           </div>
 
           <button type="submit" class="cadastro-button">Realizar Cadastro</button>

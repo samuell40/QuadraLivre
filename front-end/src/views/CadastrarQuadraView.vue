@@ -22,25 +22,36 @@
               Nenhuma modalidade encontrada.
             </div>
             <div v-else class="checkbox-list">
-              <div v-for="modalidade in modalidades" :key="modalidade.id" class="checkbox-item">
-                <input type="checkbox" :id="'modalidade-' + modalidade.id" :value="modalidade.id"
-                  v-model="form.modalidadesSelecionadas" />
+              <div
+                v-for="modalidade in modalidades"
+                :key="modalidade.id"
+                class="checkbox-item"
+              >
+                <input
+                  type="checkbox"
+                  :id="'modalidade-' + modalidade.id"
+                  :value="modalidade.id"
+                  v-model="form.modalidadesSelecionadas"
+                  @change="erroModalidade = false"
+                />
                 <label :for="'modalidade-' + modalidade.id">
                   {{ formatarNomeModalidade(modalidade.nome) }}
                 </label>
               </div>
             </div>
+            <p v-if="erroModalidade" class="erro-modalidade">
+              ⚠️ Selecione pelo menos uma modalidade!
+            </p>
           </div>
         </div>
 
         <!-- Upload da imagem -->
         <div class="form-group" id="adicionar_imagem">
           <label for="imagem">Imagem:</label>
-          <input type="file" id="imagem" @change="handleFileChange" />
+          <input type="file" id="imagem" @change="handleFileChange" accept=".jpg, .jpeg, .png" required />
         </div>
 
-        <button type="submit" class="btn_cadastrarquadra"
-          :disabled="!form.imagem || form.modalidadesSelecionadas.length === 0">
+        <button type="submit" class="btn_cadastrarquadra">
           Cadastrar Quadra
         </button>
       </form>
@@ -66,7 +77,7 @@ export default {
         imagem: null,
         modalidadesSelecionadas: [],
       },
-      previewUrl: null,
+      erroModalidade: false, 
     };
   },
   mounted() {
@@ -86,6 +97,11 @@ export default {
     },
 
     async cadastrarQuadra() {
+      if (this.form.modalidadesSelecionadas.length === 0) {
+        this.erroModalidade = true;
+        return;
+      }
+
       try {
         let urlImagem = null;
 
@@ -149,6 +165,7 @@ export default {
         };
         document.getElementById('imagem').value = null;
         this.previewUrl = null;
+        this.erroModalidade = false;
       } catch (error) {
         console.error('Erro ao cadastrar quadra:', error);
 
@@ -172,10 +189,11 @@ export default {
         .replace(/_/g, ' ')
         .toLowerCase()
         .replace(/\b\w/g, letra => letra.toUpperCase());
-    }
+    },
   },
 };
 </script>
+
 
 <style scoped>
 form {
@@ -194,7 +212,7 @@ h1 {
   font-size: 30px;
   font-family: 'Montserrat', sans-serif;
   font-weight: bold;
-  margin-bottom: 50px;
+  margin-bottom: 30px;
   margin-top: 20px;
   margin-left: 2px;
   color: #3b82f6;
@@ -283,12 +301,8 @@ input[type='file'] {
   font-family: 'Montserrat', sans-serif;
 }
 
-.mensagem-modalidade-vazia {
-  font-size: 14px;
-  color: #777;
-  margin-top: 4px;
-  padding-left: 2px;
-  font-style: italic;
+.erro-modalidade {
+  color: #d9534f;
 }
 
 @media screen and (max-width: 768px) {

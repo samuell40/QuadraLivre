@@ -36,7 +36,6 @@ function callbackLoginGoogle(req, res, next) {
 
     if (!user) {
       const email = info?.email || '';
-
       return res.redirect(`http://localhost:8080/login?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`);
     }
 
@@ -57,7 +56,15 @@ function callbackLoginGoogle(req, res, next) {
         { expiresIn: '8h' }
       );
 
-      res.redirect(`http://localhost:8080/agendarquadra/?token=${token}`);
+      // Define o token no cookie
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: false, 
+        sameSite: 'Lax',
+        maxAge: 8 * 60 * 60 * 1000, // 8 horas
+      });
+
+      res.redirect('http://localhost:8080/agendarquadra');
     });
   })(req, res, next);
 }

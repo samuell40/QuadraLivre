@@ -8,6 +8,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 const session = require("express-session");
 const passport = require("./auth/passport"); 
+const cookieParser = require('cookie-parser');
 // Rotas
 const authRoutes = require("./routes/auth.router");
 const usuario = require('./routes/usuario.router');
@@ -20,14 +21,13 @@ const app = express();
 const server = http.createServer(app);
 const prisma = new PrismaClient();
 
-// Middlewares globais
 app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Authorization', 'Content-Type'],
-    exposedHeaders: ['Authorization']
+  origin: 'http://localhost:8080', // ou o domínio do seu front-end
+  credentials: true,               // permite envio de cookies
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Authorization', 'Content-Type'],
+  exposedHeaders: ['Authorization']
 }));
-app.use(express.json());
 
 // Session + Passport
 app.use(session({
@@ -37,6 +37,7 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
+app.use(cookieParser());
 
 // Rotas
 app.use("/auth", authRoutes);

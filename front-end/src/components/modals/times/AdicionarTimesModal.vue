@@ -20,7 +20,7 @@
 
         <div class="form-group">
           <label for="fotoTime">Foto (opcional):</label>
-          <input type="file" id="fotoTime" @change="handleImagemUpload" accept="image/*" />
+          <input type="file" id="fotoTime" @change="handleImagemUpload" accept=".jpg, .jpeg, .png" />
         </div>
 
         <div class="buttons">
