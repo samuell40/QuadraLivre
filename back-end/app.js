@@ -7,13 +7,14 @@ const multer = require("multer");
 const dotenv = require("dotenv");
 dotenv.config();
 const session = require("express-session");
-const passport = require("./auth/passport"); 
+const passport = require("./auth/passport");
 const cookieParser = require('cookie-parser');
+
 // Rotas
 const authRoutes = require("./routes/auth.router");
 const usuario = require('./routes/usuario.router');
 const quadra = require('./routes/quadra.router');
-const placar = require('./routes/placar.router')
+const placar = require('./routes/placar.router');
 //const { FirstRun } = require('./firstRun');
 
 // Inicialização
@@ -21,6 +22,10 @@ const app = express();
 const server = http.createServer(app);
 const prisma = new PrismaClient();
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// CORS
 app.use(cors({
   origin: 'http://localhost:8080', // ou o domínio do seu front-end
   credentials: true,               // permite envio de cookies
@@ -43,7 +48,7 @@ app.use(cookieParser());
 app.use("/auth", authRoutes);
 app.use(usuario);
 app.use(quadra);
-app.use(placar)
+app.use(placar);
 //FirstRun();
 
 // Rota base
