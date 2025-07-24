@@ -26,13 +26,25 @@ app.use(express.urlencoded({ extended: true }));
 
 // CORS
 app.use(cors({
-  origin: 'https://quadra-livre.vercel.app',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Authorization', 'Content-Type'],
-  exposedHeaders: ['Authorization'],
-  credentials: true,  
-}));
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      'http://localhost:8080',
+      'http://192.168.0.190:8080',
+      'https://quadra-livre.vercel.app'
+    ];
 
+    if (
+      !origin ||
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app')
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
 
 // Session + Passport
 app.use(session({
