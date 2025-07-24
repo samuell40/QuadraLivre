@@ -5,6 +5,6 @@ const router = express.Router();
 
 router.post('/quadra', [validarJWT], controller.adicionarQuadra);
 
-router.get('/quadra', [validarJWT], controller.getQuadra)
+router.get('/quadra', controller.getQuadra)
 
 module.exports = router;

@@ -11,7 +11,7 @@ router.delete('/placar/:modalidade/:nome', [validarJWT], controller.deletarTimeN
 
 // Placar
 router.put('/placar/:modalidade/:nome', [validarJWT], controller.atualizarPlacar);
-router.get('/placar/:modalidade', [validarJWT], controller.getPlacar); 
+router.get('/placar/:modalidade', controller.getPlacar); 
 router.put('/reset', [validarJWT], controller.resetarPlacar);  
 
 // Modalidades
