@@ -14,7 +14,7 @@ export default {
     const data = params.get('data');
 
     if (erro) {
-      window.opener.postMessage({ erro, email }, 'http://localhost:8080');
+      window.opener.postMessage({ erro, email }, 'https://quadra-livre.vercel.app');
       window.close();
       return;
     }
@@ -22,13 +22,13 @@ export default {
     if (data) {
       try {
         const parsed = JSON.parse(decodeURIComponent(data));
-        window.opener.postMessage(parsed, 'http://localhost:8080');
+        window.opener.postMessage(parsed, 'https://quadra-livre.vercel.app');
       } catch {
-        window.opener.postMessage({ erro: 'erro_interno' }, 'http://localhost:8080');
+        window.opener.postMessage({ erro: 'erro_interno' }, 'https://quadra-livre.vercel.app');
       }
       window.close();
     } else {
-      window.opener.postMessage({ erro: 'erro_desconhecido' }, 'http://localhost:8080');
+      window.opener.postMessage({ erro: 'erro_desconhecido' }, 'https://quadra-livre.vercel.app');
       window.close();
     }
   },
