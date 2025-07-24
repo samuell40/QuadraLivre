@@ -47,6 +47,15 @@ export default {
   },
   methods: {
     loginComGoogle() {
+      const isMobile = /Android/i.test(navigator.userAgent);
+
+      // Se for mobile, redireciona diretamente
+      if (isMobile) {
+        window.location.href = 'https://quadra-livre-backend.onrender.com/auth/google';
+        return;
+      }
+
+      // Caso contrário, usa o popup (desktop)
       const width = 500;
       const height = 600;
       const left = window.screenX + (window.outerWidth - width) / 2;
@@ -57,8 +66,9 @@ export default {
         'Login com Google',
         `width=${width},height=${height},left=${left},top=${top}`
       );
+
       const listener = (event) => {
-        if (event.origin !== 'https://quadra-livre.vercel.app') return; 
+        if (event.origin !== 'https://quadra-livre.vercel.app') return;
 
         const { token, erro, email } = event.data;
 
@@ -84,12 +94,12 @@ export default {
         window.removeEventListener('message', listener);
         if (popup) popup.close();
       };
+
       window.addEventListener('message', listener, false);
     },
   },
 };
 </script>
-
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');

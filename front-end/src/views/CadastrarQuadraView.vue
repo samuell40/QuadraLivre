@@ -77,7 +77,8 @@ export default {
         imagem: null,
         modalidadesSelecionadas: [],
       },
-      erroModalidade: false, 
+      erroModalidade: false,
+      previewUrl: null,
     };
   },
   mounted() {
@@ -86,7 +87,17 @@ export default {
   methods: {
     async carregarModalidades() {
       try {
-        const res = await axios.get('https://quadra-livre-backend.onrender.com/modalidade');
+        const token = localStorage.getItem('token');
+        if (!token) {
+          Swal.fire('Erro', 'Usuário não autenticado. Faça login para continuar.', 'error');
+          return;
+        }
+
+        const res = await axios.get('https://quadra-livre-backend.onrender.com/modalidade', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         this.modalidades = res.data;
       } catch (error) {
         console.error('Erro ao carregar modalidades:', error);
@@ -101,6 +112,12 @@ export default {
       }
 
       try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          Swal.fire('Erro', 'Usuário não autenticado. Faça login para continuar.', 'error');
+          return;
+        }
+
         let urlImagem = null;
 
         if (this.form.imagem) {
@@ -111,6 +128,9 @@ export default {
             'https://quadra-livre-backend.onrender.com/upload',
             {
               method: 'POST',
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
               body: formData,
             }
           );
@@ -125,20 +145,19 @@ export default {
 
         const modalidadesFormatadas = this.form.modalidadesSelecionadas.map(id => ({ id }));
 
-        const response = await fetch('https://quadra-livre-backend.onrender.com/quadra',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              nome: this.form.nome,
-              endereco: this.form.endereco,
-              foto: urlImagem,
-              modalidades: modalidadesFormatadas,
-            }),
-          }
-        );
+        const response = await fetch('https://quadra-livre-backend.onrender.com/quadra', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            nome: this.form.nome,
+            endereco: this.form.endereco,
+            foto: urlImagem,
+            modalidades: modalidadesFormatadas,
+          }),
+        });
 
         if (!response.ok) {
           throw new Error('Erro ao cadastrar quadra');
@@ -190,7 +209,6 @@ export default {
   },
 };
 </script>
-
 
 <style scoped>
 form {
