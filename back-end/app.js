@@ -26,11 +26,11 @@ app.use(express.urlencoded({ extended: true }));
 
 // CORS
 app.use(cors({
-  origin: 'http://localhost:8080',
+  origin: 'https://quadra-livre.vercel.app',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Authorization', 'Content-Type'],
   exposedHeaders: ['Authorization'],
-  credentials: true,  // <==== ESSENCIAL para aceitar cookies com credenciais
+  credentials: true,  
 }));
 
 

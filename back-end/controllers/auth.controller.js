@@ -28,7 +28,7 @@ function callbackLoginGoogle(req, res, next) {
   passport.authenticate('google', { session: false }, (err, result, info) => {
     if (!result || !result.user) {
       const email = info?.email || '';
-      const redirectUrl = `http://localhost:8080/google-callback?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`;
+      const redirectUrl = `https://quadra-livre.vercel.app/google-callback?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`;
       return res.redirect(redirectUrl);
     }
 
@@ -50,7 +50,7 @@ function callbackLoginGoogle(req, res, next) {
         JSON.stringify({ token, usuario: user })
       );
 
-      const redirectUrl = `http://localhost:8080/google-callback?data=${payload}`;
+      const redirectUrl = `https://quadra-livre.vercel.app/google-callback?data=${payload}`;
       return res.redirect(redirectUrl);
 
     } catch (error) {

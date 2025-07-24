@@ -58,7 +58,7 @@ export default {
         `width=${width},height=${height},left=${left},top=${top}`
       );
       const listener = (event) => {
-        if (event.origin !== 'http://localhost:8080') return; 
+        if (event.origin !== 'https://quadra-livre.vercel.app') return; 
 
         const { token, erro, email } = event.data;
 
