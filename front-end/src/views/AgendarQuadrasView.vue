@@ -63,7 +63,21 @@ export default {
     async carregarQuadras() {
       this.isLoadingQuadras = true
       try {
-        const res = await fetch('https://quadra-livre-backend.onrender.com/quadra')
+        const token = localStorage.getItem('token')
+        if (!token) {
+          throw new Error('Usuário não autenticado. Token não encontrado.')
+        }
+
+        const res = await fetch('https://quadra-livre-backend.onrender.com/quadra', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+
+        if (!res.ok) {
+          throw new Error(`Erro na requisição: ${res.status} ${res.statusText}`)
+        }
+
         const data = await res.json()
         this.quadras = data
       } catch (err) {
@@ -83,6 +97,7 @@ export default {
   }
 }
 </script>
+
 
 <style scoped>
 body {

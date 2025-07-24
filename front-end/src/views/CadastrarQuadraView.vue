@@ -86,9 +86,7 @@ export default {
   methods: {
     async carregarModalidades() {
       try {
-        const res = await axios.get(
-          'https://quadra-livre-backend.onrender.com/modalidade'
-        );
+        const res = await axios.get('https://quadra-livre-backend.onrender.com/modalidade');
         this.modalidades = res.data;
       } catch (error) {
         console.error('Erro ao carregar modalidades:', error);
@@ -127,8 +125,7 @@ export default {
 
         const modalidadesFormatadas = this.form.modalidadesSelecionadas.map(id => ({ id }));
 
-        const response = await fetch(
-          'https://quadra-livre-backend.onrender.com/quadra',
+        const response = await fetch('https://quadra-livre-backend.onrender.com/quadra',
           {
             method: 'POST',
             headers: {

@@ -13,7 +13,7 @@
         <div class="form-body">
           <div class="input-group">
             <label>Email</label>
-            <div class="email">{{ form.email }}</div>
+              <input type="email" v-model="form.email" readonly />
           </div>
 
           <div class="input-group">

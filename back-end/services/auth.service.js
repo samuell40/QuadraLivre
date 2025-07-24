@@ -1,13 +1,32 @@
 const { PrismaClient } = require('@prisma/client');
+const jwt = require('jsonwebtoken');
+const config = require('../config/app.config');
+
 const prisma = new PrismaClient();
 
 async function findUserByEmail(email) {
-  const buscarEmail = await prisma.usuario.findUnique({
-    where: { email }
-  });
-  return buscarEmail;
+  const user = await prisma.usuario.findUnique({ where: { email } });
+
+  if (!user) {
+  const error = new Error('usuario_nao_cadastrado');
+  error.statusCode = 404;
+  throw error;
+}
+
+  const dados_usuario = {
+    id: user.id,
+    nome: user.nome,
+    email: user.email,
+    permissao: user.permissaoId,
+    foto: user.foto,
+    telefone: user.telefone,
+  };
+
+  const token = jwt.sign(dados_usuario, config.jwtSecret, { expiresIn: config.JWT_EXPIRATION });
+
+  return { user: dados_usuario, token };
 }
 
 module.exports = {
-  findUserByEmail
+  findUserByEmail,
 };

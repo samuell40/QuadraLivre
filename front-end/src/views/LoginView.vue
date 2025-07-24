@@ -34,6 +34,7 @@
 </template>
 
 <script>
+import router from '@/router';
 import backgroundLogin from '@/assets/backgroundLogin.png';
 import Swal from 'sweetalert2';
 
@@ -46,35 +47,49 @@ export default {
   },
   methods: {
     loginComGoogle() {
-      window.location.href = 'https://quadra-livre-backend.onrender.com/auth/google';
-    },
-    verificarErroLogin() {
-      const params = new URLSearchParams(window.location.search);
-      const erro = params.get('erro');
-      const email = params.get('email');
+      const width = 500;
+      const height = 600;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2.5;
 
-      if (erro === 'usuario_nao_cadastrado') {
-        Swal.fire({
-          icon: 'error',
-          title: 'Conta não encontrada!',
-          text: 'Redirecionando para a tela de cadastro...',
-          timer: 3000,
-          timerProgressBar: true,
-          showConfirmButton: false,
-          didOpen: () => {
-            Swal.showLoading();
-          },
-        }).then(() => {
-          window.location.href = `/cadastro?email=${encodeURIComponent(email)}`;
-        });
-      }
-    }
+      const popup = window.open(
+        'https://quadra-livre-backend.onrender.com/auth/google',
+        'Login com Google',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+      const listener = (event) => {
+        if (event.origin !== 'http://localhost:8080') return; 
+
+        const { token, erro, email } = event.data;
+
+        if (erro === 'usuario_nao_cadastrado') {
+          Swal.fire({
+            icon: 'error',
+            title: 'Conta não encontrada!',
+            text: 'Redirecionando para a tela de cadastro...',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            didOpen: () => Swal.showLoading(),
+          }).then(() => {
+            window.location.href = `/cadastro?email=${encodeURIComponent(email)}`;
+          });
+        }
+
+        if (token) {
+          localStorage.setItem('token', token);
+          router.push('/agendarquadra');
+        }
+
+        window.removeEventListener('message', listener);
+        if (popup) popup.close();
+      };
+      window.addEventListener('message', listener, false);
+    },
   },
-  mounted() {
-    this.verificarErroLogin();
-  }
 };
 </script>
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');

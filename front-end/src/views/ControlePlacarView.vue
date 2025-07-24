@@ -440,8 +440,11 @@ export default {
     },
 
     async carregarModalidades() {
+      const token = localStorage.getItem('token');
       try {
-        const res = await axios.get('https://quadra-livre-backend.onrender.com/modalidade');
+        const res = await axios.get('https://quadra-livre-backend.onrender.com/modalidade', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         this.modalidadesDisponiveis = res.data;
       } catch (error) {
         console.error('Erro ao carregar modalidades:', error);
@@ -451,8 +454,13 @@ export default {
 
     async carregarTimes() {
       if (!this.modalidadeSelecionada) return;
+
+      const token = localStorage.getItem('token');
+
       try {
-        const res = await axios.get(`https://quadra-livre-backend.onrender.com/times/${this.modalidadeSelecionada}`);
+        const res = await axios.get(`https://quadra-livre-backend.onrender.com/times/${this.modalidadeSelecionada}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         this.times = res.data.map(t => t.time);
       } catch (error) {
         console.error('Erro ao carregar times:', error);
@@ -462,9 +470,12 @@ export default {
 
     async carregarPlacarTime() {
       if (!this.modalidadeSelecionada || !this.timeSelecionado) return;
+      const token = localStorage.getItem('token');
 
       try {
-        const res = await axios.get(`https://quadra-livre-backend.onrender.com/times/${this.modalidadeSelecionada}/${this.timeSelecionado}`);
+        const res = await axios.get(`https://quadra-livre-backend.onrender.com/times/${this.modalidadeSelecionada}/${this.timeSelecionado}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         const dados = res.data;
 
         if (this.modalidadeSelecionada === 'futebol') {
@@ -570,23 +581,35 @@ export default {
     },
     async carregarPlacarModalidade(modalidade) {
       this.modalidadePlacarSelecionada = modalidade;
+      const token = localStorage.getItem('token');
+
       try {
-        const res = await axios.get(`https://quadra-livre-backend.onrender.com/placar/${modalidade}`);
+        const res = await axios.get(`https://quadra-livre-backend.onrender.com/placar/${modalidade}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         this.timesPlacar = res.data;
       } catch (error) {
         Swal.fire('Erro', 'Erro ao carregar placar.', 'error');
       }
     },
+
     async salvarPlacar(dadosParaSalvar) {
       if (!this.timeSelecionado) {
         Swal.fire('Atenção', 'Selecione um time antes de salvar o placar.', 'warning');
         return;
       }
+      const token = localStorage.getItem('token');
       try {
         if (this.modalidadeSelecionada === 'futebol') {
           dadosParaSalvar.saldoDeGols = dadosParaSalvar.golsPro - dadosParaSalvar.golsSofridos;
         }
-        await axios.put(`https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
+        await axios.put(
+          `https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`,
+          dadosParaSalvar,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
         this.limparDadosJogo();
       } catch (error) {
@@ -594,16 +617,24 @@ export default {
         Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
       }
     },
+
     async salvarPlacarFutebolAreia(dadosParaSalvar) {
       if (!this.timeSelecionado) {
         Swal.fire('Atenção', 'Selecione um time antes de salvar o placar.', 'warning');
         return;
       }
+      const token = localStorage.getItem('token');
       try {
         if (this.modalidadeSelecionada === 'futebol_de_areia') {
           dadosParaSalvar.saldoDeGols = dadosParaSalvar.golsPro - dadosParaSalvar.golsSofridos;
         }
-        await axios.put(`https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
+        await axios.put(
+          `https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`,
+          dadosParaSalvar,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
         this.limparDadosJogo();
       } catch (error) {
@@ -611,16 +642,24 @@ export default {
         Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
       }
     },
+
     async salvarPlacarFutsal(dadosParaSalvar) {
       if (!this.timeSelecionado) {
         Swal.fire('Atenção', 'Selecione um time antes de salvar o placar.', 'warning');
         return;
       }
+      const token = localStorage.getItem('token');
       try {
         if (this.modalidadeSelecionada === 'futsal') {
           dadosParaSalvar.saldoDeGols = dadosParaSalvar.golsPro - dadosParaSalvar.golsSofridos;
         }
-        await axios.put(`https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
+        await axios.put(
+          `https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`,
+          dadosParaSalvar,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
         this.limparDadosJogo();
       } catch (error) {
@@ -628,39 +667,43 @@ export default {
         Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
       }
     },
-    async salvarPlacarVolei(dadosParaSalvar) {
-      if (!this.timeSelecionado) {
-        Swal.fire('Atenção', 'Selecione um time antes de salvar o placar.', 'warning');
-        return;
-      }
-      try {
-        await axios.put(`https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
-        Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
-        this.limparDadosJogo();
-      } catch (error) {
-        Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
-      }
-    },
+
+
     async salvarPlacarVoleibol(dadosParaSalvar) {
       if (!this.timeSelecionado) {
         Swal.fire('Atenção', 'Selecione um time antes de salvar o placar.', 'warning');
         return;
       }
+      const token = localStorage.getItem('token');
       try {
-        await axios.put(`https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
+        await axios.put(
+          `https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`,
+          dadosParaSalvar,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
         this.limparDadosJogo();
       } catch (error) {
         Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
       }
     },
+
     async salvarPlacarVoleiAreia(dadosParaSalvar) {
       if (!this.timeSelecionado) {
         Swal.fire('Atenção', 'Selecione um time antes de salvar o placar.', 'warning');
         return;
       }
+      const token = localStorage.getItem('token');
       try {
-        await axios.put(`https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
+        await axios.put(
+          `https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`,
+          dadosParaSalvar,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
         this.limparDadosJogo();
       } catch (error) {
@@ -672,17 +715,24 @@ export default {
         Swal.fire('Atenção', 'Selecione um time antes de salvar o placar.', 'warning');
         return;
       }
+      const token = localStorage.getItem('token');
       try {
         console.log('Dados que serão enviados:', dadosParaSalvar);
-        await axios.put(`https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
+        await axios.put(
+          `https://quadra-livre-backend.onrender.com/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`,
+          dadosParaSalvar,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
         this.limparDadosJogo();
       } catch (error) {
         Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
       }
     },
-  },
-};
+  }
+}
 </script>
 
 <style scoped>

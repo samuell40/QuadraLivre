@@ -103,12 +103,12 @@
     </div>
   </div>
 
-  <!-- Login Necessário -->
   <VerificarLogin v-if="mostrarModalLogin" @fechar="mostrarModalLogin = false" @irParaLogin="irParaLogin" />
 
 </template>
 
 <script>
+import router from '@/router'
 import { Carousel, Slide } from 'vue3-carousel'
 import PlacarFutebolHome from '@/components/PlacarHome/PlacarFutebolHome.vue'
 import PlacarFutebolAreiaHome from '@/components/PlacarHome/PlacarFutebolAreiaHome.vue'
@@ -332,7 +332,7 @@ export default {
       try {
         const usuario = JSON.parse(usuarioLogado);
         if (usuario && usuario.token) {
-          this.$router.push({ name: 'agendar_quadra', query: { quadraId: quadra.id } });
+          router.push({ name: 'agendar_quadra', query: { quadraId: quadra.id } });
         } else {
           this.mostrarModalLogin = true;
         }
@@ -342,7 +342,7 @@ export default {
     },
     irParaLogin() {
       this.mostrarModalLogin = false;
-      this.$router.push('/login');
+      router.push('/login');
     }
   }
 }

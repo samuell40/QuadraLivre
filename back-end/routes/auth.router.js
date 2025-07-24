@@ -7,6 +7,6 @@ router.get('/google', controller.iniciarLoginGoogle);
 
 router.get('/google/callback', controller.callbackLoginGoogle);
 
-router.get('/login/failure', controller.loginFalhou); 
+//router.get('/login/failure', controller.loginFalhou); 
 
 module.exports = router;

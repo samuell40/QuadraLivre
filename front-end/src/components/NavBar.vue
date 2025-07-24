@@ -13,15 +13,17 @@
         <ul class="nav-links" :class="{ active: isMenuOpen }">
           <li><a href="/agendarquadra">Agendar Quadra</a></li>
           <li><a href="/meusagendamentos">Meus Agendamentos</a></li>
-          <li class="sair-item"><a href="/" class="sair">Sair</a></li>
+          <li class="sair-item"><a href="#" @click.prevent="logout" class="sair">Sair</a></li>
         </ul>
 
-        <a href="/" class="sair-btn-mobile">Sair</a>
+        <a href="#" @click.prevent="logout" class="sair-btn-mobile">Sair</a>
       </div>
     </nav>
 </template>
 
 <script>
+import router from '@/router';
+
 export default {
   name: 'HomeView',
   data() {
@@ -33,11 +35,16 @@ export default {
     toggleMenu() {
       this.isMenuOpen = !this.isMenuOpen;
     },
+    logout() {
+      localStorage.removeItem('token');
+      router.push('/');
+    },
   },
 };
 </script>
 
 <style scoped>
+/* Seu CSS permanece igual */
 .navbar-custom {
   position: fixed;
   top: 0;

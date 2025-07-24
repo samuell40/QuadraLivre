@@ -8,7 +8,6 @@ const dotenv = require("dotenv");
 dotenv.config();
 const session = require("express-session");
 const passport = require("./auth/passport");
-const cookieParser = require('cookie-parser');
 
 // Rotas
 const authRoutes = require("./routes/auth.router");
@@ -27,12 +26,13 @@ app.use(express.urlencoded({ extended: true }));
 
 // CORS
 app.use(cors({
-  origin: 'http://localhost:8080', // ou o domínio do seu front-end
-  credentials: true,               // permite envio de cookies
+  origin: 'http://localhost:8080',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Authorization', 'Content-Type'],
-  exposedHeaders: ['Authorization']
+  exposedHeaders: ['Authorization'],
+  credentials: true,  // <==== ESSENCIAL para aceitar cookies com credenciais
 }));
+
 
 // Session + Passport
 app.use(session({
@@ -42,7 +42,6 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(cookieParser());
 
 // Rotas
 app.use("/auth", authRoutes);

@@ -65,53 +65,42 @@
         </div>
     </div>
 </template>
+
 <script>
-import { useAuthStore } from '@/store.js';
+import router from '@/router';
 
 export default {
-    name: "SideBar",
-    setup() {
-        const authStore = useAuthStore();
-
-        return { authStore };
+  name: "SideBar",
+  data() {
+    return {
+      sidebarVisible: true,
+      isMobile: false,
+    };
+  },
+  mounted() {
+    window.addEventListener('resize', this.handleResize);
+    this.handleResize();
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.handleResize);
+  },
+  methods: {
+    toggleSidebar() {
+      if (this.isMobile) {
+        this.sidebarVisible = !this.sidebarVisible;
+      } else {
+        this.sidebarVisible = true;
+      }
     },
-    data() {
-        return {
-            sidebarVisible: true,
-            isMobile: false,
-        };
+    logout() {
+      localStorage.removeItem('token');
+      router.push('/');
     },
-    mounted() {
-        window.addEventListener('resize', this.handleResize);
-        this.handleResize();
-    },
-    beforeUnmount() {
-
-        window.removeEventListener('resize', this.handleResize);
-    },
-    methods: {
-        toggleSidebar() {
-            if (this.isMobile) {   // Controla o estado do sidebar apenas quando o botão for clicado
-                this.sidebarVisible = !this.sidebarVisible;
-            } else {
-                this.sidebarVisible = true; // No desktop, o sidebar permanece visível
-            }
-        },
-        logout() {
-            window.location.href = '/';
-        },
-        handleResize() {
-            if (window.innerWidth <= 768) {
-                this.isMobile = true;
-                if (!this.sidebarVisible) {
-                    this.sidebarVisible = false; // Oculta o sidebar no modo responsivo se estiver fechado
-                }
-            } else {
-                this.isMobile = false;
-                this.sidebarVisible = true; // No desktop, o sidebar deve estar sempre visível
-            }
-        }
-    },
+    handleResize() {
+      this.isMobile = window.innerWidth <= 768;
+      this.sidebarVisible = !this.isMobile;
+    }
+  },
 };
 </script>
 
@@ -154,10 +143,8 @@ body {
 
 .sidebar a svg {
     margin-right: 6px;
-    /* Ajusta o espaço entre o ícone e o texto */
     vertical-align: middle;
 }
-
 
 .sidebar a:hover {
     color: white;
@@ -171,11 +158,8 @@ body {
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    /* Alinhamento com flexbox */
     align-items: center;
-    /* Alinha verticalmente */
     background-color: transparent;
-    /* Sem fundo */
     color: white;
     border: none;
     padding: 10px;

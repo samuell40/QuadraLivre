@@ -113,6 +113,7 @@
 
 <script>
 import SideBar from '@/components/SideBar.vue';
+import router from '@/router';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
@@ -149,10 +150,22 @@ export default {
     this.carregarUsuarios();
   },
   methods: {
+    getAuthHeader() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return null;
+      }
+      return { Authorization: `Bearer ${token}` };
+    },
+
     async carregarUsuarios() {
       this.isLoading = true;
       try {
-        const response = await axios.get('https://quadra-livre-backend.onrender.com/usuarios');
+        const headers = this.getAuthHeader();
+        if (!headers) return;
+
+        const response = await axios.get('https://quadra-livre-backend.onrender.com/usuarios', { headers });
         this.usuarios = response.data;
       } catch (error) {
         console.error('Erro ao carregar usuários:', error);
@@ -177,7 +190,10 @@ export default {
 
     async listarPermissoes() {
       try {
-        const resPerm = await axios.get('https://quadra-livre-backend.onrender.com/permissoes');
+        const headers = this.getAuthHeader();
+        if (!headers) return;
+
+        const resPerm = await axios.get('https://quadra-livre-backend.onrender.com/permissoes', { headers });
         this.permissoes = resPerm.data;
       } catch (err) {
         console.error('Erro ao carregar permissões', err);
@@ -191,7 +207,10 @@ export default {
 
     async listarQuadras() {
       try {
-        const resQuadra = await axios.get('https://quadra-livre-backend.onrender.com/quadra');
+        const headers = this.getAuthHeader();
+        if (!headers) return;
+
+        const resQuadra = await axios.get('https://quadra-livre-backend.onrender.com/quadra', { headers });
         this.quadras = resQuadra.data;
       } catch (err) {
         console.error('Erro ao carregar quadras', err);
@@ -212,6 +231,7 @@ export default {
 
       await Promise.all([this.listarPermissoes(), this.listarQuadras()]);
     },
+
     async salvarEdicao() {
       try {
         if (!this.form.funcao) {
@@ -223,11 +243,14 @@ export default {
           return;
         }
 
+        const headers = this.getAuthHeader();
+        if (!headers) return;
+
         await axios.put('https://quadra-livre-backend.onrender.com/editar/usuario', {
           email: this.form.email,
           funcao: this.form.funcao,
           quadra: this.form.quadra,
-        });
+        }, { headers });
 
         Swal.fire({
           icon: 'success',
@@ -246,6 +269,7 @@ export default {
         });
       }
     },
+
     fecharEditar() {
       this.mostrarEditar = false;
     },
