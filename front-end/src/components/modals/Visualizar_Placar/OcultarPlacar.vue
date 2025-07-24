@@ -77,7 +77,18 @@ export default {
   methods: {
     async carregarModalidades() {
       try {
-        const res = await axios.get("https://quadra-livre-backend.onrender.com/modalidade");
+        const token = localStorage.getItem("token");
+        if (!token) {
+          Swal.fire("Erro", "Usuário não autenticado. Faça login para continuar.", "error");
+          return;
+        }
+
+        const res = await axios.get("https://quadra-livre-backend.onrender.com/modalidade", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
         this.modalidadesDisponiveis = res.data;
 
         this.modalidadesDisponiveis.forEach(({ nome }) => {
@@ -86,10 +97,12 @@ export default {
             this.visibilidade[nome] = vis;
           }
         });
+
         this.modalidadeParaExibir = "";
         this.modalidadeParaOcultar = "";
       } catch (error) {
         console.error("Erro ao carregar modalidades:", error);
+        Swal.fire("Erro", "Falha ao carregar modalidades.", "error");
       }
     },
     deixarVisivel(modalidade) {
