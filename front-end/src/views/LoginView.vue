@@ -47,14 +47,6 @@ export default {
   },
   methods: {
     loginComGoogle() {
-      const isMobile = /Mobi|Android|iPhone|/i.test(navigator.userAgent);
-
-      if (isMobile) {
-        window.location.href = 'https://quadra-livre-backend.onrender.com/auth/google';
-        return;
-      }
-
-      // Caso contrário, usa o popup (desktop)
       const width = 500;
       const height = 600;
       const left = window.screenX + (window.outerWidth - width) / 2;

@@ -7,44 +7,37 @@
 <script>
 export default {
   name: 'GoogleCallback',
-mounted() {
-  const params = new URLSearchParams(window.location.search);
-  const erro = params.get('erro');
-  const email = params.get('email');
-  const data = params.get('data');
+  mounted() {
+    const params = new URLSearchParams(window.location.search);
+    const erro = params.get('erro');
+    const email = params.get('email');
+    const data = params.get('data');
 
-  const redirecionar = (url) => {
-    setTimeout(() => {
-      window.location.href = url;
-    }, 100);
-  };
+    const redirectTo = (url) => {
+      setTimeout(() => (window.location.href = url), 100);
+    };
 
-  const payload = erro
-    ? { erro, email }
-    : data
-      ? (() => {
-          try {
-            return JSON.parse(decodeURIComponent(data));
-          } catch {
-            return { erro: 'erro_interno' };
-          }
-        })()
-      : { erro: 'erro_desconhecido' };
+    let payload;
 
-  if (window.opener && typeof window.opener.postMessage === 'function') {
-    window.opener.postMessage(payload, 'https://quadra-livre.vercel.app');
-    window.close();
-  } else {
-    if (payload.erro === 'usuario_nao_cadastrado') {
-      redirecionar(`/cadastro?email=${encodeURIComponent(payload.email || '')}`);
-    } else if (payload.token) {
-      localStorage.setItem('token', payload.token);
-      redirecionar('/agendarquadra');
-    } else {
-      redirecionar('/');
+    if (erro) {
+      payload = { erro, email };
+    } else if (data) {
+      payload = JSON.parse(decodeURIComponent(data));
     }
-  }
-}
-}
 
+    if (window.opener?.postMessage) {
+      window.opener.postMessage(payload, 'https://quadra-livre.vercel.app');
+      window.close();
+    } else {
+      if (payload?.erro === 'usuario_nao_cadastrado') {
+        redirectTo(`/cadastro?email=${encodeURIComponent(payload.email || '')}`);
+      } else if (payload?.token) {
+        localStorage.setItem('token', payload.token);
+        redirectTo('/agendarquadra');
+      } else {
+        redirectTo('/login');
+      }
+    }
+  },
+};
 </script>
