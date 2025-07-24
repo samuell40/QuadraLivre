@@ -13,23 +13,26 @@ export default {
     const email = params.get('email');
     const data = params.get('data');
 
-    if (erro) {
-      window.opener.postMessage({ erro, email }, 'https://quadra-livre.vercel.app');
-      window.close();
-      return;
-    }
+    const payload = erro
+      ? { erro, email }
+      : data
+        ? (() => {
+            try {
+              return JSON.parse(decodeURIComponent(data));
+            } catch {
+              return { erro: 'erro_interno' };
+            }
+          })()
+        : { erro: 'erro_desconhecido' };
 
-    if (data) {
-      try {
-        const parsed = JSON.parse(decodeURIComponent(data));
-        window.opener.postMessage(parsed, 'https://quadra-livre.vercel.app');
-      } catch {
-        window.opener.postMessage({ erro: 'erro_interno' }, 'https://quadra-livre.vercel.app');
-      }
+    // Verifica se foi aberto como popup (desktop)
+    if (window.opener && typeof window.opener.postMessage === 'function') {
+      window.opener.postMessage(payload, 'https://quadra-livre.vercel.app');
       window.close();
     } else {
-      window.opener.postMessage({ erro: 'erro_desconhecido' }, 'https://quadra-livre.vercel.app');
-      window.close();
+      // Fallback para mobile: salva no localStorage e redireciona para a home
+      localStorage.setItem('google_login', JSON.stringify(payload));
+      window.location.href = 'https://quadra-livre.vercel.app';
     }
   },
 };

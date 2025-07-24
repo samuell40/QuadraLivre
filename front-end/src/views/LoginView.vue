@@ -45,9 +45,40 @@ export default {
       backgroundLogin,
     };
   },
+  mounted() {
+    // Verifica se há dados de login do mobile
+    const loginData = localStorage.getItem('google_login');
+    if (loginData) {
+      try {
+        const parsed = JSON.parse(loginData);
+
+        if (parsed.erro === 'usuario_nao_cadastrado') {
+          Swal.fire({
+            icon: 'error',
+            title: 'Conta não encontrada!',
+            text: 'Redirecionando para a tela de cadastro...',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            didOpen: () => Swal.showLoading(),
+          }).then(() => {
+            window.location.href = `/cadastro?email=${encodeURIComponent(parsed.email)}`;
+          });
+        } else if (parsed.token) {
+          localStorage.setItem('token', parsed.token);
+          router.push('/agendarquadra');
+        }
+
+        localStorage.removeItem('google_login');
+      } catch (e) {
+        console.error('Erro ao processar login mobile:', e);
+        localStorage.removeItem('google_login');
+      }
+    }
+  },
   methods: {
     loginComGoogle() {
-      const isMobile = /Android/i.test(navigator.userAgent);
+      const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
       // Se for mobile, redireciona diretamente
       if (isMobile) {
