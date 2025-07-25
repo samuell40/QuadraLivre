@@ -1,24 +1,24 @@
 <template>
-   <nav class="navbar-custom">
-      <div class="navbar-container">
-        <div class="esquerda-section">
-          <div class="hamburger" @click="toggleMenu">
-            <span :class="{ open: isMenuOpen }"></span>
-            <span :class="{ open: isMenuOpen }"></span>
-            <span :class="{ open: isMenuOpen }"></span>
-          </div>
-          <div class="logo">Quadra Livre</div>
+  <nav class="navbar-custom">
+    <div class="navbar-container">
+      <div class="esquerda-section">
+        <div class="hamburger" @click="toggleMenu">
+          <span :class="{ open: isMenuOpen }"></span>
+          <span :class="{ open: isMenuOpen }"></span>
+          <span :class="{ open: isMenuOpen }"></span>
         </div>
-
-        <ul class="nav-links" :class="{ active: isMenuOpen }">
-          <li><a href="/agendarquadra">Agendar Quadra</a></li>
-          <li><a href="/meusagendamentos">Meus Agendamentos</a></li>
-          <li class="sair-item"><a href="#" @click.prevent="logout" class="sair">Sair</a></li>
-        </ul>
-
-        <a href="#" @click.prevent="logout" class="sair-btn-mobile">Sair</a>
+        <div class="logo">Quadra Livre</div>
       </div>
-    </nav>
+
+      <ul class="nav-links" :class="{ active: isMenuOpen }">
+        <li><a href="/agendarquadra">Agendar Quadra</a></li>
+        <li><a href="/meusagendamentos">Meus Agendamentos</a></li>
+        <li class="sair-item"><a href="#" @click.prevent="logout" class="sair">Sair</a></li>
+      </ul>
+
+      <a href="#" @click.prevent="logout" class="sair-btn-mobile">Sair</a>
+    </div>
+  </nav>
 </template>
 
 <script>
@@ -37,6 +37,7 @@ export default {
     },
     logout() {
       localStorage.removeItem('token');
+
       router.push('/');
     },
   },
@@ -44,7 +45,6 @@ export default {
 </script>
 
 <style scoped>
-/* Seu CSS permanece igual */
 .navbar-custom {
   position: fixed;
   top: 0;
@@ -131,6 +131,7 @@ export default {
 .sair-btn-mobile {
   display: none;
 }
+
 @media (max-width: 768px) {
   .logo {
     margin-left: 0;
@@ -141,8 +142,8 @@ export default {
     flex-direction: column;
     align-items: center;
     width: 100%;
-    margin-right: 0; /* Remove margin no mobile */
-    padding: 0; /* Remove padding se houver */
+    margin-right: 0;
+    padding: 0;
   }
 
   .nav-links.active {
@@ -150,11 +151,11 @@ export default {
     position: absolute;
     top: 70px;
     right: 0;
-    width: 100vw; /* Usa a largura total da viewport */
+    width: 100vw;
     background-color: #152147;
     padding: 20px 0;
     gap: 20px;
-    box-sizing: border-box; /* garante que padding não ultrapasse a largura */
+    box-sizing: border-box;
   }
 
   .hamburger {
