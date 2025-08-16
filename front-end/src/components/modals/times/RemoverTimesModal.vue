@@ -41,8 +41,8 @@
 </template>
 
 <script>
-import axios from 'axios';
 import Swal from 'sweetalert2';
+import api from '@/axios'; 
 
 export default {
   name: 'RemoverTimeModal',
@@ -61,9 +61,7 @@ export default {
     async carregarTimes() {
       if (!this.modalidadeSelecionadaLocal) return;
       try {
-        const res = await axios.get(
-          `http://localhost:3000/times/${this.modalidadeSelecionadaLocal}`
-        );
+        const res = await api.get(`/times/${this.modalidadeSelecionadaLocal}`);
         this.times = res.data.map((t) => t.time);
         this.timeParaRemover = '';
       } catch (error) {
@@ -79,12 +77,10 @@ export default {
       }
 
       try {
-        await axios.delete(
-          `http://localhost:3000/placar/${this.modalidadeSelecionadaLocal}/${this.timeParaRemover}`
-        );
+        await api.delete(`/placar/${this.modalidadeSelecionadaLocal}/${this.timeParaRemover}`);
         Swal.fire('Sucesso', 'Time removido com sucesso!', 'success');
         this.$emit('fechar');
-        this.$emit('atualizar'); // Notifica o componente pai para recarregar os times
+        this.$emit('atualizar'); 
       } catch (error) {
         console.error('Erro ao remover time:', error);
         Swal.fire('Erro', error.response?.data?.error || 'Erro ao remover time.', 'error');

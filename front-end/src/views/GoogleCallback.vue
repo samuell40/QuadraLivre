@@ -26,7 +26,7 @@ export default {
     }
 
     if (window.opener?.postMessage) {
-      window.opener.postMessage(payload, 'https://quadra-livre.vercel.app');
+      window.opener.postMessage(payload, 'http://localhost:8080'); /*http://quadra-livre.vercel.app*/
       window.close();
     } else {
       if (payload?.erro === 'usuario_nao_cadastrado') {

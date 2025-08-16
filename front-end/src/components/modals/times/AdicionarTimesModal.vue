@@ -33,8 +33,8 @@
 </template>
 
 <script>
-import axios from 'axios';
 import Swal from 'sweetalert2';
+import api from '@/axios';
 
 export default {
   name: 'AdicionarTimeModal',
@@ -52,40 +52,59 @@ export default {
     return {
       modalidadeSelecionada: '',
       timeParaAdicionar: '',
-      fotoTime: ''
+      arquivoFoto: null
     };
   },
   methods: {
     fecharModalAdicionarTime() {
       this.modalidadeSelecionada = '';
       this.timeParaAdicionar = '';
-      this.fotoTime = '';
+      this.arquivoFoto = null;
       this.$emit('fechar');
     },
+
     handleImagemUpload(event) {
       const file = event.target.files[0];
       if (file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          this.fotoTime = reader.result;
-        };
-        reader.readAsDataURL(file);
+        this.arquivoFoto = file;
       }
     },
+
     async adicionarTime() {
+      if (!this.modalidadeSelecionada || !this.timeParaAdicionar.trim()) {
+        Swal.fire('Atenção', 'Preencha todos os campos.', 'warning');
+        return;
+      }
+
       try {
+        let urlImagem = null;
+
+        if (this.arquivoFoto) {
+          const formData = new FormData();
+          formData.append('file', this.arquivoFoto);
+
+          const uploadResponse = await api.post('/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+
+          urlImagem = uploadResponse.data.fileUrl;
+        }
+
         const payload = {
           modalidade: this.modalidadeSelecionada,
           time: this.timeParaAdicionar.trim(),
-          foto: this.fotoTime || null,
+          foto: urlImagem || null,
         };
-        await axios.post('http://localhost:3000/times', payload);
+
+        await api.post('/times', payload);
+
         Swal.fire('Sucesso', 'Time adicionado com sucesso!', 'success');
         this.fecharModalAdicionarTime();
-        this.$emit('atualizar'); 
+        this.$emit('atualizar');
+
       } catch (error) {
         console.error('Erro ao adicionar time:', error);
-        Swal.fire('Erro', error.response?.data?.error || 'Erro ao adicionar time.', 'error');
+        Swal.fire('Erro', error.response?.data?.error || error.message || 'Erro ao adicionar time.', 'error');
       }
     },
   },

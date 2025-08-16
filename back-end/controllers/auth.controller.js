@@ -51,7 +51,7 @@ function callbackLoginGoogle(req, res, next) {
         JSON.stringify({ token, usuario: user })
       );
 
-      const redirectUrl = `https://quadra-livre.vercel.app/google-callback?data=${payload}`;
+      const redirectUrl = `http://localhost:8080/google-callback?data=${payload}`; /*https://quadra-livre.vercel.app */
       return res.redirect(redirectUrl);
 
     } catch (error) {

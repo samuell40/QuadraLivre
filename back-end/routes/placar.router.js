@@ -15,8 +15,8 @@ router.get('/placar/:modalidade', controller.getPlacar);
 router.put('/reset', [validarJWT], controller.resetarPlacar);  
 
 // Modalidades
-router.post('/modalidade', [validarJWT], controller.cadastrarModalidadeController);
+router.post('/modalidade', [validarJWT],  controller.cadastrarModalidadeController);
 router.get('/modalidade', [validarJWT], controller.getModalidadesController);
-router.delete('/modalidade/:nome', [validarJWT], controller.removerModalidadeController);
+router.delete('/modalidade/:nome',[validarJWT],  controller.removerModalidadeController);
 
 module.exports = router;

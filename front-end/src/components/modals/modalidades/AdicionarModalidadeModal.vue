@@ -19,45 +19,46 @@
 </template>
 
 <script>
-import axios from 'axios';
 import Swal from 'sweetalert2';
+import api from '@/axios'; 
 
 export default {
-    name: 'AdicionarModalidadeModal',
-    props: {
-        aberto: {
-            type: Boolean,
-            default: false,
-        },
+  name: 'AdicionarModalidadeModal',
+  props: {
+    aberto: {
+      type: Boolean,
+      default: false,
     },
-    data() {
-        return {
-            novaModalidade: '',
-        };
-    },
-    methods: {
-        async cadastrarModalidade() {
-            const nome = this.novaModalidade.trim().toLowerCase();
+  },
+  data() {
+    return {
+      novaModalidade: '',
+    };
+  },
+  methods: {
+    async cadastrarModalidade() {
+      const nome = this.novaModalidade.trim().toLowerCase();
 
-            if (!nome) {
-                Swal.fire('Atenção', 'Informe o nome da modalidade.', 'warning');
-                return;
-            }
-            try {
-                await axios.post('http://localhost:3000/modalidade', { nome });
-                Swal.fire('Sucesso', 'Modalidade cadastrada com sucesso!', 'success');
-                this.novaModalidade = '';
-                this.$emit('atualizar');
-                this.$emit('fechar');
-            } catch (error) {
-                Swal.fire(
-                    'Erro',
-                    error.response?.data?.error || 'Erro ao cadastrar modalidade.',
-                    'error'
-                );
-            }
-        },
-    },
+      if (!nome) {
+        Swal.fire('Atenção', 'Informe o nome da modalidade.', 'warning');
+        return;
+      }
+
+      try {
+        await api.post('/modalidade', { nome });
+        Swal.fire('Sucesso', 'Modalidade cadastrada com sucesso!', 'success');
+        this.novaModalidade = '';
+        this.$emit('atualizar');
+        this.$emit('fechar');
+      } catch (error) {
+        Swal.fire(
+          'Erro',
+          error.response?.data?.error || 'Erro ao cadastrar modalidade.',
+          'error'
+        );
+      }
+    }
+  },
 };
 </script>
 
