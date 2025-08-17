@@ -29,7 +29,7 @@ function callbackLoginGoogle(req, res, next) {
   passport.authenticate('google', { session: false }, (err, result, info) => {
     if (!result || !result.user) {
       const email = info?.email || '';
-      const redirectUrl = `https://quadra-livre.vercel.app/google-callback?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`;
+      const redirectUrl = `http://localhost:8080/google-callback?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`;
       return res.redirect(redirectUrl);
     }
 

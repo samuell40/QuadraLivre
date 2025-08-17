@@ -29,7 +29,7 @@ api.interceptors.response.use(
           title: 'Erro de autenticação',
           text: error.response.data.message || 'Sua autenticação falhou, refaça seu login.'
         });
-        router.push('/login');
+        router.push('/NaoAutorizado');
       } else if (status === 403) {
         console.error("Acesso negado:", error.response.data.message);
         Swal.fire({

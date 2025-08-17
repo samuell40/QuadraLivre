@@ -62,7 +62,7 @@
 <script>
 import SideBar from '@/components/SideBar.vue';
 import Swal from 'sweetalert2';
-import axios from 'axios';
+import api from '@/axios';
 
 export default {
   components: {
@@ -87,17 +87,7 @@ export default {
   methods: {
     async carregarModalidades() {
       try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          Swal.fire('Erro', 'Usuário não autenticado. Faça login para continuar.', 'error');
-          return;
-        }
-
-        const res = await axios.get('https://quadra-livre-backend.onrender.com/modalidade', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await api.get('/modalidade');
         this.modalidades = res.data;
       } catch (error) {
         console.error('Erro ao carregar modalidades:', error);
@@ -112,58 +102,24 @@ export default {
       }
 
       try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          Swal.fire('Erro', 'Usuário não autenticado. Faça login para continuar.', 'error');
-          return;
-        }
-
         let urlImagem = null;
 
         if (this.form.imagem) {
           const formData = new FormData();
           formData.append('file', this.form.imagem);
 
-          const uploadResponse = await fetch(
-            'https://quadra-livre-backend.onrender.com/upload',
-            {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-              body: formData,
-            }
-          );
-
-          if (!uploadResponse.ok) {
-            throw new Error('Erro ao enviar imagem');
-          }
-
-          const uploadData = await uploadResponse.json();
-          urlImagem = uploadData.fileUrl;
+          const uploadResponse = await api.post('/upload', formData);
+          urlImagem = uploadResponse.data.fileUrl;
         }
 
         const modalidadesFormatadas = this.form.modalidadesSelecionadas.map(id => ({ id }));
 
-        const response = await fetch('https://quadra-livre-backend.onrender.com/quadra', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            nome: this.form.nome,
-            endereco: this.form.endereco,
-            foto: urlImagem,
-            modalidades: modalidadesFormatadas,
-          }),
+        await api.post('/quadra', {
+          nome: this.form.nome,
+          endereco: this.form.endereco,
+          foto: urlImagem,
+          modalidades: modalidadesFormatadas,
         });
-
-        if (!response.ok) {
-          throw new Error('Erro ao cadastrar quadra');
-        }
-
-        await response.json();
 
         Swal.fire({
           icon: 'success',
@@ -188,7 +144,7 @@ export default {
         Swal.fire({
           icon: 'error',
           title: 'Erro',
-          text: 'Erro ao cadastrar quadra. Tente novamente.',
+          text: error.response?.data?.error || 'Erro ao cadastrar quadra. Tente novamente.',
         });
       }
     },

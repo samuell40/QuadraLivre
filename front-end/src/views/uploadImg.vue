@@ -1,39 +1,44 @@
 <script setup>
 import { ref } from "vue";
+import api from "@/axios"; 
+import Swal from "sweetalert2";
 
 const file = ref(null);
 const uploadStatus = ref("");
 const imageUrl = ref("");
 
-// Função para selecionar o arquivo
 const handleFileChange = (event) => {
   file.value = event.target.files[0];
 };
 
-// Função para fazer upload do arquivo para o backend
 const uploadFile = async () => {
   if (!file.value) {
     uploadStatus.value = "Por favor, selecione um arquivo.";
     return;
   }
 
-  //FormData para enviar o arquivo
   const formData = new FormData();
   formData.append("file", file.value);
 
   try {
-    // Enviando o arquivo para o backend
-    const response = await fetch("https://quadra-livre-backend.onrender.com/upload", {
-      method: "POST",
-      body: formData,
-    });
-    const data = await response.json();
+    const response = await api.post("/upload", formData); 
+    imageUrl.value = response.data.fileUrl;
+    uploadStatus.value = "Upload realizado com sucesso!";
 
-    console.log(data)
-    alert(data.fileUrl)
+    Swal.fire({
+      icon: "success",
+      title: "Sucesso!",
+      text: "Imagem enviada com sucesso.",
+    });
+
   } catch (error) {
     console.error("Erro no upload:", error);
     uploadStatus.value = "Erro ao enviar o arquivo.";
+    Swal.fire({
+      icon: "error",
+      title: "Erro",
+      text: error.response?.data?.error || "Falha ao enviar a imagem.",
+    });
   }
 };
 </script>
@@ -44,7 +49,6 @@ const uploadFile = async () => {
     <button @click="uploadFile">Enviar Imagem</button>
     <p>{{ uploadStatus }}</p>
 
-    <!-- Exibe a imagem após o upload -->
     <div v-if="imageUrl">
       <p>Imagem carregada:</p>
       <img :src="imageUrl" alt="Imagem carregada" style="max-width: 300px; margin-top: 10px;" />

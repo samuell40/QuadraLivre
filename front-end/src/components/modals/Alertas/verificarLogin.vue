@@ -7,7 +7,7 @@
       <h2>Você precisa estar logado!</h2>
       <p>Faça login ou crie uma conta para acessar uma quadra.</p>
       <div class="botoes-modal">
-        <button class="login" @click="$emit('irParaLogin')">Login</button>
+        <button class="login" @click="$emit('loginComGoogle')">Login</button>
         <button class="voltar" @click="$emit('fechar')">Voltar</button>
       </div>
     </div>
@@ -16,7 +16,7 @@
 
 <script>
 export default {
-  name: 'VerificarLogin'
+  name: 'loginComGoogle'
 }
 </script>
 

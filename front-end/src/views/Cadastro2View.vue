@@ -44,6 +44,7 @@
 
 <script>
 import Swal from 'sweetalert2';
+import api from '@/axios';
 
 export default {
   data() {
@@ -65,37 +66,18 @@ export default {
           const formData = new FormData();
           formData.append('file', this.form.imagem);
 
-          const uploadResponse = await fetch('https://quadra-livre-backend.onrender.com/upload', {
-            method: 'POST',
-            body: formData,
-          });
-
-          if (!uploadResponse.ok) {
-            throw new Error('Erro ao enviar imagem');
-          }
-
-          const uploadData = await uploadResponse.json();
-          urlImagem = uploadData.fileUrl;
+          const uploadResponse = await api.post('/upload', formData);
+          urlImagem = uploadResponse.data.fileUrl;
         } else {
           urlImagem = 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/Imagem%20padrao.png';
         }
 
-        const response = await fetch('https://quadra-livre-backend.onrender.com/cadastrar/usuario', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            nome: this.form.nome,
-            email: this.form.email, // envia o email preenchido automaticamente
-            telefone: this.form.telefone,
-            foto: urlImagem,
-          }),
+        await api.post('/cadastrar/usuario', {
+          nome: this.form.nome,
+          email: this.form.email,
+          telefone: this.form.telefone,
+          foto: urlImagem,
         });
-
-        if (!response.ok) {
-          throw new Error('Erro ao cadastrar usuário');
-        }
 
         Swal.fire({
           icon: 'success',
@@ -113,9 +95,8 @@ export default {
           telefone: '',
           imagem: null,
         };
-
         document.getElementById('imagem').value = null;
-        localStorage.removeItem('emailCadastro'); // limpa o email após cadastro
+        localStorage.removeItem('emailCadastro');
 
       } catch (error) {
         console.error('Erro ao cadastrar usuário:', error);
@@ -123,7 +104,7 @@ export default {
         Swal.fire({
           icon: 'error',
           title: 'Erro',
-          text: 'Erro ao cadastrar usuário. Tente novamente.',
+          text: error.response?.data?.error || 'Erro ao cadastrar usuário. Tente novamente.',
         });
       }
     },
