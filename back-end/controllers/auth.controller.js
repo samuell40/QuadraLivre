@@ -21,12 +21,25 @@ function iniciarLoginGoogle(req, res, next) {
   passport.authenticate('google', {
     scope: ['profile', 'email'],
     session: false,
-    prompt: 'select_account', 
+    prompt: 'select_account',
   })(req, res, next);
 }
 
 function callbackLoginGoogle(req, res, next) {
+  if (req.query.error === 'access_denied') {
+    return res.send(`
+      <script>
+        window.close();
+      </script>
+    `);
+  }
+
   passport.authenticate('google', { session: false }, (err, result, info) => {
+    if (err) {
+      console.error('Erro no callbackLoginGoogle:', err);
+      return res.status(500).json({ erro: 'erro_callback_google', detalhes: err.message });
+    }
+
     if (!result || !result.user) {
       const email = info?.email || '';
       const redirectUrl = `http://localhost:8080/google-callback?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`;
@@ -51,7 +64,7 @@ function callbackLoginGoogle(req, res, next) {
         JSON.stringify({ token, usuario: user })
       );
 
-      const redirectUrl = `http://localhost:8080/google-callback?data=${payload}`; /*https://quadra-livre.vercel.app */
+      const redirectUrl = `http://localhost:8080/google-callback?data=${payload}`;
       return res.redirect(redirectUrl);
 
     } catch (error) {

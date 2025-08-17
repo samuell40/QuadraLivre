@@ -33,9 +33,6 @@
 
           <button type="submit" class="cadastro-button">Realizar Cadastro</button>
 
-          <div class="links-group">
-            <a href="/login">Já tem uma conta?</a>
-          </div>
         </div>
       </form>
     </div>
@@ -306,26 +303,5 @@ export default {
 
 .cadastro-button:hover {
   background-color: #2C4FAA;
-}
-
-.links-group {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: center;
-  align-items: center;
-}
-
-.links-group a {
-  color: white;
-  text-decoration: none;
-  font-weight: bold;
-}
-
-.links-group:hover {
-  text-decoration: underline;
-}
-
-.links-group span {
-  color: white;
 }
 </style>
