@@ -53,7 +53,7 @@ function callbackLoginGoogle(req, res, next) {
         id: user.id,
         nome: user.nome,
         email: user.email,
-        permissao: user.permissao,
+        permissaoId: user.permissaoId, 
       };
 
       const token = jwt.sign(tokenPayload, config.jwtSecret, {
@@ -61,7 +61,7 @@ function callbackLoginGoogle(req, res, next) {
       });
 
       const payload = encodeURIComponent(
-        JSON.stringify({ token, usuario: user })
+        JSON.stringify({ token, usuario: tokenPayload })
       );
 
       const redirectUrl = `http://localhost:8080/google-callback?data=${payload}`;

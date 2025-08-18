@@ -15,60 +15,62 @@ const routes = [
     path: '/',
     name: 'Home',
     component: HomeView,
+    meta: { public: true },
   },
   {
     path: '/agendamentos',
     name: 'Agendamentos',
     component: AgendamentosView,
-    meta: { requiresAuth: true }, 
+    meta: { requiresAuth: true, roles: [43, 44] }, 
   },
   {
     path: '/agendarquadra',
     name: 'agendar_quadra',
     component: AgendarQuadrasView,
-    meta: { requiresAuth: true }, 
-  },
-   {
-    path: '/NaoAutorizado',
-    name: 'NaoAutorizado',
-    component: NaoAutorizado,
-    meta: { public: true }, 
-  },
-  {
-    path: '/google-callback',
-    name: 'GoogleCallback',
-    component: GoogleCallback,
-  },
-  {
-    path: '/cadastro',
-    name: 'Cadastro',
-    component: CadastroView,
-    meta: { public: true }, 
-  },
-  {
-    path: '/cadastrarquadra',
-    name: 'cadastrar_quadra',
-    component: CadastrarQuadraView,
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/controleplacar',
-    name: 'controle_placar',
-    component: ControlePlacarView,
-    meta: { requiresAuth: true }, 
+    meta: { requiresAuth: true, roles: [45] }, 
   },
   {
     path: '/meusagendamentos',
     name: 'meus_agendamentos',
     component: MeusAgendamentosView,
-    meta: { requiresAuth: true }, 
+    meta: { requiresAuth: true, roles: [45] }, 
+  },
+  {
+    path: '/cadastrarquadra',
+    name: 'cadastrar_quadra',
+    component: CadastrarQuadraView,
+    meta: { requiresAuth: true, roles: [43, 44] }, 
+  },
+  {
+    path: '/controleplacar',
+    name: 'controle_placar',
+    component: ControlePlacarView,
+    meta: { requiresAuth: true, roles: [43, 44] }, 
   },
   {
     path: '/usuarios',
     name: 'usuarios',
     component: UsuariosView,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, roles: [43, 44] }, 
   },
+  {
+    path: '/NaoAutorizado',
+    name: 'NaoAutorizado',
+    component: NaoAutorizado,
+    meta: { public: true },
+  },
+  {
+    path: '/google-callback',
+    name: 'GoogleCallback',
+    component: GoogleCallback,
+    meta: { public: true },
+  },
+  {
+    path: '/cadastro',
+    name: 'Cadastro',
+    component: CadastroView,
+    meta: { public: true },
+  }
 ];
 
 const router = createRouter({
@@ -78,9 +80,16 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token');
+  const usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
 
   if (to.meta.requiresAuth && !token) {
     return next({ name: 'NaoAutorizado' });
+  }
+
+  if (to.meta.roles && usuario) {
+    if (!to.meta.roles.includes(usuario.permissaoId)) {
+      return next({ name: 'NaoAutorizado' });
+    }
   }
 
   next();

@@ -226,9 +226,11 @@ export default {
         'Login com Google',
         `width=${width},height=${height},left=${left},top=${top}`
       );
+
       const listener = (event) => {
         if (event.origin !== 'http://localhost:8080') return;
-        const { token, erro, email } = event.data;
+        const { token, erro, email, usuario } = event.data;
+
         if (erro === 'usuario_nao_cadastrado') {
           Swal.fire({
             icon: 'error',
@@ -240,25 +242,34 @@ export default {
             didOpen: () => Swal.showLoading()
           }).then(() => window.location.href = `/cadastro?email=${encodeURIComponent(email)}`);
         }
-       if (token) {
-        localStorage.setItem('token', token);
 
-        // recuperar a quadra salva
-        const quadraSelecionada = JSON.parse(localStorage.getItem("quadraSelecionada") || "null");
+        if (token) {
+          localStorage.setItem('token', token);
+          localStorage.setItem('usuario', JSON.stringify(usuario));
 
-        if (quadraSelecionada) {
-          // já direciona com o id dela
-          router.push({ name: 'agendar_quadra', query: { quadraId: quadraSelecionada.id } });
-          localStorage.removeItem("quadraSelecionada");
-        } else {
-          router.push('/agendarquadra');
+          const quadraSelecionada = JSON.parse(localStorage.getItem("quadraSelecionada") || "null");
+
+          if ([43, 44].includes(usuario.permissaoId)) {
+            router.push({ name: "Agendamentos" });
+          } else if (usuario.permissaoId === 45) {
+            if (quadraSelecionada) {
+              router.push({ name: "agendar_quadra", query: { quadraId: quadraSelecionada.id } });
+              localStorage.removeItem("quadraSelecionada");
+            } else {
+              router.push({ name: "agendar_quadra" });
+            }
+          } else {
+            router.push({ name: "/" });
+          }
         }
-      }
+
         window.removeEventListener('message', listener);
         if (popup) popup.close();
       };
+
       window.addEventListener('message', listener, false);
     }
+
   }
 }
 </script>

@@ -23,7 +23,7 @@
 
           <div class="input-group">
             <label>Telefone</label>
-            <input type="tel" v-model="form.telefone" placeholder="Digite seu telefone" />
+            <input type="tel" v-model="form.telefone" placeholder="Digite seu telefone" @input="formatarTelefone" />
           </div>
 
           <div class="input-group">
@@ -96,7 +96,7 @@ export default {
           timer: 2000,
           showConfirmButton: false,
         }).then(() => {
-          this.$router.push('/controleplacar');
+          this.$router.push('/');
         });
 
         this.form = {
@@ -122,8 +122,33 @@ export default {
     handleFileChange(event) {
       this.form.imagem = event.target.files[0];
     },
-  },
-};
+
+    formatarTelefone(event) {
+      let input = event.target;
+      let valor = input.value.replace(/\D/g, '');
+
+      if (!valor) {
+        this.form.telefone = '';
+        return;
+      }
+
+      if (valor.length > 11) valor = valor.slice(0, 11);
+
+      let telefoneFormatado = '';
+      if (valor.length <= 2) {
+        telefoneFormatado = `(${valor}`;
+      } else if (valor.length <= 6) {
+        telefoneFormatado = `(${valor.slice(0, 2)}) ${valor.slice(2)}`;
+      } else if (valor.length <= 10) {
+        telefoneFormatado = `(${valor.slice(0, 2)}) ${valor.slice(2, 6)}-${valor.slice(6)}`;
+      } else {
+        telefoneFormatado = `(${valor.slice(0, 2)}) ${valor.slice(2, 7)}-${valor.slice(7)}`;
+      }
+
+      this.form.telefone = telefoneFormatado;
+    }
+  }
+}  
 </script>
 
 <style scoped>
@@ -212,16 +237,6 @@ export default {
   box-sizing: border-box;
 }
 
-.email {
-  background-color: #0F1835;
-  padding: 10px;
-  border-radius: 5px !important;
-  border: 1px solid #3B82F6;
-  color: white;
-  width: 100%;
-  box-sizing: border-box;
-}
-
 .input-group input {
   background-color: #0F1835;
   padding: 10px;
@@ -245,49 +260,6 @@ export default {
   text-align: right;
   width: 100%;
   box-sizing: border-box;
-}
-
-
-.data-container {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 2rem;
-  width: 90%;
-  margin-bottom: 2rem;
-}
-
-.data-group {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  width: 100%;
-}
-
-.data-group label {
-  font-weight: bold;
-  margin-bottom: 5px;
-  box-sizing: border-box;
-}
-
-.data-group input {
-  background-color: #0F1835;
-  padding: 10px;
-  border-radius: 5px !important;
-  border: 1px solid #3B82F6;
-  color: white;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.data-group input:hover {
-  background-color: #172144;
-}
-
-.data-group input::placeholder {
-  color: white;
-  opacity: 1;
 }
 
 .cadastro-button {

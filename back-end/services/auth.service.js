@@ -8,16 +8,16 @@ async function findUserByEmail(email) {
   const user = await prisma.usuario.findUnique({ where: { email } });
 
   if (!user) {
-  const error = new Error('usuario_nao_cadastrado');
-  error.statusCode = 404;
-  throw error;
-}
+    const error = new Error('usuario_nao_cadastrado');
+    error.statusCode = 404;
+    throw error;
+  }
 
   const dados_usuario = {
     id: user.id,
     nome: user.nome,
     email: user.email,
-    permissao: user.permissaoId,
+    permissaoId: user.permissaoId, // 👈 já manda o id da permissão
     foto: user.foto,
     telefone: user.telefone,
   };
@@ -26,6 +26,7 @@ async function findUserByEmail(email) {
 
   return { user: dados_usuario, token };
 }
+
 
 module.exports = {
   findUserByEmail,
