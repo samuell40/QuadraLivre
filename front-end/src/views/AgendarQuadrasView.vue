@@ -56,8 +56,18 @@ export default {
       quadraSelecionada: null
     }
   },
+  // Abre o modal com a quadra selecionada na tela home ao carregar a página
   mounted() {
-    this.carregarQuadras()
+    this.carregarQuadras().then(() => {
+      const quadraId = this.$route.query.quadraId
+      if (quadraId) {
+        // procura a quadra pelo id
+        const quadra = this.quadras.find(q => q.id == quadraId)
+        if (quadra) {
+          this.abrirModal(quadra)
+        }
+      }
+    })
   },
   methods: {
     async carregarQuadras() {

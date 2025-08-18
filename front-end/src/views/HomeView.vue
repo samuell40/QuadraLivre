@@ -212,6 +212,8 @@ export default {
       if (usuario?.token) {
         router.push({ name: 'agendar_quadra', query: { quadraId: quadra.id } });
       } else {
+        // salvar a quadra clicada para recuperar depois do login
+        localStorage.setItem("quadraSelecionada", JSON.stringify(quadra));
         this.mostrarModalLogin = true;
       }
     },
@@ -238,10 +240,20 @@ export default {
             didOpen: () => Swal.showLoading()
           }).then(() => window.location.href = `/cadastro?email=${encodeURIComponent(email)}`);
         }
-        if (token) {
-          localStorage.setItem('token', token);
+       if (token) {
+        localStorage.setItem('token', token);
+
+        // recuperar a quadra salva
+        const quadraSelecionada = JSON.parse(localStorage.getItem("quadraSelecionada") || "null");
+
+        if (quadraSelecionada) {
+          // já direciona com o id dela
+          router.push({ name: 'agendar_quadra', query: { quadraId: quadraSelecionada.id } });
+          localStorage.removeItem("quadraSelecionada");
+        } else {
           router.push('/agendarquadra');
         }
+      }
         window.removeEventListener('message', listener);
         if (popup) popup.close();
       };
