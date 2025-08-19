@@ -19,7 +19,7 @@ const routes = [
   },
   {
     path: '/agendamentos',
-    name: 'Agendamentos',
+    name: 'Agendamentos', 
     component: AgendamentosView,
     meta: { requiresAuth: true, roles: [43, 44] }, 
   },

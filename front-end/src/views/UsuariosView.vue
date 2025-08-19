@@ -13,18 +13,20 @@
       <div v-else>
         <div class="usuarios" v-if="usuariosFiltrados.length > 0">
           <div class="card" v-for="usuario in usuariosFiltrados" :key="usuario.id">
-            <div class="foto">
-              <img :src="usuario.foto" alt="Foto do usuário" />
-            </div>
-            <div class="info">
-              <h2>{{ usuario.nome }}</h2>
-              <p>{{ usuario.funcao }}</p>
-              <p>{{ usuario.email }}</p>
-
-              <div class="botoes">
-                <button class="btn-editar" @click="editarUsuario(usuario)">Editar</button>
-                <button class="btn-detalhar" @click="detalhesUsuario(usuario)">Detalhar</button>
+            <div class="card-conteudo">
+              <div class="foto">
+                <img :src="usuario.foto" alt="Foto do usuário" />
               </div>
+              <div class="info">
+                <h2>{{ usuario.nome }}</h2>
+                <p>{{ usuario.funcao }}</p>
+                <p>{{ usuario.email }}</p>
+              </div>
+            </div>
+
+            <div class="botoes">
+              <button class="btn-editar" @click="editarUsuario(usuario)">Alterar Permissões</button>
+              <button class="btn-detalhar" @click="detalhesUsuario(usuario)">Detalhar</button>
             </div>
           </div>
         </div>
@@ -76,6 +78,7 @@
         <button class="btn-fechar" @click="fecharDetalhes">Fechar</button>
       </div>
     </div>
+
     <!-- Modal de edição -->
     <div v-if="mostrarEditar" class="modal-overlay">
       <div class="modal-content">
@@ -91,7 +94,7 @@
           </select>
         </div>
 
-        <!-- Não mostrar quadra para DESENVOLVEDOR_DE_SISTEMA e USUARIO -->
+
         <div class="campo" v-if="form.funcao !== 'DESENVOLVEDOR_DE_SISTEMA' && form.funcao !== 'USUARIO'">
           <strong>Quadra:</strong>
           <select v-model="form.quadra">
@@ -115,12 +118,11 @@
 import SideBar from '@/components/SideBar.vue';
 import api from '@/axios';
 import Swal from 'sweetalert2';
+import { useAuthStore } from '@/store';
 
 export default {
   name: 'UsuariosView',
-  components: {
-    SideBar,
-  },
+  components: { SideBar },
   data() {
     return {
       usuarios: [],
@@ -139,10 +141,20 @@ export default {
     };
   },
   computed: {
+    usuarioLogadoEmail() {
+      const authStore = useAuthStore();
+      return authStore.usuario?.email || '';
+    },
+
     usuariosFiltrados() {
-      return this.usuarios.filter((u) =>
-        u.nome.toLowerCase().includes(this.busca.toLowerCase())
-      );
+      return this.usuarios
+        .filter(u => u.nome.toLowerCase().includes(this.busca.toLowerCase()))
+        .filter(u => u.email !== this.usuarioLogadoEmail);
+    },
+
+    permissoesFiltradas() {
+      if (!this.usuarioSelecionado.funcao) return this.permissoes;
+      return this.permissoes.filter(p => p.descricao !== this.usuarioSelecionado.funcao);
     },
   },
   mounted() {
@@ -156,11 +168,7 @@ export default {
         this.usuarios = response.data;
       } catch (error) {
         console.error('Erro ao carregar usuários:', error);
-        Swal.fire({
-          icon: 'error',
-          title: 'Erro',
-          text: 'Falha ao carregar usuários.',
-        });
+        Swal.fire({ icon: 'error', title: 'Erro', text: 'Falha ao carregar usuários.' });
       } finally {
         this.isLoading = false;
       }
@@ -181,11 +189,7 @@ export default {
         this.permissoes = resPerm.data;
       } catch (err) {
         console.error('Erro ao carregar permissões', err);
-        Swal.fire({
-          icon: 'error',
-          title: 'Erro',
-          text: 'Falha ao carregar permissões.',
-        });
+        Swal.fire({ icon: 'error', title: 'Erro', text: 'Falha ao carregar permissões.' });
       }
     },
 
@@ -195,32 +199,25 @@ export default {
         this.quadras = resQuadra.data;
       } catch (err) {
         console.error('Erro ao carregar quadras', err);
-        Swal.fire({
-          icon: 'error',
-          title: 'Erro',
-          text: 'Falha ao carregar quadras.',
-        });
+        Swal.fire({ icon: 'error', title: 'Erro', text: 'Falha ao carregar quadras.' });
       }
     },
 
     async editarUsuario(usuario) {
       this.usuarioSelecionado = usuario;
       this.form.email = usuario.email;
-      this.form.funcao = '';
-      this.form.quadra = '';
+      this.form.funcao = usuario.funcao; 
+      this.form.quadra = usuario.quadra || '';
       this.mostrarEditar = true;
 
       await Promise.all([this.listarPermissoes(), this.listarQuadras()]);
     },
 
+
     async salvarEdicao() {
       try {
         if (!this.form.funcao) {
-          Swal.fire({
-            icon: 'warning',
-            title: 'Atenção',
-            text: 'Selecione uma função válida antes de salvar.',
-          });
+          Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Selecione uma função válida antes de salvar.' });
           return;
         }
 
@@ -230,21 +227,12 @@ export default {
           quadra: this.form.quadra,
         });
 
-        Swal.fire({
-          icon: 'success',
-          title: 'Sucesso',
-          text: 'Usuário atualizado com sucesso!',
-        });
-
+        Swal.fire({ icon: 'success', title: 'Sucesso', text: 'Usuário atualizado com sucesso!' });
         this.mostrarEditar = false;
         this.carregarUsuarios();
       } catch (err) {
         console.error('Erro ao salvar edição:', err);
-        Swal.fire({
-          icon: 'error',
-          title: 'Erro',
-          text: 'Falha ao salvar edição do usuário.',
-        });
+        Swal.fire({ icon: 'error', title: 'Erro', text: 'Falha ao salvar edição do usuário.' });
       }
     },
 
@@ -254,6 +242,7 @@ export default {
   },
 };
 </script>
+
 
 <style scoped>
 .container {
@@ -323,12 +312,19 @@ export default {
 
 .card {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   background-color: white;
   border-radius: 12px;
   padding: 20px;
-  gap: 20px;
+  gap: 15px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.card-conteudo {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  align-items: center;
 }
 
 .foto {
@@ -366,14 +362,11 @@ export default {
   font-size: 14px;
 }
 
-.info b {
-  color: #333;
-}
-
 .botoes {
   display: flex;
   gap: 10px;
   margin-top: 10px;
+  justify-content: flex-end;
 }
 
 .btn-editar,
@@ -416,26 +409,6 @@ export default {
   border-radius: 20px;
   cursor: pointer;
   font-weight: bold;
-}
-
-.btn-cancel {
-  background-color: #7E7E7E;
-  flex: 1;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  color: white;
-}
-
-
-.btn-save {
-  background-color: #3b82f6;
-  flex: 1;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  color: white;
 }
 
 .modal-overlay {
