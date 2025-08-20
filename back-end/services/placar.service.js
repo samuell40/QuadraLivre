@@ -1,64 +1,135 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-async function buscarModalidadeId(nome) {
-  let modalidade = await prisma.modalidade.findUnique({
-    where: { nome },
-  });
-
-  if (!modalidade) {
-    modalidade = await prisma.modalidade.create({
-      data: { nome },
-    });
-  }
-
-  return modalidade.id;
-}
-
+// ------------------ MODALIDADE ------------------
 async function cadastrarModalidade(nome) {
   return await prisma.modalidade.create({
-    data: { nome },
+    data: { nome }
   });
 }
 
-async function removerModalidade(nome) {
-  const modalidade = await prisma.modalidade.findUnique({
-    where: { nome },
+async function removerModalidade(id) {
+  return await prisma.modalidade.delete({
+    where: { id: Number(id) }
   });
-
-  if (!modalidade) throw new Error('Modalidade não encontrada.');
-
-  await prisma.placar.deleteMany({
-    where: { modalidadeId: modalidade.id },
-  });
-
-  await prisma.modalidade.delete({
-    where: { id: modalidade.id },
-  });
-
-  return modalidade;
 }
 
 async function listarModalidades() {
   return await prisma.modalidade.findMany({
+    include: { times: true, quadras: true },
+  });
+}
+
+// ------------------ TIME ------------------
+async function criarTime({ nome, foto, modalidadeId }) {
+  const time = await prisma.time.create({
+    data: {
+      nome,
+      foto,
+      modalidadeId: Number(modalidadeId),
+    },
+  });
+
+  // Cria placar automaticamente se não existir
+  await criarPlacar({ timeId: time.id });
+
+  return time;
+}
+
+async function removerTime(id) {
+  // Remove o placar antes de remover o time
+  await prisma.placar.deleteMany({ where: { timeId: Number(id) } });
+
+  return await prisma.time.delete({ where: { id: Number(id) } });
+}
+
+async function listarTimesPorModalidade(modalidadeId) {
+  if (!modalidadeId) throw new Error('modalidadeId é obrigatório');
+
+  return await prisma.time.findMany({
+    where: { modalidadeId: Number(modalidadeId) },
+    include: { modalidade: true, placar: true },
     orderBy: { nome: 'asc' },
   });
 }
 
-async function criarTimeService(dados) {
-  const modalidadeId = await buscarModalidadeId(dados.modalidade);
+// ------------------ PLACAR ------------------
+async function criarPlacar(dados) {
+  const { timeId } = dados;
+
+  // Verifica se já existe placar para o time
+  const existente = await prisma.placar.findUnique({ where: { timeId: Number(timeId) } });
+  if (existente) return existente;
 
   return await prisma.placar.create({
     data: {
-      modalidadeId,
-      time: dados.time,
-      foto: dados.foto || null,
+      timeId: Number(timeId),
+      jogos: dados.jogos || 0,
+      posicao: dados.posicao || 0,
+      pontuacao: dados.pontuacao || 0,
+      vitorias: dados.vitorias || 0,
+      empates: dados.empates || 0,
+      derrotas: dados.derrotas || 0,
+      golsPro: dados.golsPro || 0,
+      golsSofridos: dados.golsSofridos || 0,
+      saldoDeGols: dados.saldoDeGols || 0,
+      setsVencidos: dados.setsVencidos || 0,
+      vitoria2x0: dados.vitoria2x0 || 0,
+      vitoria2x1: dados.vitoria2x1 || 0,
+      derrota2x1: dados.derrota2x1 || 0,
+      derrota2x0: dados.derrota2x0 || 0,
+      derrotaWo: dados.derrotaWo || 0,
+      cartoesAmarelos: dados.cartoesAmarelos || 0,
+      cartoesVermelhos: dados.cartoesVermelhos || 0,
+      visivel: dados.visivel ?? true,
+    },
+  });
+}
+
+async function atualizarPlacar(id, dados) {
+  return await prisma.placar.update({
+    where: { id: Number(id) },
+    data: {
+      jogos: dados.jogos,
+      posicao: dados.posicao,
+      pontuacao: dados.pontuacao,
+      vitorias: dados.vitorias,
+      empates: dados.empates,
+      derrotas: dados.derrotas,
+      golsPro: dados.golsPro,
+      golsSofridos: dados.golsSofridos,
+      saldoDeGols: dados.saldoDeGols,
+      setsVencidos: dados.setsVencidos,
+      vitoria2x0: dados.vitoria2x0,
+      vitoria2x1: dados.vitoria2x1,
+      derrota2x1: dados.derrota2x1,
+      derrota2x0: dados.derrota2x0,
+      derrotaWo: dados.derrotaWo,
+      cartoesAmarelos: dados.cartoesAmarelos,
+      cartoesVermelhos: dados.cartoesVermelhos,
+      visivel: dados.visivel,
+    },
+  });
+}
+
+async function listarPlacarPorModalidade(modalidadeId) {
+  return await prisma.placar.findMany({
+    where: { time: { modalidadeId: Number(modalidadeId) } },
+    include: { time: true },
+    orderBy: { pontuacao: 'desc' },
+  });
+}
+
+async function resetarPlacarPorModalidade(modalidadeId) {
+  return await prisma.placar.updateMany({
+    where: { time: { modalidadeId: Number(modalidadeId) } },
+    data: {
       jogos: 0,
       posicao: 0,
       pontuacao: 0,
       vitorias: 0,
-      derrotas: 0,
       empates: 0,
+      derrotas: 0,
       golsPro: 0,
       golsSofridos: 0,
       saldoDeGols: 0,
@@ -70,50 +141,36 @@ async function criarTimeService(dados) {
       derrotaWo: 0,
       cartoesAmarelos: 0,
       cartoesVermelhos: 0,
+      visivel: true,
     },
   });
 }
 
-async function deletarTime(nome, modalidade) {
-  const modalidadeId = await buscarModalidadeId(modalidade);
-
-  await prisma.placar.delete({
-    where: {
-      modalidadeId_time: {
-        modalidadeId,
-        time: nome,
-      },
-    },
-  });
-
-  // Atualiza posições após exclusão
-  await atualizarPosicoes(modalidade);
-}
-
+// ------------------ ORDENAÇÃO ------------------
 function ordenarTimesFutebol(times) {
   return times.sort((a, b) => {
-    if (b.pontuacao !== a.pontuacao) return b.pontuacao - a.pontuacao;
-    if (a.jogos !== b.jogos) return a.jogos - b.jogos;
-    if (b.golsPro !== a.golsPro) return b.golsPro - a.golsPro;
-    if (a.golsSofridos !== b.golsSofridos) return a.golsSofridos - b.golsSofridos;
-    if (b.saldoDeGols !== a.saldoDeGols) return b.saldoDeGols - a.saldoDeGols;
-    if ((a.cartoesAmarelos) !== (b.cartoesAmarelos)) return (a.cartoesAmarelos) - (b.cartoesAmarelos);
-    if ((a.cartoesVermelhos) !== (b.cartoesVermelhos)) return (a.cartoesVermelhos) - (b.cartoesVermelhos);
+    if (b.placar.pontuacao !== a.placar.pontuacao) return b.placar.pontuacao - a.placar.pontuacao;
+    if (a.placar.jogos !== b.placar.jogos) return a.placar.jogos - b.placar.jogos;
+    if (b.placar.golsPro !== a.placar.golsPro) return b.placar.golsPro - a.placar.golsPro;
+    if (a.placar.golsSofridos !== b.placar.golsSofridos) return a.placar.golsSofridos - b.placar.golsSofridos;
+    if (b.placar.saldoDeGols !== a.placar.saldoDeGols) return b.placar.saldoDeGols - a.placar.saldoDeGols;
+    if (a.placar.cartoesAmarelos !== b.placar.cartoesAmarelos) return a.placar.cartoesAmarelos - b.placar.cartoesAmarelos;
+    if (a.placar.cartoesVermelhos !== b.placar.cartoesVermelhos) return a.placar.cartoesVermelhos - b.placar.cartoesVermelhos;
     return 0;
   });
 }
 
 function ordenarTimesVolei(times) {
   return times.sort((a, b) => {
-    if (b.vitorias !== a.vitorias) return b.vitorias - a.vitorias;
-    if (b.pontuacao !== a.pontuacao) return b.pontuacao - a.pontuacao;
+    if (b.placar.vitorias !== a.placar.vitorias) return b.placar.vitorias - a.placar.vitorias;
+    if (b.placar.pontuacao !== a.placar.pontuacao) return b.placar.pontuacao - a.placar.pontuacao;
 
-    const aSetsV = (a.vitoria2x0) * 2 + (a.vitoria2x1) * 2 + (a.derrota2x1);
-    const aSetsP = (a.vitoria2x1) + (a.derrota2x0) * 2 + (a.derrota2x1) * 2 + (a.derrotaWo) * 2;
+    const aSetsV = (a.placar.vitoria2x0 * 2) + (a.placar.vitoria2x1 * 2) + a.placar.derrota2x1;
+    const aSetsP = a.placar.vitoria2x1 + (a.placar.derrota2x0 * 2) + (a.placar.derrota2x1 * 2) + (a.placar.derrotaWo * 2);
     const aAvg = aSetsV / (aSetsP || 1);
 
-    const bSetsV = (b.vitoria2x0) * 2 + (b.vitoria2x1) * 2 + (b.derrota2x1);
-    const bSetsP = (b.vitoria2x1) + (b.derrota2x0) * 2 + (b.derrota2x1) * 2 + (b.derrotaWo) * 2;
+    const bSetsV = (b.placar.vitoria2x0 * 2) + (b.placar.vitoria2x1 * 2) + b.placar.derrota2x1;
+    const bSetsP = b.placar.vitoria2x1 + (b.placar.derrota2x0 * 2) + (b.placar.derrota2x1 * 2) + (b.placar.derrotaWo * 2);
     const bAvg = bSetsV / (bSetsP || 1);
 
     if (bAvg !== aAvg) return bAvg - aAvg;
@@ -123,130 +180,117 @@ function ordenarTimesVolei(times) {
   });
 }
 
-async function atualizarPosicoes(modalidade) {
-  const modalidadeId = await buscarModalidadeId(modalidade);
-  const times = await prisma.placar.findMany({ where: { modalidadeId } });
-
-  // Ordena conforme modalidade
-  const timesOrdenados = modalidade === 'volei'
-    ? ordenarTimesVolei(times)
-    : ordenarTimesFutebol(times);
-
-  // Atualiza posição no banco para cada time
-  for (let i = 0; i < timesOrdenados.length; i++) {
-    const time = timesOrdenados[i];
-    await prisma.placar.update({
-      where: {
-        modalidadeId_time: {
-          modalidadeId,
-          time: time.time,
-        },
-      },
-      data: {
-        posicao: i + 1,
-      },
+// Ocultar todos os placares
+async function ocultarPlacarGeral() {
+  try {
+    await prisma.placar.updateMany({
+      data: { visivel: false }
     });
+    return { message: 'Todos os placares foram ocultados na Home.' };
+  } catch (error) {
+    throw new Error('Erro ao ocultar placares: ' + error.message);
   }
-  
-  return timesOrdenados.map((t, idx) => ({ ...t, posicao: idx + 1 }));
 }
 
-async function listarTimesPorModalidade(modalidade) {
-  // Atualiza as posições antes de listar
-  return await atualizarPosicoes(modalidade);
+// Ocultar placar por modalidade
+async function ocultarPlacarPorModalidade(modalidadeId) {
+  try {
+    const times = await prisma.time.findMany({
+      where: { modalidadeId: Number(modalidadeId) },
+      select: { id: true }
+    });
+
+    if (times.length === 0) return { message: 'Nenhum placar encontrado para essa modalidade.' };
+
+    const timeIds = times.map(t => t.id);
+
+    await prisma.placar.updateMany({
+      where: { timeId: { in: timeIds } },
+      data: { visivel: false }
+    });
+
+    return { message: `Placar(s) da modalidade ${modalidadeId} ocultado(s) na Home.` };
+  } catch (error) {
+    throw new Error('Erro ao ocultar placares por modalidade: ' + error.message);
+  }
 }
 
-async function buscarTimeNome(modalidade, nome) {
-  const modalidadeId = await buscarModalidadeId(modalidade);
-
-  return await prisma.placar.findUnique({
-    where: {
-      modalidadeId_time: {
-        modalidadeId,
-        time: nome,
-      },
-    },
-  });
+// Deixar todos os placares visíveis
+async function mostrarPlacarGeral() {
+  try {
+    await prisma.placar.updateMany({
+      data: { visivel: true }
+    });
+    return { message: 'Todos os placares foram exibidos na Home.' };
+  } catch (error) {
+    throw new Error('Erro ao exibir placares: ' + error.message);
+  }
 }
 
-async function atualizarTime(modalidade, nome, dados) {
-  const modalidadeId = await buscarModalidadeId(modalidade);
+// Deixar placar por modalidade visível
+async function mostrarPlacarPorModalidade(modalidadeId) {
+  try {
+    const times = await prisma.time.findMany({
+      where: { modalidadeId: Number(modalidadeId) },
+      select: { id: true }
+    });
 
-  await prisma.placar.update({
-    where: {
-      modalidadeId_time: {
-        modalidadeId,
-        time: nome,
-      },
-    },
-    data: {
-      pontuacao: dados.pontuacao,
-      jogos: dados.jogos,
-      vitorias: dados.vitorias,
-      derrotas: dados.derrotas,
-      empates: dados.empates,
-      golsPro: dados.golsPro,
-      golsSofridos: dados.golsSofridos,
-      saldoDeGols: dados.golsPro - dados.golsSofridos,
-      setsVencidos: dados.setsVencidos,
-      vitoria2x0: dados.vitoria2x0,
-      vitoria2x1: dados.vitoria2x1,
-      derrota2x1: dados.derrota2x1,
-      derrota2x0: dados.derrota2x0,
-      derrotaWo: dados.derrotaWo,
-      cartoesAmarelos: dados.cartoesAmarelos,
-      cartoesVermelhos: dados.cartoesVermelhos,
-    },
-  });
+    if (times.length === 0) return { message: 'Nenhum placar encontrado para essa modalidade.' };
 
-  // Atualiza posições após a alteração
-  return await atualizarPosicoes(modalidade);
+    const timeIds = times.map(t => t.id);
+
+    await prisma.placar.updateMany({
+      where: { timeId: { in: timeIds } },
+      data: { visivel: true }
+    });
+
+    return { message: `Placar(s) da modalidade ${modalidadeId} exibido(s) na Home.` };
+  } catch (error) {
+    throw new Error('Erro ao exibir placares por modalidade: ' + error.message);
+  }
 }
 
-async function listarPlacar(modalidade) {
-  return await listarTimesPorModalidade(modalidade);
-}
+async function listarVisibilidade() {
+  try {
+    // Buscar todas as modalidades
+    const modalidades = await prisma.modalidade.findMany({
+      select: { id: true, nome: true }
+    });
 
-async function resetarPlacarPorModalidade(modalidade) {
-  const modalidadeId = await buscarModalidadeId(modalidade);
+    // Para cada modalidade, verifica se existe algum placar visível
+    const resultado = await Promise.all(
+      modalidades.map(async (m) => {
+        const placar = await prisma.placar.findFirst({
+          where: { time: { modalidadeId: m.id } },
+          select: { visivel: true }
+        });
 
-  await prisma.placar.updateMany({
-    where: { modalidadeId },
-    data: {
-      pontuacao: 0,
-      jogos: 0,
-      vitorias: 0,
-      derrotas: 0,
-      empates: 0,
-      golsPro: 0,
-      golsSofridos: 0,
-      saldoDeGols: 0,
-      setsVencidos: 0,
-      vitoria2x0: 0,
-      vitoria2x1: 0,
-      derrota2x1: 0,
-      derrota2x0: 0,
-      derrotaWo: 0,
-      cartoesAmarelos: 0,
-      cartoesVermelhos: 0,
-      posicao: 0, 
-    },
-  });
+        return {
+          modalidadeId: m.id,
+          nome: m.nome,
+          visivel: placar ? placar.visivel : true 
+        };
+      })
+    );
 
-  // Atualiza posições para zerar corretamente
-  return await atualizarPosicoes(modalidade);
+    return resultado;
+  } catch (error) {
+    throw new Error("Erro ao buscar visibilidade: " + error.message);
+  }
 }
 
 module.exports = {
-  buscarModalidadeId,
-  criarTimeService,
-  deletarTime,
-  listarTimesPorModalidade,
-  buscarTimeNome,
-  atualizarTime,
-  listarPlacar,
-  resetarPlacarPorModalidade,
   cadastrarModalidade,
   removerModalidade,
   listarModalidades,
+  criarTime,
+  removerTime,
+  listarTimesPorModalidade,
+  criarPlacar,
+  atualizarPlacar,
+  listarPlacarPorModalidade,
+  resetarPlacarPorModalidade,
+  ordenarTimesFutebol,
+  ordenarTimesVolei,
+  ocultarPlacarGeral, ocultarPlacarPorModalidade, mostrarPlacarGeral, mostrarPlacarPorModalidade, listarVisibilidade
 };

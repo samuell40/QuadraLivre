@@ -12,7 +12,7 @@
         <option
           v-for="modalidade in modalidadesDisponiveis"
           :key="modalidade.id"
-          :value="modalidade.nome"
+          :value="modalidade.id"
         >
           {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
         </option>
@@ -33,24 +33,18 @@
 </template>
 
 <script>
-import axios from 'axios';
 import Swal from 'sweetalert2';
+import api from '@/axios'; 
 
 export default {
   name: 'ResetarPlacarModal',
   props: {
-    aberto: {
-      type: Boolean,
-      required: true,
-    },
-    modalidadesDisponiveis: {
-      type: Array,
-      required: true,
-    },
+    aberto: { type: Boolean, required: true },
+    modalidadesDisponiveis: { type: Array, required: true },
   },
   data() {
     return {
-      modalidadeSelecionada: '',
+      modalidadeSelecionada: '', 
     };
   },
   methods: {
@@ -58,11 +52,17 @@ export default {
       if (!this.modalidadeSelecionada) return;
 
       try {
-        await axios.put('http://localhost:3000/reset', {
-          modalidade: this.modalidadeSelecionada,
-        });
+        await api.put(`/placar/reset/${this.modalidadeSelecionada}`);
+
         Swal.fire('Sucesso', 'Placar resetado com sucesso!', 'success');
-         this.$emit('confirmado');
+
+        const modalidadeObj = this.modalidadesDisponiveis.find(
+          m => m.id === this.modalidadeSelecionada
+        );
+        if (modalidadeObj) {
+          this.$emit('confirmado', modalidadeObj.nome);
+        }
+
         this.$emit('fechar');
         this.modalidadeSelecionada = '';
       } catch (error) {

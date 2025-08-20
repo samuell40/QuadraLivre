@@ -99,13 +99,14 @@ export default {
           this.$router.push('/');
         });
 
+        // reset form
         this.form = {
           nome: '',
           email: '',
           telefone: '',
           imagem: null,
         };
-        document.getElementById('imagem').value = null;
+        this.$refs.inputImagem.value = null;
         localStorage.removeItem('emailCadastro');
 
       } catch (error) {
@@ -124,8 +125,7 @@ export default {
     },
 
     formatarTelefone(event) {
-      let input = event.target;
-      let valor = input.value.replace(/\D/g, '');
+      let valor = event.target.value.replace(/\D/g, '');
 
       if (!valor) {
         this.form.telefone = '';
@@ -134,21 +134,18 @@ export default {
 
       if (valor.length > 11) valor = valor.slice(0, 11);
 
-      let telefoneFormatado = '';
       if (valor.length <= 2) {
-        telefoneFormatado = `(${valor}`;
+        this.form.telefone = `(${valor}`;
       } else if (valor.length <= 6) {
-        telefoneFormatado = `(${valor.slice(0, 2)}) ${valor.slice(2)}`;
+        this.form.telefone = `(${valor.slice(0, 2)}) ${valor.slice(2)}`;
       } else if (valor.length <= 10) {
-        telefoneFormatado = `(${valor.slice(0, 2)}) ${valor.slice(2, 6)}-${valor.slice(6)}`;
+        this.form.telefone = `(${valor.slice(0, 2)}) ${valor.slice(2, 6)}-${valor.slice(6)}`;
       } else {
-        telefoneFormatado = `(${valor.slice(0, 2)}) ${valor.slice(2, 7)}-${valor.slice(7)}`;
+        this.form.telefone = `(${valor.slice(0, 2)}) ${valor.slice(2, 7)}-${valor.slice(7)}`;
       }
-
-      this.form.telefone = telefoneFormatado;
     }
   }
-}  
+}
 </script>
 
 <style scoped>

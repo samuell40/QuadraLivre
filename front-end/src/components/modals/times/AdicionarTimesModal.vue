@@ -7,7 +7,7 @@
           <label for="modalidade-add-time">Modalidade:</label>
           <select id="modalidade-add-time" v-model="modalidadeSelecionada" required class="dropdown">
             <option disabled value="">Selecione uma modalidade</option>
-            <option v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" :value="modalidade.nome">
+            <option v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" :value="modalidade.id">
               {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
             </option>
           </select>
@@ -39,18 +39,12 @@ import api from '@/axios';
 export default {
   name: 'AdicionarTimeModal',
   props: {
-    aberto: {
-      type: Boolean,
-      default: false
-    },
-    modalidadesDisponiveis: {
-      type: Array,
-      default: () => []
-    }
+    aberto: { type: Boolean, default: false },
+    modalidadesDisponiveis: { type: Array, default: () => [] }
   },
   data() {
     return {
-      modalidadeSelecionada: '',
+      modalidadeSelecionada: '', // guarda o ID da modalidade
       timeParaAdicionar: '',
       arquivoFoto: null
     };
@@ -60,17 +54,16 @@ export default {
       this.modalidadeSelecionada = '';
       this.timeParaAdicionar = '';
       this.arquivoFoto = null;
-      this.$emit('fechar');
+      this.$emit('fechar'); // fecha modal no componente pai
     },
 
     handleImagemUpload(event) {
       const file = event.target.files[0];
-      if (file) {
-        this.arquivoFoto = file;
-      }
+      if (file) this.arquivoFoto = file;
     },
 
     async adicionarTime() {
+      // valida campos
       if (!this.modalidadeSelecionada || !this.timeParaAdicionar.trim()) {
         Swal.fire('Atenção', 'Preencha todos os campos.', 'warning');
         return;
@@ -87,27 +80,37 @@ export default {
             headers: { 'Content-Type': 'multipart/form-data' },
           });
 
-          urlImagem = uploadResponse.data.fileUrl;
+          urlImagem = uploadResponse.data.fileUrl || uploadResponse.data.url || null;
         }
 
+        // prepara payload correto para o backend
         const payload = {
-          modalidade: this.modalidadeSelecionada,
-          time: this.timeParaAdicionar.trim(),
-          foto: urlImagem || null,
+          nome: this.timeParaAdicionar.trim(),                     
+          modalidadeId: Number(this.modalidadeSelecionada),          
+          foto: urlImagem || null                                    
         };
 
-        await api.post('/times', payload);
+        // envia para o backend
+        await api.post('/time', payload);
 
         Swal.fire('Sucesso', 'Time adicionado com sucesso!', 'success');
+
+        // limpa campos e fecha modal
         this.fecharModalAdicionarTime();
+
+        // avisa o componente pai para atualizar a lista de times
         this.$emit('atualizar');
 
       } catch (error) {
         console.error('Erro ao adicionar time:', error);
-        Swal.fire('Erro', error.response?.data?.error || error.message || 'Erro ao adicionar time.', 'error');
+        Swal.fire(
+          'Erro',
+          error.response?.data?.erro || error.message || 'Erro ao adicionar time.',
+          'error'
+        );
       }
-    },
-  },
+    }
+  }
 };
 </script>
 

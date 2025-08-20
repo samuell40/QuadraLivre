@@ -3,12 +3,13 @@
     <div class="modal-conteudo modal-placar">
       <div class="header-placar">
         <h2 class="title_placar">Visualizar Placar</h2>
-         <div class="botoes">
-        <button class="btn-ocultar" @click="abrirVisibilidade">Visibilidade Placar</button>
-        <button class="btn-reset" @click="$emit('abrir-modal-resetar')">Resetar Placar</button>
+        <div class="botoes">
+          <button class="btn-ocultar" @click="abrirVisibilidade">Visibilidade Placar</button>
+          <button class="btn-reset" @click="$emit('abrir-modal-resetar')">Resetar Placar</button>
         </div>
       </div>
 
+      <!-- Dropdown -->
       <div>
         <label for="modalidade-placar">Escolha a modalidade:</label>
         <select id="modalidade-placar" v-model="modalidadePlacarSelecionadaLocal" @change="carregarPlacar"
@@ -20,9 +21,9 @@
         </select>
       </div>
 
+      <!-- Tabelas do placar -->
       <div class="placar-table">
-        <!-- Tabela Futebol -->
-        <table class="placar" v-if="modalidadePlacarSelecionadaLocal === 'futebol'">
+        <table class="placar" v-if="['futebol', 'futebol de areia', 'futsal'].includes(modalidadePlacarSelecionadaLocal)">
           <thead>
             <tr>
               <th>Posição</th>
@@ -43,46 +44,8 @@
             <tr v-for="(time, index) in timesPlacar" :key="time.id">
               <td>{{ index + 1 }}</td>
               <td class="time-info">
-                <img v-if="time.foto" :src="time.foto" alt="Foto do time" class="time-image" />
-                {{ time.time }}
-              </td>
-              <td>{{ time.pontuacao }}</td>
-              <td>{{ time.jogos }}</td>
-              <td>{{ time.golsPro }}</td>
-              <td>{{ time.golsSofridos }}</td>
-              <td>{{ time.saldoDeGols }}</td>
-              <td>{{ time.empates }}</td>
-              <td>{{ time.vitorias }}</td>
-              <td>{{ time.derrotas }}</td>
-              <td>{{ time.cartoesAmarelos }}</td>
-              <td>{{ time.cartoesVermelhos }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <!-- Tabela Futebol De Areia-->
-        <table class="placar" v-if="modalidadePlacarSelecionadaLocal === 'futebol de areia'">
-          <thead>
-            <tr>
-              <th>Posição</th>
-              <th>Time</th>
-              <th>PTS</th>
-              <th>J</th>
-              <th>GM</th>
-              <th>GS</th>
-              <th>SG</th>
-              <th>E</th>
-              <th>VIT</th>
-              <th>DER</th>
-              <th>Amarelos</th>
-              <th>Vermelhos</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(time, index) in timesPlacar" :key="time.id">
-              <td>{{ index + 1 }}</td>
-              <td class="time-info">
-                <img v-if="time.foto" :src="time.foto" alt="Foto do time" class="time-image" />
-                {{ time.time }}
+                <img v-if="time.time?.foto" :src="time.time.foto" alt="Foto do time" class="time-image" />
+                {{ time.time?.nome }}
               </td>
               <td>{{ time.pontuacao }}</td>
               <td>{{ time.jogos }}</td>
@@ -98,47 +61,7 @@
           </tbody>
         </table>
 
-        <!-- Tabela Futsal -->
-        <table class="placar" v-if="modalidadePlacarSelecionadaLocal === 'futsal'">
-          <thead>
-            <tr>
-              <th>Posição</th>
-              <th>Time</th>
-              <th>PTS</th>
-              <th>J</th>
-              <th>GM</th>
-              <th>GS</th>
-              <th>SG</th>
-              <th>E</th>
-              <th>VIT</th>
-              <th>DER</th>
-              <th>Amarelos</th>
-              <th>Vermelhos</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(time, index) in timesPlacar" :key="time.id">
-              <td>{{ index + 1 }}</td>
-              <td class="time-info">
-                <img v-if="time.foto" :src="time.foto" alt="Foto do time" class="time-image" />
-                {{ time.time }}
-              </td>
-              <td>{{ time.pontuacao }}</td>
-              <td>{{ time.jogos }}</td>
-              <td>{{ time.golsPro }}</td>
-              <td>{{ time.golsSofridos }}</td>
-              <td>{{ time.saldoDeGols }}</td>
-              <td>{{ time.empates }}</td>
-              <td>{{ time.vitorias }}</td>
-              <td>{{ time.derrotas }}</td>
-              <td>{{ time.cartoesAmarelos }}</td>
-              <td>{{ time.cartoesVermelhos }}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <!-- Tabela Vôlei -->
-        <table class="placar" v-if="modalidadePlacarSelecionadaLocal === 'volei'">
+        <table class="placar" v-if="['volei', 'volei de areia', 'voleibol', 'futevolei'].includes(modalidadePlacarSelecionadaLocal)">
           <thead>
             <tr>
               <th>Posição</th>
@@ -159,124 +82,8 @@
             <tr v-for="(time, index) in timesPlacar" :key="time.id">
               <td>{{ index + 1 }}º</td>
               <td class="time-info">
-                <img v-if="time.foto" :src="time.foto" alt="Foto do time" class="time-image" />
-                {{ time.time }}
-              </td>
-              <td>{{ time.pontuacao }}</td>
-              <td>{{ time.jogos }}</td>
-              <td>{{ time.vitorias }}</td>
-              <td>{{ time.derrotas }}</td>
-              <td>{{ time.setsVencidos }}</td>
-              <td>{{ time.vitoria2x0 }}</td>
-              <td>{{ time.vitoria2x1 }}</td>
-              <td>{{ time.derrota2x1 }}</td>
-              <td>{{ time.derrota2x0 }}</td>
-              <td>{{ time.derrotaWo }}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <!-- Tabela Vôlei De Areia -->
-        <table class="placar" v-if="modalidadePlacarSelecionadaLocal === 'volei de areia'">
-          <thead>
-            <tr>
-              <th>Posição</th>
-              <th>Time</th>
-              <th>PTS</th>
-              <th>J</th>
-              <th>VIT</th>
-              <th>DER</th>
-              <th>STV</th>
-              <th>2x0</th>
-              <th>2x1</th>
-              <th>1x2</th>
-              <th>0x2</th>
-              <th>W.O.</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(time, index) in timesPlacar" :key="time.id">
-              <td>{{ index + 1 }}º</td>
-              <td class="time-info">
-                <img v-if="time.foto" :src="time.foto" alt="Foto do time" class="time-image" />
-                {{ time.time }}
-              </td>
-              <td>{{ time.pontuacao }}</td>
-              <td>{{ time.jogos }}</td>
-              <td>{{ time.vitorias }}</td>
-              <td>{{ time.derrotas }}</td>
-              <td>{{ time.setsVencidos }}</td>
-              <td>{{ time.vitoria2x0 }}</td>
-              <td>{{ time.vitoria2x1 }}</td>
-              <td>{{ time.derrota2x1 }}</td>
-              <td>{{ time.derrota2x0 }}</td>
-              <td>{{ time.derrotaWo }}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <!-- Tabela Vôleibol -->
-        <table class="placar" v-if="modalidadePlacarSelecionadaLocal === 'voleibol'">
-          <thead>
-            <tr>
-              <th>Posição</th>
-              <th>Time</th>
-              <th>PTS</th>
-              <th>J</th>
-              <th>VIT</th>
-              <th>DER</th>
-              <th>STV</th>
-              <th>2x0</th>
-              <th>2x1</th>
-              <th>1x2</th>
-              <th>0x2</th>
-              <th>W.O.</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(time, index) in timesPlacar" :key="time.id">
-              <td>{{ index + 1 }}º</td>
-              <td class="time-info">
-                <img v-if="time.foto" :src="time.foto" alt="Foto do time" class="time-image" />
-                {{ time.time }}
-              </td>
-              <td>{{ time.pontuacao }}</td>
-              <td>{{ time.jogos }}</td>
-              <td>{{ time.vitorias }}</td>
-              <td>{{ time.derrotas }}</td>
-              <td>{{ time.setsVencidos }}</td>
-              <td>{{ time.vitoria2x0 }}</td>
-              <td>{{ time.vitoria2x1 }}</td>
-              <td>{{ time.derrota2x1 }}</td>
-              <td>{{ time.derrota2x0 }}</td>
-              <td>{{ time.derrotaWo }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <!-- Tabela Futevolei -->
-        <table class="placar" v-if="modalidadePlacarSelecionadaLocal === 'futevolei'">
-          <thead>
-            <tr>
-              <th>Posição</th>
-              <th>Time</th>
-              <th>PTS</th>
-              <th>J</th>
-              <th>VIT</th>
-              <th>DER</th>
-              <th>STV</th>
-              <th>2x0</th>
-              <th>2x1</th>
-              <th>1x2</th>
-              <th>0x2</th>
-              <th>W.O.</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(time, index) in timesPlacar" :key="time.id">
-              <td>{{ index + 1 }}º</td>
-              <td class="time-info">
-                <img v-if="time.foto" :src="time.foto" alt="Foto do time" class="time-image" />
-                {{ time.time }}
+                <img v-if="time.time?.foto" :src="time.time.foto" alt="Foto do time" class="time-image" />
+                {{ time.time?.nome }}
               </td>
               <td>{{ time.pontuacao }}</td>
               <td>{{ time.jogos }}</td>
@@ -299,19 +106,16 @@
 
       <button class="btn-cancel-placar" @click="$emit('fechar')">Fechar</button>
     </div>
-    <OcultarPlacar :aberto="visibilidadeAberto" @fechar="fecharVisibilidade" />
   </div>
 </template>
 
 <script>
 export default {
-  name: 'VisualizarPlacarModal',
   props: {
     modalPlacarAberto: Boolean,
     modalidadePlacarSelecionada: String,
     modalidadesDisponiveis: Array,
-    timesPlacar: Array,
-    visibilidadeAberto: Boolean  
+    timesPlacar: Array
   },
   data() {
     return {
@@ -329,9 +133,6 @@ export default {
     },
     abrirVisibilidade() {
       this.$emit('abrir-visibilidade');
-    },
-    fecharVisibilidade() {
-      this.$emit('fechar-visibilidade');
     }
   }
 };
@@ -536,6 +337,7 @@ export default {
 .dropdown-row .team {
   flex: 1;
 }
+
 @media (max-width: 768px) {
  @media (max-width: 768px) {
   .header-placar {

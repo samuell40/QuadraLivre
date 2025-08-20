@@ -1,10 +1,17 @@
-/* const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function FirstRun() {
-  await criarPermissoes();
-  const quadra = await criarQuadra();
-  await criarUsuarioAdmin(quadra.id);
+  try {
+    await criarPermissoes();
+    const quadra = await criarQuadra();
+    await criarUsuarioAdmin(quadra.id);
+    console.log('Setup inicial concluído!');
+  } catch (error) {
+    console.error('Erro no setup inicial:', error);
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
 async function criarPermissoes() {
@@ -16,9 +23,9 @@ async function criarPermissoes() {
 
   await prisma.permissao.createMany({
     data: [
-      { descricao: 'ADMIN' },
+      { descricao: 'DESENVOLVEDOR_DE_SISTEMA' },
       { descricao: 'ADMINISTRADOR' },
-      { descricao: 'USUARIO' },
+      { descricao: 'USUARIO' }, 
     ],
   });
 
@@ -26,16 +33,16 @@ async function criarPermissoes() {
 }
 
 async function criarQuadra() {
-  const existente = await prisma.quadra.findFirst({
+  let quadra = await prisma.quadra.findFirst({
     where: { nome: 'Quadra Livre' },
   });
 
-  if (existente) {
+  if (quadra) {
     console.log('Quadra já existe');
-    return existente;
+    return quadra;
   }
 
-  const quadra = await prisma.quadra.create({
+  quadra = await prisma.quadra.create({
     data: {
       nome: 'Quadra Livre',
       foto: 'https://example.com/foto.png',
@@ -58,11 +65,11 @@ async function criarUsuarioAdmin(quadraId) {
   }
 
   const permissao = await prisma.permissao.findFirst({
-    where: { descricao: 'ADMIN' },
+    where: { descricao: 'DESENVOLVEDOR_DE_SISTEMA' },
   });
 
   if (!permissao) {
-    console.error('Permissão Admin não encontrada');
+    console.error('Permissão ADMIN não encontrada');
     return;
   }
 
@@ -71,7 +78,7 @@ async function criarUsuarioAdmin(quadraId) {
       nome: 'Samuel',
       email: 'samuelpc4567@gmail.com',
       telefone: '84999999999',
-      funcao: 'usuario',
+      funcao: 'usuario', 
       foto: 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/Imagem%20padrao.png',
       permissaoId: permissao.id,
       quadraId: quadraId,
@@ -82,15 +89,7 @@ async function criarUsuarioAdmin(quadraId) {
 }
 
 if (require.main === module) {
-  FirstRun()
-    .then(() => {
-      console.log('Setup inicial concluído!');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('Erro no setup inicial:', error);
-      process.exit(1);
-    });
+  FirstRun().then(() => process.exit(0));
 }
 
-module.exports = { FirstRun }; */
+module.exports = { FirstRun };

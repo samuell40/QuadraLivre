@@ -5,17 +5,17 @@
 
       <div class="form-group">
         <label for="modalidade-remover-time">Modalidade:</label>
-        <select
-          id="modalidade-remover-time"
-          v-model="modalidadeSelecionadaLocal"
+        <select 
+          id="modalidade-remover-time" 
+          v-model="modalidadeSelecionadaLocal" 
           @change="carregarTimes"
           class="dropdown"
         >
           <option disabled value="">Selecione uma modalidade</option>
-          <option
-            v-for="modalidade in modalidadesDisponiveis"
-            :key="modalidade.id"
-            :value="modalidade.nome"
+          <option 
+            v-for="modalidade in modalidadesDisponiveis" 
+            :key="modalidade.id" 
+            :value="modalidade.id"
           >
             {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
           </option>
@@ -24,10 +24,18 @@
 
       <div class="form-group">
         <label for="removerTime">Selecione o Time:</label>
-        <select id="removerTime" v-model="timeParaRemover" class="dropdown">
+        <select 
+          id="removerTime" 
+          v-model="timeParaRemover" 
+          class="dropdown"
+        >
           <option disabled value="">Selecione</option>
-          <option v-for="(time, i) in times" :key="i" :value="time">
-            {{ time }}
+          <option 
+            v-for="time in times" 
+            :key="time.id" 
+            :value="time.id"
+          >
+            {{ time.nome }}
           </option>
         </select>
       </div>
@@ -42,50 +50,57 @@
 
 <script>
 import Swal from 'sweetalert2';
-import api from '@/axios'; 
+import api from '@/axios';
 
 export default {
   name: 'RemoverTimeModal',
   props: {
-    aberto: Boolean,
-    modalidadesDisponiveis: Array,
+    aberto: { type: Boolean, default: false },
+    modalidadesDisponiveis: { type: Array, default: () => [] },
   },
   data() {
     return {
       modalidadeSelecionadaLocal: '',
       times: [],
-      timeParaRemover: '',
+      timeParaRemover: '', // ID do time
     };
+  },
+  watch: {
+    modalidadeSelecionadaLocal() {
+      this.times = [];
+      this.timeParaRemover = '';
+      this.carregarTimes();
+    },
   },
   methods: {
     async carregarTimes() {
       if (!this.modalidadeSelecionadaLocal) return;
       try {
-        const res = await api.get(`/times/${this.modalidadeSelecionadaLocal}`);
-        this.times = res.data.map((t) => t.time);
+        const res = await api.get(`/times/modalidade/${this.modalidadeSelecionadaLocal}`);
+        this.times = Array.isArray(res.data) ? res.data : [];
         this.timeParaRemover = '';
       } catch (error) {
         console.error('Erro ao carregar times:', error);
-        Swal.fire('Erro', 'Não foi possível carregar os times.', 'error');
+        Swal.fire('Erro', error.response?.data?.erro || 'Não foi possível carregar os times.', 'error');
       }
     },
 
     async removerTime() {
-      if (!this.modalidadeSelecionadaLocal || !this.timeParaRemover) {
-        Swal.fire('Aviso', 'Selecione a modalidade e o time.', 'warning');
+      if (!this.timeParaRemover) {
+        Swal.fire('Aviso', 'Selecione um time.', 'warning');
         return;
       }
 
       try {
-        await api.delete(`/placar/${this.modalidadeSelecionadaLocal}/${this.timeParaRemover}`);
+        await api.delete(`/time/${this.timeParaRemover}`);
         Swal.fire('Sucesso', 'Time removido com sucesso!', 'success');
         this.$emit('fechar');
-        this.$emit('atualizar'); 
+        this.$emit('atualizar');
       } catch (error) {
         console.error('Erro ao remover time:', error);
-        Swal.fire('Erro', error.response?.data?.error || 'Erro ao remover time.', 'error');
+        Swal.fire('Erro', error.response?.data?.erro || 'Erro ao remover time.', 'error');
       }
-    },
+    }
   },
 };
 </script>

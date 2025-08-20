@@ -6,12 +6,12 @@
         <h1 class="title">Placar</h1>
         <div class="botoes">
           <button class="btn-placar" @click="abrirModalPlacar">Visualizar Placar</button>
-          <button @click="abrirModalGerenciarModalidade" class="btn-modalidade">Gerenciar Modalidades</button>
+          <button class="btn-modalidade" @click="abrirModalGerenciarModalidade">Gerenciar Modalidades</button>
           <button class="btn-add" @click="abrirModalGerenciarTime">Gerenciar Times</button>
         </div>
       </div>
 
-      <!-- dropdowns-->
+      <!-- Dropdowns -->
       <div class="dropdown-row">
         <div class="team">
           <p>Modalidade:</p>
@@ -26,9 +26,7 @@
           <p>Time:</p>
           <select v-model="timeSelecionado" class="dropdown">
             <option disabled value="">Selecione um time</option>
-            <option v-for="(time, i) in times" :key="i" :value="time">
-              {{ time }}
-            </option>
+            <option v-for="t in times" :key="t.nome" :value="t.nome">{{ t.nome }}</option>
           </select>
         </div>
       </div>
@@ -49,17 +47,15 @@
           :timeAtivo="true" @salvar="salvarPlacar" />
         <PlacarFutevolei v-else-if="modalidadeSelecionada === 'futevolei'" :placar="futevolei.timeA" :timeAtivo="true"
           @salvar="salvarPlacar" />
-
-        <OcultarPlacar :aberto="modalControleVisibilidadeAberto" @fechar="modalControleVisibilidadeAberto = false" />
       </div>
 
       <!-- Modais -->
       <VisualizarPlacarModal :modalPlacarAberto="modalPlacarAberto"
         :modalidadePlacarSelecionada="modalidadePlacarSelecionada" :modalidadesDisponiveis="modalidadesDisponiveis"
-        :timesPlacar="timesPlacar" :visibilidadeAberto="modalControleVisibilidadeAberto" @fechar="fecharModalPlacar"
-        @abrir-modal-resetar="abrirModalResetarPlacar" @carregar-placar="carregarPlacarModalidade"
-        @abrir-visibilidade="modalControleVisibilidadeAberto = true"
-        @fechar-visibilidade="modalControleVisibilidadeAberto = false" />
+        :timesPlacar="timesPlacar" @fechar="fecharModalPlacar" @abrir-modal-resetar="abrirModalResetarPlacar"
+        @abrir-visibilidade="abrirModalOcultarPlacar" @carregar-placar="carregarPlacarModalidade" />
+
+      <OcultarPlacar :aberto="modalOcultarPlacarAberto" @fechar="fecharModalOcultarPlacar" />
 
       <ResetarPlacarModal :aberto="modalResetarPlacarAberto" :modalidadesDisponiveis="modalidadesDisponiveis"
         @fechar="fecharModalResetarPlacar" @confirmado="handleResetarConfirmado" />
@@ -105,7 +101,7 @@ import AdicionarTimeModal from '@/components/modals/times/AdicionarTimesModal.vu
 import RemoverTimeModal from '@/components/modals/times/RemoverTimesModal.vue';
 import OcultarPlacar from '@/components/modals/Visualizar_Placar/OcultarPlacar.vue';
 import Swal from 'sweetalert2';
-import api from '@/axios'; 
+import api from '@/axios';
 
 export default {
   name: 'ControlePlacarView',
@@ -150,26 +146,23 @@ export default {
       modalGerenciarTimeAberto: false,
       modalAdicionarTimeAberto: false,
       modalRemoverTimeAberto: false,
-      modalControleVisibilidadeAberto: false,
+      modalOcultarPlacarAberto: false,
       acaoGerenciarModalidade: '',
       modalidadePlacarSelecionada: '',
       modalidadeParaResetar: '',
       fotoTime: '',
       timeParaAdicionar: '',
-      timeParaRemover: ''
+      timeParaRemover: '',
     };
   },
-
   mounted() {
     this.carregarModalidades().then(() => {
-      const futebol = this.modalidadesDisponiveis.find(m => m.nome === 'futebol');
-      if (futebol) {
-        this.modalidadeSelecionada = 'futebol';
+      if (this.modalidadesDisponiveis.length) {
+        this.modalidadeSelecionada = this.modalidadesDisponiveis[0].nome;
         this.carregarTimes();
       }
     });
   },
-
   watch: {
     modalidadeSelecionada(newVal) {
       this.timeSelecionado = '';
@@ -181,39 +174,14 @@ export default {
       newVal ? this.carregarPlacarTime() : this.limparDadosJogo();
     }
   },
-
   methods: {
     criarTime(tipo) {
       const modelos = {
-        futebol: {
-          nome: '',
-          pts: { valor: 0 },
-          pj: { valor: 0 },
-          golspro: { valor: 0 },
-          golsofridos: { valor: 0 },
-          empates: { valor: 0 },
-          vitorias: { valor: 0 },
-          derrotas: { valor: 0 },
-          cartaoamarelo: { valor: 0 },
-          cartaovermelho: { valor: 0 },
-        },
-        volei: {
-          nome: '',
-          pts: { valor: 0 },
-          pj: { valor: 0 },
-          vitorias: { valor: 0 },
-          derrotas: { valor: 0 },
-          setsVencidos: { valor: 0 },
-          doiszero: { valor: 0 },
-          doisum: { valor: 0 },
-          umdois: { valor: 0 },
-          zerodois: { valor: 0 },
-          wo: { valor: 0 },
-        }
+        futebol: { nome: '', pts: { valor: 0 }, pj: { valor: 0 }, golspro: { valor: 0 }, golsofridos: { valor: 0 }, empates: { valor: 0 }, vitorias: { valor: 0 }, derrotas: { valor: 0 }, cartaoamarelo: { valor: 0 }, cartaovermelho: { valor: 0 } },
+        volei: { nome: '', pts: { valor: 0 }, pj: { valor: 0 }, vitorias: { valor: 0 }, derrotas: { valor: 0 }, setsVencidos: { valor: 0 }, doiszero: { valor: 0 }, doisum: { valor: 0 }, umdois: { valor: 0 }, zerodois: { valor: 0 }, wo: { valor: 0 } }
       };
       return JSON.parse(JSON.stringify(modelos[tipo] || {}));
     },
-
     limparDadosJogo() {
       this.futebol.timeA = this.criarTime('futebol');
       this.futebol_de_areia.timeA = this.criarTime('futebol');
@@ -223,154 +191,156 @@ export default {
       this.volei_de_areia.timeA = this.criarTime('volei');
       this.futevolei.timeA = this.criarTime('volei');
     },
-
     increment(placar) { if (placar?.valor !== undefined) placar.valor++; },
     decrement(placar) { if (placar?.valor && placar.valor > 0) placar.valor--; },
+    handleImagemUpload(event) { const file = event.target.files[0]; if (file) { const reader = new FileReader(); reader.onload = () => (this.fotoTime = reader.result); reader.readAsDataURL(file); } },
 
-    handleImagemUpload(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = () => (this.fotoTime = reader.result);
-        reader.readAsDataURL(file);
-      }
-    },
-
+    // Modais
     abrirModalPlacar() {
       this.modalPlacarAberto = true;
+      this.modalidadeSelecionada = 'futebol';
       this.modalidadePlacarSelecionada = 'futebol';
       this.carregarPlacarModalidade('futebol');
     },
-    fecharModalPlacar() { this.modalPlacarAberto = false; this.modalidadePlacarSelecionada = ''; this.timesPlacar = []; },
 
+    fecharModalPlacar() {
+      this.modalPlacarAberto = false;
+      this.modalidadePlacarSelecionada = '';
+      this.timesPlacar = [];
+    },
     abrirModalResetarPlacar() { this.modalResetarPlacarAberto = true; this.modalidadeParaResetar = ''; },
     fecharModalResetarPlacar() { this.modalResetarPlacarAberto = false; this.modalidadeParaResetar = ''; },
-
     abrirModalGerenciarModalidade() { this.modalGerenciarModalidadeAberto = true; this.acaoGerenciarModalidade = ''; },
     fecharModalGerenciarModalidade() { this.modalGerenciarModalidadeAberto = false; this.acaoGerenciarModalidade = ''; },
-
     confirmarAcaoGerenciarModalidade(acao) {
       this.acaoGerenciarModalidade = acao;
       this.fecharModalGerenciarModalidade();
       if (acao === 'adicionar') this.abrirModalAdicionarModalidade();
       else if (acao === 'remover') this.abrirModalRemoverModalidade();
     },
-
     abrirModalAdicionarModalidade() { this.modalAdicionarModalidadeAberto = true; },
     fecharModalAdicionarModalidade() { this.modalAdicionarModalidadeAberto = false; },
-
     abrirModalRemoverModalidade() { this.modalRemoverModalidadeAberto = true; },
     fecharModalRemoverModalidade() { this.modalRemoverModalidadeAberto = false; },
-
     abrirModalGerenciarTime() { this.modalGerenciarTimeAberto = true; },
     fecharModalGerenciarTime() { this.modalGerenciarTimeAberto = false; },
-
     abrirModalAdicionarTime() { this.modalAdicionarTimeAberto = true; this.timeParaAdicionar = ''; this.fotoTime = ''; },
     fecharModalAdicionarTime() { this.modalAdicionarTimeAberto = false; this.timeParaAdicionar = ''; this.fotoTime = ''; },
-
     abrirModalRemoverTime() { this.modalRemoverTimeAberto = true; this.carregarTimes(); this.timeParaRemover = ''; },
     fecharModalRemoverTime() { this.modalRemoverTimeAberto = false; this.timeParaRemover = ''; },
+    abrirModalOcultarPlacar() { this.modalOcultarPlacarAberto = true; },
+    fecharModalOcultarPlacar() { this.modalOcultarPlacarAberto = false; },
 
-    confirmarAcaoGerenciarTime(acao) {
-      if (acao === 'adicionar') this.abrirModalAdicionarTime();
-      else if (acao === 'remover') this.abrirModalRemoverTime();
-      this.fecharModalGerenciarTime();
-    },
-
+    // API
     async carregarModalidades() {
       try {
-        const res = await api.get('/modalidade');
+        const res = await api.get('/listar/modalidade');
         this.modalidadesDisponiveis = res.data;
       } catch (error) {
         console.error('Erro ao carregar modalidades:', error);
         Swal.fire('Erro', 'Não foi possível carregar as modalidades.', 'error');
       }
     },
-
     async carregarTimes() {
       if (!this.modalidadeSelecionada) return;
       try {
-        const res = await api.get(`/times/${this.modalidadeSelecionada}`);
-        this.times = res.data.map(t => t.time);
+        const modalidade = this.modalidadesDisponiveis.find(m => m.nome === this.modalidadeSelecionada);
+        if (!modalidade) return;
+        const res = await api.get(`/times/modalidade/${modalidade.id}`);
+        this.times = Array.isArray(res.data) ? res.data : [];
       } catch (error) {
         console.error('Erro ao carregar times:', error);
         Swal.fire('Erro', 'Não foi possível carregar os times.', 'error');
       }
     },
-
     async carregarPlacarTime() {
       if (!this.modalidadeSelecionada || !this.timeSelecionado) return;
-      try {
-        const res = await api.get(`/times/${this.modalidadeSelecionada}/${this.timeSelecionado}`);
-        const dados = res.data;
-        const modalidadesGols = ['futebol', 'futebol_de_areia', 'futsal'];
-        const modalidadesSets = ['volei', 'voleibol', 'volei_de_areia', 'futevolei'];
-        let destino = this[this.modalidadeSelecionada]?.timeA;
+      const time = this.times.find(t => t.nome === this.timeSelecionado);
+      if (!time || !time.placar) return;
+      const dados = time.placar;
+      const destino = this[this.modalidadeSelecionada.replace(/ /g, '_')]?.timeA;
+      if (!destino) return;
 
-        if (modalidadesGols.includes(this.modalidadeSelecionada)) {
-          Object.assign(destino, {
-            nome: dados.time || '',
-            pts: { valor: dados.pontuacao },
-            pj: { valor: dados.jogos },
-            golspro: { valor: dados.golsPro },
-            golsofridos: { valor: dados.golsSofridos },
-            empates: { valor: dados.empates },
-            vitorias: { valor: dados.vitorias },
-            derrotas: { valor: dados.derrotas },
-            cartaoamarelo: { valor: dados.cartoesAmarelos },
-            cartaovermelho: { valor: dados.cartoesVermelhos },
-          });
-        }
+      const modalidadesGols = ['futebol', 'futebol_de_areia', 'futsal'];
+      const modalidadesSets = ['volei', 'voleibol', 'volei_de_areia', 'futevolei'];
 
-        if (modalidadesSets.includes(this.modalidadeSelecionada)) {
-          Object.assign(destino, {
-            nome: dados.time || '',
-            pts: { valor: dados.pontuacao },
-            pj: { valor: dados.jogos },
-            vitorias: { valor: dados.vitorias },
-            derrotas: { valor: dados.derrotas },
-            setsVencidos: { valor: dados.setsVencidos },
-            doiszero: { valor: dados.vitoria2x0 },
-            doisum: { valor: dados.vitoria2x1 },
-            umdois: { valor: dados.derrota2x1 },
-            zerodois: { valor: dados.derrota2x0 },
-            wo: { valor: dados.derrotaWo },
-          });
-        }
-      } catch (error) {
-        console.error('Erro ao carregar placar do time:', error);
-        Swal.fire('Erro', 'Não foi possível carregar o placar do time.', 'error');
+      if (modalidadesGols.includes(this.modalidadeSelecionada.replace(/ /g, '_'))) {
+        Object.assign(destino, {
+          nome: time.nome || '',
+          pts: { valor: dados.pontuacao ?? 0 },
+          pj: { valor: dados.jogos ?? 0 },
+          golspro: { valor: dados.golsPro ?? 0 },
+          golsofridos: { valor: dados.golsSofridos ?? 0 },
+          empates: { valor: dados.empates ?? 0 },
+          vitorias: { valor: dados.vitorias ?? 0 },
+          derrotas: { valor: dados.derrotas ?? 0 },
+          cartaoamarelo: { valor: dados.cartoesAmarelos ?? 0 },
+          cartaovermelho: { valor: dados.cartoesVermelhos ?? 0 },
+        });
+      }
+
+      if (modalidadesSets.includes(this.modalidadeSelecionada.replace(/ /g, '_'))) {
+        Object.assign(destino, {
+          nome: time.nome || '',
+          pts: { valor: dados.pontuacao ?? 0 },
+          pj: { valor: dados.jogos ?? 0 },
+          vitorias: { valor: dados.vitorias ?? 0 },
+          derrotas: { valor: dados.derrotas ?? 0 },
+          setsVencidos: { valor: dados.setsVencidos ?? 0 },
+          doiszero: { valor: dados.vitoria2x0 ?? 0 },
+          doisum: { valor: dados.vitoria2x1 ?? 0 },
+          umdois: { valor: dados.derrota2x1 ?? 0 },
+          zerodois: { valor: dados.derrota2x0 ?? 0 },
+          wo: { valor: dados.derrotaWo ?? 0 },
+        });
       }
     },
-
     async carregarPlacarModalidade(modalidade) {
-      this.modalidadePlacarSelecionada = modalidade;
+      if (!modalidade) return;
       try {
-        const res = await api.get(`/placar/${modalidade}`);
-        this.timesPlacar = res.data;
+        const modalidadeObj = this.modalidadesDisponiveis.find(m => m.nome === modalidade);
+        if (!modalidadeObj) return;
+        const res = await api.get(`/placar/modalidade/${modalidadeObj.id}`);
+        this.timesPlacar = Array.isArray(res.data.placares) ? res.data.placares : [];
       } catch (error) {
-        Swal.fire('Erro', 'Erro ao carregar placar.', 'error');
+        console.error('Erro ao carregar placar da modalidade:', error);
+        Swal.fire('Erro', 'Não foi possível carregar os placares da modalidade.', 'error');
       }
     },
-
     async salvarPlacar(dadosParaSalvar) {
       if (!this.timeSelecionado) {
         Swal.fire('Atenção', 'Selecione um time antes de salvar o placar.', 'warning');
         return;
       }
       try {
-        const modalidadesComSaldo = ['futebol', 'futebol_de_areia', 'futsal'];
+        const time = this.times.find(t => t.nome === this.timeSelecionado);
+        if (!time || !time.placar) return;
+        const placarId = time.placar.id;
+        const modalidadesComSaldo = ['futebol', 'futebol de areia', 'futsal'];
         if (modalidadesComSaldo.includes(this.modalidadeSelecionada)) {
-          dadosParaSalvar.saldoDeGols = dadosParaSalvar.golsPro - dadosParaSalvar.golsSofridos;
+          dadosParaSalvar.saldoDeGols = (dadosParaSalvar.golsPro ?? 0) - (dadosParaSalvar.golsSofridos ?? 0);
         }
-        await api.put(`/placar/${this.modalidadeSelecionada}/${this.timeSelecionado}`, dadosParaSalvar);
+        await api.put(`/placar/${placarId}`, dadosParaSalvar);
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
         this.limparDadosJogo();
+        this.carregarPlacarTime();
       } catch (error) {
         console.error('Erro ao salvar placar:', error);
         Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
       }
     },
+    async handleResetarConfirmado(modalidade) {
+      try {
+        const modalidadeObj = this.modalidadesDisponiveis.find(m => m.nome === modalidade);
+        if (!modalidadeObj) return;
+        await api.put(`/placar/reset/${modalidadeObj.id}`);
+        Swal.fire('Sucesso', `Placar da modalidade "${modalidade}" resetado!`, 'success');
+        this.carregarPlacarModalidade(modalidade);
+      } catch (error) {
+        console.error('Erro ao resetar placar:', error);
+        Swal.fire('Erro', 'Não foi possível resetar o placar.', 'error');
+      }
+    }
   }
 };
 </script>

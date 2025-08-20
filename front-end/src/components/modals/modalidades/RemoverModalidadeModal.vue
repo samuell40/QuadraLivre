@@ -6,7 +6,11 @@
         <label for="modalidadeRemover">Selecione a Modalidade:</label>
         <select id="modalidadeRemover" v-model="modalidadeParaRemover" class="dropdown">
           <option disabled value="">Selecione uma modalidade</option>
-          <option v-for="(modalidade, i) in modalidadesDisponiveis" :key="i" :value="modalidade.nome">
+          <option 
+            v-for="modalidade in modalidadesDisponiveis" 
+            :key="modalidade.id" 
+            :value="modalidade.id"
+          >
             {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
           </option>
         </select>
@@ -57,7 +61,7 @@ export default {
         this.$emit('atualizar');
         this.fecharModal();
       } catch (error) {
-        Swal.fire('Erro', error.response?.data?.error || 'Erro ao remover modalidade.', 'error');
+        Swal.fire('Erro', error.response?.data?.erro || 'Erro ao remover modalidade.', 'error');
       }
     }
   }

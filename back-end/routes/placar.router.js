@@ -1,22 +1,36 @@
 const express = require('express');
 const controller = require('../controllers/placar.controller');
-const validarJWT = require('../middlewares/auth')
+const validarJWT = require('../middlewares/auth');
 const router = express.Router();
 
-// Times
-router.post('/times', [validarJWT], controller.criarTime);
-router.get('/times/:modalidade', [validarJWT], controller.nomeTime);
-router.get('/times/:modalidade/:nome', [validarJWT], controller.buscarTime);
-router.delete('/placar/:modalidade/:nome', [validarJWT], controller.deletarTimeNome);
+router.post('/modalidade',[validarJWT], controller.cadastrarModalidadeController);
 
-// Placar
-router.put('/placar/:modalidade/:nome', [validarJWT], controller.atualizarPlacar);
-router.get('/placar/:modalidade', controller.getPlacar); 
-router.put('/reset', [validarJWT], controller.resetarPlacar);  
+router.delete('/modalidade/:id',[validarJWT], controller.removerModalidadeController);
 
-// Modalidades
-router.post('/modalidade', [validarJWT],  controller.cadastrarModalidadeController);
-router.get('/modalidade', [validarJWT], controller.getModalidadesController);
-router.delete('/modalidade/:nome',[validarJWT],  controller.removerModalidadeController);
+router.get('/listar/modalidade', controller.listarModalidadesController);
+
+router.post('/time', [validarJWT],  controller.criarTimeController);
+
+router.delete('/time/:id', [validarJWT], controller.removerTimeController);
+
+router.get('/times/modalidade/:modalidadeId', controller.listarTimesPorModalidadeController);
+
+router.post('/placar', controller.criarPlacarController);
+
+router.put('/placar/:id', [validarJWT], controller.atualizarPlacarController);
+
+router.get('/placar/modalidade/:modalidadeId', controller.listarPlacarPorModalidadeController);
+
+router.put('/placar/reset/:modalidadeId', [validarJWT], controller.resetarPlacarPorModalidadeController);
+
+router.put('/ocultar', [validarJWT],  controller.ocultarPlacarGeralController);
+
+router.put('/ocultar/:modalidadeId', [validarJWT], controller.ocultarPlacarPorModalidadeController);
+
+router.put('/mostrar',[validarJWT],  controller.mostrarPlacarGeralController);
+
+router.put('/mostrar/:modalidadeId',[validarJWT],  controller.mostrarPlacarPorModalidadeController);
+
+router.get('/visibilidade', controller.listarVisibilidadeController);
 
 module.exports = router;

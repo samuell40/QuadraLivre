@@ -27,11 +27,7 @@ function iniciarLoginGoogle(req, res, next) {
 
 function callbackLoginGoogle(req, res, next) {
   if (req.query.error === 'access_denied') {
-    return res.send(`
-      <script>
-        window.close();
-      </script>
-    `);
+    return res.send(`<script> window.close(); </script>`);
   }
 
   passport.authenticate('google', { session: false }, (err, result, info) => {
@@ -53,7 +49,11 @@ function callbackLoginGoogle(req, res, next) {
         id: user.id,
         nome: user.nome,
         email: user.email,
-        permissaoId: user.permissaoId, 
+        telefone: user.telefone,
+        funcao: user.funcao,       // 👈 adicionado
+        permissaoId: user.permissaoId,
+        foto: user.foto,
+        quadraId: user.quadraId,   // 👈 adicionado
       };
 
       const token = jwt.sign(tokenPayload, config.jwtSecret, {

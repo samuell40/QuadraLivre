@@ -85,85 +85,86 @@ export default {
     this.carregarModalidades();
   },
   methods: {
-    async carregarModalidades() {
-      try {
-        const res = await api.get('/modalidade');
-        this.modalidades = res.data;
-      } catch (error) {
-        console.error('Erro ao carregar modalidades:', error);
-        Swal.fire('Erro', 'Não foi possível carregar as modalidades.', 'error');
-      }
-    },
-
-    async cadastrarQuadra() {
-      if (this.form.modalidadesSelecionadas.length === 0) {
-        this.erroModalidade = true;
-        return;
-      }
-
-      try {
-        let urlImagem = null;
-
-        if (this.form.imagem) {
-          const formData = new FormData();
-          formData.append('file', this.form.imagem);
-
-          const uploadResponse = await api.post('/upload', formData);
-          urlImagem = uploadResponse.data.fileUrl;
-        }
-
-        const modalidadesFormatadas = this.form.modalidadesSelecionadas.map(id => ({ id }));
-
-        await api.post('/quadra', {
-          nome: this.form.nome,
-          endereco: this.form.endereco,
-          foto: urlImagem,
-          modalidades: modalidadesFormatadas,
-        });
-
-        Swal.fire({
-          icon: 'success',
-          title: 'Sucesso!',
-          text: 'Quadra cadastrada com sucesso!',
-          timer: 2000,
-          showConfirmButton: false,
-        });
-
-        this.form = {
-          nome: '',
-          endereco: '',
-          imagem: null,
-          modalidadesSelecionadas: [],
-        };
-        document.getElementById('imagem').value = null;
-        this.previewUrl = null;
-        this.erroModalidade = false;
-      } catch (error) {
-        console.error('Erro ao cadastrar quadra:', error);
-
-        Swal.fire({
-          icon: 'error',
-          title: 'Erro',
-          text: error.response?.data?.error || 'Erro ao cadastrar quadra. Tente novamente.',
-        });
-      }
-    },
-
-    handleFileChange(event) {
-      this.form.imagem = event.target.files[0];
-      this.previewUrl = this.form.imagem
-        ? URL.createObjectURL(this.form.imagem)
-        : null;
-    },
-
-    formatarNomeModalidade(nome) {
-      return nome
-        .replace(/_/g, ' ')
-        .toLowerCase()
-        .replace(/\b\w/g, letra => letra.toUpperCase());
-    },
+     async carregarModalidades() {
+    try {
+      // Ajuste aqui: URL correta conforme seu backend
+      const res = await api.get('/listar/modalidade'); 
+      this.modalidades = res.data;
+    } catch (error) {
+      console.error('Erro ao carregar modalidades:', error);
+      Swal.fire('Erro', 'Não foi possível carregar as modalidades.', 'error');
+    }
   },
-};
+
+  async cadastrarQuadra() {
+    if (this.form.modalidadesSelecionadas.length === 0) {
+      this.erroModalidade = true;
+      return;
+    }
+
+    try {
+      let urlImagem = null;
+
+      if (this.form.imagem) {
+        const formData = new FormData();
+        formData.append('file', this.form.imagem);
+
+        const uploadResponse = await api.post('/upload', formData);
+        urlImagem = uploadResponse.data.fileUrl;
+      }
+
+      const modalidadesFormatadas = this.form.modalidadesSelecionadas.map(id => ({ id }));
+
+      await api.post('/quadra', {
+        nome: this.form.nome,
+        endereco: this.form.endereco,
+        foto: urlImagem,
+        modalidades: modalidadesFormatadas,
+      });
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Sucesso!',
+        text: 'Quadra cadastrada com sucesso!',
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      this.form = {
+        nome: '',
+        endereco: '',
+        imagem: null,
+        modalidadesSelecionadas: [],
+      };
+      document.getElementById('imagem').value = null;
+      this.previewUrl = null;
+      this.erroModalidade = false;
+    } catch (error) {
+      console.error('Erro ao cadastrar quadra:', error);
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: error.response?.data?.error || 'Erro ao cadastrar quadra. Tente novamente.',
+      });
+    }
+  },
+
+  handleFileChange(event) {
+    this.form.imagem = event.target.files[0];
+    this.previewUrl = this.form.imagem
+      ? URL.createObjectURL(this.form.imagem)
+      : null;
+  },
+
+  formatarNomeModalidade(nome) {
+    return nome
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, letra => letra.toUpperCase());
+  },
+}
+}
 </script>
 
 <style scoped>

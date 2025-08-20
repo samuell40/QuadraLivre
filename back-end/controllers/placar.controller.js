@@ -1,115 +1,186 @@
 const placarService = require('../services/placar.service');
 
-async function criarTime(req, res) {
-  const { modalidade, time, foto } = req.body;
-  try {
-    const novoTime = await placarService.criarTimeService({ modalidade, time, foto });
-    await placarService.listarTimesPorModalidade(modalidade);
-    res.status(201).json(novoTime);
-  } catch (error) {
-    console.error('Erro ao criar time:', error);
-    res.status(500).json({ error: 'Erro interno ao criar time.' });
-  }
-}
-
-async function deletarTimeNome(req, res) {
-  const { nome, modalidade } = req.params;
-  try {
-    await placarService.deletarTime(nome, modalidade);
-    await placarService.listarTimesPorModalidade(modalidade);
-    res.status(200).json({ mensagem: 'Time deletado com sucesso.' });
-  } catch (error) {
-    console.error('Erro ao deletar time:', error);
-    res.status(404).json({ error: error.message });
-  }
-}
-
-async function nomeTime(req, res) {
-  const { modalidade } = req.params;
-  try {
-    const nomes = await placarService.listarTimesPorModalidade(modalidade);
-    res.status(200).json(nomes);
-  } catch (error) {
-    console.error('Erro ao buscar nomes dos times:', error);
-    res.status(500).json({ error: 'Erro interno ao buscar nomes dos times.' });
-  }
-}
-
-async function buscarTime(req, res) {
-  const { modalidade, nome } = req.params;
-  try {
-    const time = await placarService.buscarTimeNome(modalidade, nome);
-    res.status(200).json(time);
-  } catch (error) {
-    console.error('Erro ao buscar time:', error);
-    res.status(500).json({ error: 'Erro interno ao buscar time.' });
-  }
-}
-
-async function atualizarPlacar(req, res) {
-  const { modalidade, nome } = req.params;
-  const dados = req.body;
-  try {
-    const resultado = await placarService.atualizarTime(modalidade, nome, dados);
-    res.status(200).json(resultado);
-  } catch (error) {
-    console.error('Erro ao atualizar time:', error);
-    res.status(500).json({ error: 'Erro interno ao atualizar time.' });
-  }
-}
-
-async function getPlacar(req, res) {
-  const { modalidade } = req.params;
-  try {
-    const resultados = await placarService.listarPlacar(modalidade);
-    res.status(200).json(resultados);
-  } catch (error) {
-    console.error('Erro ao buscar placar:', error);
-    res.status(500).json({ error: 'Erro interno ao buscar placar.' });
-  }
-}
-
-async function resetarPlacar(req, res) {
-  const { modalidade } = req.body;
-  try {
-    await placarService.resetarPlacarPorModalidade(modalidade);
-    res.status(200).json({ mensagem: `Placar da modalidade "${modalidade}" resetado com sucesso.` });
-  } catch (error) {
-    console.error('Erro ao resetar placar:', error);
-    res.status(500).json({ error: 'Erro interno ao resetar placar.' });
-  }
-}
-
+// ------------------ MODALIDADES ------------------
 async function cadastrarModalidadeController(req, res) {
   const { nome } = req.body;
+
   try {
-    const novaModalidade = await placarService.cadastrarModalidade(nome);
-    res.status(201).json(novaModalidade);
+    const modalidade = await placarService.cadastrarModalidade(nome);
+    return res.status(201).json(modalidade);
   } catch (error) {
-    console.error('Erro ao cadastrar modalidade:', error);
-    res.status(409).json({ error: 'Modalidade já cadastrada.' });
+    return res.status(400).json({ erro: error.message });
   }
 }
 
 async function removerModalidadeController(req, res) {
-  const { nome } = req.params;
+  const { id } = req.params;
+
   try {
-    const resultado = await placarService.removerModalidade(nome);
-    res.status(200).json(resultado);
+    const modalidade = await placarService.removerModalidade(id);
+    return res.status(200).json({ mensagem: 'Modalidade removida', modalidade });
   } catch (error) {
-    console.error('Erro ao remover modalidade:', error);
-    res.status(404).json({ error: error.message });
+    return res.status(404).json({ erro: error.message });
   }
 }
 
-async function getModalidadesController(req, res) {
+async function listarModalidadesController(req, res) {
   try {
     const modalidades = await placarService.listarModalidades();
     res.status(200).json(modalidades);
   } catch (error) {
-    console.error('Erro ao buscar modalidades:', error);
-    res.status(500).json({ error: 'Erro interno ao buscar modalidades.' });
+    res.status(500).json({ erro: error.message });
   }
 }
 
-module.exports = { criarTime, deletarTimeNome, nomeTime, buscarTime, atualizarPlacar,  getPlacar, resetarPlacar, cadastrarModalidadeController, removerModalidadeController, getModalidadesController };
+// ------------------ TIMES ------------------
+async function criarTimeController(req, res) {
+  const { nome, foto, modalidadeId } = req.body;
+
+  if (!nome || !modalidadeId) {
+    return res.status(400).json({ erro: 'Nome e modalidadeId são obrigatórios' });
+  }
+
+  try {
+    const time = await placarService.criarTime({ nome, foto, modalidadeId });
+    res.status(201).json({ mensagem: 'Time criado', time });
+  } catch (error) {
+    res.status(400).json({ erro: error.message });
+  }
+}
+
+async function removerTimeController(req, res) {
+  const { id } = req.params;
+
+  try {
+    const time = await placarService.removerTime(id);
+    res.status(200).json({ mensagem: 'Time removido', time });
+  } catch (error) {
+    res.status(404).json({ erro: error.message });
+  }
+}
+
+async function listarTimesPorModalidadeController(req, res) {
+  const { modalidadeId } = req.params;
+
+  if (!modalidadeId) {
+    return res.status(400).json({ erro: 'modalidadeId é obrigatório' });
+  }
+
+  try {
+    const times = await placarService.listarTimesPorModalidade(Number(modalidadeId));
+    res.status(200).json(times);
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+}
+
+
+// ------------------ PLACAR ------------------
+async function criarPlacarController(req, res) {
+  try {
+    const placar = await placarService.criarPlacar(req.body);
+    res.status(201).json({ mensagem: 'Placar criado ou já existente', placar });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+}
+
+async function atualizarPlacarController(req, res) {
+  const { id } = req.params;
+  const campos = req.body;
+
+  try {
+    const placar = await placarService.atualizarPlacar(id, campos);
+    res.status(200).json({ mensagem: 'Placar atualizado', placar });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+}
+
+async function listarPlacarPorModalidadeController(req, res) {
+  const { modalidadeId } = req.params;
+
+  try {
+    const placares = await placarService.listarPlacarPorModalidade(modalidadeId);
+    res.status(200).json({ placares });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+}
+
+async function resetarPlacarPorModalidadeController(req, res) {
+  const { modalidadeId } = req.params;
+
+  try {
+    const resultado = await placarService.resetarPlacarPorModalidade(modalidadeId);
+    res.status(200).json({ mensagem: 'Placar resetado', resultado });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+}
+
+async function ocultarPlacarGeralController(req, res) {
+  try {
+    const resultado = await placarService.ocultarPlacarGeral();
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ erro: error.message });
+  }
+}
+
+// Ocultar placar de uma modalidade específica
+async function ocultarPlacarPorModalidadeController(req, res) {
+  try {
+    const { modalidadeId } = req.params;
+    const resultado = await placarService.ocultarPlacarPorModalidade(Number(modalidadeId));
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ erro: error.message });
+  }
+}
+
+async function mostrarPlacarGeralController(req, res) {
+  try {
+    const resultado = await placarService.mostrarPlacarGeral();
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ erro: error.message });
+  }
+}
+
+async function mostrarPlacarPorModalidadeController(req, res) {
+  try {
+    const { modalidadeId } = req.params;
+    const resultado = await placarService.mostrarPlacarPorModalidade(Number(modalidadeId));
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ erro: error.message });
+  }
+}
+
+async function listarVisibilidadeController(req, res) {
+  try {
+    const resultado = await placarService.listarVisibilidade();
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ erro: error.message });
+  }
+}
+
+module.exports = {
+  cadastrarModalidadeController,
+  removerModalidadeController,
+  listarModalidadesController,
+  criarTimeController,
+  removerTimeController,
+  listarTimesPorModalidadeController,
+  criarPlacarController,
+  atualizarPlacarController,
+  listarPlacarPorModalidadeController,
+  resetarPlacarPorModalidadeController, ocultarPlacarGeralController, ocultarPlacarPorModalidadeController, mostrarPlacarGeralController, mostrarPlacarPorModalidadeController, listarVisibilidadeController
+};

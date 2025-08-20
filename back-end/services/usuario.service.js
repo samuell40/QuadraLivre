@@ -7,9 +7,9 @@ async function postUsuario(user) {
       nome: user.nome,
       email: user.email,
       telefone: user.telefone,
-      funcao: "Usuario",
+      funcao: "USUARIO",
       foto: user.foto,
-      permissaoId: 45,
+      permissaoId: 3,
     },
   })
   return cadastro;

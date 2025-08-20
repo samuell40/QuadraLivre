@@ -16,9 +16,11 @@ model Usuario {
   permissaoId  Int
   foto         String?       @db.VarChar(2048)
   quadraId     Int?
+
   quadra       Quadra?       @relation(fields: [quadraId], references: [id])
   permissao    Permissao     @relation(fields: [permissaoId], references: [id])
   agendamentos Agendamento[]
+  times        UsuarioTime[] // Relação com times
 }
 
 model Quadra {
@@ -31,52 +33,69 @@ model Quadra {
 }
 
 model Agendamento {
-  id        Int      @id @default(autoincrement())
+  id        Int               @id @default(autoincrement())
   dia       Int
   mes       Int
   ano       Int
   hora      Int
-  status    Boolean
+  status    String   @default("Pendente")
   usuarioId Int?
-  usuario   Usuario? @relation(fields: [usuarioId], references: [id])
+  usuario   Usuario?          @relation(fields: [usuarioId], references: [id])
 }
 
 model Modalidade {
-  id       Int      @id @default(autoincrement())
-  nome     String   @unique
-  placares Placar[]
-  quadras  Quadra[] @relation("QuadraModalidade")
+  id     Int     @id @default(autoincrement())
+  nome   String  @unique
+  times  Time[]
+  quadras Quadra[] @relation("QuadraModalidade")
+}
+
+model Time {
+  id           Int     @id @default(autoincrement())
+  nome         String
+  foto         String? @db.VarChar(2048)
+  modalidadeId Int
+  modalidade   Modalidade @relation(fields: [modalidadeId], references: [id])
+  jogadores    UsuarioTime[]
+
+  placar       Placar?    // lado opcional, sem fields/references
 }
 
 model Placar {
   id           Int     @id @default(autoincrement())
-  modalidadeId Int
-  time         String
-  foto         String?
-  jogos        Int
-  posicao      Int
-  pontuacao    Int
-  vitorias     Int
-  empates      Int?
-  derrotas     Int
+  timeId       Int     @unique
+  time         Time    @relation(fields: [timeId], references: [id])
 
-  golsPro      Int?
-  golsSofridos Int?
-  saldoDeGols  Int?
+  jogos        Int     @default(0)
+  posicao      Int     @default(0)
+  pontuacao    Int     @default(0)
+  vitorias     Int     @default(0)
+  empates      Int     @default(0)
+  derrotas     Int     @default(0)
+  golsPro      Int     @default(0)
+  golsSofridos Int     @default(0)
+  saldoDeGols  Int     @default(0)
 
-  setsVencidos Int?
-  vitoria2x0   Int?
-  vitoria2x1   Int?
-  derrota2x1   Int?
-  derrota2x0   Int?
-  derrotaWo    Int?
+  setsVencidos Int     @default(0)
+  vitoria2x0   Int     @default(0)
+  vitoria2x1   Int     @default(0)
+  derrota2x1   Int     @default(0)
+  derrota2x0   Int     @default(0)
+  derrotaWo    Int     @default(0)
 
-  cartoesAmarelos  Int?
-  cartoesVermelhos Int?
+  cartoesAmarelos  Int @default(0)
+  cartoesVermelhos Int @default(0)
+  visivel Boolean @default(true)
+}
 
-  modalidade Modalidade @relation(fields: [modalidadeId], references: [id])
+model UsuarioTime {
+  usuarioId Int
+  timeId    Int
 
-  @@unique([modalidadeId, time])
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+  time    Time    @relation(fields: [timeId], references: [id])
+
+  @@id([usuarioId, timeId]) // PK composta
 }
 
 model Permissao {

@@ -1,5 +1,6 @@
 <template>
   <div class="home">
+    <!-- Navbar -->
     <nav class="navbar-custom">
       <div class="navbar-container">
         <div class="esquerda-section">
@@ -23,6 +24,7 @@
       </div>
     </nav>
 
+    <!-- Seção Central -->
     <section class="texto-centro">
       <div class="conteudo-centralizado">
         <h1 class="texto">
@@ -37,6 +39,7 @@
       </div>
     </section>
 
+    <!-- Quadras Disponíveis -->
     <h3 id="quadras-disponiveis" class="tit_horario">Quadras Disponíveis</h3>
     <section class="agendamento">
       <template v-if="isLoadingQuadras">
@@ -62,37 +65,19 @@
     </section>
 
     <!-- Placares -->
-    <h3 v-if="exibirPlacar.futebol || exibirPlacar.volei" id="placar-virtual" class="tit_horario">Placar Virtual</h3>
-    <div v-if="loadingPlacar.futebol || loadingPlacar.volei" class="loader"></div>
+    <h3 v-if="algumPlacarVisivel" id="placar-virtual" class="tit_horario">Placar Virtual</h3>
 
-    <div v-if="exibirPlacar.futebol">
-      <PlacarFutebolHome v-show="!loadingPlacar.futebol" :times="timesFutebolComPosicao" />
-    </div>
-    <div v-if="exibirPlacar['futebol de areia']">
-      <PlacarFutebolAreiaHome :times="timesFutebolAreiaComPosicao" :isLoading="loadingPlacar['futebol de areia']" />
-    </div>
-    <div v-if="exibirPlacar.futsal">
-      <PlacarFutsalHome :times="timesFutsalComPosicao" :isLoading="loadingPlacar.futsal" />
-    </div>
-    <div v-if="exibirPlacar.volei">
-      <PlacarVoleihome v-show="!loadingPlacar.volei" :times="timesVoleiComPosicao" />
-    </div>
-    <div v-if="exibirPlacar.voleibol">
-      <PlacarVoleibolHome v-show="!loadingPlacar.voleibol" :times="timesVoleibolComPosicao"
-        :isLoading="loadingPlacar.voleibol" />
-    </div>
-    <div v-if="exibirPlacar['volei de areia']">
-      <PlacarVoleiAreiaHome v-show="!loadingPlacar['volei de areia']" :times="timesVoleiAreiaComPosicao"
-        :isLoading="loadingPlacar['volei de areia']" />
-    </div>
-    <div v-if="exibirPlacar.futevolei">
-      <PlacarFutevoleiHome v-show="!loadingPlacar.futevolei" :times="timesFutevoleiComPosicao"
-        :isLoading="loadingPlacar.futevolei" />
+    <div v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id">
+      <div v-if="getTimesComPosicao(modalidade.nome).length > 0">
+        <div v-if="loadingPlacar[modalidade.nome]" class="loader"></div>
+        <PlacarGeral :times="getTimesComPosicao(modalidade.nome)" :isLoading="loadingPlacar[modalidade.nome]"
+          :modalidade="modalidade.nome" />
+      </div>
     </div>
 
+    <!-- Modal de Login -->
     <VerificarLogin v-if="mostrarModalLogin" @fechar="mostrarModalLogin = false" @irParaLogin="irParaLogin"
       @loginComGoogle="loginComGoogle" />
-
   </div>
 </template>
 
@@ -100,176 +85,195 @@
 import router from '@/router'
 import { Carousel, Slide } from 'vue3-carousel'
 import Swal from 'sweetalert2'
-import PlacarFutebolHome from '@/components/PlacarHome/PlacarFutebolHome.vue'
-import PlacarFutebolAreiaHome from '@/components/PlacarHome/PlacarFutebolAreiaHome.vue'
-import PlacarFutsalHome from '@/components/PlacarHome/PlacarFutsalHome.vue'
-import PlacarVoleihome from '@/components/PlacarHome/PlacarVoleiHome.vue'
-import PlacarVoleibolHome from '@/components/PlacarHome/PlacarVoleibolHome.vue'
-import PlacarVoleiAreiaHome from '@/components/PlacarHome/PlacarVoleiAreiaHome.vue'
-import PlacarFutevoleiHome from '@/components/PlacarHome/PlacarFutevoleiHome.vue'
+import PlacarGeral from '@/components/PlacarHome/PlacarGeral.vue'
 import VerificarLogin from '@/components/modals/Alertas/verificarLogin.vue'
 import api from '@/axios'
 import 'vue3-carousel/dist/carousel.css'
 
 export default {
   name: 'HomeView',
-  components: {
-    Carousel,
-    Slide,
-    PlacarFutebolHome,
-    PlacarFutebolAreiaHome,
-    PlacarFutsalHome,
-    PlacarVoleihome,
-    PlacarVoleibolHome,
-    PlacarVoleiAreiaHome,
-    PlacarFutevoleiHome,
-    VerificarLogin
-  },
+  components: { Carousel, Slide, PlacarGeral, VerificarLogin },
   data() {
     return {
       isMenuOpen: false,
       quadras: [],
-      placares: {
-        futebol: [],
-        "futebol de areia": [],
-        futsal: [],
-        volei: [],
-        voleibol: [],
-        "volei de areia": [],
-        futevolei: []
-      },
-      loadingPlacar: {
-        futebol: true,
-        "futebol de areia": true,
-        futsal: true,
-        volei: true,
-        voleibol: true,
-        "volei de areia": true,
-        futevolei: true
-      },
-      exibirPlacar: {
-        futebol: true,
-        "futebol de areia": true,
-        futsal: true,
-        volei: true,
-        voleibol: true,
-        "volei de areia": true,
-        futevolei: true
-      },
-      isLoadingQuadras: true,
-      mostrarModalLogin: false
+      placares: {},
+      loadingPlacar: {},
+      mostrarModalLogin: false,
+      modalidadesDisponiveis: [],
+      isLoadingQuadras: false,
+      ws: null
     }
   },
   computed: {
-    timesFutebolComPosicao() { return this.addPosicao(this.placares.futebol) },
-    timesFutebolAreiaComPosicao() { return this.addPosicao(this.placares["futebol de areia"]) },
-    timesFutsalComPosicao() { return this.addPosicao(this.placares.futsal) },
-    timesVoleiComPosicao() { return this.addPosicao(this.placares.volei) },
-    timesVoleibolComPosicao() { return this.addPosicao(this.placares.voleibol) },
-    timesVoleiAreiaComPosicao() { return this.addPosicao(this.placares["volei de areia"]) },
-    timesFutevoleiComPosicao() { return this.addPosicao(this.placares.futevolei) }
+    algumPlacarVisivel() {
+      return this.modalidadesDisponiveis.some(mod =>
+        (this.placares[mod.nome] || []).some(t => t.visivel)
+      )
+    }
   },
   mounted() {
-    this.carregarQuadras();
-    Object.keys(this.placares).forEach(tipo => this.carregarPlacar(tipo));
-    this.atualizarVisibilidadePlacar();
-    window.addEventListener("storage", this.atualizarVisibilidadePlacar);
+    this.carregarQuadras()
+    this.carregarModalidades()
   },
   beforeUnmount() {
-    window.removeEventListener("storage", this.atualizarVisibilidadePlacar);
+    if (this.ws) this.ws.close()
   },
   methods: {
-    addPosicao(times) {
-      return [...times].sort((a, b) => b.pontuacao - a.pontuacao).map((t, i) => ({ ...t, posicao: i + 1 }));
-    },
-    atualizarVisibilidadePlacar() {
-      Object.keys(this.exibirPlacar).forEach(chave => {
-        this.exibirPlacar[chave] = JSON.parse(localStorage.getItem(`exibirPlacar_${chave}`) ?? "true");
-      });
-    },
     toggleMenu() { this.isMenuOpen = !this.isMenuOpen },
     next() { if (this.$refs.carousel) this.$refs.carousel.next() },
     prev() { if (this.$refs.carousel) this.$refs.carousel.prev() },
-    async carregarQuadras() {
-      this.isLoadingQuadras = true;
-      try { const res = await api.get('/quadra'); this.quadras = res.data }
-      catch (err) { console.error('Erro ao carregar quadras:', err) }
-      finally { this.isLoadingQuadras = false }
-    },
-    async carregarPlacar(tipo) {
-      this.loadingPlacar[tipo] = true;
-      try {
-        const res = await api.get(`/placar/${tipo}`);
-        this.placares[tipo] = res.data;
-      } catch (err) {
-        console.error(`Erro ao carregar placar ${tipo}:`, err);
-      } finally {
-        this.loadingPlacar[tipo] = false;
-      }
-    },
-    verificarLogin(quadra) {
-      const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-      if (usuario?.token) {
-        router.push({ name: 'agendar_quadra', query: { quadraId: quadra.id } });
-      } else {
-        // salvar a quadra clicada para recuperar depois do login
-        localStorage.setItem("quadraSelecionada", JSON.stringify(quadra));
-        this.mostrarModalLogin = true;
-      }
-    },
-    loginComGoogle() {
-      const width = 500, height = 600;
-      const left = window.screenX + (window.outerWidth - width) / 2;
-      const top = window.screenY + (window.outerHeight - height) / 2.5;
-      const popup = window.open(
-        'http://localhost:3000/auth/google',
-        'Login com Google',
-        `width=${width},height=${height},left=${left},top=${top}`
-      );
 
-      const listener = (event) => {
-        if (event.origin !== 'http://localhost:8080') return;
-        const { token, erro, email, usuario } = event.data;
+    async carregarQuadras() {
+      this.isLoadingQuadras = true
+      try {
+        const res = await api.get('/quadra')
+        this.quadras = res.data
+      } catch (err) {
+        console.error('Erro ao carregar quadras:', err)
+      } finally {
+        this.isLoadingQuadras = false
+      }
+    },
+
+    async carregarModalidades() {
+      try {
+        const res = await api.get('/listar/modalidade')
+        this.modalidadesDisponiveis = res.data
+
+        this.modalidadesDisponiveis.forEach(mod => {
+          this.placares[mod.nome] = []
+          this.loadingPlacar[mod.nome] = true
+          this.carregarPlacarModalidade(mod)
+        })
+
+        this.iniciarWebSocket()
+      } catch (error) {
+        console.error('Erro ao carregar modalidades:', error)
+        Swal.fire('Erro', 'Não foi possível carregar as modalidades.', 'error')
+      }
+    },
+
+    async carregarPlacarModalidade(modalidade) {
+      if (!modalidade) return
+      this.loadingPlacar[modalidade.nome] = true
+      try {
+        const res = await api.get(`/placar/modalidade/${modalidade.id}`)
+        this.placares[modalidade.nome] = Array.isArray(res.data.placares) ? res.data.placares : []
+      } catch (err) {
+        console.error(`Erro ao carregar placar ${modalidade.nome}:`, err)
+      } finally {
+        this.loadingPlacar[modalidade.nome] = false
+      }
+    },
+
+    addPosicao(times) {
+      return [...times]
+        .filter(t => t.visivel)
+        .sort((a, b) => b.pontuacao - a.pontuacao)
+        .map((t, i) => ({ ...t, posicao: i + 1 }))
+    },
+
+    getTimesComPosicao(modalidade) {
+      return this.addPosicao(this.placares[modalidade] || [])
+    },
+
+    iniciarWebSocket() {
+      this.ws = new WebSocket('ws://localhost:3000/placares')
+
+      this.ws.onopen = () => console.log('WebSocket conectado!')
+      this.ws.onmessage = event => {
+        try {
+          const data = JSON.parse(event.data)
+          if (data.modalidade && Array.isArray(data.placares)) {
+            this.$set(this.placares, data.modalidade, data.placares)
+          }
+        } catch (err) {
+          console.error('Erro ao processar mensagem WebSocket:', err)
+        }
+      }
+      this.ws.onclose = () => setTimeout(this.iniciarWebSocket, 5000)
+      this.ws.onerror = err => { console.error('Erro no WebSocket:', err); this.ws.close() }
+    },
+
+    async ocultarTodosPlacares() {
+      try {
+        await api.patch('/placar/ocultar/todos')
+        Object.keys(this.placares).forEach(mod => {
+          this.placares[mod] = this.placares[mod].map(p => ({ ...p, visivel: false }))
+        })
+      } catch (err) {
+        console.error('Erro ao ocultar todos placares:', err)
+      }
+    },
+
+    async ocultarPlacarModalidade(modalidadeId) {
+      try {
+        await api.patch(`/placar/ocultar/modalidade/${modalidadeId}`)
+        const mod = this.modalidadesDisponiveis.find(m => m.id === modalidadeId)
+        if (mod) {
+          this.placares[mod.nome] = this.placares[mod.nome].map(p => ({ ...p, visivel: false }))
+        }
+      } catch (err) {
+        console.error(`Erro ao ocultar placar da modalidade ${modalidadeId}:`, err)
+      }
+    },
+
+    verificarLogin(quadra) {
+      const usuario = JSON.parse(localStorage.getItem('usuario') || '{}')
+      if (usuario?.token) {
+        router.push({ name: 'agendar_quadra', query: { quadraId: quadra.id } })
+      } else {
+        localStorage.setItem("quadraSelecionada", JSON.stringify(quadra))
+        this.mostrarModalLogin = true
+      }
+    },
+
+    loginComGoogle() {
+      const width = 500, height = 600
+      const left = window.screenX + (window.outerWidth - width) / 2
+      const top = window.screenY + (window.outerHeight - height) / 2.5
+      const popup = window.open('http://localhost:3000/auth/google', 'Login com Google',
+        `width=${width},height=${height},left=${left},top=${top}`)
+
+      const listener = event => {
+        if (event.origin !== 'http://localhost:8080') return
+        const { token, erro, email, usuario } = event.data
 
         if (erro === 'usuario_nao_cadastrado') {
           Swal.fire({
-            icon: 'error',
-            title: 'Conta não encontrada!',
-            text: 'Redirecionando para cadastro...',
-            timer: 3000,
-            timerProgressBar: true,
-            showConfirmButton: false,
+            icon: 'error', title: 'Conta não encontrada!',
+            text: 'Redirecionando para cadastro...', timer: 3000,
+            timerProgressBar: true, showConfirmButton: false,
             didOpen: () => Swal.showLoading()
-          }).then(() => window.location.href = `/cadastro?email=${encodeURIComponent(email)}`);
+          }).then(() => window.location.href = `/cadastro?email=${encodeURIComponent(email)}`)
         }
 
         if (token) {
-          localStorage.setItem('token', token);
-          localStorage.setItem('usuario', JSON.stringify(usuario));
+          localStorage.setItem('token', token)
+          localStorage.setItem('usuario', JSON.stringify(usuario))
+          const quadraSelecionada = JSON.parse(localStorage.getItem("quadraSelecionada") || "null")
 
-          const quadraSelecionada = JSON.parse(localStorage.getItem("quadraSelecionada") || "null");
-
-          if ([43, 44].includes(usuario.permissaoId)) {
-            router.push({ name: "Agendamentos" });
-          } else if (usuario.permissaoId === 45) {
+          if ([1, 2].includes(usuario.permissaoId)) {
+            router.push({ name: "Agendamentos" })
+          } else if (usuario.permissaoId === 3) {
             if (quadraSelecionada) {
-              router.push({ name: "agendar_quadra", query: { quadraId: quadraSelecionada.id } });
-              localStorage.removeItem("quadraSelecionada");
+              router.push({ name: "agendar_quadra", query: { quadraId: quadraSelecionada.id } })
+              localStorage.removeItem("quadraSelecionada")
             } else {
-              router.push({ name: "agendar_quadra" });
+              router.push({ name: "agendar_quadra" })
             }
           } else {
-            router.push({ name: "/" });
+            router.push({ name: "Home" })
           }
         }
 
-        window.removeEventListener('message', listener);
-        if (popup) popup.close();
-      };
+        window.removeEventListener('message', listener)
+        if (popup) popup.close()
+      }
 
-      window.addEventListener('message', listener, false);
+      window.addEventListener('message', listener, false)
     }
-
   }
 }
 </script>
