@@ -3,7 +3,7 @@ import Swal from 'sweetalert2';
 import router from './router';
 
 const api = axios.create({
-  baseURL: 'https://quadra-livre-backend.onrender.com',
+  baseURL: 'http://localhost:3000',
 });
 
 api.interceptors.request.use(

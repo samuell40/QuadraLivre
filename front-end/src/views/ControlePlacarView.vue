@@ -3,50 +3,54 @@
     <SideBar />
     <div class="layout">
       <div class="header">
-        <h1 class="title">Placar</h1>
+        <h1 class="title">Controles do Placar</h1>
         <div class="botoes">
           <button class="btn-placar" @click="abrirModalPlacar">Visualizar Placar</button>
           <button class="btn-modalidade" @click="abrirModalGerenciarModalidade">Gerenciar Modalidades</button>
           <button class="btn-add" @click="abrirModalGerenciarTime">Gerenciar Times</button>
         </div>
       </div>
-
-      <!-- Dropdowns -->
-      <div class="dropdown-row">
-        <div class="team">
-          <p>Modalidade:</p>
-          <select id="modalidade" v-model="modalidadeSelecionada" @change="carregarTimes" class="dropdown">
-            <option disabled value="">Selecione uma modalidade</option>
-            <option v-for="(modalidade, i) in modalidadesDisponiveis" :key="i" :value="modalidade.nome">
-              {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
-            </option>
-          </select>
-        </div>
-        <div class="team">
-          <p>Time:</p>
-          <select v-model="timeSelecionado" class="dropdown">
-            <option disabled value="">Selecione um time</option>
-            <option v-for="t in times" :key="t.nome" :value="t.nome">{{ t.nome }}</option>
-          </select>
-        </div>
+      <div v-if="isLoading" class="spinner-overlay">
+        <div class="loader"></div>
       </div>
 
-      <!-- Controles do Placar -->
-      <div class="game">
-        <PlacarFutebol v-if="modalidadeSelecionada === 'futebol'" :placar="futebol.timeA" :timeAtivo="true"
-          @salvar="salvarPlacar" />
-        <PlacarFutebolAreia v-else-if="modalidadeSelecionada === 'futebol de areia'" :placar="futebol_de_areia.timeA"
-          :timeAtivo="true" @salvar="salvarPlacar" />
-        <PlacarFutsal v-else-if="modalidadeSelecionada === 'futsal'" :placar="futsal.timeA" :timeAtivo="true"
-          @salvar="salvarPlacar" />
-        <PlacarVolei v-else-if="modalidadeSelecionada === 'volei'" :placar="volei.timeA" :timeAtivo="true"
-          @salvar="salvarPlacar" />
-        <PlacarVoleibol v-else-if="modalidadeSelecionada === 'voleibol'" :placar="voleibol.timeA" :timeAtivo="true"
-          @salvar="salvarPlacar" />
-        <PlacarVoleiAreia v-else-if="modalidadeSelecionada === 'volei de areia'" :placar="volei_de_areia.timeA"
-          :timeAtivo="true" @salvar="salvarPlacar" />
-        <PlacarFutevolei v-else-if="modalidadeSelecionada === 'futevolei'" :placar="futevolei.timeA" :timeAtivo="true"
-          @salvar="salvarPlacar" />
+      <div v-else>
+        <div class="dropdown-row">
+          <div class="team">
+            <p>Modalidade:</p>
+            <select id="modalidade" v-model="modalidadeSelecionada" @change="carregarTimes" class="dropdown">
+              <option disabled value="">Selecione uma modalidade</option>
+              <option v-for="(modalidade, i) in modalidadesDisponiveis" :key="i" :value="modalidade.nome">
+                {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
+              </option>
+            </select>
+          </div>
+          <div class="team">
+            <p>Time:</p>
+            <select v-model="timeSelecionado" class="dropdown">
+              <option disabled value="">Selecione um time</option>
+              <option v-for="t in times" :key="t.nome" :value="t.nome">{{ t.nome }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Controles do Placar -->
+        <div class="game">
+          <PlacarFutebol v-if="modalidadeSelecionada === 'futebol'" :placar="futebol.timeA" :timeAtivo="true"
+            :timeSelecionado="timeSelecionado" @salvar="salvarPlacar" />
+          <PlacarFutebolAreia v-else-if="modalidadeSelecionada === 'futebol de areia'" :placar="futebol_de_areia.timeA"
+            :timeAtivo="true" :timeSelecionado="timeSelecionado" @salvar="salvarPlacar" />
+          <PlacarFutsal v-else-if="modalidadeSelecionada === 'futsal'" :placar="futsal.timeA" :timeAtivo="true"
+            :timeSelecionado="timeSelecionado" @salvar="salvarPlacar" />
+          <PlacarVolei v-else-if="modalidadeSelecionada === 'volei'" :placar="volei.timeA" :timeAtivo="true"
+            :timeSelecionado="timeSelecionado" @salvar="salvarPlacar" />
+          <PlacarVoleibol v-else-if="modalidadeSelecionada === 'voleibol'" :placar="voleibol.timeA" :timeAtivo="true"
+            :timeSelecionado="timeSelecionado" @salvar="salvarPlacar" />
+          <PlacarVoleiAreia v-else-if="modalidadeSelecionada === 'volei de areia'" :placar="volei_de_areia.timeA"
+            :timeAtivo="true" :timeSelecionado="timeSelecionado" @salvar="salvarPlacar" />
+          <PlacarFutevolei v-else-if="modalidadeSelecionada === 'futevolei'" :placar="futevolei.timeA" :timeAtivo="true"
+            :timeSelecionado="timeSelecionado" @salvar="salvarPlacar" />
+        </div>
       </div>
 
       <!-- Modais -->
@@ -58,7 +62,7 @@
       <OcultarPlacar :aberto="modalOcultarPlacarAberto" @fechar="fecharModalOcultarPlacar" />
 
       <ResetarPlacarModal :aberto="modalResetarPlacarAberto" :modalidadesDisponiveis="modalidadesDisponiveis"
-        @fechar="fecharModalResetarPlacar" @confirmado="handleResetarConfirmado" />
+        @fechar="fecharModalResetarPlacar" @confirmado="resetarConfirmado" />
 
       <GerenciarModalidadesModal :aberto="modalGerenciarModalidadeAberto" :acao="acaoGerenciarModalidade"
         @confirmar="confirmarAcaoGerenciarModalidade" @fechar="fecharModalGerenciarModalidade" />
@@ -106,26 +110,15 @@ import api from '@/axios';
 export default {
   name: 'ControlePlacarView',
   components: {
-    SideBar,
-    PlacarFutebol,
-    PlacarFutebolAreia,
-    PlacarFutsal,
-    PlacarVolei,
-    PlacarVoleibol,
-    PlacarVoleiAreia,
-    PlacarFutevolei,
-    VisualizarPlacarModal,
-    ResetarPlacarModal,
-    GerenciarModalidadesModal,
-    AdicionarModalidadeModal,
-    RemoverModalidadeModal,
-    GerenciarTimesModal,
-    AdicionarTimeModal,
-    RemoverTimeModal,
-    OcultarPlacar
+    SideBar, PlacarFutebol, PlacarFutebolAreia, PlacarFutsal,
+    PlacarVolei, PlacarVoleibol, PlacarVoleiAreia, PlacarFutevolei,
+    VisualizarPlacarModal, ResetarPlacarModal, GerenciarModalidadesModal,
+    AdicionarModalidadeModal, RemoverModalidadeModal, GerenciarTimesModal,
+    AdicionarTimeModal, RemoverTimeModal, OcultarPlacar
   },
   data() {
     return {
+      isLoading: true, // Spinner inicial
       modalidadesDisponiveis: [],
       modalidadeSelecionada: '',
       timeSelecionado: '',
@@ -157,6 +150,7 @@ export default {
   },
   mounted() {
     this.carregarModalidades().then(() => {
+      this.isLoading = false; // Spinner some
       if (this.modalidadesDisponiveis.length) {
         this.modalidadeSelecionada = this.modalidadesDisponiveis[0].nome;
         this.carregarTimes();
@@ -202,7 +196,6 @@ export default {
       this.modalidadePlacarSelecionada = 'futebol';
       this.carregarPlacarModalidade('futebol');
     },
-
     fecharModalPlacar() {
       this.modalPlacarAberto = false;
       this.modalidadePlacarSelecionada = '';
@@ -231,7 +224,6 @@ export default {
     abrirModalOcultarPlacar() { this.modalOcultarPlacarAberto = true; },
     fecharModalOcultarPlacar() { this.modalOcultarPlacarAberto = false; },
 
-    // API
     async carregarModalidades() {
       try {
         const res = await api.get('/listar/modalidade');
@@ -241,30 +233,52 @@ export default {
         Swal.fire('Erro', 'Não foi possível carregar as modalidades.', 'error');
       }
     },
+
     async carregarTimes() {
       if (!this.modalidadeSelecionada) return;
+      this.isLoading = true;
       try {
-        const modalidade = this.modalidadesDisponiveis.find(m => m.nome === this.modalidadeSelecionada);
+        const modalidade = this.modalidadesDisponiveis.find(
+          m => m.nome === this.modalidadeSelecionada
+        );
         if (!modalidade) return;
         const res = await api.get(`/times/modalidade/${modalidade.id}`);
         this.times = Array.isArray(res.data) ? res.data : [];
       } catch (error) {
         console.error('Erro ao carregar times:', error);
         Swal.fire('Erro', 'Não foi possível carregar os times.', 'error');
+      } finally {
+        this.isLoading = false;
       }
     },
+
     async carregarPlacarTime() {
       if (!this.modalidadeSelecionada || !this.timeSelecionado) return;
+
+      try {
+        const modalidade = this.modalidadesDisponiveis.find(
+          m => m.nome === this.modalidadeSelecionada
+        );
+        if (!modalidade) return;
+
+        const res = await api.get(`/times/modalidade/${modalidade.id}`);
+        this.times = Array.isArray(res.data) ? res.data : [];
+      } catch (error) {
+        console.error('Erro ao atualizar times:', error);
+      }
+
       const time = this.times.find(t => t.nome === this.timeSelecionado);
       if (!time || !time.placar) return;
+
       const dados = time.placar;
-      const destino = this[this.modalidadeSelecionada.replace(/ /g, '_')]?.timeA;
+      const key = this.modalidadeSelecionada.replace(/ /g, '_');
+      const destino = this[key]?.timeA;
       if (!destino) return;
 
       const modalidadesGols = ['futebol', 'futebol_de_areia', 'futsal'];
       const modalidadesSets = ['volei', 'voleibol', 'volei_de_areia', 'futevolei'];
 
-      if (modalidadesGols.includes(this.modalidadeSelecionada.replace(/ /g, '_'))) {
+      if (modalidadesGols.includes(key)) {
         Object.assign(destino, {
           nome: time.nome || '',
           pts: { valor: dados.pontuacao ?? 0 },
@@ -279,7 +293,7 @@ export default {
         });
       }
 
-      if (modalidadesSets.includes(this.modalidadeSelecionada.replace(/ /g, '_'))) {
+      if (modalidadesSets.includes(key)) {
         Object.assign(destino, {
           nome: time.nome || '',
           pts: { valor: dados.pontuacao ?? 0 },
@@ -295,41 +309,51 @@ export default {
         });
       }
     },
+
     async carregarPlacarModalidade(modalidade) {
       if (!modalidade) return;
+      this.timesPlacar = null;
       try {
         const modalidadeObj = this.modalidadesDisponiveis.find(m => m.nome === modalidade);
         if (!modalidadeObj) return;
+
         const res = await api.get(`/placar/modalidade/${modalidadeObj.id}`);
         this.timesPlacar = Array.isArray(res.data.placares) ? res.data.placares : [];
       } catch (error) {
         console.error('Erro ao carregar placar da modalidade:', error);
         Swal.fire('Erro', 'Não foi possível carregar os placares da modalidade.', 'error');
+        this.timesPlacar = [];
       }
     },
+
     async salvarPlacar(dadosParaSalvar) {
       if (!this.timeSelecionado) {
         Swal.fire('Atenção', 'Selecione um time antes de salvar o placar.', 'warning');
         return;
       }
+
       try {
         const time = this.times.find(t => t.nome === this.timeSelecionado);
         if (!time || !time.placar) return;
+
         const placarId = time.placar.id;
         const modalidadesComSaldo = ['futebol', 'futebol de areia', 'futsal'];
         if (modalidadesComSaldo.includes(this.modalidadeSelecionada)) {
           dadosParaSalvar.saldoDeGols = (dadosParaSalvar.golsPro ?? 0) - (dadosParaSalvar.golsSofridos ?? 0);
         }
+
         await api.put(`/placar/${placarId}`, dadosParaSalvar);
         Swal.fire('Sucesso', 'Placar salvo com sucesso!', 'success');
-        this.limparDadosJogo();
+
+        Object.assign(time.placar, dadosParaSalvar);
         this.carregarPlacarTime();
+        this.limparDadosJogo();
       } catch (error) {
         console.error('Erro ao salvar placar:', error);
         Swal.fire('Erro', 'Erro ao salvar placar.', 'error');
       }
     },
-    async handleResetarConfirmado(modalidade) {
+    async resetarConfirmado(modalidade) {
       try {
         const modalidadeObj = this.modalidadesDisponiveis.find(m => m.nome === modalidade);
         if (!modalidadeObj) return;
@@ -366,8 +390,9 @@ export default {
 
 .title {
   color: #3b82f6;
-  font-size: 28px;
+  font-size: 30px;
   margin-left: 15%;
+   font-weight: bold;
 }
 
 .botoes {
@@ -430,6 +455,38 @@ export default {
 
 .dropdown-row .team {
   flex: 1;
+}
+
+.spinner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.loader {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #3b82f6;
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  animation: spin 1s linear infinite;
+  margin: 40px auto 80px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {

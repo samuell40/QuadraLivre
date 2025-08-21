@@ -21,9 +21,20 @@
         </select>
       </div>
 
-      <!-- Tabelas do placar -->
+      <!-- Tabelas do placar / Spinner / Sem dados -->
       <div class="placar-table">
-        <table class="placar" v-if="['futebol', 'futebol de areia', 'futsal'].includes(modalidadePlacarSelecionadaLocal)">
+        <!-- Spinner enquanto carrega -->
+        <div v-if="timesPlacar === null" class="loader-container-centralizado">
+          <div class="loader"></div>
+        </div>
+
+        <!-- Nenhum placar encontrado -->
+        <div v-else-if="timesPlacar && timesPlacar.length === 0" class="sem-dados-centralizado">
+          Nenhum placar encontrado para essa modalidade.
+        </div>
+
+        <!-- Tabela Futebol/Futsal -->
+        <table v-else-if="['futebol', 'futebol de areia', 'futsal'].includes(modalidadePlacarSelecionadaLocal)" class="placar">
           <thead>
             <tr>
               <th>Posição</th>
@@ -61,7 +72,8 @@
           </tbody>
         </table>
 
-        <table class="placar" v-if="['volei', 'volei de areia', 'voleibol', 'futevolei'].includes(modalidadePlacarSelecionadaLocal)">
+        <!-- Tabela Vôlei/Futevôlei -->
+        <table v-else-if="['volei', 'volei de areia', 'voleibol', 'futevolei'].includes(modalidadePlacarSelecionadaLocal)" class="placar">
           <thead>
             <tr>
               <th>Posição</th>
@@ -98,10 +110,6 @@
             </tr>
           </tbody>
         </table>
-      </div>
-
-      <div v-if="timesPlacar.length === 0" class="sem-dados">
-        Nenhum placar encontrado para essa modalidade.
       </div>
 
       <button class="btn-cancel-placar" @click="$emit('fechar')">Fechar</button>
@@ -338,7 +346,30 @@ export default {
   flex: 1;
 }
 
-@media (max-width: 768px) {
+.loader-container-centralizado,
+.sem-dados-centralizado {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 250px; /* ajuste conforme necessário */
+  font-size: 18px;
+  color: #555;
+}
+
+.loader {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #3b82f6;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
  @media (max-width: 768px) {
   .header-placar {
     flex-direction: column;
@@ -358,7 +389,6 @@ export default {
     min-width: 120px;
     text-align: center;
   }
-}
 }
 
 </style>

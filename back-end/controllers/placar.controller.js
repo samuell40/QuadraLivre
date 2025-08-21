@@ -1,6 +1,5 @@
 const placarService = require('../services/placar.service');
 
-// ------------------ MODALIDADES ------------------
 async function cadastrarModalidadeController(req, res) {
   const { nome } = req.body;
 
@@ -32,7 +31,6 @@ async function listarModalidadesController(req, res) {
   }
 }
 
-// ------------------ TIMES ------------------
 async function criarTimeController(req, res) {
   const { nome, foto, modalidadeId } = req.body;
 
@@ -74,8 +72,16 @@ async function listarTimesPorModalidadeController(req, res) {
   }
 }
 
+async function getTodosTimes(req, res) {
+  try {
+    const times = await placarService.listarTodosTimes();
+    return res.json(times);
+  } catch (error) {
+    console.error('Erro ao listar todos os times:', error);
+    return res.status(500).json({ error: 'Erro ao listar todos os times.' });
+  }
+}
 
-// ------------------ PLACAR ------------------
 async function criarPlacarController(req, res) {
   try {
     const placar = await placarService.criarPlacar(req.body);
@@ -129,7 +135,6 @@ async function ocultarPlacarGeralController(req, res) {
   }
 }
 
-// Ocultar placar de uma modalidade específica
 async function ocultarPlacarPorModalidadeController(req, res) {
   try {
     const { modalidadeId } = req.params;
@@ -178,7 +183,7 @@ module.exports = {
   listarModalidadesController,
   criarTimeController,
   removerTimeController,
-  listarTimesPorModalidadeController,
+  listarTimesPorModalidadeController, getTodosTimes,
   criarPlacarController,
   atualizarPlacarController,
   listarPlacarPorModalidadeController,

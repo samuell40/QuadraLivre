@@ -5,64 +5,65 @@
       <div class="box-small">
         <p>Pontos</p>
         <div class="controls espacamento">
-          <button @click="decrement(placar.pts)" :disabled="!placar.nome">−</button>
-          <span>{{ placar.pts.valor }}</span>
-          <button @click="increment(placar.pts)" :disabled="!placar.nome">+</button>
+          <button @click="decrement('pts')">−</button>
+          <span>{{ placarLocal.pts.valor }}</span>
+          <button @click="increment('pts')">+</button>
         </div>
       </div>
     </div>
 
+    <!-- Jogos, Vitórias, Derrotas -->
     <div class="line">
       <div class="box-small">
         <p>Partidas Jogadas</p>
         <div class="controls">
-          <button @click="decrement(placar.pj)" :disabled="!placar.nome">−</button>
-          <span>{{ placar.pj.valor }}</span>
-          <button @click="increment(placar.pj)" :disabled="!placar.nome">+</button>
+          <button @click="decrement('pj')">−</button>
+          <span>{{ placarLocal.pj.valor }}</span>
+          <button @click="increment('pj')">+</button>
         </div>
       </div>
       <div class="box-small">
         <p>Vitórias</p>
         <div class="controls">
-          <button @click="decrement(placar.vitorias)" :disabled="!placar.nome">−</button>
-          <span>{{ placar.vitorias.valor }}</span>
-          <button @click="increment(placar.vitorias)" :disabled="!placar.nome">+</button>
+          <button @click="decrement('vitorias', 'vitoria')">−</button>
+          <span>{{ placarLocal.vitorias.valor }}</span>
+          <button @click="increment('vitorias', 'vitoria')">+</button>
         </div>
       </div>
-
       <div class="box-small">
         <p>Derrotas</p>
         <div class="controls">
-          <button @click="decrement(placar.derrotas)" :disabled="!placar.nome">−</button>
-          <span>{{ placar.derrotas.valor }}</span>
-          <button @click="increment(placar.derrotas)" :disabled="!placar.nome">+</button>
+          <button @click="decrement('derrotas')">−</button>
+          <span>{{ placarLocal.derrotas.valor }}</span>
+          <button @click="increment('derrotas')">+</button>
         </div>
       </div>
     </div>
 
+    <!-- Sets e Resultados -->
     <div class="line">
       <div class="box-small">
         <p>Sets Vencidos</p>
         <div class="controls">
-          <button @click="decrement(placar.setsVencidos)" :disabled="!placar.nome">−</button>
-          <span>{{ placar.setsVencidos.valor }}</span>
-          <button @click="increment(placar.setsVencidos)" :disabled="!placar.nome">+</button>
+          <button @click="decrement('setsVencidos')">−</button>
+          <span>{{ placarLocal.setsVencidos.valor }}</span>
+          <button @click="increment('setsVencidos')">+</button>
         </div>
       </div>
       <div class="box-small">
         <p>2x0</p>
         <div class="controls">
-          <button @click="decrement(placar.doiszero)" :disabled="!placar.nome">−</button>
-          <span>{{ placar.doiszero.valor }}</span>
-          <button @click="increment(placar.doiszero)" :disabled="!placar.nome">+</button>
+          <button @click="decrement('doiszero')">−</button>
+          <span>{{ placarLocal.doiszero.valor }}</span>
+          <button @click="increment('doiszero')">+</button>
         </div>
       </div>
       <div class="box-small">
         <p>2x1</p>
         <div class="controls">
-          <button @click="decrement(placar.doisum)" :disabled="!placar.nome">−</button>
-          <span>{{ placar.doisum.valor }}</span>
-          <button @click="increment(placar.doisum)" :disabled="!placar.nome">+</button>
+          <button @click="decrement('doisum')">−</button>
+          <span>{{ placarLocal.doisum.valor }}</span>
+          <button @click="increment('doisum')">+</button>
         </div>
       </div>
     </div>
@@ -71,71 +72,97 @@
       <div class="box-small">
         <p>1x2</p>
         <div class="controls">
-          <button @click="decrement(placar.umdois)" :disabled="!placar.nome">−</button>
-          <span>{{ placar.umdois.valor }}</span>
-          <button @click="increment(placar.umdois)" :disabled="!placar.nome">+</button>
+          <button @click="decrement('umdois')">−</button>
+          <span>{{ placarLocal.umdois.valor }}</span>
+          <button @click="increment('umdois')">+</button>
         </div>
       </div>
       <div class="box-small">
         <p>0x2</p>
         <div class="controls">
-          <button @click="decrement(placar.zerodois)" :disabled="!placar.nome">−</button>
-          <span>{{ placar.zerodois.valor }}</span>
-          <button @click="increment(placar.zerodois)" :disabled="!placar.nome">+</button>
+          <button @click="decrement('zerodois')">−</button>
+          <span>{{ placarLocal.zerodois.valor }}</span>
+          <button @click="increment('zerodois')">+</button>
         </div>
       </div>
       <div class="box-small">
         <p>W.O</p>
         <div class="controls">
-          <button @click="decrement(placar.wo)" :disabled="!placar.nome">−</button>
-          <span>{{ placar.wo.valor }}</span>
-          <button @click="increment(placar.wo)" :disabled="!placar.nome">+</button>
+          <button @click="decrement('wo')">−</button>
+          <span>{{ placarLocal.wo.valor }}</span>
+          <button @click="increment('wo')">+</button>
         </div>
       </div>
     </div>
+
     <button class="btn-save1" @click="salvar">Salvar</button>
   </div>
 </template>
 
 <script>
+import Swal from 'sweetalert2';
+
 export default {
   name: 'PlacarVolei',
   props: {
+    placar: { type: Object, required: true },
+    timeAtivo: { type: Boolean, required: true },
+    timeSelecionado: { type: String, required: false }
+  },
+  data() {
+    return {
+      placarLocal: JSON.parse(JSON.stringify(this.placar))
+    };
+  },
+  watch: {
     placar: {
-      type: Object,
-      required: true
-    },
-    timeAtivo: {
-      type: Boolean,
-      required: true
+      handler(novo) {
+        this.placarLocal = JSON.parse(JSON.stringify(novo));
+      },
+      immediate: true,
+      deep: true
     }
   },
   methods: {
-    increment(obj) {
-      obj.valor++;
+    increment(campo, tipo = '') {
+      if (!this.timeSelecionado) {
+        Swal.fire('Atenção', 'Selecione um time antes de alterar o placar.', 'warning');
+        return;
+      }
+      this.placarLocal[campo].valor++;
+      if (tipo === 'vitoria') this.placarLocal.pts.valor += 2; // geralmente futevôlei soma 2 pts por vitória
     },
-    decrement(obj) {
-      if (obj.valor > 0) {
-        obj.valor--;
+    decrement(campo, tipo = '') {
+      if (!this.timeSelecionado) {
+        Swal.fire('Atenção', 'Selecione um time antes de alterar o placar.', 'warning');
+        return;
+      }
+      if (this.placarLocal[campo].valor > 0) {
+        this.placarLocal[campo].valor--;
+        if (tipo === 'vitoria' && this.placarLocal.pts.valor >= 2) this.placarLocal.pts.valor -= 2;
       }
     },
     salvar() {
+      if (!this.timeSelecionado) {
+        Swal.fire('Atenção', 'Selecione um time antes de salvar o placar.', 'warning');
+        return;
+      }
       const dadosParaSalvar = {
-        pontuacao: this.placar.pts.valor,
-        jogos: this.placar.pj.valor,
-        vitorias: this.placar.vitorias.valor,
-        derrotas: this.placar.derrotas.valor,
-        setsVencidos: this.placar.setsVencidos.valor,
-        vitoria2x0: this.placar.doiszero.valor,
-        vitoria2x1: this.placar.doisum.valor,
-        derrota2x1: this.placar.umdois.valor,
-        derrota2x0: this.placar.zerodois.valor,
-        derrotaWo: this.placar.wo.valor,
+        pontuacao: this.placarLocal.pts.valor,
+        jogos: this.placarLocal.pj.valor,
+        vitorias: this.placarLocal.vitorias.valor,
+        derrotas: this.placarLocal.derrotas.valor,
+        setsVencidos: this.placarLocal.setsVencidos.valor,
+        vitoria2x0: this.placarLocal.doiszero.valor,
+        vitoria2x1: this.placarLocal.doisum.valor,
+        derrota2x1: this.placarLocal.umdois.valor,
+        derrota2x0: this.placarLocal.zerodois.valor,
+        derrotaWo: this.placarLocal.wo.valor
       };
       this.$emit('salvar', dadosParaSalvar);
     }
   }
-}
+};
 </script>
 
 <style scoped>

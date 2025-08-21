@@ -15,6 +15,8 @@ router.delete('/time/:id', [validarJWT], controller.removerTimeController);
 
 router.get('/times/modalidade/:modalidadeId', controller.listarTimesPorModalidadeController);
 
+router.get('/times', controller.getTodosTimes);
+
 router.post('/placar', controller.criarPlacarController);
 
 router.put('/placar/:id', [validarJWT], controller.atualizarPlacarController);

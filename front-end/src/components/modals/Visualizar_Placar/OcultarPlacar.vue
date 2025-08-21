@@ -2,25 +2,20 @@
   <div class="modal-overlay" v-if="aberto">
     <div class="modal-content">
       <h2>Controle de Visibilidade</h2>
-      <p class="mensagem-alerta">
-        ATENÇÃO: esta configuração altera a exibição dos placares na tela inicial (HOME).
-      </p>
 
-      <!-- Loader -->
-      <div v-if="carregando" class="loading-wrapper">
+        <div v-if="carregando" class="loading-wrapper">
         <div class="spinner"></div>
-        <p>Carregando modalidades...</p>
       </div>
 
-      <!-- Dropdowns só aparecem quando não está carregando -->
       <div v-else>
-        <!-- Dropdown para deixar visível -->
+         <p class="mensagem-alerta">
+        ATENÇÃO: esta configuração altera a exibição dos placares na tela inicial (HOME).
+      </p>
         <div class="form-group">
           <label for="visivel-dropdown" class="label-dropdown">Deixar Visível</label>
           <select
             id="visivel-dropdown"
             v-model="modalidadeParaExibir"
-            @change="deixarVisivel(modalidadeParaExibir)"
             class="dropdown"
           >
             <option disabled value="">Selecione uma modalidade</option>
@@ -41,7 +36,6 @@
           <select
             id="ocultar-dropdown"
             v-model="modalidadeParaOcultar"
-            @change="ocultar(modalidadeParaOcultar)"
             class="dropdown"
           >
             <option disabled value="">Selecione uma modalidade</option>
@@ -56,7 +50,9 @@
           </select>
         </div>
 
+        <!-- Botões Fechar e Salvar -->
         <div class="buttons">
+          <button class="btn-save" @click="salvar">Salvar</button>
           <button class="btn-cancel" @click="$emit('fechar')">Fechar</button>
         </div>
       </div>
@@ -76,7 +72,7 @@ export default {
       modalidades: [],
       modalidadeParaExibir: "",
       modalidadeParaOcultar: "",
-      carregando: false, // <- estado de loading
+      carregando: false,
     };
   },
   computed: {
@@ -94,7 +90,7 @@ export default {
   },
   methods: {
     async carregarModalidades() {
-      this.carregando = true; // começa a carregar
+      this.carregando = true;
       try {
         const res = await api.get("/visibilidade");
         this.modalidades = res.data;
@@ -104,7 +100,7 @@ export default {
         console.error("Erro ao carregar modalidades:", error);
         Swal.fire("Erro", "Não foi possível carregar as modalidades.", "error");
       } finally {
-        this.carregando = false; // terminou de carregar
+        this.carregando = false;
       }
     },
 
@@ -135,18 +131,16 @@ export default {
       } catch (err) {
         console.error(err);
         Swal.fire("Erro", "Não foi possível atualizar visibilidade.", "error");
-      } finally {
-        this.modalidadeParaExibir = "";
-        this.modalidadeParaOcultar = "";
       }
     },
 
-    deixarVisivel(modalidadeId) {
-      this.alterarVisibilidade(modalidadeId, true);
-    },
-
-    ocultar(modalidadeId) {
-      this.alterarVisibilidade(modalidadeId, false);
+    salvar() {
+      // Chama alterarVisibilidade para cada dropdown selecionado
+      if (this.modalidadeParaExibir) this.alterarVisibilidade(this.modalidadeParaExibir, true);
+      if (this.modalidadeParaOcultar) this.alterarVisibilidade(this.modalidadeParaOcultar, false);
+      // Limpa seleção após salvar
+      this.modalidadeParaExibir = "";
+      this.modalidadeParaOcultar = "";
     },
 
     capitalizar(str) {
@@ -168,29 +162,32 @@ export default {
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  padding: 15px;
 }
 
 .modal-content {
   background: white;
   padding: 30px 40px;
   border-radius: 10px;
-  width: 400px;
-  max-width: 90%;
+  width: 100%;
+  max-width: 500px;
+  box-sizing: border-box;
 }
 
 .modal-content h2 {
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   color: #3b82f6;
+  font-size: 1.5rem;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   display: flex;
   flex-direction: column;
 }
 
 .label-dropdown {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   font-weight: 600;
   font-size: 14px;
   color: #333;
@@ -201,50 +198,81 @@ export default {
   padding: 10px;
   border-radius: 6px;
   border: 1px solid #ccc;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .mensagem-alerta {
   color: red;
   font-size: 13px;
+  margin-bottom: 15px;
 }
 
 .buttons {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
   margin-top: 1rem;
 }
 
-.btn-cancel {
+.btn-cancel,
+.btn-save {
   flex: 1;
+  min-width: 100px;
   padding: 10px 0;
   border-radius: 20px;
   border: none;
   cursor: pointer;
-  color: white;
   font-size: 16px;
+  color: white;
+}
+
+.btn-cancel {
+  background-color: #7E7E7E ;
+}
+
+.btn-save {
   background-color: #3b82f6;
 }
 
 .loading-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(0,0,0,0.1);
-  border-top-color:  #152147;
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #3b82f6;
   border-radius: 50%;
+  width: 100px;
+  height: 100px;
   animation: spin 1s linear infinite;
-  margin-bottom: 10px;
+  margin: 40px auto;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+
+@media (max-width: 768px) {
+  .modal-content {
+    padding: 20px;
+  }
+
+  .modal-content h2 {
+    font-size: 1.4rem;
+  }
+
+  .dropdown {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .btn-cancel,
+  .btn-save {
+    font-size: 15px;
+    padding: 10px 0;
+  }
 }
 </style>

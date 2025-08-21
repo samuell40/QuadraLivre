@@ -18,21 +18,37 @@
 
           <div class="input-group">
             <label>Nome</label>
-            <input type="text" v-model="form.nome" placeholder="Digite seu nome" required />
+            <input 
+              type="text" 
+              v-model="form.nome" 
+              placeholder="Digite seu nome" 
+              required 
+            />
           </div>
 
           <div class="input-group">
             <label>Telefone</label>
-            <input type="tel" v-model="form.telefone" placeholder="Digite seu telefone" @input="formatarTelefone" />
+            <input 
+              type="tel" 
+              v-model="form.telefone" 
+              placeholder="Digite seu telefone" 
+              @input="formatarTelefone" 
+              required
+            />
           </div>
 
           <div class="input-group">
             <label>Foto</label>
-            <input type="file" id="imagem" @change="handleFileChange" accept=".jpg, .jpeg, .png">
+            <input 
+              type="file" 
+              id="imagem" 
+              ref="inputImagem"
+              @change="handleFileChange" 
+              accept=".jpg, .jpeg, .png"
+            >
           </div>
 
           <button type="submit" class="cadastro-button">Realizar Cadastro</button>
-
         </div>
       </form>
     </div>
@@ -70,6 +86,16 @@ export default {
   methods: {
     async cadastrarUsuario() {
       try {
+        // 🔴 validação de telefone obrigatório
+        if (!this.form.telefone || this.form.telefone.length < 14) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Atenção',
+            text: 'Por favor, informe um número de telefone válido.',
+          });
+          return;
+        }
+
         let urlImagem = null;
 
         if (this.form.imagem) {
@@ -106,7 +132,9 @@ export default {
           telefone: '',
           imagem: null,
         };
-        this.$refs.inputImagem.value = null;
+        if (this.$refs.inputImagem) {
+          this.$refs.inputImagem.value = null;
+        }
         localStorage.removeItem('emailCadastro');
 
       } catch (error) {

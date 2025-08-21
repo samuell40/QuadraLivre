@@ -4,7 +4,11 @@
     <div class="container">
       <h1>Cadastrar Quadra</h1>
 
-      <form @submit.prevent="cadastrarQuadra">
+      <div v-if="modalidades.length === 0" class="loader-container-centralizado">
+        <div class="loader"></div>
+      </div>
+
+      <form v-else @submit.prevent="cadastrarQuadra">
         <div class="form-group">
           <label for="nome">Nome:</label>
           <input type="text" id="nome" v-model="form.nome" required />
@@ -17,32 +21,27 @@
 
         <div class="form-group">
           <label>Modalidades:</label>
-          <div class="form-group modalidades-group">
-            <div v-if="modalidades.length === 0" class="mensagem-modalidade-vazia">
-              Nenhuma modalidade encontrada.
+          <div class="checkbox-list">
+            <div
+              v-for="modalidade in modalidades"
+              :key="modalidade.id"
+              class="checkbox-item"
+            >
+              <input
+                type="checkbox"
+                :id="'modalidade-' + modalidade.id"
+                :value="modalidade.id"
+                v-model="form.modalidadesSelecionadas"
+                @change="erroModalidade = false"
+              />
+              <label :for="'modalidade-' + modalidade.id">
+                {{ formatarNomeModalidade(modalidade.nome) }}
+              </label>
             </div>
-            <div v-else class="checkbox-list">
-              <div
-                v-for="modalidade in modalidades"
-                :key="modalidade.id"
-                class="checkbox-item"
-              >
-                <input
-                  type="checkbox"
-                  :id="'modalidade-' + modalidade.id"
-                  :value="modalidade.id"
-                  v-model="form.modalidadesSelecionadas"
-                  @change="erroModalidade = false"
-                />
-                <label :for="'modalidade-' + modalidade.id">
-                  {{ formatarNomeModalidade(modalidade.nome) }}
-                </label>
-              </div>
-            </div>
-            <p v-if="erroModalidade" class="erro-modalidade">
-              ⚠️ Selecione pelo menos uma modalidade!
-            </p>
           </div>
+          <p v-if="erroModalidade" class="erro-modalidade">
+            ⚠️ Selecione pelo menos uma modalidade!
+          </p>
         </div>
 
         <!-- Upload da imagem -->
@@ -87,7 +86,6 @@ export default {
   methods: {
      async carregarModalidades() {
     try {
-      // Ajuste aqui: URL correta conforme seu backend
       const res = await api.get('/listar/modalidade'); 
       this.modalidades = res.data;
     } catch (error) {
@@ -277,6 +275,37 @@ input[type='file'] {
   color: #d9534f;
 }
 
+.loader-container-centralizado {
+ position: fixed; 
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center; 
+  align-items: center;     
+  z-index: 9999;
+}
+
+.loader {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #3b82f6;
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  animation: spin 1s linear infinite;
+  margin: 40px auto 80px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
 @media screen and (max-width: 768px) {
   .cadastro_quadra {
     margin-left: 0;

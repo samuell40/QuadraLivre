@@ -6,11 +6,7 @@
       <h1>Agendamentos</h1>
 
       <div class="agendamentos">
-        <AgendamentoCard
-          v-for="ag in agendamentos"
-          :key="ag.id"
-          :agendamento="ag"
-        />
+        <AgendamentoCard v-for="ag in agendamentos" :key="ag.id" :agendamento="ag" />
       </div>
     </div>
   </div>
@@ -57,7 +53,8 @@ const agendamentos = ref([
 }
 
 h1 {
- color: #3B82F6;
- font-weight: bold;
+  color: #3B82F6;
+  font-weight: bold;
+  font-size: 30px;
 }
 </style>

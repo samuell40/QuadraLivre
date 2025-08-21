@@ -24,41 +24,49 @@ export default {
   name: 'NaoAutorizado',
   methods: {
     loginComGoogle() {
-      const width = 500, height = 600;
-      const left = window.screenX + (window.outerWidth - width) / 2;
-      const top = window.screenY + (window.outerHeight - height) / 2.5;
-      const popup = window.open(
-        'http://localhost:3000/auth/google',
-        'Login com Google',
-        `width=${width},height=${height},left=${left},top=${top}`
-      );
+      const width = 500, height = 600
+      const left = window.screenX + (window.outerWidth - width) / 2
+      const top = window.screenY + (window.outerHeight - height) / 2.5
+      const popup = window.open('http://localhost:3000/auth/google', 'Login com Google',
+        `width=${width},height=${height},left=${left},top=${top}`)
 
-      const listener = (event) => {
-        if (event.origin !== 'http://localhost:8080') return;
-        const { token, erro, email } = event.data;
+      const listener = event => {
+        if (event.origin !== 'http://localhost:8080') return
+        const { token, erro, email, usuario } = event.data
 
         if (erro === 'usuario_nao_cadastrado') {
           Swal.fire({
-            icon: 'error',
-            title: 'Conta não encontrada!',
-            text: 'Redirecionando para cadastro...',
-            timer: 3000,
-            timerProgressBar: true,
-            showConfirmButton: false,
+            icon: 'error', title: 'Conta não encontrada!',
+            text: 'Redirecionando para cadastro...', timer: 3000,
+            timerProgressBar: true, showConfirmButton: false,
             didOpen: () => Swal.showLoading()
-          }).then(() => window.location.href = `/cadastro?email=${encodeURIComponent(email)}`);
+          }).then(() => window.location.href = `/cadastro?email=${encodeURIComponent(email)}`)
         }
 
         if (token) {
-          localStorage.setItem('token', token);
-          router.push('/agendarquadra');
+          localStorage.setItem('token', token)
+          localStorage.setItem('usuario', JSON.stringify(usuario))
+          const quadraSelecionada = JSON.parse(localStorage.getItem("quadraSelecionada") || "null")
+
+          if ([1, 2].includes(usuario.permissaoId)) {
+            router.push({ name: "Agendamentos" })
+          } else if (usuario.permissaoId === 3) {
+            if (quadraSelecionada) {
+              router.push({ name: "agendar_quadra", query: { quadraId: quadraSelecionada.id } })
+              localStorage.removeItem("quadraSelecionada")
+            } else {
+              router.push({ name: "agendar_quadra" })
+            }
+          } else {
+            router.push({ name: "Home" })
+          }
         }
 
-        window.removeEventListener('message', listener);
-        if (popup) popup.close();
-      };
+        window.removeEventListener('message', listener)
+        if (popup) popup.close()
+      }
 
-      window.addEventListener('message', listener, false);
+      window.addEventListener('message', listener, false)
     }
   }
 };

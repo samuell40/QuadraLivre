@@ -5,9 +5,9 @@
       <div class="box-small">
         <p>Pontos</p>
         <div class="controls espacamento">
-          <button @click="decrement('pts')" :disabled="!placarLocal.nome">−</button>
+          <button @click="decrement('pts')">−</button>
           <span>{{ placarLocal.pts.valor }}</span>
-          <button @click="increment('pts')" :disabled="!placarLocal.nome">+</button>
+          <button @click="increment('pts')">+</button>
         </div>
       </div>
     </div>
@@ -17,25 +17,25 @@
       <div class="box-small">
         <p>Vitórias</p>
         <div class="controls">
-          <button @click="decrement('vitorias', 'vitoria')" :disabled="!placarLocal.nome">−</button>
+          <button @click="decrement('vitorias', 'vitoria')">−</button>
           <span>{{ placarLocal.vitorias.valor }}</span>
-          <button @click="increment('vitorias', 'vitoria')" :disabled="!placarLocal.nome">+</button>
+          <button @click="increment('vitorias', 'vitoria')">+</button>
         </div>
       </div>
       <div class="box-small">
         <p>Empates</p>
         <div class="controls">
-          <button @click="decrement('empates', 'empate')" :disabled="!placarLocal.nome">−</button>
+          <button @click="decrement('empates', 'empate')">−</button>
           <span>{{ placarLocal.empates.valor }}</span>
-          <button @click="increment('empates', 'empate')" :disabled="!placarLocal.nome">+</button>
+          <button @click="increment('empates', 'empate')">+</button>
         </div>
       </div>
       <div class="box-small">
         <p>Derrotas</p>
         <div class="controls">
-          <button @click="decrement('derrotas')" :disabled="!placarLocal.nome">−</button>
+          <button @click="decrement('derrotas')">−</button>
           <span>{{ placarLocal.derrotas.valor }}</span>
-          <button @click="increment('derrotas')" :disabled="!placarLocal.nome">+</button>
+          <button @click="increment('derrotas')">+</button>
         </div>
       </div>
     </div>
@@ -45,25 +45,25 @@
       <div class="box-small">
         <p>Partidas Jogadas</p>
         <div class="controls">
-          <button @click="decrement('pj')" :disabled="!placarLocal.nome">−</button>
+          <button @click="decrement('pj')">−</button>
           <span>{{ placarLocal.pj.valor }}</span>
-          <button @click="increment('pj')" :disabled="!placarLocal.nome">+</button>
+          <button @click="increment('pj')">+</button>
         </div>
       </div>
       <div class="box-small">
         <p>Gols Marcados</p>
         <div class="controls">
-          <button @click="decrement('golspro')" :disabled="!placarLocal.nome">−</button>
+          <button @click="decrement('golspro')">−</button>
           <span>{{ placarLocal.golspro.valor }}</span>
-          <button @click="increment('golspro')" :disabled="!placarLocal.nome">+</button>
+          <button @click="increment('golspro')">+</button>
         </div>
       </div>
       <div class="box-small">
         <p>Gols Sofridos</p>
         <div class="controls">
-          <button @click="decrement('golsofridos')" :disabled="!placarLocal.nome">−</button>
+          <button @click="decrement('golsofridos')">−</button>
           <span>{{ placarLocal.golsofridos.valor }}</span>
-          <button @click="increment('golsofridos')" :disabled="!placarLocal.nome">+</button>
+          <button @click="increment('golsofridos')">+</button>
         </div>
       </div>
     </div>
@@ -73,17 +73,17 @@
       <div class="box-small">
         <p>Cartão amarelo</p>
         <div class="controls">
-          <button @click="decrement('cartaoamarelo')" :disabled="!placarLocal.nome">−</button>
+          <button @click="decrement('cartaoamarelo')">−</button>
           <span>{{ placarLocal.cartaoamarelo.valor }}</span>
-          <button @click="increment('cartaoamarelo')" :disabled="!placarLocal.nome">+</button>
+          <button @click="increment('cartaoamarelo')">+</button>
         </div>
       </div>
       <div class="box-small">
         <p>Cartão Vermelho</p>
         <div class="controls">
-          <button @click="decrement('cartaovermelho')" :disabled="!placarLocal.nome">−</button>
+          <button @click="decrement('cartaovermelho')">−</button>
           <span>{{ placarLocal.cartaovermelho.valor }}</span>
-          <button @click="increment('cartaovermelho')" :disabled="!placarLocal.nome">+</button>
+          <button @click="increment('cartaovermelho')">+</button>
         </div>
       </div>
     </div>
@@ -93,39 +93,39 @@
 </template>
 
 <script>
+import Swal from 'sweetalert2';
 export default {
   name: 'PlacarFutebol',
   props: {
-    placar: {
-      type: Object,
-      required: true
-    },
-    timeAtivo: {
-      type: Boolean,
-      required: true
-    }
+    placar: { type: Object, required: true },
+    timeAtivo: { type: Boolean, required: true },
+    timeSelecionado: { type: String, required: false }
   },
   data() {
-    return {
-      placarLocal: JSON.parse(JSON.stringify(this.placar)) // cópia profunda
-    };
+    return { placarLocal: JSON.parse(JSON.stringify(this.placar)) };
   },
   watch: {
     placar: {
-      handler(novo) {
-        this.placarLocal = JSON.parse(JSON.stringify(novo));
-      },
+      handler(novo) { this.placarLocal = JSON.parse(JSON.stringify(novo)); },
       immediate: true,
       deep: true
     }
   },
   methods: {
     increment(campo, tipo = '') {
+      if (!this.timeSelecionado) {
+        Swal.fire('Atenção', 'Selecione um time antes de alterar o placar.', 'warning');
+        return;
+      }
       this.placarLocal[campo].valor++;
       if (tipo === 'vitoria') this.placarLocal.pts.valor += 3;
       else if (tipo === 'empate') this.placarLocal.pts.valor += 1;
     },
     decrement(campo, tipo = '') {
+      if (!this.timeSelecionado) {
+        Swal.fire('Atenção', 'Selecione um time antes de alterar o placar.', 'warning');
+        return;
+      }
       if (this.placarLocal[campo].valor > 0) {
         this.placarLocal[campo].valor--;
         if (tipo === 'vitoria' && this.placarLocal.pts.valor >= 3) this.placarLocal.pts.valor -= 3;
@@ -133,6 +133,10 @@ export default {
       }
     },
     salvar() {
+      if (!this.timeSelecionado) {
+        Swal.fire('Atenção', 'Selecione um time antes de salvar o placar.', 'warning');
+        return;
+      }
       const saldoDeGols = this.placarLocal.golspro.valor - this.placarLocal.golsofridos.valor;
       const dadosParaSalvar = {
         pontuacao: this.placarLocal.pts.valor,
@@ -149,7 +153,7 @@ export default {
       this.$emit('salvar', dadosParaSalvar);
     }
   }
-};
+}
 </script>
 
 <style scoped>

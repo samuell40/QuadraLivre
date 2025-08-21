@@ -5,9 +5,9 @@
       <div class="box-small">
         <p>Pontos</p>
         <div class="controls espacamento">
-          <button @click="decrement('pts')" :disabled="!futsal.nome">−</button>
-          <span>{{ futsal.pts.valor }}</span>
-          <button @click="increment('pts')" :disabled="!futsal.nome">+</button>
+          <button @click="decrement('pts')">−</button>
+          <span>{{ placarLocal.pts.valor }}</span>
+          <button @click="increment('pts')">+</button>
         </div>
       </div>
     </div>
@@ -17,25 +17,25 @@
       <div class="box-small">
         <p>Vitórias</p>
         <div class="controls">
-          <button @click="decrement('vitorias', 'vitoria')" :disabled="!futsal.nome">−</button>
-          <span>{{ futsal.vitorias.valor }}</span>
-          <button @click="increment('vitorias', 'vitoria')" :disabled="!futsal.nome">+</button>
+          <button @click="decrement('vitorias', 'vitoria')">−</button>
+          <span>{{ placarLocal.vitorias.valor }}</span>
+          <button @click="increment('vitorias', 'vitoria')">+</button>
         </div>
       </div>
       <div class="box-small">
         <p>Empates</p>
         <div class="controls">
-          <button @click="decrement('empates', 'empate')" :disabled="!futsal.nome">−</button>
-          <span>{{ futsal.empates.valor }}</span>
-          <button @click="increment('empates', 'empate')" :disabled="!futsal.nome">+</button>
+          <button @click="decrement('empates', 'empate')">−</button>
+          <span>{{ placarLocal.empates.valor }}</span>
+          <button @click="increment('empates', 'empate')">+</button>
         </div>
       </div>
       <div class="box-small">
         <p>Derrotas</p>
         <div class="controls">
-          <button @click="decrement('derrotas')" :disabled="!futsal.nome">−</button>
-          <span>{{ futsal.derrotas.valor }}</span>
-          <button @click="increment('derrotas')" :disabled="!futsal.nome">+</button>
+          <button @click="decrement('derrotas')">−</button>
+          <span>{{ placarLocal.derrotas.valor }}</span>
+          <button @click="increment('derrotas')">+</button>
         </div>
       </div>
     </div>
@@ -45,25 +45,25 @@
       <div class="box-small">
         <p>Partidas Jogadas</p>
         <div class="controls">
-          <button @click="decrement('pj')" :disabled="!futsal.nome">−</button>
-          <span>{{ futsal.pj.valor }}</span>
-          <button @click="increment('pj')" :disabled="!futsal.nome">+</button>
+          <button @click="decrement('pj')">−</button>
+          <span>{{ placarLocal.pj.valor }}</span>
+          <button @click="increment('pj')">+</button>
         </div>
       </div>
       <div class="box-small">
         <p>Gols Marcados</p>
         <div class="controls">
-          <button @click="decrement('golspro')" :disabled="!futsal.nome">−</button>
-          <span>{{ futsal.golspro.valor }}</span>
-          <button @click="increment('golspro')" :disabled="!futsal.nome">+</button>
+          <button @click="decrement('golspro')">−</button>
+          <span>{{ placarLocal.golspro.valor }}</span>
+          <button @click="increment('golspro')">+</button>
         </div>
       </div>
       <div class="box-small">
         <p>Gols Sofridos</p>
         <div class="controls">
-          <button @click="decrement('golsofridos')" :disabled="!futsal.nome">−</button>
-          <span>{{ futsal.golsofridos.valor }}</span>
-          <button @click="increment('golsofridos')" :disabled="!futsal.nome">+</button>
+          <button @click="decrement('golsofridos')">−</button>
+          <span>{{ placarLocal.golsofridos.valor }}</span>
+          <button @click="increment('golsofridos')">+</button>
         </div>
       </div>
     </div>
@@ -73,17 +73,17 @@
       <div class="box-small">
         <p>Cartão amarelo</p>
         <div class="controls">
-          <button @click="decrement('cartaoamarelo')" :disabled="!futsal.nome">−</button>
-          <span>{{ futsal.cartaoamarelo.valor }}</span>
-          <button @click="increment('cartaoamarelo')" :disabled="!futsal.nome">+</button>
+          <button @click="decrement('cartaoamarelo')">−</button>
+          <span>{{ placarLocal.cartaoamarelo.valor }}</span>
+          <button @click="increment('cartaoamarelo')">+</button>
         </div>
       </div>
       <div class="box-small">
         <p>Cartão Vermelho</p>
         <div class="controls">
-          <button @click="decrement('cartaovermelho')" :disabled="!futsal.nome">−</button>
-          <span>{{ futsal.cartaovermelho.valor }}</span>
-          <button @click="increment('cartaovermelho')" :disabled="!futsal.nome">+</button>
+          <button @click="decrement('cartaovermelho')">−</button>
+          <span>{{ placarLocal.cartaovermelho.valor }}</span>
+          <button @click="increment('cartaovermelho')">+</button>
         </div>
       </div>
     </div>
@@ -93,63 +93,67 @@
 </template>
 
 <script>
+import Swal from 'sweetalert2';
 export default {
   name: 'PlacarFutebol',
   props: {
-    placar: {
-      type: Object,
-      required: true
-    },
-    timeAtivo: {
-      type: Boolean,
-      required: true
-    }
+    placar: { type: Object, required: true },
+    timeAtivo: { type: Boolean, required: true },
+    timeSelecionado: { type: String, required: false }
   },
   data() {
-    return {
-      futsal: JSON.parse(JSON.stringify(this.placar)) 
-    };
+    return { placarLocal: JSON.parse(JSON.stringify(this.placar)) };
   },
   watch: {
     placar: {
-      handler(novo) {
-        this.futsal = JSON.parse(JSON.stringify(novo));
-      },
+      handler(novo) { this.placarLocal = JSON.parse(JSON.stringify(novo)); },
       immediate: true,
       deep: true
     }
   },
   methods: {
     increment(campo, tipo = '') {
-      this.futsal[campo].valor++;
-      if (tipo === 'vitoria') this.futsal.pts.valor += 3;
-      else if (tipo === 'empate') this.futsal.pts.valor += 1;
+      if (!this.timeSelecionado) {
+        Swal.fire('Atenção', 'Selecione um time antes de alterar o placar.', 'warning');
+        return;
+      }
+      this.placarLocal[campo].valor++;
+      if (tipo === 'vitoria') this.placarLocal.pts.valor += 3;
+      else if (tipo === 'empate') this.placarLocal.pts.valor += 1;
     },
     decrement(campo, tipo = '') {
-      if (this.futsal[campo].valor > 0) {
-        this.futsal[campo].valor--;
-        if (tipo === 'vitoria' && this.futsal.pts.valor >= 3) this.futsal.pts.valor -= 3;
-        else if (tipo === 'empate' && this.futsal.pts.valor >= 1) this.futsal.pts.valor -= 1;
+      if (!this.timeSelecionado) {
+        Swal.fire('Atenção', 'Selecione um time antes de alterar o placar.', 'warning');
+        return;
+      }
+      if (this.placarLocal[campo].valor > 0) {
+        this.placarLocal[campo].valor--;
+        if (tipo === 'vitoria' && this.placarLocal.pts.valor >= 3) this.placarLocal.pts.valor -= 3;
+        else if (tipo === 'empate' && this.placarLocal.pts.valor >= 1) this.placarLocal.pts.valor -= 1;
       }
     },
     salvar() {
-      const saldoDeGols = this.futsal.golspro.valor - this.futsal.golsofridos.valor;
+      if (!this.timeSelecionado) {
+        Swal.fire('Atenção', 'Selecione um time antes de salvar o placar.', 'warning');
+        return;
+      }
+      const saldoDeGols = this.placarLocal.golspro.valor - this.placarLocal.golsofridos.valor;
       const dadosParaSalvar = {
-        pontuacao: this.futsal.pts.valor,
-        jogos: this.futsal.pj.valor,
-        golsPro: this.futsal.golspro.valor,
-        golsSofridos: this.futsal.golsofridos.valor,
+        pontuacao: this.placarLocal.pts.valor,
+        jogos: this.placarLocal.pj.valor,
+        golsPro: this.placarLocal.golspro.valor,
+        golsSofridos: this.placarLocal.golsofridos.valor,
         saldoDeGols,
-        empates: this.futsal.empates.valor,
-        vitorias: this.futsal.vitorias.valor,
-        derrotas: this.futsal.derrotas.valor,
-        cartoesAmarelos: this.futsal.cartaoamarelo.valor,
-        cartoesVermelhos: this.futsal.cartaovermelho.valor
+        empates: this.placarLocal.empates.valor,
+        vitorias: this.placarLocal.vitorias.valor,
+        derrotas: this.placarLocal.derrotas.valor,
+        cartoesAmarelos: this.placarLocal.cartaoamarelo.valor,
+        cartoesVermelhos: this.placarLocal.cartaovermelho.valor
       };
       this.$emit('salvar', dadosParaSalvar);
     }
   }
-};
+}
 </script>
 
 <style scoped>
