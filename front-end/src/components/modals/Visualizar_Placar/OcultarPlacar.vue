@@ -135,10 +135,8 @@ export default {
     },
 
     salvar() {
-      // Chama alterarVisibilidade para cada dropdown selecionado
       if (this.modalidadeParaExibir) this.alterarVisibilidade(this.modalidadeParaExibir, true);
       if (this.modalidadeParaOcultar) this.alterarVisibilidade(this.modalidadeParaOcultar, false);
-      // Limpa seleção após salvar
       this.modalidadeParaExibir = "";
       this.modalidadeParaOcultar = "";
     },

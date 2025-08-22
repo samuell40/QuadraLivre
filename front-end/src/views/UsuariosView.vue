@@ -12,7 +12,6 @@
         <div class="loader"></div>
       </div>
 
-
       <div v-else>
         <div class="usuarios" v-if="usuariosFiltrados.length > 0">
           <div class="card" v-for="usuario in usuariosFiltrados" :key="usuario.id">
@@ -96,22 +95,23 @@
     <div v-if="mostrarEditar" class="modal-overlay">
       <div class="modal-content">
         <h2>Editar Usuário</h2>
-
-        <!-- Loader no modal -->
-        <div v-if="isLoadingModal" class="loader loader-small"></div>
+        <div v-if="isCarregandoModal" class="loader-wrapper">
+          <div class="loader loader-small"></div>
+        </div>
 
         <div v-else>
           <div class="campo">
             <strong>Função:</strong>
             <select v-model="form.funcao">
               <option disabled value="">Selecione a função</option>
-              <option v-for="p in permissoes" :key="p.id" :value="p.descricao">
+              <option v-for="p in permissoesFiltradas" :key="p.id" :value="p.descricao">
                 {{ p.descricao }}
               </option>
             </select>
           </div>
 
-          <div class="campo" v-if="form.funcao !== 'DESENVOLVEDOR_DE_SISTEMA' && form.funcao !== 'USUARIO'">
+          <div class="campo"
+            v-if="form.funcao === 'ADMINISTRADOR' && usuarioLogado.funcao === 'DESENVOLVEDOR_DE_SISTEMA'">
             <strong>Quadra:</strong>
             <select v-model="form.quadra">
               <option disabled value="">Selecione a quadra</option>
@@ -120,6 +120,7 @@
               </option>
             </select>
           </div>
+
 
           <div class="campo" v-if="form.funcao === 'USUARIO'">
             <strong>Time:</strong>
@@ -132,8 +133,8 @@
           </div>
 
           <div class="botoes" style="margin-top: 20px;">
-            <button class="btn-salvarEdicao" @click="salvarEdicao" :disabled="isLoadingModal">Salvar</button>
-            <button class="btn-fecharEdicao" @click="fecharEditar" :disabled="isLoadingModal">Cancelar</button>
+            <button class="btn-salvarEdicao" @click="salvarEdicao" :disabled="isSalvando">Salvar</button>
+            <button class="btn-fecharEdicao" @click="fecharEditar" :disabled="isSalvando">Cancelar</button>
           </div>
         </div>
       </div>
@@ -155,7 +156,8 @@ export default {
       usuarios: [],
       busca: '',
       isLoading: true,
-      isLoadingModal: false, // 🔹 novo
+      isCarregandoModal: false,
+      isSalvando: false,
       mostrarDetalhes: false,
       mostrarEditar: false,
       usuarioSelecionado: {},
@@ -171,15 +173,30 @@ export default {
     };
   },
   computed: {
-    usuarioLogadoEmail() {
+    usuarioLogado() {
       const authStore = useAuthStore();
-      return authStore.usuario?.email || '';
+      return authStore.usuario || {};
+    },
+    usuarioLogadoEmail() {
+      return this.usuarioLogado.email || '';
     },
     usuariosFiltrados() {
       return this.usuarios
         .filter(u => u.nome.toLowerCase().includes(this.busca.toLowerCase()))
-        .filter(u => u.email !== this.usuarioLogadoEmail);
+        .filter(u => u.email !== this.usuarioLogadoEmail)
+        .filter(u => {
+          if (this.usuarioLogado.funcao === 'ADMINISTRADOR') {
+            return u.funcao !== 'DESENVOLVEDOR_DE_SISTEMA' && u.funcao !== 'ADMINISTRADOR';
+          }
+          return true;
+        });
     },
+    permissoesFiltradas() {
+      if (this.usuarioLogado.funcao === 'ADMINISTRADOR') {
+        return this.permissoes.filter(p => p.descricao === 'USUARIO');
+      }
+      return this.permissoes;
+    }
   },
   mounted() {
     this.carregarUsuarios();
@@ -229,32 +246,42 @@ export default {
       this.usuarioSelecionado = usuario;
       this.form.email = usuario.email;
       this.form.funcao = usuario.funcao;
-      this.form.quadra = usuario.quadra || '';
+      this.form.quadra = usuario.quadra?.id || '';
       this.form.timeId = usuario.time?.id || '';
       this.mostrarEditar = true;
 
-      this.isLoadingModal = true;
+      this.isCarregandoModal = true;
       try {
         await Promise.all([this.listarPermissoes(), this.listarQuadras(), this.listarTimes()]);
       } catch (err) {
         console.error('Erro ao carregar dados do modal:', err);
         Swal.fire({ icon: 'error', title: 'Erro', text: 'Falha ao carregar dados do modal.' });
       } finally {
-        this.isLoadingModal = false;
+        this.isCarregandoModal = false;
       }
     },
 
     async salvarEdicao() {
-      this.isLoadingModal = true;
+      this.isSalvando = true;
       try {
         if (!this.form.funcao) {
-          Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Selecione uma função válida antes de salvar.' });
+          await Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Selecione uma função válida antes de salvar.' });
           return;
         }
 
         const permissaoSelecionada = this.permissoes.find(p => p.descricao === this.form.funcao);
         if (!permissaoSelecionada) {
-          Swal.fire({ icon: 'error', title: 'Erro', text: 'Permissão inválida.' });
+          await Swal.fire({ icon: 'error', title: 'Erro', text: 'Permissão inválida.' });
+          return;
+        }
+
+        if (this.form.funcao === 'USUARIO' && !this.form.timeId) {
+          await Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Usuários precisam estar vinculados a um time.' });
+          return;
+        }
+
+        if (this.form.funcao === 'ADMINISTRADOR' && !this.form.quadra) {
+          await Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Administradores precisam estar vinculados a uma quadra.' });
           return;
         }
 
@@ -266,15 +293,13 @@ export default {
           timeId: this.form.timeId || null
         };
 
-        if (this.form.funcao === 'USUARIO' && this.form.timeId) {
+        if (this.form.funcao === 'USUARIO') {
           const timeSelecionado = this.times.find(t => t.id === Number(this.form.timeId));
           const jaTemTimeNaModalidade = this.usuarioSelecionado.times?.find(
             t => t.modalidadeId === timeSelecionado.modalidadeId
           );
 
           if (jaTemTimeNaModalidade && jaTemTimeNaModalidade.id !== timeSelecionado.id) {
-            this.mostrarEditar = false;
-
             const confirmacao = await Swal.fire({
               title: 'Trocar de time?',
               text: `Você já faz parte do time "${jaTemTimeNaModalidade.nome}" na modalidade "${timeSelecionado.modalidade.nome}". Deseja trocar para o time "${timeSelecionado.nome}"?`,
@@ -286,42 +311,32 @@ export default {
               cancelButtonColor: '#7E7E7E',
             });
 
-            if (!confirmacao.isConfirmed) {
-              this.mostrarEditar = true;
-              return;
-            }
+            if (!confirmacao.isConfirmed) return;
 
-            await api.post('/vincular', {
-              usuarioId: this.usuarioSelecionado.id,
-              timeId: timeSelecionado.id,
-            });
+            await api.post('/vincular', { usuarioId: this.usuarioSelecionado.id, timeId: timeSelecionado.id });
           } else {
-            await api.post('/vincular', {
-              usuarioId: this.usuarioSelecionado.id,
-              timeId: timeSelecionado.id,
-            });
+            await api.post('/vincular', { usuarioId: this.usuarioSelecionado.id, timeId: timeSelecionado.id });
           }
         }
 
         await api.put('/editar/usuario', payload);
 
-        Swal.fire({ icon: 'success', title: 'Sucesso', text: 'Usuário atualizado com sucesso!' });
+        await Swal.fire({ icon: 'success', title: 'Sucesso', text: 'Usuário atualizado com sucesso!' });
+
         this.mostrarEditar = false;
         this.carregarUsuarios();
-
       } catch (err) {
         console.error('Erro ao salvar edição:', err);
-        Swal.fire({ icon: 'error', title: 'Erro', text: err.response?.data?.error || 'Falha ao salvar edição do usuário.' });
+        await Swal.fire({ icon: 'error', title: 'Erro', text: err.response?.data?.error || 'Falha ao salvar edição do usuário.' });
       } finally {
-        this.isLoadingModal = false;
+        this.isSalvando = false;
       }
     },
-
     fecharEditar() {
       this.mostrarEditar = false;
-    },
-  },
-};
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -335,6 +350,7 @@ export default {
   min-height: 100vh;
   margin-left: 180px;
   margin-right: -70px;
+  position: relative;
 }
 
 .header {
@@ -558,15 +574,13 @@ select {
 }
 
 .loader-container-centralizado {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
 }
 
 .loader {
@@ -588,6 +602,7 @@ select {
     transform: rotate(360deg);
   }
 }
+
 
 @media (max-width: 768px) {
   .container {

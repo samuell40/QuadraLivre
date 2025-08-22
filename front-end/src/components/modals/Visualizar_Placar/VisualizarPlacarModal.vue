@@ -351,7 +351,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 250px; /* ajuste conforme necessário */
+  height: 250px; 
   font-size: 18px;
   color: #555;
 }

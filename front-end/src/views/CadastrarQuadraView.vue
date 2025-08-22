@@ -4,10 +4,12 @@
     <div class="container">
       <h1>Cadastrar Quadra</h1>
 
+      <!-- Loader centralizado -->
       <div v-if="modalidades.length === 0" class="loader-container-centralizado">
         <div class="loader"></div>
       </div>
 
+      <!-- Formulário só aparece quando as modalidades carregarem -->
       <form v-else @submit.prevent="cadastrarQuadra">
         <div class="form-group">
           <label for="nome">Nome:</label>
@@ -47,7 +49,13 @@
         <!-- Upload da imagem -->
         <div class="form-group" id="adicionar_imagem">
           <label for="imagem">Imagem:</label>
-          <input type="file" id="imagem" @change="handleFileChange" accept=".jpg, .jpeg, .png" required />
+          <input 
+            type="file" 
+            id="imagem" 
+            @change="handleFileChange" 
+            accept=".jpg, .jpeg, .png" 
+            required 
+          />
         </div>
 
         <button type="submit" class="btn_cadastrarquadra">
@@ -64,9 +72,7 @@ import Swal from 'sweetalert2';
 import api from '@/axios';
 
 export default {
-  components: {
-    SideBar,
-  },
+  components: { SideBar },
   data() {
     return {
       modalidades: [],
@@ -84,85 +90,77 @@ export default {
     this.carregarModalidades();
   },
   methods: {
-     async carregarModalidades() {
-    try {
-      const res = await api.get('/listar/modalidade'); 
-      this.modalidades = res.data;
-    } catch (error) {
-      console.error('Erro ao carregar modalidades:', error);
-      Swal.fire('Erro', 'Não foi possível carregar as modalidades.', 'error');
-    }
-  },
+    async carregarModalidades() {
+      try {
+        const res = await api.get('/listar/modalidade');
+        this.modalidades = res.data;
+      } catch (error) {
+        console.error('Erro ao carregar modalidades:', error);
+        Swal.fire('Erro', 'Não foi possível carregar as modalidades.', 'error');
+      }
+    },
 
-  async cadastrarQuadra() {
-    if (this.form.modalidadesSelecionadas.length === 0) {
-      this.erroModalidade = true;
-      return;
-    }
-
-    try {
-      let urlImagem = null;
-
-      if (this.form.imagem) {
-        const formData = new FormData();
-        formData.append('file', this.form.imagem);
-
-        const uploadResponse = await api.post('/upload', formData);
-        urlImagem = uploadResponse.data.fileUrl;
+    async cadastrarQuadra() {
+      if (this.form.modalidadesSelecionadas.length === 0) {
+        this.erroModalidade = true;
+        return;
       }
 
-      const modalidadesFormatadas = this.form.modalidadesSelecionadas.map(id => ({ id }));
+      try {
+        let urlImagem = null;
 
-      await api.post('/quadra', {
-        nome: this.form.nome,
-        endereco: this.form.endereco,
-        foto: urlImagem,
-        modalidades: modalidadesFormatadas,
-      });
+        if (this.form.imagem) {
+          const formData = new FormData();
+          formData.append('file', this.form.imagem);
 
-      Swal.fire({
-        icon: 'success',
-        title: 'Sucesso!',
-        text: 'Quadra cadastrada com sucesso!',
-        timer: 2000,
-        showConfirmButton: false,
-      });
+          const uploadResponse = await api.post('/upload', formData);
+          urlImagem = uploadResponse.data.fileUrl;
+        }
 
-      this.form = {
-        nome: '',
-        endereco: '',
-        imagem: null,
-        modalidadesSelecionadas: [],
-      };
-      document.getElementById('imagem').value = null;
-      this.previewUrl = null;
-      this.erroModalidade = false;
-    } catch (error) {
-      console.error('Erro ao cadastrar quadra:', error);
+        const modalidadesFormatadas = this.form.modalidadesSelecionadas.map(id => ({ id }));
 
-      Swal.fire({
-        icon: 'error',
-        title: 'Erro',
-        text: error.response?.data?.error || 'Erro ao cadastrar quadra. Tente novamente.',
-      });
-    }
+        await api.post('/quadra', {
+          nome: this.form.nome,
+          endereco: this.form.endereco,
+          foto: urlImagem,
+          modalidades: modalidadesFormatadas,
+        });
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Sucesso!',
+          text: 'Quadra cadastrada com sucesso!',
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        this.form = { nome: '', endereco: '', imagem: null, modalidadesSelecionadas: [] };
+        document.getElementById('imagem').value = null;
+        this.previewUrl = null;
+        this.erroModalidade = false;
+      } catch (error) {
+        console.error('Erro ao cadastrar quadra:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Erro',
+          text: error.response?.data?.error || 'Erro ao cadastrar quadra. Tente novamente.',
+        });
+      }
+    },
+
+    handleFileChange(event) {
+      this.form.imagem = event.target.files[0];
+      this.previewUrl = this.form.imagem ? URL.createObjectURL(this.form.imagem) : null;
+    },
+
+    formatarNomeModalidade(nome) {
+      return nome
+        .replace(/_/g, ' ')
+        .toLowerCase()
+        .replace(/\b\w/g, letra => letra.toUpperCase());
+    },
   },
-
-  handleFileChange(event) {
-    this.form.imagem = event.target.files[0];
-    this.previewUrl = this.form.imagem
-      ? URL.createObjectURL(this.form.imagem)
-      : null;
-  },
-
-  formatarNomeModalidade(nome) {
-    return nome
-      .replace(/_/g, ' ')
-      .toLowerCase()
-      .replace(/\b\w/g, letra => letra.toUpperCase());
-  },
-}
-}
+};
 </script>
 
 <style scoped>
@@ -276,15 +274,11 @@ input[type='file'] {
 }
 
 .loader-container-centralizado {
- position: fixed; 
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
   display: flex;
-  justify-content: center; 
-  align-items: center;     
-  z-index: 9999;
+  justify-content: center;
+  align-items: flex-start;  
+  height: 300px;            
+  margin-top: 200px;        
 }
 
 .loader {
@@ -294,18 +288,12 @@ input[type='file'] {
   width: 100px;
   height: 100px;
   animation: spin 1s linear infinite;
-  margin: 40px auto 80px;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
+
 @media screen and (max-width: 768px) {
   .cadastro_quadra {
     margin-left: 0;

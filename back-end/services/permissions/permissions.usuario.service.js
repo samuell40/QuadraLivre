@@ -1,46 +1,27 @@
 const verificarPermissoes = require('../../utils/permisssion.utils.js');
-const permissions = require('../../config/permissions.config.js')
+const permissions = require('../../config/permissions.config.js');
 
-async function get(req, res, next) {
+function checkPermission(requiredPerms) {
+  return async (req, res, next) => {
     try {
-        await verificarPermissoes(req.user, permissions.PERMISSAO_ADMIN);
-        next(); 
+      await verificarPermissoes(req.user, requiredPerms);
+      next();
     } catch (err) {
-        next(err);
+      next(err);
     }
-}
-async function getDados(req, res, next) {
-    try {
-        await verificarPermissoes(req.user, permissions.TODOS);
-        next(); 
-    } catch (err) {
-        next(err);
-    }
+  };
 }
 
-async function post(req, res, next) {
-    try {
-        await verificarPermissoes(req.user, permissions.TODOS);
-        next();
-    } catch (err) {
-        next(err);
-    }
-}
-async function apagar(req, res, next) {
-    try {
-        await verificarPermissoes(req.user, permissions.PERMISSAO_ADMIN);
-        next(); 
-    } catch (err) {
-        next(err);
-    }
-}
-async function postUsuario(req, res, next) {
-    try {
-        await verificarPermissoes(req.user, permissions.PERMISSAO_ADMIN);
-        next(); 
-    } catch (err) {
-        next(err);
-    }
-}
+const todos = checkPermission(permissions.TODOS); 
+const admin = checkPermission(permissions.ADMINISTRADOR); 
+const devAdmin = checkPermission(permissions.DESENVOLVEDOR_DE_SISTEMA_E_ADMINISTRADOR);
+const dev = checkPermission(permissions.DESENVOLVEDOR_DE_SISTEMA);
+const usuarioComum = checkPermission(permissions.USUARIO);
 
-module.exports = {get, getDados, post, apagar, postUsuario};
+module.exports = {
+  todos,
+  admin,
+  devAdmin,
+  dev,
+  usuarioComum,
+};

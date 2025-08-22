@@ -1,6 +1,5 @@
 <template>
   <div class="home">
-    <!-- Navbar -->
     <nav class="navbar-custom">
       <div class="navbar-container">
         <div class="esquerda-section">
@@ -24,7 +23,6 @@
       </div>
     </nav>
 
-    <!-- Seção Central -->
     <section class="texto-centro">
       <div class="conteudo-centralizado">
         <h1 class="texto">
@@ -64,21 +62,20 @@
       </template>
     </section>
 
-    <!-- Placares -->
-    <section id="placar-virtual" class="placares-container">
-      <!-- O título só aparece se houver pelo menos um placar visível -->
-      <h3 v-if="modalidadesDisponiveis.some(mod => getTimesComPosicao(mod.nome).length > 0)" class="tit_horario">
-        Placar Virtual
-      </h3>
 
-      <!-- Mostra loaders enquanto modalidades não carregaram -->
+    <section id="placar-virtual" class="placares-container">
+      <h3 class="tit_horario">Placar dos Campeonatos</h3>
+
       <div v-if="modalidadesDisponiveis.length === 0">
         <div class="placar-wrapper" v-for="n in 2" :key="n">
           <div class="loader"></div>
         </div>
       </div>
 
-      <!-- Placar real quando modalidades chegam -->
+      <p v-else-if="todosPlacaresOcultos" class="sem-placar-unico" style="text-align:center; margin-top:1rem;">
+        Nenhum placar disponível no momento.
+      </p>
+
       <div v-else v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" class="placar-wrapper">
         <div v-if="loadingPlacar[modalidade.nome]" class="loader"></div>
         <PlacarGeral v-else-if="getTimesComPosicao(modalidade.nome).length > 0"
@@ -87,7 +84,6 @@
       </div>
     </section>
 
-    <!-- Modal de Login -->
     <VerificarLogin v-if="mostrarModalLogin" @fechar="mostrarModalLogin = false" @irParaLogin="irParaLogin"
       @loginComGoogle="loginComGoogle" />
   </div>
@@ -119,9 +115,18 @@ export default {
   },
   computed: {
     algumPlacarVisivel() {
+      // true se houver pelo menos um time visível em qualquer modalidade
       return this.modalidadesDisponiveis.some(mod =>
         (this.placares[mod.nome] || []).some(t => t.visivel)
       )
+    },
+
+    todosPlacaresOcultos() {
+      // true se todas as modalidades tiverem 0 times visíveis
+      return this.modalidadesDisponiveis.length > 0 &&
+        this.modalidadesDisponiveis.every(mod =>
+          !(this.placares[mod.nome] || []).some(t => t.visivel)
+        )
     }
   },
   mounted() {
@@ -265,7 +270,6 @@ export default {
   }
 }
 </script>
-
 
 <style scoped>
 .navbar-custom {

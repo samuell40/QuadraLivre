@@ -113,15 +113,14 @@ export default {
   color: #7E7E7E;
   background: white;
   position: sticky;
-  top: 0; /* fixa no topo */
+  top: 0; 
   z-index: 20;
-   margin-left: 8%; 
-
+  margin-left: 8%; 
 }
 
 .placar-wrapper {
   width: 100%;
-  overflow-x: auto;   /* scroll horizontal */
+  overflow-x: auto;  
   margin: 0 auto;
   padding: 20px 110px;
   box-sizing: border-box;
@@ -129,7 +128,7 @@ export default {
 
 .placar {
   width: 100%;
-  min-width: 600px; /* 🔥 garante largura mínima para scroll */
+  min-width: 600px; 
   border-collapse: collapse;
   table-layout: fixed;
   background-color: white;
@@ -178,7 +177,6 @@ export default {
   flex-shrink: 0;
 }
 
-/* 🔥 Responsivo */
 @media (max-width: 768px) {
   .placar-wrapper {
     padding: 20px;

@@ -10,7 +10,8 @@
           <button class="btn-add" @click="abrirModalGerenciarTime">Gerenciar Times</button>
         </div>
       </div>
-      <div v-if="isLoading" class="spinner-overlay">
+
+      <div v-if="isLoading" class="loader-container-centralizado">
         <div class="loader"></div>
       </div>
 
@@ -118,7 +119,7 @@ export default {
   },
   data() {
     return {
-      isLoading: true, // Spinner inicial
+      isLoading: true, 
       modalidadesDisponiveis: [],
       modalidadeSelecionada: '',
       timeSelecionado: '',
@@ -150,7 +151,7 @@ export default {
   },
   mounted() {
     this.carregarModalidades().then(() => {
-      this.isLoading = false; // Spinner some
+      this.isLoading = false; 
       if (this.modalidadesDisponiveis.length) {
         this.modalidadeSelecionada = this.modalidadesDisponiveis[0].nome;
         this.carregarTimes();
@@ -189,7 +190,6 @@ export default {
     decrement(placar) { if (placar?.valor && placar.valor > 0) placar.valor--; },
     handleImagemUpload(event) { const file = event.target.files[0]; if (file) { const reader = new FileReader(); reader.onload = () => (this.fotoTime = reader.result); reader.readAsDataURL(file); } },
 
-    // Modais
     abrirModalPlacar() {
       this.modalPlacarAberto = true;
       this.modalidadeSelecionada = 'futebol';
@@ -379,6 +379,7 @@ export default {
   flex: 1;
   padding: 20px 10px;
   width: 100%;
+  position: relative;
 }
 
 .header {
@@ -392,7 +393,7 @@ export default {
   color: #3b82f6;
   font-size: 30px;
   margin-left: 15%;
-   font-weight: bold;
+  font-weight: bold;
 }
 
 .botoes {
@@ -457,16 +458,15 @@ export default {
   flex: 1;
 }
 
-.spinner-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+.loader-container-centralizado {
+  position: fixed;
+  top: 50%;
+  left: 55%; 
+  transform: translate(-60%, -50%); 
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 999;
+  z-index: 9999;
 }
 
 .loader {
@@ -476,7 +476,6 @@ export default {
   width: 100px;
   height: 100px;
   animation: spin 1s linear infinite;
-  margin: 40px auto 80px;
 }
 
 @keyframes spin {
@@ -488,6 +487,7 @@ export default {
     transform: rotate(360deg);
   }
 }
+
 
 @media (max-width: 768px) {
   .container {
