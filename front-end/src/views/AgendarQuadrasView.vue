@@ -30,7 +30,14 @@
     </div>
 
     <AgendamentoFutebolModal
-      v-if="mostrarModal"
+      v-if="mostrarModal && quadraSelecionada?.modalidades?.some(m => ['futebol','futsal','futebol de areia'].includes(m.nome.toLowerCase()))"
+      :quadra="quadraSelecionada"
+      @fechar="mostrarModal = false"
+      @confirmar="confirmarAgendamento"
+    />
+
+    <AgendamentoVoleiModal
+      v-if="mostrarModal && quadraSelecionada?.modalidades?.some(m => ['volei','voleibol','futevolei','volei de areia'].includes(m.nome.toLowerCase()))"
       :quadra="quadraSelecionada"
       @fechar="mostrarModal = false"
       @confirmar="confirmarAgendamento"
@@ -42,12 +49,14 @@
 import Swal from 'sweetalert2'
 import NavBar from '@/components/NavBar.vue'
 import AgendamentoFutebolModal from '@/components/modals/Agendamentos/AgendModalFut.vue'
+import AgendamentoVoleiModal from '@/components/modals/Agendamentos/AgendModalVol.vue'
 
 export default {
   name: 'AgendarQuadras',
   components: {
     NavBar,
-    AgendamentoFutebolModal
+    AgendamentoFutebolModal,
+    AgendamentoVoleiModal
   },
   data() {
     return {
@@ -79,7 +88,7 @@ export default {
           throw new Error('Usuário não autenticado. Token não encontrado.')
         }
 
-        const res = await fetch('https://quadra-livre-backend.onrender.com/quadra', {
+        const res = await fetch('http://localhost:3000/quadra', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -99,8 +108,12 @@ export default {
     },
 
     abrirModal(quadra) {
+      console.log('Abrindo modal para quadra:', quadra)
       this.quadraSelecionada = quadra
       this.mostrarModal = true
+      console.log('Mostrar futebol:', this.quadraSelecionada?.modalidades?.some(
+        m => ['futebol','futsal','futebol de areia'].includes(m.nome.toLowerCase())
+      ))
     },
 
     async confirmarAgendamento(agendamento) {

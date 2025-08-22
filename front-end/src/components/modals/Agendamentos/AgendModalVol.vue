@@ -1,26 +1,39 @@
-<template>
+<template> 
   <div class="modal-overlay" @click.self="$emit('fechar')">
     <div class="modal-content">
       <h2 class="title"><strong>{{ quadra?.nome }}</strong></h2>
 
+      <!-- Escolha da data -->
       <label for="data"><strong>Escolha a data:</strong></label>
       <input type="date" v-model="data" :min="minDate" :max="maxDate" />
 
-      <label for="hora"><strong>Escolha a hora:</strong></label>
+      <!-- Escolha da hora e duração -->
+      <label for="hora"><strong>Escolha a hora e duração:</strong></label>
       <div class="linha-horizontal">
         <input type="time" v-model="hora" min="07:00" max="23:59" />
-        <select v-model="tempo" class="select-tempo">
-          <option disabled value="">Tempo</option>
-          <option value="1h">1 hora</option>
-          <option value="2h">2 horas</option>
+        <select v-model="duracao" class="select-tempo">
+          <option disabled value="">Duração</option>
+          <option value="1">1 hora</option>
+          <option value="2">2 horas</option>
         </select>
       </div>
 
+      <!-- Tipo de agendamento -->
+      <label for="tipo"><strong>Tipo de agendamento:</strong></label>
+      <select v-model="tipo">
+        <option disabled value="">Selecione</option>
+        <option value="PARTIDA">Partida</option>
+        <option value="TREINO">Treino</option>
+        <option value="EVENTO">Evento</option>
+        <option value="OUTRO">Outro</option>
+      </select>
+
+      <!-- Ações -->
       <div class="modal-actions">
         <button
           @click="confirmar"
           class="btn-confirmar"
-          :disabled="!data || !hora || !tempo"
+          :disabled="!data || !hora || !duracao || !tipo"
         >
           Confirmar
         </button>
@@ -46,18 +59,19 @@ export default {
     return {
       data: '',
       hora: '',
-      tempo: '',
+      duracao: '',  // duração em horas (1 ou 2)
+      tipo: '',     // PARTIDA | TREINO | EVENTO | OUTRO
       minDate: hoje.toISOString().split('T')[0],
       maxDate: umAno.toISOString().split('T')[0]
     }
   },
   methods: {
     confirmar() {
-      if (!this.data || !this.hora || !this.tempo) {
+      if (!this.data || !this.hora || !this.duracao || !this.tipo) {
         Swal.fire({
           icon: 'warning',
           title: 'Campos obrigatórios',
-          text: 'Preencha todos os campos para agendar.',
+          text: 'Preencha data, hora, duração e tipo de agendamento.',
           confirmButtonColor: '#1E3A8A'
         })
         return
@@ -65,7 +79,6 @@ export default {
 
       const agora = new Date()
       const dataSelecionada = new Date(`${this.data}T${this.hora}`)
-
       const hoje = new Date()
       hoje.setHours(0, 0, 0, 0)
 
@@ -74,7 +87,7 @@ export default {
         Swal.fire({
           icon: 'error',
           title: 'Data inválida',
-          text: 'Não é possível agendar para datas anteriores a atual.',
+          text: 'Não é possível agendar para datas anteriores a hoje.',
           confirmButtonColor: '#1E3A8A'
         })
         return
@@ -86,7 +99,7 @@ export default {
         Swal.fire({
           icon: 'error',
           title: 'Data muito distante',
-          text: 'Você não pode agendar para mais de 1 ano a frente da data atual.',
+          text: 'Você não pode agendar para mais de 1 ano no futuro.',
           confirmButtonColor: '#1E3A8A'
         })
         return
@@ -121,18 +134,23 @@ export default {
       Swal.fire({
         icon: 'success',
         title: 'Agendamento confirmado!',
-        text: `Local: ${this.quadra?.nome} às ${this.hora} do dia ${this.data} por ${this.tempo}`,
+        text: `Local: ${this.quadra?.nome} às ${this.hora} do dia ${this.data} por ${this.duracao} hora(s) [${this.tipo}]`,
         confirmButtonColor: '#1E3A8A',
         timer: 4000,
         showConfirmButton: false,
         timerProgressBar: true
       })
 
+      // Emissão para o backend
       this.$emit('confirmar', {
-        quadra: this.quadra,
-        data: this.data,
-        hora: this.hora,
-        tempo: this.tempo
+        usuarioId: this.$store.state.usuario.id,
+        dia: parseInt(this.data.split('-')[2]),
+        mes: parseInt(this.data.split('-')[1]),
+        ano: parseInt(this.data.split('-')[0]),
+        hora: parseInt(this.hora.split(':')[0]),
+        duracao: parseInt(this.duracao),
+        tipo: this.tipo,
+        status: 'Pendente'
       })
     }
   }
@@ -156,23 +174,24 @@ export default {
 .modal-content {
   background-color: white;
   color: #7E7E7E;
-  padding: 24px 56px;
+  padding: 18px 56px;
   border-radius: 8px;
   max-width: 800px;
   width: 90%;
   max-height: 550px;
-  height: 60%;
+  height: 70%;
 }
 
 .modal-content input,
-.select-tempo {
+.select-tempo,
+select {
   color: #7E7E7E;
   height: 50px;
   padding: 10px;
   border: 1px solid #D9D9D9;
   border-radius: 4px;
   width: 100%;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 }
 
 .modal-content label {
@@ -182,13 +201,14 @@ export default {
 
 .title {
   margin-bottom: 32px;
+  color: #3b82f6;
   text-align: center;
 }
 
 .linha-horizontal {
   display: flex;
   gap: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 8px;
 }
 
 .linha-horizontal input,

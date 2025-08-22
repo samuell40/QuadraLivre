@@ -3,14 +3,33 @@
     <div class="modal-content">
       <h2 class="title"><strong>{{ quadra?.nome }}</strong></h2>
 
+      <!-- Escolha da data -->
       <label for="data"><strong>Escolha a data:</strong></label>
       <input type="date" v-model="data" :min="minDate" :max="maxDate" />
 
+      <!-- Escolha da hora -->
       <label for="hora"><strong>Escolha a hora:</strong></label>
       <input type="time" v-model="hora" min="07:00" max="23:00" />
 
+      <!-- Tipo de agendamento -->
+      <label for="tipo"><strong>Tipo de agendamento:</strong></label>
+      <select v-model="tipo">
+        <option disabled value="">Selecione</option>
+        <option value="PARTIDA">Partida</option>
+        <option value="TREINO">Treino</option>
+        <option value="EVENTO">Evento</option>
+        <option value="OUTRO">Outro</option>
+      </select>
+
+      <!-- Ações -->
       <div class="modal-actions">
-        <button @click="confirmar" class="btn-confirmar" :disabled="!data || !hora">Confirmar</button>
+        <button
+          @click="confirmar"
+          class="btn-confirmar"
+          :disabled="!data || !hora || !tipo"
+        >
+          Confirmar
+        </button>
         <button @click="$emit('fechar')" class="btn-cancelar">Cancelar</button>
       </div>
     </div>
@@ -33,17 +52,19 @@ export default {
     return {
       data: '',
       hora: '',
+      tipo: '', // PARTIDA | TREINO | EVENTO | OUTRO
+      duracao: 1, // fixo para futebol
       minDate: hoje.toISOString().split('T')[0],
       maxDate: umAno.toISOString().split('T')[0]
     }
   },
   methods: {
     confirmar() {
-      if (!this.data || !this.hora) {
+      if (!this.data || !this.hora || !this.tipo) {
         Swal.fire({
           icon: 'warning',
           title: 'Campos obrigatórios',
-          text: 'Preencha todos os campos para agendar.',
+          text: 'Preencha data, hora e tipo de agendamento.',
           confirmButtonColor: '#1E3A8A'
         })
         return
@@ -51,16 +72,15 @@ export default {
 
       const agora = new Date()
       const dataSelecionada = new Date(`${this.data}T${this.hora}`)
-
       const hoje = new Date()
       hoje.setHours(0, 0, 0, 0)
 
-      // Validações
+      // Validações de data
       if (dataSelecionada < hoje) {
         Swal.fire({
           icon: 'error',
           title: 'Data inválida',
-          text: 'Não é possível agendar para datas anteriores a atual.',
+          text: 'Não é possível agendar para datas anteriores a hoje.',
           confirmButtonColor: '#1E3A8A'
         })
         return
@@ -72,17 +92,18 @@ export default {
         Swal.fire({
           icon: 'error',
           title: 'Data muito distante',
-          text: 'Você não pode agendar para mais de 1 ano a frente da data atual.',
+          text: 'Você não pode agendar para mais de 1 ano no futuro.',
           confirmButtonColor: '#1E3A8A'
         })
         return
       }
 
+      // Validação de hora
       const [h, m] = this.hora.split(':')
       const horaSelecionada = parseInt(h) * 60 + parseInt(m)
       const horaMin = 7 * 60
-      const horaMax = (23 * 60) + 1
-      if (horaSelecionada < horaMin || horaSelecionada >= horaMax) {
+      const horaMax = 23 * 60
+      if (horaSelecionada < horaMin || horaSelecionada > horaMax) {
         Swal.fire({
           icon: 'error',
           title: 'Horário inválido',
@@ -92,6 +113,7 @@ export default {
         return
       }
 
+      // Validação de antecedência
       const diffHoras = (dataSelecionada - agora) / (1000 * 60 * 60)
       if (diffHoras < 24) {
         Swal.fire({
@@ -103,24 +125,28 @@ export default {
         return
       }
 
-      // Agendamento confirmado
+      // Confirmação
       Swal.fire({
         icon: 'success',
         title: 'Agendamento confirmado!',
-        text: `Local: ${this.quadra?.nome} às ${this.hora} do dia ${this.data}`,
+        text: `Local: ${this.quadra?.nome} às ${this.hora} do dia ${this.data} [${this.tipo}]`,
         confirmButtonColor: '#1E3A8A',
-        timer: 5000,
+        timer: 4000,
         showConfirmButton: false,
         timerProgressBar: true
       })
 
+      // Emissão para backend
       this.$emit('confirmar', {
-        quadra: this.quadra,
         quadraId: this.quadra.id,
+        usuarioId: this.$store.state.usuario.id,
         dia: parseInt(this.data.split('-')[2]),
         mes: parseInt(this.data.split('-')[1]),
         ano: parseInt(this.data.split('-')[0]),
-        hora: parseInt(this.hora.split(':')[0])
+        hora: parseInt(this.hora.split(':')[0]),
+        duracao: this.duracao,
+        tipo: this.tipo,
+        status: 'Pendente'
       })
     }
   }
@@ -148,33 +174,29 @@ export default {
   border-radius: 8px;
   max-width: 800px;
   width: 90%;
-  max-height: 500px;
-  height: 55%;
+  max-height: 550px;
+  height: 70%;
 }
 
-.modal-content input {
+.modal-content input,
+select {
   color: #7E7E7E;
   height: 50px;
   padding: 10px;
   border: 1px solid #D9D9D9;
   border-radius: 4px;
-}
-
-.modal-content input:first-of-type {
-  margin-bottom: 20px;
-}
-
-.modal-content input:nth-of-type(2) {
+  width: 100%;
   margin-bottom: 24px;
 }
 
 .modal-content label {
   margin-bottom: 6px;
+  display: block;
 }
 
 .title {
   margin-bottom: 32px;
-  color: #3b82f6;
+  text-align: center;
 }
 
 .modal-actions {
