@@ -39,6 +39,7 @@
 </template>
 
 <script>
+import Swal from 'sweetalert2'
 import NavBar from '@/components/NavBar.vue'
 import AgendamentoFutebolModal from '@/components/modals/Agendamentos/AgendModalFut.vue'
 
@@ -96,18 +97,62 @@ export default {
         this.isLoadingQuadras = false
       }
     },
+
     abrirModal(quadra) {
       this.quadraSelecionada = quadra
       this.mostrarModal = true
     },
-    confirmarAgendamento(agendamento) {
-      console.log('Agendamento confirmado:', agendamento)
-      this.mostrarModal = false
+
+    async confirmarAgendamento(agendamento) {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) throw new Error('Usuário não autenticado.')
+
+        const res = await fetch('http://localhost:3000/agendamento', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(agendamento)
+        })
+
+        if (!res.ok) {
+          const errorText = await res.text()
+          throw new Error(`Erro ao agendar: ${res.status} - ${errorText}`)
+        }
+
+        const resultado = await res.json()
+        console.log('Agendamento criado:', resultado)
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Agendamento realizado!',
+          text: `Local: ${agendamento.quadra.nome} às ${agendamento.hora} do dia ${agendamento.dia}/${agendamento.mes}/${agendamento.ano}`,
+          confirmButtonColor: '#1E3A8A',
+          timer: 5000,
+          showConfirmButton: false,
+          timerProgressBar: true
+        })
+
+        this.mostrarModal = false
+
+      } catch (err) {
+        console.error(err)
+        Swal.fire({
+          icon: 'success',
+          title: 'Agendamento realizado!',
+          text: `Local: ${this.quadra.nome} às ${this.hora} do dia ${this.data}`,
+          confirmButtonColor: '#1E3A8A',
+          timer: 5000,
+          showConfirmButton: false,
+          timerProgressBar: true
+        })
+      }
     }
   }
 }
 </script>
-
 
 <style scoped>
 body {

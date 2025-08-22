@@ -116,8 +116,11 @@ export default {
 
       this.$emit('confirmar', {
         quadra: this.quadra,
-        data: this.data,
-        hora: this.hora
+        quadraId: this.quadra.id,
+        dia: parseInt(this.data.split('-')[2]),
+        mes: parseInt(this.data.split('-')[1]),
+        ano: parseInt(this.data.split('-')[0]),
+        hora: parseInt(this.hora.split(':')[0])
       })
     }
   }
