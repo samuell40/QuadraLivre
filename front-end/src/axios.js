@@ -6,10 +6,13 @@ const api = axios.create({
   baseURL: 'http://localhost:3000',
 });
 
+// Interceptor para adicionar o token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token'); 
-    if (token) {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.warn('Token não encontrado. A requisição pode falhar.');
+    } else {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -17,36 +20,29 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Interceptor para tratar erros
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
       const status = error.response.status;
+      const msg = error.response.data?.message || 'Ocorreu um erro inesperado.';
       if (status === 401) {
-        console.error("Erro de autenticação:", error.response.data.message);
-        Swal.fire({
-          icon: 'error',
-          title: 'Erro de autenticação',
-          text: error.response.data.message || 'Sua autenticação falhou, refaça seu login.'
-        });
+        console.error('Erro de autenticação:', msg);
+        Swal.fire({ icon: 'error', title: 'Erro de autenticação', text: msg });
         router.push('/NaoAutorizado');
       } else if (status === 403) {
-        console.error("Acesso negado:", error.response.data.message);
-        Swal.fire({
-          icon: 'error',
-          title: 'Acesso negado',
-          text: error.response.data.message || 'Você não tem permissão para acessar este recurso.'
-        });
+        console.error('Acesso negado:', msg);
+        Swal.fire({ icon: 'error', title: 'Acesso negado', text: msg });
+      } else if (status === 422) {
+        console.error('Erro de validação:', msg);
+        Swal.fire({ icon: 'warning', title: 'Erro de validação', text: msg });
       } else {
-        console.error("Erro da API:", error.response.data.message);
-        Swal.fire({
-          icon: 'error',
-          title: 'Erro',
-          text: error.response.data.message || 'Ocorreu um erro inesperado.'
-        });
+        console.error('Erro da API:', msg);
+        Swal.fire({ icon: 'error', title: 'Erro', text: msg });
       }
     } else {
-      console.error("Erro inesperado:", error.message);
+      console.error('Erro inesperado:', error.message);
       Swal.fire({
         icon: 'error',
         title: 'Erro de conexão',

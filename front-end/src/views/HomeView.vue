@@ -65,15 +65,27 @@
     </section>
 
     <!-- Placares -->
-    <h3 v-if="algumPlacarVisivel" id="placar-virtual" class="tit_horario">Placar Virtual</h3>
+    <section id="placar-virtual" class="placares-container">
+      <!-- O título só aparece se houver pelo menos um placar visível -->
+      <h3 v-if="modalidadesDisponiveis.some(mod => getTimesComPosicao(mod.nome).length > 0)" class="tit_horario">
+        Placar Virtual
+      </h3>
 
-    <div v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id">
-      <div v-if="getTimesComPosicao(modalidade.nome).length > 0">
+      <!-- Mostra loaders enquanto modalidades não carregaram -->
+      <div v-if="modalidadesDisponiveis.length === 0">
+        <div class="placar-wrapper" v-for="n in 2" :key="n">
+          <div class="loader"></div>
+        </div>
+      </div>
+
+      <!-- Placar real quando modalidades chegam -->
+      <div v-else v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" class="placar-wrapper">
         <div v-if="loadingPlacar[modalidade.nome]" class="loader"></div>
-        <PlacarGeral :times="getTimesComPosicao(modalidade.nome)" :isLoading="loadingPlacar[modalidade.nome]"
+        <PlacarGeral v-else-if="getTimesComPosicao(modalidade.nome).length > 0"
+          :times="getTimesComPosicao(modalidade.nome)" :isLoading="loadingPlacar[modalidade.nome]"
           :modalidade="modalidade.nome" />
       </div>
-    </div>
+    </section>
 
     <!-- Modal de Login -->
     <VerificarLogin v-if="mostrarModalLogin" @fechar="mostrarModalLogin = false" @irParaLogin="irParaLogin"
@@ -101,7 +113,7 @@ export default {
       loadingPlacar: {},
       mostrarModalLogin: false,
       modalidadesDisponiveis: [],
-      isLoadingQuadras: false,
+      isLoadingQuadras: true,
       ws: null
     }
   },
@@ -179,44 +191,22 @@ export default {
     },
 
     iniciarWebSocket() {
-      this.ws = new WebSocket('ws://localhost:3000/placares')
-
-      this.ws.onopen = () => console.log('WebSocket conectado!')
-      this.ws.onmessage = event => {
-        try {
-          const data = JSON.parse(event.data)
-          if (data.modalidade && Array.isArray(data.placares)) {
-            this.$set(this.placares, data.modalidade, data.placares)
-          }
-        } catch (err) {
-          console.error('Erro ao processar mensagem WebSocket:', err)
-        }
-      }
-      this.ws.onclose = () => setTimeout(this.iniciarWebSocket, 5000)
-      this.ws.onerror = err => { console.error('Erro no WebSocket:', err); this.ws.close() }
-    },
-
-    async ocultarTodosPlacares() {
       try {
-        await api.patch('/placar/ocultar/todos')
-        Object.keys(this.placares).forEach(mod => {
-          this.placares[mod] = this.placares[mod].map(p => ({ ...p, visivel: false }))
-        })
-      } catch (err) {
-        console.error('Erro ao ocultar todos placares:', err)
-      }
-    },
-
-    async ocultarPlacarModalidade(modalidadeId) {
-      try {
-        await api.patch(`/placar/ocultar/modalidade/${modalidadeId}`)
-        const mod = this.modalidadesDisponiveis.find(m => m.id === modalidadeId)
-        if (mod) {
-          this.placares[mod.nome] = this.placares[mod.nome].map(p => ({ ...p, visivel: false }))
-        }
-      } catch (err) {
-        console.error(`Erro ao ocultar placar da modalidade ${modalidadeId}:`, err)
-      }
+        this.ws = new WebSocket('ws://localhost:3000/placares');
+        this.ws.onopen = () => console.log('WebSocket conectado!');
+        this.ws.onmessage = event => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.tipo === "visibilidadeAtualizada") {
+              this.modalidadesDisponiveis.forEach(mod => {
+                this.placares[mod.nome] = data.placares?.filter(p => p.time.modalidadeId === mod.id) || [];
+              });
+            }
+          } catch (err) { console.error('Erro ao processar mensagem WebSocket:', err); }
+        };
+        this.ws.onclose = () => setTimeout(this.iniciarWebSocket, 5000)
+        this.ws.onerror = () => this.ws.close()
+      } catch (err) { console.error('Falha ao iniciar WebSocket:', err); }
     },
 
     verificarLogin(quadra) {
@@ -228,6 +218,8 @@ export default {
         this.mostrarModalLogin = true
       }
     },
+
+    irParaLogin() { this.mostrarModalLogin = true },
 
     loginComGoogle() {
       const width = 500, height = 600
@@ -241,12 +233,8 @@ export default {
         const { token, erro, email, usuario } = event.data
 
         if (erro === 'usuario_nao_cadastrado') {
-          Swal.fire({
-            icon: 'error', title: 'Conta não encontrada!',
-            text: 'Redirecionando para cadastro...', timer: 3000,
-            timerProgressBar: true, showConfirmButton: false,
-            didOpen: () => Swal.showLoading()
-          }).then(() => window.location.href = `/cadastro?email=${encodeURIComponent(email)}`)
+          Swal.fire({ icon: 'error', title: 'Conta não encontrada!', text: 'Redirecionando para cadastro...', timer: 3000, timerProgressBar: true, showConfirmButton: false, didOpen: () => Swal.showLoading() })
+            .then(() => window.location.href = `/cadastro?email=${encodeURIComponent(email)}`)
         }
 
         if (token) {
@@ -277,6 +265,7 @@ export default {
   }
 }
 </script>
+
 
 <style scoped>
 .navbar-custom {
@@ -574,6 +563,25 @@ p {
   margin: 0;
   line-height: 1.2;
   color: #fff
+}
+
+.placares-container {
+  margin-top: 60px;
+  /* espaço entre quadras e placares */
+  padding: 0 20px;
+}
+
+.placar-wrapper {
+  margin-bottom: 40px;
+  /* espaço entre cada placar */
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.placar-wrapper .loader {
+  margin: 40px auto;
+  /* centraliza loader */
 }
 
 @media (max-width: 768px) {
