@@ -29,15 +29,8 @@
       </div>
     </div>
 
-    <AgendamentoFutebolModal
-      v-if="mostrarModal && quadraSelecionada?.modalidades?.some(m => ['futebol','futsal','futebol de areia'].includes(m.nome.toLowerCase()))"
-      :quadra="quadraSelecionada"
-      @fechar="mostrarModal = false"
-      @confirmar="confirmarAgendamento"
-    />
-
-    <AgendamentoVoleiModal
-      v-if="mostrarModal && quadraSelecionada?.modalidades?.some(m => ['volei','voleibol','futevolei','volei de areia'].includes(m.nome.toLowerCase()))"
+    <AgendamentoModal
+      v-if="mostrarModal"
       :quadra="quadraSelecionada"
       @fechar="mostrarModal = false"
       @confirmar="confirmarAgendamento"
@@ -48,15 +41,15 @@
 <script>
 import Swal from 'sweetalert2'
 import NavBar from '@/components/NavBar.vue'
-import AgendamentoFutebolModal from '@/components/modals/Agendamentos/AgendModalFut.vue'
-import AgendamentoVoleiModal from '@/components/modals/Agendamentos/AgendModalVol.vue'
+import AgendamentoModal from '@/components/modals/Agendamentos/AgendModal.vue'
+import api from '@/axios'
+import { useAuthStore } from '@/store'
 
 export default {
   name: 'AgendarQuadras',
   components: {
     NavBar,
-    AgendamentoFutebolModal,
-    AgendamentoVoleiModal
+    AgendamentoModal,
   },
   data() {
     return {
@@ -66,16 +59,12 @@ export default {
       quadraSelecionada: null
     }
   },
-  // Abre o modal com a quadra selecionada na tela home ao carregar a página
   mounted() {
     this.carregarQuadras().then(() => {
       const quadraId = this.$route.query.quadraId
       if (quadraId) {
-        // procura a quadra pelo id
         const quadra = this.quadras.find(q => q.id == quadraId)
-        if (quadra) {
-          this.abrirModal(quadra)
-        }
+        if (quadra) this.abrirModal(quadra)
       }
     })
   },
@@ -83,22 +72,7 @@ export default {
     async carregarQuadras() {
       this.isLoadingQuadras = true
       try {
-        const token = localStorage.getItem('token')
-        if (!token) {
-          throw new Error('Usuário não autenticado. Token não encontrado.')
-        }
-
-        const res = await fetch('http://localhost:3000/quadra', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-
-        if (!res.ok) {
-          throw new Error(`Erro na requisição: ${res.status} ${res.statusText}`)
-        }
-
-        const data = await res.json()
+        const { data } = await api.get('/quadra')
         this.quadras = data
       } catch (err) {
         console.error('Erro ao carregar quadras:', err)
@@ -108,40 +82,35 @@ export default {
     },
 
     abrirModal(quadra) {
-      console.log('Abrindo modal para quadra:', quadra)
       this.quadraSelecionada = quadra
       this.mostrarModal = true
-      console.log('Mostrar futebol:', this.quadraSelecionada?.modalidades?.some(
-        m => ['futebol','futsal','futebol de areia'].includes(m.nome.toLowerCase())
-      ))
     },
 
-    async confirmarAgendamento(agendamento) {
-      try {
-        const token = localStorage.getItem('token')
-        if (!token) throw new Error('Usuário não autenticado.')
-
-        const res = await fetch('http://localhost:3000/agendamento', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(agendamento)
+    async confirmarAgendamento(agendamentoDoModal) {
+      const authStore = useAuthStore()
+      if (!authStore.usuario) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Erro de usuário',
+          text: 'Usuário não autenticado. Faça login e tente novamente.',
+          confirmButtonColor: '#1E3A8A'
         })
+        return
+      }
 
-        if (!res.ok) {
-          const errorText = await res.text()
-          throw new Error(`Erro ao agendar: ${res.status} - ${errorText}`)
-        }
+      // Monta payload completo com usuário e quadra
+      const agendamento = {
+        ...agendamentoDoModal,
+        usuarioId: authStore.usuario.id,
+        quadraId: this.quadraSelecionada.id
+      }
 
-        const resultado = await res.json()
-        console.log('Agendamento criado:', resultado)
-
+      try {
+        const { data: resultado } = await api.post('/agendamento', agendamento)
         Swal.fire({
           icon: 'success',
           title: 'Agendamento realizado!',
-          text: `Local: ${agendamento.quadra.nome} às ${agendamento.hora} do dia ${agendamento.dia}/${agendamento.mes}/${agendamento.ano}`,
+          text: `Local: ${this.quadraSelecionada.nome} às ${agendamento.hora} do dia ${agendamento.dia}/${agendamento.mes}/${agendamento.ano}`,
           confirmButtonColor: '#1E3A8A',
           timer: 5000,
           showConfirmButton: false,
@@ -149,18 +118,24 @@ export default {
         })
 
         this.mostrarModal = false
-
+        console.log('Agendamento criado:', resultado)
       } catch (err) {
-        console.error(err)
-        Swal.fire({
-          icon: 'success',
-          title: 'Agendamento realizado!',
-          text: `Local: ${this.quadra.nome} às ${this.hora} do dia ${this.data}`,
-          confirmButtonColor: '#1E3A8A',
-          timer: 5000,
-          showConfirmButton: false,
-          timerProgressBar: true
-        })
+        if (err.response?.status === 409) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Horário já agendado',
+            text: 'Escolha outro horário para esta quadra.',
+            confirmButtonColor: '#1E3A8A'
+          })
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Erro inesperado',
+            text: 'Ocorreu um problema ao tentar agendar. Tente novamente.',
+            confirmButtonColor: '#1E3A8A'
+          })
+        }
+        console.error('Erro ao agendar:', err)
       }
     }
   }

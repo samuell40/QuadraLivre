@@ -30,6 +30,7 @@ model Quadra {
   endereco    String?
   usuarios    Usuario[]
   modalidades Modalidade[] @relation("QuadraModalidade")
+  agendamentos Agendamento[]
 }
 
 enum TipoAgendamento {
@@ -50,6 +51,8 @@ model Agendamento {
   tipo      TipoAgendamento @default(TREINO)
   usuarioId Int?
   usuario   Usuario?          @relation(fields: [usuarioId], references: [id])
+  quadraId  Int?
+  quadra    Quadra?   @relation(fields: [quadraId], references: [id])
 }
 
   model Modalidade {

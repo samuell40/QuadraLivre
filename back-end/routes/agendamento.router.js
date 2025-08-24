@@ -1,9 +1,9 @@
-import express from 'express'
-import { criarAgendamento } from '../controllers/agendamento.controller.js'
-import { autenticar } from '../middlewares/auth.js'
+const express = require('express');
+const { criarAgendamentoController } = require('../controllers/agendamento.controller');
+const validarJWT = require('../middlewares/auth');
 
-const router = express.Router()
+const router = express.Router();
 
-router.post('/agendamento', autenticar, criarAgendamento)
+router.post('/agendamento', [validarJWT], criarAgendamentoController);
 
-export default router
+module.exports = router;

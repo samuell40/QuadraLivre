@@ -15,6 +15,7 @@ const authRoutes = require("./routes/auth.router");
 const usuario = require('./routes/usuario.router');
 const quadra = require('./routes/quadra.router');
 const placar = require('./routes/placar.router');
+const agendamento = require('./routes/agendamento.router');
 //const { FirstRun } = require('./firstRun');
 
 // Inicialização
@@ -46,6 +47,7 @@ app.use("/auth", authRoutes);
 app.use(usuario);
 app.use(quadra);
 app.use(placar);
+app.use(agendamento);
 //FirstRun();
 
 // Rota base
