@@ -72,8 +72,6 @@ const vincularUsuarioTimeController = async (req, res) => {
   }
 };
 
-
-
 module.exports = {
   postUsuarioController,
   updateUsuarioController,

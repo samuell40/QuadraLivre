@@ -69,7 +69,7 @@
 
         <div class="campo" v-if="usuarioSelecionado.funcao === 'ADMINISTRADOR'">
           <strong>Quadra:</strong>
-          <p class="detalhe">{{ usuarioSelecionado.quadra || 'Nenhuma' }}</p>
+          <p class="detalhe">{{ usuarioSelecionado.quadra?.nome.trim() || 'Nenhuma' }}</p>
         </div>
 
         <div class="campo" v-if="usuarioSelecionado.funcao === 'USUARIO'">

@@ -1,4 +1,6 @@
 const nodemailer = require('nodemailer');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -22,19 +24,16 @@ async function enviarEmailNovaModalidade(dev, modalidadeNome) {
     modalidadeNome.charAt(0).toUpperCase() + modalidadeNome.slice(1);
 
   const html = `
-  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; background: f9f9f9#; padding: 20px; border-radius: 10px; color: #333;">
-    <h2 style="color: #f9f9f9;">Olá, ${dev.nome}!</h2>
-    <p>Informamos que uma nova modalidade foi cadastrada no sistema:</p>
-    <p style="font-size: 16px;">
-      <strong>${nomeModalidadeFormatado}</strong>
-    </p>
-    <p class="aviso" style="color: #3b82f6;">
-      No momento, ainda não há placar configurado para esta modalidade.
-    </p>
-    <br/>
-    <p>
-      Atenciosamente,<br/>Equipe QuadraLivre
-    </p>
+  <div style="font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px;">
+    <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 10px; color: #333; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
+      <h2 style="color: #3b82f6; margin-top: 0; font-size: 24px;">Olá, ${dev.nome}!</h2>
+      <p style="margin: 12px 0; font-size: 18px; line-height: 1.5;">
+        Informamos que a modalidade <strong>${nomeModalidadeFormatado}</strong> foi cadastrada no sistema.
+      </p>
+      <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
+        Atenciosamente,<br/>Equipe Quadra Livre
+      </p>
+    </div>
   </div>
   `;
 
@@ -45,4 +44,68 @@ async function enviarEmailNovaModalidade(dev, modalidadeNome) {
   });
 }
 
-module.exports = { enviarEmail, enviarEmailNovaModalidade };
+async function enviarEmailAlteracaoPermissao(usuario) {
+  if (![1, 2].includes(usuario.permissaoId)) return; 
+
+  const descricaoFormatada = formatarPermissao(usuario.permissao.descricao);
+
+  let mensagem;
+
+  if (usuario.permissaoId === 2) {
+    mensagem = `Informamos que você foi promovido para <strong>${descricaoFormatada}</strong> e vinculado à quadra: <strong>${usuario.quadra.nome}</strong>.`;
+  } else {
+    mensagem = `Informamos que sua função foi atualizada para <strong>${descricaoFormatada}</strong>.`;
+  }
+
+  const html = `
+  <div style="font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px;">
+    <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 10px; color: #333; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
+      <h2 style="color: #3b82f6; margin-top: 0; font-size: 24px;">Olá, ${usuario.nome}!</h2>
+      <p style="margin: 12px 0; font-size: 18px; line-height: 1.5;">
+        ${mensagem}
+      </p>
+      <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
+        Atenciosamente,<br/>Equipe QuadraLivre
+      </p>
+    </div>
+  </div>
+  `;
+
+  return enviarEmail({
+    to: usuario.email,
+    subject: `Alteração de permissão`,
+    html
+  });
+}
+
+function formatarPermissao(descricao) {
+  return descricao
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, l => l.toUpperCase());
+}
+
+
+async function enviarEmailVinculoTime(usuario, time) {
+  const html = `
+  <div style="font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px;">
+    <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 10px; color: #333; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
+      <h2 style="color: #3b82f6; margin-top: 0; font-size: 24px;">Olá, ${usuario.nome}!</h2>
+      <p style="margin: 12px 0; font-size: 18px; line-height: 1.5;">
+        Você foi vinculado ao time <strong>${time.nome}</strong> da modalidade <strong>${time.modalidade.nome}</strong>.
+      </p>
+      <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
+        Atenciosamente,<br/>Equipe QuadraLivre
+      </p>
+    </div>
+  </div>
+  `;
+
+  return enviarEmail({
+    to: usuario.email,
+    subject: `Vinculação a novo time`,
+    html
+  });
+}
+
+module.exports = { enviarEmail, enviarEmailNovaModalidade, enviarEmailAlteracaoPermissao, enviarEmailVinculoTime };
