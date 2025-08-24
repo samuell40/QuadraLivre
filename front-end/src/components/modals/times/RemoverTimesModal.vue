@@ -85,22 +85,39 @@ export default {
       }
     },
 
-    async removerTime() {
-      if (!this.timeParaRemover) {
-        Swal.fire('Aviso', 'Selecione um time.', 'warning');
-        return;
-      }
+  async removerTime() {
+  if (!this.timeParaRemover) {
+    Swal.fire('Aviso', 'Selecione um time.', 'warning');
+    return;
+  }
 
-      try {
-        await api.delete(`/time/${this.timeParaRemover}`);
-        Swal.fire('Sucesso', 'Time removido com sucesso!', 'success');
-        this.$emit('fechar');
-        this.$emit('atualizar');
-      } catch (error) {
-        console.error('Erro ao remover time:', error);
-        Swal.fire('Erro', error.response?.data?.erro || 'Erro ao remover time.', 'error');
-      }
+  try {
+    // Remove o time pelo ID ou nome
+    await api.delete(`/time/${this.timeParaRemover}`);
+
+    Swal.fire('Sucesso', 'Time removido com sucesso!', 'success');
+
+    // Limpa a seleção
+    this.timeParaRemover = '';
+
+    // Recarrega os times da modalidade atual
+    if (this.modalidadeSelecionada) {
+      await this.carregarTimes();
     }
+
+    // Opcional: fecha o modal e atualiza listas externas
+    this.$emit('fechar');
+    this.$emit('atualizar');
+
+  } catch (error) {
+    console.error('Erro ao remover time:', error);
+    Swal.fire(
+      'Erro',
+      error.response?.data?.erro || 'Erro ao remover time.',
+      'error'
+    );
+  }
+}
   },
 };
 </script>

@@ -2,7 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function postUsuario(user) {
-  const cadastro = await prisma.Usuario.create({
+  return prisma.usuario.create({
     data: {
       nome: user.nome,
       email: user.email,
@@ -11,8 +11,7 @@ async function postUsuario(user) {
       foto: user.foto,
       permissaoId: 3,
     },
-  })
-  return cadastro;
+  });
 }
 
 async function updateUsuario(user) {
@@ -24,25 +23,20 @@ async function updateUsuario(user) {
     throw new Error('Usuário não encontrado');
   }
 
-  // Valores base sempre atualizados
   let dadosAtualizados = {
     funcao: user.funcao,
     permissaoId: user.permissaoId,
-    quadraId: null, // padrão
+    quadraId: null, 
   };
 
-  // Apenas atualiza quadra se for ADMINISTRADOR
   if (user.permissaoId === 2 && user.quadra) {
     const quadra = await prisma.quadra.findUnique({ where: { id: user.quadra } });
     dadosAtualizados.quadraId = quadra ? quadra.id : null;
   }
 
-  // Remove vínculos de time se não for USUARIO
   if (user.permissaoId !== 3) {
     await prisma.usuarioTime.deleteMany({ where: { usuarioId: usuarioDb.id } });
   }
-
-  // Atualiza usuário
   const usuarioAtualizado = await prisma.usuario.update({
     where: { email: user.email },
     data: dadosAtualizados,
@@ -56,31 +50,25 @@ async function getUsuarios() {
     include: {
       agendamentos: true,
       quadra: true,
-      times: {
-        include: {
-          time: true,
-        }
-      }
-    }
+      times: { include: { time: true } },
+    },
   });
 
-  const usuariosFormatados = usuarios.map(user => ({
+  return usuarios.map(user => ({
     id: user.id,
     nome: user.nome,
     email: user.email,
     telefone: user.telefone,
     foto: user.foto,
     funcao: user.funcao,
-    quadra: user.quadra ? user.quadra.nome : null,
-    times: user.times.map(ut => ut.time), 
+    quadra: user.quadra ? { id: user.quadra.id, nome: user.quadra.nome } : null,
+    times: user.times.map(ut => ut.time),
     totalAgendamentos: user.agendamentos.length,
   }));
-
-  return usuariosFormatados;
 }
 
 async function listarPermissoes() {
-  return await prisma.permissao.findMany();
+  return prisma.permissao.findMany();
 }
 
 async function vincularUsuarioTime(usuarioId, timeId) {
@@ -124,4 +112,11 @@ async function vincularUsuarioTime(usuarioId, timeId) {
   return vinculo;
 }
 
-module.exports = { postUsuario, updateUsuario, getUsuarios, listarPermissoes, vincularUsuarioTime};
+
+module.exports = {
+  postUsuario,
+  updateUsuario,
+  getUsuarios,
+  listarPermissoes,
+  vincularUsuarioTime,
+};

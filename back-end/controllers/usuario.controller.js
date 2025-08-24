@@ -1,53 +1,56 @@
 const Usuario = require('../services/usuario.service');
 
-async function postUsuario(req, res) {
+async function postUsuarioController(req, res) {
   try {
-    const cadastro = await Usuario.postUsuario(req.body);
-    res.status(200).json({ cadastro });
+    const { nome, email, telefone, foto } = req.body;
+
+    if (!nome || !email) {
+      return res.status(400).json({ error: 'Nome e email são obrigatórios.' });
+    }
+
+    const cadastro = await Usuario.postUsuario({ nome, email, telefone, foto });
+    return res.status(201).json({ cadastro });
+
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Erro ao cadastrar usuário.' });
+    return res.status(500).json({ error: 'Erro ao cadastrar usuário.' });
   }
 }
 
-async function updateUsuario(req, res) {
+async function updateUsuarioController(req, res) {
   try {
-    const { email, funcao, permissaoId, quadra, timeId } = req.body;
+    const { email, funcao, permissaoId, quadra } = req.body;
 
-    const usuarioAtualizado = await Usuario.updateUsuario({
-      email,
-      funcao,
-      permissaoId,
-      quadra,
-      timeId,
-    });
+    if (!email) {
+      return res.status(400).json({ error: 'Email do usuário é obrigatório.' });
+    }
 
-    // Retorna o usuário atualizado
-    res.status(200).json({ usuario: usuarioAtualizado });
+    const usuarioAtualizado = await Usuario.updateUsuario({ email, funcao, permissaoId, quadra });
+    return res.status(200).json({ usuario: usuarioAtualizado });
+
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Erro ao editar usuário.' });
+    return res.status(500).json({ error: 'Erro ao atualizar usuário.' });
   }
 }
 
-
-async function getUsuarios(req, res) {
+async function getUsuariosController(req, res) {
   try {
-    const usuarios = await Usuario.getUsuarios(); 
-    res.status(200).json(usuarios);               
-  } catch (error) {
-    console.error('Erro no getUsuarios:', error);
-    res.status(500).json({ error: 'Erro ao buscar usuários' });
+    const usuarios = await Usuario.getUsuarios();
+    return res.status(200).json(usuarios);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Erro ao buscar usuários.' });
   }
 }
 
-async function getPermissoes(req, res) {
+async function getPermissoesController(req, res) {
   try {
     const permissoes = await Usuario.listarPermissoes();
-    res.status(200).json(permissoes);
+    return res.status(200).json(permissoes);
   } catch (err) {
-    console.error('Erro ao buscar permissões:', err);
-    res.status(500).json({ error: 'Erro ao buscar permissões.' });
+    console.error(err);
+    return res.status(500).json({ error: 'Erro ao buscar permissões.' });
   }
 }
 
@@ -60,9 +63,8 @@ const vincularUsuarioTimeController = async (req, res) => {
       vinculo 
     });
   } catch (error) {
-    // Se for erro de vínculo na mesma modalidade
     if (error.message.includes('já está vinculado ao time')) {
-      return res.status(409).json({ error: error.message }); // 409 = conflito
+      return res.status(409).json({ error: error.message }); 
     }
     
     console.error('Erro ao vincular usuário ao time:', error);
@@ -71,4 +73,10 @@ const vincularUsuarioTimeController = async (req, res) => {
 };
 
 
-module.exports = { postUsuario, updateUsuario, getUsuarios, getPermissoes, vincularUsuarioTimeController};
+
+module.exports = {
+  postUsuarioController,
+  updateUsuarioController,
+  getUsuariosController,
+  getPermissoesController,
+  vincularUsuarioTimeController}

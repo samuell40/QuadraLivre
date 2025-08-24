@@ -73,7 +73,7 @@
         </table>
 
         <!-- Tabela Vôlei/Futevôlei -->
-        <table v-else-if="['volei', 'volei de areia', 'voleibol', 'futevolei'].includes(modalidadePlacarSelecionadaLocal)" class="placar">
+        <table v-else-if="['volei', 'volei de areia', 'futevolei'].includes(modalidadePlacarSelecionadaLocal)" class="placar">
           <thead>
             <tr>
               <th>Posição</th>

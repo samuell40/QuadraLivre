@@ -1,18 +1,42 @@
 const { broadcast } = require("../websocket");
 const { PrismaClient } = require('@prisma/client');
+const { enviarEmailNovaModalidade } = require('./email.service')
 const prisma = new PrismaClient();
 
 async function cadastrarModalidade(nome) {
-  if (!nome) return { error: 'Nome da modalidade é obrigatório' };
+  const existente = await prisma.modalidade.findUnique({ where: { nome } });
+  if (existente) throw new Error(`A modalidade "${nome}" já existe.`);
 
-  return prisma.modalidade.create({ data: { nome } });
+  const modalidade = await prisma.modalidade.create({ data: { nome } });
+
+  const placar = await prisma.placar.findFirst({
+    where: { time: { modalidadeId: modalidade.id } },
+    include: { time: true }
+  });
+
+  if (!placar) {
+    const ID_DESENVOLVEDOR_SISTEMA = 1;
+    const desenvolvedores = await prisma.usuario.findMany({
+      where: { permissaoId: ID_DESENVOLVEDOR_SISTEMA },
+      select: { nome: true, email: true }
+    });
+
+    for (const dev of desenvolvedores) {
+      await enviarEmailNovaModalidade(dev, modalidade.nome);
+    }
+  }
+
+  return modalidade;
 }
 
 async function removerModalidade(id) {
-  if (!id) return { error: 'ID da modalidade é obrigatório' };
+  const times = await prisma.time.findMany({ where: { modalidadeId: Number(id) } });
 
-  const existente = await prisma.modalidade.findUnique({ where: { id: Number(id) } });
-  if (!existente) return { error: 'Modalidade não encontrada' };
+  for (const time of times) {
+    await prisma.placar.deleteMany({ where: { timeId: time.id } });
+  }
+
+  await prisma.time.deleteMany({ where: { modalidadeId: Number(id) } });
 
   return prisma.modalidade.delete({ where: { id: Number(id) } });
 }
@@ -22,10 +46,8 @@ async function listarModalidades() {
 }
 
 async function criarTime({ nome, foto, modalidadeId }) {
-  if (!nome || !modalidadeId) return { error: 'Nome e modalidadeId são obrigatórios' };
-
   const time = await prisma.time.create({
-    data: { nome, foto, modalidadeId: Number(modalidadeId) },
+    data: { nome: nome.trim(), foto, modalidadeId: Number(modalidadeId) },
   });
 
   await criarPlacar({ timeId: time.id });
@@ -33,15 +55,21 @@ async function criarTime({ nome, foto, modalidadeId }) {
 }
 
 async function removerTime(id) {
-  if (!id) return { error: 'ID do time é obrigatório' };
+  const timeId = Number(id);
+  await prisma.usuarioTime.deleteMany({
+    where: { timeId }
+  });
 
-  await prisma.placar.deleteMany({ where: { timeId: Number(id) } });
-  return prisma.time.delete({ where: { id: Number(id) } });
+  await prisma.placar.deleteMany({
+    where: { timeId }
+  });
+
+  return prisma.time.delete({
+    where: { id: timeId }
+  });
 }
 
 async function listarTimesPorModalidade(modalidadeId) {
-  if (!modalidadeId) return { error: 'modalidadeId é obrigatório' };
-
   return prisma.time.findMany({
     where: { modalidadeId: Number(modalidadeId) },
     include: { modalidade: true, placar: true },
@@ -57,35 +85,40 @@ async function listarTodosTimes() {
 }
 
 async function criarPlacar({ timeId }) {
-  if (!timeId) return { error: 'timeId é obrigatório' };
-
-  const existente = await prisma.placar.findUnique({ where: { timeId: Number(timeId) } });
-  if (existente) return existente;
-
   return prisma.placar.create({
     data: {
-      timeId: Number(timeId), jogos: 0, posicao: 0, pontuacao: 0, vitorias: 0, empates: 0, derrotas: 0,
-      golsPro: 0, golsSofridos: 0, saldoDeGols: 0, setsVencidos: 0, vitoria2x0: 0, vitoria2x1: 0,
-      derrota2x1: 0, derrota2x0: 0, derrotaWo: 0, cartoesAmarelos: 0, cartoesVermelhos: 0, visivel: true
+      timeId: Number(timeId),
+      jogos: 0,
+      posicao: 0,
+      pontuacao: 0,
+      vitorias: 0,
+      empates: 0,
+      derrotas: 0,
+      golsPro: 0,
+      golsSofridos: 0,
+      saldoDeGols: 0,
+      setsVencidos: 0,
+      vitoria2x0: 0,
+      vitoria2x1: 0,
+      derrota2x1: 0,
+      derrota2x0: 0,
+      derrotaWo: 0,
+      cartoesAmarelos: 0,
+      cartoesVermelhos: 0,
+      visivel: true
     }
   });
 }
 
 async function atualizarPlacar(id, dados) {
-  if (!id || !dados) return { error: 'ID e dados são obrigatórios' };
-
-  const placarAtualizado = await prisma.placar.update({
+  return prisma.placar.update({
     where: { id: Number(id) },
     data: dados,
-    include: { time: true } 
+    include: { time: true }
   });
-
-  return placarAtualizado;
 }
 
 async function listarPlacarPorModalidade(modalidadeId) {
-  if (!modalidadeId) return { error: 'modalidadeId é obrigatório' };
-
   return prisma.placar.findMany({
     where: { time: { modalidadeId: Number(modalidadeId) } },
     include: { time: true },
@@ -94,14 +127,27 @@ async function listarPlacarPorModalidade(modalidadeId) {
 }
 
 async function resetarPlacarPorModalidade(modalidadeId) {
-  if (!modalidadeId) return { error: 'modalidadeId é obrigatório' };
-
   return prisma.placar.updateMany({
     where: { time: { modalidadeId: Number(modalidadeId) } },
     data: {
-      jogos: 0, posicao: 0, pontuacao: 0, vitorias: 0, empates: 0, derrotas: 0,
-      golsPro: 0, golsSofridos: 0, saldoDeGols: 0, setsVencidos: 0, vitoria2x0: 0, vitoria2x1: 0,
-      derrota2x1: 0, derrota2x0: 0, derrotaWo: 0, cartoesAmarelos: 0, cartoesVermelhos: 0, visivel: true
+      jogos: 0,
+      posicao: 0,
+      pontuacao: 0,
+      vitorias: 0,
+      empates: 0,
+      derrotas: 0,
+      golsPro: 0,
+      golsSofridos: 0,
+      saldoDeGols: 0,
+      setsVencidos: 0,
+      vitoria2x0: 0,
+      vitoria2x1: 0,
+      derrota2x1: 0,
+      derrota2x0: 0,
+      derrotaWo: 0,
+      cartoesAmarelos: 0,
+      cartoesVermelhos: 0,
+      visivel: true
     }
   });
 }
@@ -123,14 +169,10 @@ async function ocultarPlacarGeral() {
 }
 
 async function ocultarPlacarPorModalidade(modalidadeId) {
-  if (!modalidadeId) return { error: 'modalidadeId é obrigatório' };
-
   const times = await prisma.time.findMany({
     where: { modalidadeId: Number(modalidadeId) },
     select: { id: true, modalidade: true }
   });
-
-  if (times.length === 0) return { error: 'Nenhum placar encontrado' };
 
   const timeIds = times.map(t => t.id);
 
@@ -140,7 +182,7 @@ async function ocultarPlacarPorModalidade(modalidadeId) {
   });
 
   const placaresAtualizados = await prisma.placar.findMany({
-    where: { timeId: { in: timeIds }, visivel: true },
+    where: { timeId: { in: timeIds } },
     include: { time: true },
     orderBy: { pontuacao: 'desc' }
   });
@@ -174,14 +216,10 @@ async function mostrarPlacarGeral() {
 }
 
 async function mostrarPlacarPorModalidade(modalidadeId) {
-  if (!modalidadeId) return { error: 'modalidadeId é obrigatório' };
-
   const times = await prisma.time.findMany({
     where: { modalidadeId: Number(modalidadeId) },
     select: { id: true, modalidade: true }
   });
-
-  if (times.length === 0) return { error: 'Nenhum placar encontrado' };
 
   const timeIds = times.map(t => t.id);
 
@@ -191,7 +229,7 @@ async function mostrarPlacarPorModalidade(modalidadeId) {
   });
 
   const placaresAtualizados = await prisma.placar.findMany({
-    where: { timeId: { in: timeIds }, visivel: true },
+    where: { timeId: { in: timeIds } },
     include: { time: true },
     orderBy: { pontuacao: 'desc' }
   });
@@ -219,15 +257,10 @@ async function listarVisibilidade() {
         select: { visivel: true }
       });
 
-      let visivel = true;
-      if (placar) {
-        visivel = placar.visivel;
-      }
-
       return {
         modalidadeId: m.id,
         nome: m.nome,
-        visivel
+        visivel: placar?.visivel ?? true
       };
     })
   );

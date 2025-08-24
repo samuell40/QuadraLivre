@@ -5,14 +5,15 @@ const verificarPermissao  = require('../services/permissions/permissions.usuario
 
 const router = express.Router()
 
-router.post('/cadastrar/usuario', controller.postUsuario);
+router.post('/cadastrar/usuario', controller.postUsuarioController);
 
-router.put('/editar/usuario', [validarJWT], verificarPermissao.devAdmin , controller.updateUsuario);
+router.put('/editar/usuario', [validarJWT], verificarPermissao.devAdmin , controller.updateUsuarioController);
 
-router.get('/usuarios', [validarJWT],  verificarPermissao.devAdmin, controller.getUsuarios);
+router.get('/usuarios', [validarJWT],  verificarPermissao.devAdmin, controller.getUsuariosController);
 
-router.get('/permissoes',[validarJWT], verificarPermissao.devAdmin, controller.getPermissoes);
+router.get('/permissoes',[validarJWT], verificarPermissao.devAdmin, controller.getPermissoesController);
 
 router.post('/vincular',[validarJWT], verificarPermissao.devAdmin, controller.vincularUsuarioTimeController);
+
 
 module.exports = router;

@@ -35,6 +35,13 @@ export default {
       novaModalidade: '',
     };
   },
+  watch: {
+    aberto(novoValor) {
+      if (novoValor) {
+        this.novaModalidade = ''; // limpa o input sempre que o modal abrir
+      }
+    }
+  },
   methods: {
     async cadastrarModalidade() {
       const nome = this.novaModalidade.trim().toLowerCase();
@@ -47,15 +54,11 @@ export default {
       try {
         await api.post('/modalidade', { nome });
         Swal.fire('Sucesso', 'Modalidade cadastrada com sucesso!', 'success');
-        this.novaModalidade = '';
         this.$emit('atualizar');
         this.$emit('fechar');
       } catch (error) {
-        Swal.fire(
-          'Erro',
-          error.response?.data?.error || 'Erro ao cadastrar modalidade.',
-          'error'
-        );
+        const mensagemErro = error.response?.data?.erro || 'Erro ao cadastrar modalidade.';
+        Swal.fire('Erro', mensagemErro, 'error');
       }
     }
   },

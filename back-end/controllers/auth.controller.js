@@ -5,17 +5,24 @@ const { findUserByEmail } = require('../services/auth.service');
 
 async function verificarUsuario(req, accessToken, refreshToken, profile, done) {
   try {
-    const email = profile.emails?.[0]?.value;
-    const { user } = await findUserByEmail(email);
-    return done(null, { user });
-  } catch (err) {
-    const email = profile.emails?.[0]?.value || '';
-    if (err.message === 'usuario_nao_cadastrado') {
+    const email = profile?.emails?.[0]?.value; // pega email do Google
+
+    if (!email) {
+      return done(null, false, { message: 'Email não fornecido pelo Google' });
+    }
+
+    const user = await findUserByEmail(email);
+
+    if (!user) {
       return done(null, false, { message: 'usuario_nao_cadastrado', email });
     }
+
+    return done(null, user); 
+  } catch (err) {
     return done(err);
   }
 }
+
 
 function iniciarLoginGoogle(req, res, next) {
   passport.authenticate('google', {
@@ -30,40 +37,33 @@ function callbackLoginGoogle(req, res, next) {
     return res.send(`<script> window.close(); </script>`);
   }
 
-  passport.authenticate('google', { session: false }, (err, result, info) => {
-    if (err) {
-      console.error('Erro no callbackLoginGoogle:', err);
-      return res.status(500).json({ erro: 'erro_callback_google', detalhes: err.message });
-    }
-
-    if (!result || !result.user) {
-      const email = info?.email || '';
-      const redirectUrl = `http://localhost:8080/google-callback?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`;
-      return res.redirect(redirectUrl);
-    }
-
+  passport.authenticate('google', { session: false }, async (err, user, info) => {
     try {
-      const { user } = result;
+      if (err) throw err;
+
+      if (!user) {
+        const email = info?.email || '';
+        const redirectUrl = `http://localhost:8080/google-callback?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`;
+        return res.redirect(redirectUrl);
+      }
+
+      if (!user.id || !user.nome || !user.email) {
+        return res.status(500).json({ erro: 'Dados do usuário incompletos' });
+      }
 
       const tokenPayload = {
         id: user.id,
         nome: user.nome,
         email: user.email,
-        telefone: user.telefone,
-        funcao: user.funcao,       // 👈 adicionado
-        permissaoId: user.permissaoId,
-        foto: user.foto,
-        quadraId: user.quadraId,   // 👈 adicionado
+        telefone: user.telefone || null,
+        funcao: user.funcao || null,
+        permissaoId: user.permissaoId || null,
+        foto: user.foto || null,
+        quadraId: user.quadraId || null
       };
 
-      const token = jwt.sign(tokenPayload, config.jwtSecret, {
-        expiresIn: config.JWT_EXPIRATION,
-      });
-
-      const payload = encodeURIComponent(
-        JSON.stringify({ token, usuario: tokenPayload })
-      );
-
+      const token = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: config.JWT_EXPIRATION });
+      const payload = encodeURIComponent(JSON.stringify({ token, usuario: tokenPayload }));
       const redirectUrl = `http://localhost:8080/google-callback?data=${payload}`;
       return res.redirect(redirectUrl);
 

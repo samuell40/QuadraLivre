@@ -37,7 +37,6 @@
       </div>
     </section>
 
-    <!-- Quadras Disponíveis -->
     <h3 id="quadras-disponiveis" class="tit_horario">Quadras Disponíveis</h3>
     <section class="agendamento">
       <template v-if="isLoadingQuadras">
@@ -115,14 +114,12 @@ export default {
   },
   computed: {
     algumPlacarVisivel() {
-      // true se houver pelo menos um time visível em qualquer modalidade
       return this.modalidadesDisponiveis.some(mod =>
         (this.placares[mod.nome] || []).some(t => t.visivel)
       )
     },
 
     todosPlacaresOcultos() {
-      // true se todas as modalidades tiverem 0 times visíveis
       return this.modalidadesDisponiveis.length > 0 &&
         this.modalidadesDisponiveis.every(mod =>
           !(this.placares[mod.nome] || []).some(t => t.visivel)
@@ -283,7 +280,6 @@ export default {
   z-index: 1000;
 }
 
-
 .navbar-container {
   display: flex;
   align-items: center;
@@ -300,17 +296,12 @@ export default {
   width: 100px;
   height: 100px;
   animation: spin 1s linear infinite;
-  margin: 40px auto;
+  margin: 20px auto;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .esquerda-section {
@@ -319,14 +310,12 @@ export default {
   gap: 20px;
 }
 
-
 .logo {
   color: #ffffff;
   font-size: 20px;
   white-space: nowrap;
   margin-left: 80px;
 }
-
 
 .nav-links {
   list-style: none;
@@ -338,13 +327,11 @@ export default {
   margin-right: 80px;
 }
 
-
 .nav-links li a {
   color: #ffffff;
   text-decoration: none;
   font-weight: 500;
 }
-
 
 .login {
   background-color: #1E3A8A;
@@ -354,7 +341,6 @@ export default {
   font-weight: 500;
 }
 
-
 .hamburger {
   display: none;
   flex-direction: column;
@@ -362,14 +348,12 @@ export default {
   gap: 5px;
 }
 
-
 .hamburger span {
   width: 25px;
   height: 3px;
   background-color: #fff;
   transition: 0.3s;
 }
-
 
 .nav-links.active {
   display: flex;
@@ -383,25 +367,20 @@ export default {
   gap: 20px;
 }
 
-
 .login-btn-mobile {
   display: none;
 }
 
-
 .texto-centro {
   background-color: #050B2C;
   color: white;
-  padding: 40px 60px 40px;
+  padding: 16px 60px;
   margin-top: 70px;
   display: flex;
   justify-content: center;
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
-  padding: 16px;
-
-
 }
 
 .texto {
@@ -412,25 +391,21 @@ export default {
   display: inline-block;
 }
 
-
 .primeira-linha,
 .segunda-linha {
   display: block;
 }
-
 
 .segunda-linha {
   padding-left: 0;
   color: #3B82F6;
 }
 
-
 h1 {
   font-size: 80px;
   font-family: "Montserrat";
   margin-bottom: 16px;
 }
-
 
 h3 {
   font-size: 22px;
@@ -440,17 +415,16 @@ h3 {
   color: #ffff;
 }
 
-
 p {
   color: #888;
   font-size: 18px;
 }
 
-
 .tit_horario {
-  font-size: 30px;
+  font-size: 28px;
   color: #7E7E7E;
-  margin-top: 40px;
+  margin-top: 50px;  
+  margin-bottom: 5px; 
   text-align: center;
   font-weight: bold;
 }
@@ -463,7 +437,7 @@ p {
 .agendamento {
   position: relative;
   width: 100%;
-  margin: 30px auto;
+  margin: 20px auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -479,7 +453,6 @@ p {
   padding: 0 20px;
   box-sizing: border-box;
 }
-
 
 .btn-prev {
   margin-right: 10px;
@@ -566,33 +539,34 @@ p {
   font-size: 14px;
   margin: 0;
   line-height: 1.2;
-  color: #fff
+  color: #fff;
 }
 
 .placares-container {
-  margin-top: 60px;
-  /* espaço entre quadras e placares */
+  margin-top: 30px; 
   padding: 0 20px;
 }
 
 .placar-wrapper {
-  margin-bottom: 40px;
-  /* espaço entre cada placar */
+  margin-top: 0px;   
+  margin-bottom: 10px; 
   display: flex;
   justify-content: center;
   position: relative;
 }
 
+.placar-wrapper:last-child {
+  margin-bottom: 0;
+}
+
 .placar-wrapper .loader {
-  margin: 40px auto;
-  /* centraliza loader */
+  margin: 20px auto;
 }
 
 @media (max-width: 768px) {
   .logo {
     margin-left: 0;
   }
-
 
   .nav-links {
     display: none;
@@ -602,7 +576,6 @@ p {
     margin-right: 0;
     padding: 0;
   }
-
 
   .nav-links.active {
     display: flex;
@@ -616,11 +589,9 @@ p {
     box-sizing: border-box;
   }
 
-
   .hamburger {
     display: flex;
   }
-
 
   .login-item {
     display: none;
@@ -640,8 +611,9 @@ p {
   }
 
   .tit_horario {
-    font-size: 30px;
-    margin-top: 40px;
+    font-size: 26px;
+    margin-top: 20px;
+    margin-bottom: 5px;
     text-align: center;
     font-weight: bold;
   }

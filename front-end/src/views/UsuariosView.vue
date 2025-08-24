@@ -312,17 +312,14 @@ export default {
             });
 
             if (!confirmacao.isConfirmed) return;
-
-            await api.post('/vincular', { usuarioId: this.usuarioSelecionado.id, timeId: timeSelecionado.id });
-          } else {
-            await api.post('/vincular', { usuarioId: this.usuarioSelecionado.id, timeId: timeSelecionado.id });
           }
+
+          await api.post('/vincular', { usuarioId: this.usuarioSelecionado.id, timeId: timeSelecionado.id });
         }
 
         await api.put('/editar/usuario', payload);
 
         await Swal.fire({ icon: 'success', title: 'Sucesso', text: 'Usuário atualizado com sucesso!' });
-
         this.mostrarEditar = false;
         this.carregarUsuarios();
       } catch (err) {
@@ -332,6 +329,7 @@ export default {
         this.isSalvando = false;
       }
     },
+
     fecharEditar() {
       this.mostrarEditar = false;
     }

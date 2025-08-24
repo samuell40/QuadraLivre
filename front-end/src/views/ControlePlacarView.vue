@@ -37,52 +37,48 @@
 
         <!-- Controles do Placar -->
         <div class="game">
-          <PlacarFutebol v-if="modalidadeSelecionada === 'futebol'" :placar="futebol.timeA" :timeAtivo="true"
-            :timeSelecionado="timeSelecionado" @salvar="salvarPlacar" />
-          <PlacarFutebolAreia v-else-if="modalidadeSelecionada === 'futebol de areia'" :placar="futebol_de_areia.timeA"
-            :timeAtivo="true" :timeSelecionado="timeSelecionado" @salvar="salvarPlacar" />
-          <PlacarFutsal v-else-if="modalidadeSelecionada === 'futsal'" :placar="futsal.timeA" :timeAtivo="true"
-            :timeSelecionado="timeSelecionado" @salvar="salvarPlacar" />
-          <PlacarVolei v-else-if="modalidadeSelecionada === 'volei'" :placar="volei.timeA" :timeAtivo="true"
-            :timeSelecionado="timeSelecionado" @salvar="salvarPlacar" />
-          <PlacarVoleibol v-else-if="modalidadeSelecionada === 'voleibol'" :placar="voleibol.timeA" :timeAtivo="true"
-            :timeSelecionado="timeSelecionado" @salvar="salvarPlacar" />
-          <PlacarVoleiAreia v-else-if="modalidadeSelecionada === 'volei de areia'" :placar="volei_de_areia.timeA"
-            :timeAtivo="true" :timeSelecionado="timeSelecionado" @salvar="salvarPlacar" />
-          <PlacarFutevolei v-else-if="modalidadeSelecionada === 'futevolei'" :placar="futevolei.timeA" :timeAtivo="true"
-            :timeSelecionado="timeSelecionado" @salvar="salvarPlacar" />
+          <PlacarFutebol v-if="['futebol', 'futebol de areia', 'futsal'].includes(modalidadeSelecionada)"
+            :placar="futebol.timeA" :timeAtivo="true" :timeSelecionado="timeSelecionado" @salvar="salvarPlacar" />
+
+          <PlacarVolei v-else-if="['volei', 'volei de areia', 'futevolei'].includes(modalidadeSelecionada)"
+            :placar="volei.timeA" :timeAtivo="true" :timeSelecionado="timeSelecionado" @salvar="salvarPlacar" />
+
+          <div v-else class="mensagem-placar">
+            <p> Placar em desenvolvimento. Em breve estará disponível!</p>
+          </div>
         </div>
+
+
+        <!-- Modais -->
+        <VisualizarPlacarModal :modalPlacarAberto="modalPlacarAberto"
+          :modalidadePlacarSelecionada="modalidadePlacarSelecionada" :modalidadesDisponiveis="modalidadesDisponiveis"
+          :timesPlacar="timesPlacar" @fechar="fecharModalPlacar" @abrir-modal-resetar="abrirModalResetarPlacar"
+          @abrir-visibilidade="abrirModalOcultarPlacar" @carregar-placar="carregarPlacarModalidade" />
+
+        <OcultarPlacar :aberto="modalOcultarPlacarAberto" @fechar="fecharModalOcultarPlacar" />
+
+        <ResetarPlacarModal :aberto="modalResetarPlacarAberto" :modalidadesDisponiveis="modalidadesDisponiveis"
+          @fechar="fecharModalResetarPlacar" @confirmado="resetarConfirmado" />
+
+        <GerenciarModalidadesModal :aberto="modalGerenciarModalidadeAberto" :acao="acaoGerenciarModalidade"
+          @confirmar="confirmarAcaoGerenciarModalidade" @fechar="fecharModalGerenciarModalidade" />
+
+        <AdicionarModalidadeModal :aberto="modalAdicionarModalidadeAberto" @fechar="fecharModalAdicionarModalidade"
+          @atualizar="carregarModalidades" />
+
+        <RemoverModalidadeModal :aberto="modalRemoverModalidadeAberto" :modalidadesDisponiveis="modalidadesDisponiveis"
+          @fechar="fecharModalRemoverModalidade" @atualizar="carregarModalidades" />
+
+        <GerenciarTimesModal :aberto="modalGerenciarTimeAberto" @fechar="fecharModalGerenciarTime"
+          @abrir-adicionar-time="abrirModalAdicionarTime" @abrir-remover-time="abrirModalRemoverTime"
+          @carregar-times="carregarTimes" />
+
+        <AdicionarTimeModal :aberto="modalAdicionarTimeAberto" :modalidadesDisponiveis="modalidadesDisponiveis"
+          @fechar="fecharModalAdicionarTime" @atualizar="carregarTimes" />
+
+        <RemoverTimeModal :aberto="modalRemoverTimeAberto" :modalidadesDisponiveis="modalidadesDisponiveis"
+          @fechar="fecharModalRemoverTime" @atualizar="carregarTimes" />
       </div>
-
-      <!-- Modais -->
-      <VisualizarPlacarModal :modalPlacarAberto="modalPlacarAberto"
-        :modalidadePlacarSelecionada="modalidadePlacarSelecionada" :modalidadesDisponiveis="modalidadesDisponiveis"
-        :timesPlacar="timesPlacar" @fechar="fecharModalPlacar" @abrir-modal-resetar="abrirModalResetarPlacar"
-        @abrir-visibilidade="abrirModalOcultarPlacar" @carregar-placar="carregarPlacarModalidade" />
-
-      <OcultarPlacar :aberto="modalOcultarPlacarAberto" @fechar="fecharModalOcultarPlacar" />
-
-      <ResetarPlacarModal :aberto="modalResetarPlacarAberto" :modalidadesDisponiveis="modalidadesDisponiveis"
-        @fechar="fecharModalResetarPlacar" @confirmado="resetarConfirmado" />
-
-      <GerenciarModalidadesModal :aberto="modalGerenciarModalidadeAberto" :acao="acaoGerenciarModalidade"
-        @confirmar="confirmarAcaoGerenciarModalidade" @fechar="fecharModalGerenciarModalidade" />
-
-      <AdicionarModalidadeModal :aberto="modalAdicionarModalidadeAberto" @fechar="fecharModalAdicionarModalidade"
-        @atualizar="carregarModalidades" />
-
-      <RemoverModalidadeModal :aberto="modalRemoverModalidadeAberto" :modalidadesDisponiveis="modalidadesDisponiveis"
-        @fechar="fecharModalRemoverModalidade" @atualizar="carregarModalidades" />
-
-      <GerenciarTimesModal :aberto="modalGerenciarTimeAberto" @fechar="fecharModalGerenciarTime"
-        @abrir-adicionar-time="abrirModalAdicionarTime" @abrir-remover-time="abrirModalRemoverTime"
-        @carregar-times="carregarTimes" />
-
-      <AdicionarTimeModal :aberto="modalAdicionarTimeAberto" :modalidadesDisponiveis="modalidadesDisponiveis"
-        @fechar="fecharModalAdicionarTime" @atualizar="carregarTimes" />
-
-      <RemoverTimeModal :aberto="modalRemoverTimeAberto" :modalidadesDisponiveis="modalidadesDisponiveis"
-        @fechar="fecharModalRemoverTime" @atualizar="carregarTimes" />
     </div>
   </div>
 </template>
@@ -90,12 +86,7 @@
 <script>
 import SideBar from '@/components/SideBar.vue';
 import PlacarFutebol from '@/components/ControlesPlacar/PlacarFutebol.vue';
-import PlacarFutebolAreia from '@/components/ControlesPlacar/PlacarFutebolAreia.vue';
-import PlacarFutsal from '@/components/ControlesPlacar/PlacarFutsal.vue';
 import PlacarVolei from '@/components/ControlesPlacar/PlacarVolei.vue';
-import PlacarVoleibol from '@/components/ControlesPlacar/PlacarVoleibol.vue';
-import PlacarVoleiAreia from '@/components/ControlesPlacar/PlacarVoleiAreia.vue';
-import PlacarFutevolei from '@/components/ControlesPlacar/PlacarFutevolei.vue';
 import VisualizarPlacarModal from '@/components/modals/Visualizar_Placar/VisualizarPlacarModal.vue';
 import ResetarPlacarModal from '@/components/modals/Visualizar_Placar/ResetarPlacarModal.vue';
 import GerenciarModalidadesModal from '@/components/modals/modalidades/GerenciarModalidadesModal.vue';
@@ -111,15 +102,14 @@ import api from '@/axios';
 export default {
   name: 'ControlePlacarView',
   components: {
-    SideBar, PlacarFutebol, PlacarFutebolAreia, PlacarFutsal,
-    PlacarVolei, PlacarVoleibol, PlacarVoleiAreia, PlacarFutevolei,
-    VisualizarPlacarModal, ResetarPlacarModal, GerenciarModalidadesModal,
+    SideBar, PlacarFutebol,
+    PlacarVolei, VisualizarPlacarModal, ResetarPlacarModal, GerenciarModalidadesModal,
     AdicionarModalidadeModal, RemoverModalidadeModal, GerenciarTimesModal,
     AdicionarTimeModal, RemoverTimeModal, OcultarPlacar
   },
   data() {
     return {
-      isLoading: true, 
+      isLoading: true,
       modalidadesDisponiveis: [],
       modalidadeSelecionada: '',
       timeSelecionado: '',
@@ -151,7 +141,7 @@ export default {
   },
   mounted() {
     this.carregarModalidades().then(() => {
-      this.isLoading = false; 
+      this.isLoading = false;
       if (this.modalidadesDisponiveis.length) {
         this.modalidadeSelecionada = this.modalidadesDisponiveis[0].nome;
         this.carregarTimes();
@@ -211,16 +201,43 @@ export default {
       if (acao === 'adicionar') this.abrirModalAdicionarModalidade();
       else if (acao === 'remover') this.abrirModalRemoverModalidade();
     },
-    abrirModalAdicionarModalidade() { this.modalAdicionarModalidadeAberto = true; },
-    fecharModalAdicionarModalidade() { this.modalAdicionarModalidadeAberto = false; },
-    abrirModalRemoverModalidade() { this.modalRemoverModalidadeAberto = true; },
-    fecharModalRemoverModalidade() { this.modalRemoverModalidadeAberto = false; },
+    abrirModalAdicionarModalidade() {
+       this.novaModalidade = ''; 
+      this.modalAdicionarModalidadeAberto = true;
+    },
+
+    fecharModalAdicionarModalidade() {
+      this.modalAdicionarModalidadeAberto = false;
+    },
+
+    abrirModalRemoverModalidade() {
+      this.modalRemoverModalidadeAberto = true;
+    },
+
+    fecharModalRemoverModalidade() {
+      this.modalRemoverModalidadeAberto = false;
+    },
+
     abrirModalGerenciarTime() { this.modalGerenciarTimeAberto = true; },
     fecharModalGerenciarTime() { this.modalGerenciarTimeAberto = false; },
     abrirModalAdicionarTime() { this.modalAdicionarTimeAberto = true; this.timeParaAdicionar = ''; this.fotoTime = ''; },
-    fecharModalAdicionarTime() { this.modalAdicionarTimeAberto = false; this.timeParaAdicionar = ''; this.fotoTime = ''; },
-    abrirModalRemoverTime() { this.modalRemoverTimeAberto = true; this.carregarTimes(); this.timeParaRemover = ''; },
-    fecharModalRemoverTime() { this.modalRemoverTimeAberto = false; this.timeParaRemover = ''; },
+    fecharModalAdicionarTime() {
+      this.modalAdicionarTimeAberto = false;
+      this.timeParaAdicionar = '';
+      this.fotoTime = '';
+    },
+
+    abrirModalRemoverTime() {
+      this.modalRemoverTimeAberto = true;
+      this.carregarTimes();
+      this.timeParaRemover = '';
+    },
+
+    fecharModalRemoverTime() {
+      this.modalRemoverTimeAberto = false;
+      this.timeParaRemover = '';
+    },
+
     abrirModalOcultarPlacar() { this.modalOcultarPlacarAberto = true; },
     fecharModalOcultarPlacar() { this.modalOcultarPlacarAberto = false; },
 
@@ -236,7 +253,7 @@ export default {
 
     async carregarTimes() {
       if (!this.modalidadeSelecionada) return;
-      this.isLoading = true;
+      this.isLoadingTimes = true;
       try {
         const modalidade = this.modalidadesDisponiveis.find(
           m => m.nome === this.modalidadeSelecionada
@@ -248,7 +265,7 @@ export default {
         console.error('Erro ao carregar times:', error);
         Swal.fire('Erro', 'Não foi possível carregar os times.', 'error');
       } finally {
-        this.isLoading = false;
+        this.isLoadingTimes = false;
       }
     },
 
@@ -366,7 +383,7 @@ export default {
       }
     }
   }
-};
+}
 </script>
 
 <style scoped>
@@ -458,11 +475,22 @@ export default {
   flex: 1;
 }
 
+.mensagem-placar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #7E7E7E;
+}
+
 .loader-container-centralizado {
   position: fixed;
   top: 50%;
-  left: 55%; 
-  transform: translate(-60%, -50%); 
+  left: 55%;
+  transform: translate(-60%, -50%);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -540,6 +568,35 @@ export default {
   .line {
     gap: 15px;
     margin-bottom: 25px;
+  }
+
+  @media (min-width: 1400px) {
+    .layout {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .title {
+      margin-left: 0;
+      font-size: 36px;
+    }
+
+    .botoes {
+      margin-right: 0;
+      gap: 30px;
+    }
+
+    .game {
+      width: 100%;
+      margin-left: 0;
+    }
+
+    .dropdown-row {
+      width: 100%;
+      margin-left: 0;
+      gap: 40px;
+    }
   }
 }
 </style>
