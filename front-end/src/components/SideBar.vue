@@ -10,7 +10,7 @@
 
         <div v-if="sidebarVisible" class="sidebar">
             <img src="../assets/QuadraLivre.png" alt="Logo"> 
-              <a href="">
+              <a href="/dashboard">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
                     <g fill="#fff">
                         <rect width="5" height="18" x="16" y="3" rx="2" />

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
+import DashboardView from '@/views/DashboardView.vue';
 import AgendamentosView from '../views/AgendamentosView.vue';
 import NaoAutorizado from '@/views/NaoAutorizado.vue';
 import CadastroView from '../views/CadastroView.vue';
@@ -16,6 +17,12 @@ const routes = [
     name: 'Home',
     component: HomeView,
     meta: { public: true },
+  },
+   {
+    path: '/dashboard',
+    name: 'Dashboard', 
+    component: DashboardView,
+    meta: { requiresAuth: true, roles: [1, 2] }, 
   },
   {
     path: '/agendamentos',

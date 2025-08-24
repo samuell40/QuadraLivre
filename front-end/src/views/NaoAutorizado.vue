@@ -49,7 +49,7 @@ export default {
           const quadraSelecionada = JSON.parse(localStorage.getItem("quadraSelecionada") || "null")
 
           if ([1, 2].includes(usuario.permissaoId)) {
-            router.push({ name: "Agendamentos" })
+            router.push({ name: "/Dashboard" })
           } else if (usuario.permissaoId === 3) {
             if (quadraSelecionada) {
               router.push({ name: "agendar_quadra", query: { quadraId: quadraSelecionada.id } })
