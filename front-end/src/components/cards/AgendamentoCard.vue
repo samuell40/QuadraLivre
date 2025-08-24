@@ -58,6 +58,10 @@ button {
  font-weight: bold;
 }
 
+button:hover {
+ opacity: 0.8;
+}
+
 button:first-child {
  background-color: #1E3A8A;
  color: white;

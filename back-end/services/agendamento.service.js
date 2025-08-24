@@ -1,6 +1,25 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+const listarAgendamentosService = async (usuarioId) => {
+  if (!usuarioId) {
+    throw { status: 400, message: 'Usuário não informado.' };
+  }
+
+  const agendamentos = await prisma.agendamento.findMany({
+    where: { usuarioId },
+    include: { quadra: true },
+    orderBy: [
+      { ano: 'asc' },
+      { mes: 'asc' },
+      { dia: 'asc' },
+      { hora: 'asc' }
+    ]
+  });
+
+  return agendamentos;
+};
+
 const criarAgendamentoService = async ({ usuarioId, dia, mes, ano, hora, duracao = 1, tipo = 'TREINO', quadraId }) => {
   if (!dia || !mes || !ano || !hora || !usuarioId || !quadraId) {
     throw { status: 400, message: 'Campos obrigatórios não preenchidos.' };
@@ -33,4 +52,14 @@ const criarAgendamentoService = async ({ usuarioId, dia, mes, ano, hora, duracao
   return agendamento;
 };
 
-module.exports = { criarAgendamentoService };
+const cancelarAgendamentoService = async (id) => {
+  if (!id) throw { status: 400, message: 'ID do agendamento obrigatório.' };
+
+  const agendamento = await prisma.agendamento.findUnique({ where: { id: Number(id) } });
+  if (!agendamento) throw { status: 404, message: 'Agendamento não encontrado.' };
+
+  await prisma.agendamento.delete({ where: { id: Number(id) } });
+  return true;
+};
+
+module.exports = { criarAgendamentoService, listarAgendamentosService, cancelarAgendamentoService  };

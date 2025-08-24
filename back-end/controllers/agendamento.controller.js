@@ -1,4 +1,4 @@
-const { criarAgendamentoService } = require('../services/agendamento.service');
+const { criarAgendamentoService, listarAgendamentosService, cancelarAgendamentoService } = require('../services/agendamento.service');
 
 const criarAgendamentoController = async (req, res) => {
   try {
@@ -13,4 +13,27 @@ const criarAgendamentoController = async (req, res) => {
   }
 };
 
-module.exports = { criarAgendamentoController };
+const listarAgendamentosController = async (req, res) => {
+  try {
+    const usuarioId = req.user?.id;
+
+    const agendamentos = await listarAgendamentosService(usuarioId);
+    return res.status(200).json(agendamentos);
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ error: err.message || 'Erro ao listar agendamentos.' });
+  }
+};
+
+const cancelarAgendamentoController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await cancelarAgendamentoService(id);
+    return res.status(200).json({ message: 'Agendamento deletado com sucesso.' });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ error: err.message || 'Erro ao deletar agendamento.' });
+  }
+};
+
+module.exports = { criarAgendamentoController, listarAgendamentosController, cancelarAgendamentoController };

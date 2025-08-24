@@ -12,8 +12,9 @@
     </p>
 
     <div class="buttons">
-      <button class="cancelar">Cancelar Agendamento</button>
-      <button class="novo">Novo Agendamento</button>
+      <button class="cancelar" @click="$emit('cancelar')">Cancelar Agendamento</button>
+      <!-- Adicionei o emit 'novo' aqui -->
+      <button class="novo" @click="$emit('novo')">Novo Agendamento</button>
     </div>
   </div>
 </template>
@@ -25,7 +26,6 @@ export default {
     agendamento: Object
   }
 }
-
 </script>
 
 <style scoped>
@@ -88,6 +88,10 @@ button {
   border-radius: 8px;
   cursor: pointer;
   flex: 1;
+}
+
+button:hover {
+  opacity: 0.8;
 }
 
 button.cancelar {
