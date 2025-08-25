@@ -3,9 +3,11 @@
     <div class="d-flex">
       <SideBar />
       <div class="container">
+
+        <!-- Cards de contagem -->
         <section class="section_totalAgendamentos">
           <div class="card_contagem">
-            <h3>Total de Agendamentos</h3>
+            <h3>Total</h3>
             <p>{{ totalAgendamentos }}</p>
           </div>
           <div class="card_contagem">
@@ -21,6 +23,8 @@
             <p>{{ totalCancelados }}</p>
           </div>
         </section>
+
+        <!-- Gráficos de cima -->
         <section class="section_graficos_top">
           <div class="chart-container">
             <canvas id="agendamentosModalidadeChart"></canvas>
@@ -30,11 +34,19 @@
           </div>
         </section>
 
+        <!-- Gráfico de baixo com loader centralizado -->
         <section class="section_graficos_bottom">
+          <!-- Loader centralizado -->
+          <div v-if="loading" class="loader-container-centralizado">
+            <div class="loader"></div>
+          </div>
+
+          <!-- Canvas do gráfico -->
           <div class="chart-container-full">
             <canvas id="agendamentosMesChart"></canvas>
           </div>
         </section>
+
       </div>
     </div>
   </div>
@@ -44,6 +56,8 @@
 import SideBar from '@/components/SideBar.vue';
 import { Chart, registerables } from 'chart.js';
 import { nextTick } from 'vue';
+import api from '@/axios';
+
 Chart.register(...registerables);
 
 export default {
@@ -58,48 +72,44 @@ export default {
       totalCancelados: 0,
       agendamentosMesChart: null,
       agendamentosModalidadeChart: null,
-      agendamentosTipoChart: null
+      agendamentosTipoChart: null,
+      loading: false
     };
   },
   methods: {
     async carregarAgendamentos() {
       try {
-        const agendamentos = [
-          { status: 'Pendente', modalidade: 'Futebol', tipo: 'PARTIDA', mes: 'Janeiro' },
-          { status: 'Cancelado', modalidade: 'Futebol', tipo: 'EVENTO', mes: 'Fevereiro' },
-          { status: 'Confirmado', modalidade: 'Futebol de areia', tipo: 'OUTRO', mes: 'Fevereiro' },
-          { status: 'Confirmado', modalidade: 'Futebol de areia', tipo: 'OUTRO', mes: 'Fevereiro' },
-          { status: 'Confirmado', modalidade: 'Futebol de areia', tipo: 'OUTRO', mes: 'Fevereiro' },
-          { status: 'Confirmado', modalidade: 'Futebol de areia', tipo: 'OUTRO', mes: 'Fevereiro' },
-          { status: 'Pendente', modalidade: 'Vôlei', tipo: 'PARTIDA', mes: 'Março' },
-          { status: 'Confirmado', modalidade: 'Futebol', tipo: 'TREINO', mes: 'Março' },
-          { status: 'Confirmado', modalidade: 'Futebol', tipo: 'TREINO', mes: 'Março' },
-          { status: 'Confirmado', modalidade: 'Futebol', tipo: 'TREINO', mes: 'Março' },
-          { status: 'Confirmado', modalidade: 'Futsal', tipo: 'EVENTO', mes: 'Abril' },
-          { status: 'Confirmado', modalidade: 'Futebol', tipo: 'TREINO', mes: 'Abril' },
-          { status: 'Confirmado', modalidade: 'Futevolei', tipo: 'TREINO', mes: 'Abril' },
-          { status: 'Confirmado', modalidade: 'Futebol', tipo: 'TREINO', mes: 'Maio' },
-          { status: 'Confirmado', modalidade: 'Futevolei', tipo: 'TREINO', mes: 'Maio' },
-          { status: 'Confirmado', modalidade: 'Futebol', tipo: 'EVENTO', mes: 'Maio' },
-          { status: 'Confirmado', modalidade: 'Futebol', tipo: 'EVENTO', mes: 'Maio' },
-          { status: 'Confirmado', modalidade: 'Futebol', tipo: 'EVENTO', mes: 'Maio' },
-          { status: 'Confirmado', modalidade: 'Futebol', tipo: 'PARTIDA', mes: 'Maio' },
-          { status: 'Confirmado', modalidade: 'Futebol', tipo: 'PARTIDA', mes: 'Junho' },
-          { status: 'Confirmado', modalidade: 'Futebol', tipo: 'PARTIDA', mes: 'Junho' },
-          { status: 'Confirmado', modalidade: 'Futebol', tipo: 'CAMPEONATO', mes: 'Junho' },
-          { status: 'Confirmado', modalidade: 'Futebol', tipo: 'OUTROS', mes: 'Junho' },
-          { status: 'Confirmado', modalidade: 'Futebol', tipo: 'OUTROS', mes: 'Julho' },
-          { status: 'Confirmado', modalidade: 'Futebol', tipo: 'TREINO', mes: 'Julho' },
-          { status: 'Confirmado', modalidade: 'Futebol', tipo: 'TREINO', mes: 'Agosto' },
-          { status: 'Confirmado', modalidade: 'Futebol', tipo: 'TREINO', mes: 'Agosto' },
-          { status: 'Pendente', modalidade: 'Vôlei de areia', tipo: 'PARTIDA', mes: 'Agosto' },
-        ];
+        this.loading = true;
 
-        this.agendamentos = agendamentos;
-        this.totalAgendamentos = agendamentos.length;
-        this.totalPendentes = agendamentos.filter(a => a.status === 'Pendente').length;
-        this.totalConfirmados = agendamentos.filter(a => a.status === 'Confirmado').length;
-        this.totalCancelados = agendamentos.filter(a => a.status === 'Cancelado').length;
+        const usuario = JSON.parse(localStorage.getItem("usuario") || "null");
+        let data = [];
+
+        if (usuario?.permissaoId === 1) {
+          const res = await api.get('/agendamentos/todos');
+          data = res.data;
+        } else if (usuario?.permissaoId === 2) {
+          if (!usuario.quadraId) {
+            console.warn("Usuário com permissão 2 não possui quadra vinculada.");
+            return;
+          }
+          const res = await api.get(`/agendamentos/quadra/${usuario.quadraId}`);
+          data = res.data;
+        } else {
+          console.warn("Permissão não autorizada para acessar agendamentos.");
+          return;
+        }
+
+        const anoAtual = new Date().getFullYear();
+        this.agendamentos = data.filter(a => {
+          if (a.ano) return a.ano === anoAtual;
+          if (a.data) return new Date(a.data).getFullYear() === anoAtual;
+          return false;
+        });
+
+        this.totalAgendamentos = this.agendamentos.length;
+        this.totalPendentes = this.agendamentos.filter(a => a.status === 'Pendente').length;
+        this.totalConfirmados = this.agendamentos.filter(a => a.status === 'Confirmado').length;
+        this.totalCancelados = this.agendamentos.filter(a => a.status === 'Negado').length;
 
         await nextTick();
         this.renderAgendamentosModalidadeChart();
@@ -107,17 +117,20 @@ export default {
         this.renderAgendamentosMesChart();
       } catch (error) {
         console.error('Erro ao carregar agendamentos:', error);
+      } finally {
+        this.loading = false;
       }
     },
 
-    // Gráfico de barras por modalidade
     renderAgendamentosModalidadeChart() {
       const canvas = document.getElementById('agendamentosModalidadeChart');
       if (this.agendamentosModalidadeChart) this.agendamentosModalidadeChart.destroy();
       const ctx = canvas.getContext('2d');
 
-      const modalidades = [...new Set(this.agendamentos.map(a => a.modalidade))];
-      const quantidade = modalidades.map(m => this.agendamentos.filter(a => a.modalidade === m).length);
+      const modalidades = [...new Set(this.agendamentos.map(a => a.modalidade || a.quadra?.modalidade || 'Não definido'))];
+      const quantidade = modalidades.map(m =>
+        this.agendamentos.filter(a => (a.modalidade || a.quadra?.modalidade || 'Não definido') === m).length
+      );
 
       this.agendamentosModalidadeChart = new Chart(ctx, {
         type: 'bar',
@@ -126,71 +139,52 @@ export default {
           datasets: [{
             label: 'Agendamentos por Modalidade',
             data: quantidade,
-            backgroundColor: ['#3B82F6']
+            backgroundColor: '#3B82F6'
           }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } } }
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
       });
     },
 
-    // Gráfico de pizza por tipo
     renderAgendamentosTipoChart() {
       const canvas = document.getElementById('agendamentosTipoChart');
       if (this.agendamentosTipoChart) this.agendamentosTipoChart.destroy();
       const ctx = canvas.getContext('2d');
 
-      const tipos = ['PARTIDA', 'TREINO', 'EVENTO', 'OUTRO'];
+      const tipos = ['PARTIDA', 'TREINO', 'EVENTO', 'OUTRO', 'CAMPEONATO'];
       const quantidade = tipos.map(t => this.agendamentos.filter(a => a.tipo === t).length);
 
       this.agendamentosTipoChart = new Chart(ctx, {
         type: 'pie',
         data: {
           labels: tipos,
-          datasets: [{
-            label: 'Agendamentos por Tipo',
-            data: quantidade,
-            backgroundColor: ['#152147', '#1E3A8A', '#3B82F6', '#D9D9D9'],
-            borderWidth: 1
-          }]
+          datasets: [{ data: quantidade, backgroundColor: ['#152147', '#1E3A8A', '#3B82F6', '#D9D9D9', '#F7F9FC'] }]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: true,
-              position: 'bottom'
-            }
-          }
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
       });
     },
 
-    // Gráfico de barras
     renderAgendamentosMesChart() {
       const canvas = document.getElementById('agendamentosMesChart');
       if (this.agendamentosMesChart) this.agendamentosMesChart.destroy();
       const ctx = canvas.getContext('2d');
 
-      const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-      const quantidade = meses.map(mes => this.agendamentos.filter(a => a.mes === mes).length);
+      const mesesNomes = [
+        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+      ];
+
+      const quantidade = mesesNomes.map((_, idx) =>
+        this.agendamentos.filter(a => a.mes === (idx + 1) || a.mes === mesesNomes[idx]).length
+      );
 
       this.agendamentosMesChart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: meses,
-          datasets: [{
-            label: 'Agendamentos por Mês',
-            data: quantidade,
-            backgroundColor: '#1E3A8A'
-          }]
+          labels: mesesNomes,
+          datasets: [{ label: 'Agendamentos por Mês', data: quantidade, backgroundColor: '#1E3A8A' }]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: true } },
-          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-        }
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
       });
     }
   },
@@ -254,6 +248,8 @@ export default {
 }
 
 .section_graficos_bottom {
+  position: relative;
+  /* importante para centralizar o loader dentro da seção */
   margin-top: 40px;
 }
 
@@ -265,6 +261,37 @@ export default {
 .chart-container-full {
   width: 100%;
   height: 350px;
+}
+
+/* Loader */
+.loader-container-centralizado {
+  position: absolute;
+  top: -70%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.loader {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #3b82f6;
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {

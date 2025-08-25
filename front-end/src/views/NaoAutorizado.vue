@@ -23,7 +23,7 @@ import Swal from 'sweetalert2';
 export default {
   name: 'NaoAutorizado',
   methods: {
-    loginComGoogle() {
+     loginComGoogle() {
       const width = 500, height = 600
       const left = window.screenX + (window.outerWidth - width) / 2
       const top = window.screenY + (window.outerHeight - height) / 2.5
@@ -35,12 +35,8 @@ export default {
         const { token, erro, email, usuario } = event.data
 
         if (erro === 'usuario_nao_cadastrado') {
-          Swal.fire({
-            icon: 'error', title: 'Conta não encontrada!',
-            text: 'Redirecionando para cadastro...', timer: 3000,
-            timerProgressBar: true, showConfirmButton: false,
-            didOpen: () => Swal.showLoading()
-          }).then(() => window.location.href = `/cadastro?email=${encodeURIComponent(email)}`)
+          Swal.fire({ icon: 'error', title: 'Conta não encontrada!', text: 'Redirecionando para cadastro...', timer: 3000, timerProgressBar: true, showConfirmButton: false, didOpen: () => Swal.showLoading() })
+            .then(() => window.location.href = `/cadastro?email=${encodeURIComponent(email)}`)
         }
 
         if (token) {
@@ -49,7 +45,7 @@ export default {
           const quadraSelecionada = JSON.parse(localStorage.getItem("quadraSelecionada") || "null")
 
           if ([1, 2].includes(usuario.permissaoId)) {
-            router.push({ name: "/Dashboard" })
+            router.push({ name: "Dashboard" })
           } else if (usuario.permissaoId === 3) {
             if (quadraSelecionada) {
               router.push({ name: "agendar_quadra", query: { quadraId: quadraSelecionada.id } })
