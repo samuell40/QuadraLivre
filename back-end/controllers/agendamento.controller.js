@@ -1,4 +1,4 @@
-const { criarAgendamentoService, listarAgendamentosService, cancelarAgendamentoService } = require('../services/agendamento.service');
+const { criarAgendamentoService, listarAgendamentosService, listarTodosAgendamentosService, listarAgendamentosPorQuadraService, cancelarAgendamentoService } = require('../services/agendamento.service');
 
 const criarAgendamentoController = async (req, res) => {
   try {
@@ -25,6 +25,27 @@ const listarAgendamentosController = async (req, res) => {
   }
 };
 
+const listarTodosAgendamentosController = async (req, res) => {
+  try {
+    const agendamentos = await listarTodosAgendamentosService();
+    return res.status(200).json(agendamentos);
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ error: err.message || 'Erro ao listar todos os agendamentos.' });
+  }
+};
+
+const listarAgendamentosPorQuadraController = async (req, res) => {
+  try {
+    const { quadraId } = req.params;
+    const agendamentos = await listarAgendamentosPorQuadraService(quadraId);
+    return res.status(200).json(agendamentos);
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ error: err.message || 'Erro ao listar agendamentos da quadra.' });
+  }
+};
+
 const cancelarAgendamentoController = async (req, res) => {
   try {
     const { id } = req.params;
@@ -36,4 +57,10 @@ const cancelarAgendamentoController = async (req, res) => {
   }
 };
 
-module.exports = { criarAgendamentoController, listarAgendamentosController, cancelarAgendamentoController };
+module.exports = { 
+  criarAgendamentoController, 
+  listarAgendamentosController, 
+  listarTodosAgendamentosController,
+  listarAgendamentosPorQuadraController,
+  cancelarAgendamentoController 
+};

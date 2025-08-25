@@ -20,6 +20,35 @@ const listarAgendamentosService = async (usuarioId) => {
   return agendamentos;
 };
 
+const listarTodosAgendamentosService = async () => {
+  return await prisma.agendamento.findMany({
+    include: { quadra: true, usuario: true },
+    orderBy: [
+      { ano: 'asc' },
+      { mes: 'asc' },
+      { dia: 'asc' },
+      { hora: 'asc' }
+    ]
+  });
+};
+
+const listarAgendamentosPorQuadraService = async (quadraId) => {
+  if (!quadraId) {
+    throw { status: 400, message: 'Quadra não informada.' };
+  }
+
+  return await prisma.agendamento.findMany({
+    where: { quadraId: Number(quadraId) },
+    include: { usuario: true, quadra: true },
+    orderBy: [
+      { ano: 'asc' },
+      { mes: 'asc' },
+      { dia: 'asc' },
+      { hora: 'asc' }
+    ]
+  });
+};
+
 const criarAgendamentoService = async ({ usuarioId, dia, mes, ano, hora, duracao = 1, tipo = 'TREINO', quadraId }) => {
   if (!dia || !mes || !ano || !hora || !usuarioId || !quadraId) {
     throw { status: 400, message: 'Campos obrigatórios não preenchidos.' };
@@ -62,4 +91,10 @@ const cancelarAgendamentoService = async (id) => {
   return true;
 };
 
-module.exports = { criarAgendamentoService, listarAgendamentosService, cancelarAgendamentoService  };
+module.exports = { 
+  criarAgendamentoService,
+  listarAgendamentosService,
+  listarTodosAgendamentosService,  
+  listarAgendamentosPorQuadraService,
+   cancelarAgendamentoService
+};

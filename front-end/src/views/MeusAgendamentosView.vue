@@ -44,7 +44,7 @@ const router = useRouter();
 const agendamentos = ref([]);
 const isLoading = ref(true);
 
-// Carrega os agendamentos do usuário usando a mesma lógica do AgendarQuadra
+// Carrega os agendamentos do usuário
 const carregarAgendamentos = async () => {
   isLoading.value = true;
   try {
@@ -75,26 +75,45 @@ const carregarAgendamentos = async () => {
 
 // Cancelar um agendamento
 const cancelarAgendamento = async (id) => {
-  try {
-    await api.delete(`/agendamento/${id}`, {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    });
-    agendamentos.value = agendamentos.value.filter(a => a.id !== id);
-    Swal.fire({
-      icon: "success",
-      title: "Agendamento cancelado",
-      timer: 2000,
-      showConfirmButton: false,
-      timerProgressBar: true,
-    });
-  } catch (err) {
-    console.error("Erro ao cancelar agendamento:", err);
-    Swal.fire({
-      icon: "error",
-      title: "Erro",
-      text: "Não foi possível cancelar o agendamento.",
-      confirmButtonColor: "#1E3A8A",
-    });
+  const confirmacao = await Swal.fire({
+    title: "Você realmente deseja cancelar o agendamento?",
+    text: "Essa ação não poderá ser desfeita.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#1E3A8A",
+    cancelButtonColor: "#7e7e7e",
+    confirmButtonText: "Sim, cancelar",
+    cancelButtonText: "Não",
+    customClass: {
+      confirmButton: 'swal-botao',
+      cancelButton: 'swal-botao'
+    }
+  });
+
+  if (confirmacao.isConfirmed) {
+    try {
+      await api.delete(`/agendamento/${id}`, {
+        headers: { Authorization: `Bearer ${authStore.token}` },
+      });
+
+      agendamentos.value = agendamentos.value.filter(a => a.id !== id);
+
+      Swal.fire({
+        icon: "success",
+        title: "Agendamento cancelado com sucesso",
+        timer: 2000,
+        showConfirmButton: false,
+        timerProgressBar: true,
+      });
+    } catch (err) {
+      console.error("Erro ao cancelar agendamento:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Erro",
+        text: "Não foi possível cancelar o agendamento.",
+        confirmButtonColor: "#1E3A8A",
+      });
+    }
   }
 };
 
@@ -135,7 +154,6 @@ onMounted(() => {
   margin-bottom: 20px;
 }
 
-/* Loader estilo igual AgendarQuadra */
 .loader {
   height: 200px;
   display: flex;
