@@ -4,10 +4,14 @@
     <div class="conteudo">
       <h1 class="title">Dashboard</h1>
       <NavBarUse />
-      
+
       <section class="section_totalAgendamentos">
         <div class="card_contagem">
-          <h3>Total</h3>
+          <h3>Usuarios</h3>
+          <p>{{ totalUsuarios }}</p>
+        </div>
+        <div class="card_contagem">
+          <h3>Agendamentos</h3>
           <p>{{ totalAgendamentos }}</p>
         </div>
         <div class="card_contagem">
@@ -65,6 +69,9 @@ export default {
       totalPendentes: 0,
       totalConfirmados: 0,
       totalCancelados: 0,
+      totalUsuarios: 0,
+      totalTimes: 0,
+      totalModalidades: 0,
       agendamentosMesChart: null,
       agendamentosModalidadeChart: null,
       agendamentosTipoChart: null,
@@ -72,6 +79,33 @@ export default {
     }
   },
   methods: {
+    async carregarUsuarios() {
+      try {
+        const res = await api.get('/usuarios')
+        this.totalUsuarios = Array.isArray(res.data) ? res.data.length : 0
+      } catch (error) {
+        console.error('Erro ao carregar usuários:', error)
+      }
+    },
+
+    async carregarTimes() {
+      try {
+        const res = await api.get('/times')
+        this.totalTimes = Array.isArray(res.data) ? res.data.length : 0
+      } catch (error) {
+        console.error('Erro ao carregar times:', error)
+      }
+    },
+
+    async carregarModalidades() {
+      try {
+        const res = await api.get('/listar/modalidade')
+        this.totalModalidades = Array.isArray(res.data) ? res.data.length : 0
+      } catch (error) {
+        console.error('Erro ao carregar modalidades:', error)
+      }
+    },
+
     async carregarAgendamentos() {
       try {
         this.loading = true
@@ -182,9 +216,11 @@ export default {
       })
     }
   },
-
   mounted() {
     this.carregarAgendamentos()
+    this.carregarUsuarios()
+    this.carregarTimes()
+    this.carregarModalidades()
   }
 }
 </script>
@@ -197,7 +233,7 @@ export default {
 
 .SideBar {
   width: 250px;
-  position: fixed; 
+  position: fixed;
   top: 0;
   left: 0;
   bottom: 0;
@@ -207,7 +243,7 @@ export default {
   flex: 1;
   padding: 32px;
   margin-left: 250px;
-  overflow-x: hidden; 
+  overflow-x: hidden;
 }
 
 .title {
@@ -219,7 +255,7 @@ export default {
 
 .section_totalAgendamentos {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 20px;
   margin-top: 20px;
   margin-bottom: 40px;
@@ -261,7 +297,7 @@ export default {
 
 .chart-container {
   flex: 1;
-  min-width: 0; 
+  min-width: 0;
   height: 350px;
 }
 
@@ -291,8 +327,13 @@ export default {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {
@@ -304,7 +345,7 @@ export default {
     bottom: 0;
     transform: translateX(-100%);
     background: #fff;
-    box-shadow: 2px 0 12px rgba(0,0,0,0.2);
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.2);
   }
 
   .SideBar.open {

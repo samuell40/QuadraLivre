@@ -44,7 +44,7 @@ export default {
   },
   data() {
     return {
-      modalidadeSelecionada: '', // guarda o ID da modalidade
+      modalidadeSelecionada: '', 
       timeParaAdicionar: '',
       arquivoFoto: null
     };
@@ -54,7 +54,7 @@ export default {
       this.modalidadeSelecionada = '';
       this.timeParaAdicionar = '';
       this.arquivoFoto = null;
-      this.$emit('fechar'); // fecha modal no componente pai
+      this.$emit('fechar'); 
     },
 
     handleImagemUpload(event) {
@@ -63,14 +63,13 @@ export default {
     },
 
     async adicionarTime() {
-      // valida campos
       if (!this.modalidadeSelecionada || !this.timeParaAdicionar.trim()) {
         Swal.fire('Atenção', 'Preencha todos os campos.', 'warning');
         return;
       }
 
       try {
-        let urlImagem = null;
+        let urlImagem = 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/QuadraLivre.png';
 
         if (this.arquivoFoto) {
           const formData = new FormData();
@@ -80,25 +79,21 @@ export default {
             headers: { 'Content-Type': 'multipart/form-data' },
           });
 
-          urlImagem = uploadResponse.data.fileUrl || uploadResponse.data.url || null;
+          urlImagem = uploadResponse.data.fileUrl || uploadResponse.data.url || urlImagem;
         }
 
-        // prepara payload correto para o backend
         const payload = {
           nome: this.timeParaAdicionar.trim(),                     
           modalidadeId: Number(this.modalidadeSelecionada),          
-          foto: urlImagem || null                                    
+          foto: urlImagem                   
         };
 
-        // envia para o backend
         await api.post('/time', payload);
 
         Swal.fire('Sucesso', 'Time adicionado com sucesso!', 'success');
 
-        // limpa campos e fecha modal
         this.fecharModalAdicionarTime();
 
-        // avisa o componente pai para atualizar a lista de times
         this.$emit('atualizar');
 
       } catch (error) {

@@ -5,18 +5,10 @@
 
       <div class="form-group">
         <label for="modalidade-remover-time">Modalidade:</label>
-        <select 
-          id="modalidade-remover-time" 
-          v-model="modalidadeSelecionadaLocal" 
-          @change="carregarTimes"
-          class="dropdown"
-        >
+        <select id="modalidade-remover-time" v-model="modalidadeSelecionadaLocal" @change="carregarTimes"
+          class="dropdown">
           <option disabled value="">Selecione uma modalidade</option>
-          <option 
-            v-for="modalidade in modalidadesDisponiveis" 
-            :key="modalidade.id" 
-            :value="modalidade.id"
-          >
+          <option v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" :value="modalidade.id">
             {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
           </option>
         </select>
@@ -24,17 +16,9 @@
 
       <div class="form-group">
         <label for="removerTime">Selecione o Time:</label>
-        <select 
-          id="removerTime" 
-          v-model="timeParaRemover" 
-          class="dropdown"
-        >
+        <select id="removerTime" v-model="timeParaRemover" class="dropdown">
           <option disabled value="">Selecione</option>
-          <option 
-            v-for="time in times" 
-            :key="time.id" 
-            :value="time.id"
-          >
+          <option v-for="time in times" :key="time.id" :value="time.id">
             {{ time.nome }}
           </option>
         </select>
@@ -62,7 +46,7 @@ export default {
     return {
       modalidadeSelecionadaLocal: '',
       times: [],
-      timeParaRemover: '', // ID do time
+      timeParaRemover: '', 
     };
   },
   watch: {
@@ -75,49 +59,48 @@ export default {
   methods: {
     async carregarTimes() {
       if (!this.modalidadeSelecionadaLocal) return;
+      this.isLoadingTimes = true;
       try {
-        const res = await api.get(`/times/modalidade/${this.modalidadeSelecionadaLocal}`);
+        const modalidade = this.modalidadesDisponiveis.find(
+          m => m.id === this.modalidadeSelecionadaLocal || m.nome === this.modalidadeSelecionadaLocal
+        );
+        if (!modalidade) return;
+
+        const res = await api.get(`/times/modalidade/${modalidade.id}`);
         this.times = Array.isArray(res.data) ? res.data : [];
-        this.timeParaRemover = '';
       } catch (error) {
         console.error('Erro ao carregar times:', error);
-        Swal.fire('Erro', error.response?.data?.erro || 'Não foi possível carregar os times.', 'error');
+        Swal.fire('Erro', 'Não foi possível carregar os times.', 'error');
+      } finally {
+        this.isLoadingTimes = false;
       }
     },
 
-  async removerTime() {
-  if (!this.timeParaRemover) {
-    Swal.fire('Aviso', 'Selecione um time.', 'warning');
-    return;
-  }
+    async removerTime() {
+      if (!this.timeParaRemover) {
+        Swal.fire('Aviso', 'Selecione um time.', 'warning');
+        return;
+      }
 
-  try {
-    // Remove o time pelo ID ou nome
-    await api.delete(`/time/${this.timeParaRemover}`);
+      try {
+        await api.delete(`/time/${this.timeParaRemover}`);
 
-    Swal.fire('Sucesso', 'Time removido com sucesso!', 'success');
+        Swal.fire('Sucesso', 'Time removido com sucesso!', 'success');
+        this.timeParaRemover = '';
 
-    // Limpa a seleção
-    this.timeParaRemover = '';
+        await this.carregarTimes();
 
-    // Recarrega os times da modalidade atual
-    if (this.modalidadeSelecionada) {
-      await this.carregarTimes();
+        this.$emit('fechar');
+        this.$emit('atualizar');
+      } catch (error) {
+        console.error('Erro ao remover time:', error);
+        Swal.fire(
+          'Erro',
+          error.response?.data?.erro || 'Erro ao remover time.',
+          'error'
+        );
+      }
     }
-
-    // Opcional: fecha o modal e atualiza listas externas
-    this.$emit('fechar');
-    this.$emit('atualizar');
-
-  } catch (error) {
-    console.error('Erro ao remover time:', error);
-    Swal.fire(
-      'Erro',
-      error.response?.data?.erro || 'Erro ao remover time.',
-      'error'
-    );
-  }
-}
   },
 };
 </script>

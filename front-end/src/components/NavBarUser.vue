@@ -27,7 +27,7 @@ export default {
     }
   },
   mounted() {
-    this.usuario = JSON.parse(localStorage.getItem("usuario") || "null")
+    this.usuario = JSON.parse(localStorage.getItem("usuario"))
     console.log("Usuário logado no NavBarUse:", this.usuario)
   },
   methods: {
@@ -50,18 +50,21 @@ export default {
 }
 
 .user-photo {
-  width: 80px;
-  height: 80px;
+  width: 55px;
+  height: 55px;
   object-fit: cover;
   margin-right: 1px; 
 }
 
 .user-info .user-name {
-  font-size: 20px;
+  font-size: 17px;
+  color: #3b82f6;
+  font-weight: bold;
 }
 
 .user-info .user-role {
   font-size: 14px;
+  margin-top: -8px;
 }
 
 @media (max-width: 768px) {

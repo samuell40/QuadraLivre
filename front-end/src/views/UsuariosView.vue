@@ -18,10 +18,33 @@
               <div class="foto">
                 <img :src="usuario.foto" alt="Foto do usuário" />
               </div>
+
               <div class="info">
                 <h2>{{ usuario.nome }}</h2>
                 <p>{{ usuario.funcao }}</p>
-                <p>{{ usuario.email }}</p>
+                <p class="detalhe-contato">
+                  <span>{{ usuario.email }}</span>
+                  <svg v-if="usuario.email" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                    viewBox="0 0 48 48" class="icon" @click="contatoGmail(usuario)"
+                    style="cursor:pointer; margin-left: 8px;">
+                    <path fill="#4caf50" d="M45,16.2l-5,2.75l-5,4.75L35,40h7c1.657,0,3-1.343,3-3V16.2z" />
+                    <path fill="#1e88e5" d="M3,16.2l3.614,1.71L13,23.7V40H6c-1.657,0-3-1.343-3-3V16.2z" />
+                    <polygon fill="#e53935" points="35,11.2 24,19.45 13,11.2 12,17 13,23.7 24,31.95 35,23.7 36,17" />
+                    <path fill="#c62828"
+                      d="M3,12.298V16.2l10,7.5V11.2L9.876,8.859C9.132,8.301,8.228,8,7.298,8h0C4.924,8,3,9.924,3,12.298z" />
+                    <path fill="#fbc02d"
+                      d="M45,12.298V16.2l-10,7.5V11.2l3.124-2.341C38.868,8.301,39.772,8,40.702,8h0C43.076,8,45,9.924,45,12.298z" />
+                  </svg>
+                </p>
+                <p class="detalhe-contato">
+                  <span>{{ usuario.telefone || 'Não informado' }}</span>
+                  <svg v-if="usuario.telefone" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#25D366"
+                    class="icon" viewBox="0 0 16 16" @click="contatoWhatsApp(usuario)"
+                    style="cursor:pointer; margin-left: 8px;">
+                    <path
+                      d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232" />
+                  </svg>
+                </p>
               </div>
             </div>
 
@@ -39,6 +62,7 @@
     <div v-if="mostrarDetalhes" class="modal-overlay">
       <div class="modal-content">
         <h2>Detalhes do Usuário</h2>
+
         <div class="topo-detalhes">
           <div class="detalhe-foto">
             <img :src="usuarioSelecionado.foto" alt="Foto do usuário" />
@@ -50,14 +74,36 @@
             </div>
             <div class="campo">
               <strong>Email:</strong>
-              <p class="detalhe">{{ usuarioSelecionado.email }}</p>
+              <div class="detalhe detalhe-contato">
+                <span>{{ usuarioSelecionado.email }}</span>
+                <svg v-if="usuarioSelecionado.email" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="20"
+                  height="20" viewBox="0 0 48 48" @click="contatoGmail(usuarioSelecionado)" class="icon"
+                  style="cursor:pointer; margin-left: 8px;">
+                  <path fill="#4caf50" d="M45,16.2l-5,2.75l-5,4.75L35,40h7c1.657,0,3-1.343,3-3V16.2z" />
+                  <path fill="#1e88e5" d="M3,16.2l3.614,1.71L13,23.7V40H6c-1.657,0-3-1.343-3-3V16.2z" />
+                  <polygon fill="#e53935" points="35,11.2 24,19.45 13,11.2 12,17 13,23.7 24,31.95 35,23.7 36,17" />
+                  <path fill="#c62828"
+                    d="M3,12.298V16.2l10,7.5V11.2L9.876,8.859C9.132,8.301,8.228,8,7.298,8h0C4.924,8,3,9.924,3,12.298z" />
+                  <path fill="#fbc02d"
+                    d="M45,12.298V16.2l-10,7.5V11.2l3.124-2.341C38.868,8.301,39.772,8,40.702,8h0C43.076,8,45,9.924,45,12.298z" />
+                </svg>
+              </div>
             </div>
+
           </div>
         </div>
 
         <div class="campo">
           <strong>Telefone:</strong>
-          <p class="detalhe">{{ usuarioSelecionado.telefone || 'Não informado' }}</p>
+          <div class="detalhe detalhe-contato">
+            <span>{{ usuarioSelecionado.telefone || 'Não informado' }}</span>
+            <svg v-if="usuarioSelecionado.telefone" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+              fill="#25D366" class="icon" viewBox="0 0 16 16" @click="contatoWhatsApp(usuarioSelecionado)"
+              style="cursor:pointer; margin-left: 8px;">
+              <path
+                d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232" />
+            </svg>
+          </div>
         </div>
 
         <div class="campo">
@@ -162,6 +208,7 @@ export default {
       permissoes: [],
       quadras: [],
       times: [],
+      mostrarContato: false,
       form: {
         email: '',
         funcao: '',
@@ -258,7 +305,6 @@ export default {
         this.isCarregandoModal = false;
       }
     },
-
     async salvarEdicao() {
       this.isSalvando = true;
       try {
@@ -323,6 +369,43 @@ export default {
         this.isSalvando = false;
       }
     },
+    abrirModalContato(usuario) {
+      this.usuarioSelecionado = usuario;
+      this.mostrarContato = true;
+    },
+
+    fecharModalContato() {
+      this.mostrarContato = false;
+    },
+
+    contatoWhatsApp(usuario) {
+      if (!usuario.telefone) {
+        Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Usuário não possui telefone cadastrado.' });
+        return;
+      }
+      const numeroLimpo = usuario.telefone.replace(/\D/g, '');
+      const url = `https://wa.me/${numeroLimpo}`;
+      window.open(url, '_blank');
+      this.fecharModalContato();
+    },
+
+    contatoGmail(usuario) {
+      if (!usuario.email) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Atenção',
+          text: 'Usuário não possui e-mail cadastrado.'
+        });
+        return;
+      }
+
+      const url = `https://mail.google.com/mail/?view=cm&fs=1&to=${usuario.email}`;
+      window.open(url, '_blank');
+
+      this.fecharModalContato();
+    },
+
+
     fecharEditar() {
       this.mostrarEditar = false;
     }
@@ -358,6 +441,7 @@ export default {
   z-index: 100;
   transition: transform 0.3s ease;
 }
+
 .input-busca {
   padding: 10px;
   border: 1px solid #ccc;
@@ -395,6 +479,14 @@ export default {
   flex-direction: row;
   gap: 20px;
   align-items: center;
+  justify-content: space-between;
+}
+
+.icones-contato {
+  display: flex;
+  gap: 10px;
+  margin-top: -5px;
+  align-self: flex-start;
 }
 
 .foto {
@@ -479,6 +571,23 @@ export default {
   border-radius: 20px;
   cursor: pointer;
   font-weight: bold;
+}
+
+.detalhe-contato {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.icones-contato {
+  display: flex;
+  gap: 10px;
+}
+
+.icon:hover {
+  opacity: 0.8;
+  transform: scale(1.1);
+  transition: 0.2s;
 }
 
 .modal-overlay {
@@ -595,7 +704,7 @@ select {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 150px; 
+  height: 150px;
 }
 
 @keyframes spin {
@@ -612,76 +721,83 @@ select {
   .SideBar {
     transform: translateX(-100%);
     position: fixed;
-    top: 0; left: 0; bottom: 0;
+    top: 0;
+    left: 0;
+    bottom: 0;
     width: 250px;
     background: #fff;
-    box-shadow: 2px 0 12px rgba(0,0,0,0.2);
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.2);
     z-index: 100;
   }
 
   .SideBar.open {
-     transform: translateX(0); 
-    }
+    transform: translateX(0);
+  }
 
   .conteudo {
     margin-left: 0;
-    padding: 16px; 
-    width: 100%; 
+    padding: 16px;
+    width: 100%;
     box-sizing: border-box;
   }
 
-  .title { 
-    font-size: 24px; 
+  .title {
+    font-size: 24px;
   }
 
-  .usuarios { 
-    grid-template-columns: 1fr; 
-    gap: 15px; 
+  .usuarios {
+    grid-template-columns: 1fr;
+    gap: 15px;
   }
 
-  .card-conteudo { 
-    flex-direction: column; 
-    align-items: center; 
-    text-align: center; 
+  .card-conteudo {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
   }
 
-  .foto img { 
-    width: 80px; 
-    height: 80px; 
+  .foto img {
+    width: 80px;
+    height: 80px;
   }
 
-  .info h2 { 
-    font-size: 18px; 
+  .info h2 {
+    font-size: 18px;
   }
 
-  .info p { 
-    font-size: 13px; 
+  .info p {
+    font-size: 13px;
   }
 
-  .botoes { 
-    flex-direction: column; 
+  .botoes {
+    flex-direction: column;
     gap: 10px;
-   }
+  }
 
-  .btn-editar, .btn-detalhar, .btn-salvarEdicao, .btn-fecharEdicao { 
-    width: 100%; 
-    padding: 8px 0; 
+  .btn-editar,
+  .btn-detalhar,
+  .btn-salvarEdicao,
+  .btn-fecharEdicao {
+    width: 100%;
+    padding: 8px 0;
   }
 
   .modal-content {
-     width: 95%;
-      padding: 20px; 
-    }
-
-  .detalhe-foto img { 
-    width: 120px; 
-    height: 120px; 
-  
+    width: 95%;
+    padding: 20px;
   }
+
+  .detalhe-foto img {
+    width: 120px;
+    height: 120px;
+
+  }
+
   .detalhe-info {
-     gap: 8px; 
-    }
-  select { 
+    gap: 8px;
+  }
+
+  select {
     font-size: 14px;
   }
 }

@@ -28,7 +28,7 @@ const routes = [
     path: '/agendamentos',
     name: 'Agendamentos', 
     component: AgendamentosView,
-    meta: { requiresAuth: true, roles: [1, 2] }, 
+    meta: { requiresAuth: true, roles: [2] }, 
   },
   {
     path: '/agendarquadra',
@@ -46,7 +46,7 @@ const routes = [
     path: '/cadastrarquadra',
     name: 'cadastrar_quadra',
     component: CadastrarQuadraView,
-    meta: { requiresAuth: true, roles: [1, 2] }, 
+    meta: { requiresAuth: true, roles: [1] }, 
   },
   {
     path: '/controleplacar',
