@@ -22,13 +22,10 @@ export default {
 
 <style scoped>
 .card {
- width: 95%;
-  background: white;
-  border-radius: 12px;
+  width: 100%;
+  box-sizing: border-box;
   padding: 24px;
   margin-bottom: 12px;
-  font-family: 'Montserrat', sans-serif;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
 .buttons {
@@ -71,5 +68,18 @@ button:first-child {
 button:last-child {
  background-color: #F3F3F3;
  color: #7E7E7E;
+}
+
+@media (max-width: 768px) {
+  .buttons {
+    display: flex;          
+    flex-direction: column; 
+    gap: 10px;             
+  }
+
+  .buttons button {
+    width: 100%; 
+    margin: 0;  
+  }
 }
 </style>

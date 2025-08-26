@@ -1,68 +1,63 @@
 <template>
-  <div class="dashboard">
-    <div class="d-flex">
-      <SideBar />
-      <div class="container">
+  <div class="layout">
+    <SideBar />
+    <div class="conteudo">
+      <h1 class="title">Dashboard</h1>
+      <NavBarUse />
+      
+      <section class="section_totalAgendamentos">
+        <div class="card_contagem">
+          <h3>Total</h3>
+          <p>{{ totalAgendamentos }}</p>
+        </div>
+        <div class="card_contagem">
+          <h3>Pendentes</h3>
+          <p>{{ totalPendentes }}</p>
+        </div>
+        <div class="card_contagem">
+          <h3>Confirmados</h3>
+          <p>{{ totalConfirmados }}</p>
+        </div>
+        <div class="card_contagem">
+          <h3>Recusados</h3>
+          <p>{{ totalCancelados }}</p>
+        </div>
+      </section>
 
-        <!-- Cards de contagem -->
-        <section class="section_totalAgendamentos">
-          <div class="card_contagem">
-            <h3>Total</h3>
-            <p>{{ totalAgendamentos }}</p>
-          </div>
-          <div class="card_contagem">
-            <h3>Pendentes</h3>
-            <p>{{ totalPendentes }}</p>
-          </div>
-          <div class="card_contagem">
-            <h3>Confirmados</h3>
-            <p>{{ totalConfirmados }}</p>
-          </div>
-          <div class="card_contagem">
-            <h3>Recusados</h3>
-            <p>{{ totalCancelados }}</p>
-          </div>
-        </section>
+      <!-- Gráficos -->
+      <section class="section_graficos_top">
+        <div class="chart-container">
+          <canvas id="agendamentosModalidadeChart"></canvas>
+        </div>
+        <div class="chart-container">
+          <canvas id="agendamentosTipoChart"></canvas>
+        </div>
+      </section>
 
-        <!-- Gráficos de cima -->
-        <section class="section_graficos_top">
-          <div class="chart-container">
-            <canvas id="agendamentosModalidadeChart"></canvas>
-          </div>
-          <div class="chart-container">
-            <canvas id="agendamentosTipoChart"></canvas>
-          </div>
-        </section>
-
-        <!-- Gráfico de baixo com loader centralizado -->
-        <section class="section_graficos_bottom">
-          <!-- Loader centralizado -->
-          <div v-if="loading" class="loader-container-centralizado">
-            <div class="loader"></div>
-          </div>
-
-          <!-- Canvas do gráfico -->
-          <div class="chart-container-full">
-            <canvas id="agendamentosMesChart"></canvas>
-          </div>
-        </section>
-
-      </div>
+      <section class="section_graficos_bottom">
+        <div v-if="loading" class="loader-container-centralizado">
+          <div class="loader"></div>
+        </div>
+        <div class="chart-container-full">
+          <canvas id="agendamentosMesChart"></canvas>
+        </div>
+      </section>
     </div>
   </div>
 </template>
 
 <script>
-import SideBar from '@/components/SideBar.vue';
-import { Chart, registerables } from 'chart.js';
-import { nextTick } from 'vue';
-import api from '@/axios';
+import SideBar from '@/components/SideBar.vue'
+import NavBarUse from '@/components/NavBarUser.vue'
+import { Chart, registerables } from 'chart.js'
+import { nextTick } from 'vue'
+import api from '@/axios'
 
-Chart.register(...registerables);
+Chart.register(...registerables)
 
 export default {
   name: 'DashboardView',
-  components: { SideBar },
+  components: { SideBar, NavBarUse },
   data() {
     return {
       agendamentos: [],
@@ -74,63 +69,62 @@ export default {
       agendamentosModalidadeChart: null,
       agendamentosTipoChart: null,
       loading: false
-    };
+    }
   },
   methods: {
     async carregarAgendamentos() {
       try {
-        this.loading = true;
-
-        const usuario = JSON.parse(localStorage.getItem("usuario") || "null");
-        let data = [];
+        this.loading = true
+        const usuario = JSON.parse(localStorage.getItem("usuario") || "null")
+        let data = []
 
         if (usuario?.permissaoId === 1) {
-          const res = await api.get('/agendamentos/todos');
-          data = res.data;
+          const res = await api.get('/agendamentos/todos')
+          data = res.data
         } else if (usuario?.permissaoId === 2) {
           if (!usuario.quadraId) {
-            console.warn("Usuário com permissão 2 não possui quadra vinculada.");
-            return;
+            console.warn("Usuário com permissão 2 não possui quadra vinculada.")
+            return
           }
-          const res = await api.get(`/agendamentos/quadra/${usuario.quadraId}`);
-          data = res.data;
+          const res = await api.get(`/agendamentos/quadra/${usuario.quadraId}`)
+          data = res.data
         } else {
-          console.warn("Permissão não autorizada para acessar agendamentos.");
-          return;
+          console.warn("Permissão não autorizada para acessar agendamentos.")
+          return
         }
 
-        const anoAtual = new Date().getFullYear();
+        const anoAtual = new Date().getFullYear()
         this.agendamentos = data.filter(a => {
-          if (a.ano) return a.ano === anoAtual;
-          if (a.data) return new Date(a.data).getFullYear() === anoAtual;
-          return false;
-        });
+          if (a.ano) return a.ano === anoAtual
+          if (a.data) return new Date(a.data).getFullYear() === anoAtual
+          return false
+        })
 
-        this.totalAgendamentos = this.agendamentos.length;
-        this.totalPendentes = this.agendamentos.filter(a => a.status === 'Pendente').length;
-        this.totalConfirmados = this.agendamentos.filter(a => a.status === 'Confirmado').length;
-        this.totalCancelados = this.agendamentos.filter(a => a.status === 'Negado').length;
+        this.totalAgendamentos = this.agendamentos.length
+        this.totalPendentes = this.agendamentos.filter(a => a.status === 'Pendente').length
+        this.totalConfirmados = this.agendamentos.filter(a => a.status === 'Confirmado').length
+        this.totalCancelados = this.agendamentos.filter(a => a.status === 'Negado').length
 
-        await nextTick();
-        this.renderAgendamentosModalidadeChart();
-        this.renderAgendamentosTipoChart();
-        this.renderAgendamentosMesChart();
+        await nextTick()
+        this.renderAgendamentosModalidadeChart()
+        this.renderAgendamentosTipoChart()
+        this.renderAgendamentosMesChart()
       } catch (error) {
-        console.error('Erro ao carregar agendamentos:', error);
+        console.error('Erro ao carregar agendamentos:', error)
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
 
     renderAgendamentosModalidadeChart() {
-      const canvas = document.getElementById('agendamentosModalidadeChart');
-      if (this.agendamentosModalidadeChart) this.agendamentosModalidadeChart.destroy();
-      const ctx = canvas.getContext('2d');
+      const canvas = document.getElementById('agendamentosModalidadeChart')
+      if (this.agendamentosModalidadeChart) this.agendamentosModalidadeChart.destroy()
+      const ctx = canvas.getContext('2d')
 
-      const modalidades = [...new Set(this.agendamentos.map(a => a.modalidade || a.quadra?.modalidade || 'Não definido'))];
+      const modalidades = [...new Set(this.agendamentos.map(a => a.modalidade || a.quadra?.modalidade || 'Não definido'))]
       const quantidade = modalidades.map(m =>
         this.agendamentos.filter(a => (a.modalidade || a.quadra?.modalidade || 'Não definido') === m).length
-      );
+      )
 
       this.agendamentosModalidadeChart = new Chart(ctx, {
         type: 'bar',
@@ -143,16 +137,16 @@ export default {
           }]
         },
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
-      });
+      })
     },
 
     renderAgendamentosTipoChart() {
-      const canvas = document.getElementById('agendamentosTipoChart');
-      if (this.agendamentosTipoChart) this.agendamentosTipoChart.destroy();
-      const ctx = canvas.getContext('2d');
+      const canvas = document.getElementById('agendamentosTipoChart')
+      if (this.agendamentosTipoChart) this.agendamentosTipoChart.destroy()
+      const ctx = canvas.getContext('2d')
 
-      const tipos = ['PARTIDA', 'TREINO', 'EVENTO', 'OUTRO', 'CAMPEONATO'];
-      const quantidade = tipos.map(t => this.agendamentos.filter(a => a.tipo === t).length);
+      const tipos = ['PARTIDA', 'TREINO', 'EVENTO', 'OUTRO', 'CAMPEONATO']
+      const quantidade = tipos.map(t => this.agendamentos.filter(a => a.tipo === t).length)
 
       this.agendamentosTipoChart = new Chart(ctx, {
         type: 'pie',
@@ -161,22 +155,22 @@ export default {
           datasets: [{ data: quantidade, backgroundColor: ['#152147', '#1E3A8A', '#3B82F6', '#D9D9D9', '#F7F9FC'] }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-      });
+      })
     },
 
     renderAgendamentosMesChart() {
-      const canvas = document.getElementById('agendamentosMesChart');
-      if (this.agendamentosMesChart) this.agendamentosMesChart.destroy();
-      const ctx = canvas.getContext('2d');
+      const canvas = document.getElementById('agendamentosMesChart')
+      if (this.agendamentosMesChart) this.agendamentosMesChart.destroy()
+      const ctx = canvas.getContext('2d')
 
       const mesesNomes = [
         'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
         'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-      ];
+      ]
 
       const quantidade = mesesNomes.map((_, idx) =>
         this.agendamentos.filter(a => a.mes === (idx + 1) || a.mes === mesesNomes[idx]).length
-      );
+      )
 
       this.agendamentosMesChart = new Chart(ctx, {
         type: 'bar',
@@ -185,29 +179,42 @@ export default {
           datasets: [{ label: 'Agendamentos por Mês', data: quantidade, backgroundColor: '#1E3A8A' }]
         },
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
-      });
+      })
     }
   },
 
   mounted() {
-    this.carregarAgendamentos();
+    this.carregarAgendamentos()
   }
-};
+}
 </script>
 
 <style scoped>
-.dashboard {
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.SideBar {
+  width: 250px;
+  position: fixed; 
+  top: 0;
+  left: 0;
+  bottom: 0;
+}
+
+.conteudo {
+  flex: 1;
+  padding: 32px;
   margin-left: 250px;
-  margin-top: 30px;
-  padding: 20px;
-  border-radius: 10px;
+  overflow-x: hidden; 
 }
 
 .title {
   font-size: 30px;
   color: #3b82f6;
   font-weight: bold;
-  margin-bottom: 20px;
+  margin-top: 12px;
 }
 
 .section_totalAgendamentos {
@@ -221,7 +228,7 @@ export default {
 .card_contagem {
   background: white;
   border-radius: 12px;
-  padding: 24px;
+  padding: 10px;
   margin-bottom: 12px;
   font-family: 'Montserrat', sans-serif;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
@@ -249,12 +256,12 @@ export default {
 
 .section_graficos_bottom {
   position: relative;
-  /* importante para centralizar o loader dentro da seção */
   margin-top: 40px;
 }
 
 .chart-container {
   flex: 1;
+  min-width: 0; 
   height: 350px;
 }
 
@@ -263,7 +270,6 @@ export default {
   height: 350px;
 }
 
-/* Loader */
 .loader-container-centralizado {
   position: absolute;
   top: -70%;
@@ -285,36 +291,53 @@ export default {
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 @media (max-width: 768px) {
-  .dashboard {
+  .SideBar {
+    position: fixed;
+    width: 250px;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    transform: translateX(-100%);
+    background: #fff;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.2);
+  }
+
+  .SideBar.open {
+    transform: translateX(0);
+  }
+
+  .conteudo {
     margin-left: 0;
-    padding: 10px;
+    padding: 20px;
   }
 
   .section_totalAgendamentos {
     grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+
+  .section_graficos_top {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .chart-container,
+  .chart-container-full {
+    height: 300px;
+    width: 100%;
   }
 
   .card_contagem p {
     font-size: 24px;
   }
 
-  .section_graficos_top {
-    flex-direction: column;
-  }
-
-  .chart-container,
-  .chart-container-full {
-    height: 300px;
+  .title {
+    font-size: 24px;
   }
 }
 </style>

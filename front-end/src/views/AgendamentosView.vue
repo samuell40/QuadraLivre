@@ -4,6 +4,7 @@
 
     <div class="conteudo">
       <h1>Agendamentos</h1>
+           <NavBarUse />
 
       <div class="agendamentos">
         <AgendamentoCard v-for="ag in agendamentos" :key="ag.id" :agendamento="ag" />
@@ -14,6 +15,7 @@
 
 <script setup>
 import SideBar from '@/components/SideBar.vue'
+import NavBarUse from '@/components/NavBarUser.vue'
 import { ref } from 'vue'
 import AgendamentoCard from '@/components/cards/AgendamentoCard.vue'
 
@@ -41,20 +43,64 @@ const agendamentos = ref([
   min-height: 100vh;
 }
 
+.SideBar {
+  width: 250px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+
 .conteudo {
   flex: 1;
   padding: 32px;
-  background-color: #f2f2f2;
-  margin-left: 250px;
+  margin-left: 250px; 
+  transition: margin-left 0.3s ease;
+}
+
+h1 {
+  font-size: 30px;
+  color: #3b82f6;
+  font-weight: bold;
+  margin-top: 12px;
 }
 
 .agendamentos {
   margin-top: 20px;
+  display: grid;
+  gap: 20px;
 }
 
-h1 {
-  color: #3B82F6;
-  font-weight: bold;
-  font-size: 30px;
+@media (max-width: 768px) {
+  .SideBar {
+    transform: translateX(-100%);
+    width: 250px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    background: #fff;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.2);
+  }
+
+  .SideBar.open {
+    transform: translateX(0);
+  }
+
+  .conteudo {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  .agendamentos {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
 }
 </style>

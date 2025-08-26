@@ -1,8 +1,10 @@
 <template>
-  <div class="cadastro_quadra">
+  <div class="layout">
     <SideBar />
-    <div class="container">
-      <h1>Cadastrar Quadra</h1>
+
+    <div class="conteudo">
+     <h1 class="title">Cadastrar Quadra</h1>
+          <NavBarUse />
 
       <!-- Loader centralizado -->
       <div v-if="modalidades.length === 0" class="loader-container-centralizado">
@@ -62,17 +64,19 @@
           Cadastrar Quadra
         </button>
       </form>
+
     </div>
   </div>
 </template>
 
 <script>
 import SideBar from '@/components/SideBar.vue';
+import NavBarUse from '@/components/NavBarUser.vue'
 import Swal from 'sweetalert2';
 import api from '@/axios';
 
 export default {
-  components: { SideBar },
+  components: { SideBar, NavBarUse },
   data() {
     return {
       modalidades: [],
@@ -164,26 +168,39 @@ export default {
 </script>
 
 <style scoped>
-form {
+.layout {
   display: flex;
-  flex-direction: column;
-  gap: 15px;
+  min-height: 100vh;
 }
 
-.cadastro_quadra {
+.sidebar {
+  width: 250px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: #fff;
+  box-shadow: 2px 0 12px rgba(0,0,0,0.2);
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+.conteudo {
+  flex: 1;
+  padding: 32px;
   margin-left: 250px;
-  padding: 20px 55px;
-  border-radius: 20px;
+  transition: margin-left 0.3s ease;
 }
 
-h1 {
+.title {
   font-size: 30px;
-  font-family: 'Montserrat', sans-serif;
-  font-weight: bold;
-  margin-bottom: 30px;
-  margin-top: 20px;
-  margin-left: 2px;
   color: #3b82f6;
+  font-weight: bold;
+  margin-top: 12px;
 }
 
 form {
@@ -273,12 +290,16 @@ input[type='file'] {
   color: #d9534f;
 }
 
+/* LOADER */
 .loader-container-centralizado {
+  position: fixed;
+  top: 50%;
+  left: 55%;
+  transform: translate(-60%, -50%);
   display: flex;
   justify-content: center;
-  align-items: flex-start;  
-  height: 300px;            
-  margin-top: 200px;        
+  align-items: center;
+  z-index: 9999;
 }
 
 .loader {
@@ -291,25 +312,41 @@ input[type='file'] {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-@media screen and (max-width: 768px) {
-  .cadastro_quadra {
+@media (max-width: 768px) { 
+  .sidebar {
+    transform: translateX(-100%);
+    width: 250px;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .conteudo {
     margin-left: 0;
-    padding: 15px;
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
-  .container {
-    padding: 0;
-  }
-
-  h1 {
+  .title {
     font-size: 24px;
   }
 
+  form {
+    display: grid;
+    gap: 15px;
+  }
+
   .checkbox-list {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-template-columns: 1fr;
+  }
+
+  .checkbox-item label {
+    width: 100%;
   }
 }
 </style>

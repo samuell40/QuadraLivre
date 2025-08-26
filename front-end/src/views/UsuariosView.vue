@@ -1,12 +1,11 @@
 <template>
-  <div class="container">
+  <div class="layout">
     <SideBar />
-    <div class="layout">
-      <div class="header">
-        <h1 class="title">Usuários</h1>
-        <input type="text" placeholder="Digite o nome do usuário..." v-model="busca" class="input-busca"
-          :disabled="isLoading" />
-      </div>
+    <div class="conteudo">
+      <h1 class="title">Usuarios</h1>
+      <NavBarUse />
+      <input type="text" placeholder="Digite o nome do usuário..." v-model="busca" class="input-busca"
+        :disabled="isLoading" />
 
       <div v-if="isLoading" class="loader-container-centralizado">
         <div class="loader"></div>
@@ -32,7 +31,6 @@
             </div>
           </div>
         </div>
-
         <p v-else class="sem-resultados">Nenhum usuário encontrado.</p>
       </div>
     </div>
@@ -121,7 +119,6 @@
             </select>
           </div>
 
-
           <div class="campo" v-if="form.funcao === 'USUARIO'">
             <strong>Time:</strong>
             <select v-model="form.timeId">
@@ -144,13 +141,14 @@
 
 <script>
 import SideBar from '@/components/SideBar.vue';
+import NavBarUse from '@/components/NavBarUser.vue';
 import api from '@/axios';
 import Swal from 'sweetalert2';
 import { useAuthStore } from '@/store';
 
 export default {
   name: 'UsuariosView',
-  components: { SideBar },
+  components: { SideBar, NavBarUse },
   data() {
     return {
       usuarios: [],
@@ -268,7 +266,6 @@ export default {
           await Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Selecione uma função válida antes de salvar.' });
           return;
         }
-
         const permissaoSelecionada = this.permissoes.find(p => p.descricao === this.form.funcao);
         if (!permissaoSelecionada) {
           await Swal.fire({ icon: 'error', title: 'Erro', text: 'Permissão inválida.' });
@@ -284,7 +281,6 @@ export default {
           await Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Administradores precisam estar vinculados a uma quadra.' });
           return;
         }
-
         const payload = {
           email: this.form.email,
           funcao: this.form.funcao,
@@ -313,12 +309,10 @@ export default {
 
             if (!confirmacao.isConfirmed) return;
           }
-
           await api.post('/vincular', { usuarioId: this.usuarioSelecionado.id, timeId: timeSelecionado.id });
         }
 
         await api.put('/editar/usuario', payload);
-
         await Swal.fire({ icon: 'success', title: 'Sucesso', text: 'Usuário atualizado com sucesso!' });
         this.mostrarEditar = false;
         this.carregarUsuarios();
@@ -329,7 +323,6 @@ export default {
         this.isSalvando = false;
       }
     },
-
     fecharEditar() {
       this.mostrarEditar = false;
     }
@@ -338,38 +331,40 @@ export default {
 </script>
 
 <style scoped>
-.container {
-  display: flex;
-}
-
 .layout {
-  flex: 1;
-  padding: 20px;
-  min-height: 100vh;
-  margin-left: 180px;
-  margin-right: -70px;
-  position: relative;
-}
-
-.header {
   display: flex;
-  flex-direction: column;
-  gap: 15px;
-  margin-bottom: 25px;
-  margin-top: 17px;
+  min-height: 100vh;
 }
 
-.input-busca {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  width: 100%;
+.conteudo {
+  flex: 1;
+  padding: 32px;
+  margin-left: 250px;
 }
 
 .title {
   font-size: 30px;
   color: #3b82f6;
   font-weight: bold;
+  margin-top: 12px;
+}
+
+.SideBar {
+  width: 250px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+.input-busca {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 100%;
+  margin-top: 10px;
+  margin-bottom: 25px;
 }
 
 .usuarios {
@@ -571,14 +566,20 @@ select {
   margin-top: 5px;
 }
 
+.navbar-use {
+  display: flex;
+  width: 435px;
+}
+
 .loader-container-centralizado {
-  position: absolute;
+  position: fixed;
   top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  left: 55%;
+  transform: translate(-60%, -50%);
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 9999;
 }
 
 .loader {
@@ -588,7 +589,13 @@ select {
   width: 100px;
   height: 100px;
   animation: spin 1s linear infinite;
-  margin: 40px auto 80px;
+}
+
+.loader-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 150px; 
 }
 
 @keyframes spin {
@@ -601,44 +608,81 @@ select {
   }
 }
 
-
 @media (max-width: 768px) {
-  .container {
-    flex-direction: column;
+  .SideBar {
+    transform: translateX(-100%);
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 250px;
+    background: #fff;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.2);
+    z-index: 100;
   }
 
-  .usuarios {
-    grid-template-columns: 1fr !important;
-  }
+  .SideBar.open {
+     transform: translateX(0); 
+    }
 
-  .layout {
+  .conteudo {
     margin-left: 0;
-    margin-right: 0;
-    padding: 15px 10px;
+    padding: 16px; 
+    width: 100%; 
+    box-sizing: border-box;
   }
 
-  .input-busca {
-    width: 100%;
+  .title { 
+    font-size: 24px; 
   }
 
-  .card {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 15px;
-    max-width: 450px;
+  .usuarios { 
+    grid-template-columns: 1fr; 
+    gap: 15px; 
   }
 
-  .foto img {
-    width: 80px;
-    height: 80px;
+  .card-conteudo { 
+    flex-direction: column; 
+    align-items: center; 
+    text-align: center; 
   }
 
-  .btn-fechar {
-    width: 100%;
+  .foto img { 
+    width: 80px; 
+    height: 80px; 
   }
 
-  .detalhe-foto {
-    display: none;
+  .info h2 { 
+    font-size: 18px; 
+  }
+
+  .info p { 
+    font-size: 13px; 
+  }
+
+  .botoes { 
+    flex-direction: column; 
+    gap: 10px;
+   }
+
+  .btn-editar, .btn-detalhar, .btn-salvarEdicao, .btn-fecharEdicao { 
+    width: 100%; 
+    padding: 8px 0; 
+  }
+
+  .modal-content {
+     width: 95%;
+      padding: 20px; 
+    }
+
+  .detalhe-foto img { 
+    width: 120px; 
+    height: 120px; 
+  
+  }
+  .detalhe-info {
+     gap: 8px; 
+    }
+  select { 
+    font-size: 14px;
   }
 }
 </style>

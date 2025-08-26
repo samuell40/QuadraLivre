@@ -1,7 +1,8 @@
 <template>
-  <div class="container">
+  <div class="layout">
     <SideBar />
-    <div class="layout">
+
+    <div class="conteudo">
       <div class="header">
         <h1 class="title">Controles do Placar</h1>
         <div class="botoes">
@@ -47,7 +48,6 @@
             <p> Placar em desenvolvimento. Em breve estará disponível!</p>
           </div>
         </div>
-
 
         <!-- Modais -->
         <VisualizarPlacarModal :modalPlacarAberto="modalPlacarAberto"
@@ -202,7 +202,7 @@ export default {
       else if (acao === 'remover') this.abrirModalRemoverModalidade();
     },
     abrirModalAdicionarModalidade() {
-       this.novaModalidade = ''; 
+      this.novaModalidade = '';
       this.modalAdicionarModalidadeAberto = true;
     },
 
@@ -387,16 +387,42 @@ export default {
 </script>
 
 <style scoped>
-.container {
+/* LAYOUT */
+.layout {
   display: flex;
-  margin-top: 20px;
+  min-height: 100vh;
 }
 
-.layout {
+/* SIDEBAR */
+.sidebar {
+  width: 250px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: #fff;
+  box-shadow: 2px 0 12px rgba(0,0,0,0.2);
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+/* CONTEÚDO */
+.conteudo {
   flex: 1;
-  padding: 20px 10px;
-  width: 100%;
-  position: relative;
+  padding: 32px;
+  margin-left: 250px;
+  transition: margin-left 0.3s ease;
+}
+
+.title {
+  font-size: 30px;
+  color: #3b82f6;
+  font-weight: bold;
+  margin-top: 12px;
 }
 
 .header {
@@ -406,18 +432,10 @@ export default {
   margin-bottom: 20px;
 }
 
-.title {
-  color: #3b82f6;
-  font-size: 30px;
-  margin-left: 15%;
-  font-weight: bold;
-}
-
 .botoes {
   display: flex;
   gap: 20px;
   align-items: center;
-  margin-right: -5%;
 }
 
 .btn-placar {
@@ -447,17 +465,15 @@ export default {
   cursor: pointer;
 }
 
+/* GAME */
 .game {
   display: flex;
   flex-direction: column;
-  width: 90%;
-  margin-left: 15%;
 }
 
 .dropdown {
   width: 100%;
   padding: 10px;
-  margin-bottom: 15px;
   border-radius: 6px;
   border: 1px solid #ccc;
   font-size: 16px;
@@ -467,8 +483,6 @@ export default {
 .dropdown-row {
   display: flex;
   gap: 20px;
-  width: 90%;
-  margin-left: 15%;
 }
 
 .dropdown-row .team {
@@ -486,6 +500,7 @@ export default {
   color: #7E7E7E;
 }
 
+/* LOADER */
 .loader-container-centralizado {
   position: fixed;
   top: 50%;
@@ -507,96 +522,55 @@ export default {
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-
+/* RESPONSIVO */
 @media (max-width: 768px) {
-  .container {
-    flex-direction: column;
-    margin-top: 10px;
+  /* Sidebar móvel */
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .conteudo {
+    margin-left: 0;
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .title {
-    margin-left: 0;
     font-size: 24px;
-    width: 100%;
   }
 
+  /* HEADER + BOTÕES EM COLUNA */
   .header {
-    width: 95%;
     flex-direction: column;
     align-items: flex-start;
+    gap: 15px;
   }
 
   .botoes {
-    margin-right: 0;
-    width: 100%;
-    justify-content: flex-start;
+    flex-direction: column;
     gap: 10px;
+    width: 100%;
   }
 
-  .game {
+  .btn-placar, .btn-modalidade, .btn-add {
     width: 100%;
-    margin-left: 0;
-    padding: 0 10px;
+    padding: 10px 0;
   }
 
   .dropdown-row {
     flex-direction: column;
-    width: 100%;
-    margin-left: 0;
   }
 
   .dropdown-row .team {
     width: 100%;
-    flex: none;
-  }
-
-  .controls button {
-    width: 36px;
-    height: 36px;
-    font-size: 20px;
-  }
-
-  .line {
-    gap: 15px;
-    margin-bottom: 25px;
-  }
-
-  @media (min-width: 1400px) {
-    .layout {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-
-    .title {
-      margin-left: 0;
-      font-size: 36px;
-    }
-
-    .botoes {
-      margin-right: 0;
-      gap: 30px;
-    }
-
-    .game {
-      width: 100%;
-      margin-left: 0;
-    }
-
-    .dropdown-row {
-      width: 100%;
-      margin-left: 0;
-      gap: 40px;
-    }
   }
 }
 </style>

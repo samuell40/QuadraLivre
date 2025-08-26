@@ -1,5 +1,7 @@
 <template>
-  <div class="home">
+  <div class="layout">
+    <NavBar />
+
     <nav class="navbar-custom">
       <div class="navbar-container">
         <div class="esquerda-section">
@@ -268,7 +270,14 @@ export default {
 }
 </script>
 
+
 <style scoped>
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 .navbar-custom {
   position: fixed;
   top: 0;
