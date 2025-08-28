@@ -3,7 +3,6 @@
     <div class="modal-content">
       <h2 class="title">Escolha a modalidade</h2>
 
-      <!-- Loader animado -->
       <div v-if="isLoading" class="loader-container">
         <div class="loader"></div>
       </div>
@@ -91,7 +90,6 @@ export default {
   margin-bottom: 24px;
 }
 
-/* Loader */
 .loader-container {
   display: flex;
   justify-content: center;

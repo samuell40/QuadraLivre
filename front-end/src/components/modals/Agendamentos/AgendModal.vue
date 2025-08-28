@@ -1,24 +1,31 @@
-<template> 
+<template>
   <div class="modal-overlay" @click.self="$emit('fechar')">
     <div class="modal-content">
       <h2 class="title"><strong>{{ quadra?.nome }}</strong></h2>
 
       <!-- Escolha da data -->
       <label for="data"><strong>Escolha a data:</strong></label>
-      <input type="date" v-model="data" :min="minDate" :max="maxDate" />
+      <input type="date" v-model="data" :min="minDate" :max="maxDate" @change="gerarHorariosDisponiveis" />
 
-      <!-- Escolha da hora e duração (quando aplicável) -->
-      <label for="hora"><strong>Escolha a hora {{ exibirDuracao ? 'e duração' : '' }}:</strong></label>
-      <div class="linha-horizontal">
-        <input type="time" v-model="hora" min="07:00" max="23:59" />
-        
-        <!-- Só exibe a duração se for modalidade que permite -->
-        <select v-if="exibirDuracao" v-model="duracao" class="select-tempo">
-          <option disabled value="">Duração</option>
-          <option value="1">1 hora</option>
-          <option value="2">2 horas</option>
-        </select>
+      <!-- Lista de horários -->
+      <label for="hora"><strong>Escolha o horário {{ exibirDuracao ? 'e duração' : '' }}:</strong></label>
+      <div class="horarios">
+        <button
+          v-for="h in horariosDisponiveis"
+          :key="h"
+          :class="{ selecionado: h === hora }"
+          @click="hora = h"
+        >
+          {{ h }}
+        </button>
       </div>
+
+      <!-- Só exibe a duração se for modalidade que permite -->
+      <select v-if="exibirDuracao" v-model="duracao" class="select-tempo">
+        <option disabled value="">Duração</option>
+        <option value="1">1 hora</option>
+        <option value="2">2 horas</option>
+      </select>
 
       <!-- Tipo de agendamento -->
       <label for="tipo"><strong>Tipo de agendamento:</strong></label>
@@ -67,11 +74,11 @@ export default {
       tipo: '',
       minDate: hoje.toISOString().split('T')[0],
       maxDate: umAno.toISOString().split('T')[0],
-      authStore: useAuthStore()
+      authStore: useAuthStore(),
+      horariosDisponiveis: []
     }
   },
   computed: {
-    // Normaliza apenas a modalidade selecionada
     modalidadeSelecionadaPadronizada() {
       if (!this.modalidade?.nome) return ''
       return this.modalidade.nome.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').trim()
@@ -86,6 +93,19 @@ export default {
     }
   },
   methods: {
+    gerarHorariosDisponiveis() {
+      // Zera horário selecionado
+      this.hora = ''
+      this.horariosDisponiveis = []
+
+      // Gera horários de 07:00 a 23:00
+      for (let h = 7; h <= 23; h++) {
+        this.horariosDisponiveis.push(`${h.toString().padStart(2,'0')}:00`)
+      }
+
+      // Aqui você poderia filtrar horários já agendados para essa data, se quiser
+    },
+
     confirmar() {
       if (!this.data || !this.hora || (this.exibirDuracao && !this.duracao) || !this.tipo) {
         Swal.fire({
@@ -97,35 +117,7 @@ export default {
         return
       }
 
-      const agora = new Date()
-      const dataSelecionada = new Date(`${this.data}T${this.hora}`)
-      const hoje = new Date()
-      hoje.setHours(0, 0, 0, 0)
-
-      if (dataSelecionada < hoje) {
-        Swal.fire({ icon: 'error', title: 'Data inválida', text: 'Não é possível agendar para datas anteriores a hoje.', confirmButtonColor: '#1E3A8A' })
-        return
-      }
-
-      const limite = new Date()
-      limite.setFullYear(limite.getFullYear() + 1)
-      if (dataSelecionada > limite) {
-        Swal.fire({ icon: 'error', title: 'Data muito distante', text: 'Você não pode agendar para mais de 1 ano no futuro.', confirmButtonColor: '#1E3A8A' })
-        return
-      }
-
-      const [h, m] = this.hora.split(':')
-      const horaSelecionada = parseInt(h) * 60 + parseInt(m)
-      if (horaSelecionada < 7 * 60 || horaSelecionada > 23 * 60 + 59) {
-        Swal.fire({ icon: 'error', title: 'Horário inválido', text: 'Escolha um horário entre 07:00 e 23:59.', confirmButtonColor: '#1E3A8A' })
-        return
-      }
-
-      if ((dataSelecionada - agora) / (1000 * 60 * 60) < 24) {
-        Swal.fire({ icon: 'error', title: 'Agendamento muito próximo', text: 'Você só pode agendar com pelo menos 24 horas de antecedência.', confirmButtonColor: '#1E3A8A' })
-        return
-      }
-
+      const [h] = this.hora.split(':')
       const duracaoFinal = this.exibirDuracao ? parseInt(this.duracao) : 1
 
       this.$emit('confirmar', {
@@ -135,7 +127,7 @@ export default {
         dia: parseInt(this.data.split('-')[2]),
         mes: parseInt(this.data.split('-')[1]),
         ano: parseInt(this.data.split('-')[0]),
-        hora: parseInt(this.hora.split(':')[0]),
+        hora: parseInt(h),
         duracao: duracaoFinal,
         tipo: this.tipo,
         status: 'Pendente'
@@ -166,8 +158,8 @@ export default {
   border-radius: 8px;
   max-width: 800px;
   width: 90%;
-  max-height: 550px;
-  height: 70%;
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 .modal-content input,
@@ -207,6 +199,32 @@ select {
   border: 1px solid #D9D9D9;
   border-radius: 4px;
   color: #7E7E7E;
+}
+
+.horarios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.horarios button {
+  padding: 6px 12px;
+  font-size: 14px;
+  border: 1px solid #1E3A8A;
+  border-radius: 6px;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.horarios button:hover {
+  background-color: #0831d6;
+  color: #fff;
+}
+
+.horarios button.selecionado {
+  background-color: #1E3A8A;
+  color: #fff;
 }
 
 .modal-actions {
