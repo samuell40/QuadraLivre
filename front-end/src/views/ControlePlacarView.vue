@@ -465,7 +465,6 @@ export default {
   cursor: pointer;
 }
 
-/* GAME */
 .game {
   display: flex;
   flex-direction: column;
@@ -500,7 +499,6 @@ export default {
   color: #7E7E7E;
 }
 
-/* LOADER */
 .loader-container-centralizado {
   position: fixed;
   top: 50%;
@@ -526,9 +524,7 @@ export default {
   100% { transform: rotate(360deg); }
 }
 
-/* RESPONSIVO */
 @media (max-width: 768px) {
-  /* Sidebar móvel */
   .sidebar {
     transform: translateX(-100%);
   }
@@ -547,7 +543,6 @@ export default {
     font-size: 24px;
   }
 
-  /* HEADER + BOTÕES EM COLUNA */
   .header {
     flex-direction: column;
     align-items: flex-start;

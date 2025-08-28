@@ -11,9 +11,9 @@
   const criarAgendamentoController = async (req, res) => {
     try {
       const usuarioId = req.user?.id || req.body.usuarioId;
-      const { dia, mes, ano, hora, duracao, tipo, quadraId } = req.body;
+      const { dia, mes, ano, hora, duracao, tipo, quadraId,  modalidadeId  } = req.body;
 
-      const agendamento = await criarAgendamentoService({ usuarioId, dia, mes, ano, hora, duracao, tipo, quadraId });
+      const agendamento = await criarAgendamentoService({ usuarioId, dia, mes, ano, hora, duracao, tipo, quadraId, modalidadeId });
       return res.status(201).json(agendamento);
     } catch (err) {
       console.error(err);

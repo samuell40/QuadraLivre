@@ -155,10 +155,15 @@ export default {
       if (this.agendamentosModalidadeChart) this.agendamentosModalidadeChart.destroy()
       const ctx = canvas.getContext('2d')
 
-      const modalidades = [...new Set(this.agendamentos.map(a => a.modalidade || a.quadra?.modalidade || 'Não definido'))]
-      const quantidade = modalidades.map(m =>
-        this.agendamentos.filter(a => (a.modalidade || a.quadra?.modalidade || 'Não definido') === m).length
-      )
+      const nomesModalidades = this.agendamentos.map(a => {
+        if (a.modalidade?.nome) return a.modalidade.nome
+        if (a.quadra?.modalidades?.length > 0) return a.quadra.modalidades[0].nome
+        return 'Não definido'
+      })
+
+      const modalidades = [...new Set(nomesModalidades)]
+
+      const quantidade = modalidades.map(m => nomesModalidades.filter(n => n === m).length)
 
       this.agendamentosModalidadeChart = new Chart(ctx, {
         type: 'bar',
@@ -202,14 +207,31 @@ export default {
         'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
       ]
 
-      const quantidade = mesesNomes.map((_, idx) =>
-        this.agendamentos.filter(a => a.mes === (idx + 1) || a.mes === mesesNomes[idx]).length
+      const mesesAgendamentos = this.agendamentos.map(a => a.mes)
+
+      if (mesesAgendamentos.length === 0) {
+        this.agendamentosMesChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: mesesNomes,
+            datasets: [{ label: 'Agendamentos por Mês', data: new Array(12).fill(0), backgroundColor: '#1E3A8A' }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        })
+        return
+      }
+
+      const mesInicial = Math.min(...mesesAgendamentos) - 1 
+      const mesesFiltrados = mesesNomes.slice(mesInicial) 
+
+      const quantidade = mesesFiltrados.map((_, idx) =>
+        this.agendamentos.filter(a => a.mes === (mesInicial + idx + 1)).length
       )
 
       this.agendamentosMesChart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: mesesNomes,
+          labels: mesesFiltrados,
           datasets: [{ label: 'Agendamentos por Mês', data: quantidade, backgroundColor: '#1E3A8A' }]
         },
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }

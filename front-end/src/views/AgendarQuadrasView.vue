@@ -1,4 +1,4 @@
-<template> 
+<template>
   <div class="container">
     <NavBar />
 
@@ -15,11 +15,7 @@
 
       <div v-else class="quadras-grid">
         <div class="card-quadra" v-for="quadra in quadras" :key="quadra.id">
-          <img
-            :src="quadra.foto || require('@/assets/futibinha.png')"
-            :alt="quadra.nome"
-            class="imagem-quadra"
-          />
+          <img :src="quadra.foto || require('@/assets/futibinha.png')" :alt="quadra.nome" class="imagem-quadra" />
           <div class="overlay">
             <h3 class="nome-quadra">{{ quadra.nome }}</h3>
             <h3 class="endereco">{{ quadra.endereco }}</h3>
@@ -30,21 +26,12 @@
     </div>
 
     <!-- Modal para escolher modalidade -->
-    <ModalidadeModal
-      v-if="mostrarModalidadeModal"
-      :quadra-id="quadraSelecionada?.id"
-      @fechar="mostrarModalidadeModal = false"
-      @confirmar="abrirAgendamentoModal"
-    />
+    <ModalidadeModal v-if="mostrarModalidadeModal" :quadra-id="quadraSelecionada?.id"
+      @fechar="mostrarModalidadeModal = false" @confirmar="abrirAgendamentoModal" />
 
     <!-- Modal final de agendamento -->
-    <AgendamentoModal
-      v-if="mostrarModalAgendamento"
-      :quadra="quadraSelecionada"
-      :modalidade="modalidadeSelecionada"
-      @fechar="mostrarModalAgendamento = false"
-      @confirmar="confirmarAgendamento"
-    />
+    <AgendamentoModal v-if="mostrarModalAgendamento && modalidadeSelecionada" :quadra="quadraSelecionada"
+      :modalidade="modalidadeSelecionada" @fechar="mostrarModalAgendamento = false" @confirmar="confirmarAgendamento" />
   </div>
 </template>
 
@@ -202,7 +189,7 @@ body {
   height: 240px;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .imagem-quadra {
@@ -214,7 +201,7 @@ body {
   position: absolute;
   bottom: 0;
   width: 100%;
-  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
   color: white;
   padding: 16px;
   display: flex;
@@ -235,7 +222,8 @@ body {
   padding: 6px 8px;
   cursor: pointer;
   width: 80px;
-  height: 36px; /* ✅ Corrigido */
+  height: 36px;
+  /* ✅ Corrigido */
   border-radius: 6px;
   font-size: 12px;
   font-weight: bold;
@@ -263,7 +251,12 @@ body {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>

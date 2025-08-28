@@ -6,6 +6,7 @@ import NaoAutorizado from '@/views/NaoAutorizado.vue';
 import CadastroView from '../views/CadastroView.vue';
 import CadastrarQuadraView from '../views/CadastrarQuadraView.vue';
 import ControlePlacarView from '../views/ControlePlacarView';
+import PartidaView from '@/views/PartidaView.vue';
 import UsuariosView from '../views/UsuariosView';
 import MeusAgendamentosView from '../views/MeusAgendamentosView';
 import AgendarQuadrasView from '@/views/AgendarQuadrasView.vue';
@@ -52,6 +53,12 @@ const routes = [
     path: '/controleplacar',
     name: 'controle_placar',
     component: ControlePlacarView,
+    meta: { requiresAuth: true, roles: [1, 2] }, 
+  },
+    {
+    path: '/partida',
+    name: 'partida',
+    component: PartidaView,
     meta: { requiresAuth: true, roles: [1, 2] }, 
   },
   {

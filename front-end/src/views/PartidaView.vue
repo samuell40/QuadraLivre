@@ -1,0 +1,449 @@
+<template>
+  <div class="layout">
+    <SideBar />
+    <NavBarUse v-if="!partidaIniciada" />
+
+    <div class="conteudo">
+      <h1 class="title">Partida ao Vivo</h1>
+
+      <div v-if="partidaIniciada" class="temporizador-topo">
+        <p class="temporizador">{{ minutos }}:{{ segundos }}</p>
+      </div>
+
+      <div v-if="carregandoModalidades" class="loader-container-centralizado">
+        <div class="loader"></div>
+      </div>
+
+      <div v-else>
+        <div class="dropdowns">
+          <div class="dropdown-row modalidade">
+            <div class="team">
+              <label>Modalidade:</label>
+              <select v-model="modalidadeSelecionada" @change="handleModalidadeChange" class="dropdown"
+                :disabled="partidaIniciada">
+                <option disabled value="">Selecione a modalidade</option>
+                <option v-for="m in modalidadesDisponiveis" :key="m.id" :value="m.nome">
+                  {{ m.nome }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="dropdown-row">
+            <div class="team">
+              <label>Time 1:</label>
+              <select v-model="timeSelecionado1" @change="carregarPlacarTime('time1')" class="dropdown"
+                :disabled="partidaIniciada">
+                <option disabled value="">Selecione o time</option>
+                <option v-for="t in times" :key="t.id" :value="t.nome"
+                  :disabled="t.nome === timeSelecionado2 || !checaMesmoTipoTime(t)">
+                  {{ t.nome }}
+                </option>
+              </select>
+            </div>
+
+            <div class="team">
+              <label>Time 2:</label>
+              <select v-model="timeSelecionado2" @change="carregarPlacarTime('time2')" class="dropdown"
+                :disabled="partidaIniciada">
+                <option disabled value="">Selecione o time</option>
+                <option v-for="t in times" :key="t.id" :value="t.nome"
+                  :disabled="t.nome === timeSelecionado1 || !checaMesmoTipoTime(t)">
+                  {{ t.nome }}
+                </option>
+              </select>
+            </div>
+
+            <div class="team">
+              <button class="dropdown botao-iniciar" @click="togglePartida"
+                :disabled="!timeSelecionado1 || !timeSelecionado2 || (!modalidadeSelecionada && !partidaIniciada)">
+                {{ !partidaIniciada ? 'Iniciar Partida' : (temporizadorAtivo ? 'Pausar Partida' : 'Retomar Partida') }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="!partidaIniciada" class="mensagem-inicial">
+          <p>
+            Para iniciar uma partida, selecione uma modalidade, escolha os times e clique em "Iniciar Partida".
+          </p>
+        </div>
+
+        <div class="placares" v-if="partidaIniciada">
+          <component :is="isVolei ? 'PlacarTimeVolei' : 'PlacarTime'" :key="'time1'" :timeNome="timeSelecionado1"
+            :timeData="time1" @update="time1 = $event" @remover="resetTime('time1')" />
+          <component :is="isVolei ? 'PlacarTimeVolei' : 'PlacarTime'" :key="'time2'" :timeNome="timeSelecionado2"
+            :timeData="time2" @update="time2 = $event" @remover="resetTime('time2')" />
+        </div>
+
+        <div v-if="partidaIniciada" class="finalizar-container">
+          <button class="botao-finalizar" @click="finalizarPartida">
+            Finalizar Partida
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import SideBar from '@/components/SideBar.vue'
+import PlacarTime from '@/components/Partida/PlacarTimeFutebol.vue'
+import NavBarUse from '@/components/NavBarUser.vue'
+import PlacarTimeVolei from '@/components/Partida/PlacarTimeVolei.vue'
+import api from '@/axios'
+import Swal from 'sweetalert2'
+
+export default {
+  name: 'PartidaView',
+  components: { SideBar, NavBarUse, PlacarTime, PlacarTimeVolei },
+
+  data() {
+    return {
+      modalidadesDisponiveis: [],
+      modalidadeSelecionada: '',
+      times: [],
+      timeSelecionado1: '',
+      timeSelecionado2: '',
+      partidaIniciada: false,
+      time1: {},
+      time2: {},
+      carregandoModalidades: true,
+      tempoSegundos: 0,
+      temporizadorAtivo: false,
+      intervaloTemporizador: null
+    }
+  },
+
+  computed: {
+    isVolei() {
+      if (!this.modalidadeSelecionada) return false
+      const nome = this.modalidadeSelecionada
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+      return nome.includes("volei")
+    },
+    minutos() {
+      return String(Math.floor(this.tempoSegundos / 60)).padStart(2, '0')
+    },
+    segundos() {
+      return String(this.tempoSegundos % 60).padStart(2, '0')
+    }
+  },
+
+  watch: {
+    modalidadeSelecionada() { this.salvarEstado() },
+    timeSelecionado1() { this.salvarEstado() },
+    timeSelecionado2() { this.salvarEstado() },
+    tempoSegundos() { this.salvarEstado() },
+    partidaIniciada() { this.salvarEstado() },
+    time1: { handler() { this.salvarEstado() }, deep: true },
+    time2: { handler() { this.salvarEstado() }, deep: true }
+  },
+
+  methods: {
+    criarTime(tipo) {
+      const modelos = {
+        futebol: { nome: '', pts: 0, pj: 0, golspro: 0, golsofridos: 0, empates: 0, vitorias: 0, derrotas: 0, cartaoamarelo: 0, cartaovermelho: 0, faltas: 0 },
+        volei: { nome: '', pts: 0, pj: 0, vitorias: 0, derrotas: 0, setsVencidos: 0, doiszero: 0, doisum: 0, umdois: 0, zerodois: 0, wo: 0 }
+      }
+      return JSON.parse(JSON.stringify(modelos[tipo] || {}))
+    },
+
+    async carregarModalidades() {
+      try {
+        const res = await api.get('/listar/modalidade')
+        this.modalidadesDisponiveis = res.data || []
+        await this.carregarEstadoSalvo()
+      } catch (error) {
+        console.error(error)
+        Swal.fire('Erro', 'Não foi possível carregar as modalidades.', 'error')
+      } finally {
+        this.carregandoModalidades = false
+      }
+    },
+
+    async carregarTimes() {
+      if (!this.modalidadeSelecionada) return
+      try {
+        const modalidade = this.modalidadesDisponiveis.find(m => m.nome === this.modalidadeSelecionada)
+        if (!modalidade) return
+        const res = await api.get(`/times/modalidade/${modalidade.id}`)
+        this.times = Array.isArray(res.data) ? res.data : []
+      } catch (error) {
+        console.error(error)
+        Swal.fire('Erro', 'Não foi possível carregar os times.', 'error')
+      }
+    },
+
+    checaMesmoTipoTime(time) {
+      if (!this.timeSelecionado1 && !this.timeSelecionado2) return true
+      const timeNome = time.nome.toLowerCase()
+      return this.isVolei === timeNome.includes('volei')
+    },
+
+    carregarPlacarTime(timeKey, nomeTime = null) {
+      const tipo = this.isVolei ? 'volei' : 'futebol'
+      this[timeKey] = this.criarTime(tipo)
+      if (nomeTime) this[timeKey].nome = nomeTime
+      else this[timeKey].nome = this[timeKey === 'time1' ? 'timeSelecionado1' : 'timeSelecionado2'] || ''
+    },
+
+    togglePartida() {
+      if (!this.partidaIniciada) this.iniciarPartida()
+      else this.temporizadorAtivo = !this.temporizadorAtivo
+    },
+
+    iniciarPartida() {
+      if (!this.timeSelecionado1 || !this.timeSelecionado2 || !this.modalidadeSelecionada) return
+      if (!this.time1.nome) this.carregarPlacarTime('time1', this.timeSelecionado1)
+      if (!this.time2.nome) this.carregarPlacarTime('time2', this.timeSelecionado2)
+      this.partidaIniciada = true
+      this.temporizadorAtivo = true
+      this.iniciarTemporizador()
+      Swal.fire('Sucesso', 'Partida iniciada!', 'success')
+    },
+
+    iniciarTemporizador() {
+      if (this.intervaloTemporizador) clearInterval(this.intervaloTemporizador)
+      this.intervaloTemporizador = setInterval(() => {
+        if (this.temporizadorAtivo) this.tempoSegundos++
+      }, 1000)
+    },
+
+    finalizarPartida() {
+      Swal.fire('Partida Finalizada', 'A Partida Foi Finalizada!', 'success')
+      this.resetTime('time1')
+      this.resetTime('time2')
+      this.modalidadeSelecionada = ''
+      this.partidaIniciada = false
+      this.tempoSegundos = 0
+      this.temporizadorAtivo = false
+      clearInterval(this.intervaloTemporizador)
+      this.intervaloTemporizador = null
+      localStorage.removeItem('partidaEstado')
+    },
+
+    resetTime(timeKey) {
+      this[timeKey] = {}
+      if (timeKey === 'time1') this.timeSelecionado1 = ''
+      else this.timeSelecionado2 = ''
+    },
+
+    salvarEstado() {
+      const estado = {
+        partidaIniciada: this.partidaIniciada,
+        tempoSegundos: this.tempoSegundos,
+        timeSelecionado1: this.timeSelecionado1,
+        timeSelecionado2: this.timeSelecionado2,
+        modalidadeSelecionada: this.modalidadeSelecionada,
+        time1: this.time1,
+        time2: this.time2,
+        inicioPartida: this.partidaIniciada ? Date.now() - this.tempoSegundos * 1000 : null
+      }
+      localStorage.setItem('partidaEstado', JSON.stringify(estado))
+    },
+
+    async carregarEstadoSalvo() {
+      const estado = JSON.parse(localStorage.getItem('partidaEstado'))
+      if (estado) {
+        this.modalidadeSelecionada = estado.modalidadeSelecionada || ''
+        await this.carregarTimes()
+        this.timeSelecionado1 = estado.timeSelecionado1 || ''
+        this.timeSelecionado2 = estado.timeSelecionado2 || ''
+        this.time1 = estado.time1 || this.criarTime(this.isVolei ? 'volei' : 'futebol')
+        this.time2 = estado.time2 || this.criarTime(this.isVolei ? 'volei' : 'futebol')
+        this.tempoSegundos = estado.inicioPartida ? Math.floor((Date.now() - estado.inicioPartida) / 1000) : 0
+        this.partidaIniciada = estado.partidaIniciada || false
+        if (this.partidaIniciada) {
+          this.temporizadorAtivo = true
+          this.iniciarTemporizador()
+        }
+      }
+    },
+
+    handleModalidadeChange() {
+      this.carregarTimes()
+      this.timeSelecionado1 = ''
+      this.timeSelecionado2 = ''
+    }
+  },
+
+  mounted() {
+    this.carregarModalidades()
+  }
+}
+</script>
+
+<style scoped>
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.conteudo {
+  flex: 1;
+  padding: 20px;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.title {
+  font-size: 30px;
+  color: #3b82f6;
+  font-weight: bold;
+  margin-top: 12px;
+  margin-left: 18%;
+}
+
+.temporizador-topo {
+  position: absolute;
+  top: 30px;
+  right: 45px;
+  width: 10%;
+  height: 50px;
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  z-index: 10;
+  padding: 0;
+}
+
+.temporizador {
+  font-size: 35px;
+  font-weight: bold;
+  color: #3b82f6;
+  margin: 0;
+}
+
+.botao-pausar {
+  padding: 6px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: none;
+  background-color: #3b82f6;
+  color: #fff;
+  cursor: pointer;
+  margin-top: 0;
+}
+
+.botao-pausar:hover {
+  background-color: #2563eb;
+}
+
+.placares {
+  display: flex;
+  gap: 30px;
+  margin-top: 30px;
+  margin-left: 18%;
+}
+
+.dropdowns {
+  display: flex;
+  flex-direction: column;
+  margin-left: 18%;
+  width: 100%;
+}
+
+.dropdown-row {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 15px;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.dropdown-row.modalidade .team {
+  width: 80%;
+  display: flex;
+  flex-direction: column;
+}
+
+.dropdown-row .team {
+  width: 375px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dropdown {
+  width: 100%;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+.botao-iniciar {
+  margin-top: 21px;
+}
+
+.finalizar-container {
+  margin: 30px 18%;
+  width: 80%;
+}
+
+.botao-finalizar {
+  width: 100%;
+  padding: 15px;
+  font-size: 18px;
+  background-color: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.mensagem-inicial {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+  font-size: 18px;
+  font-weight: 500;
+  color: #3b82f6;
+  text-align: center;
+  margin: 35px 18%;
+  margin-left: 35%;
+}
+
+.loader-container-centralizado {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  margin-left: 5%;
+}
+
+.loader {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #3b82f6;
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  animation: spin 1s linear infinite;
+}
+
+h2 {
+  color: #3b82f6;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+</style>

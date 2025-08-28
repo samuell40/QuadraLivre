@@ -8,7 +8,7 @@ const listarAgendamentosService = async (usuarioId) => {
 
   const agendamentos = await prisma.agendamento.findMany({
     where: { usuarioId },
-    include: { quadra: true },
+    include: { quadra: true, modalidade: true },
     orderBy: [
       { ano: 'asc' },
       { mes: 'asc' },
@@ -22,7 +22,7 @@ const listarAgendamentosService = async (usuarioId) => {
 
 const listarTodosAgendamentosService = async () => {
   return await prisma.agendamento.findMany({
-    include: { quadra: true, usuario: true },
+    include: { quadra: true, usuario: true, modalidade: true },
     orderBy: [
       { ano: 'asc' },
       { mes: 'asc' },
@@ -39,7 +39,7 @@ const listarAgendamentosPorQuadraService = async (quadraId) => {
 
   return await prisma.agendamento.findMany({
     where: { quadraId: Number(quadraId) },
-    include: { usuario: true, quadra: true },
+    include: { usuario: true, quadra: true, modalidade: true },
     orderBy: [
       { ano: 'asc' },
       { mes: 'asc' },
@@ -67,6 +67,7 @@ const listarAgendamentosConfirmadosService = async (quadraId, ano, mes, dia) => 
       id: true,
       hora: true,
       duracao: true,
+      modalidade: true
     },
     orderBy: [
       { hora: 'asc' }
@@ -76,8 +77,8 @@ const listarAgendamentosConfirmadosService = async (quadraId, ano, mes, dia) => 
   return agendamentos;
 };
 
-const criarAgendamentoService = async ({ usuarioId, dia, mes, ano, hora, duracao = 1, tipo = 'TREINO', quadraId }) => {
-  if (!dia || !mes || !ano || !hora || !usuarioId || !quadraId) {
+const criarAgendamentoService = async ({ usuarioId, dia, mes, ano, hora, duracao = 1, tipo = 'TREINO', quadraId, modalidadeId }) => {
+  if (!dia || !mes || !ano || !hora || !usuarioId || !quadraId || !modalidadeId) {
     throw { status: 400, message: 'Campos obrigatórios não preenchidos.' };
   }
 
@@ -101,8 +102,10 @@ const criarAgendamentoService = async ({ usuarioId, dia, mes, ano, hora, duracao
       tipo,
       status: 'Pendente',
       usuarioId,
-      quadraId
-    }
+      quadraId,
+      modalidadeId
+    },
+    include: { modalidade: true }
   });
 
   return agendamento;
@@ -152,10 +155,10 @@ const listarModalidadesPorQuadraService = async (quadraId) => {
   }
 };
 
-module.exports = { 
+module.exports = {
   criarAgendamentoService,
   listarAgendamentosService,
-  listarTodosAgendamentosService,  
+  listarTodosAgendamentosService,
   listarAgendamentosPorQuadraService,
   cancelarAgendamentoService,
   listarAgendamentosConfirmadosService,

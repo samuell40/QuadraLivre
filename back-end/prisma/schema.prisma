@@ -8,14 +8,14 @@ datasource db {
 }
 
 model Usuario {
-  id           Int           @id @default(autoincrement())
-  nome         String
-  email        String        @unique
-  telefone     String?
-  funcao       String
-  permissaoId  Int
-  foto         String?       @db.VarChar(2048)
-  quadraId     Int?
+  id          Int     @id @default(autoincrement())
+  nome        String
+  email       String  @unique
+  telefone    String?
+  funcao      String
+  permissaoId Int
+  foto        String? @db.VarChar(2048)
+  quadraId    Int?
 
   quadra       Quadra?       @relation(fields: [quadraId], references: [id])
   permissao    Permissao     @relation(fields: [permissaoId], references: [id])
@@ -24,12 +24,12 @@ model Usuario {
 }
 
 model Quadra {
-  id          Int          @id @default(autoincrement())
-  nome        String
-  foto        String?      @db.VarChar(2048)
-  endereco    String?
-  usuarios    Usuario[]
-  modalidades Modalidade[] @relation("QuadraModalidade")
+  id           Int           @id @default(autoincrement())
+  nome         String
+  foto         String?       @db.VarChar(2048)
+  endereco     String?
+  usuarios     Usuario[]
+  modalidades  Modalidade[]  @relation("QuadraModalidade")
   agendamentos Agendamento[]
 }
 
@@ -41,63 +41,66 @@ enum TipoAgendamento {
 }
 
 model Agendamento {
-  id        Int               @id @default(autoincrement())
-  dia       Int
-  mes       Int
-  ano       Int
-  hora      Int
-  duracao   Int       @default(1)
-  status    String   @default("Pendente")
-  tipo      TipoAgendamento @default(TREINO)
-  usuarioId Int?
-  usuario   Usuario?          @relation(fields: [usuarioId], references: [id])
-  quadraId  Int?
-  quadra    Quadra?   @relation(fields: [quadraId], references: [id])
+  id           Int             @id @default(autoincrement())
+  dia          Int
+  mes          Int
+  ano          Int
+  hora         Int
+  duracao      Int             @default(1)
+  status       String          @default("Pendente")
+  tipo         TipoAgendamento @default(TREINO)
+  usuarioId    Int?
+  usuario      Usuario?        @relation(fields: [usuarioId], references: [id])
+  quadraId     Int?
+  quadra       Quadra?         @relation(fields: [quadraId], references: [id])
+  modalidadeId Int?
+  modalidade   Modalidade?     @relation("AgendamentoModalidade", fields: [modalidadeId], references: [id])
 }
 
-  model Modalidade {
-    id     Int     @id @default(autoincrement())
-    nome   String  @unique
-    times  Time[]
-    quadras Quadra[] @relation("QuadraModalidade")
-  }
+model Modalidade {
+  id           Int           @id @default(autoincrement())
+  nome         String        @unique
+  times        Time[]
+  quadras      Quadra[]      @relation("QuadraModalidade")
+  agendamentos Agendamento[] @relation("AgendamentoModalidade")
+}
 
 model Time {
-  id           Int     @id @default(autoincrement())
+  id           Int           @id @default(autoincrement())
   nome         String
-  foto         String? @db.VarChar(2048)
+  foto         String?       @db.VarChar(2048)
   modalidadeId Int
-  modalidade   Modalidade @relation(fields: [modalidadeId], references: [id])
+  modalidade   Modalidade    @relation(fields: [modalidadeId], references: [id])
   jogadores    UsuarioTime[]
 
-  placar       Placar?    // lado opcional, sem fields/references
+  placar Placar?
 }
 
 model Placar {
-  id           Int     @id @default(autoincrement())
-  timeId       Int     @unique
-  time         Time    @relation(fields: [timeId], references: [id])
+  id     Int  @id @default(autoincrement())
+  timeId Int  @unique
+  time   Time @relation(fields: [timeId], references: [id])
 
-  jogos        Int     @default(0)
-  posicao      Int     @default(0)
-  pontuacao    Int     @default(0)
-  vitorias     Int     @default(0)
-  empates      Int     @default(0)
-  derrotas     Int     @default(0)
-  golsPro      Int     @default(0)
-  golsSofridos Int     @default(0)
-  saldoDeGols  Int     @default(0)
+  jogos        Int @default(0)
+  posicao      Int @default(0)
+  pontuacao    Int @default(0)
+  vitorias     Int @default(0)
+  empates      Int @default(0)
+  derrotas     Int @default(0)
+  golsPro      Int @default(0)
+  golsSofridos Int @default(0)
+  saldoDeGols  Int @default(0)
 
-  setsVencidos Int     @default(0)
-  vitoria2x0   Int     @default(0)
-  vitoria2x1   Int     @default(0)
-  derrota2x1   Int     @default(0)
-  derrota2x0   Int     @default(0)
-  derrotaWo    Int     @default(0)
+  setsVencidos Int @default(0)
+  vitoria2x0   Int @default(0)
+  vitoria2x1   Int @default(0)
+  derrota2x1   Int @default(0)
+  derrota2x0   Int @default(0)
+  derrotaWo    Int @default(0)
 
-  cartoesAmarelos  Int @default(0)
-  cartoesVermelhos Int @default(0)
-  visivel Boolean @default(true)
+  cartoesAmarelos  Int     @default(0)
+  cartoesVermelhos Int     @default(0)
+  visivel          Boolean @default(true)
 }
 
 model UsuarioTime {

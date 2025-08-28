@@ -81,7 +81,6 @@ onMounted(() => {
 .conteudo {
   flex: 1;
   padding: 32px 75px;
-  background-color: #f2f2f2;
   margin-left: 250px;
 }
 
