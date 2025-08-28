@@ -49,6 +49,33 @@ const listarAgendamentosPorQuadraService = async (quadraId) => {
   });
 };
 
+// Listar agendamentos confirmados por quadra e data
+const listarAgendamentosConfirmadosService = async (quadraId, ano, mes, dia) => {
+  if (!quadraId) {
+    throw { status: 400, message: 'Quadra não informada.' };
+  }
+
+  const agendamentos = await prisma.agendamento.findMany({
+    where: {
+      quadraId,
+      status: "Confirmado",
+      ano,
+      mes,
+      dia
+    },
+    select: {
+      id: true,
+      hora: true,
+      duracao: true,
+    },
+    orderBy: [
+      { hora: 'asc' }
+    ]
+  });
+
+  return agendamentos;
+};
+
 const criarAgendamentoService = async ({ usuarioId, dia, mes, ano, hora, duracao = 1, tipo = 'TREINO', quadraId }) => {
   if (!dia || !mes || !ano || !hora || !usuarioId || !quadraId) {
     throw { status: 400, message: 'Campos obrigatórios não preenchidos.' };
@@ -131,6 +158,7 @@ module.exports = {
   listarTodosAgendamentosService,  
   listarAgendamentosPorQuadraService,
   cancelarAgendamentoService,
+  listarAgendamentosConfirmadosService,
   atualizarAgendamentoService,
   listarModalidadesPorQuadraService
 };

@@ -3,6 +3,8 @@
     <h3>{{ agendamento.quadra }}</h3>
     <p>Data: <strong>{{ agendamento.data }}</strong></p>
     <p>Hora: <strong>{{ agendamento.hora }}</strong></p>
+    <p>Duração: <strong>{{ agendamento.duracao }} hora(s)</strong></p>
+    <p>Tipo: <strong>{{ agendamento.tipo }}</strong></p>
 
     <p>
       Status:
@@ -13,7 +15,6 @@
 
     <div class="buttons">
       <button class="cancelar" @click="$emit('cancelar')">Cancelar Agendamento</button>
-      <!-- Adicionei o emit 'novo' aqui -->
       <button class="novo" @click="$emit('novo')">Novo Agendamento</button>
     </div>
   </div>
@@ -24,6 +25,9 @@ export default {
   name: 'MeusAgendamentoCard',
   props: {
     agendamento: Object
+  },
+   mounted() {
+    console.log(this.agendamento);
   }
 }
 </script>

@@ -2,7 +2,8 @@ const {
   criarAgendamentoService, 
   listarAgendamentosService, 
   listarTodosAgendamentosService, 
-  listarAgendamentosPorQuadraService, 
+  listarAgendamentosPorQuadraService,
+  listarAgendamentosConfirmadosService,
   cancelarAgendamentoService,
   atualizarAgendamentoService,
   listarModalidadesPorQuadraService } = require('../services/agendamento.service');
@@ -69,6 +70,23 @@ const listarAgendamentosAdminController = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(err.status || 500).json({ error: err.message || 'Erro ao listar agendamentos da quadra.' });
+  }
+};
+const listarAgendamentosConfirmadosController = async (req, res) => {
+  try {
+    const { quadraId } = req.params;
+    const { ano, mes, dia } = req.query; // você pode passar pela URL
+
+    const agendamentos = await listarAgendamentosConfirmadosService(
+      Number(quadraId),
+      Number(ano),
+      Number(mes),
+      Number(dia)
+    );
+
+    res.json(agendamentos);
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message || 'Erro ao listar agendamentos confirmados' });
   }
 };
 

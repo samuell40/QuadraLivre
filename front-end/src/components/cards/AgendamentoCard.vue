@@ -1,22 +1,15 @@
 <template>
   <div class="card">
     <div class="header">
-      <img class="quadra-foto" :src="agendamento.quadra.foto" alt="Foto da quadra" />
       <div class="quadra-info">
         <h3>{{ agendamento.quadra.nome }}</h3>
-        <p>{{ agendamento.quadra.endereco }}</p>
       </div>
     </div>
-
-    <div class="usuario">
-      <img class="usuario-foto" :src="agendamento.usuario.foto" alt="Foto do usuário" />
-      <p>
-        Realizado por: <strong>{{ agendamento.usuario.nome }} ({{ agendamento.usuario.email }})</strong>
-      </p>
-    </div>
-
+    <p>Realizado por: <strong>{{ agendamento.usuario.nome }}</strong></p>
     <p>Data: <strong>{{ formatarData(agendamento) }}</strong></p>
     <p>Hora: <strong>{{ agendamento.hora }}:00</strong></p>
+    <p>Duração: <strong>{{ agendamento.duracao }} hora(s)</strong></p>
+    <p>Tipo: <strong>{{ agendamento.tipo }}</strong></p>
 
     <div class="buttons" v-if="!readonly && agendamento.status === 'Pendente'">
       <button @click="aceitar">Aceitar</button>
