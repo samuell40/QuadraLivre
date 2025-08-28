@@ -3,11 +3,20 @@
     <SideBar />
 
     <div class="conteudo">
-      <h1>Agendamentos</h1>
-           <NavBarUse />
+      <h1>Agendamentos da Minha Quadra</h1>
 
-      <div class="agendamentos">
-        <AgendamentoCard v-for="ag in agendamentos" :key="ag.id" :agendamento="ag" />
+      <div v-if="isLoading">Carregando...</div>
+
+      <div v-else-if="agendamentos.length === 0">
+        Nenhum agendamento encontrado para sua quadra.
+      </div>
+
+      <div v-else class="agendamentos">
+        <AgendamentoCard
+          v-for="ag in agendamentos"
+          :key="ag.id"
+          :agendamento="ag"
+        />
       </div>
     </div>
   </div>
@@ -15,26 +24,62 @@
 
 <script setup>
 import SideBar from '@/components/SideBar.vue'
-import NavBarUse from '@/components/NavBarUser.vue'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import AgendamentoCard from '@/components/cards/AgendamentoCard.vue'
+import { useAuthStore } from '@/store'
+import api from '@/axios'
+import Swal from 'sweetalert2'
 
-const agendamentos = ref([
-  {
-    id: 1,
-    quadra: 'Metodão',
-    usuario: 'João Silva',
-    data: '31/12/2025',
-    hora: '23:00',
+const authStore = useAuthStore()
+const agendamentos = ref([])
+const isLoading = ref(false)
+
+// Observa authStore.user e carrega os agendamentos quando estiver definido
+watch(
+  () => authStore.user,
+  (user) => {
+    console.log('Usuário logado:', user)
+    if (user) {
+      const quadraId = user.quadraId
+      console.log('quadraId do admin:', quadraId)
+
+      carregarAgendamentos(quadraId)
+    }
   },
-  {
-    id: 2,
-    quadra: 'Quadra de Areia',
-    usuario: 'Maria Oliveira',
-    data: '25/12/2025',
-    hora: '10:00',
+  { immediate: true }
+)
+
+const carregarAgendamentos = async (quadraId) => {
+  isLoading.value = true
+  try {
+    console.log('Chamando API com quadraId:', quadraId)
+    const { data } = await api.get(`/agendamentos/quadra/${quadraId}`)
+    console.log('Dados recebidos da API:', data)
+
+    agendamentos.value = data.map(a => ({
+      id: a.id,
+      quadra: a.quadra?.nome || 'Não informado',
+      usuario: a.usuario?.nome || 'Não informado',
+      data: `${a.dia.toString().padStart(2, '0')}/${a.mes
+        .toString()
+        .padStart(2, '0')}/${a.ano}`,
+      hora: `${a.hora.toString().padStart(2, '0')}:00`,
+      status: a.status.toLowerCase()
+    }))
+
+    console.log('Agendamentos processados:', agendamentos.value)
+  } catch (err) {
+    console.error('Erro ao carregar agendamentos:', err)
+    Swal.fire({
+      icon: 'error',
+      title: 'Erro',
+      text: err.response?.data?.message || err.message || 'Não foi possível carregar os agendamentos da quadra.',
+      confirmButtonColor: '#1E3A8A'
+    })
+  } finally {
+    isLoading.value = false
   }
-])
+}
 </script>
 
 <style scoped>
@@ -43,64 +88,20 @@ const agendamentos = ref([
   min-height: 100vh;
 }
 
-.SideBar {
-  width: 250px;
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  z-index: 100;
-  transition: transform 0.3s ease;
-}
-
 .conteudo {
   flex: 1;
   padding: 32px;
-  margin-left: 250px; 
-  transition: margin-left 0.3s ease;
-}
-
-h1 {
-  font-size: 30px;
-  color: #3b82f6;
-  font-weight: bold;
-  margin-top: 12px;
+  background-color: #f2f2f2;
+  margin-left: 250px;
 }
 
 .agendamentos {
   margin-top: 20px;
-  display: grid;
-  gap: 20px;
 }
 
-@media (max-width: 768px) {
-  .SideBar {
-    transform: translateX(-100%);
-    width: 250px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    background: #fff;
-    box-shadow: 2px 0 12px rgba(0,0,0,0.2);
-  }
-
-  .SideBar.open {
-    transform: translateX(0);
-  }
-
-  .conteudo {
-    margin-left: 0;
-    padding: 20px;
-  }
-
-  h1 {
-    font-size: 24px;
-  }
-
-  .agendamentos {
-    grid-template-columns: 1fr;
-    gap: 15px;
-  }
+h1 {
+  color: #3B82F6;
+  font-weight: bold;
+  font-size: 30px;
 }
 </style>

@@ -91,10 +91,30 @@ const cancelarAgendamentoService = async (id) => {
   return true;
 };
 
+const listarModalidadesPorQuadraService = async (quadraId) => {
+  if (!quadraId) throw { status: 400, message: 'Quadra não informada.' };
+
+  try {
+    // Prisma faz join na relação N:N
+    const quadra = await prisma.quadra.findUnique({
+      where: { id: Number(quadraId) },
+      include: { modalidades: true }
+    });
+
+    if (!quadra) throw { status: 404, message: 'Quadra não encontrada.' };
+
+    return quadra.modalidades;
+  } catch (err) {
+    console.error('Erro no service de modalidades:', err);
+    throw { status: 500, message: 'Erro ao buscar modalidades da quadra.' };
+  }
+};
+
 module.exports = { 
   criarAgendamentoService,
   listarAgendamentosService,
   listarTodosAgendamentosService,  
   listarAgendamentosPorQuadraService,
-   cancelarAgendamentoService
+  cancelarAgendamentoService,
+  listarModalidadesPorQuadraService
 };

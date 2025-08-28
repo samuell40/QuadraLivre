@@ -1,4 +1,4 @@
-<template>
+<template> 
   <div class="container">
     <NavBar />
 
@@ -23,16 +23,26 @@
           <div class="overlay">
             <h3 class="nome-quadra">{{ quadra.nome }}</h3>
             <h3 class="endereco">{{ quadra.endereco }}</h3>
-            <button class="btn-agendar" @click="abrirModal(quadra)">Agendar</button>
+            <button class="btn-agendar" @click="abrirModalidadeModal(quadra)">Agendar</button>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Modal para escolher modalidade -->
+    <ModalidadeModal
+      v-if="mostrarModalidadeModal"
+      :quadra-id="quadraSelecionada?.id"
+      @fechar="mostrarModalidadeModal = false"
+      @confirmar="abrirAgendamentoModal"
+    />
+
+    <!-- Modal final de agendamento -->
     <AgendamentoModal
-      v-if="mostrarModal"
+      v-if="mostrarModalAgendamento"
       :quadra="quadraSelecionada"
-      @fechar="mostrarModal = false"
+      :modalidade="modalidadeSelecionada"
+      @fechar="mostrarModalAgendamento = false"
       @confirmar="confirmarAgendamento"
     />
   </div>
@@ -42,31 +52,25 @@
 import Swal from 'sweetalert2'
 import NavBar from '@/components/NavBar.vue'
 import AgendamentoModal from '@/components/modals/Agendamentos/AgendModal.vue'
+import ModalidadeModal from '@/components/modals/Agendamentos/ModalidadeModal.vue'
 import api from '@/axios'
 import { useAuthStore } from '@/store'
 
 export default {
   name: 'AgendarQuadras',
-  components: {
-    NavBar,
-    AgendamentoModal,
-  },
+  components: { NavBar, AgendamentoModal, ModalidadeModal },
   data() {
     return {
       quadras: [],
       isLoadingQuadras: true,
-      mostrarModal: false,
-      quadraSelecionada: null
+      mostrarModalidadeModal: false,
+      mostrarModalAgendamento: false,
+      quadraSelecionada: null,
+      modalidadeSelecionada: null
     }
   },
   mounted() {
-    this.carregarQuadras().then(() => {
-      const quadraId = this.$route.query.quadraId
-      if (quadraId) {
-        const quadra = this.quadras.find(q => q.id == quadraId)
-        if (quadra) this.abrirModal(quadra)
-      }
-    })
+    this.carregarQuadras()
   },
   methods: {
     async carregarQuadras() {
@@ -81,44 +85,53 @@ export default {
       }
     },
 
-    abrirModal(quadra) {
+    abrirModalidadeModal(quadra) {
       this.quadraSelecionada = quadra
-      this.mostrarModal = true
+      this.mostrarModalidadeModal = true
+    },
+
+    abrirAgendamentoModal(modalidade) {
+      this.modalidadeSelecionada = modalidade
+      this.mostrarModalidadeModal = false
+      this.mostrarModalAgendamento = true
     },
 
     async confirmarAgendamento(agendamentoDoModal) {
       const authStore = useAuthStore()
       if (!authStore.usuario) {
         Swal.fire({
-          icon: 'error',
-          title: 'Erro de usuário',
-          text: 'Usuário não autenticado. Faça login e tente novamente.',
+          title: 'Você precisa estar logado',
+          text: 'Deseja ir para a tela de login?',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Ir para login',
+          cancelButtonText: 'Cancelar',
           confirmButtonColor: '#1E3A8A'
+        }).then(result => {
+          if (result.isConfirmed) this.$router.push('/login')
         })
         return
       }
 
-      // Monta payload completo com usuário e quadra
       const agendamento = {
         ...agendamentoDoModal,
         usuarioId: authStore.usuario.id,
-        quadraId: this.quadraSelecionada.id
+        quadraId: this.quadraSelecionada.id,
+        modalidadeId: this.modalidadeSelecionada.id
       }
 
       try {
-        const { data: resultado } = await api.post('/agendamento', agendamento)
+        await api.post('/agendamento', agendamento)
         Swal.fire({
           icon: 'success',
           title: 'Agendamento realizado!',
-          text: `Local: ${this.quadraSelecionada.nome} às ${agendamento.hora} do dia ${agendamento.dia}/${agendamento.mes}/${agendamento.ano}`,
+          text: `Quadra: ${this.quadraSelecionada.nome} | Modalidade: ${this.modalidadeSelecionada.nome}`,
           confirmButtonColor: '#1E3A8A',
           timer: 5000,
           showConfirmButton: false,
           timerProgressBar: true
         })
-
-        this.mostrarModal = false
-        console.log('Agendamento criado:', resultado)
+        this.mostrarModalAgendamento = false
       } catch (err) {
         if (err.response?.status === 409) {
           Swal.fire({
@@ -221,11 +234,9 @@ body {
   border: none;
   padding: 6px 8px;
   cursor: pointer;
-
   width: 80px;
-  height: 36  px;
+  height: 36px; /* ✅ Corrigido */
   border-radius: 6px;
-  color: white;
   font-size: 12px;
   font-weight: bold;
   transition: background-color 0.2s;

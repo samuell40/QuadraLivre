@@ -1,4 +1,10 @@
-const { criarAgendamentoService, listarAgendamentosService, listarTodosAgendamentosService, listarAgendamentosPorQuadraService, cancelarAgendamentoService } = require('../services/agendamento.service');
+const { 
+  criarAgendamentoService, 
+  listarAgendamentosService, 
+  listarTodosAgendamentosService, 
+  listarAgendamentosPorQuadraService, 
+  cancelarAgendamentoService, 
+  listarModalidadesPorQuadraService } = require('../services/agendamento.service');
 
 const criarAgendamentoController = async (req, res) => {
   try {
@@ -15,7 +21,7 @@ const criarAgendamentoController = async (req, res) => {
 
 const listarAgendamentosController = async (req, res) => {
   try {
-    const usuarioId = req.user?.id;
+    const usuarioId = req.user?.id; 
 
     const agendamentos = await listarAgendamentosService(usuarioId);
     return res.status(200).json(agendamentos);
@@ -37,7 +43,17 @@ const listarTodosAgendamentosController = async (req, res) => {
 
 const listarAgendamentosPorQuadraController = async (req, res) => {
   try {
+    const { perfil } = req.user;
     const { quadraId } = req.params;
+
+    if (perfil !== 'admin') {
+      return res.status(403).json({ message: 'Acesso negado' });
+    }
+
+    if (!quadraId) {
+      return res.status(400).json({ message: 'Quadra não informada' });
+    }
+
     const agendamentos = await listarAgendamentosPorQuadraService(quadraId);
     return res.status(200).json(agendamentos);
   } catch (err) {
@@ -57,10 +73,22 @@ const cancelarAgendamentoController = async (req, res) => {
   }
 };
 
+const listarModalidadesPorQuadraController = async (req, res) => {
+  try {
+    const { quadraId } = req.params;
+    const modalidades = await listarModalidadesPorQuadraService(quadraId);
+    return res.status(200).json(modalidades);
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ error: err.message || 'Erro ao listar modalidades.' });
+  }
+};
+
 module.exports = { 
   criarAgendamentoController, 
   listarAgendamentosController, 
   listarTodosAgendamentosController,
   listarAgendamentosPorQuadraController,
-  cancelarAgendamentoController 
+  cancelarAgendamentoController ,
+  listarModalidadesPorQuadraController
 };

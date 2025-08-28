@@ -51,7 +51,10 @@ import { useAuthStore } from '@/store'
 
 export default {
   name: 'AgendamentoModal',
-  props: { quadra: Object },
+  props: { 
+    quadra: Object,
+    modalidade: Object
+  },
   data() {
     const hoje = new Date()
     const umAno = new Date()
@@ -68,19 +71,18 @@ export default {
     }
   },
   computed: {
-    modalidadesPadronizadas() {
-      if (!this.quadra?.modalidades || this.quadra.modalidades.length === 0) return []
-      return this.quadra.modalidades.map(m =>
-        m.nome.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').trim()
-      )
+    // Normaliza apenas a modalidade selecionada
+    modalidadeSelecionadaPadronizada() {
+      if (!this.modalidade?.nome) return ''
+      return this.modalidade.nome.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').trim()
     },
     isFutebol() {
       const modalidadesFutebol = ['futebol', 'futsal', 'futebol de areia', 'futevolei']
-      return this.modalidadesPadronizadas.some(m => modalidadesFutebol.includes(m))
+      return modalidadesFutebol.includes(this.modalidadeSelecionadaPadronizada)
     },
     exibirDuracao() {
       const modalidadesDuracao = ['volei', 'volei de areia', 'futevolei']
-      return this.modalidadesPadronizadas.some(m => modalidadesDuracao.includes(m))
+      return modalidadesDuracao.includes(this.modalidadeSelecionadaPadronizada)
     }
   },
   methods: {
@@ -129,6 +131,7 @@ export default {
       this.$emit('confirmar', {
         usuarioId: this.authStore.usuario.id,
         quadraId: this.quadra.id,
+        modalidadeId: this.modalidade?.id,
         dia: parseInt(this.data.split('-')[2]),
         mes: parseInt(this.data.split('-')[1]),
         ano: parseInt(this.data.split('-')[0]),
