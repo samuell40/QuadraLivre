@@ -9,16 +9,29 @@
         <div class="loader"></div>
       </div>
 
-      <div v-else-if="agendamentos.length === 0">
-        Nenhum agendamento encontrado para sua quadra.
-      </div>
+      <div v-else>
+        <div v-if="agendamentosPendentes.length === 0">
+          Nenhum agendamento pendente.
+        </div>
+        <div v-else class="agendamentos">
+          <h2>Agendamentos Pendentes</h2>
+          <AgendamentoCard
+            v-for="ag in agendamentosPendentes"
+            :key="ag.id"
+            :agendamento="ag"
+            @atualizar="carregarAgendamentos"
+          />
+        </div>
 
-      <div v-else class="agendamentos">
-        <AgendamentoCard
-          v-for="ag in agendamentos"
-          :key="ag.id"
-          :agendamento="ag"
-        />
+        <div v-if="agendamentosProcessados.length > 0" class="agendamentos-processados">
+          <h2>Agendamentos Processados</h2>
+          <AgendamentoCard
+            v-for="ag in agendamentosProcessados"
+            :key="ag.id"
+            :agendamento="ag"
+            :readonly="true"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -39,6 +52,14 @@ export default {
       isLoading: true,
     };
   },
+  computed: {
+    agendamentosPendentes() {
+      return this.agendamentos.filter(a => a.status === 'Pendente');
+    },
+    agendamentosProcessados() {
+      return this.agendamentos.filter(a => a.status !== 'Pendente');
+    }
+  },
   mounted() {
     this.carregarAgendamentos();
   },
@@ -46,7 +67,6 @@ export default {
     async carregarAgendamentos() {
       this.isLoading = true;
       try {
-        // Chama endpoint que retorna agendamentos da quadra do usuário logado
         const response = await api.get('/agendamentos/minha-quadra');
         this.agendamentos = response.data;
       } catch (err) {
@@ -81,9 +101,18 @@ export default {
   margin-top: 20px;
 }
 
+.agendamentos-processados {
+  margin-top: 40px;
+}
+
 h1 {
   color: #3B82F6;
   font-weight: bold;
   font-size: 30px;
+}
+
+h2 {
+  color: #3B82F6;
+  margin-bottom: 16px;
 }
 </style>

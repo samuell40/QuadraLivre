@@ -1,39 +1,65 @@
 <template>
   <div class="card">
-    <h3>{{ agendamento.quadra.nome }}</h3>
-    <p>
-      Realizado por: 
-      <strong>{{ agendamento.usuario.nome }} ({{ agendamento.usuario.email }})</strong>
-    </p>
-    <p>
-      Endereço: <strong>{{ agendamento.quadra.endereco }}</strong>
-    </p>
-    <p>
-      Data: <strong>{{ formatarData(agendamento) }}</strong>
-    </p>
-    <p>
-      Hora: <strong>{{ agendamento.hora }}:00</strong>
-    </p>
-    <div class="buttons">
-      <button>Aceitar</button>
-      <button>Recusar</button>
+    <div class="header">
+      <img class="quadra-foto" :src="agendamento.quadra.foto" alt="Foto da quadra" />
+      <div class="quadra-info">
+        <h3>{{ agendamento.quadra.nome }}</h3>
+        <p>{{ agendamento.quadra.endereco }}</p>
+      </div>
     </div>
+
+    <div class="usuario">
+      <img class="usuario-foto" :src="agendamento.usuario.foto" alt="Foto do usuário" />
+      <p>
+        Realizado por: <strong>{{ agendamento.usuario.nome }} ({{ agendamento.usuario.email }})</strong>
+      </p>
+    </div>
+
+    <p>Data: <strong>{{ formatarData(agendamento) }}</strong></p>
+    <p>Hora: <strong>{{ agendamento.hora }}:00</strong></p>
+
+    <div class="buttons" v-if="!readonly && agendamento.status === 'Pendente'">
+      <button @click="aceitar">Aceitar</button>
+      <button @click="recusar">Recusar</button>
+    </div>
+
+    <p v-else>Status: <strong>{{ agendamento.status }}</strong></p>
   </div>
 </template>
 
 <script>
+import api from '@/axios';
+import Swal from 'sweetalert2';
+
 export default {
-  name: 'AgendamentoCard',
   props: {
-    agendamento: Object
+    agendamento: Object,
+    readonly: { type: Boolean, default: false }
   },
   methods: {
     formatarData(ag) {
-      // Formata para DD/MM/AAAA
       return `${String(ag.dia).padStart(2,'0')}/${String(ag.mes).padStart(2,'0')}/${ag.ano}`;
+    },
+    async aceitar() {
+      try {
+        await api.patch(`/agendamento/${this.agendamento.id}/aceitar`);
+        Swal.fire('Sucesso', 'Agendamento confirmado!', 'success');
+        this.$emit('atualizar');
+      } catch (err) {
+        Swal.fire('Erro', err.response?.data?.error || 'Falha ao confirmar agendamento', 'error');
+      }
+    },
+    async recusar() {
+      try {
+        await api.patch(`/agendamento/${this.agendamento.id}/recusar`);
+        Swal.fire('Sucesso', 'Agendamento recusado!', 'success');
+        this.$emit('atualizar');
+      } catch (err) {
+        Swal.fire('Erro', err.response?.data?.error || 'Falha ao recusar agendamento', 'error');
+      }
     }
   }
-}
+};
 </script>
 
 <style scoped>
@@ -47,20 +73,53 @@ export default {
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
-.buttons {
-  margin-top: 12px;
+.header {
   display: flex;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
-h3 {
+.quadra-foto {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-right: 12px;
+}
+
+.quadra-info h3 {
   color: #1E3A8A;
   font-weight: bolder;
-  margin-bottom: 10px;
+  margin: 0;
+}
+
+.quadra-info p {
+  color: #7E7E7E;
+  margin: 2px 0 0 0;
+}
+
+.usuario {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.usuario-foto {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 8px;
 }
 
 p {
   color: #7E7E7E;
   margin: 4px 0;
+}
+
+.buttons {
+  margin-top: 12px;
+  display: flex;
 }
 
 button {
@@ -96,6 +155,16 @@ button:last-child {
   .buttons button {
     width: 100%;
     margin: 0;
+  }
+
+  .header, .usuario {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .quadra-foto, .usuario-foto {
+    margin-bottom: 6px;
+    margin-right: 0;
   }
 }
 </style>

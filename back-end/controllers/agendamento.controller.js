@@ -3,7 +3,8 @@ const {
   listarAgendamentosService, 
   listarTodosAgendamentosService, 
   listarAgendamentosPorQuadraService, 
-  cancelarAgendamentoService, 
+  cancelarAgendamentoService,
+  atualizarAgendamentoService,
   listarModalidadesPorQuadraService } = require('../services/agendamento.service');
 
 const criarAgendamentoController = async (req, res) => {
@@ -43,7 +44,22 @@ const listarTodosAgendamentosController = async (req, res) => {
 
 const listarAgendamentosPorQuadraController = async (req, res) => {
   try {
-    const quadraId = req.user?.quadraId; // pega direto do token
+    const { quadraId } = req.params;
+
+  if (!quadraId) {
+      return res.status(400).json({ message: 'Quadra não informada' });
+  }
+   const agendamentos = await listarAgendamentosPorQuadraService(quadraId);
+   return res.status(200).json(agendamentos);
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ error: err.message || 'Erro ao listar agendamentos da quadra.' });
+  }
+};
+
+const listarAgendamentosAdminController = async (req, res) => {
+  try {
+    const quadraId = req.user?.quadraId;
     if (!quadraId) {
       return res.status(400).json({ message: 'Usuário não está vinculado a nenhuma quadra.' });
     }
@@ -67,6 +83,28 @@ const cancelarAgendamentoController = async (req, res) => {
   }
 };
 
+const aceitarAgendamentoController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const agendamento = await atualizarAgendamentoService(id, 'Confirmado');
+    return res.status(200).json(agendamento);
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ error: err.message || 'Erro ao aceitar agendamento.' });
+  }
+};
+
+const recusarAgendamentoController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const agendamento = await atualizarAgendamentoService(id, 'Recusado');
+    return res.status(200).json(agendamento);
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ error: err.message || 'Erro ao recusar agendamento.' });
+  }
+};
+
 const listarModalidadesPorQuadraController = async (req, res) => {
   try {
     const { quadraId } = req.params;
@@ -82,7 +120,10 @@ module.exports = {
   criarAgendamentoController, 
   listarAgendamentosController, 
   listarTodosAgendamentosController,
+  listarAgendamentosAdminController,
   listarAgendamentosPorQuadraController,
-  cancelarAgendamentoController ,
-  listarModalidadesPorQuadraController
+  cancelarAgendamentoController,
+  aceitarAgendamentoController,
+  recusarAgendamentoController,
+  listarModalidadesPorQuadraController,
 };

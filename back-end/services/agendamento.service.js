@@ -91,6 +91,21 @@ const cancelarAgendamentoService = async (id) => {
   return true;
 };
 
+const atualizarAgendamentoService = async (id, status) => {
+  if (!id || !status) throw { status: 400, message: 'ID e status são obrigatórios.' };
+
+  const agendamento = await prisma.agendamento.findUnique({ where: { id: Number(id) } });
+  if (!agendamento) throw { status: 404, message: 'Agendamento não encontrado.' };
+  if (agendamento.status !== 'Pendente') throw { status: 400, message: 'Agendamento já foi processado.' };
+
+  const atualizado = await prisma.agendamento.update({
+    where: { id: Number(id) },
+    data: { status }
+  });
+
+  return atualizado;
+};
+
 const listarModalidadesPorQuadraService = async (quadraId) => {
   if (!quadraId) throw { status: 400, message: 'Quadra não informada.' };
 
@@ -116,5 +131,6 @@ module.exports = {
   listarTodosAgendamentosService,  
   listarAgendamentosPorQuadraService,
   cancelarAgendamentoService,
+  atualizarAgendamentoService,
   listarModalidadesPorQuadraService
 };
