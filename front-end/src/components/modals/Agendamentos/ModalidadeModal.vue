@@ -3,7 +3,10 @@
     <div class="modal-content">
       <h2 class="title">Escolha a modalidade</h2>
 
-      <div v-if="isLoading" class="loader">Carregando...</div>
+      <!-- Loader animado -->
+      <div v-if="isLoading" class="loader-container">
+        <div class="loader"></div>
+      </div>
 
       <div v-else>
         <div v-if="modalidades.length === 0">
@@ -86,6 +89,28 @@ export default {
 .title {
   color: #3b82f6;
   margin-bottom: 24px;
+}
+
+/* Loader */
+.loader-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.loader {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #3b82f6;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: girar 1s linear infinite;
+}
+
+@keyframes girar {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .modal-lista {
