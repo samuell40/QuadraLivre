@@ -31,7 +31,7 @@ router.get('/agendamentos/minha-quadra', [validarJWT], listarAgendamentosAdminCo
 router.get('/agendamentos/quadra/:quadraId', [validarJWT], listarAgendamentosPorQuadraController);
 
 // Listar agendamentos confirmados por quadra
-router.get("/agendamentos/quadra/:quadraId/confirmados", listarAgendamentosConfirmadosController);
+router.get( "/agendamentos/quadra/:quadraId/confirmados", [validarJWT], listarAgendamentosConfirmadosController );
 
 // Cancelar um agendamento
 router.delete('/agendamento/:id', [validarJWT], cancelarAgendamentoController);
