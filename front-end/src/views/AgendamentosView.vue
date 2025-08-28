@@ -5,10 +5,10 @@
     <div class="conteudo">
       <h1>Agendamentos da Minha Quadra</h1>
 
-      <div v-if="isLoading" class="loader-container-centralizado">
-        <div class="loader"></div>
-      </div>
+      <!-- Loader -->
+      <div v-if="isLoading" class="loader"></div>
 
+      <!-- Conteúdo -->
       <div v-else>
         <div v-if="agendamentosPendentes.length === 0">
           Nenhum agendamento pendente.
@@ -37,51 +37,39 @@
   </div>
 </template>
 
-<script>
-import SideBar from '@/components/SideBar.vue';
-import AgendamentoCard from '@/components/cards/AgendamentoCard.vue';
-import api from '@/axios';
-import Swal from 'sweetalert2';
+<script setup>
+import { ref, onMounted, computed } from "vue";
+import SideBar from "@/components/SideBar.vue";
+import AgendamentoCard from "@/components/cards/AgendamentoCard.vue";
+import api from "@/axios";
+import Swal from "sweetalert2";
 
-export default {
-  name: 'AgendamentosView',
-  components: { SideBar, AgendamentoCard },
-  data() {
-    return {
-      agendamentos: [],
-      isLoading: true,
-    };
-  },
-  computed: {
-    agendamentosPendentes() {
-      return this.agendamentos.filter(a => a.status === 'Pendente');
-    },
-    agendamentosProcessados() {
-      return this.agendamentos.filter(a => a.status !== 'Pendente');
-    }
-  },
-  mounted() {
-    this.carregarAgendamentos();
-  },
-  methods: {
-    async carregarAgendamentos() {
-      this.isLoading = true;
-      try {
-        const response = await api.get('/agendamentos/minha-quadra');
-        this.agendamentos = response.data;
-      } catch (err) {
-        console.error('Erro ao carregar agendamentos:', err);
-        Swal.fire({
-          icon: 'error',
-          title: 'Erro',
-          text: 'Falha ao carregar agendamentos da quadra.'
-        });
-      } finally {
-        this.isLoading = false;
-      }
-    }
+const agendamentos = ref([]);
+const isLoading = ref(true);
+
+const carregarAgendamentos = async () => {
+  isLoading.value = true;
+  try {
+    const { data } = await api.get("/agendamentos/minha-quadra");
+    agendamentos.value = data;
+  } catch (err) {
+    console.error("Erro ao carregar agendamentos:", err);
+    Swal.fire({
+      icon: "error",
+      title: "Erro",
+      text: "Falha ao carregar agendamentos da quadra."
+    });
+  } finally {
+    isLoading.value = false;
   }
 };
+
+const agendamentosPendentes = computed(() => agendamentos.value.filter(a => a.status === "Pendente"));
+const agendamentosProcessados = computed(() => agendamentos.value.filter(a => a.status !== "Pendente"));
+
+onMounted(() => {
+  carregarAgendamentos();
+});
 </script>
 
 <style scoped>
@@ -92,7 +80,7 @@ export default {
 
 .conteudo {
   flex: 1;
-  padding: 32px;
+  padding: 32px 75px;
   background-color: #f2f2f2;
   margin-left: 250px;
 }
@@ -105,14 +93,40 @@ export default {
   margin-top: 40px;
 }
 
-h1 {
+h1, h2 {
   color: #3B82F6;
+}
+
+h1 {
   font-weight: bold;
   font-size: 30px;
+  margin-bottom: 20px;
 }
 
 h2 {
-  color: #3B82F6;
   margin-bottom: 16px;
+}
+
+/* Loader igual MeusAgendamentos */
+.loader {
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loader::after {
+  content: '';
+  width: 50px;
+  height: 50px;
+  border: 5px solid #3b82f6;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: girar 1s linear infinite;
+}
+
+@keyframes girar {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>
