@@ -54,6 +54,8 @@ const carregarAgendamentos = async () => {
       quadraId: a.quadra?.id || null,
       data: `${a.dia.toString().padStart(2, "0")}/${a.mes.toString().padStart(2, "0")}/${a.ano}`,
       hora: `${a.hora.toString().padStart(2, "0")}:00`,
+      duracao: a.duracao,
+      tipo: a.tipo,
       status: a.status.toLowerCase(),
     }));
   } catch (err) {

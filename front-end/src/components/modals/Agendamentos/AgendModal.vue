@@ -14,6 +14,7 @@
           v-for="h in horariosDisponiveis"
           :key="h"
           :class="{ selecionado: h === hora }"
+          :disabled="horariosIndisponiveis.includes(h)"
           @click="hora = h"
         >
           {{ h }}
@@ -55,6 +56,7 @@
 <script>
 import Swal from 'sweetalert2'
 import { useAuthStore } from '@/store'
+import api from '@/axios'
 
 export default {
   name: 'AgendamentoModal',
@@ -75,7 +77,8 @@ export default {
       minDate: hoje.toISOString().split('T')[0],
       maxDate: umAno.toISOString().split('T')[0],
       authStore: useAuthStore(),
-      horariosDisponiveis: []
+      horariosDisponiveis: [],
+      horariosIndisponiveis: []
     }
   },
   computed: {
@@ -93,17 +96,41 @@ export default {
     }
   },
   methods: {
-    gerarHorariosDisponiveis() {
-      // Zera horário selecionado
+    async gerarHorariosDisponiveis() {
       this.hora = ''
       this.horariosDisponiveis = []
+      this.horariosIndisponiveis = []
 
-      // Gera horários de 07:00 a 23:00
+      // gera horários base
       for (let h = 7; h <= 23; h++) {
         this.horariosDisponiveis.push(`${h.toString().padStart(2,'0')}:00`)
       }
 
-      // Aqui você poderia filtrar horários já agendados para essa data, se quiser
+      try {
+        const { data: agendamentos } = await api.get(
+          `/agendamentos/quadra/${this.quadra.id}?data=${this.data}`
+        )
+        console.log('Agendamentos recebidos:', agendamentos)
+
+        agendamentos.forEach(a => {
+          for (let i = 0; i < a.duracao; i++) {
+            const hString = String(a.hora + i).padStart(2,'0') + ':00'
+            this.horariosIndisponiveis.push(hString)
+          }
+        })
+
+        // remove duplicados
+        this.horariosIndisponiveis = [...new Set(this.horariosIndisponiveis)]
+        console.log('Horários indisponíveis:', this.horariosIndisponiveis)
+      } catch (err) {
+        console.error('Erro ao buscar horários ocupados:', err)
+        Swal.fire({
+          icon: 'error',
+          title: 'Erro',
+          text: 'Não foi possível carregar os horários dessa quadra.',
+          confirmButtonColor: '#1E3A8A',
+        })
+      }
     },
 
     confirmar() {
@@ -119,7 +146,23 @@ export default {
 
       const [h] = this.hora.split(':')
       const duracaoFinal = this.exibirDuracao ? parseInt(this.duracao) : 1
+      const horaSelecionada = parseInt(h)
 
+      // valida se o intervalo escolhido invade horários ocupados
+      for (let i = 0; i < duracaoFinal; i++) {
+        const hString = String(horaSelecionada + i).padStart(2,'0') + ':00'
+        if (this.horariosIndisponiveis.includes(hString)) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Horário indisponível',
+            text: `O horário das ${hString} já está ocupado.`,
+            confirmButtonColor: '#1E3A8A'
+          })
+          return
+        }
+      }
+
+      // emite para o pai salvar
       this.$emit('confirmar', {
         usuarioId: this.authStore.usuario.id,
         quadraId: this.quadra.id,
@@ -127,7 +170,7 @@ export default {
         dia: parseInt(this.data.split('-')[2]),
         mes: parseInt(this.data.split('-')[1]),
         ano: parseInt(this.data.split('-')[0]),
-        hora: parseInt(h),
+        hora: horaSelecionada,
         duracao: duracaoFinal,
         tipo: this.tipo,
         status: 'Pendente'
@@ -150,7 +193,6 @@ export default {
   justify-content: center;
   z-index: 1000;
 }
-
 .modal-content {
   background-color: white;
   color: #7E7E7E;
@@ -161,7 +203,6 @@ export default {
   max-height: 80vh;
   overflow-y: auto;
 }
-
 .modal-content input,
 .select-tempo,
 select {
@@ -173,41 +214,21 @@ select {
   width: 100%;
   margin-bottom: 18px;
 }
-
 .modal-content label {
   margin-bottom: 6px;
   display: block;
 }
-
 .title {
   margin-bottom: 32px;
   color: #3b82f6;
   text-align: center;
 }
-
-.linha-horizontal {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.linha-horizontal input,
-.linha-horizontal select {
-  flex: 1;
-  height: 50px;
-  padding: 10px;
-  border: 1px solid #D9D9D9;
-  border-radius: 4px;
-  color: #7E7E7E;
-}
-
 .horarios {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 12px;
 }
-
 .horarios button {
   padding: 6px 12px;
   font-size: 14px;
@@ -216,23 +237,24 @@ select {
   background-color: #fff;
   cursor: pointer;
 }
-
 .horarios button:hover {
-  background-color: #0831d6;
+  background-color: #3b82f6;
   color: #fff;
 }
-
 .horarios button.selecionado {
   background-color: #1E3A8A;
   color: #fff;
 }
-
+.horarios button:disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
 .modal-actions {
   display: flex;
   justify-content: space-between;
   margin-top: 16px;
 }
-
 .modal-actions button {
   width: 48%;
   height: 42px;
@@ -241,38 +263,20 @@ select {
   border-radius: 5px;
   cursor: pointer;
 }
-
 .btn-confirmar {
   background-color: #1E3A8A;
   color: #fff;
 }
-
 .btn-confirmar:disabled {
   background-color: #ccc;
   cursor: not-allowed;
   opacity: 0.7;
 }
-
 .btn-cancelar {
   background-color: #F7F9FC;
   color: #7E7E7E;
 }
-
 .btn-cancelar:hover, .btn-confirmar:hover {
   opacity: 0.8;
-}
-
-input[type="time"]::-webkit-calendar-picker-indicator {
-  display: none;
-  -webkit-appearance: none;
-}
-
-input[type="time"] {
-  appearance: none;
-  -moz-appearance: textfield;
-}
-
-h2 {
-  text-align: center;
 }
 </style>

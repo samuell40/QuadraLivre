@@ -107,7 +107,6 @@ h2 {
   margin-bottom: 16px;
 }
 
-/* Loader igual MeusAgendamentos */
 .loader {
   height: 200px;
   display: flex;
