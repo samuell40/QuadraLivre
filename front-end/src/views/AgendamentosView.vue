@@ -5,7 +5,9 @@
     <div class="conteudo">
       <h1>Agendamentos da Minha Quadra</h1>
 
-      <div v-if="isLoading">Carregando...</div>
+      <div v-if="isLoading" class="loader-container-centralizado">
+        <div class="loader"></div>
+      </div>
 
       <div v-else-if="agendamentos.length === 0">
         Nenhum agendamento encontrado para sua quadra.
@@ -22,64 +24,44 @@
   </div>
 </template>
 
-<script setup>
-import SideBar from '@/components/SideBar.vue'
-import { ref, watch } from 'vue'
-import AgendamentoCard from '@/components/cards/AgendamentoCard.vue'
-import { useAuthStore } from '@/store'
-import api from '@/axios'
-import Swal from 'sweetalert2'
+<script>
+import SideBar from '@/components/SideBar.vue';
+import AgendamentoCard from '@/components/cards/AgendamentoCard.vue';
+import api from '@/axios';
+import Swal from 'sweetalert2';
 
-const authStore = useAuthStore()
-const agendamentos = ref([])
-const isLoading = ref(false)
-
-// Observa authStore.user e carrega os agendamentos quando estiver definido
-watch(
-  () => authStore.user,
-  (user) => {
-    console.log('Usuário logado:', user)
-    if (user) {
-      const quadraId = user.quadraId
-      console.log('quadraId do admin:', quadraId)
-
-      carregarAgendamentos(quadraId)
-    }
+export default {
+  name: 'AgendamentosView',
+  components: { SideBar, AgendamentoCard },
+  data() {
+    return {
+      agendamentos: [],
+      isLoading: true,
+    };
   },
-  { immediate: true }
-)
-
-const carregarAgendamentos = async (quadraId) => {
-  isLoading.value = true
-  try {
-    console.log('Chamando API com quadraId:', quadraId)
-    const { data } = await api.get(`/agendamentos/quadra/${quadraId}`)
-    console.log('Dados recebidos da API:', data)
-
-    agendamentos.value = data.map(a => ({
-      id: a.id,
-      quadra: a.quadra?.nome || 'Não informado',
-      usuario: a.usuario?.nome || 'Não informado',
-      data: `${a.dia.toString().padStart(2, '0')}/${a.mes
-        .toString()
-        .padStart(2, '0')}/${a.ano}`,
-      hora: `${a.hora.toString().padStart(2, '0')}:00`,
-      status: a.status.toLowerCase()
-    }))
-
-    console.log('Agendamentos processados:', agendamentos.value)
-  } catch (err) {
-    console.error('Erro ao carregar agendamentos:', err)
-    Swal.fire({
-      icon: 'error',
-      title: 'Erro',
-      text: err.response?.data?.message || err.message || 'Não foi possível carregar os agendamentos da quadra.',
-      confirmButtonColor: '#1E3A8A'
-    })
-  } finally {
-    isLoading.value = false
+  mounted() {
+    this.carregarAgendamentos();
+  },
+  methods: {
+    async carregarAgendamentos() {
+      this.isLoading = true;
+      try {
+        // Chama endpoint que retorna agendamentos da quadra do usuário logado
+        const response = await api.get('/agendamentos/minha-quadra');
+        this.agendamentos = response.data;
+      } catch (err) {
+        console.error('Erro ao carregar agendamentos:', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Erro',
+          text: 'Falha ao carregar agendamentos da quadra.'
+        });
+      } finally {
+        this.isLoading = false;
+      }
+    }
   }
-}
+};
 </script>
 
 <style scoped>

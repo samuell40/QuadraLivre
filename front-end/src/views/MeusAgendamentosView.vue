@@ -36,10 +36,8 @@ import { useRouter } from "vue-router";
 import NavBar from "@/components/NavBar.vue";
 import MeusAgendamentoCard from "@/components/cards/MeusAgendamentosCard.vue";
 import api from "@/axios";
-import { useAuthStore } from "@/store";
 import Swal from "sweetalert2";
 
-const authStore = useAuthStore();
 const router = useRouter();
 const agendamentos = ref([]);
 const isLoading = ref(true);
@@ -48,9 +46,7 @@ const isLoading = ref(true);
 const carregarAgendamentos = async () => {
   isLoading.value = true;
   try {
-    const { data } = await api.get("/agendamentos", {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    });
+    const { data } = await api.get("/agendamentos");
 
     agendamentos.value = data.map(a => ({
       id: a.id,
@@ -92,9 +88,7 @@ const cancelarAgendamento = async (id) => {
 
   if (confirmacao.isConfirmed) {
     try {
-      await api.delete(`/agendamento/${id}`, {
-        headers: { Authorization: `Bearer ${authStore.token}` },
-      });
+      await api.delete(`/agendamento/${id}`);
 
       agendamentos.value = agendamentos.value.filter(a => a.id !== id);
 

@@ -43,15 +43,9 @@ const listarTodosAgendamentosController = async (req, res) => {
 
 const listarAgendamentosPorQuadraController = async (req, res) => {
   try {
-    const { perfil } = req.user;
-    const { quadraId } = req.params;
-
-    if (perfil !== 'admin') {
-      return res.status(403).json({ message: 'Acesso negado' });
-    }
-
+    const quadraId = req.user?.quadraId; // pega direto do token
     if (!quadraId) {
-      return res.status(400).json({ message: 'Quadra não informada' });
+      return res.status(400).json({ message: 'Usuário não está vinculado a nenhuma quadra.' });
     }
 
     const agendamentos = await listarAgendamentosPorQuadraService(quadraId);

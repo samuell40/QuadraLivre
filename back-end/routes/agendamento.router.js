@@ -21,12 +21,12 @@ router.get('/agendamentos', [validarJWT], listarAgendamentosController);
 router.get('/agendamentos/todos', [validarJWT], listarTodosAgendamentosController);
 
 // Listar agendamentos por quadra
-router.get('/agendamentos/quadra/:quadraId', [validarJWT], listarAgendamentosPorQuadraController);
+router.get('/agendamentos/minha-quadra', [validarJWT], listarAgendamentosPorQuadraController);
 
 // Cancelar um agendamento
 router.delete('/agendamento/:id', [validarJWT], cancelarAgendamentoController);
 
-// Mostrar modalidades por quadra (para o modal)
+// Listar modalidades por quadra (para o modal)
 router.get('/quadra/:quadraId/modalidades', [validarJWT], listarModalidadesPorQuadraController);
 
 module.exports = router;
