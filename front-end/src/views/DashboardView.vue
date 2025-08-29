@@ -155,10 +155,13 @@ export default {
       if (this.agendamentosModalidadeChart) this.agendamentosModalidadeChart.destroy()
       const ctx = canvas.getContext('2d')
 
+      const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1)
+
       const nomesModalidades = this.agendamentos.map(a => {
-        if (a.modalidade?.nome) return a.modalidade.nome
-        if (a.quadra?.modalidades?.length > 0) return a.quadra.modalidades[0].nome
-        return 'Não definido'
+        let nome = 'Não definido'
+        if (a.modalidade?.nome) nome = a.modalidade.nome
+        else if (a.quadra?.modalidades?.length > 0) nome = a.quadra.modalidades[0].nome
+        return capitalize(nome)
       })
 
       const modalidades = [...new Set(nomesModalidades)]
@@ -175,10 +178,20 @@ export default {
             backgroundColor: '#3B82F6'
           }]
         },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          }
+        }
       })
     },
-
     renderAgendamentosTipoChart() {
       const canvas = document.getElementById('agendamentosTipoChart')
       if (this.agendamentosTipoChart) this.agendamentosTipoChart.destroy()
@@ -216,13 +229,22 @@ export default {
             labels: mesesNomes,
             datasets: [{ label: 'Agendamentos por Mês', data: new Array(12).fill(0), backgroundColor: '#1E3A8A' }]
           },
-          options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { precision: 0 }
+              }
+            }
+          }
         })
         return
       }
 
-      const mesInicial = Math.min(...mesesAgendamentos) - 1 
-      const mesesFiltrados = mesesNomes.slice(mesInicial) 
+      const mesInicial = Math.min(...mesesAgendamentos) - 1
+      const mesesFiltrados = mesesNomes.slice(mesInicial)
 
       const quantidade = mesesFiltrados.map((_, idx) =>
         this.agendamentos.filter(a => a.mes === (mesInicial + idx + 1)).length
@@ -234,10 +256,20 @@ export default {
           labels: mesesFiltrados,
           datasets: [{ label: 'Agendamentos por Mês', data: quantidade, backgroundColor: '#1E3A8A' }]
         },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0 }
+            }
+          }
+        }
       })
     }
   },
+  
   mounted() {
     this.carregarAgendamentos()
     this.carregarUsuarios()

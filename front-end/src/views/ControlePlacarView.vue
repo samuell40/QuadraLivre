@@ -27,12 +27,19 @@
               </option>
             </select>
           </div>
+
           <div class="team">
             <p>Time:</p>
-            <select v-model="timeSelecionado" class="dropdown">
-              <option disabled value="">Selecione um time</option>
-              <option v-for="t in times" :key="t.nome" :value="t.nome">{{ t.nome }}</option>
-            </select>
+            <div class="dropdown-container">
+              <select v-model="timeSelecionado" class="dropdown" :disabled="isLoadingTimes || !times.length">
+                <option disabled value="">
+                  {{ times.length ? 'Selecione um time' : 'Nenhum time cadastrado' }}
+                </option>
+                <option v-for="t in times" :key="t.nome" :value="t.nome">{{ t.nome }}</option>
+              </select>
+
+              <span v-if="isLoadingTimes" class="loader-pequena-dropdown"></span>
+            </div>
           </div>
         </div>
 
@@ -137,6 +144,7 @@ export default {
       fotoTime: '',
       timeParaAdicionar: '',
       timeParaRemover: '',
+      isLoadingTimes: false,
     };
   },
   mounted() {
@@ -251,7 +259,7 @@ export default {
       }
     },
 
-    async carregarTimes() {
+  async carregarTimes() {
       if (!this.modalidadeSelecionada) return;
       this.isLoadingTimes = true;
       try {
@@ -261,6 +269,11 @@ export default {
         if (!modalidade) return;
         const res = await api.get(`/times/modalidade/${modalidade.id}`);
         this.times = Array.isArray(res.data) ? res.data : [];
+
+        if (!this.times.length) {
+          Swal.fire('Aviso', 'Não há nenhum time cadastrado para esta modalidade.', 'info');
+        }
+
       } catch (error) {
         console.error('Erro ao carregar times:', error);
         Swal.fire('Erro', 'Não foi possível carregar os times.', 'error');
@@ -387,13 +400,11 @@ export default {
 </script>
 
 <style scoped>
-/* LAYOUT */
 .layout {
   display: flex;
   min-height: 100vh;
 }
 
-/* SIDEBAR */
 .sidebar {
   width: 250px;
   position: fixed;
@@ -401,7 +412,7 @@ export default {
   left: 0;
   bottom: 0;
   background: #fff;
-  box-shadow: 2px 0 12px rgba(0,0,0,0.2);
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.2);
   z-index: 100;
   transition: transform 0.3s ease;
 }
@@ -410,7 +421,6 @@ export default {
   transform: translateX(0);
 }
 
-/* CONTEÚDO */
 .conteudo {
   flex: 1;
   padding: 32px;
@@ -520,14 +530,39 @@ export default {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.dropdown-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.loader-pequena-dropdown {
+  position: absolute;
+  right: 30px;
+  top: 20%;
+  transform: translateY(-50%);
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
 }
 
 @media (max-width: 768px) {
   .sidebar {
     transform: translateX(-100%);
   }
+
   .sidebar.open {
     transform: translateX(0);
   }
@@ -555,7 +590,9 @@ export default {
     width: 100%;
   }
 
-  .btn-placar, .btn-modalidade, .btn-add {
+  .btn-placar,
+  .btn-modalidade,
+  .btn-add {
     width: 100%;
     padding: 10px 0;
   }

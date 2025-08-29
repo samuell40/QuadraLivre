@@ -16,8 +16,10 @@
 
       <div class="form-group">
         <label for="removerTime">Selecione o Time:</label>
-        <select id="removerTime" v-model="timeParaRemover" class="dropdown">
-          <option disabled value="">Selecione</option>
+        <select id="removerTime" v-model="timeParaRemover" class="dropdown" :disabled="isLoadingTimes || !times.length">
+          <option disabled value="">
+            {{ isLoadingTimes ? 'Carregando...' : 'Selecione' }}
+          </option>
           <option v-for="time in times" :key="time.id" :value="time.id">
             {{ time.nome }}
           </option>
@@ -47,6 +49,7 @@ export default {
       modalidadeSelecionadaLocal: '',
       times: [],
       timeParaRemover: '', 
+      isLoadingTimes: false,
     };
   },
   watch: {
@@ -62,12 +65,18 @@ export default {
       this.isLoadingTimes = true;
       try {
         const modalidade = this.modalidadesDisponiveis.find(
-          m => m.id === this.modalidadeSelecionadaLocal || m.nome === this.modalidadeSelecionadaLocal
+          m => m.id === this.modalidadeSelecionadaLocal
         );
         if (!modalidade) return;
 
         const res = await api.get(`/times/modalidade/${modalidade.id}`);
         this.times = Array.isArray(res.data) ? res.data : [];
+
+        // Se não houver times, exibe alerta
+        if (!this.times.length) {
+          Swal.fire('Aviso', 'Não há nenhum time cadastrado para esta modalidade.', 'info');
+        }
+
       } catch (error) {
         console.error('Erro ao carregar times:', error);
         Swal.fire('Erro', 'Não foi possível carregar os times.', 'error');
@@ -104,6 +113,7 @@ export default {
   },
 };
 </script>
+
 
 <style scoped>
 .modal-overlay {

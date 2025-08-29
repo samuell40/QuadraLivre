@@ -2,24 +2,24 @@
   <div class="placar">
     <h2>{{ timeNome }}</h2>
 
-      <div class="box">
-        <p>Sets Vencidos</p>
-        <div class="controls">
-          <button @click="decrement('setsVencidos')">−</button>
-          <span>{{ localTime.setsVencidos }}</span>
-          <button @click="increment('setsVencidos')">+</button>
-        </div>
+    <div class="box">
+      <p>Sets Vencidos</p>
+      <div class="controls">
+        <button @click="decrement('setsVencidos')">−</button>
+        <span>{{ localTime.setsVencidos }}</span>
+        <button @click="increment('setsVencidos')">+</button>
       </div>
+    </div>
 
-      <div class="box">
-        <p>W.O</p>
-        <div class="controls">
-          <button @click="decrement('wo')">−</button>
-          <span>{{ localTime.wo }}</span>
-          <button @click="increment('wo')">+</button>
+    <div class="box">
+      <p>W.O</p>
+      <div class="controls">
+        <button @click="decrement('wo')">−</button>
+        <span>{{ localTime.wo }}</span>
+        <button @click="increment('wo')">+</button>
+      </div>
     </div>
-    </div>
-    </div>
+  </div>
 </template>
 
 <script>
@@ -27,7 +27,8 @@ export default {
   name: 'PlacarTimeVolei',
   props: {
     timeNome: { type: String, default: 'Time' },
-    timeData: { type: Object, required: true }
+    timeData: { type: Object, required: true },
+    setsAdversario: { type: Number, default: 0 } // 👈 novo: quantos sets o adversário já tem
   },
   data() {
     return {
@@ -44,11 +45,22 @@ export default {
   },
   methods: {
     increment(campo) {
-      this.localTime[campo]++
+      if (campo === 'setsVencidos') {
+        // 🚨 regra: ninguém pode ultrapassar 3 sets
+        if (this.localTime.setsVencidos < 3 && this.setsAdversario < 3) {
+          this.localTime.setsVencidos++
+        }
+      } else if (campo === 'wo') {
+        this.localTime.wo++
+      } else {
+        this.localTime[campo]++
+      }
       this.$emit('update', { ...this.localTime })
     },
     decrement(campo) {
-      if (this.localTime[campo] > 0) this.localTime[campo]--
+      if (this.localTime[campo] > 0) {
+        this.localTime[campo]--
+      }
       this.$emit('update', { ...this.localTime })
     }
   }

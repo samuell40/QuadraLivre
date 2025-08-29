@@ -19,8 +19,12 @@
           <div class="dropdown-row modalidade">
             <div class="team">
               <label>Modalidade:</label>
-              <select v-model="modalidadeSelecionada" @change="handleModalidadeChange" class="dropdown"
-                :disabled="partidaIniciada">
+              <select
+                v-model="modalidadeSelecionada"
+                @change="handleModalidadeChange"
+                class="dropdown"
+                :disabled="partidaIniciada"
+              >
                 <option disabled value="">Selecione a modalidade</option>
                 <option v-for="m in modalidadesDisponiveis" :key="m.id" :value="m.nome">
                   {{ m.nome }}
@@ -32,31 +36,56 @@
           <div class="dropdown-row">
             <div class="team">
               <label>Time 1:</label>
-              <select v-model="timeSelecionado1" @change="carregarPlacarTime('time1')" class="dropdown"
-                :disabled="partidaIniciada">
-                <option disabled value="">Selecione o time</option>
-                <option v-for="t in times" :key="t.id" :value="t.nome"
-                  :disabled="t.nome === timeSelecionado2 || !checaMesmoTipoTime(t)">
-                  {{ t.nome }}
-                </option>
-              </select>
+              <div class="dropdown-container">
+                <select
+                  v-model="timeSelecionado1"
+                  @change="carregarPlacarTime('time1')"
+                  class="dropdown"
+                  :disabled="partidaIniciada || carregandoTimes || times.length === 0"
+                >
+                  <option disabled value="">Selecione o time</option>
+                  <option
+                    v-for="t in times"
+                    :key="t.id"
+                    :value="t.nome"
+                    :disabled="t.nome === timeSelecionado2 || !checaMesmoTipoTime(t)"
+                  >
+                    {{ t.nome }}
+                  </option>
+                </select>
+                <span v-if="carregandoTimes" class="loader-pequeno-dropdown"></span>
+              </div>
             </div>
 
             <div class="team">
               <label>Time 2:</label>
-              <select v-model="timeSelecionado2" @change="carregarPlacarTime('time2')" class="dropdown"
-                :disabled="partidaIniciada">
-                <option disabled value="">Selecione o time</option>
-                <option v-for="t in times" :key="t.id" :value="t.nome"
-                  :disabled="t.nome === timeSelecionado1 || !checaMesmoTipoTime(t)">
-                  {{ t.nome }}
-                </option>
-              </select>
+              <div class="dropdown-container">
+                <select
+                  v-model="timeSelecionado2"
+                  @change="carregarPlacarTime('time2')"
+                  class="dropdown"
+                  :disabled="partidaIniciada || carregandoTimes || times.length === 0"
+                >
+                  <option disabled value="">Selecione o time</option>
+                  <option
+                    v-for="t in times"
+                    :key="t.id"
+                    :value="t.nome"
+                    :disabled="t.nome === timeSelecionado1 || !checaMesmoTipoTime(t)"
+                  >
+                    {{ t.nome }}
+                  </option>
+                </select>
+                <span v-if="carregandoTimes" class="loader-pequeno-dropdown"></span>
+              </div>
             </div>
 
             <div class="team">
-              <button class="dropdown botao-iniciar" @click="togglePartida"
-                :disabled="!timeSelecionado1 || !timeSelecionado2 || (!modalidadeSelecionada && !partidaIniciada)">
+              <button
+                class="dropdown botao-iniciar"
+                @click="togglePartida"
+                :disabled="!timeSelecionado1 || !timeSelecionado2 || (!modalidadeSelecionada && !partidaIniciada)"
+              >
                 {{ !partidaIniciada ? 'Iniciar Partida' : (temporizadorAtivo ? 'Pausar Partida' : 'Retomar Partida') }}
               </button>
             </div>
@@ -64,21 +93,49 @@
         </div>
 
         <div v-if="!partidaIniciada" class="mensagem-inicial">
-          <p>
-            Para iniciar uma partida, selecione uma modalidade, escolha os times e clique em "Iniciar Partida".
-          </p>
+          <p>Para iniciar uma partida, selecione uma modalidade, escolha os times e clique em "Iniciar Partida".</p>
         </div>
 
         <div class="placares" v-if="partidaIniciada">
-          <component :is="isVolei ? 'PlacarTimeVolei' : 'PlacarTime'" :key="'time1'" :timeNome="timeSelecionado1"
-            :timeData="time1" @update="time1 = $event" @remover="resetTime('time1')" />
-          <component :is="isVolei ? 'PlacarTimeVolei' : 'PlacarTime'" :key="'time2'" :timeNome="timeSelecionado2"
-            :timeData="time2" @update="time2 = $event" @remover="resetTime('time2')" />
+          <!-- Time 1 -->
+          <PlacarTimeVolei
+            v-if="['volei', 'volei de areia', 'futevolei'].includes(modalidadeSelecionada.toLowerCase())"
+            :timeNome="timeSelecionado1"
+            :timeData="time1"
+            :setsAdversario="time2.setsVencidos"
+            @update="time1 = $event"
+            @remover="resetTime('time1')"
+          />
+          <PlacarTime
+            v-else-if="['futebol', 'futebol de areia', 'futsal'].includes(modalidadeSelecionada.toLowerCase())"
+            :timeNome="timeSelecionado1"
+            :timeData="time1"
+            @update="time1 = $event"
+            @remover="resetTime('time1')"
+          />
+
+          <!-- Time 2 -->
+          <PlacarTimeVolei
+            v-if="['volei', 'volei de areia', 'futevolei'].includes(modalidadeSelecionada.toLowerCase())"
+            :timeNome="timeSelecionado2"
+            :timeData="time2"
+            :setsAdversario="time1.setsVencidos"
+            @update="time2 = $event"
+            @remover="resetTime('time2')"
+          />
+          <PlacarTime
+            v-else-if="['futebol', 'futebol de areia', 'futsal'].includes(modalidadeSelecionada.toLowerCase())"
+            :timeNome="timeSelecionado2"
+            :timeData="time2"
+            @update="time2 = $event"
+            @remover="resetTime('time2')"
+          />
         </div>
 
         <div v-if="partidaIniciada" class="finalizar-container">
-          <button class="botao-finalizar" @click="finalizarPartida">
-            Finalizar Partida
+          <button class="botao-finalizar" @click="finalizarPartida" :disabled="finalizandoPartida">
+            <span v-if="finalizandoPartida" class="loader-pequeno"></span>
+            <span v-else>Finalizar Partida</span>
           </button>
         </div>
       </div>
@@ -109,9 +166,11 @@ export default {
       time1: {},
       time2: {},
       carregandoModalidades: true,
+      carregandoTimes: false,
       tempoSegundos: 0,
       temporizadorAtivo: false,
-      intervaloTemporizador: null
+      intervaloTemporizador: null,
+      finalizandoPartida: false
     }
   },
 
@@ -132,21 +191,11 @@ export default {
     }
   },
 
-  watch: {
-    modalidadeSelecionada() { this.salvarEstado() },
-    timeSelecionado1() { this.salvarEstado() },
-    timeSelecionado2() { this.salvarEstado() },
-    tempoSegundos() { this.salvarEstado() },
-    partidaIniciada() { this.salvarEstado() },
-    time1: { handler() { this.salvarEstado() }, deep: true },
-    time2: { handler() { this.salvarEstado() }, deep: true }
-  },
-
   methods: {
     criarTime(tipo) {
       const modelos = {
-        futebol: { nome: '', pts: 0, pj: 0, golspro: 0, golsofridos: 0, empates: 0, vitorias: 0, derrotas: 0, cartaoamarelo: 0, cartaovermelho: 0, faltas: 0 },
-        volei: { nome: '', pts: 0, pj: 0, vitorias: 0, derrotas: 0, setsVencidos: 0, doiszero: 0, doisum: 0, umdois: 0, zerodois: 0, wo: 0 }
+        futebol: { nome: '', golspro: 0, golsofridos: 0, cartaoamarelo: 0, cartaovermelho: 0, faltas: 0 },
+        volei: { nome: '', setsVencidos: 0, setsSofridos: 0, wo: 0 }
       }
       return JSON.parse(JSON.stringify(modelos[tipo] || {}))
     },
@@ -166,14 +215,21 @@ export default {
 
     async carregarTimes() {
       if (!this.modalidadeSelecionada) return
+      this.carregandoTimes = true
       try {
         const modalidade = this.modalidadesDisponiveis.find(m => m.nome === this.modalidadeSelecionada)
         if (!modalidade) return
-        const res = await api.get(`/times/modalidade/${modalidade.id}`)
+        const res = await api.get(`/times/modalidade/${modalidade.id}?includePlacar=true`)
         this.times = Array.isArray(res.data) ? res.data : []
+
+        if (this.times.length === 0) {
+          Swal.fire('Aviso', 'Não há nenhum time cadastrado para esta modalidade.', 'info')
+        }
       } catch (error) {
         console.error(error)
         Swal.fire('Erro', 'Não foi possível carregar os times.', 'error')
+      } finally {
+        this.carregandoTimes = false
       }
     },
 
@@ -212,17 +268,139 @@ export default {
       }, 1000)
     },
 
-    finalizarPartida() {
-      Swal.fire('Partida Finalizada', 'A Partida Foi Finalizada!', 'success')
-      this.resetTime('time1')
-      this.resetTime('time2')
-      this.modalidadeSelecionada = ''
-      this.partidaIniciada = false
-      this.tempoSegundos = 0
-      this.temporizadorAtivo = false
-      clearInterval(this.intervaloTemporizador)
-      this.intervaloTemporizador = null
-      localStorage.removeItem('partidaEstado')
+    async handleModalidadeChange() {
+      this.timeSelecionado1 = ''
+      this.timeSelecionado2 = ''
+      this.times = []
+      await this.carregarTimes()
+    },
+
+    calcularIncrementosFutebol(timeA, timeB) {
+      const incA = {
+        jogos: 1,
+        golsPro: timeA.golspro,
+        golsSofridos: timeB.golspro,
+        cartoesAmarelos: timeA.cartaoamarelo,
+        cartoesVermelhos: timeA.cartaovermelho,
+        saldoDeGols: timeA.golspro - timeB.golspro,
+        vitorias: 0, empates: 0, derrotas: 0, pontuacao: 0
+      }
+      const incB = {
+        jogos: 1,
+        golsPro: timeB.golspro,
+        golsSofridos: timeA.golspro,
+        cartoesAmarelos: timeB.cartaoamarelo,
+        cartoesVermelhos: timeB.cartaovermelho,
+        saldoDeGols: timeB.golspro - timeA.golspro,
+        vitorias: 0, empates: 0, derrotas: 0, pontuacao: 0
+      }
+
+      if (timeA.golspro > timeB.golspro) {
+        incA.vitorias = 1; incA.pontuacao = 3; incB.derrotas = 1
+      } else if (timeA.golspro < timeB.golspro) {
+        incB.vitorias = 1; incB.pontuacao = 3; incA.derrotas = 1
+      } else {
+        incA.empates = 1; incB.empates = 1; incA.pontuacao = 1; incB.pontuacao = 1
+      }
+      return [incA, incB]
+    },
+
+    calcularIncrementosVolei(timeA, timeB) {
+      const incA = {
+        jogos: 1,
+        setsVencidos: timeA.setsVencidos,
+        derrotaWo: timeA.wo,
+        vitorias: 0, derrotas: 0,
+        vitoria2x0: 0, vitoria2x1: 0,
+        derrota2x1: 0, derrota2x0: 0,
+        pontuacao: 0
+      }
+      const incB = {
+        jogos: 1,
+        setsVencidos: timeB.setsVencidos,
+        derrotaWo: timeB.wo,
+        vitorias: 0, derrotas: 0,
+        vitoria2x0: 0, vitoria2x1: 0,
+        derrota2x1: 0, derrota2x0: 0,
+        pontuacao: 0
+      }
+
+      if (timeA.wo) { incA.pontuacao = -2 }
+      if (timeB.wo) { incB.pontuacao = -2 }
+
+      if (timeA.setsVencidos > timeB.setsVencidos) {
+        incA.vitorias = 1; incB.derrotas = 1
+        if (timeA.setsVencidos === 3 && timeB.setsVencidos <= 1) {
+          incA.pontuacao = 3
+          if (timeB.setsVencidos === 0) incA.vitoria2x0 = 1
+          else incA.vitoria2x1 = 1
+        } else if (timeA.setsVencidos === 3 && timeB.setsVencidos === 2) {
+          incA.pontuacao = 2; incB.pontuacao = 1; incA.vitoria2x1 = 1; incB.derrota2x1 = 1
+        }
+      } else if (timeB.setsVencidos > timeA.setsVencidos) {
+        incB.vitorias = 1; incA.derrotas = 1
+        if (timeB.setsVencidos === 3 && timeA.setsVencidos <= 1) {
+          incB.pontuacao = 3
+          if (timeA.setsVencidos === 0) incB.vitoria2x0 = 1
+          else incB.vitoria2x1 = 1
+        } else if (timeB.setsVencidos === 3 && timeA.setsVencidos === 2) {
+          incB.pontuacao = 2; incA.pontuacao = 1; incB.vitoria2x1 = 1; incA.derrota2x1 = 1
+        }
+      }
+      return [incA, incB]
+    },
+
+    async atualizarPlacar(timeSelecionado, incremento) {
+      try {
+        const timeEncontrado = this.times.find(t => t.nome === timeSelecionado)
+        if (!timeEncontrado || !timeEncontrado.placar) return
+        const placarId = timeEncontrado.placar.id
+        await api.put(`/placar/incrementar/${placarId}`, incremento)
+      } catch (error) {
+        console.error(error)
+        Swal.fire('Erro', 'Falha ao salvar placar no banco.', 'error')
+      }
+    },
+
+    async finalizarPartida() {
+      const confirmacao = await Swal.fire({
+        title: 'Deseja mesmo finalizar a partida?',
+        text: "Você não poderá desfazer essa ação.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3b82f6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sim, finalizar',
+        cancelButtonText: 'Cancelar'
+      })
+
+      if (!confirmacao.isConfirmed) return
+
+      try {
+        this.finalizandoPartida = true
+
+        let incs
+        if (this.isVolei) incs = this.calcularIncrementosVolei(this.time1, this.time2)
+        else incs = this.calcularIncrementosFutebol(this.time1, this.time2)
+
+        await this.atualizarPlacar(this.timeSelecionado1, incs[0])
+        await this.atualizarPlacar(this.timeSelecionado2, incs[1])
+
+        Swal.fire('Partida Finalizada', 'A Partida Foi Finalizada!', 'success')
+      } catch (e) {
+        console.error(e)
+      } finally {
+        this.finalizandoPartida = false
+        this.resetTime('time1')
+        this.resetTime('time2')
+        this.modalidadeSelecionada = ''
+        this.partidaIniciada = false
+        this.tempoSegundos = 0
+        this.temporizadorAtivo = false
+        clearInterval(this.intervaloTemporizador)
+        this.intervaloTemporizador = null
+        localStorage.removeItem('partidaEstado')
+      }
     },
 
     resetTime(timeKey) {
@@ -261,12 +439,6 @@ export default {
           this.iniciarTemporizador()
         }
       }
-    },
-
-    handleModalidadeChange() {
-      this.carregarTimes()
-      this.timeSelecionado1 = ''
-      this.timeSelecionado2 = ''
     }
   },
 
@@ -445,5 +617,46 @@ h2 {
   100% {
     transform: rotate(360deg);
   }
+}
+
+.loader-pequeno {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 5px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.dropdown-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.loader-pequeno-dropdown {
+  position: absolute;
+  right: 10px;
+  top: 35%;
+  transform: translateY(-50%);
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  animation: spin 1s linear infinite;
 }
 </style>
