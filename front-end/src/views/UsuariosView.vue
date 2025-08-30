@@ -49,9 +49,13 @@
             </div>
 
             <div class="botoes">
-              <button class="btn-editar" @click="editarUsuario(usuario)">Alterar Permissões</button>
+              <button class="btn-editar" @click="editarUsuario(usuario)">
+                {{ usuarioLogado.permissaoId === 2 ? 'Vincular a um Time' : 'Alterar Permissões' }}
+              </button>
+
               <button class="btn-detalhar" @click="detalhesUsuario(usuario)">Detalhar</button>
             </div>
+
           </div>
         </div>
         <p v-else class="sem-resultados">Nenhum usuário encontrado.</p>
