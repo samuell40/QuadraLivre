@@ -28,25 +28,33 @@ export default {
   props: {
     timeNome: { type: String, default: 'Time' },
     timeData: { type: Object, required: true },
-    setsAdversario: { type: Number, default: 0 } // 👈 novo: quantos sets o adversário já tem
+    setsAdversario: { type: Number, default: 0 }
   },
   data() {
     return {
-      localTime: { ...this.timeData }
+      localTime: {
+        setsVencidos: 0,
+        wo: 0,
+        ...this.timeData
+      }
     }
   },
   watch: {
     timeData: {
       handler(newVal) {
-        this.localTime = { ...newVal }
+        this.localTime = {
+          setsVencidos: 0,
+          wo: 0,
+          ...newVal
+        }
       },
-      deep: true
+      deep: true,
+      immediate: true
     }
   },
   methods: {
     increment(campo) {
       if (campo === 'setsVencidos') {
-        // 🚨 regra: ninguém pode ultrapassar 3 sets
         if (this.localTime.setsVencidos < 3 && this.setsAdversario < 3) {
           this.localTime.setsVencidos++
         }
@@ -81,7 +89,7 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap: 15px; 
+  gap: 15px;
 }
 
 .placar h2 {
@@ -142,6 +150,6 @@ export default {
   cursor: pointer;
   font-weight: bold;
   width: 100%;
-  margin-top: auto; 
+  margin-top: auto;
 }
 </style>

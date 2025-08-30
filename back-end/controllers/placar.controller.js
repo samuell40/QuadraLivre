@@ -159,23 +159,6 @@ async function atualizarPlacarController(req, res) {
   }
 }
 
-async function incrementarPlacarController(req, res) {
-  try {
-    const { id } = req.params;
-    const incremento = req.body;
-
-    if (!id) {
-      return res.status(400).json({ erro: 'ID do placar é obrigatório.' });
-    }
-
-    const placarAtualizado = await placarService.incrementarPlacar(id, incremento);
-    return res.status(200).json({ mensagem: 'Placar incrementado com sucesso', placar: placarAtualizado });
-  } catch (error) {
-    console.error('Erro ao incrementar placar:', error);
-    return res.status(500).json({ erro: error.message });
-  }
-}
-
 async function listarPlacarPorModalidadeController(req, res) {
   try {
     const { modalidadeId } = req.params;
@@ -276,7 +259,7 @@ module.exports = {
   listarTimesPorModalidadeController,
   getTodosTimes,
   criarPlacarController,
-  atualizarPlacarController, incrementarPlacarController,
+  atualizarPlacarController,
   listarPlacarPorModalidadeController,
   resetarPlacarPorModalidadeController,
   ocultarPlacarGeralController,

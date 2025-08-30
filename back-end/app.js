@@ -12,6 +12,7 @@ const { initWebSocket } = require("./websocket");
 
 // Rotas
 const authRoutes = require("./routes/auth.router");
+const partida = require('./routes/partida.router')
 const usuario = require('./routes/usuario.router');
 const quadra = require('./routes/quadra.router');
 const placar = require('./routes/placar.router');
@@ -47,6 +48,7 @@ app.use("/auth", authRoutes);
 app.use(usuario);
 app.use(quadra);
 app.use(placar);
+app.use(partida)
 app.use(agendamento);
 //FirstRun();
 

@@ -65,11 +65,6 @@ router.put(
   controller.atualizarPlacarController
 );
 
-router.put(
-  '/placar/incrementar/:id',
-  controller.incrementarPlacarController
-);
-
 router.get(
   '/placar/modalidade/:modalidadeId',
   controller.listarPlacarPorModalidadeController

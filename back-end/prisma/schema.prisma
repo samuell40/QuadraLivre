@@ -63,6 +63,7 @@ model Modalidade {
   times        Time[]
   quadras      Quadra[]      @relation("QuadraModalidade")
   agendamentos Agendamento[] @relation("AgendamentoModalidade")
+  partidas     Partida[]
 }
 
 model Time {
@@ -73,7 +74,32 @@ model Time {
   modalidade   Modalidade    @relation(fields: [modalidadeId], references: [id])
   jogadores    UsuarioTime[]
 
-  placar Placar?
+  placar   Placar?
+  partidasA Partida[] @relation("TimeAPartidas")
+  partidasB Partida[] @relation("TimeBPartidas")
+}
+
+model Partida {
+  id            Int        @id @default(autoincrement())
+  data          DateTime   @default(now())
+  modalidadeId  Int
+  modalidade    Modalidade @relation(fields: [modalidadeId], references: [id])
+
+  timeAId Int
+  timeA   Time @relation("TimeAPartidas", fields: [timeAId], references: [id])
+
+  timeBId Int
+  timeB   Time @relation("TimeBPartidas", fields: [timeBId], references: [id])
+
+  pontosTimeA Int @default(0)
+  pontosTimeB Int @default(0)
+
+  tempoSegundos   Int      @default(0)
+  partidaIniciada Boolean  @default(false)
+  finalizada      Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Placar {

@@ -63,7 +63,6 @@
       </template>
     </section>
 
-
     <section id="placar-virtual" class="placares-container">
       <h3 class="tit_horario">Placar dos Campeonatos</h3>
 
@@ -111,7 +110,7 @@ export default {
       mostrarModalLogin: false,
       modalidadesDisponiveis: [],
       isLoadingQuadras: true,
-      ws: null
+      ws: null,
     }
   },
   computed: {
@@ -120,7 +119,6 @@ export default {
         (this.placares[mod.nome] || []).some(t => t.visivel)
       )
     },
-
     todosPlacaresOcultos() {
       return this.modalidadesDisponiveis.length > 0 &&
         this.modalidadesDisponiveis.every(mod =>
@@ -128,12 +126,9 @@ export default {
         )
     }
   },
-  mounted() {
+  async mounted() {
     this.carregarQuadras()
     this.carregarModalidades()
-  },
-  beforeUnmount() {
-    if (this.ws) this.ws.close()
   },
   methods: {
     toggleMenu() { this.isMenuOpen = !this.isMenuOpen },
@@ -270,7 +265,6 @@ export default {
 }
 </script>
 
-
 <style scoped>
 .layout {
   display: flex;
@@ -309,8 +303,13 @@ export default {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .esquerda-section {
@@ -432,8 +431,8 @@ p {
 .tit_horario {
   font-size: 28px;
   color: #7E7E7E;
-  margin-top: 50px;  
-  margin-bottom: 5px; 
+  margin-top: 50px;
+  margin-bottom: 5px;
   text-align: center;
   font-weight: bold;
 }
@@ -552,13 +551,13 @@ p {
 }
 
 .placares-container {
-  margin-top: 30px; 
+  margin-top: 30px;
   padding: 0 20px;
 }
 
 .placar-wrapper {
-  margin-top: 0px;   
-  margin-bottom: 10px; 
+  margin-top: 0px;
+  margin-bottom: 10px;
   display: flex;
   justify-content: center;
   position: relative;
