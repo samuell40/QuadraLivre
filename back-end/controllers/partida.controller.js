@@ -48,4 +48,31 @@ async function incrementarPlacarController(req, res) {
   }
 }
 
-module.exports = { criarPartidaController, finalizarPartidaController, listarPartidasController, incrementarPlacarController}
+async function atualizarParcialController(req, res) {
+  try {
+    const partidaId = Number(req.params.id);
+    const dados = req.body;
+
+    if (!partidaId) {
+      return res.status(400).json({ erro: 'ID da partida é obrigatório.' });
+    }
+
+    const partidaAtualizada = await partidas.atualizarParcial(partidaId, dados);
+    return res.status(200).json(partidaAtualizada);
+  } catch (error) {
+    console.error('Erro ao atualizar placar parcial:', error);
+    return res.status(500).json({ erro: error.message });
+  }
+}
+
+async function listarPartidasAtivasController(req, res) {
+  try {
+    const partidaslistadas = await partidas.listarPartidasAtivas;
+    res.json(partidaslistadas);
+  } catch (err) {
+    console.error("Erro ao listar partidas ativas:", err);
+    res.status(500).json({ error: "Erro ao listar partidas ativas" });
+  }
+}
+
+module.exports = { criarPartidaController, finalizarPartidaController, listarPartidasController, incrementarPlacarController, atualizarParcialController, listarPartidasAtivasController}

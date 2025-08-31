@@ -115,15 +115,17 @@ export default {
   position: sticky;
   top: 0; 
   z-index: 20;
-  margin-left: 8%; 
+  margin-left: 3%; 
 }
 
 .placar-wrapper {
   width: 100%;
   overflow-x: auto;  
-  margin: 0 auto;
-  padding: 20px 110px;
+  margin: 0;            
+  padding: 20px 20px;   
   box-sizing: border-box;
+  display: flex;
+  justify-content: flex-start; 
 }
 
 .placar {

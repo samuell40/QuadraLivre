@@ -10,4 +10,8 @@ router.get('/listar', controller.listarPartidasController)
 
 router.put( '/placar/incrementar/:id', controller.incrementarPlacarController);
 
+router.put('/partida/:id', controller.atualizarParcialController);
+
+router.get('/partida/listar/ativas', controller.listarPartidasAtivasController);
+
 module.exports = router;

@@ -23,11 +23,14 @@
 </template>
 
 <script>
+import api from '@/axios'
+
 export default {
   name: 'PlacarTimeVolei',
   props: {
     timeNome: { type: String, default: 'Time' },
     timeData: { type: Object, required: true },
+    partidaId: { type: [String, Number], required: true },
     setsAdversario: { type: Number, default: 0 }
   },
   data() {
@@ -53,7 +56,7 @@ export default {
     }
   },
   methods: {
-    increment(campo) {
+    async increment(campo) {
       if (campo === 'setsVencidos') {
         if (this.localTime.setsVencidos < 3 && this.setsAdversario < 3) {
           this.localTime.setsVencidos++
@@ -63,13 +66,45 @@ export default {
       } else {
         this.localTime[campo]++
       }
+
       this.$emit('update', { ...this.localTime })
+
+      if (this.partidaId) {
+        try {
+          const pontosA = this.$parent.time1.setsVencidos || 0
+          const pontosB = this.$parent.time2.setsVencidos || 0
+
+          await api.put(`/partida/${this.partidaId}`, {
+            pontosTimeA: pontosA,
+            pontosTimeB: pontosB,
+            tempoSegundos: this.$parent.tempoSegundos
+          })
+        } catch (e) {
+          console.error("Erro ao atualizar no backend:", e)
+        }
+      }
     },
-    decrement(campo) {
+
+    async decrement(campo) {
       if (this.localTime[campo] > 0) {
         this.localTime[campo]--
       }
       this.$emit('update', { ...this.localTime })
+
+      if (this.partidaId) {
+        try {
+          const pontosA = this.$parent.time1.setsVencidos || 0
+          const pontosB = this.$parent.time2.setsVencidos || 0
+
+          await api.put(`/partida/${this.partidaId}`, {
+            pontosTimeA: pontosA,
+            pontosTimeB: pontosB,
+            tempoSegundos: this.$parent.tempoSegundos
+          })
+        } catch (e) {
+          console.error("Erro ao atualizar no backend:", e)
+        }
+      }
     }
   }
 }

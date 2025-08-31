@@ -3,19 +3,37 @@ const prisma = new PrismaClient();
 
 async function criarPartida(data) {
   const { modalidadeId, timeAId, timeBId } = data;
-  return await prisma.partida.create({
-    data: { 
-      modalidadeId, 
-      timeAId, 
+  const partida = await prisma.partida.create({
+    data: {
+      modalidadeId,
+      timeAId,
       timeBId,
-      partidaIniciada: true,  
-      finalizada: false       
-    }
+      partidaIniciada: true,
+      finalizada: false
+    },
+    include: { timeA: true, timeB: true, modalidade: true }
   });
+
+  // Importa dinamicamente para evitar circularidade
+  const { broadcast } = require('../websocket');
+  if (typeof broadcast === 'function') {
+    broadcast({
+      tipo: "placarUpdate",
+      partidaId: partida.id,
+      modalidadeId: partida.modalidadeId,
+      partidaIniciada: partida.partidaIniciada,
+      timeA: partida.timeA,
+      timeB: partida.timeB,
+      pontosTimeA: partida.pontosTimeA,
+      pontosTimeB: partida.pontosTimeB
+    });
+  }
+
+  return partida;
 }
 
 async function finalizarPartida(id, { pontosTimeA, pontosTimeB, tempoSegundos }) {
-  return await prisma.partida.update({
+  const partida = await prisma.partida.update({
     where: { id },
     data: {
       pontosTimeA,
@@ -23,29 +41,49 @@ async function finalizarPartida(id, { pontosTimeA, pontosTimeB, tempoSegundos })
       tempoSegundos,
       finalizada: true,
       partidaIniciada: false
-    }
+    },
+    include: { timeA: true, timeB: true, modalidade: true }
   });
+
+  const { broadcast } = require('../websocket');
+  if (typeof broadcast === 'function') {
+    broadcast({
+      tipo: "placarUpdate",
+      partidaId: partida.id,
+      modalidadeId: partida.modalidadeId,
+      partidaIniciada: partida.partidaIniciada,
+      timeA: partida.timeA,
+      timeB: partida.timeB,
+      pontosTimeA: partida.pontosTimeA,
+      pontosTimeB: partida.pontosTimeB
+    });
+  }
+
+  return partida;
 }
 
 async function atualizarParcial(id, { pontosTimeA, pontosTimeB, tempoSegundos }) {
-  return await prisma.partida.update({
-    where: { id },
-    data: {
-      pontosTimeA,
-      pontosTimeB,
-      tempoSegundos
-    }
+  const partida = await prisma.partida.update({
+    where: { id: Number(id) },
+    data: { pontosTimeA, pontosTimeB, tempoSegundos },
+    include: { timeA: true, timeB: true, modalidade: true }
   });
-}
 
-async function listarPartidas() {
-  return await prisma.partida.findMany({
-    include: {
-      timeA: true,
-      timeB: true,
-      modalidade: true
-    }
-  });
+  const { broadcast } = require('../websocket');
+  if (typeof broadcast === 'function') {
+    broadcast({
+      tipo: "placarUpdate",
+      partidaId: partida.id,
+      modalidadeId: partida.modalidadeId,
+      partidaIniciada: partida.partidaIniciada,
+      timeA: partida.timeA,
+      timeB: partida.timeB,
+      pontosTimeA: partida.pontosTimeA,
+      pontosTimeB: partida.pontosTimeB
+    });
+  }
+
+  return partida;
 }
 
 async function incrementarPlacar(id, incremento) {
@@ -77,10 +115,25 @@ async function incrementarPlacar(id, incremento) {
   });
 }
 
-module.exports = { 
-  criarPartida, 
-  finalizarPartida, 
-  atualizarParcial,  
-  listarPartidas, 
-  incrementarPlacar 
+async function listarPartidas() {
+  return await prisma.partida.findMany({
+    include: { timeA: true, timeB: true, modalidade: true }
+  });
+}
+
+async function listarPartidasAtivas() {
+  return await prisma.partida.findMany({
+    where: { partidaIniciada: true, finalizada: false },
+    include: { timeA: true, timeB: true, modalidade: true },
+    orderBy: { createdAt: "desc" }
+  });
+}
+
+module.exports = {
+  criarPartida,
+  finalizarPartida,
+  atualizarParcial,
+  listarPartidas,
+  listarPartidasAtivas,
+  incrementarPlacar
 };

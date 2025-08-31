@@ -78,12 +78,13 @@
           <component
             :is="['volei', 'volei de areia', 'futevolei'].includes(modalidadeSelecionada.toLowerCase()) ? 'PlacarTimeVolei' : 'PlacarTime'"
             :timeNome="timeSelecionado1?.nome || ''" :timeData="time1" :setsAdversario="time2.setsVencidos"
-            :partida-id="partidaAtualId" @update="time1 = $event" @remover="resetTime('time1')" />
+            :partida-id="partidaId" @update="time1 = $event" @remover="resetTime('time1')" />
 
           <component
             :is="['volei', 'volei de areia', 'futevolei'].includes(modalidadeSelecionada.toLowerCase()) ? 'PlacarTimeVolei' : 'PlacarTime'"
             :timeNome="timeSelecionado2?.nome || ''" :timeData="time2" :setsAdversario="time1.setsVencidos"
-            :partida-id="partidaAtualId" @update="time2 = $event" @remover="resetTime('time2')" />
+            :partida-id="partidaId" @update="time2 = $event" @remover="resetTime('time2')" />
+
         </div>
 
         <div v-if="partidaIniciada" class="finalizar-container">

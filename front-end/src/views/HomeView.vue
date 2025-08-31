@@ -63,24 +63,31 @@
       </template>
     </section>
 
-    <section id="placar-virtual" class="placares-container">
-      <h3 class="tit_horario">Placar dos Campeonatos</h3>
+    <section class="placares-e-partidas">
+      <div class="placar-geral-container">
+        <h3 class="tit_horario">Placar dos Campeonatos</h3>
 
-      <div v-if="modalidadesDisponiveis.length === 0">
-        <div class="placar-wrapper" v-for="n in 2" :key="n">
-          <div class="loader"></div>
+        <div v-if="modalidadesDisponiveis.length === 0">
+          <div class="placar-wrapper" v-for="n in 2" :key="n">
+            <div class="loader"></div>
+          </div>
+        </div>
+
+        <p v-else-if="todosPlacaresOcultos" class="sem-placar-unico" style="text-align:center; margin-top:1rem;">
+          Nenhum placar disponível no momento.
+        </p>
+
+        <div v-else v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" class="placar-wrapper">
+          <div v-if="loadingPlacar[modalidade.nome]" class="loader"></div>
+          <PlacarGeral v-else-if="getTimesComPosicao(modalidade.nome).length > 0"
+            :times="getTimesComPosicao(modalidade.nome)" :isLoading="loadingPlacar[modalidade.nome]"
+            :modalidade="modalidade.nome" />
         </div>
       </div>
 
-      <p v-else-if="todosPlacaresOcultos" class="sem-placar-unico" style="text-align:center; margin-top:1rem;">
-        Nenhum placar disponível no momento.
-      </p>
-
-      <div v-else v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" class="placar-wrapper">
-        <div v-if="loadingPlacar[modalidade.nome]" class="loader"></div>
-        <PlacarGeral v-else-if="getTimesComPosicao(modalidade.nome).length > 0"
-          :times="getTimesComPosicao(modalidade.nome)" :isLoading="loadingPlacar[modalidade.nome]"
-          :modalidade="modalidade.nome" />
+      <div class="lista-partidas-container">
+        <h3 class="tit_horario">Partidas</h3>
+        <ListaPartidas :partidasAtivas="partidasAtivas" />
       </div>
     </section>
 
@@ -94,13 +101,14 @@ import router from '@/router'
 import { Carousel, Slide } from 'vue3-carousel'
 import Swal from 'sweetalert2'
 import PlacarGeral from '@/components/PlacarHome/PlacarGeral.vue'
+import ListaPartidas from '@/components/PlacarHome/ListaPartidas.vue'
 import VerificarLogin from '@/components/modals/Alertas/verificarLogin.vue'
 import api from '@/axios'
 import 'vue3-carousel/dist/carousel.css'
 
 export default {
   name: 'HomeView',
-  components: { Carousel, Slide, PlacarGeral, VerificarLogin },
+  components: { Carousel, Slide, PlacarGeral, ListaPartidas, VerificarLogin },
   data() {
     return {
       isMenuOpen: false,
@@ -111,6 +119,7 @@ export default {
       modalidadesDisponiveis: [],
       isLoadingQuadras: true,
       ws: null,
+      partidasAtivas: []
     }
   },
   computed: {
@@ -129,7 +138,13 @@ export default {
   async mounted() {
     this.carregarQuadras()
     this.carregarModalidades()
+    this.carregarPartidasAtivas()
+
+    setInterval(() => {
+      this.carregarPartidasAtivas()
+    }, 30000)
   },
+
   methods: {
     toggleMenu() { this.isMenuOpen = !this.isMenuOpen },
     next() { if (this.$refs.carousel) this.$refs.carousel.next() },
@@ -146,6 +161,30 @@ export default {
         this.isLoadingQuadras = false
       }
     },
+    async carregarPartidasAtivas() {
+      try {
+        const res = await api.get('/partida/listar/ativas');
+        const partidasRecebidas = Array.isArray(res.data) ? res.data.filter(p => p.partidaIniciada) : [];
+
+        if (partidasRecebidas.length > 0) {
+          partidasRecebidas.forEach(p => {
+            const index = this.partidasAtivas.findIndex(pa => pa.id === p.id);
+            if (index >= 0) {
+              this.partidasAtivas[index] = { ...this.partidasAtivas[index], ...p };
+            } else {
+              this.partidasAtivas.push(p);
+            }
+          });
+
+          this.partidasAtivas = this.partidasAtivas.filter(pa =>
+            partidasRecebidas.some(pr => pr.id === pa.id)
+          );
+        }
+      } catch (err) {
+        console.error("Erro ao carregar partidas ativas:", err);
+      }
+    },
+
 
     async carregarModalidades() {
       try {
@@ -192,22 +231,52 @@ export default {
     iniciarWebSocket() {
       try {
         this.ws = new WebSocket('ws://localhost:3000/placares');
-        this.ws.onopen = () => console.log('WebSocket conectado!');
+
+        this.ws.onopen = () => {
+          console.log('WebSocket conectado!');
+        };
+
         this.ws.onmessage = event => {
           try {
             const data = JSON.parse(event.data);
-            if (data.tipo === "visibilidadeAtualizada") {
-              this.modalidadesDisponiveis.forEach(mod => {
-                this.placares[mod.nome] = data.placares?.filter(p => p.time.modalidadeId === mod.id) || [];
-              });
-            }
-          } catch (err) { console.error('Erro ao processar mensagem WebSocket:', err); }
-        };
-        this.ws.onclose = () => setTimeout(this.iniciarWebSocket, 5000)
-        this.ws.onerror = () => this.ws.close()
-      } catch (err) { console.error('Falha ao iniciar WebSocket:', err); }
-    },
 
+            if (data.tipo === "visibilidadeAtualizada") {
+              const partidasRecebidas = data.placares?.filter(p => p.partidaIniciada) || [];
+
+              if (partidasRecebidas.length > 0) {
+                partidasRecebidas.forEach(p => {
+                  const index = this.partidasAtivas.findIndex(pa => pa.id === p.id);
+                  if (index >= 0) {
+                    this.partidasAtivas[index] = { ...this.partidasAtivas[index], ...p };
+                  } else {
+                    this.partidasAtivas.push(p);
+                  }
+                });
+                this.partidasAtivas = this.partidasAtivas.filter(pa =>
+                  partidasRecebidas.some(pr => pr.id === pa.id)
+                );
+              }
+            }
+
+          } catch (err) {
+            console.error('Erro ao processar mensagem WebSocket:', err);
+          }
+        };
+
+        this.ws.onclose = () => {
+          console.warn('WebSocket fechado. Tentando reconectar em 5s...');
+          setTimeout(() => this.iniciarWebSocket(), 5000);
+        };
+
+        this.ws.onerror = err => {
+          console.error('Erro no WebSocket:', err);
+          this.ws.close();
+        };
+
+      } catch (err) {
+        console.error('Falha ao iniciar WebSocket:', err);
+      }
+    },
     verificarLogin(quadra) {
       const usuario = JSON.parse(localStorage.getItem('usuario') || '{}')
       if (usuario?.token) {
@@ -270,6 +339,7 @@ export default {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  padding-bottom: 40px; 
 }
 
 .navbar-custom {
@@ -306,7 +376,6 @@ export default {
   0% {
     transform: rotate(0deg);
   }
-
   100% {
     transform: rotate(360deg);
   }
@@ -569,6 +638,36 @@ p {
 
 .placar-wrapper .loader {
   margin: 20px auto;
+}
+
+.placares-e-partidas {
+  display: flex;
+  justify-content: space-between;
+  gap: 0;
+  padding: 0;
+  width: 90%;        
+  margin: 0 auto;      
+}
+
+.placar-geral-container {
+  flex: 0 0 65%; 
+}
+
+.lista-partidas-container {
+  flex: 0 0 35%; 
+  overflow: hidden;
+}
+
+@media (max-width: 1024px) {
+  .placares-e-partidas {
+    flex-direction: column;
+  }
+
+  .placar-geral-container,
+  .lista-partidas-container {
+    flex: 1 1 100%;
+    max-height: none;
+  }
 }
 
 @media (max-width: 768px) {
