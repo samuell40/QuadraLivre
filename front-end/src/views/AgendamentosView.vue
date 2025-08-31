@@ -5,53 +5,77 @@
     <div class="conteudo">
       <h1>Agendamentos da Minha Quadra</h1>
 
+      <!-- Consultar horários compacto no topo -->
+      <div class="consultar-horarios">
+        <label for="data-horarios">Consultar horários:</label>
+        <Datepicker
+          v-model="dataSelecionada"
+          :day-class="getDayClass"
+          :enable-time-picker="false"
+          @update:model-value="abrirModalDataSelecionada"
+          :format="formatDate"
+          placeholder="Escolha um dia"
+        />
+      </div>
+
       <!-- Loader -->
       <div v-if="isLoading" class="loader"></div>
 
       <!-- Conteúdo -->
       <div v-else>
+        <!-- Pendentes -->
         <div v-if="agendamentosPendentes.length === 0">
           Nenhum agendamento pendente.
         </div>
         <div v-else class="agendamentos">
-          <h2>Agendamentos Pendentes</h2>
+          <h4>Agendamentos Pendentes</h4>
           <AgendamentoCard
             v-for="ag in agendamentosPendentes"
             :key="ag.id"
             :agendamento="ag"
-            @atualizar="carregarAgendamentos"
+            :class="{ finalizado: ag.status === 'Finalizado' }"
+            @ver-horarios="() => abrirModal(ag.dia, ag.mes, ag.ano)"
           />
         </div>
 
-        <div v-if="agendamentosFinalizados.length > 0" class="agendamentos-finalizados">
-          <h2>Agendamentos Finalizados</h2>
-          <AgendamentoCard
-            v-for="ag in agendamentosFinalizados"
-            :key="ag.id"
-            :agendamento="ag"
-            :readonly="true"
-          />
-        </div>
+        <!-- Modal de horários -->
+        <ListaAgendModal
+          v-if="modalAberto && modalData"
+          :quadraId="quadraId"
+          :data="modalData"
+          @fechar="modalAberto = false"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, nextTick } from "vue";
 import SideBar from "@/components/SideBar.vue";
 import AgendamentoCard from "@/components/cards/AgendamentoCard.vue";
+import ListaAgendModal from "@/components/modals/Agendamentos/ListaAgendModal.vue";
 import api from "@/axios";
 import Swal from "sweetalert2";
+import Datepicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
 
 const agendamentos = ref([]);
 const isLoading = ref(true);
+const modalAberto = ref(false);
+const modalData = ref('');
+const quadraId = ref(null);
 
+// Abre modal manualmente por data
+const dataSelecionada = ref('');
+
+// Carregar agendamentos da quadra
 const carregarAgendamentos = async () => {
   isLoading.value = true;
   try {
     const { data } = await api.get("/agendamentos/minha-quadra");
     agendamentos.value = data;
+    if (data.length) quadraId.value = data[0].quadra.id;
   } catch (err) {
     console.error("Erro ao carregar agendamentos:", err);
     Swal.fire({
@@ -64,12 +88,46 @@ const carregarAgendamentos = async () => {
   }
 };
 
-const agendamentosPendentes = computed(() => agendamentos.value.filter(a => a.status === "Pendente"));
-const agendamentosFinalizados = computed(() => agendamentos.value.filter(a => a.status !== "Pendente"));
+const agendamentosPendentes = computed(() =>
+  agendamentos.value.filter(a => a.status === "Pendente")
+);
 
-onMounted(() => {
-  carregarAgendamentos();
-});
+const datasComAgendamento = computed(() =>
+  agendamentos.value.map(a => new Date(a.ano, a.mes - 1, a.dia))
+);
+
+// Marca os dias com agendamento no calendário
+const getDayClass = (date) => {
+  const existe = datasComAgendamento.value.some(d =>
+    d.getFullYear() === date.getFullYear() &&
+    d.getMonth() === date.getMonth() &&
+    d.getDate() === date.getDate()
+  );
+  return existe ? 'dia-com-agendamento' : '';
+};
+
+const abrirModal = async (dia, mes, ano) => {
+  modalData.value = `${ano}-${String(mes).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+  await nextTick();
+  modalAberto.value = true;
+};
+
+const abrirModalDataSelecionada = () => {
+  if (!dataSelecionada.value) return;
+  const d = dataSelecionada.value;
+  const ano = d.getFullYear();
+  const mes = (d.getMonth() + 1).toString().padStart(2,'0');
+  const dia = d.getDate().toString().padStart(2,'0');
+  modalData.value = `${ano}-${mes}-${dia}`;
+  modalAberto.value = true;
+};
+
+const formatDate = date => {
+  const d = new Date(date);
+  return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
+};
+
+onMounted(() => carregarAgendamentos());
 </script>
 
 <style scoped>
@@ -84,25 +142,46 @@ onMounted(() => {
   margin-left: 250px;
 }
 
-.agendamentos {
-  margin-top: 20px;
+.consultar-horarios {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
-.agendamentos-finalizados {
-  margin-top: 40px;
+.consultar-horarios label {
+  font-weight: 600;
+  color: #3B82F6;
 }
 
-h1, h2 {
+.agendamentos .agendamento-card {
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  background-color: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.agendamentos .agendamento-card.finalizado {
+  background-color: #f3f4f6;
+  border-left: 4px solid #6b7280;
+  opacity: 0.8;
+}
+
+h1, h4 {
   color: #3B82F6;
 }
 
 h1 {
   font-weight: bold;
   font-size: 30px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
-h2 {
+h4 {
   margin-bottom: 16px;
 }
 
@@ -126,5 +205,57 @@ h2 {
 @keyframes girar {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Datepicker */
+:deep(.dp__input_wrap) {
+  display: flex;
+  align-items: center;
+}
+
+:deep(.dp__input_icon) {
+  width: 18px;
+  height: 18px;
+  margin-left: 4px; 
+}
+
+:deep(.dp__menu) {
+  width: auto;
+  max-width: 280px;
+  font-size: 0.85rem;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+:deep(.dp__calendar) {
+  min-width: 250px;
+}
+
+.vue-datepicker {
+  width: 160px;
+  font-size: 0.85rem;
+}
+
+.vue-datepicker input {
+  padding: 4px 8px;      
+  font-size: 0.85rem;
+}
+
+.vue-datepicker__calendar {
+  font-size: 0.8rem;
+  width: 240px;
+}
+
+.vue-datepicker__calendar-trigger {
+  padding: 2px 4px !important;
+  font-size: 0.8rem !important; 
+  width: 20px !important;
+  height: 20px !important;
+}
+
+:deep(.dia-com-agendamento) {
+  background-color: #3B82F6 !important;
+  color: white !important;
+  border-radius: 50% !important;
 }
 </style>

@@ -77,10 +77,8 @@ const listarAgendamentosConfirmadosService = async (quadraId, ano, mes, dia) => 
       mes,
       dia
     },
-    select: {
-      id: true,
-      hora: true,
-      duracao: true,
+    include: {
+      usuario: true,
       modalidade: true
     },
     orderBy: [
