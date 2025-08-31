@@ -12,18 +12,32 @@
 
       <!-- Lista de agendamentos -->
       <div v-else>
-        <div v-if="agendamentos.length === 0" class="mensagem-nenhum-agendamento">
-          <p>Nenhum agendamento encontrado.</p>
-        </div>
-
-        <div v-else>
+        <!-- Futuros -->
+        <div v-if="agendamentosFuturos.length > 0">
           <MeusAgendamentoCard
-            v-for="ag in agendamentos"
+            v-for="ag in agendamentosFuturos"
             :key="ag.id"
-            :agendamento="ag"
+            :agendamento="{ ...ag, data: ag.dataFormatada, hora: ag.hora }"
+            :mostrarBotoes="true"
             @cancelar="cancelarAgendamento(ag.id)"
             @novo="irParaAgendarQuadra(ag.quadraId)"
           />
+        </div>
+
+        <!-- Passados -->
+        <div v-if="agendamentosPassados.length > 0">
+          <h4>Agendamentos Passados</h4>
+          <MeusAgendamentoCard
+            v-for="ag in agendamentosPassados"
+            :key="ag.id"
+            :agendamento="{ ...ag, data: ag.dataFormatada, hora: ag.hora }"
+            :mostrarBotoes="false"
+          />
+        </div>
+
+        <!-- Nenhum agendamento -->
+        <div v-if="agendamentosFuturos.length === 0 && agendamentosPassados.length === 0" class="mensagem-nenhum-agendamento">
+          <p>Nenhum agendamento encontrado.</p>
         </div>
       </div>
     </div>
@@ -39,25 +53,46 @@ import api from "@/axios";
 import Swal from "sweetalert2";
 
 const router = useRouter();
-const agendamentos = ref([]);
 const isLoading = ref(true);
+const agendamentosFuturos = ref([]);
+const agendamentosPassados = ref([]);
 
 // Carrega os agendamentos do usuário
 const carregarAgendamentos = async () => {
   isLoading.value = true;
   try {
     const { data } = await api.get("/agendamentos");
+    const agora = new Date();
 
-    agendamentos.value = data.map(a => ({
-      id: a.id,
-      quadra: a.quadra?.nome || "Não informado",
-      quadraId: a.quadra?.id || null,
-      data: `${a.dia.toString().padStart(2, "0")}/${a.mes.toString().padStart(2, "0")}/${a.ano}`,
-      hora: `${a.hora.toString().padStart(2, "0")}:00`,
-      duracao: a.duracao,
-      tipo: a.tipo,
-      status: a.status.toLowerCase(),
-    }));
+    const agendamentosFormatados = data.map(a => {
+      const dataObj = new Date(a.ano, a.mes - 1, a.dia, a.hora);
+      return {
+        id: a.id,
+        quadra: a.quadra?.nome || "Não informado",
+        quadraId: a.quadra?.id || null,
+        data: dataObj, // usado internamente para lógica
+        dataFormatada: `${a.dia.toString().padStart(2, "0")}/${a.mes.toString().padStart(2, "0")}/${a.ano}`,
+        hora: `${a.hora.toString().padStart(2, "0")}:00`,
+        duracao: a.duracao,
+        tipo: a.tipo,
+        status: a.status.toLowerCase(),
+      };
+    });
+
+    // Futuros (ordenando confirmados primeiro)
+    agendamentosFuturos.value = agendamentosFormatados
+      .filter(a => a.data >= agora)
+      .sort((x, y) => {
+        if (x.status === "confirmado" && y.status !== "confirmado") return -1;
+        if (x.status !== "confirmado" && y.status === "confirmado") return 1;
+        return x.data - y.data;
+      });
+
+    // Passados
+    agendamentosPassados.value = agendamentosFormatados
+      .filter(a => a.data < agora)
+      .sort((x, y) => y.data - x.data); // mais recentes primeiro
+
   } catch (err) {
     console.error("Erro ao carregar agendamentos:", err);
     Swal.fire({
@@ -92,7 +127,9 @@ const cancelarAgendamento = async (id) => {
     try {
       await api.delete(`/agendamento/${id}`);
 
-      agendamentos.value = agendamentos.value.filter(a => a.id !== id);
+      // Remove dos arrays futuros e passados
+      agendamentosFuturos.value = agendamentosFuturos.value.filter(a => a.id !== id);
+      agendamentosPassados.value = agendamentosPassados.value.filter(a => a.id !== id);
 
       Swal.fire({
         icon: "success",
@@ -177,5 +214,10 @@ onMounted(() => {
   color: #555;
   font-size: 18px;
   padding: 40px 0;
+}
+
+h4 {
+  color: #3b82f6;
+  margin-bottom: 10px;
 }
 </style>

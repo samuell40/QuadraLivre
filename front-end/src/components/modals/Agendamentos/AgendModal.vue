@@ -71,20 +71,21 @@ export default {
     modalidade: Object
   },
   data() {
-    const hoje = new Date()
-    const umAno = new Date()
-    umAno.setFullYear(hoje.getFullYear() + 1)
+    const agora = new Date()
+    const tresMeses = new Date()
+    tresMeses.setMonth(agora.getMonth() + 3) // limite de 3 meses
 
     return {
       data: '',
       hora: '',
       duracao: '',
       tipo: '',
-      minDate: hoje.toISOString().split('T')[0],
-      maxDate: umAno.toISOString().split('T')[0],
+      minDate: agora.toISOString().split('T')[0],
+      maxDate: tresMeses.toISOString().split('T')[0], // limite de 3 meses
       authStore: useAuthStore(),
       horariosDisponiveis: [],
-      horariosIndisponiveis: []
+      horariosIndisponiveis: [],
+      datasDisponiveis: []
     }
   },
   computed: {
@@ -107,46 +108,44 @@ export default {
   },
   methods: {
     async gerarHorariosDisponiveis() {
+      if (!this.data || this.data.split('-').length !== 3) return;
       this.hora = ''
       this.horariosDisponiveis = []
       this.horariosIndisponiveis = []
 
-      // horários base (07:00 até 23:00)
+      // horários válidos: 07h até 23h
       for (let h = 7; h <= 23; h++) {
         this.horariosDisponiveis.push(`${h.toString().padStart(2, '0')}:00`)
       }
 
       try {
-        // Chamada para o endpoint que já filtra por dia
         const [ano, mes, dia] = this.data.split('-')
         const { data: agendamentos } = await api.get(
           `/agendamentos/quadra/${this.quadra.id}/confirmados?ano=${ano}&mes=${mes}&dia=${dia}`
         )
-        console.log('Agendamentos confirmados do dia:', agendamentos)
 
-        // Marca horários indisponíveis
         agendamentos.forEach(a => {
           for (let i = 0; i < a.duracao; i++) {
             const hString = String(a.hora + i).padStart(2, '0') + ':00'
             this.horariosIndisponiveis.push(hString)
           }
         })
-
-        // Remove duplicados
         this.horariosIndisponiveis = [...new Set(this.horariosIndisponiveis)]
 
-        // Se for o dia de hoje, remove horários passados
-        const hoje = new Date()
-        const dataSelecionada = new Date(this.data)
-        if (
-          dataSelecionada.getFullYear() === hoje.getFullYear() &&
-          dataSelecionada.getMonth() === hoje.getMonth() &&
-          dataSelecionada.getDate() === hoje.getDate()
-        ) {
-          const horaAtual = hoje.getHours()
-          this.horariosDisponiveis = this.horariosDisponiveis.filter(h => {
-            return parseInt(h.split(':')[0]) > horaAtual
-          })
+        this.horariosDisponiveis = this.horariosDisponiveis.filter(h => {
+          const horaAgendamento = parseInt(h.split(':')[0])
+          const [anoSel, mesSel, diaSel] = this.data.split('-').map(n => parseInt(n))
+          const agendamento = new Date(anoSel, mesSel - 1, diaSel, horaAgendamento, 0, 0, 0)
+          const limite24h = new Date(Date.now() + 24 * 60 * 60 * 1000)
+          if (agendamento < limite24h) return false
+          return !this.horariosIndisponiveis.includes(h)
+        })
+
+        if (this.horariosDisponiveis.length > 0) {
+          const dataFormatada = this.data
+          if (!this.datasDisponiveis.includes(dataFormatada)) {
+            this.datasDisponiveis.push(dataFormatada)
+          }
         }
       } catch (err) {
         console.error('Erro ao buscar horários ocupados:', err)
@@ -157,6 +156,10 @@ export default {
           confirmButtonColor: '#1E3A8A',
         })
       }
+    },
+
+    isDataDisponivel(data) {
+      return this.datasDisponiveis.includes(data)
     },
 
     confirmar() {
@@ -181,9 +184,35 @@ export default {
       }
 
       const horaSelecionada = parseInt(this.hora.split(':')[0])
-      const duracaoFinal = this.exibirDuracao ? parseInt(this.duracao) : 1
+      const [ano, mes, dia] = this.data.split('-').map(n => parseInt(n))
+      const agendamento = new Date(ano, mes - 1, dia, horaSelecionada, 0, 0, 0)
 
-      // valida se o intervalo escolhido invade horários ocupados
+      // validação de 24h
+      const limite24h = new Date(Date.now() + 24 * 60 * 60 * 1000)
+      if (agendamento < limite24h) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Data/hora inválida',
+          text: 'O agendamento deve ser feito com pelo menos 24h de antecedência.',
+          confirmButtonColor: '#1E3A8A'
+        })
+        return
+      }
+
+      // validação de 3 meses
+      const limiteTresMeses = new Date()
+      limiteTresMeses.setMonth(limiteTresMeses.getMonth() + 3)
+      if (agendamento > limiteTresMeses) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Data inválida',
+          text: 'O agendamento não pode ser feito para mais de 3 meses à frente.',
+          confirmButtonColor: '#1E3A8A'
+        })
+        return
+      }
+
+      const duracaoFinal = this.exibirDuracao ? parseInt(this.duracao) : 1
       for (let i = 0; i < duracaoFinal; i++) {
         const hString = String(horaSelecionada + i).padStart(2, '0') + ':00'
         if (this.horariosIndisponiveis.includes(hString)) {
@@ -197,7 +226,6 @@ export default {
         }
       }
 
-      // Emite os dados do agendamento para o componente pai
       this.$emit('confirmar', {
         usuarioId: this.authStore.usuario.id,
         quadraId: this.quadra.id,
@@ -214,6 +242,7 @@ export default {
   }
 }
 </script>
+
 
 <style scoped>
 .modal-overlay {
@@ -250,6 +279,10 @@ select {
   border-radius: 4px;
   width: 100%;
   margin-bottom: 18px;
+}
+
+select:hover, input:hover {
+  border-color: #3b82f6;
 }
 
 .modal-content label {

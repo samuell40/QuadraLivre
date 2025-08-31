@@ -14,7 +14,7 @@
       </span>
     </p>
 
-    <div class="buttons">
+    <div class="buttons" v-if="mostrarBotoes">
       <button 
         v-if="agendamento.status !== 'confirmado'" 
         @click="$emit('cancelar', agendamento.id)"
@@ -30,9 +30,13 @@
 export default {
   name: 'MeusAgendamentoCard',
   props: {
-    agendamento: Object
+    agendamento: Object,
+    mostrarBotoes: {
+      type: Boolean,
+      default: true
+    }
   },
-   mounted() {
+  mounted() {
     console.log(this.agendamento);
   }
 }

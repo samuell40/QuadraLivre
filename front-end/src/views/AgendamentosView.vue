@@ -23,10 +23,10 @@
           />
         </div>
 
-        <div v-if="agendamentosProcessados.length > 0" class="agendamentos-processados">
-          <h2>Agendamentos Processados</h2>
+        <div v-if="agendamentosFinalizados.length > 0" class="agendamentos-finalizados">
+          <h2>Agendamentos Finalizados</h2>
           <AgendamentoCard
-            v-for="ag in agendamentosProcessados"
+            v-for="ag in agendamentosFinalizados"
             :key="ag.id"
             :agendamento="ag"
             :readonly="true"
@@ -65,7 +65,7 @@ const carregarAgendamentos = async () => {
 };
 
 const agendamentosPendentes = computed(() => agendamentos.value.filter(a => a.status === "Pendente"));
-const agendamentosProcessados = computed(() => agendamentos.value.filter(a => a.status !== "Pendente"));
+const agendamentosFinalizados = computed(() => agendamentos.value.filter(a => a.status !== "Pendente"));
 
 onMounted(() => {
   carregarAgendamentos();
@@ -88,7 +88,7 @@ onMounted(() => {
   margin-top: 20px;
 }
 
-.agendamentos-processados {
+.agendamentos-finalizados {
   margin-top: 40px;
 }
 

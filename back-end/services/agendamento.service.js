@@ -17,11 +17,15 @@ const listarAgendamentosService = async (usuarioId) => {
     ]
   });
 
-  return agendamentos;
+  // garante que sempre vem duracao
+  return agendamentos.map(a => ({
+    ...a,
+    duracao: a.duracao ?? 1
+  }));
 };
 
 const listarTodosAgendamentosService = async () => {
-  return await prisma.agendamento.findMany({
+  const agendamentos = await prisma.agendamento.findMany({
     include: { quadra: true, usuario: true, modalidade: true },
     orderBy: [
       { ano: 'asc' },
@@ -30,6 +34,11 @@ const listarTodosAgendamentosService = async () => {
       { hora: 'asc' }
     ]
   });
+
+  return agendamentos.map(a => ({
+    ...a,
+    duracao: a.duracao ?? 1
+  }));
 };
 
 const listarAgendamentosPorQuadraService = async (quadraId) => {
@@ -37,7 +46,7 @@ const listarAgendamentosPorQuadraService = async (quadraId) => {
     throw { status: 400, message: 'Quadra não informada.' };
   }
 
-  return await prisma.agendamento.findMany({
+  const agendamentos = await prisma.agendamento.findMany({
     where: { quadraId: Number(quadraId) },
     include: { usuario: true, quadra: true, modalidade: true },
     orderBy: [
@@ -47,6 +56,11 @@ const listarAgendamentosPorQuadraService = async (quadraId) => {
       { hora: 'asc' }
     ]
   });
+
+  return agendamentos.map(a => ({
+    ...a,
+    duracao: a.duracao ?? 1
+  }));
 };
 
 // Listar agendamentos confirmados por quadra e data
@@ -74,7 +88,10 @@ const listarAgendamentosConfirmadosService = async (quadraId, ano, mes, dia) => 
     ]
   });
 
-  return agendamentos;
+  return agendamentos.map(a => ({
+    ...a,
+    duracao: a.duracao ?? 1
+  }));
 };
 
 const criarAgendamentoService = async ({ usuarioId, dia, mes, ano, hora, duracao = 1, tipo = 'TREINO', quadraId, modalidadeId }) => {
@@ -82,12 +99,24 @@ const criarAgendamentoService = async ({ usuarioId, dia, mes, ano, hora, duracao
     throw { status: 400, message: 'Campos obrigatórios não preenchidos.' };
   }
 
-  // Verifica conflito no mesmo horário para a mesma quadra
+  // Verifica conflito em qualquer hora do intervalo
   const conflito = await prisma.agendamento.findFirst({
-    where: { dia, mes, ano, hora, quadraId }
+    where: {
+      dia,
+      mes,
+      ano,
+      quadraId,
+      AND: [
+        {
+          hora: {
+            gte: hora,
+            lt: hora + duracao
+          }
+        }
+      ]
+    }
   });
 
-  // Verifica se o usuário já tem um agendamento no mesmo horário
   if (conflito) {
     throw { status: 409, message: 'Horário já agendado.' };
   }
@@ -108,7 +137,10 @@ const criarAgendamentoService = async ({ usuarioId, dia, mes, ano, hora, duracao
     include: { modalidade: true }
   });
 
-  return agendamento;
+  return {
+    ...agendamento,
+    duracao: agendamento.duracao ?? 1
+  };
 };
 
 const cancelarAgendamentoService = async (id) => {
@@ -133,14 +165,16 @@ const atualizarAgendamentoService = async (id, status) => {
     data: { status }
   });
 
-  return atualizado;
+  return {
+    ...atualizado,
+    duracao: atualizado.duracao ?? 1
+  };
 };
 
 const listarModalidadesPorQuadraService = async (quadraId) => {
   if (!quadraId) throw { status: 400, message: 'Quadra não informada.' };
 
   try {
-    // Prisma faz join na relação N:N
     const quadra = await prisma.quadra.findUnique({
       where: { id: Number(quadraId) },
       include: { modalidades: true }
