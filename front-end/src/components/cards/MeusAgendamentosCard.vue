@@ -1,8 +1,9 @@
 <template>
   <div class="card">
     <h3>{{ agendamento.quadra }}</h3>
-    <p>Data: <strong>{{ agendamento.data }}</strong></p>
-    <p>Hora: <strong>{{ agendamento.hora }}</strong></p>
+    <p> Data:
+      <strong>{{ agendamento.data }}</strong>, às <strong>{{ agendamento.hora }}</strong>
+    </p>
     <p>Duração: <strong>{{ agendamento.duracao }} hora(s)</strong></p>
     <p>Tipo: <strong>{{ agendamento.tipo }}</strong></p>
 
@@ -14,7 +15,12 @@
     </p>
 
     <div class="buttons">
-      <button class="cancelar" @click="$emit('cancelar')">Cancelar Agendamento</button>
+      <button 
+        v-if="agendamento.status !== 'confirmado'" 
+        @click="$emit('cancelar', agendamento.id)"
+      >
+        Cancelar Agendamento
+      </button>
       <button class="novo" @click="$emit('novo')">Novo Agendamento</button>
     </div>
   </div>

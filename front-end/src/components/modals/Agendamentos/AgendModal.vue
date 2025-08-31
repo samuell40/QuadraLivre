@@ -5,18 +5,29 @@
 
       <!-- Escolha da data -->
       <label for="data"><strong>Escolha a data:</strong></label>
-      <input type="date" v-model="data" :min="minDate" :max="maxDate" @change="gerarHorariosDisponiveis" />
+      <input
+        type="date"
+        v-model="data"
+        :min="minDate"
+        :max="maxDate"
+        @change="gerarHorariosDisponiveis"
+      />
 
       <!-- Lista de horários -->
       <label for="hora"><strong>Escolha o horário {{ exibirDuracao ? 'e duração' : '' }}:</strong></label>
       <div class="horarios">
-        <button v-for="h in horariosDisponiveis" :key="h" :class="{ selecionado: h === hora }"
-          :disabled="horariosIndisponiveis.includes(h)" @click="hora = h">
+        <button
+          v-for="h in horariosDisponiveis"
+          :key="h"
+          :class="{ selecionado: h === hora }"
+          :disabled="horariosIndisponiveis.includes(h)"
+          @click="hora = h"
+        >
           {{ h }}
         </button>
       </div>
 
-      <!-- Só exibe a duração se for modalidade que permite -->
+      <!-- Exibe duração dependendo da modalidade -->
       <select v-if="exibirDuracao" v-model="duracao" class="select-tempo">
         <option disabled value="">Duração</option>
         <option value="1">1 hora</option>
@@ -35,8 +46,11 @@
 
       <!-- Ações -->
       <div class="modal-actions">
-        <button @click="confirmar" class="btn-confirmar"
-          :disabled="!data || !hora || (exibirDuracao && !duracao) || !tipo">
+        <button
+          @click="confirmar"
+          class="btn-confirmar"
+          :disabled="!data || !hora || (exibirDuracao && !duracao) || !tipo"
+        >
           Confirmar
         </button>
         <button @click="$emit('fechar')" class="btn-cancelar">Cancelar</button>
@@ -76,7 +90,11 @@ export default {
   computed: {
     modalidadeSelecionadaPadronizada() {
       if (!this.modalidade?.nome) return ''
-      return this.modalidade.nome.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').trim()
+      return this.modalidade.nome
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .trim()
     },
     isFutebol() {
       const modalidadesFutebol = ['futebol', 'futsal', 'futebol de areia', 'futevolei']
@@ -93,17 +111,20 @@ export default {
       this.horariosDisponiveis = []
       this.horariosIndisponiveis = []
 
-      // gera horários base
+      // horários base (07:00 até 23:00)
       for (let h = 7; h <= 23; h++) {
         this.horariosDisponiveis.push(`${h.toString().padStart(2, '0')}:00`)
       }
 
       try {
+        // Chamada para o endpoint que já filtra por dia
+        const [ano, mes, dia] = this.data.split('-')
         const { data: agendamentos } = await api.get(
-          `/agendamentos/quadra/${this.quadra.id}?data=${this.data}`
+          `/agendamentos/quadra/${this.quadra.id}/confirmados?ano=${ano}&mes=${mes}&dia=${dia}`
         )
-        console.log('Agendamentos recebidos:', agendamentos)
+        console.log('Agendamentos confirmados do dia:', agendamentos)
 
+        // Marca horários indisponíveis
         agendamentos.forEach(a => {
           for (let i = 0; i < a.duracao; i++) {
             const hString = String(a.hora + i).padStart(2, '0') + ':00'
@@ -111,9 +132,22 @@ export default {
           }
         })
 
-        // remove duplicados
+        // Remove duplicados
         this.horariosIndisponiveis = [...new Set(this.horariosIndisponiveis)]
-        console.log('Horários indisponíveis:', this.horariosIndisponiveis)
+
+        // Se for o dia de hoje, remove horários passados
+        const hoje = new Date()
+        const dataSelecionada = new Date(this.data)
+        if (
+          dataSelecionada.getFullYear() === hoje.getFullYear() &&
+          dataSelecionada.getMonth() === hoje.getMonth() &&
+          dataSelecionada.getDate() === hoje.getDate()
+        ) {
+          const horaAtual = hoje.getHours()
+          this.horariosDisponiveis = this.horariosDisponiveis.filter(h => {
+            return parseInt(h.split(':')[0]) > horaAtual
+          })
+        }
       } catch (err) {
         console.error('Erro ao buscar horários ocupados:', err)
         Swal.fire({
@@ -146,9 +180,8 @@ export default {
         return
       }
 
-      const [h] = this.hora.split(':')
+      const horaSelecionada = parseInt(this.hora.split(':')[0])
       const duracaoFinal = this.exibirDuracao ? parseInt(this.duracao) : 1
-      const horaSelecionada = parseInt(h)
 
       // valida se o intervalo escolhido invade horários ocupados
       for (let i = 0; i < duracaoFinal; i++) {
@@ -164,7 +197,7 @@ export default {
         }
       }
 
-      // emite para o pai salvar
+      // Emite os dados do agendamento para o componente pai
       this.$emit('confirmar', {
         usuarioId: this.authStore.usuario.id,
         quadraId: this.quadra.id,
@@ -248,6 +281,7 @@ select {
 
 .horarios button:hover {
   background-color: #3b82f6;
+  border-color: #7f7f7f;
   color: #fff;
 }
 

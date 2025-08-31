@@ -6,8 +6,9 @@
       </div>
     </div>
     <p>Realizado por: <strong>{{ agendamento.usuario.nome }}</strong></p>
-    <p>Data: <strong>{{ formatarData(agendamento) }}</strong></p>
-    <p>Hora: <strong>{{ agendamento.hora }}:00</strong></p>
+    <p>
+      <strong>{{ formatarData(agendamento) }}</strong>, às <strong>{{ agendamento.hora }}:00</strong>
+    </p>
     <p>Duração: <strong>{{ agendamento.duracao }} hora(s)</strong></p>
     <p>Tipo: <strong>{{ agendamento.tipo }}</strong></p>
 
