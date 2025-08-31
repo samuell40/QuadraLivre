@@ -5,7 +5,7 @@
     <div class="conteudo">
       <h1>Agendamentos da Minha Quadra</h1>
 
-      <!-- Consultar horários compacto no topo -->
+      <!-- Consultar horários -->
       <div class="consultar-horarios">
         <label for="data-horarios">Consultar horários:</label>
         <Datepicker
@@ -69,7 +69,7 @@ const quadraId = ref(null);
 // Abre modal manualmente por data
 const dataSelecionada = ref('');
 
-// Carregar agendamentos da quadra
+// Carrega agendamentos da quadra
 const carregarAgendamentos = async () => {
   isLoading.value = true;
   try {

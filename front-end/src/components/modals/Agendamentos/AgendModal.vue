@@ -3,14 +3,17 @@
     <div class="modal-content">
       <h2 class="title"><strong>{{ quadra?.nome }}</strong></h2>
 
-      <!-- Escolha da data -->
+      <!-- Escolha da data com Datepicker -->
       <label for="data"><strong>Escolha a data:</strong></label>
-      <input
-        type="date"
+      <Datepicker
         v-model="data"
-        :min="minDate"
-        :max="maxDate"
-        @change="gerarHorariosDisponiveis"
+        :min-date="minDateObj"
+        :max-date="maxDateObj"
+        :day-class="getDayClass"
+        :enable-time-picker="false"
+        @update:model-value="gerarHorariosDisponiveis"
+        :format="formatDate"
+        placeholder="Escolha um dia"
       />
 
       <!-- Lista de horários -->
@@ -63,9 +66,12 @@
 import Swal from 'sweetalert2'
 import { useAuthStore } from '@/store'
 import api from '@/axios'
+import Datepicker from '@vuepic/vue-datepicker'
+import '@vuepic/vue-datepicker/dist/main.css'
 
 export default {
   name: 'AgendamentoModal',
+  components: { Datepicker },
   props: {
     quadra: Object,
     modalidade: Object
@@ -73,15 +79,15 @@ export default {
   data() {
     const agora = new Date()
     const tresMeses = new Date()
-    tresMeses.setMonth(agora.getMonth() + 3) // limite de 3 meses
+    tresMeses.setMonth(agora.getMonth() + 3)
 
     return {
       data: '',
       hora: '',
       duracao: '',
       tipo: '',
-      minDate: agora.toISOString().split('T')[0],
-      maxDate: tresMeses.toISOString().split('T')[0], // limite de 3 meses
+      minDateObj: agora,
+      maxDateObj: tresMeses,
       authStore: useAuthStore(),
       horariosDisponiveis: [],
       horariosIndisponiveis: [],
@@ -107,19 +113,39 @@ export default {
     }
   },
   methods: {
+    formatDate(date) {
+      const d = new Date(date)
+      return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`
+    },
+
+    getDayClass(date) {
+      const dStr = this.formatDateAPI(date)
+      return this.datasDisponiveis.includes(dStr) ? 'dia-disponivel' : ''
+    },
+
+    // Converte Date para YYYY-MM-DD para API
+    formatDateAPI(date) {
+      const d = new Date(date)
+      const ano = d.getFullYear()
+      const mes = String(d.getMonth() + 1).padStart(2, '0')
+      const dia = String(d.getDate()).padStart(2, '0')
+      return `${ano}-${mes}-${dia}`
+    },
+
     async gerarHorariosDisponiveis() {
-      if (!this.data || this.data.split('-').length !== 3) return;
+      if (!this.data) return
       this.hora = ''
       this.horariosDisponiveis = []
       this.horariosIndisponiveis = []
 
-      // horários válidos: 07h até 23h
       for (let h = 7; h <= 23; h++) {
-        this.horariosDisponiveis.push(`${h.toString().padStart(2, '0')}:00`)
+        this.horariosDisponiveis.push(`${h.toString().padStart(2,'0')}:00`)
       }
 
       try {
-        const [ano, mes, dia] = this.data.split('-')
+        const dataStr = this.formatDateAPI(this.data)
+        const [ano, mes, dia] = dataStr.split('-')
+
         const { data: agendamentos } = await api.get(
           `/agendamentos/quadra/${this.quadra.id}/confirmados?ano=${ano}&mes=${mes}&dia=${dia}`
         )
@@ -132,34 +158,20 @@ export default {
         })
         this.horariosIndisponiveis = [...new Set(this.horariosIndisponiveis)]
 
-        this.horariosDisponiveis = this.horariosDisponiveis.filter(h => {
-          const horaAgendamento = parseInt(h.split(':')[0])
-          const [anoSel, mesSel, diaSel] = this.data.split('-').map(n => parseInt(n))
-          const agendamento = new Date(anoSel, mesSel - 1, diaSel, horaAgendamento, 0, 0, 0)
-          const limite24h = new Date(Date.now() + 24 * 60 * 60 * 1000)
-          if (agendamento < limite24h) return false
-          return !this.horariosIndisponiveis.includes(h)
-        })
+        this.horariosDisponiveis = this.horariosDisponiveis.filter(h => !this.horariosIndisponiveis.includes(h))
 
-        if (this.horariosDisponiveis.length > 0) {
-          const dataFormatada = this.data
-          if (!this.datasDisponiveis.includes(dataFormatada)) {
-            this.datasDisponiveis.push(dataFormatada)
-          }
+        if (this.horariosDisponiveis.length > 0 && !this.datasDisponiveis.includes(dataStr)) {
+          this.datasDisponiveis.push(dataStr)
         }
       } catch (err) {
-        console.error('Erro ao buscar horários ocupados:', err)
+        console.error(err)
         Swal.fire({
           icon: 'error',
           title: 'Erro',
-          text: 'Não foi possível carregar os horários dessa quadra.',
+          text: 'Não foi possível carregar os horários desta quadra.',
           confirmButtonColor: '#1E3A8A',
         })
       }
-    },
-
-    isDataDisponivel(data) {
-      return this.datasDisponiveis.includes(data)
     },
 
     confirmar() {
@@ -184,10 +196,10 @@ export default {
       }
 
       const horaSelecionada = parseInt(this.hora.split(':')[0])
-      const [ano, mes, dia] = this.data.split('-').map(n => parseInt(n))
+      const dataStr = this.formatDateAPI(this.data)
+      const [ano, mes, dia] = dataStr.split('-').map(n => parseInt(n))
       const agendamento = new Date(ano, mes - 1, dia, horaSelecionada, 0, 0, 0)
 
-      // validação de 24h
       const limite24h = new Date(Date.now() + 24 * 60 * 60 * 1000)
       if (agendamento < limite24h) {
         Swal.fire({
@@ -199,7 +211,6 @@ export default {
         return
       }
 
-      // validação de 3 meses
       const limiteTresMeses = new Date()
       limiteTresMeses.setMonth(limiteTresMeses.getMonth() + 3)
       if (agendamento > limiteTresMeses) {
@@ -230,9 +241,9 @@ export default {
         usuarioId: this.authStore.usuario.id,
         quadraId: this.quadra.id,
         modalidadeId: this.modalidade.id,
-        dia: parseInt(this.data.split('-')[2]),
-        mes: parseInt(this.data.split('-')[1]),
-        ano: parseInt(this.data.split('-')[0]),
+        dia: dia,
+        mes: mes,
+        ano: ano,
         hora: horaSelecionada,
         duracao: duracaoFinal,
         tipo: this.tipo,
@@ -265,9 +276,11 @@ export default {
   border-radius: 8px;
   max-width: 800px;
   width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
+  max-height: 90vh;
+  overflow-y: visible;
+  position: relative;
 }
+
 
 .modal-content input,
 .select-tempo,
@@ -363,5 +376,58 @@ select:hover, input:hover {
 .btn-cancelar:hover,
 .btn-confirmar:hover {
   opacity: 0.8;
+}
+
+/* Destaque de datas disponíveis */
+:deep(.dia-disponivel) {
+  background-color: #3B82F6 !important;
+  color: white !important;
+  border-radius: 50% !important;
+}
+
+:deep(.dp__input_wrap) {
+  display: flex;
+  align-items: center;
+}
+
+:deep(.dp__input_icon) {
+  width: 18px;
+  height: 18px;
+  margin-left: 4px; 
+}
+
+:deep(.dp__menu) {
+  width: auto;
+  max-width: 280px;
+  font-size: 0.85rem;
+  padding: 8px;
+  border-radius: 8px;
+  z-index: 1100 !important;
+}
+
+:deep(.dp__calendar) {
+  min-width: 250px;
+}
+
+.vue-datepicker {
+  width: 160px;
+  font-size: 0.85rem;
+}
+
+.vue-datepicker input {
+  padding: 4px 8px;      
+  font-size: 0.85rem;
+}
+
+.vue-datepicker__calendar {
+  font-size: 0.8rem;
+  width: 240px;
+}
+
+.vue-datepicker__calendar-trigger {
+  padding: 2px 4px !important;
+  font-size: 0.8rem !important; 
+  width: 20px !important;
+  height: 20px !important;
 }
 </style>

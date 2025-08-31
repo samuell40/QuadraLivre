@@ -4,9 +4,13 @@
       <h2>Horários do dia {{ data }}</h2>
       
       <div class="horarios-dia">
-        <div v-for="h in horariosDia" :key="h.hora" 
+        <div 
+          v-for="h in horariosDia" 
+          :key="h.hora" 
           class="horario" 
-          :class="h.agendamento ? 'agendado' : 'disponivel'">
+          :class="h.agendamento ? 'agendado' : 'disponivel'"
+          @click="h.agendamento && selecionarAgendamento(h.agendamento)"
+        >
           <span>{{ h.hora.toString().padStart(2,'0') }}:00</span>
           <span v-if="h.agendamento">
             {{ h.agendamento.usuario.nome }} ({{ h.agendamento.tipo }})
@@ -15,7 +19,20 @@
         </div>
       </div>
 
-      <button class="btn-cancelar" @click="$emit('fechar')">Fechar</button>
+      <!-- Card de detalhes do agendamento -->
+      <div v-if="agendamentoSelecionado" class="detalhes-agendamento">
+        <h3>{{ agendamentoSelecionado.titulo || 'Agendamento' }}</h3>
+        <p><strong>Realizado por:</strong> {{ agendamentoSelecionado.usuario.nome }}</p>
+        <p>
+          <strong>Data:</strong> {{ data }} 
+          às {{ agendamentoSelecionado.hora.toString().padStart(2,'0') }}:00
+        </p>
+        <p><strong>Duração:</strong> {{ agendamentoSelecionado.duracao }} hora(s)</p>
+        <p><strong>Tipo:</strong> {{ agendamentoSelecionado.tipo }}</p>
+        <button class="btn-cancelar" @click="agendamentoSelecionado = null">Fechar Detalhes</button>
+      </div>
+
+      <button class="btn-cancelar" @click="$emit('fechar')">Fechar Modal</button>
     </div>
   </div>
 </template>
@@ -32,7 +49,8 @@ export default {
   },
   data() {
     return {
-      horariosDia: []
+      horariosDia: [],
+      agendamentoSelecionado: null
     };
   },
   watch: {
@@ -47,7 +65,6 @@ export default {
   },
   methods: {
     async carregarHorarios() {
-      // não tenta carregar se props inválidas
       if (!this.data || !this.quadraId) return;
 
       try {
@@ -65,7 +82,6 @@ export default {
           `/agendamentos/quadra/${this.quadraId}/confirmados?ano=${ano}&mes=${mes}&dia=${dia}`
         );
 
-        // cria todos os horários do dia (07h até 23h)
         const horarios = [];
         for (let h = 7; h <= 23; h++) {
           const agendamento = agendamentos.find(a => h >= a.hora && h < a.hora + a.duracao);
@@ -83,11 +99,13 @@ export default {
           confirmButtonColor: '#1E3A8A'
         });
       }
+    },
+    selecionarAgendamento(agendamento) {
+      this.agendamentoSelecionado = agendamento;
     }
   }
 };
 </script>
-
 
 <style scoped>
 .modal-overlay {
@@ -120,10 +138,7 @@ export default {
   padding: 6px 10px;
   border-radius: 6px;
   font-weight: 500;
-}
-
-.horario span:first-child {
-  font-weight: bold;
+  cursor: pointer;
 }
 
 .horario.agendado {
@@ -132,12 +147,20 @@ export default {
 }
 
 .horario.disponivel {
-  background-color: #D1FAE5; /* verde claro */
+  background-color: #D1FAE5;
   color: #065F46;
 }
 
+.detalhes-agendamento {
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid #3B82F6;
+  border-radius: 8px;
+  background-color: #eff6ff;
+}
+
 .btn-cancelar {
-  margin-top: 1.5rem;
+  margin-top: 10px;
   padding: 0.6rem 1.2rem;
   background-color: #3B82F6;
   color: #fff;
@@ -147,22 +170,4 @@ export default {
 }
 
 .btn-cancelar:hover { background-color: #2563EB; }
-
-.abrir-modal-dia input[type="date"] {
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-.btn-consultar {
-  padding: 6px 14px;
-  background-color: #3B82F6;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-}
-
-.btn-consultar:hover { background-color: #2563EB; }
 </style>
