@@ -125,17 +125,18 @@ export default {
 .placar {
   flex: none;
   width: 580px;
+  max-width: 100%;
   background: #fff;
   border-radius: 12px;
   padding: 30px;
   text-align: center;
   border: 1px solid #ddd;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   gap: 15px;
+  margin: 0 auto; 
 }
 
 .placar h2 {
@@ -146,6 +147,7 @@ export default {
   border-radius: 8px 8px 0 0;
   color: #3b82f6;
   font-weight: bold;
+  font-size: 20px;
 }
 
 .box {
@@ -160,6 +162,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   margin-top: 10px;
+  gap: 10px;
 }
 
 .controls span {
@@ -178,6 +181,7 @@ export default {
   font-size: 18px;
   cursor: pointer;
   transition: 0.2s;
+  flex-shrink: 0;
 }
 
 .controls button:hover {
@@ -199,4 +203,33 @@ export default {
   width: 100%;
   margin-top: auto;
 }
+
+@media (max-width: 768px) {
+  .placar {
+    width: 100%;
+    padding: 20px;
+  }
+
+  .placar h2 {
+    font-size: 18px;
+    padding: 8px;
+  }
+  
+  .controls {
+    flex-direction: row;
+    justify-content: center;
+    gap: 20px;
+  }
+
+  .controls span {
+    font-size: 16px;
+  }
+
+  .controls button {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+}
+
 </style>

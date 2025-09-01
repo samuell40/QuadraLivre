@@ -4,7 +4,11 @@
       <h4 class="modalidade-titulo">{{ modalidade }}</h4>
 
       <div class="cards-partidas">
-        <div v-for="partida in grupo" :key="partida.id" class="card-partida-wrapper">
+        <div
+          v-for="partida in grupo"
+          :key="partida.id"
+          class="card-partida-wrapper"
+        >
           <div class="card-partida" :class="{ encerrada: partida.finalizada }">
             <div class="time">
               <span>{{ partida.timeA?.nome }}</span>
@@ -45,6 +49,7 @@ export default {
     }
   },
   computed: {
+    // junta todas e organiza por modalidade
     partidasPorModalidade() {
       const todas = [...this.partidasAtivas, ...this.partidasEncerradas];
       return todas.reduce((acc, partida) => {
@@ -80,13 +85,11 @@ export default {
     },
     statusPartida(partida) {
       if (partida.finalizada) return "ENCERRADA";
-      if (partida.emIntervalo) return "PAUSADA"; 
       if (!partida.finalizada && this.partidasAtivas[0]?.id === partida.id) {
         return `${this.tempoDecorrido} MIN`;
       }
       return "EM ANDAMENTO";
     }
-
   },
   beforeUnmount() {
     if (this.intervaloTempo) clearInterval(this.intervaloTempo);
@@ -194,8 +197,7 @@ export default {
 }
 
 .status-partida.encerrada {
-  color: #dc2626;
-  /* vermelho */
+  color: #dc2626; /* vermelho */
 }
 
 @media (max-width: 1024px) {

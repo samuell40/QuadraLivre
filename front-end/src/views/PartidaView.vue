@@ -19,10 +19,18 @@
           <div class="dropdown-row modalidade">
             <div class="team">
               <label>Modalidade:</label>
-              <select v-model="modalidadeSelecionada" @change="handleModalidadeChange" class="dropdown"
-                :disabled="partidaIniciada">
+              <select
+                v-model="modalidadeSelecionada"
+                @change="handleModalidadeChange"
+                class="dropdown"
+                :disabled="partidaIniciada"
+              >
                 <option disabled value="">Selecione a modalidade</option>
-                <option v-for="m in modalidadesDisponiveis" :key="m.id" :value="m.nome">
+                <option
+                  v-for="m in modalidadesDisponiveis"
+                  :key="m.id"
+                  :value="m.nome"
+                >
                   {{ m.nome }}
                 </option>
               </select>
@@ -33,11 +41,19 @@
             <div class="team">
               <label>Time 1:</label>
               <div class="dropdown-container">
-                <select v-model="timeSelecionado1" @change="carregarPlacarTime('time1')" class="dropdown"
-                  :disabled="partidaIniciada || carregandoTimes || times.length === 0">
+                <select
+                  v-model="timeSelecionado1"
+                  @change="carregarPlacarTime('time1')"
+                  class="dropdown"
+                  :disabled="partidaIniciada || carregandoTimes || times.length === 0"
+                >
                   <option disabled value="">Selecione o time</option>
-                  <option v-for="t in times" :key="t.id" :value="t"
-                    :disabled="timeSelecionado2?.id === t.id || !checaMesmoTipoTime(t)">
+                  <option
+                    v-for="t in times"
+                    :key="t.id"
+                    :value="t"
+                    :disabled="timeSelecionado2?.id === t.id"
+                  >
                     {{ t.nome }}
                   </option>
                 </select>
@@ -48,11 +64,19 @@
             <div class="team">
               <label>Time 2:</label>
               <div class="dropdown-container">
-                <select v-model="timeSelecionado2" @change="carregarPlacarTime('time2')" class="dropdown"
-                  :disabled="partidaIniciada || carregandoTimes || times.length === 0">
+                <select
+                  v-model="timeSelecionado2"
+                  @change="carregarPlacarTime('time2')"
+                  class="dropdown"
+                  :disabled="partidaIniciada || carregandoTimes || times.length === 0"
+                >
                   <option disabled value="">Selecione o time</option>
-                  <option v-for="t in times" :key="t.id" :value="t"
-                    :disabled="timeSelecionado1?.id === t.id || !checaMesmoTipoTime(t)">
+                  <option
+                    v-for="t in times"
+                    :key="t.id"
+                    :value="t"
+                    :disabled="timeSelecionado1?.id === t.id"
+                  >
                     {{ t.nome }}
                   </option>
                 </select>
@@ -61,34 +85,55 @@
             </div>
 
             <div class="team">
-              <button class="dropdown botao-iniciar" @click="togglePartida"
-                :disabled="!timeSelecionado1 || !timeSelecionado2 || (!modalidadeSelecionada && !partidaIniciada)">
-                {{ !partidaIniciada ? 'Iniciar Partida' : (temporizadorAtivo ? 'Pausar Partida' : 'Retomar Partida') }}
+              <button
+                class="dropdown botao-iniciar"
+                @click="togglePartida"
+                :disabled="!timeSelecionado1 || !timeSelecionado2 || (!modalidadeSelecionada && !partidaIniciada)"
+              >
+                {{
+                  !partidaIniciada
+                    ? 'Iniciar Partida'
+                    : (temporizadorAtivo ? 'Pausar Partida' : 'Retomar Partida')
+                }}
               </button>
-
             </div>
           </div>
         </div>
 
         <div v-if="!partidaIniciada" class="mensagem-inicial">
-          <p>Para iniciar uma partida, selecione uma modalidade, escolha os times e clique em "Iniciar Partida".</p>
+          <p>
+            Para iniciar uma partida, selecione uma modalidade, escolha os times e clique em "Iniciar Partida".
+          </p>
         </div>
 
         <div class="placares" v-if="partidaIniciada">
           <component
             :is="['volei', 'volei de areia', 'futevolei'].includes(modalidadeSelecionada.toLowerCase()) ? 'PlacarTimeVolei' : 'PlacarTime'"
-            :timeNome="timeSelecionado1?.nome || ''" :timeData="time1" :setsAdversario="time2.setsVencidos"
-            :partida-id="partidaId" @update="time1 = $event" @remover="resetTime('time1')" />
+            :timeNome="timeSelecionado1?.nome || ''"
+            :timeData="time1"
+            :setsAdversario="time2.setsVencidos"
+            :partida-id="partidaId"
+            @update="time1 = $event"
+            @remover="resetTime('time1')"
+          />
 
           <component
             :is="['volei', 'volei de areia', 'futevolei'].includes(modalidadeSelecionada.toLowerCase()) ? 'PlacarTimeVolei' : 'PlacarTime'"
-            :timeNome="timeSelecionado2?.nome || ''" :timeData="time2" :setsAdversario="time1.setsVencidos"
-            :partida-id="partidaId" @update="time2 = $event" @remover="resetTime('time2')" />
-
+            :timeNome="timeSelecionado2?.nome || ''"
+            :timeData="time2"
+            :setsAdversario="time1.setsVencidos"
+            :partida-id="partidaId"
+            @update="time2 = $event"
+            @remover="resetTime('time2')"
+          />
         </div>
 
         <div v-if="partidaIniciada" class="finalizar-container">
-          <button class="botao-finalizar" @click="finalizarPartida" :disabled="finalizandoPartida">
+          <button
+            class="botao-finalizar"
+            @click="finalizarPartida"
+            :disabled="finalizandoPartida"
+          >
             <span v-if="finalizandoPartida" class="loader-pequeno"></span>
             <span v-else>Finalizar Partida</span>
           </button>
@@ -214,51 +259,51 @@ export default {
       }
     },
 
-async togglePartida() {
-  if (!this.partidaIniciada) {
-    localStorage.removeItem('partidaEstado')
+    async togglePartida() {
+      if (!this.partidaIniciada) {
+        localStorage.removeItem('partidaEstado')
 
-    const modalidade = this.modalidadesDisponiveis.find(
-      m => m.nome === this.modalidadeSelecionada
-    )
+        const modalidade = this.modalidadesDisponiveis.find(
+          m => m.nome === this.modalidadeSelecionada
+        )
 
-    const res = await api.post('/partida', {
-      modalidadeId: modalidade.id,
-      timeAId: this.timeSelecionado1.id,
-      timeBId: this.timeSelecionado2.id
-    })
+        const res = await api.post('/partida', {
+          modalidadeId: modalidade.id,
+          timeAId: this.timeSelecionado1.id,
+          timeBId: this.timeSelecionado2.id
+        })
 
-    this.partidaId = res.data.id
-    this.partida = res.data
-
-    this.time1 = this.times.find(t => t.id === this.timeSelecionado1.id)
-    this.time2 = this.times.find(t => t.id === this.timeSelecionado2.id)
-
-    this.partidaIniciada = true
-    this.temporizadorAtivo = true
-    this.inicioPartida = Date.now()
-    this.iniciarTemporizador()
-
-    this.salvarEstado() 
-    Swal.fire('Sucesso', 'Partida iniciada!', 'success')
-  } else {
-    this.temporizadorAtivo = !this.temporizadorAtivo
-
-    if (this.temporizadorAtivo) {
-      this.inicioPartida = Date.now() - this.tempoSegundos * 1000
-      if (this.partidaId) {
-        const res = await api.put(`/retomar/${this.partidaId}`)
+        this.partidaId = res.data.id
         this.partida = res.data
+
+        this.time1 = this.times.find(t => t.id === this.timeSelecionado1.id)
+        this.time2 = this.times.find(t => t.id === this.timeSelecionado2.id)
+
+        this.partidaIniciada = true
+        this.temporizadorAtivo = true
+        this.inicioPartida = Date.now()
+        this.iniciarTemporizador()
+
+        this.salvarEstado()
+        Swal.fire('Sucesso', 'Partida iniciada!', 'success')
+      } else {
+        this.temporizadorAtivo = !this.temporizadorAtivo
+
+        if (this.temporizadorAtivo) {
+          this.inicioPartida = Date.now() - this.tempoSegundos * 1000
+          if (this.partidaId) {
+            const res = await api.put(`/retomar/${this.partidaId}`)
+            this.partida = res.data
+          }
+        } else {
+          if (this.partidaId) {
+            const res = await api.put(`/pausar/${this.partidaId}`)
+            this.partida = res.data
+          }
+        }
+        this.salvarEstado()
       }
-    } else {
-      if (this.partidaId) {
-        const res = await api.put(`/pausar/${this.partidaId}`)
-        this.partida = res.data
-      }
-    }
-    this.salvarEstado() 
-  }
-},
+    },
 
     iniciarTemporizador() {
       if (this.intervaloTemporizador) clearInterval(this.intervaloTemporizador)
@@ -684,5 +729,58 @@ h2 {
   width: 18px;
   height: 18px;
   animation: spin 1s linear infinite;
+}
+
+/* --- Responsividade --- */
+@media (max-width: 768px) {
+  .title {
+    font-size: 24px;
+    margin-left: 0;
+  }
+
+  .placares {
+    flex-direction: column;
+    align-items: center;
+    margin-left: 0;
+    gap: 20px;
+  }
+
+  .dropdowns {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .dropdown-row {
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+  }
+
+  .dropdown-row .team,
+  .dropdown-row.modalidade .team {
+    width: 100%;
+  }
+
+  .botao-iniciar {
+    margin-top: 15px;
+    width: 100%;
+  }
+
+  .finalizar-container {
+    margin: 20px 0;
+    width: 100%;
+  }
+
+  .mensagem-inicial {
+    margin: 20px 5%;
+    margin-left: 0;
+    height: auto;
+  }
+
+  .temporizador-topo {
+    position: static;
+    width: 100%;
+    margin: 10px 0;
+  }
 }
 </style>
