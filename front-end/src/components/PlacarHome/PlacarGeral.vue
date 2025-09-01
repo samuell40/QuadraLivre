@@ -38,7 +38,6 @@
         </div>
       </div>
 
-      <!-- Vôlei -->
       <div v-else-if="['volei', 'volei de areia', 'voleibol', 'futevolei'].includes(modalidade)">
         <h3 class="placar-tipo">Campeonato {{ capitalizarModalidade(modalidade) }}</h3>
         <div class="placar-wrapper">

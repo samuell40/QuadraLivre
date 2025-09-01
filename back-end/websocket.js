@@ -1,15 +1,15 @@
 const { WebSocketServer } = require("ws");
-const { listarPartidasAtivas } = require("./services/partida.service"); // ajuste o caminho conforme necessário
-
-let wss;
+const { listarPartidasAtivas } = require("./services/partida.service"); 
+const { setServer } = require("./ws-utils"); // importando apenas setServer
 
 function initWebSocket(server) {
-  wss = new WebSocketServer({ server, path: "/placares" });
+  const wss = new WebSocketServer({ server, path: "/placares" });
+
+  setServer(wss); 
 
   wss.on("connection", async (ws) => {
     console.log("Novo cliente conectado ao placar!");
 
-    // Envia partidas ativas imediatamente ao conectar
     try {
       const partidasAtivas = await listarPartidasAtivas();
       ws.send(JSON.stringify({ tipo: "visibilidadeAtualizada", placares: partidasAtivas }));
@@ -27,16 +27,4 @@ function initWebSocket(server) {
   });
 }
 
-// função auxiliar para enviar para todos os clientes
-function broadcast(data) {
-  if (!wss) return;
-  const msg = JSON.stringify(data);
-
-  wss.clients.forEach((client) => {
-    if (client.readyState === 1) {
-      client.send(msg);
-    }
-  });
-}
-
-module.exports = { initWebSocket, broadcast };
+module.exports = { initWebSocket };

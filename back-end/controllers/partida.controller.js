@@ -67,7 +67,7 @@ async function atualizarParcialController(req, res) {
 
 async function listarPartidasAtivasController(req, res) {
   try {
-    const partidaslistadas = await partidas.listarPartidasAtivas;
+    const partidaslistadas = await partidas.listarPartidasAtivas();
     res.json(partidaslistadas);
   } catch (err) {
     console.error("Erro ao listar partidas ativas:", err);
@@ -75,4 +75,14 @@ async function listarPartidasAtivasController(req, res) {
   }
 }
 
-module.exports = { criarPartidaController, finalizarPartidaController, listarPartidasController, incrementarPlacarController, atualizarParcialController, listarPartidasAtivasController}
+async function listarPartidasEncerradasController(req, res) {
+  try {
+    const partidasEncerradas = await partidas.listarPartidasEncerradas();
+    res.json(partidasEncerradas);
+  } catch (err) {
+    console.error("Erro ao listar partidas encerradas:", err);
+    res.status(500).json({ error: "Erro ao listar partidas encerradas" });
+  }
+}
+
+module.exports = { criarPartidaController, finalizarPartidaController, listarPartidasController, incrementarPlacarController, atualizarParcialController, listarPartidasAtivasController, listarPartidasEncerradasController}

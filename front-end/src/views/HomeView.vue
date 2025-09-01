@@ -87,7 +87,7 @@
 
       <div class="lista-partidas-container">
         <h3 class="tit_horario">Partidas</h3>
-        <ListaPartidas :partidasAtivas="partidasAtivas" />
+        <ListaPartidas :partidasAtivas="partidasAtivas" :partidasEncerradas="partidasEncerradas" />
       </div>
     </section>
 
@@ -119,7 +119,8 @@ export default {
       modalidadesDisponiveis: [],
       isLoadingQuadras: true,
       ws: null,
-      partidasAtivas: []
+      partidasAtivas: [],
+      partidasEncerradas: []
     }
   },
   computed: {
@@ -139,9 +140,11 @@ export default {
     this.carregarQuadras()
     this.carregarModalidades()
     this.carregarPartidasAtivas()
+    this.carregarPartidasEncerradas()
 
     setInterval(() => {
       this.carregarPartidasAtivas()
+      this.carregarPartidasEncerradas()
     }, 30000)
   },
 
@@ -185,7 +188,14 @@ export default {
       }
     },
 
-
+    async carregarPartidasEncerradas() {
+      try {
+        const res = await api.get('/partida/listar/encerradas');
+        this.partidasEncerradas = Array.isArray(res.data) ? res.data : [];
+      } catch (err) {
+        console.error("Erro ao carregar partidas encerradas:", err);
+      }
+    },
     async carregarModalidades() {
       try {
         const res = await api.get('/listar/modalidade')
@@ -239,6 +249,20 @@ export default {
         this.ws.onmessage = event => {
           try {
             const data = JSON.parse(event.data);
+            if (data.tipo === "partidaIniciada") {
+              this.partidasAtivas.unshift({
+                id: data.partidaId,
+                partidaIniciada: true,
+                finalizada: data.finalizada,
+                createdAt: data.createdAt,
+                modalidadeId: data.modalidadeId,
+                modalidade: data.modalidade,
+                timeA: data.timeA,
+                timeB: data.timeB,
+                pontosTimeA: data.pontosTimeA || 0,
+                pontosTimeB: data.pontosTimeB || 0
+              });
+            }
 
             if (data.tipo === "visibilidadeAtualizada") {
               const partidasRecebidas = data.placares?.filter(p => p.partidaIniciada) || [];
@@ -255,6 +279,28 @@ export default {
                 this.partidasAtivas = this.partidasAtivas.filter(pa =>
                   partidasRecebidas.some(pr => pr.id === pa.id)
                 );
+              }
+            }
+            if (data.tipo === "placarUpdate") {
+              const index = this.partidasAtivas.findIndex(pa => pa.id === data.partidaId);
+              if (index >= 0) {
+                this.partidasAtivas[index] = {
+                  ...this.partidasAtivas[index],
+                  pontosTimeA: data.pontosTimeA,
+                  pontosTimeB: data.pontosTimeB,
+                  timeA: data.timeA,
+                  timeB: data.timeB
+                };
+              } else {
+                this.partidasAtivas.push({
+                  id: data.partidaId,
+                  partidaIniciada: data.partidaIniciada,
+                  modalidadeId: data.modalidadeId,
+                  pontosTimeA: data.pontosTimeA,
+                  pontosTimeB: data.pontosTimeB,
+                  timeA: data.timeA,
+                  timeB: data.timeB
+                });
               }
             }
 
@@ -339,7 +385,7 @@ export default {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding-bottom: 40px; 
+  padding-bottom: 40px;
 }
 
 .navbar-custom {
@@ -376,6 +422,7 @@ export default {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -645,16 +692,16 @@ p {
   justify-content: space-between;
   gap: 0;
   padding: 0;
-  width: 90%;        
-  margin: 0 auto;      
+  width: 90%;
+  margin: 0 auto;
 }
 
 .placar-geral-container {
-  flex: 0 0 65%; 
+  flex: 0 0 65%;
 }
 
 .lista-partidas-container {
-  flex: 0 0 35%; 
+  flex: 0 0 35%;
   overflow: hidden;
 }
 

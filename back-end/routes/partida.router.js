@@ -14,4 +14,6 @@ router.put('/partida/:id', controller.atualizarParcialController);
 
 router.get('/partida/listar/ativas', controller.listarPartidasAtivasController);
 
+router.get('/partida/listar/encerradas', controller.listarPartidasEncerradasController);
+
 module.exports = router;

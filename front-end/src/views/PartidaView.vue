@@ -154,107 +154,113 @@ export default {
     modalidadeSelecionada() { this.salvarEstado() }
   },
 
-  methods: {
-    criarTime(tipo) {
-      const modelos = {
-        futebol: { nome: '', golspro: 0, golsofridos: 0, cartaoamarelo: 0, cartaovermelho: 0, faltas: 0 },
-        volei: { nome: '', setsVencidos: 0, setsSofridos: 0, wo: 0 }
+ methods: {
+  criarTime(tipo) {
+    const modelos = {
+      futebol: { nome: '', golspro: 0, golsofridos: 0, cartaoamarelo: 0, cartaovermelho: 0, faltas: 0 },
+      volei: { nome: '', setsVencidos: 0, setsSofridos: 0, wo: 0 }
+    }
+    return JSON.parse(JSON.stringify(modelos[tipo] || {}))
+  },
+
+  checaMesmoTipoTime(time) {
+    if (!this.timeSelecionado1 && !this.timeSelecionado2) return true
+    const timeNome = time.nome.toLowerCase()
+    return this.isVolei === timeNome.includes('volei')
+  },
+
+  async carregarModalidades() {
+    try {
+      const res = await api.get('/listar/modalidade')
+      this.modalidadesDisponiveis = res.data || []
+      await this.carregarEstadoSalvo()
+    } catch (error) {
+      console.error(error)
+      Swal.fire('Erro', 'Não foi possível carregar as modalidades.', 'error')
+    } finally {
+      this.carregandoModalidades = false
+    }
+  },
+
+  async carregarTimes() {
+    if (!this.modalidadeSelecionada) return
+    this.carregandoTimes = true
+    try {
+      const modalidade = this.modalidadesDisponiveis.find(m => m.nome === this.modalidadeSelecionada)
+      if (!modalidade) return
+      const res = await api.get(`/times/modalidade/${modalidade.id}?includePlacar=true`)
+      this.times = Array.isArray(res.data) ? res.data : []
+
+      if (this.times.length === 0) {
+        Swal.fire('Aviso', 'Não há nenhum time cadastrado para esta modalidade.', 'info')
       }
-      return JSON.parse(JSON.stringify(modelos[tipo] || {}))
-    },
+    } catch (error) {
+      console.error(error)
+      Swal.fire('Erro', 'Não foi possível carregar os times.', 'error')
+    } finally {
+      this.carregandoTimes = false
+    }
+  },
 
-    checaMesmoTipoTime(time) {
-      if (!this.timeSelecionado1 && !this.timeSelecionado2) return true
-      const timeNome = time.nome.toLowerCase()
-      return this.isVolei === timeNome.includes('volei')
-    },
+  carregarPlacarTime(timeKey, nomeTime = null) {
+    const tipo = this.isVolei ? 'volei' : 'futebol'
+    this[timeKey] = this.criarTime(tipo)
+    const nomeSelecionado = nomeTime || this[timeKey === 'time1' ? 'timeSelecionado1' : 'timeSelecionado2'] || ''
+    this[timeKey].nome = nomeSelecionado
 
-    async carregarModalidades() {
-      try {
-        const res = await api.get('/listar/modalidade')
-        this.modalidadesDisponiveis = res.data || []
-        await this.carregarEstadoSalvo()
-      } catch (error) {
-        console.error(error)
-        Swal.fire('Erro', 'Não foi possível carregar as modalidades.', 'error')
-      } finally {
-        this.carregandoModalidades = false
+    if (this.partidaIniciada) {
+      const timeObj = this.times.find(t => t.nome === nomeSelecionado)
+      if (timeObj?.placar) Object.assign(this[timeKey], timeObj.placar)
+    }
+  },
+
+  async togglePartida() {
+    if (!this.partidaIniciada) {
+      localStorage.removeItem('partidaEstado')
+      const modalidade = this.modalidadesDisponiveis.find(m => m.nome === this.modalidadeSelecionada)
+
+      const res = await api.post('/partida', {
+        modalidadeId: modalidade.id,
+        timeAId: this.timeSelecionado1.id,
+        timeBId: this.timeSelecionado2.id
+      })
+      this.partidaId = res.data.id
+
+      this.time1 = this.times.find(t => t.id === this.timeSelecionado1.id)
+      this.time2 = this.times.find(t => t.id === this.timeSelecionado2.id)
+
+      this.partidaIniciada = true
+      this.temporizadorAtivo = true
+      this.inicioPartida = Date.now() // ⏱ salva o timestamp real de início
+      this.iniciarTemporizador()
+      Swal.fire('Sucesso', 'Partida iniciada!', 'success')
+    } else {
+      this.temporizadorAtivo = !this.temporizadorAtivo
+      if (this.temporizadorAtivo) {
+        // ao retomar, ajusta início considerando tempo já passado
+        this.inicioPartida = Date.now() - this.tempoSegundos * 1000
       }
-    },
+    }
+  },
 
-    async carregarTimes() {
-      if (!this.modalidadeSelecionada) return
-      this.carregandoTimes = true
-      try {
-        const modalidade = this.modalidadesDisponiveis.find(m => m.nome === this.modalidadeSelecionada)
-        if (!modalidade) return
-        const res = await api.get(`/times/modalidade/${modalidade.id}?includePlacar=true`)
-        this.times = Array.isArray(res.data) ? res.data : []
+  iniciarTemporizador() {
+    if (this.intervaloTemporizador) clearInterval(this.intervaloTemporizador)
 
-        if (this.times.length === 0) {
-          Swal.fire('Aviso', 'Não há nenhum time cadastrado para esta modalidade.', 'info')
-        }
-      } catch (error) {
-        console.error(error)
-        Swal.fire('Erro', 'Não foi possível carregar os times.', 'error')
-      } finally {
-        this.carregandoTimes = false
+    this.intervaloTemporizador = setInterval(() => {
+      if (this.temporizadorAtivo && this.inicioPartida) {
+        this.tempoSegundos = Math.floor((Date.now() - this.inicioPartida) / 1000)
+        this.salvarEstado()
       }
-    },
+    }, 1000)
+  },
 
-    carregarPlacarTime(timeKey, nomeTime = null) {
-      const tipo = this.isVolei ? 'volei' : 'futebol'
-      this[timeKey] = this.criarTime(tipo)
-      const nomeSelecionado = nomeTime || this[timeKey === 'time1' ? 'timeSelecionado1' : 'timeSelecionado2'] || ''
-      this[timeKey].nome = nomeSelecionado
-
-      if (this.partidaIniciada) {
-        const timeObj = this.times.find(t => t.nome === nomeSelecionado)
-        if (timeObj?.placar) Object.assign(this[timeKey], timeObj.placar)
-      }
-    },
-
-    async togglePartida() {
-      if (!this.partidaIniciada) {
-        localStorage.removeItem('partidaEstado')
-        const modalidade = this.modalidadesDisponiveis.find(m => m.nome === this.modalidadeSelecionada)
-
-        const res = await api.post('/partida', {
-          modalidadeId: modalidade.id,
-          timeAId: this.timeSelecionado1.id,
-          timeBId: this.timeSelecionado2.id
-        })
-        this.partidaId = res.data.id
-
-        this.time1 = this.times.find(t => t.id === this.timeSelecionado1.id)
-        this.time2 = this.times.find(t => t.id === this.timeSelecionado2.id)
-
-        this.partidaIniciada = true
-        this.temporizadorAtivo = true
-        this.iniciarTemporizador()
-        Swal.fire('Sucesso', 'Partida iniciada!', 'success')
-      } else {
-        this.temporizadorAtivo = !this.temporizadorAtivo
-      }
-    },
-
-    iniciarTemporizador() {
-      if (this.intervaloTemporizador) clearInterval(this.intervaloTemporizador)
-      this.intervaloTemporizador = setInterval(() => {
-        if (this.temporizadorAtivo) {
-          this.tempoSegundos++
-          this.salvarEstado()
-        }
-      }, 1000)
-    },
-
-    async handleModalidadeChange() {
-      this.timeSelecionado1 = ''
-      this.timeSelecionado2 = ''
-      this.times = []
-      await this.carregarTimes()
-      this.salvarEstado()
-    },
+  async handleModalidadeChange() {
+    this.timeSelecionado1 = ''
+    this.timeSelecionado2 = ''
+    this.times = []
+    await this.carregarTimes()
+    this.salvarEstado()
+  },
 
     calcularIncrementosFutebol(timeA, timeB) {
       const incA = {
@@ -348,7 +354,46 @@ export default {
         Swal.fire('Erro', 'Falha ao salvar placar no banco.', 'error')
       }
     },
-    async finalizarPartida() {
+
+  salvarEstado() {
+    const estado = {
+      partidaIniciada: this.partidaIniciada,
+      tempoSegundos: this.tempoSegundos,
+      timeSelecionado1: this.timeSelecionado1,
+      timeSelecionado2: this.timeSelecionado2,
+      modalidadeSelecionada: this.modalidadeSelecionada,
+      time1: this.time1,
+      time2: this.time2,
+      inicioPartida: this.inicioPartida || null
+    }
+    localStorage.setItem('partidaEstado', JSON.stringify(estado))
+  },
+
+  async carregarEstadoSalvo() {
+    const estado = JSON.parse(localStorage.getItem('partidaEstado'))
+    if (estado) {
+      this.modalidadeSelecionada = estado.modalidadeSelecionada || ''
+      await this.carregarTimes()
+      this.timeSelecionado1 = estado.timeSelecionado1 || ''
+      this.timeSelecionado2 = estado.timeSelecionado2 || ''
+      this.time1 = estado.time1 || this.criarTime(this.isVolei ? 'volei' : 'futebol')
+      this.time2 = estado.time2 || this.criarTime(this.isVolei ? 'volei' : 'futebol')
+
+      this.inicioPartida = estado.inicioPartida
+      if (this.inicioPartida) {
+        this.tempoSegundos = Math.floor((Date.now() - this.inicioPartida) / 1000)
+      } else {
+        this.tempoSegundos = 0
+      }
+
+      this.partidaIniciada = estado.partidaIniciada || false
+      if (this.partidaIniciada) {
+        this.temporizadorAtivo = true
+        this.iniciarTemporizador()
+      }
+    }
+  },
+   async finalizarPartida() {
       const confirmacao = await Swal.fire({
         title: 'Deseja mesmo finalizar a partida?',
         text: "Você não poderá desfazer essa ação.",
@@ -397,46 +442,12 @@ export default {
         this.$forceUpdate()
       }
     },
-
-    resetTime(timeKey) {
+     resetTime(timeKey) {
       this[timeKey] = {}
       if (timeKey === 'time1') this.timeSelecionado1 = ''
       else this.timeSelecionado2 = ''
     },
-
-    salvarEstado() {
-      const estado = {
-        partidaIniciada: this.partidaIniciada,
-        tempoSegundos: this.tempoSegundos,
-        timeSelecionado1: this.timeSelecionado1,
-        timeSelecionado2: this.timeSelecionado2,
-        modalidadeSelecionada: this.modalidadeSelecionada,
-        time1: this.time1,
-        time2: this.time2,
-        inicioPartida: this.partidaIniciada ? Date.now() - this.tempoSegundos * 1000 : null
-      }
-      localStorage.setItem('partidaEstado', JSON.stringify(estado))
-    },
-
-    async carregarEstadoSalvo() {
-      const estado = JSON.parse(localStorage.getItem('partidaEstado'))
-      if (estado) {
-        this.modalidadeSelecionada = estado.modalidadeSelecionada || ''
-        await this.carregarTimes()
-        this.timeSelecionado1 = estado.timeSelecionado1 || ''
-        this.timeSelecionado2 = estado.timeSelecionado2 || ''
-        this.time1 = estado.time1 || this.criarTime(this.isVolei ? 'volei' : 'futebol')
-        this.time2 = estado.time2 || this.criarTime(this.isVolei ? 'volei' : 'futebol')
-        this.tempoSegundos = estado.inicioPartida ? Math.floor((Date.now() - estado.inicioPartida) / 1000) : 0
-        this.partidaIniciada = estado.partidaIniciada || false
-        if (this.partidaIniciada) {
-          this.temporizadorAtivo = true
-          this.iniciarTemporizador()
-        }
-      }
-    },
-  },
-
+},
   mounted() {
     this.carregarModalidades()
   }
