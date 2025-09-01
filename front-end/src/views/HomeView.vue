@@ -67,27 +67,25 @@
       <div class="placar-geral-container">
         <h3 class="tit_horario">Placar dos Campeonatos</h3>
 
-        <div v-if="modalidadesDisponiveis.length === 0">
-          <div class="placar-wrapper" v-for="n in 2" :key="n">
-            <div class="loader"></div>
-          </div>
-        </div>
+        <div v-if="isLoadingPlacares" class="loader"></div>
 
         <p v-else-if="todosPlacaresOcultos" class="sem-placar-unico" style="text-align:center; margin-top:1rem;">
           Nenhum placar disponível no momento.
         </p>
 
         <div v-else v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" class="placar-wrapper">
-          <div v-if="loadingPlacar[modalidade.nome]" class="loader"></div>
-          <PlacarGeral v-else-if="getTimesComPosicao(modalidade.nome).length > 0"
-            :times="getTimesComPosicao(modalidade.nome)" :isLoading="loadingPlacar[modalidade.nome]"
-            :modalidade="modalidade.nome" />
+          <PlacarGeral v-if="getTimesComPosicao(modalidade.nome).length > 0"
+            :times="getTimesComPosicao(modalidade.nome)" :modalidade="modalidade.nome" />
         </div>
       </div>
 
+
       <div class="lista-partidas-container">
         <h3 class="tit_horario">Partidas</h3>
-        <ListaPartidas :partidasAtivas="partidasAtivas" :partidasEncerradas="partidasEncerradas" />
+
+        <div v-if="isLoadingPartidas" class="loader"></div>
+
+        <ListaPartidas v-else :partidasAtivas="partidasAtivas" :partidasEncerradas="partidasEncerradas" />
       </div>
     </section>
 
@@ -114,10 +112,11 @@ export default {
       isMenuOpen: false,
       quadras: [],
       placares: {},
-      loadingPlacar: {},
+      isLoadingPlacares: true,
       mostrarModalLogin: false,
       modalidadesDisponiveis: [],
       isLoadingQuadras: true,
+      isLoadingPartidas: true,
       ws: null,
       partidasAtivas: [],
       partidasEncerradas: []
@@ -165,9 +164,16 @@ export default {
       }
     },
     async carregarPartidasAtivas() {
+      this.isLoadingPartidas = true
       try {
         const res = await api.get('/partida/listar/ativas');
-        const partidasRecebidas = Array.isArray(res.data) ? res.data.filter(p => p.partidaIniciada) : [];
+
+        const partidasRecebidas = Array.isArray(res.data)
+          ? res.data.filter(p => p.partidaIniciada).map(p => ({
+            ...p,
+            emIntervalo: p.emIntervalo ?? false
+          }))
+          : [];
 
         if (partidasRecebidas.length > 0) {
           partidasRecebidas.forEach(p => {
@@ -182,9 +188,13 @@ export default {
           this.partidasAtivas = this.partidasAtivas.filter(pa =>
             partidasRecebidas.some(pr => pr.id === pa.id)
           );
+        } else {
+          this.partidasAtivas = []
         }
       } catch (err) {
         console.error("Erro ao carregar partidas ativas:", err);
+      } finally {
+        this.isLoadingPartidas = false
       }
     },
 
@@ -201,14 +211,15 @@ export default {
         const res = await api.get('/listar/modalidade')
         this.modalidadesDisponiveis = res.data
 
-        this.modalidadesDisponiveis.forEach(mod => {
-          this.placares[mod.nome] = []
-          this.loadingPlacar[mod.nome] = true
-          this.carregarPlacarModalidade(mod)
-        })
+        this.placares = {}
+        this.isLoadingPlacares = true
 
+        await Promise.all(this.modalidadesDisponiveis.map(mod => this.carregarPlacarModalidade(mod)))
+
+        this.isLoadingPlacares = false
         this.iniciarWebSocket()
       } catch (error) {
+        this.isLoadingPlacares = false
         console.error('Erro ao carregar modalidades:', error)
         Swal.fire('Erro', 'Não foi possível carregar as modalidades.', 'error')
       }
@@ -216,14 +227,11 @@ export default {
 
     async carregarPlacarModalidade(modalidade) {
       if (!modalidade) return
-      this.loadingPlacar[modalidade.nome] = true
       try {
         const res = await api.get(`/placar/modalidade/${modalidade.id}`)
         this.placares[modalidade.nome] = Array.isArray(res.data.placares) ? res.data.placares : []
       } catch (err) {
         console.error(`Erro ao carregar placar ${modalidade.nome}:`, err)
-      } finally {
-        this.loadingPlacar[modalidade.nome] = false
       }
     },
 
@@ -249,6 +257,12 @@ export default {
         this.ws.onmessage = event => {
           try {
             const data = JSON.parse(event.data);
+
+            if (data.tipo === "snapshotPartidas") {
+              this.partidasAtivas = Array.isArray(data.partidas) ? data.partidas : [];
+              return;
+            }
+
             if (data.tipo === "partidaIniciada") {
               this.partidasAtivas.unshift({
                 id: data.partidaId,
@@ -260,48 +274,100 @@ export default {
                 timeA: data.timeA,
                 timeB: data.timeB,
                 pontosTimeA: data.pontosTimeA || 0,
-                pontosTimeB: data.pontosTimeB || 0
+                pontosTimeB: data.pontosTimeB || 0,
+                emIntervalo: data.emIntervalo || false
               });
+              return;
             }
 
             if (data.tipo === "visibilidadeAtualizada") {
-              const partidasRecebidas = data.placares?.filter(p => p.partidaIniciada) || [];
+              if (Array.isArray(data.placares) && data.placares.length > 0) {
+                const porModalidade = data.placares.reduce((acc, p) => {
+                  const modNome = p.time?.modalidade?.nome || 'Desconhecida';
+                  if (!acc[modNome]) acc[modNome] = [];
+                  acc[modNome].push(p);
+                  return acc;
+                }, {});
 
-              if (partidasRecebidas.length > 0) {
-                partidasRecebidas.forEach(p => {
-                  const index = this.partidasAtivas.findIndex(pa => pa.id === p.id);
-                  if (index >= 0) {
-                    this.partidasAtivas[index] = { ...this.partidasAtivas[index], ...p };
-                  } else {
-                    this.partidasAtivas.push(p);
-                  }
+                const novo = { ...this.placares };
+                Object.keys(porModalidade).forEach(mod => {
+                  novo[mod] = porModalidade[mod];
                 });
-                this.partidasAtivas = this.partidasAtivas.filter(pa =>
-                  partidasRecebidas.some(pr => pr.id === pa.id)
-                );
+                this.placares = novo;
               }
+              return;
             }
-            if (data.tipo === "placarUpdate") {
+
+            if (data.tipo === "partidaPausada") {
               const index = this.partidasAtivas.findIndex(pa => pa.id === data.partidaId);
               if (index >= 0) {
                 this.partidasAtivas[index] = {
                   ...this.partidasAtivas[index],
-                  pontosTimeA: data.pontosTimeA,
-                  pontosTimeB: data.pontosTimeB,
-                  timeA: data.timeA,
-                  timeB: data.timeB
+                  emIntervalo: true
                 };
-              } else {
-                this.partidasAtivas.push({
-                  id: data.partidaId,
-                  partidaIniciada: data.partidaIniciada,
-                  modalidadeId: data.modalidadeId,
-                  pontosTimeA: data.pontosTimeA,
-                  pontosTimeB: data.pontosTimeB,
-                  timeA: data.timeA,
-                  timeB: data.timeB
-                });
               }
+              return;
+            }
+
+            if (data.tipo === "partidaRetomada") {
+              const index = this.partidasAtivas.findIndex(pa => pa.id === data.partidaId);
+              if (index >= 0) {
+                this.partidasAtivas[index] = {
+                  ...this.partidasAtivas[index],
+                  emIntervalo: false
+                };
+              }
+              return;
+            }
+
+            if (data.tipo === "placarUpdate") {
+              const index = this.partidasAtivas.findIndex(pa => pa.id === data.partidaId);
+
+              if (data.finalizada) {
+                if (index >= 0) {
+                  const partidaEncerrada = {
+                    ...this.partidasAtivas[index],
+                    pontosTimeA: data.pontosTimeA,
+                    pontosTimeB: data.pontosTimeB,
+                    finalizada: true
+                  };
+                  this.partidasAtivas.splice(index, 1);
+                  this.partidasEncerradas.unshift(partidaEncerrada);
+                } else {
+                  this.partidasEncerradas.unshift({
+                    id: data.partidaId,
+                    modalidadeId: data.modalidadeId,
+                    finalizada: true,
+                    timeA: data.timeA,
+                    timeB: data.timeB,
+                    pontosTimeA: data.pontosTimeA,
+                    pontosTimeB: data.pontosTimeB
+                  });
+                }
+              } else {
+                if (index >= 0) {
+                  this.partidasAtivas[index] = {
+                    ...this.partidasAtivas[index],
+                    pontosTimeA: data.pontosTimeA,
+                    pontosTimeB: data.pontosTimeB,
+                    timeA: data.timeA,
+                    timeB: data.timeB,
+                    finalizada: false
+                  };
+                } else {
+                  this.partidasAtivas.push({
+                    id: data.partidaId,
+                    partidaIniciada: data.partidaIniciada,
+                    modalidadeId: data.modalidadeId,
+                    pontosTimeA: data.pontosTimeA,
+                    pontosTimeB: data.pontosTimeB,
+                    timeA: data.timeA,
+                    timeB: data.timeB,
+                    finalizada: false
+                  });
+                }
+              }
+              return;
             }
 
           } catch (err) {

@@ -1,4 +1,4 @@
-const { broadcast } = require("../websocket");
+const { broadcast } = require('../ws-utils'); 
 const { PrismaClient } = require('@prisma/client');
 const { enviarEmailNovaModalidade } = require('./email.service')
 const prisma = new PrismaClient();
@@ -155,7 +155,7 @@ async function resetarPlacarPorModalidade(modalidadeId) {
 async function ocultarPlacarGeral() {
   await prisma.placar.updateMany({ data: { visivel: false } });
   const placaresAtualizados = await prisma.placar.findMany({
-    include: { time: true },
+    include: { time: { include: { modalidade: true } } },
     orderBy: { pontuacao: 'desc' }
   });
 
@@ -183,7 +183,7 @@ async function ocultarPlacarPorModalidade(modalidadeId) {
 
   const placaresAtualizados = await prisma.placar.findMany({
     where: { timeId: { in: timeIds } },
-    include: { time: true },
+    include: { time: { include: { modalidade: true } } },
     orderBy: { pontuacao: 'desc' }
   });
 
@@ -202,7 +202,7 @@ async function mostrarPlacarGeral() {
   await prisma.placar.updateMany({ data: { visivel: true } });
 
   const placaresAtualizados = await prisma.placar.findMany({
-    include: { time: true },
+    include: { time: { include: { modalidade: true } } },
     orderBy: { pontuacao: 'desc' }
   });
 
@@ -230,7 +230,7 @@ async function mostrarPlacarPorModalidade(modalidadeId) {
 
   const placaresAtualizados = await prisma.placar.findMany({
     where: { timeId: { in: timeIds } },
-    include: { time: true },
+    include: { time: { include: { modalidade: true } } },
     orderBy: { pontuacao: 'desc' }
   });
 

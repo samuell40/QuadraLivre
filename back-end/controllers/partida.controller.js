@@ -85,4 +85,26 @@ async function listarPartidasEncerradasController(req, res) {
   }
 }
 
-module.exports = { criarPartidaController, finalizarPartidaController, listarPartidasController, incrementarPlacarController, atualizarParcialController, listarPartidasAtivasController, listarPartidasEncerradasController}
+async function pausarPartidaController(req, res) {
+  try {
+    const partidaId = Number(req.params.id);
+    const partida = await partidas.pausarPartida(partidaId);
+    res.json(partida);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: error.message });
+  }
+}
+
+async function retomarPartidaController(req, res) {
+  try {
+    const partidaId = Number(req.params.id);
+    const partida = await partidas.retomarPartida(partidaId);
+    res.json(partida);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: error.message });
+  }
+}
+
+module.exports = { criarPartidaController, finalizarPartidaController, listarPartidasController, incrementarPlacarController, atualizarParcialController, listarPartidasAtivasController, listarPartidasEncerradasController, pausarPartidaController, retomarPartidaController}

@@ -1,6 +1,6 @@
 const { WebSocketServer } = require("ws");
 const { listarPartidasAtivas } = require("./services/partida.service"); 
-const { setServer } = require("./ws-utils"); // importando apenas setServer
+const { setServer } = require("./ws-utils"); 
 
 function initWebSocket(server) {
   const wss = new WebSocketServer({ server, path: "/placares" });
@@ -12,7 +12,10 @@ function initWebSocket(server) {
 
     try {
       const partidasAtivas = await listarPartidasAtivas();
-      ws.send(JSON.stringify({ tipo: "visibilidadeAtualizada", placares: partidasAtivas }));
+      ws.send(JSON.stringify({
+        tipo: "snapshotPartidas",
+        partidas: partidasAtivas
+      }));
     } catch (err) {
       console.error("Erro ao enviar partidas ativas via WebSocket:", err);
     }

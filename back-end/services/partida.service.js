@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const { broadcast } = require('../ws-utils'); // ✅ agora importa do ws-utils
+const { broadcast } = require('../ws-utils'); 
 const prisma = new PrismaClient();
 
 async function criarPartida(data) {
@@ -9,20 +9,20 @@ async function criarPartida(data) {
     include: { timeA: true, timeB: true, modalidade: true }
   });
 
-  broadcast({
-    tipo: "partidaIniciada",
-    partidaId: partida.id,
-    modalidadeId: partida.modalidadeId,
-    modalidade: partida.modalidade,
-    partidaIniciada: partida.partidaIniciada,
-    finalizada: partida.finalizada, // 👈 importante
-    createdAt: partida.createdAt,   // 👈 manda a hora de criação
-    timeA: partida.timeA,
-    timeB: partida.timeB,
-    pontosTimeA: partida.pontosTimeA || 0,
-    pontosTimeB: partida.pontosTimeB || 0
-  });
-
+broadcast({
+  tipo: "partidaIniciada",
+  partidaId: partida.id,
+  modalidadeId: partida.modalidadeId,
+  modalidade: partida.modalidade, 
+  partidaIniciada: partida.partidaIniciada,
+  finalizada: partida.finalizada,
+  emIntervalo: partida.emIntervalo,
+  timeA: partida.timeA,
+  timeB: partida.timeB,
+  pontosTimeA: partida.pontosTimeA,
+  pontosTimeB: partida.pontosTimeB,
+  createdAt: partida.createdAt
+});
 
   return partida;
 }
@@ -39,7 +39,7 @@ async function finalizarPartida(id, { pontosTimeA, pontosTimeB, tempoSegundos })
     partidaId: partida.id,
     modalidadeId: partida.modalidadeId,
     partidaIniciada: partida.partidaIniciada,
-    finalizada: partida.finalizada,   // 👈 ADICIONAR
+    finalizada: partida.finalizada,   
     timeA: partida.timeA,
     timeB: partida.timeB,
     pontosTimeA: partida.pontosTimeA,
@@ -66,22 +66,6 @@ async function atualizarParcial(id, { pontosTimeA, pontosTimeB, tempoSegundos })
     timeB: partida.timeB,
     pontosTimeA: partida.pontosTimeA,
     pontosTimeB: partida.pontosTimeB
-  });
-
-  return partida;
-}
-
-async function pausarPartida(id) {
-  const partida = await prisma.partida.update({
-    where: { id: Number(id) },
-    data: { emIntervalo: true },
-    include: { timeA: true, timeB: true, modalidade: true }
-  });
-
-  broadcast({
-    tipo: "statusUpdate",
-    partidaId: partida.id,
-    emIntervalo: partida.emIntervalo
   });
 
   return partida;
@@ -140,13 +124,61 @@ async function listarPartidasEncerradas() {
   });
 }
 
+async function pausarPartida(id) {
+  const partida = await prisma.partida.update({
+    where: { id: Number(id) },
+    data: { emIntervalo: true },
+    include: { timeA: true, timeB: true, modalidade: true }
+  });
+
+  broadcast({
+    tipo: "partidaPausada",
+    partidaId: partida.id,
+    modalidadeId: partida.modalidadeId,
+    partidaIniciada: partida.partidaIniciada,
+    finalizada: partida.finalizada,
+    emIntervalo: true,
+    timeA: partida.timeA,
+    timeB: partida.timeB,
+    pontosTimeA: partida.pontosTimeA,
+    pontosTimeB: partida.pontosTimeB
+  });
+
+  return partida;
+}
+
+async function retomarPartida(id) {
+  const partida = await prisma.partida.update({
+    where: { id: Number(id) },
+    data: { emIntervalo: false },
+    include: { timeA: true, timeB: true, modalidade: true }
+  });
+
+  broadcast({
+    tipo: "partidaRetomada",
+    partidaId: partida.id,
+    modalidadeId: partida.modalidadeId,
+    partidaIniciada: partida.partidaIniciada,
+    finalizada: partida.finalizada,
+    emIntervalo: false,
+    timeA: partida.timeA,
+    timeB: partida.timeB,
+    pontosTimeA: partida.pontosTimeA,
+    pontosTimeB: partida.pontosTimeB
+  });
+
+  return partida;
+}
+
+
 module.exports = {
   criarPartida,
   finalizarPartida,
   atualizarParcial,
   listarPartidas,
   listarPartidasAtivas,
-  pausarPartida,
   incrementarPlacar,
-  listarPartidasEncerradas
+  listarPartidasEncerradas,
+  pausarPartida,
+  retomarPartida
 };

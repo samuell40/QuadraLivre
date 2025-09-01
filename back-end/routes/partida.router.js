@@ -4,6 +4,10 @@ const router = express.Router();
 
 router.post('/partida', controller.criarPartidaController)
 
+router.put("/pausar/:id", controller.pausarPartidaController);
+
+router.put("/retomar/:id", controller.retomarPartidaController);
+
 router.put('/finalizar/:id', controller.finalizarPartidaController)
 
 router.get('/listar', controller.listarPartidasController)

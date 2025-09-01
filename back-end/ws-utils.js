@@ -1,4 +1,3 @@
-// ws-utils.js
 let wss;
 
 function setServer(server) {
