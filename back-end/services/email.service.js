@@ -108,4 +108,30 @@ async function enviarEmailVinculoTime(usuario, time) {
   });
 }
 
-module.exports = { enviarEmail, enviarEmailNovaModalidade, enviarEmailAlteracaoPermissao, enviarEmailVinculoTime };
+async function enviarEmailStatusAgendamento(agendamento) {
+  const statusFormatado = agendamento.status === 'Confirmado' ? 'confirmado' : 'recusado';
+  
+  const html = `
+  <div style="font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px;">
+    <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 10px; color: #333; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
+      <h2 style="color: #3b82f6; margin-top: 0; font-size: 24px;">Olá, ${agendamento.usuario.nome}!</h2>
+      <p style="margin: 12px 0; font-size: 18px; line-height: 1.5;">
+        Seu agendamento na quadra <strong>${agendamento.quadra.nome}</strong> para a modalidade 
+        <strong>${agendamento.modalidade.nome}</strong> no dia <strong>${agendamento.dia}/${agendamento.mes}/${agendamento.ano}</strong> 
+        às <strong>${agendamento.hora.toString().padStart(2,'0')}:00</strong> foi <strong>${statusFormatado}</strong>.
+      </p>
+      <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
+        Atenciosamente,<br/>Equipe Quadra Livre
+      </p>
+    </div>
+  </div>
+  `;
+
+  return enviarEmail({
+    to: agendamento.usuario.email,
+    subject: `Agendamento ${statusFormatado} - Quadra Livre`,
+    html
+  });
+}
+
+module.exports = { enviarEmail, enviarEmailNovaModalidade, enviarEmailAlteracaoPermissao, enviarEmailVinculoTime, enviarEmailStatusAgendamento };

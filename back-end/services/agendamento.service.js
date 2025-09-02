@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { enviarEmailStatusAgendamento } = require('./email.service');
 
 const listarAgendamentosService = async (usuarioId) => {
   if (!usuarioId) {
@@ -8,7 +9,17 @@ const listarAgendamentosService = async (usuarioId) => {
 
   const agendamentos = await prisma.agendamento.findMany({
     where: { usuarioId },
-    include: { quadra: true, modalidade: true },
+    include: {
+      quadra: true,
+      modalidade: true,
+      usuario: {
+        include: {
+          times: {
+            include: { time: true }
+          }
+        }
+      }
+    },
     orderBy: [
       { ano: 'asc' },
       { mes: 'asc' },
@@ -17,7 +28,6 @@ const listarAgendamentosService = async (usuarioId) => {
     ]
   });
 
-  // garante que sempre vem duracao
   return agendamentos.map(a => ({
     ...a,
     duracao: a.duracao ?? 1
@@ -26,7 +36,17 @@ const listarAgendamentosService = async (usuarioId) => {
 
 const listarTodosAgendamentosService = async () => {
   const agendamentos = await prisma.agendamento.findMany({
-    include: { quadra: true, usuario: true, modalidade: true },
+    include: {
+      quadra: true,
+      modalidade: true,
+      usuario: {
+        include: {
+          times: {
+            include: { time: true }
+          }
+        }
+      }
+    },
     orderBy: [
       { ano: 'asc' },
       { mes: 'asc' },
@@ -48,7 +68,17 @@ const listarAgendamentosPorQuadraService = async (quadraId) => {
 
   const agendamentos = await prisma.agendamento.findMany({
     where: { quadraId: Number(quadraId) },
-    include: { usuario: true, quadra: true, modalidade: true },
+    include: {
+      quadra: true,
+      modalidade: true,
+      usuario: {
+        include: {
+          times: {
+            include: { time: true }
+          }
+        }
+      }
+    },
     orderBy: [
       { ano: 'asc' },
       { mes: 'asc' },
@@ -78,12 +108,16 @@ const listarAgendamentosConfirmadosService = async (quadraId, ano, mes, dia) => 
       dia
     },
     include: {
-      usuario: true,
-      modalidade: true
+      modalidade: true,
+      usuario: {
+        include: {
+          times: {
+            include: { time: true }
+          }
+        }
+      }
     },
-    orderBy: [
-      { hora: 'asc' }
-    ]
+    orderBy: [{ hora: 'asc' }]
   });
 
   return agendamentos.map(a => ({
@@ -97,7 +131,6 @@ const criarAgendamentoService = async ({ usuarioId, dia, mes, ano, hora, duracao
     throw { status: 400, message: 'Campos obrigatórios não preenchidos.' };
   }
 
-  // Verifica conflito em qualquer hora do intervalo
   const conflito = await prisma.agendamento.findFirst({
     where: {
       dia,
@@ -132,7 +165,16 @@ const criarAgendamentoService = async ({ usuarioId, dia, mes, ano, hora, duracao
       quadraId,
       modalidadeId
     },
-    include: { modalidade: true }
+    include: {
+      modalidade: true,
+      usuario: {
+        include: {
+          times: {
+            include: { time: true }
+          }
+        }
+      }
+    }
   });
 
   return {
@@ -154,14 +196,25 @@ const cancelarAgendamentoService = async (id) => {
 const atualizarAgendamentoService = async (id, status) => {
   if (!id || !status) throw { status: 400, message: 'ID e status são obrigatórios.' };
 
-  const agendamento = await prisma.agendamento.findUnique({ where: { id: Number(id) } });
+  const agendamento = await prisma.agendamento.findUnique({
+    where: { id: Number(id) },
+    include: { usuario: true, quadra: true, modalidade: true }
+  });
+
   if (!agendamento) throw { status: 404, message: 'Agendamento não encontrado.' };
   if (agendamento.status !== 'Pendente') throw { status: 400, message: 'Agendamento já foi processado.' };
 
   const atualizado = await prisma.agendamento.update({
     where: { id: Number(id) },
-    data: { status }
+    data: { status },
+    include: { usuario: true, quadra: true, modalidade: true }
   });
+
+  try {
+    await enviarEmailStatusAgendamento(atualizado);
+  } catch (err) {
+    console.error('Erro ao enviar email de status do agendamento:', err);
+  }
 
   return {
     ...atualizado,

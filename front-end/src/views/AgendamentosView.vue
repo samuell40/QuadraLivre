@@ -15,7 +15,18 @@
           @update:model-value="abrirModalDataSelecionada"
           :format="formatDate"
           placeholder="Escolha um dia"
-        />
+        >
+          <!-- Slot para customizar o dia -->
+          <template #day="{ day, date }">
+            <div
+              :title="getDayTitle(date)"
+              :class="getDayClass(date)"
+              class="custom-day"
+            >
+              {{ day }}
+            </div>
+          </template>
+        </Datepicker>
       </div>
 
       <!-- Loader -->
@@ -65,11 +76,9 @@ const isLoading = ref(true);
 const modalAberto = ref(false);
 const modalData = ref('');
 const quadraId = ref(null);
+const dataSelecionada = ref(null); // sempre Date
 
-// Abre modal manualmente por data
-const dataSelecionada = ref('');
-
-// Carrega agendamentos da quadra
+// Carregar agendamentos da quadra
 const carregarAgendamentos = async () => {
   isLoading.value = true;
   try {
@@ -92,26 +101,48 @@ const agendamentosPendentes = computed(() =>
   agendamentos.value.filter(a => a.status === "Pendente")
 );
 
-const datasComAgendamento = computed(() =>
-  agendamentos.value.map(a => new Date(a.ano, a.mes - 1, a.dia))
-);
+// Mapa de confirmados por dia
+const confirmadosPorDia = computed(() => {
+  const mapa = {};
+  agendamentos.value
+    .filter(a => a.status === "Confirmado")
+    .forEach(a => {
+      const key = `${a.ano}-${String(a.mes).padStart(2,'0')}-${String(a.dia).padStart(2,'0')}`;
+      mapa[key] = (mapa[key] || 0) + 1;
+    });
+  return mapa;
+});
 
-// Marca os dias com agendamento no calendário
+// Classes para os dias
 const getDayClass = (date) => {
-  const existe = datasComAgendamento.value.some(d =>
-    d.getFullYear() === date.getFullYear() &&
-    d.getMonth() === date.getMonth() &&
-    d.getDate() === date.getDate()
-  );
-  return existe ? 'dia-com-agendamento' : '';
+  const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+
+  if (confirmadosPorDia.value[key]) {
+    if (dataSelecionada.value && date.toDateString() === dataSelecionada.value.toDateString()) {
+      return 'dia-com-agendamento dia-selecionado';
+    }
+    return 'dia-com-agendamento';
+  }
+  return '';
 };
 
+// Tooltip
+const getDayTitle = (date) => {
+  const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+  if (confirmadosPorDia.value[key]) {
+    return `${confirmadosPorDia.value[key]} agendamento(s) confirmado(s)`;
+  }
+  return "";
+};
+
+// Abrir modal manual (card)
 const abrirModal = async (dia, mes, ano) => {
   modalData.value = `${ano}-${String(mes).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
   await nextTick();
   modalAberto.value = true;
 };
 
+// Abrir modal pelo datepicker
 const abrirModalDataSelecionada = () => {
   if (!dataSelecionada.value) return;
   const d = dataSelecionada.value;
@@ -122,6 +153,7 @@ const abrirModalDataSelecionada = () => {
   modalAberto.value = true;
 };
 
+// Formatador da data no input
 const formatDate = date => {
   const d = new Date(date);
   return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
@@ -257,5 +289,6 @@ h4 {
   background-color: #3B82F6 !important;
   color: white !important;
   border-radius: 50% !important;
+  cursor: pointer;
 }
 </style>
