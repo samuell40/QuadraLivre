@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { enviarEmailStatusAgendamento } = require('./email.service');
 
 const listarAgendamentosService = async (usuarioId) => {
   if (!usuarioId) {
@@ -195,23 +196,25 @@ const cancelarAgendamentoService = async (id) => {
 const atualizarAgendamentoService = async (id, status) => {
   if (!id || !status) throw { status: 400, message: 'ID e status são obrigatórios.' };
 
-  const agendamento = await prisma.agendamento.findUnique({ where: { id: Number(id) } });
+  const agendamento = await prisma.agendamento.findUnique({
+    where: { id: Number(id) },
+    include: { usuario: true, quadra: true, modalidade: true }
+  });
+
   if (!agendamento) throw { status: 404, message: 'Agendamento não encontrado.' };
   if (agendamento.status !== 'Pendente') throw { status: 400, message: 'Agendamento já foi processado.' };
 
   const atualizado = await prisma.agendamento.update({
     where: { id: Number(id) },
     data: { status },
-    include: {
-      usuario: {
-        include: {
-          times: {
-            include: { time: true }
-          }
-        }
-      }
-    }
+    include: { usuario: true, quadra: true, modalidade: true }
   });
+
+  try {
+    await enviarEmailStatusAgendamento(atualizado);
+  } catch (err) {
+    console.error('Erro ao enviar email de status do agendamento:', err);
+  }
 
   return {
     ...atualizado,
