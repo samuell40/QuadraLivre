@@ -160,7 +160,7 @@ export default {
 
         this.horariosDisponiveis = this.horariosDisponiveis.filter(h => !this.horariosIndisponiveis.includes(h))
 
-        if (this.horariosDisponiveis.length > 0 && !this.datasDisponiveis.includes(dataStr)) {
+        if (agendamentos.length > 0 && !this.datasDisponiveis.includes(dataStr)) {
           this.datasDisponiveis.push(dataStr)
         }
       } catch (err) {

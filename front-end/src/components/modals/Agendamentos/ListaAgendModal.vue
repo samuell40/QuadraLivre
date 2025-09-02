@@ -7,29 +7,40 @@
         <div 
           v-for="h in horariosDia" 
           :key="h.hora" 
-          class="horario" 
-          :class="h.agendamento ? 'agendado' : 'disponivel'"
-          @click="h.agendamento && selecionarAgendamento(h.agendamento)"
+          class="horario-wrapper"
         >
-          <span>{{ h.hora.toString().padStart(2,'0') }}:00</span>
-          <span v-if="h.agendamento">
-            {{ h.agendamento.usuario.nome }} ({{ h.agendamento.tipo }})
-          </span>
-          <span v-else>Disponível</span>
-        </div>
-      </div>
+          <div 
+            class="horario" 
+            :class="h.agendamento ? 'agendado' : 'disponivel'"
+            @click="h.agendamento && selecionarAgendamento(h.agendamento)"
+          >
+            <span>{{ h.hora.toString().padStart(2,'0') }}:00</span>
+            <span v-if="h.agendamento">
+              {{ h.agendamento.usuario?.times[0]?.time?.nome || 'Sem time' }} 
+              ({{ h.agendamento.tipo }})
+            </span>
+            <span v-else>Disponível</span>
+          </div>
 
-      <!-- Card de detalhes do agendamento -->
-      <div v-if="agendamentoSelecionado" class="detalhes-agendamento">
-        <h3>{{ agendamentoSelecionado.titulo || 'Agendamento' }}</h3>
-        <p><strong>Realizado por:</strong> {{ agendamentoSelecionado.usuario.nome }}</p>
-        <p>
-          <strong>Data:</strong> {{ data }} 
-          às {{ agendamentoSelecionado.hora.toString().padStart(2,'0') }}:00
-        </p>
-        <p><strong>Duração:</strong> {{ agendamentoSelecionado.duracao }} hora(s)</p>
-        <p><strong>Tipo:</strong> {{ agendamentoSelecionado.tipo }}</p>
-        <button class="btn-cancelar" @click="agendamentoSelecionado = null">Fechar Detalhes</button>
+          <!-- Card de detalhes logo abaixo do horário clicado -->
+          <div 
+            v-if="agendamentoSelecionado && agendamentoSelecionado.id === h.agendamento?.id" 
+            class="detalhes-agendamento"
+          >
+            <h3>{{ agendamentoSelecionado.titulo || 'Agendamento' }}</h3>
+            <p><strong>Realizado por:</strong> {{ agendamentoSelecionado.usuario.nome }}</p>
+            <p>
+              <strong>Data:</strong> {{ data }} 
+              às {{ agendamentoSelecionado.hora.toString().padStart(2,'0') }}:00
+            </p>
+            <p><strong>Duração:</strong> {{ agendamentoSelecionado.duracao }} hora(s)</p>
+            <p><strong>Tipo:</strong> {{ agendamentoSelecionado.tipo }}</p>
+            <p>
+              <strong>Time:</strong> {{ agendamentoSelecionado.usuario?.times[0]?.time?.nome || 'Sem time' }}
+            </p>
+            <button class="btn-cancelar" @click="agendamentoSelecionado = null">Fechar Detalhes</button>
+          </div>
+        </div>
       </div>
 
       <button class="btn-cancelar" @click="$emit('fechar')">Fechar Modal</button>
@@ -132,6 +143,12 @@ export default {
   gap: 6px;
 }
 
+.horario-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .horario {
   display: flex;
   justify-content: space-between;
@@ -152,7 +169,6 @@ export default {
 }
 
 .detalhes-agendamento {
-  margin-top: 20px;
   padding: 10px;
   border: 1px solid #3B82F6;
   border-radius: 8px;
