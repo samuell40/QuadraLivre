@@ -4,11 +4,7 @@
       <h4 class="modalidade-titulo">{{ modalidade }}</h4>
 
       <div class="cards-partidas">
-        <div
-          v-for="partida in grupo"
-          :key="partida.id"
-          class="card-partida-wrapper"
-        >
+        <div v-for="partida in grupo" :key="partida.id" class="card-partida-wrapper">
           <div class="card-partida" :class="{ encerrada: partida.finalizada }">
             <div class="time">
               <span>{{ partida.timeA?.nome }}</span>
@@ -37,28 +33,37 @@
 </template>
 
 <script>
+import { useWebSocketStore } from "@/webscoket";
+import { mapState } from "pinia";
+
 export default {
-  props: {
-    partidasAtivas: { type: Array, default: () => [] },
-    partidasEncerradas: { type: Array, default: () => [] }
-  },
+  name: "ListaPartidas",
   data() {
     return {
       tempoDecorrido: 0,
-      intervaloTempo: null
-    }
+      intervaloTempo: null,
+    };
   },
   computed: {
-    // junta todas e organiza por modalidade
+    ...mapState(useWebSocketStore, [
+      "partidasAtivas",
+      "partidasEncerradas",
+      "placares",
+    ]),
+
     partidasPorModalidade() {
       const todas = [...this.partidasAtivas, ...this.partidasEncerradas];
       return todas.reduce((acc, partida) => {
-        const modalidade = partida.modalidade?.nome || "Sem modalidade";
+        let modalidade = partida.modalidade?.nome;
+
+        modalidade = modalidade.charAt(0).toUpperCase() + modalidade.slice(1);
+
         if (!acc[modalidade]) acc[modalidade] = [];
         acc[modalidade].push(partida);
         return acc;
       }, {});
-    }
+    },
+
   },
   watch: {
     partidasAtivas: {
@@ -68,8 +73,8 @@ export default {
         }
       },
       deep: true,
-      immediate: true
-    }
+      immediate: true,
+    },
   },
   methods: {
     iniciarCronometro(partida) {
@@ -85,16 +90,21 @@ export default {
     },
     statusPartida(partida) {
       if (partida.finalizada) return "ENCERRADA";
+      if (partida.emIntervalo) return "PAUSADA";
       if (!partida.finalizada && this.partidasAtivas[0]?.id === partida.id) {
         return `${this.tempoDecorrido} MIN`;
       }
       return "EM ANDAMENTO";
-    }
+    },
   },
   beforeUnmount() {
     if (this.intervaloTempo) clearInterval(this.intervaloTempo);
-  }
-}
+  },
+  mounted() {
+    const wsStore = useWebSocketStore();
+    wsStore.iniciar();
+  },
+};
 </script>
 
 <style scoped>
@@ -197,7 +207,8 @@ export default {
 }
 
 .status-partida.encerrada {
-  color: #dc2626; /* vermelho */
+  color: #dc2626;
+  /* vermelho */
 }
 
 @media (max-width: 1024px) {

@@ -5,18 +5,34 @@
     <div class="box">
       <p>Sets Vencidos</p>
       <div class="controls">
-        <button @click="decrement('setsVencidos')">−</button>
+        <button 
+          @click="decrement('setsVencidos')" 
+          :disabled="!temporizadorAtivo || localTime.wo === 1"
+        >−</button>
+        
         <span>{{ localTime.setsVencidos }}</span>
-        <button @click="increment('setsVencidos')">+</button>
+        
+        <button 
+          @click="increment('setsVencidos')" 
+          :disabled="!temporizadorAtivo || localTime.setsVencidos >= 3 || setsAdversario >= 3 || localTime.wo === 1"
+        >+</button>
       </div>
     </div>
 
     <div class="box">
       <p>W.O</p>
       <div class="controls">
-        <button @click="decrement('wo')">−</button>
+        <button 
+          @click="decrement('wo')" 
+          :disabled="!temporizadorAtivo || localTime.wo <= 0"
+        >−</button>
+        
         <span>{{ localTime.wo }}</span>
-        <button @click="increment('wo')">+</button>
+        
+        <button 
+          @click="increment('wo')" 
+          :disabled="!temporizadorAtivo || localTime.wo >= 1"
+        >+</button>
       </div>
     </div>
   </div>
@@ -31,7 +47,8 @@ export default {
     timeNome: { type: String, default: 'Time' },
     timeData: { type: Object, required: true },
     partidaId: { type: [String, Number], required: true },
-    setsAdversario: { type: Number, default: 0 }
+    setsAdversario: { type: Number, default: 0 },
+    temporizadorAtivo: { type: Boolean, default: false }
   },
   data() {
     return {
@@ -58,11 +75,16 @@ export default {
   methods: {
     async increment(campo) {
       if (campo === 'setsVencidos') {
-        if (this.localTime.setsVencidos < 3 && this.setsAdversario < 3) {
+        // só incrementa se não houver W.O.
+        if (this.localTime.wo === 0 && this.localTime.setsVencidos < 3 && this.setsAdversario < 3) {
           this.localTime.setsVencidos++
         }
       } else if (campo === 'wo') {
-        this.localTime.wo++
+        if (this.localTime.wo < 1) {
+          this.localTime.wo++
+          // se WO foi marcado, zera os sets vencidos
+          this.localTime.setsVencidos = 0
+        }
       } else {
         this.localTime[campo]++
       }
@@ -88,7 +110,13 @@ export default {
     async decrement(campo) {
       if (this.localTime[campo] > 0) {
         this.localTime[campo]--
+
+        // se tirou o WO, libera sets de novo
+        if (campo === 'wo' && this.localTime.wo === 0) {
+          this.localTime.setsVencidos = 0
+        }
       }
+
       this.$emit('update', { ...this.localTime })
 
       if (this.partidaId) {
@@ -125,7 +153,7 @@ export default {
   flex-direction: column;
   justify-content: flex-start;
   gap: 15px;
-  margin: 0 auto; 
+  margin: 0 auto;
 }
 
 .placar h2 {
@@ -205,7 +233,7 @@ export default {
   }
 
   .controls {
-    flex-direction: row; 
+    flex-direction: row;
     justify-content: center;
     gap: 20px;
   }

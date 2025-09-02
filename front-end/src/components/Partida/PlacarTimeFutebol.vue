@@ -5,36 +5,36 @@
     <div class="box">
       <p>Gols Marcados</p>
       <div class="controls">
-        <button @click="decrement('golspro')">−</button>
+        <button @click="decrement('golspro')" :disabled="!temporizadorAtivo">−</button>
         <span>{{ localTime.golspro }}</span>
-        <button @click="increment('golspro')">+</button>
+        <button @click="increment('golspro')" :disabled="!temporizadorAtivo">+</button>
       </div>
     </div>
 
     <div class="box">
       <p>Cartão Amarelo</p>
       <div class="controls">
-        <button @click="decrement('cartaoamarelo')">−</button>
+        <button @click="decrement('cartaoamarelo')" :disabled="!temporizadorAtivo">−</button>
         <span>{{ localTime.cartaoamarelo }}</span>
-        <button @click="increment('cartaoamarelo')">+</button>
+        <button @click="increment('cartaoamarelo')" :disabled="!temporizadorAtivo">+</button>
       </div>
     </div>
 
     <div class="box">
       <p>Cartão Vermelho</p>
       <div class="controls">
-        <button @click="decrement('cartaovermelho')">−</button>
+        <button @click="decrement('cartaovermelho')" :disabled="!temporizadorAtivo">−</button>
         <span>{{ localTime.cartaovermelho }}</span>
-        <button @click="increment('cartaovermelho')">+</button>
+        <button @click="increment('cartaovermelho')" :disabled="!temporizadorAtivo">+</button>
       </div>
     </div>
 
     <div class="box">
       <p>Faltas</p>
       <div class="controls">
-        <button @click="decrement('faltas')">−</button>
+        <button @click="decrement('faltas')" :disabled="!temporizadorAtivo">−</button>
         <span>{{ localTime.faltas }}</span>
-        <button @click="increment('faltas')">+</button>
+        <button @click="increment('faltas')" :disabled="!temporizadorAtivo">+</button>
       </div>
     </div>
   </div>
@@ -48,7 +48,8 @@ export default {
   props: {
     timeNome: { type: String, default: 'Time' },
     timeData: { type: Object, required: true },
-    partidaId: { type: [String, Number], required: true } 
+    partidaId: { type: [String, Number], required: true },
+    temporizadorAtivo: { type: Boolean, default: false }
   },
   data() {
     return {
@@ -136,7 +137,7 @@ export default {
   flex-direction: column;
   justify-content: flex-start;
   gap: 15px;
-  margin: 0 auto; 
+  margin: 0 auto;
 }
 
 .placar h2 {
@@ -214,7 +215,7 @@ export default {
     font-size: 18px;
     padding: 8px;
   }
-  
+
   .controls {
     flex-direction: row;
     justify-content: center;
@@ -231,5 +232,4 @@ export default {
     font-size: 16px;
   }
 }
-
 </style>

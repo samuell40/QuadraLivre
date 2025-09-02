@@ -19,18 +19,10 @@
           <div class="dropdown-row modalidade">
             <div class="team">
               <label>Modalidade:</label>
-              <select
-                v-model="modalidadeSelecionada"
-                @change="handleModalidadeChange"
-                class="dropdown"
-                :disabled="partidaIniciada"
-              >
+              <select v-model="modalidadeSelecionada" @change="handleModalidadeChange" class="dropdown"
+                :disabled="partidaIniciada">
                 <option disabled value="">Selecione a modalidade</option>
-                <option
-                  v-for="m in modalidadesDisponiveis"
-                  :key="m.id"
-                  :value="m.nome"
-                >
+                <option v-for="m in modalidadesDisponiveis" :key="m.id" :value="m.nome">
                   {{ m.nome }}
                 </option>
               </select>
@@ -41,19 +33,10 @@
             <div class="team">
               <label>Time 1:</label>
               <div class="dropdown-container">
-                <select
-                  v-model="timeSelecionado1"
-                  @change="carregarPlacarTime('time1')"
-                  class="dropdown"
-                  :disabled="partidaIniciada || carregandoTimes || times.length === 0"
-                >
+                <select v-model="timeSelecionado1" @change="carregarPlacarTime('time1')" class="dropdown"
+                  :disabled="partidaIniciada || carregandoTimes || times.length === 0">
                   <option disabled value="">Selecione o time</option>
-                  <option
-                    v-for="t in times"
-                    :key="t.id"
-                    :value="t"
-                    :disabled="timeSelecionado2?.id === t.id"
-                  >
+                  <option v-for="t in times" :key="t.id" :value="t" :disabled="timeSelecionado2?.id === t.id">
                     {{ t.nome }}
                   </option>
                 </select>
@@ -64,19 +47,10 @@
             <div class="team">
               <label>Time 2:</label>
               <div class="dropdown-container">
-                <select
-                  v-model="timeSelecionado2"
-                  @change="carregarPlacarTime('time2')"
-                  class="dropdown"
-                  :disabled="partidaIniciada || carregandoTimes || times.length === 0"
-                >
+                <select v-model="timeSelecionado2" @change="carregarPlacarTime('time2')" class="dropdown"
+                  :disabled="partidaIniciada || carregandoTimes || times.length === 0">
                   <option disabled value="">Selecione o time</option>
-                  <option
-                    v-for="t in times"
-                    :key="t.id"
-                    :value="t"
-                    :disabled="timeSelecionado1?.id === t.id"
-                  >
+                  <option v-for="t in times" :key="t.id" :value="t" :disabled="timeSelecionado1?.id === t.id">
                     {{ t.nome }}
                   </option>
                 </select>
@@ -85,11 +59,8 @@
             </div>
 
             <div class="team">
-              <button
-                class="dropdown botao-iniciar"
-                @click="togglePartida"
-                :disabled="!timeSelecionado1 || !timeSelecionado2 || (!modalidadeSelecionada && !partidaIniciada)"
-              >
+              <button class="dropdown botao-iniciar" @click="togglePartida"
+                :disabled="!timeSelecionado1 || !timeSelecionado2 || (!modalidadeSelecionada && !partidaIniciada)">
                 {{
                   !partidaIniciada
                     ? 'Iniciar Partida'
@@ -109,31 +80,19 @@
         <div class="placares" v-if="partidaIniciada">
           <component
             :is="['volei', 'volei de areia', 'futevolei'].includes(modalidadeSelecionada.toLowerCase()) ? 'PlacarTimeVolei' : 'PlacarTime'"
-            :timeNome="timeSelecionado1?.nome || ''"
-            :timeData="time1"
-            :setsAdversario="time2.setsVencidos"
-            :partida-id="partidaId"
-            @update="time1 = $event"
-            @remover="resetTime('time1')"
-          />
+            :timeNome="timeSelecionado1?.nome || ''" :timeData="time1" :setsAdversario="time2.setsVencidos"
+            :partida-id="partidaId" :temporizadorAtivo="temporizadorAtivo" @update="time1 = $event"
+            @remover="resetTime('time1')" />
 
           <component
             :is="['volei', 'volei de areia', 'futevolei'].includes(modalidadeSelecionada.toLowerCase()) ? 'PlacarTimeVolei' : 'PlacarTime'"
-            :timeNome="timeSelecionado2?.nome || ''"
-            :timeData="time2"
-            :setsAdversario="time1.setsVencidos"
-            :partida-id="partidaId"
-            @update="time2 = $event"
-            @remover="resetTime('time2')"
-          />
+            :timeNome="timeSelecionado2?.nome || ''" :timeData="time2" :setsAdversario="time1.setsVencidos"
+            :partida-id="partidaId" :temporizadorAtivo="temporizadorAtivo" @update="time2 = $event"
+            @remover="resetTime('time2')" />
         </div>
 
         <div v-if="partidaIniciada" class="finalizar-container">
-          <button
-            class="botao-finalizar"
-            @click="finalizarPartida"
-            :disabled="finalizandoPartida"
-          >
+          <button class="botao-finalizar" @click="finalizarPartida" :disabled="finalizandoPartida">
             <span v-if="finalizandoPartida" class="loader-pequeno"></span>
             <span v-else>Finalizar Partida</span>
           </button>
@@ -150,6 +109,8 @@ import NavBarUse from '@/components/NavBarUser.vue'
 import PlacarTimeVolei from '@/components/Partida/PlacarTimeVolei.vue'
 import api from '@/axios'
 import Swal from 'sweetalert2'
+import { useWebSocketStore } from '@/webscoket'
+import { mapState } from 'pinia'
 
 export default {
   name: 'PartidaView',
@@ -163,6 +124,8 @@ export default {
       timeSelecionado1: '',
       timeSelecionado2: '',
       partidaIniciada: false,
+      partidaId: null,
+      partida: null,
       time1: {},
       time2: {},
       carregandoModalidades: true,
@@ -171,10 +134,13 @@ export default {
       temporizadorAtivo: false,
       intervaloTemporizador: null,
       finalizandoPartida: false,
+      inicioPartida: null,
     }
   },
 
   computed: {
+    ...mapState(useWebSocketStore, ['connected', 'partidasAtivas', 'partidasEncerradas', 'placares']),
+
     isVolei() {
       if (!this.modalidadeSelecionada) return false
       const nome = this.modalidadeSelecionada
@@ -197,6 +163,12 @@ export default {
     timeSelecionado1() { this.salvarEstado() },
     timeSelecionado2() { this.salvarEstado() },
     modalidadeSelecionada() { this.salvarEstado() }
+  },
+
+  mounted() {
+    const wsStore = useWebSocketStore()
+    wsStore.iniciar()
+    this.carregarModalidades()
   },
 
   methods: {
@@ -324,81 +296,6 @@ export default {
       this.salvarEstado()
     },
 
-    calcularIncrementosFutebol(timeA, timeB) {
-      const incA = {
-        jogos: 1,
-        golsPro: timeA.golspro,
-        golsSofridos: timeB.golspro,
-        cartoesAmarelos: timeA.cartaoamarelo,
-        cartoesVermelhos: timeA.cartaovermelho,
-        saldoDeGols: timeA.golspro - timeB.golspro,
-        vitorias: 0, empates: 0, derrotas: 0, pontuacao: 0
-      }
-      const incB = {
-        jogos: 1,
-        golsPro: timeB.golspro,
-        golsSofridos: timeA.golspro,
-        cartoesAmarelos: timeB.cartaoamarelo,
-        cartoesVermelhos: timeB.cartaovermelho,
-        saldoDeGols: timeB.golspro - timeA.golspro,
-        vitorias: 0, empates: 0, derrotas: 0, pontuacao: 0
-      }
-
-      if (timeA.golspro > timeB.golspro) {
-        incA.vitorias = 1; incA.pontuacao = 3; incB.derrotas = 1
-      } else if (timeA.golspro < timeB.golspro) {
-        incB.vitorias = 1; incB.pontuacao = 3; incA.derrotas = 1
-      } else {
-        incA.empates = 1; incB.empates = 1; incA.pontuacao = 1; incB.pontuacao = 1
-      }
-      return [incA, incB]
-    },
-
-    calcularIncrementosVolei(timeA, timeB) {
-      const incA = {
-        jogos: 1,
-        setsVencidos: timeA.setsVencidos,
-        derrotaWo: timeA.wo,
-        vitorias: 0, derrotas: 0,
-        vitoria2x0: 0, vitoria2x1: 0,
-        derrota2x1: 0, derrota2x0: 0,
-        pontuacao: 0
-      }
-      const incB = {
-        jogos: 1,
-        setsVencidos: timeB.setsVencidos,
-        derrotaWo: timeB.wo,
-        vitorias: 0, derrotas: 0,
-        vitoria2x0: 0, vitoria2x1: 0,
-        derrota2x1: 0, derrota2x0: 0,
-        pontuacao: 0
-      }
-
-      if (timeA.wo) { incA.pontuacao = -2 }
-      if (timeB.wo) { incB.pontuacao = -2 }
-
-      if (timeA.setsVencidos > timeB.setsVencidos) {
-        incA.vitorias = 1; incB.derrotas = 1
-        if (timeA.setsVencidos === 3 && timeB.setsVencidos <= 1) {
-          incA.pontuacao = 3
-          if (timeB.setsVencidos === 0) incA.vitoria2x0 = 1
-          else incA.vitoria2x1 = 1
-        } else if (timeA.setsVencidos === 3 && timeB.setsVencidos === 2) {
-          incA.pontuacao = 2; incB.pontuacao = 1; incA.vitoria2x1 = 1; incB.derrota2x1 = 1
-        }
-      } else if (timeB.setsVencidos > timeA.setsVencidos) {
-        incB.vitorias = 1; incA.derrotas = 1
-        if (timeB.setsVencidos === 3 && timeA.setsVencidos <= 1) {
-          incB.pontuacao = 3
-          if (timeA.setsVencidos === 0) incB.vitoria2x0 = 1
-          else incB.vitoria2x1 = 1
-        } else if (timeB.setsVencidos === 3 && timeA.setsVencidos === 2) {
-          incB.pontuacao = 2; incA.pontuacao = 1; incB.vitoria2x1 = 1; incA.derrota2x1 = 1
-        }
-      }
-      return [incA, incB]
-    },
-
     async atualizarPlacar(timeObj, incremento) {
       try {
         const timeEncontrado = this.times.find(t => t.id === timeObj.id)
@@ -427,10 +324,12 @@ export default {
         time1: this.time1,
         time2: this.time2,
         inicioPartida: this.inicioPartida || null,
-        temporizadorAtivo: this.temporizadorAtivo
+        temporizadorAtivo: this.temporizadorAtivo,
+        partidaId: this.partidaId
       }
       localStorage.setItem('partidaEstado', JSON.stringify(estado))
     },
+
     async carregarEstadoSalvo() {
       const estado = JSON.parse(localStorage.getItem('partidaEstado'))
       if (estado) {
@@ -442,6 +341,7 @@ export default {
         this.time2 = estado.time2 || this.criarTime(this.isVolei ? 'volei' : 'futebol')
 
         this.inicioPartida = estado.inicioPartida
+        this.partidaId = estado.partidaId || null
 
         if (this.inicioPartida && estado.temporizadorAtivo) {
           this.tempoSegundos = Math.floor((Date.now() - this.inicioPartida) / 1000)
@@ -475,11 +375,6 @@ export default {
       try {
         this.finalizandoPartida = true
 
-        let incs
-        if (this.isVolei) incs = this.calcularIncrementosVolei(this.time1, this.time2)
-        else incs = this.calcularIncrementosFutebol(this.time1, this.time2)
-        await this.atualizarPlacar(this.time1, incs[0])
-        await this.atualizarPlacar(this.time2, incs[1])
         if (this.partidaId) {
           await api.put(`/finalizar/${this.partidaId}`, {
             pontosTimeA: this.time1.golspro || this.time1.setsVencidos || 0,
@@ -507,15 +402,13 @@ export default {
         this.$forceUpdate()
       }
     },
+
     resetTime(timeKey) {
       this[timeKey] = {}
       if (timeKey === 'time1') this.timeSelecionado1 = ''
       else this.timeSelecionado2 = ''
     },
   },
-  mounted() {
-    this.carregarModalidades()
-  }
 }
 </script>
 
