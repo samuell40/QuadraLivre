@@ -3,30 +3,12 @@
     <SideBar />
 
     <div class="conteudo">
-      <h1>Agendamentos da Minha Quadra</h1>
-
-      <!-- Consultar horários -->
-      <div class="consultar-horarios">
-        <label for="data-horarios">Consultar horários:</label>
-        <Datepicker
-          v-model="dataSelecionada"
-          :day-class="getDayClass"
-          :enable-time-picker="false"
-          @update:model-value="abrirModalDataSelecionada"
-          :format="formatDate"
-          placeholder="Escolha um dia"
-        >
-          <!-- Slot para customizar o dia -->
-          <template #day="{ day, date }">
-            <div
-              :title="getDayTitle(date)"
-              :class="getDayClass(date)"
-              class="custom-day"
-            >
-              {{ day }}
-            </div>
-          </template>
-        </Datepicker>
+      <!-- Título + Botão -->
+      <div class="titulo-container">
+        <h1>Controle de Agendamentos</h1>
+        <button class="btn-visualizar" @click="abrirModalHojeEAmanha">
+          Visualizar Horários
+        </button>
       </div>
 
       <!-- Loader -->
@@ -34,26 +16,59 @@
 
       <!-- Conteúdo -->
       <div v-else>
-        <!-- Pendentes -->
-        <div v-if="agendamentosPendentes.length === 0">
-          Nenhum agendamento pendente.
+        <!-- Abas -->
+        <div class="abas">
+          <button
+            :class="['aba-btn', { ativa: abaAtiva === 'pendentes' }]"
+            @click="abaAtiva = 'pendentes'"
+          >
+            Pendentes
+          </button>
+          <button
+            :class="['aba-btn', { ativa: abaAtiva === 'futuros' }]"
+            @click="abaAtiva = 'futuros'"
+          >
+            Agendamentos Futuros
+          </button>
         </div>
-        <div v-else class="agendamentos">
-          <h4>Agendamentos Pendentes</h4>
-          <AgendamentoCard
-            v-for="ag in agendamentosPendentes"
-            :key="ag.id"
-            :agendamento="ag"
-            :class="{ finalizado: ag.status === 'Finalizado' }"
-            @ver-horarios="() => abrirModal(ag.dia, ag.mes, ag.ano)"
-          />
+
+        <!-- Pendentes -->
+        <div v-if="abaAtiva === 'pendentes'">
+          <div v-if="agendamentosPendentes.length === 0" class="nenhum">
+            Nenhum agendamento pendente.
+          </div>
+          <div v-else class="agendamentos">
+            <AgendamentoCard
+              v-for="ag in agendamentosPendentes"
+              :key="ag.id"
+              :agendamento="ag"
+              :class="{ finalizado: ag.status === 'Finalizado' }"
+              @ver-horarios="() => abrirModal(ag.dia, ag.mes, ag.ano)"
+            />
+          </div>
+        </div>
+
+        <!-- Futuros Confirmados -->
+        <div v-if="abaAtiva === 'futuros'">
+          <div v-if="agendamentosFuturos.length === 0" class="nenhum">
+            Nenhum agendamento futuro confirmado.
+          </div>
+          <div v-else class="agendamentos">
+            <AgendamentoCard
+              v-for="ag in agendamentosFuturos"
+              :key="ag.id"
+              :agendamento="ag"
+              :class="{ finalizado: ag.status === 'Finalizado' }"
+              @ver-horarios="() => abrirModal(ag.dia, ag.mes, ag.ano)"
+            />
+          </div>
         </div>
 
         <!-- Modal de horários -->
         <ListaAgendModal
-          v-if="modalAberto && modalData"
+          v-if="modalAberto && datasModal.length"
           :quadraId="quadraId"
-          :data="modalData"
+          :datas="datasModal"
           @fechar="modalAberto = false"
         />
       </div>
@@ -62,21 +77,37 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, nextTick } from "vue";
+import { ref, onMounted, computed } from "vue";
 import SideBar from "@/components/SideBar.vue";
 import AgendamentoCard from "@/components/cards/AgendamentoCard.vue";
 import ListaAgendModal from "@/components/modals/Agendamentos/ListaAgendModal.vue";
 import api from "@/axios";
 import Swal from "sweetalert2";
-import Datepicker from '@vuepic/vue-datepicker';
-import '@vuepic/vue-datepicker/dist/main.css';
 
 const agendamentos = ref([]);
 const isLoading = ref(true);
 const modalAberto = ref(false);
-const modalData = ref('');
+const datasModal = ref([]);
 const quadraId = ref(null);
-const dataSelecionada = ref(null); // sempre Date
+const abaAtiva = ref("pendentes");
+
+const agendamentosPendentes = computed(() =>
+  agendamentos.value.filter(a => a.status === "Pendente")
+);
+
+const agendamentosFuturos = computed(() => {
+  const hoje = new Date();
+  hoje.setHours(0,0,0,0);
+
+  return agendamentos.value.filter(a => {
+    if (a.status !== "Confirmado") return false;
+
+    const agData = new Date(a.ano, a.mes - 1, a.dia);
+    agData.setHours(0,0,0,0);
+
+    return agData.getTime() >= hoje.getTime();
+  });
+});
 
 // Carregar agendamentos da quadra
 const carregarAgendamentos = async () => {
@@ -97,66 +128,24 @@ const carregarAgendamentos = async () => {
   }
 };
 
-const agendamentosPendentes = computed(() =>
-  agendamentos.value.filter(a => a.status === "Pendente")
-);
-
-// Mapa de confirmados por dia
-const confirmadosPorDia = computed(() => {
-  const mapa = {};
-  agendamentos.value
-    .filter(a => a.status === "Confirmado")
-    .forEach(a => {
-      const key = `${a.ano}-${String(a.mes).padStart(2,'0')}-${String(a.dia).padStart(2,'0')}`;
-      mapa[key] = (mapa[key] || 0) + 1;
-    });
-  return mapa;
-});
-
-// Classes para os dias
-const getDayClass = (date) => {
-  const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-
-  if (confirmadosPorDia.value[key]) {
-    if (dataSelecionada.value && date.toDateString() === dataSelecionada.value.toDateString()) {
-      return 'dia-com-agendamento dia-selecionado';
-    }
-    return 'dia-com-agendamento';
-  }
-  return '';
+const formatarData = (date) => {
+  const ano = date.getFullYear();
+  const mes = String(date.getMonth() + 1).padStart(2, "0");
+  const dia = String(date.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
 };
 
-// Tooltip
-const getDayTitle = (date) => {
-  const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-  if (confirmadosPorDia.value[key]) {
-    return `${confirmadosPorDia.value[key]} agendamento(s) confirmado(s)`;
-  }
-  return "";
-};
-
-// Abrir modal manual (card)
-const abrirModal = async (dia, mes, ano) => {
-  modalData.value = `${ano}-${String(mes).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
-  await nextTick();
+const abrirModal = (dia, mes, ano) => {
+  datasModal.value = [`${ano}-${String(mes).padStart(2,'0')}-${String(dia).padStart(2,'0')}`];
   modalAberto.value = true;
 };
 
-// Abrir modal pelo datepicker
-const abrirModalDataSelecionada = () => {
-  if (!dataSelecionada.value) return;
-  const d = dataSelecionada.value;
-  const ano = d.getFullYear();
-  const mes = (d.getMonth() + 1).toString().padStart(2,'0');
-  const dia = d.getDate().toString().padStart(2,'0');
-  modalData.value = `${ano}-${mes}-${dia}`;
+const abrirModalHojeEAmanha = () => {
+  const hoje = new Date();
+  const amanha = new Date();
+  amanha.setDate(hoje.getDate() + 1);
+  datasModal.value = [formatarData(hoje), formatarData(amanha)];
   modalAberto.value = true;
-};
-
-// Formatador da data no input
-const formatDate = date => {
-  const d = new Date(date);
-  return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
 };
 
 onMounted(() => carregarAgendamentos());
@@ -174,27 +163,38 @@ onMounted(() => carregarAgendamentos());
   margin-left: 250px;
 }
 
-.consultar-horarios {
+.titulo-container {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
   margin-bottom: 20px;
 }
 
-.consultar-horarios label {
+.btn-visualizar {
+  background-color: #3B82F6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
   font-weight: 600;
-  color: #3B82F6;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-visualizar:hover {
+  background-color: #2563eb;
 }
 
 .agendamentos .agendamento-card {
-  padding: 12px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
   background-color: #ffffff;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 0.9rem;
 }
 
 .agendamentos .agendamento-card.finalizado {
@@ -209,12 +209,12 @@ h1, h4 {
 
 h1 {
   font-weight: bold;
-  font-size: 30px;
-  margin-bottom: 10px;
+  font-size: 28px;
+  margin: 0;
 }
 
 h4 {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .loader {
@@ -239,56 +239,26 @@ h4 {
   100% { transform: rotate(360deg); }
 }
 
-/* Datepicker */
-:deep(.dp__input_wrap) {
+/* Estilo das abas */
+.abas {
   display: flex;
-  align-items: center;
+  margin-bottom: 16px;
+  gap: 8px;
 }
 
-:deep(.dp__input_icon) {
-  width: 18px;
-  height: 18px;
-  margin-left: 4px; 
-}
-
-:deep(.dp__menu) {
-  width: auto;
-  max-width: 280px;
-  font-size: 0.85rem;
-  padding: 8px;
-  border-radius: 8px;
-}
-
-:deep(.dp__calendar) {
-  min-width: 250px;
-}
-
-.vue-datepicker {
-  width: 160px;
-  font-size: 0.85rem;
-}
-
-.vue-datepicker input {
-  padding: 4px 8px;      
-  font-size: 0.85rem;
-}
-
-.vue-datepicker__calendar {
-  font-size: 0.8rem;
-  width: 240px;
-}
-
-.vue-datepicker__calendar-trigger {
-  padding: 2px 4px !important;
-  font-size: 0.8rem !important; 
-  width: 20px !important;
-  height: 20px !important;
-}
-
-:deep(.dia-com-agendamento) {
-  background-color: #3B82F6 !important;
-  color: white !important;
-  border-radius: 50% !important;
+.aba-btn {
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  border-radius: 20px;
+  border: 1px solid #3B82F6;
+  background-color: #fff;
+  color: #3B82F6;
   cursor: pointer;
+  transition: 0.2s;
+}
+
+.aba-btn.ativa {
+  background-color: #3B82F6;
+  color: #fff;
 }
 </style>
