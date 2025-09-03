@@ -107,4 +107,20 @@ async function retomarPartidaController(req, res) {
   }
 }
 
-module.exports = { criarPartidaController, finalizarPartidaController, listarPartidasController, incrementarPlacarController, atualizarParcialController, listarPartidasAtivasController, listarPartidasEncerradasController, pausarPartidaController, retomarPartidaController}
+async function limparPartidasController(req, res) {
+  try {
+    const modalidadeId = parseInt(req.params.modalidadeId, 10);
+
+    const result = await partidas.limparPartidas(modalidadeId);
+
+    res.status(200).json({
+      message: "Partidas limpas com sucesso.",
+      apagadas: result.count,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+module.exports = { criarPartidaController, finalizarPartidaController, listarPartidasController, incrementarPlacarController, atualizarParcialController, listarPartidasAtivasController, listarPartidasEncerradasController, pausarPartidaController, retomarPartidaController, limparPartidasController}

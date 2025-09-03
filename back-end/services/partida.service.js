@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const { broadcast } = require('../ws-utils'); 
+const { broadcast } = require('../ws-utils');
 const prisma = new PrismaClient();
 
 async function criarPartida(data) {
@@ -9,20 +9,20 @@ async function criarPartida(data) {
     include: { timeA: true, timeB: true, modalidade: true }
   });
 
-broadcast({
-  tipo: "partidaIniciada",
-  partidaId: partida.id,
-  modalidadeId: partida.modalidadeId,
-  modalidade: partida.modalidade, 
-  partidaIniciada: partida.partidaIniciada,
-  finalizada: partida.finalizada,
-  emIntervalo: partida.emIntervalo,
-  timeA: partida.timeA,
-  timeB: partida.timeB,
-  pontosTimeA: partida.pontosTimeA,
-  pontosTimeB: partida.pontosTimeB,
-  createdAt: partida.createdAt
-});
+  broadcast({
+    tipo: "partidaIniciada",
+    partidaId: partida.id,
+    modalidadeId: partida.modalidadeId,
+    modalidade: partida.modalidade,
+    partidaIniciada: partida.partidaIniciada,
+    finalizada: partida.finalizada,
+    emIntervalo: partida.emIntervalo,
+    timeA: partida.timeA,
+    timeB: partida.timeB,
+    pontosTimeA: partida.pontosTimeA,
+    pontosTimeB: partida.pontosTimeB,
+    createdAt: partida.createdAt
+  });
 
   return partida;
 }
@@ -38,8 +38,9 @@ async function finalizarPartida(id, { pontosTimeA, pontosTimeB, tempoSegundos })
     tipo: "placarUpdate",
     partidaId: partida.id,
     modalidadeId: partida.modalidadeId,
+    modalidade: partida.modalidade, 
     partidaIniciada: partida.partidaIniciada,
-    finalizada: partida.finalizada,   
+    finalizada: partida.finalizada,
     timeA: partida.timeA,
     timeB: partida.timeB,
     pontosTimeA: partida.pontosTimeA,
@@ -61,6 +62,7 @@ async function atualizarParcial(id, { pontosTimeA, pontosTimeB, tempoSegundos })
     tipo: "placarUpdate",
     partidaId: partida.id,
     modalidadeId: partida.modalidadeId,
+    modalidade: partida.modalidade, 
     partidaIniciada: partida.partidaIniciada,
     timeA: partida.timeA,
     timeB: partida.timeB,
@@ -170,6 +172,19 @@ async function retomarPartida(id) {
   return partida;
 }
 
+async function limparPartidas(modalidadeId) {
+  const result = await prisma.partida.deleteMany({
+    where: { modalidadeId },
+  });
+
+  broadcast({
+    tipo: "partidasLimpas",
+    modalidadeId,
+    apagadas: result.count
+  });
+
+  return result;
+}
 
 module.exports = {
   criarPartida,
@@ -180,5 +195,6 @@ module.exports = {
   incrementarPlacar,
   listarPartidasEncerradas,
   pausarPartida,
-  retomarPartida
+  retomarPartida,
+  limparPartidas
 };

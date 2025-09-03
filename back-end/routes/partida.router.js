@@ -20,4 +20,6 @@ router.get('/partida/listar/ativas', controller.listarPartidasAtivasController);
 
 router.get('/partida/listar/encerradas', controller.listarPartidasEncerradasController);
 
+router.delete("/partidas/limpar/:modalidadeId", controller.limparPartidasController);
+
 module.exports = router;

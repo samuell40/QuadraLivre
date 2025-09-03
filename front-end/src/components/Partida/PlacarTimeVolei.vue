@@ -75,14 +75,12 @@ export default {
   methods: {
     async increment(campo) {
       if (campo === 'setsVencidos') {
-        // só incrementa se não houver W.O.
         if (this.localTime.wo === 0 && this.localTime.setsVencidos < 3 && this.setsAdversario < 3) {
           this.localTime.setsVencidos++
         }
       } else if (campo === 'wo') {
         if (this.localTime.wo < 1) {
           this.localTime.wo++
-          // se WO foi marcado, zera os sets vencidos
           this.localTime.setsVencidos = 0
         }
       } else {
@@ -111,7 +109,6 @@ export default {
       if (this.localTime[campo] > 0) {
         this.localTime[campo]--
 
-        // se tirou o WO, libera sets de novo
         if (campo === 'wo' && this.localTime.wo === 0) {
           this.localTime.setsVencidos = 0
         }
@@ -162,7 +159,7 @@ export default {
   padding: 10px;
   margin: -30px -30px 20px -30px;
   border-radius: 8px 8px 0 0;
-  color: #555;
+  color: #3b82f6;
   font-size: 20px;
   font-weight: bold;
 }

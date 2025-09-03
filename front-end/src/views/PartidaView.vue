@@ -1,13 +1,16 @@
 <template>
   <div class="layout">
     <SideBar />
-    <NavBarUse v-if="!partidaIniciada" />
-
     <div class="conteudo">
-      <h1 class="title">Partida ao Vivo</h1>
+      <div class="header">
+        <h1 class="title">Partidas ao Vivo</h1>
+        <button v-if="!partidaIniciada" class="limparpartidas" @click="abrirModalLimpar = true">
+          Limpar Partidas
+        </button>
 
-      <div v-if="partidaIniciada" class="temporizador-topo">
-        <p class="temporizador">{{ minutos }}:{{ segundos }}</p>
+        <div v-else class="temporizador-topo">
+          <p class="temporizador">{{ minutos }}:{{ segundos }}</p>
+        </div>
       </div>
 
       <div v-if="carregandoModalidades" class="loader-container-centralizado">
@@ -97,6 +100,9 @@
             <span v-else>Finalizar Partida</span>
           </button>
         </div>
+        <LimparPartidas :aberto="abrirModalLimpar" :modalidadesDisponiveis="modalidadesDisponiveis"
+          @fechar="abrirModalLimpar = false" @confirmado="carregarPartidas" />
+
       </div>
     </div>
   </div>
@@ -105,8 +111,9 @@
 <script>
 import SideBar from '@/components/SideBar.vue'
 import PlacarTime from '@/components/Partida/PlacarTimeFutebol.vue'
-import NavBarUse from '@/components/NavBarUser.vue'
 import PlacarTimeVolei from '@/components/Partida/PlacarTimeVolei.vue'
+import LimparPartidas from '@/components/Partida/LimparPartidas.vue'
+import NavBarUse from '@/components/NavBarUser.vue'
 import api from '@/axios'
 import Swal from 'sweetalert2'
 import { useWebSocketStore } from '@/webscoket'
@@ -114,7 +121,7 @@ import { mapState } from 'pinia'
 
 export default {
   name: 'PartidaView',
-  components: { SideBar, NavBarUse, PlacarTime, PlacarTimeVolei },
+  components: { SideBar, NavBarUse, PlacarTime, PlacarTimeVolei, LimparPartidas },
 
   data() {
     return {
@@ -135,6 +142,7 @@ export default {
       intervaloTemporizador: null,
       finalizandoPartida: false,
       inicioPartida: null,
+      abrirModalLimpar: false,
     }
   },
 
@@ -219,6 +227,11 @@ export default {
       }
     },
 
+    async carregarPartidas() {
+      await this.carregarModalidades()
+      await this.carregarTimes()
+    },
+
     carregarPlacarTime(timeKey, nomeTime = null) {
       const tipo = this.isVolei ? 'volei' : 'futebol'
       this[timeKey] = this.criarTime(tipo)
@@ -294,6 +307,97 @@ export default {
       this.times = []
       await this.carregarTimes()
       this.salvarEstado()
+    },
+
+    calcularIncrementosFutebol(timeA, timeB) {
+      const incA = {
+        jogos: 1,
+        golsPro: timeA.golspro,
+        golsSofridos: timeB.golspro,
+        cartoesAmarelos: timeA.cartaoamarelo,
+        cartoesVermelhos: timeA.cartaovermelho,
+        saldoDeGols: timeA.golspro - timeB.golspro,
+        vitorias: 0, empates: 0, derrotas: 0, pontuacao: 0
+      }
+      const incB = {
+        jogos: 1,
+        golsPro: timeB.golspro,
+        golsSofridos: timeA.golspro,
+        cartoesAmarelos: timeB.cartaoamarelo,
+        cartoesVermelhos: timeB.cartaovermelho,
+        saldoDeGols: timeB.golspro - timeA.golspro,
+        vitorias: 0, empates: 0, derrotas: 0, pontuacao: 0
+      }
+
+      if (timeA.golspro > timeB.golspro) {
+        incA.vitorias = 1; incA.pontuacao = 3; incB.derrotas = 1
+      } else if (timeA.golspro < timeB.golspro) {
+        incB.vitorias = 1; incB.pontuacao = 3; incA.derrotas = 1
+      } else {
+        incA.empates = 1; incB.empates = 1; incA.pontuacao = 1; incB.pontuacao = 1
+      }
+      return [incA, incB]
+    },
+
+    calcularIncrementosVolei(timeA, timeB) {
+      const incA = {
+        jogos: 1,
+        setsVencidos: timeA.setsVencidos,
+        derrotaWo: timeA.wo,
+        vitorias: 0, derrotas: 0,
+        vitoria2x0: 0, vitoria2x1: 0,
+        derrota2x1: 0, derrota2x0: 0,
+        pontuacao: 0
+      }
+      const incB = {
+        jogos: 1,
+        setsVencidos: timeB.setsVencidos,
+        derrotaWo: timeB.wo,
+        vitorias: 0, derrotas: 0,
+        vitoria2x0: 0, vitoria2x1: 0,
+        derrota2x1: 0, derrota2x0: 0,
+        pontuacao: 0
+      }
+
+      if (timeA.wo && !timeB.wo) {
+        incA.pontuacao = -2
+        incA.derrotas = 1
+        incB.pontuacao = 3
+        incB.vitorias = 1
+        return [incA, incB]
+      }
+
+      if (timeB.wo && !timeA.wo) {
+        incB.pontuacao = -2
+        incB.derrotas = 1
+        incA.pontuacao = 3
+        incA.vitorias = 1
+        return [incA, incB]
+      }
+
+      if (timeA.setsVencidos > timeB.setsVencidos) {
+        incA.vitorias = 1; incB.derrotas = 1
+        if (timeA.setsVencidos === 3 && timeB.setsVencidos <= 1) {
+          incA.pontuacao = 3
+          if (timeB.setsVencidos === 0) incA.vitoria2x0 = 1
+          else incA.vitoria2x1 = 1
+        } else if (timeA.setsVencidos === 3 && timeB.setsVencidos === 2) {
+          incA.pontuacao = 2; incB.pontuacao = 1
+          incA.vitoria2x1 = 1; incB.derrota2x1 = 1
+        }
+      } else if (timeB.setsVencidos > timeA.setsVencidos) {
+        incB.vitorias = 1; incA.derrotas = 1
+        if (timeB.setsVencidos === 3 && timeA.setsVencidos <= 1) {
+          incB.pontuacao = 3
+          if (timeA.setsVencidos === 0) incB.vitoria2x0 = 1
+          else incB.vitoria2x1 = 1
+        } else if (timeB.setsVencidos === 3 && timeA.setsVencidos === 2) {
+          incB.pontuacao = 2; incA.pontuacao = 1
+          incB.vitoria2x1 = 1; incA.derrota2x1 = 1
+        }
+      }
+
+      return [incA, incB]
     },
 
     async atualizarPlacar(timeObj, incremento) {
@@ -383,6 +487,16 @@ export default {
           })
         }
 
+        let incA, incB
+        if (this.isVolei) {
+          [incA, incB] = this.calcularIncrementosVolei(this.time1, this.time2)
+        } else {
+          [incA, incB] = this.calcularIncrementosFutebol(this.time1, this.time2)
+        }
+
+        await this.atualizarPlacar(this.time1, incA)
+        await this.atualizarPlacar(this.time2, incB)
+
         Swal.fire('Partida Finalizada', 'A Partida Foi Finalizada!', 'success')
       } catch (e) {
         console.error(e)
@@ -418,11 +532,31 @@ export default {
   min-height: 100vh;
 }
 
+.sidebar {
+  width: 250px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: #fff;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.2);
+  z-index: 200;
+  transition: transform 0.3s ease;
+}
+
+.sidebar.closed {
+  transform: translateX(-100%);
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
 .conteudo {
   flex: 1;
-  padding: 20px;
-  overflow-x: hidden;
-  position: relative;
+  padding: 32px;
+  margin-left: 250px;
+  transition: margin-left 0.3s ease;
 }
 
 .title {
@@ -430,7 +564,22 @@ export default {
   color: #3b82f6;
   font-weight: bold;
   margin-top: 12px;
-  margin-left: 18%;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.limparpartidas {
+  background-color: #3b82f6;
+  color: white;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
 }
 
 .temporizador-topo {
@@ -464,7 +613,6 @@ export default {
   background-color: #3b82f6;
   color: #fff;
   cursor: pointer;
-  margin-top: 0;
 }
 
 .botao-pausar:hover {
@@ -475,14 +623,14 @@ export default {
   display: flex;
   gap: 30px;
   margin-top: 30px;
-  margin-left: 18%;
+  justify-content: center;
 }
 
 .dropdowns {
   display: flex;
   flex-direction: column;
-  margin-left: 18%;
   width: 100%;
+  align-items: center;
 }
 
 .dropdown-row {
@@ -494,13 +642,13 @@ export default {
 }
 
 .dropdown-row.modalidade .team {
-  width: 80%;
+  width: 99%;
   display: flex;
   flex-direction: column;
 }
 
 .dropdown-row .team {
-  width: 375px;
+  width: 380px;
   display: flex;
   flex-direction: column;
 }
@@ -518,8 +666,8 @@ export default {
 }
 
 .finalizar-container {
-  margin: 30px 18%;
-  width: 80%;
+  margin: 30px auto;
+  width: 100%;
 }
 
 .botao-finalizar {
@@ -542,20 +690,18 @@ export default {
   font-weight: 500;
   color: #3b82f6;
   text-align: center;
-  margin: 35px 18%;
-  margin-left: 35%;
+  margin: 35px auto;
 }
 
 .loader-container-centralizado {
   position: fixed;
   top: 50%;
-  left: 50%;
+  left: 55%;
   transform: translate(-50%, -50%);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
-  margin-left: 5%;
 }
 
 .loader {
@@ -595,16 +741,6 @@ h2 {
   margin-right: 5px;
 }
 
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
 .dropdown-container {
   position: relative;
   display: inline-block;
@@ -624,22 +760,52 @@ h2 {
   animation: spin 1s linear infinite;
 }
 
-/* --- Responsividade --- */
+.menu-toggle {
+  display: none;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 300;
+}
+
 @media (max-width: 768px) {
-  .title {
-    font-size: 24px;
+  .conteudo {
     margin-left: 0;
+    padding: 16px;
+  }
+
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .menu-toggle {
+    display: block;
+  }
+
+  .title {
+    font-size: 22px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .placares {
     flex-direction: column;
     align-items: center;
-    margin-left: 0;
     gap: 20px;
   }
 
   .dropdowns {
-    margin-left: 0;
     width: 100%;
   }
 
@@ -651,7 +817,7 @@ h2 {
 
   .dropdown-row .team,
   .dropdown-row.modalidade .team {
-    width: 100%;
+    width: 100% !important;
   }
 
   .botao-iniciar {
@@ -665,15 +831,20 @@ h2 {
   }
 
   .mensagem-inicial {
-    margin: 20px 5%;
-    margin-left: 0;
+    margin: 20px auto;
     height: auto;
   }
 
   .temporizador-topo {
     position: static;
-    width: 100%;
-    margin: 10px 0;
+    width: auto;
+    height: 40px;
+    margin-left: auto;
+    padding: 4px 8px;
+  }
+
+  .temporizador {
+    font-size: 22px;
   }
 }
 </style>

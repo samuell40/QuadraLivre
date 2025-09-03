@@ -78,6 +78,13 @@ export default {
       loading: false
     }
   },
+  mounted() {
+    window.scrollTo(0, 0)
+    this.carregarAgendamentos()
+    this.carregarUsuarios()
+    this.carregarTimes()
+    this.carregarModalidades()
+  },
   methods: {
     async carregarUsuarios() {
       try {
@@ -269,13 +276,6 @@ export default {
       })
     }
   },
-  
-  mounted() {
-    this.carregarAgendamentos()
-    this.carregarUsuarios()
-    this.carregarTimes()
-    this.carregarModalidades()
-  }
 }
 </script>
 
