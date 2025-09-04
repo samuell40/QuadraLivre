@@ -93,7 +93,8 @@ model Partida {
 
   pontosTimeA Int @default(0)
   pontosTimeB Int @default(0)
-
+  woTimeA Boolean @default(false)  
+  woTimeB Boolean @default(false)  
   tempoSegundos   Int      @default(0)
   partidaIniciada Boolean  @default(false)
   finalizada      Boolean  @default(false)

@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Partida" ADD COLUMN     "woTimeA" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "woTimeB" BOOLEAN NOT NULL DEFAULT false;
