@@ -115,10 +115,28 @@ async function vincularUsuarioTime(usuarioId, timeId) {
   return vinculo;
 }
 
+async function getUsuarioTimesService(usuarioId) {
+  return await prisma.usuario.findUnique({
+    where: { id: Number(usuarioId) },
+    include: {
+      times: {
+        include: {
+          time: {
+            include: {
+              modalidade: true 
+            }
+          }
+        }
+      }
+    }
+  })
+}
+
 module.exports = {
   postUsuario,
   updateUsuario,
   getUsuarios,
+  getUsuarioTimesService,
   listarPermissoes,
   vincularUsuarioTime,
 };

@@ -13,7 +13,8 @@ router.get('/usuarios', [validarJWT],  verificarPermissao.devAdmin, controller.g
 
 router.get('/permissoes',[validarJWT], verificarPermissao.devAdmin, controller.getPermissoesController);
 
-router.post('/vincular',[validarJWT], verificarPermissao.devAdmin, controller.vincularUsuarioTimeController);
+router.get('/usuarios/:id/times', [validarJWT], controller.getUsuarioTimesController);
 
+router.post('/vincular',[validarJWT], verificarPermissao.devAdmin, controller.vincularUsuarioTimeController);
 
 module.exports = router;

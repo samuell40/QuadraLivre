@@ -55,6 +55,9 @@ model Agendamento {
   quadra       Quadra?         @relation(fields: [quadraId], references: [id])
   modalidadeId Int?
   modalidade   Modalidade?     @relation("AgendamentoModalidade", fields: [modalidadeId], references: [id])
+
+  timeId Int?
+  time   Time? @relation("TimeAgendamentos", fields: [timeId], references: [id])
 }
 
 model Modalidade {
@@ -77,6 +80,8 @@ model Time {
   placar   Placar?
   partidasA Partida[] @relation("TimeAPartidas")
   partidasB Partida[] @relation("TimeBPartidas")
+
+  agendamentos Agendamento[] @relation("TimeAgendamentos")
 }
 
 model Partida {

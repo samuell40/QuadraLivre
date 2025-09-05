@@ -9,7 +9,8 @@ const {
   cancelarAgendamentoController,
   aceitarAgendamentoController,
   recusarAgendamentoController,
-  listarModalidadesPorQuadraController
+  listarModalidadesPorQuadraController,
+  listarAgendamentosPorTimeController
 } = require('../controllers/agendamento.controller');
 const validarJWT = require('../middlewares/auth');
 
@@ -33,6 +34,12 @@ router.get('/agendamentos/quadra/:quadraId', [validarJWT], listarAgendamentosPor
 // Listar agendamentos confirmados por quadra
 router.get( "/agendamentos/quadra/:quadraId/confirmados", [validarJWT], listarAgendamentosConfirmadosController );
 
+// Listar modalidades por quadra (para o modal)
+router.get('/quadra/:quadraId/modalidades', [validarJWT], listarModalidadesPorQuadraController);
+
+// Listar agendamentos por time
+router.get('/agendamentos/time/:timeId', [validarJWT], listarAgendamentosPorTimeController);
+
 // Cancelar um agendamento
 router.delete('/agendamento/:id', [validarJWT], cancelarAgendamentoController);
 
@@ -41,8 +48,5 @@ router.patch('/agendamento/:id/aceitar', [validarJWT], aceitarAgendamentoControl
 
 // Recusar um agendamento
 router.patch('/agendamento/:id/recusar', [validarJWT], recusarAgendamentoController);
-
-// Listar modalidades por quadra (para o modal)
-router.get('/quadra/:quadraId/modalidades', [validarJWT], listarModalidadesPorQuadraController);
 
 module.exports = router;

@@ -72,9 +72,30 @@ const vincularUsuarioTimeController = async (req, res) => {
   }
 };
 
+async function getUsuarioTimesController(req, res) {
+  try {
+    const { id } = req.params;
+
+    const usuario = await Usuario.getUsuarioTimesService(id);
+
+    if (!usuario) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    const times = usuario.times.map(tu => tu.time);
+
+    return res.json(times);
+  } catch (err) {
+    console.error('Erro ao buscar times do usuário:', err);
+    return res.status(500).json({ error: 'Erro interno ao buscar times do usuário' });
+  }
+}
+
 module.exports = {
   postUsuarioController,
   updateUsuarioController,
   getUsuariosController,
   getPermissoesController,
-  vincularUsuarioTimeController}
+  getUsuarioTimesController,
+  vincularUsuarioTimeController
+}

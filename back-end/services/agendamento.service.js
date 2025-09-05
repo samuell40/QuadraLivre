@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { enviarEmailStatusAgendamento } = require('./email.service');
+const { startOfWeek, endOfWeek } = require('date-fns')
 
 const listarAgendamentosService = async (usuarioId) => {
   if (!usuarioId) {
@@ -126,32 +127,94 @@ const listarAgendamentosConfirmadosService = async (quadraId, ano, mes, dia) => 
   }));
 };
 
-const criarAgendamentoService = async ({ usuarioId, dia, mes, ano, hora, duracao = 1, tipo = 'TREINO', quadraId, modalidadeId }) => {
-  if (!dia || !mes || !ano || !hora || !usuarioId || !quadraId || !modalidadeId) {
-    throw { status: 400, message: 'Campos obrigatórios não preenchidos.' };
+const criarAgendamentoService = async ({
+  usuarioId,
+  dia,
+  mes,
+  ano,
+  hora,
+  duracao = 1,
+  tipo = "TREINO",
+  quadraId,
+  modalidadeId,
+  timeId,
+}) => {
+  if (
+    !dia ||
+    !mes ||
+    !ano ||
+    !hora ||
+    !usuarioId ||
+    !quadraId ||
+    !modalidadeId ||
+    !timeId
+  ) {
+    throw { status: 400, message: "Campos obrigatórios não preenchidos." };
   }
 
+  // Valida a existência da quadra, modalidade e time
+  const [quadra, modalidade, time] = await Promise.all([
+    prisma.quadra.findUnique({ where: { id: Number(quadraId) } }),
+    prisma.modalidade.findUnique({ where: { id: Number(modalidadeId) } }),
+    prisma.time.findUnique({ where: { id: Number(timeId) } }),
+  ]);
+
+  if (!quadra) throw { status: 400, message: "Quadra não existe." };
+  if (!modalidade) throw { status: 400, message: "Modalidade não existe." };
+  if (!time) throw { status: 400, message: "Time não existe." };
+
+  // Verifica agendamentos do mesmo time na semana
+  const dataAgendamento = new Date(ano, mes - 1, dia);
+  const inicioSemana = startOfWeek(dataAgendamento, { weekStartsOn: 1 });
+  const fimSemana = endOfWeek(dataAgendamento, { weekStartsOn: 1 });
+
+  const agendamentosSemana = await prisma.agendamento.count({
+    where: {
+      timeId,
+      status: { in: ["Pendente", "Confirmado"] },
+      // compara intervalo da semana
+      ano: {
+        gte: inicioSemana.getFullYear(),
+        lte: fimSemana.getFullYear(),
+      },
+      AND: Array.from({ length: 7 }).map((_, i) => {
+        const d = new Date(inicioSemana);
+        d.setDate(inicioSemana.getDate() + i);
+        return {
+          dia: d.getDate(),
+          mes: d.getMonth() + 1,
+          ano: d.getFullYear(),
+        };
+      }),
+    },
+  });
+
+  if (agendamentosSemana >= 2) {
+    throw {
+      status: 400,
+      message: "Este time já possui 2 agendamentos nesta semana.",
+    };
+  }
+
+  // Checa conflito de horários na quadra
   const conflito = await prisma.agendamento.findFirst({
     where: {
       dia,
       mes,
       ano,
       quadraId,
-      AND: [
-        {
-          hora: {
-            gte: hora,
-            lt: hora + duracao
-          }
-        }
-      ]
-    }
+      hora: {
+        gte: hora,
+        lt: hora + duracao,
+      },
+    },
   });
 
   if (conflito) {
-    throw { status: 409, message: 'Horário já agendado.' };
+    throw { status: 409, message: "Horário já agendado." };
   }
 
+  // Cria do agendamento
   const agendamento = await prisma.agendamento.create({
     data: {
       dia,
@@ -160,26 +223,26 @@ const criarAgendamentoService = async ({ usuarioId, dia, mes, ano, hora, duracao
       hora,
       duracao,
       tipo,
-      status: 'Pendente',
+      status: "Pendente",
       usuarioId,
       quadraId,
-      modalidadeId
+      modalidadeId,
+      timeId,
     },
     include: {
       modalidade: true,
       usuario: {
         include: {
-          times: {
-            include: { time: true }
-          }
-        }
-      }
-    }
+          times: { include: { time: true } },
+        },
+      },
+      time: true,
+    },
   });
 
   return {
     ...agendamento,
-    duracao: agendamento.duracao ?? 1
+    duracao: agendamento.duracao ?? 1,
   };
 };
 
@@ -240,6 +303,71 @@ const listarModalidadesPorQuadraService = async (quadraId) => {
   }
 };
 
+const listarAgendamentosPorTimeService = async (timeId, inicio, fim) => {
+  if (!timeId || !inicio || !fim) {
+    throw { status: 400, message: 'Parâmetros obrigatórios não informados.' };
+  }
+
+  const dataInicio = new Date(inicio);
+  const dataFim = new Date(fim);
+
+  const agendamentos = await prisma.agendamento.findMany({
+    where: {
+      timeId: Number(timeId),
+      AND: [
+        {
+          OR: [
+            { ano: { gt: dataInicio.getFullYear() } },
+            {
+              ano: dataInicio.getFullYear(),
+              OR: [
+                { mes: { gt: dataInicio.getMonth() + 1 } },
+                {
+                  mes: dataInicio.getMonth() + 1,
+                  dia: { gte: dataInicio.getDate() }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          OR: [
+            { ano: { lt: dataFim.getFullYear() } },
+            {
+              ano: dataFim.getFullYear(),
+              OR: [
+                { mes: { lt: dataFim.getMonth() + 1 } },
+                {
+                  mes: dataFim.getMonth() + 1,
+                  dia: { lte: dataFim.getDate() }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    select: {
+      id: true,
+      dia: true,
+      mes: true,
+      ano: true,
+      hora: true,
+      duracao: true,
+      status: true
+    },
+    orderBy: [
+      { ano: 'asc' },
+      { mes: 'asc' },
+      { dia: 'asc' },
+      { hora: 'asc' }
+    ]
+  });
+
+  return agendamentos.map(a => ({ ...a, duracao: a.duracao ?? 1 }));
+};
+
+
 module.exports = {
   criarAgendamentoService,
   listarAgendamentosService,
@@ -248,5 +376,6 @@ module.exports = {
   cancelarAgendamentoService,
   listarAgendamentosConfirmadosService,
   atualizarAgendamentoService,
-  listarModalidadesPorQuadraService
+  listarModalidadesPorQuadraService,
+  listarAgendamentosPorTimeService
 };
