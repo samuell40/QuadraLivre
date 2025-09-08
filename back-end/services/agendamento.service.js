@@ -127,73 +127,93 @@ const listarAgendamentosConfirmadosService = async (quadraId, ano, mes, dia) => 
   }));
 };
 
+const listarAgendamentosConfirmadosSemanaService = async (quadraId) => {
+  if (!quadraId) throw { status: 400, message: 'Quadra não informada.' };
+
+  const hoje = new Date();
+  const inicioSemana = startOfWeek(hoje, { weekStartsOn: 1 });
+  const fimSemana = endOfWeek(hoje, { weekStartsOn: 1 });
+
+  const agendamentos = await prisma.agendamento.findMany({
+    where: {
+      quadraId,
+      status: "Confirmado",
+      AND: [
+        {
+          ano: {
+            gte: inicioSemana.getFullYear(),
+            lte: fimSemana.getFullYear(),
+          },
+        },
+        {
+          mes: {
+            gte: inicioSemana.getMonth() + 1,
+            lte: fimSemana.getMonth() + 1,
+          },
+        },
+        {
+          dia: {
+            gte: inicioSemana.getDate(),
+            lte: fimSemana.getDate(),
+          },
+        },
+      ],
+    },
+    include: {
+      modalidade: true,
+      usuario: { include: { times: { include: { time: true } } } },
+    },
+    orderBy: [{ hora: 'asc' }],
+  });
+
+  return agendamentos.map(a => ({ ...a, duracao: a.duracao ?? 1 }));
+};
+
 const criarAgendamentoService = async ({
-  usuarioId,
-  dia,
-  mes,
-  ano,
-  hora,
-  duracao = 1,
-  tipo = "TREINO",
-  quadraId,
-  modalidadeId,
-  timeId,
+  usuarioId, dia, mes, ano, hora, duracao = 1, tipo = "TREINO", quadraId, modalidadeId, timeId,
 }) => {
-  if (
-    !dia ||
-    !mes ||
-    !ano ||
-    !hora ||
-    !usuarioId ||
-    !quadraId ||
-    !modalidadeId ||
-    !timeId
-  ) {
+  if (!dia || !mes || !ano || !hora || !usuarioId || !quadraId || !modalidadeId) {
     throw { status: 400, message: "Campos obrigatórios não preenchidos." };
   }
 
-  // Valida a existência da quadra, modalidade e time
-  const [quadra, modalidade, time] = await Promise.all([
+  // Valida a existência da quadra e modalidade
+  const [quadra, modalidade] = await Promise.all([
     prisma.quadra.findUnique({ where: { id: Number(quadraId) } }),
     prisma.modalidade.findUnique({ where: { id: Number(modalidadeId) } }),
-    prisma.time.findUnique({ where: { id: Number(timeId) } }),
   ]);
 
   if (!quadra) throw { status: 400, message: "Quadra não existe." };
   if (!modalidade) throw { status: 400, message: "Modalidade não existe." };
-  if (!time) throw { status: 400, message: "Time não existe." };
 
-  // Verifica agendamentos do mesmo time na semana
-  const dataAgendamento = new Date(ano, mes - 1, dia);
-  const inicioSemana = startOfWeek(dataAgendamento, { weekStartsOn: 1 });
-  const fimSemana = endOfWeek(dataAgendamento, { weekStartsOn: 1 });
+  // Se o time foi informado, valida existência e limite semanal
+  if (timeId) {
+    const time = await prisma.time.findUnique({ where: { id: Number(timeId) } });
+    if (!time) throw { status: 400, message: "Time não existe." };
 
-  const agendamentosSemana = await prisma.agendamento.count({
-    where: {
-      timeId,
-      status: { in: ["Pendente", "Confirmado"] },
-      // compara intervalo da semana
-      ano: {
-        gte: inicioSemana.getFullYear(),
-        lte: fimSemana.getFullYear(),
+    // Verifica agendamentos do mesmo time na semana
+    const dataAgendamento = new Date(ano, mes - 1, dia);
+    const inicioSemana = startOfWeek(dataAgendamento, { weekStartsOn: 1 });
+    const fimSemana = endOfWeek(dataAgendamento, { weekStartsOn: 1 });
+
+    const agendamentosSemana = await prisma.agendamento.findMany({
+      where: {
+        timeId,
+        status: { in: ["Confirmado"] },
+        ano: { gte: inicioSemana.getFullYear(), lte: fimSemana.getFullYear() },
       },
-      AND: Array.from({ length: 7 }).map((_, i) => {
-        const d = new Date(inicioSemana);
-        d.setDate(inicioSemana.getDate() + i);
-        return {
-          dia: d.getDate(),
-          mes: d.getMonth() + 1,
-          ano: d.getFullYear(),
-        };
-      }),
-    },
-  });
+    });
 
-  if (agendamentosSemana >= 2) {
-    throw {
-      status: 400,
-      message: "Este time já possui 2 agendamentos nesta semana.",
-    };
+    const countSemana = agendamentosSemana.filter((a) => {
+      const data = new Date(a.ano, a.mes - 1, a.dia);
+      return data >= inicioSemana && data <= fimSemana;
+    }).length;
+
+    if (countSemana >= 2) {
+      throw {
+        status: 400,
+        message: "Este time já possui 2 agendamentos nesta semana.",
+      };
+    }
   }
 
   // Checa conflito de horários na quadra
@@ -214,7 +234,7 @@ const criarAgendamentoService = async ({
     throw { status: 409, message: "Horário já agendado." };
   }
 
-  // Cria do agendamento
+  // Cria o agendamento
   const agendamento = await prisma.agendamento.create({
     data: {
       dia,
@@ -227,7 +247,7 @@ const criarAgendamentoService = async ({
       usuarioId,
       quadraId,
       modalidadeId,
-      timeId,
+      timeId: timeId ?? null,
     },
     include: {
       modalidade: true,
@@ -375,6 +395,7 @@ module.exports = {
   listarAgendamentosPorQuadraService,
   cancelarAgendamentoService,
   listarAgendamentosConfirmadosService,
+  listarAgendamentosConfirmadosSemanaService,
   atualizarAgendamentoService,
   listarModalidadesPorQuadraService,
   listarAgendamentosPorTimeService

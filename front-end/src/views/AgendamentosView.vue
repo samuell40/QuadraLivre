@@ -1,75 +1,63 @@
 <template>
-  <div class="layout">
+  <div class="layout-agendamento">
     <SideBar />
 
-    <div class="conteudo">
-      <!-- Título + Botão -->
-      <div class="titulo-container">
-        <h1>Controle de Agendamentos</h1>
-        <button class="btn-visualizar" @click="abrirModalHojeEAmanha">
+    <div class="conteudo-agendamento">
+      <div class="titulo-container-agendamento">
+        <h1 class="titulo-agendamento">Controle de Agendamentos</h1>
+        <button class="btn-visualizar-agendamento" @click="abrirModalHojeEAmanha">
           Visualizar Horários
         </button>
       </div>
 
       <!-- Loader -->
-      <div v-if="isLoading" class="loader"></div>
+      <div v-if="isLoading" class="loader-agendamento"></div>
 
-      <!-- Conteúdo -->
       <div v-else>
-        <!-- Abas -->
-        <div class="abas">
-          <button
-            :class="['aba-btn', { ativa: abaAtiva === 'pendentes' }]"
-            @click="abaAtiva = 'pendentes'"
-          >
-            Pendentes
-          </button>
-          <button
-            :class="['aba-btn', { ativa: abaAtiva === 'futuros' }]"
-            @click="abaAtiva = 'futuros'"
-          >
-            Agendamentos Futuros
-          </button>
-        </div>
+        <!-- Dropdown / Accordion -->
+        <div class="accordion-agendamento" v-for="tipo in ['pendentes', 'confirmados', 'recusados']" :key="tipo">
+          <div class="accordion-header-agendamento" @click="tipo !== 'pendentes' && toggleAccordion(tipo)">
+            <h3>{{ tipo.charAt(0).toUpperCase() + tipo.slice(1) }}</h3>
+            <span v-if="tipo !== 'pendentes'">{{ accordionAberto === tipo ? '▲' : '▼' }}</span>
+          </div>
 
-        <!-- Pendentes -->
-        <div v-if="abaAtiva === 'pendentes'">
-          <div v-if="agendamentosPendentes.length === 0" class="nenhum">
-            Nenhum agendamento pendente.
-          </div>
-          <div v-else class="agendamentos">
-            <AgendamentoCard
-              v-for="ag in agendamentosPendentes"
-              :key="ag.id"
-              :agendamento="ag"
-              :class="{ finalizado: ag.status === 'Finalizado' }"
-              @ver-horarios="() => abrirModal(ag.dia, ag.mes, ag.ano)"
-            />
-          </div>
-        </div>
+          <div 
+            class="accordion-body-agendamento"
+            v-show="tipo === 'pendentes' || accordionAberto === tipo"
+            :class="{'scrollable': tipo === 'pendentes'}"
+          >
+            <div v-if="agendamentosPorTipo(tipo).length === 0" class="agendamento-card-agendamento nenhum">
+              {{ tipo === 'pendentes' ? 'No momento não há nenhum agendamento pendente.' 
+                : tipo === 'confirmados' ? 'Nenhum agendamento futuro confirmado.' 
+                : 'Nenhum agendamento recusado.' }}
+            </div>
 
-        <!-- Futuros Confirmados -->
-        <div v-if="abaAtiva === 'futuros'">
-          <div v-if="agendamentosFuturos.length === 0" class="nenhum">
-            Nenhum agendamento futuro confirmado.
-          </div>
-          <div v-else class="agendamentos">
-            <AgendamentoCard
-              v-for="ag in agendamentosFuturos"
-              :key="ag.id"
-              :agendamento="ag"
-              :class="{ finalizado: ag.status === 'Finalizado' }"
-              @ver-horarios="() => abrirModal(ag.dia, ag.mes, ag.ano)"
-            />
+            <div v-else class="agendamentos-agendamento">
+              <AgendamentoCard 
+                v-for="ag in agendamentosPorTipo(tipo)" 
+                :key="ag.id" 
+                :agendamento="normalizarAgendamento(ag)"
+                :class="{ finalizado: ag.status === 'Finalizado' }"
+                @ver-horarios="() => abrirModal(ag.dia, ag.mes, ag.ano)" 
+              />
+            </div>
           </div>
         </div>
 
         <!-- Modal de horários -->
-        <ListaAgendModal
-          v-if="modalAberto && datasModal.length"
-          :quadraId="quadraId"
+        <ListaAgendModal 
+          v-if="modalAberto && datasModal.length" 
+          :quadraId="quadraId" 
           :datas="datasModal"
-          @fechar="modalAberto = false"
+          @fechar="modalAberto = false" 
+          @ver-detalhes="abrirModalDetalhes" 
+        />
+
+        <!-- Modal de detalhes -->
+        <DetalheAgendModal 
+          v-if="detalheAberto" 
+          :agendamento="agendamentoSelecionado"
+          @fechar="detalheAberto = false" 
         />
       </div>
     </div>
@@ -77,10 +65,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted } from "vue";
 import SideBar from "@/components/SideBar.vue";
 import AgendamentoCard from "@/components/cards/AgendamentoCard.vue";
 import ListaAgendModal from "@/components/modals/Agendamentos/ListaAgendModal.vue";
+import DetalheAgendModal from "@/components/modals/Agendamentos/DetalharAgendModal.vue";
 import api from "@/axios";
 import Swal from "sweetalert2";
 
@@ -89,27 +78,30 @@ const isLoading = ref(true);
 const modalAberto = ref(false);
 const datasModal = ref([]);
 const quadraId = ref(null);
-const abaAtiva = ref("pendentes");
 
-const agendamentosPendentes = computed(() =>
-  agendamentos.value.filter(a => a.status === "Pendente")
-);
+const detalheAberto = ref(false);
+const agendamentoSelecionado = ref(null);
 
-const agendamentosFuturos = computed(() => {
-  const hoje = new Date();
-  hoje.setHours(0,0,0,0);
+// controle dos accordions
+const accordionAberto = ref(null);
+const toggleAccordion = (tipo) => {
+  accordionAberto.value = accordionAberto.value === tipo ? null : tipo;
+};
 
-  return agendamentos.value.filter(a => {
-    if (a.status !== "Confirmado") return false;
+const agendamentosPorTipo = (tipo) => {
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  if(tipo === 'pendentes') return agendamentos.value.filter(a => a.status === "Pendente");
+  if(tipo === 'confirmados') return agendamentos.value.filter(a => a.status === "Confirmado" && new Date(a.ano, a.mes-1, a.dia).getTime() >= hoje.getTime());
+  if(tipo === 'recusados') return agendamentos.value.filter(a => a.status === "Recusado");
+  return [];
+};
 
-    const agData = new Date(a.ano, a.mes - 1, a.dia);
-    agData.setHours(0,0,0,0);
-
-    return agData.getTime() >= hoje.getTime();
-  });
+const normalizarAgendamento = (ag) => ({
+  ...ag,
+  usuario: ag.usuario?.nome || 'Sem usuário',
+  time: ag.time?.nome || 'Nenhum'
 });
 
-// Carregar agendamentos da quadra
 const carregarAgendamentos = async () => {
   isLoading.value = true;
   try {
@@ -118,25 +110,21 @@ const carregarAgendamentos = async () => {
     if (data.length) quadraId.value = data[0].quadra.id;
   } catch (err) {
     console.error("Erro ao carregar agendamentos:", err);
-    Swal.fire({
-      icon: "error",
-      title: "Erro",
-      text: "Falha ao carregar agendamentos da quadra."
-    });
+    Swal.fire({ icon: "error", title: "Erro", text: "Falha ao carregar agendamentos da quadra." });
   } finally {
     isLoading.value = false;
   }
 };
 
-const formatarData = (date) => {
-  const ano = date.getFullYear();
-  const mes = String(date.getMonth() + 1).padStart(2, "0");
-  const dia = String(date.getDate()).padStart(2, "0");
-  return `${ano}-${mes}-${dia}`;
-};
+// const formatarData = (date) => {
+//   const ano = date.getFullYear();
+//   const mes = String(date.getMonth() + 1).padStart(2, "0");
+//   const dia = String(date.getDate()).padStart(2, "0");
+//   return `${ano}-${mes}-${dia}`;
+// };
 
 const abrirModal = (dia, mes, ano) => {
-  datasModal.value = [`${ano}-${String(mes).padStart(2,'0')}-${String(dia).padStart(2,'0')}`];
+  datasModal.value = [{ dia, mes, ano }];
   modalAberto.value = true;
 };
 
@@ -144,33 +132,47 @@ const abrirModalHojeEAmanha = () => {
   const hoje = new Date();
   const amanha = new Date();
   amanha.setDate(hoje.getDate() + 1);
-  datasModal.value = [formatarData(hoje), formatarData(amanha)];
+
+  datasModal.value = [
+    { dia: hoje.getDate(), mes: hoje.getMonth() + 1, ano: hoje.getFullYear() },
+    { dia: amanha.getDate(), mes: amanha.getMonth() + 1, ano: amanha.getFullYear() }
+  ];
+
   modalAberto.value = true;
+};
+
+const abrirModalDetalhes = (agendamento) => {
+  agendamentoSelecionado.value = normalizarAgendamento(agendamento);
+  detalheAberto.value = true;
 };
 
 onMounted(() => carregarAgendamentos());
 </script>
 
-<style scoped>
-.layout {
+<style>
+.layout-agendamento {
   display: flex;
   min-height: 100vh;
 }
-
-.conteudo {
+.conteudo-agendamento {
   flex: 1;
   padding: 32px 75px;
   margin-left: 250px;
 }
 
-.titulo-container {
+.titulo-container-agendamento {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
 }
-
-.btn-visualizar {
+.titulo-agendamento {
+  font-size: 30px;
+  color: #3B82F6;
+  font-weight: bold;
+  margin-top: 12px;
+}
+.btn-visualizar-agendamento {
   background-color: #3B82F6;
   color: white;
   border: none;
@@ -180,51 +182,17 @@ onMounted(() => carregarAgendamentos());
   cursor: pointer;
   transition: 0.2s;
 }
-
-.btn-visualizar:hover {
+.btn-visualizar-agendamento:hover {
   background-color: #2563eb;
 }
 
-.agendamentos .agendamento-card {
-  padding: 10px;
-  margin-bottom: 8px;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  background-color: #ffffff;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.9rem;
-}
-
-.agendamentos .agendamento-card.finalizado {
-  background-color: #f3f4f6;
-  border-left: 4px solid #6b7280;
-  opacity: 0.8;
-}
-
-h1, h4 {
-  color: #3B82F6;
-}
-
-h1 {
-  font-weight: bold;
-  font-size: 28px;
-  margin: 0;
-}
-
-h4 {
-  margin-bottom: 12px;
-}
-
-.loader {
+.loader-agendamento {
   height: 200px;
   display: flex;
   justify-content: center;
   align-items: center;
 }
-
-.loader::after {
+.loader-agendamento::after {
   content: '';
   width: 50px;
   height: 50px;
@@ -233,32 +201,87 @@ h4 {
   border-radius: 50%;
   animation: girar 1s linear infinite;
 }
-
 @keyframes girar {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
-/* Estilo das abas */
-.abas {
-  display: flex;
-  margin-bottom: 16px;
-  gap: 8px;
+.accordion-agendamento {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  overflow: hidden;
 }
-
-.aba-btn {
-  padding: 6px 14px;
-  font-size: 0.9rem;
-  border-radius: 20px;
-  border: 1px solid #3B82F6;
-  background-color: #fff;
-  color: #3B82F6;
+.accordion-header-agendamento {
   cursor: pointer;
-  transition: 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #f9fafb;
+  font-weight: 400;
+  color: #374151;
+}
+.accordion-header-agendamento:hover {
+  background-color: #f3f4f6;
+}
+.accordion-header-agendamento h3 {
+  font-size: 17px;
+  font-weight: bold;
+  margin: 0;
+  color: #7E7E7E;
+}
+.accordion-body-agendamento {
+  padding: 12px 16px;
+  background-color: #fff;
+}
+.accordion-body-agendamento.scrollable {
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+.accordion-body-agendamento.scrollable::-webkit-scrollbar {
+  width: 8px;
+}
+.accordion-body-agendamento.scrollable::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 8px;
+}
+.accordion-body-agendamento.scrollable::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
-.aba-btn.ativa {
-  background-color: #3B82F6;
-  color: #fff;
+.agendamento-card-agendamento {
+  width: 100%;
+  padding: 16px;
+  margin-bottom: 12px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+.agendamento-card-agendamento.finalizado {
+  background-color: #f3f4f6;
+  border-left: 4px solid #6b7280;
+  opacity: 0.8;
+}
+.agendamento-card-agendamento.nenhum {
+  color: #7E7E7E;
+  font-size: 1rem;
+  height: 100px;
+  font-weight: 600;
+  text-align: center;
+  justify-content: center;
+  display: flex;
+}
+.agendamentos-agendamento {
+  padding: 12px 0;
 }
 </style>

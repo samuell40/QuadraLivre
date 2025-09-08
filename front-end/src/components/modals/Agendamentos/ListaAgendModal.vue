@@ -3,11 +3,11 @@
     <div class="modal-content">
       <h2>Horários da Quadra</h2>
 
-      <div v-for="d in datas" :key="d" class="dia-container">
+      <div v-for="d in datas" :key="`${d.ano}-${d.mes}-${d.dia}`" class="dia-container">
         <h3>{{ formatarData(d) }}</h3>
         <div class="horarios-linha">
           <div 
-            v-for="h in horariosPorDia[d]" 
+            v-for="h in horariosPorDia[`${d.ano}-${d.mes}-${d.dia}`]" 
             :key="h.hora" 
             class="horario"
             :class="h.agendamento ? 'agendado' : 'disponivel'"
@@ -18,21 +18,12 @@
         </div>
       </div>
 
-      <!-- Detalhes do agendamento selecionado -->
-      <div v-if="agendamentoSelecionado" class="detalhes-agendamento">
-        <h3>{{ agendamentoSelecionado.titulo || 'Agendamento' }}</h3>
-        <p><strong>Realizado por:</strong> {{ agendamentoSelecionado.usuario.nome }}</p>
-        <p>
-          <strong>Data:</strong> {{ agendamentoSelecionado.data }} 
-          às {{ agendamentoSelecionado.hora.toString().padStart(2,'0') }}:00
-        </p>
-        <p><strong>Duração:</strong> {{ agendamentoSelecionado.duracao }} hora(s)</p>
-        <p><strong>Tipo:</strong> {{ agendamentoSelecionado.tipo }}</p>
-        <p>
-          <strong>Time:</strong> {{ agendamentoSelecionado.usuario?.times[0]?.time?.nome || 'Sem time' }}
-        </p>
-        <button class="btn-cancelar" @click="agendamentoSelecionado = null">Fechar Detalhes</button>
-      </div>
+      <!-- Modal de detalhe do agendamento -->
+      <DetalheAgendModal 
+        v-if="agendamentoSelecionado" 
+        :agendamento="agendamentoSelecionado" 
+        @fechar="agendamentoSelecionado = null"
+      />
 
       <button class="btn-cancelar" @click="$emit('fechar')">Fechar Modal</button>
     </div>
@@ -42,19 +33,21 @@
 <script>
 import api from '@/axios';
 import Swal from 'sweetalert2';
+import DetalheAgendModal from './DetalharAgendModal.vue';
 
 export default {
   name: 'ListaAgendModal',
   props: {
     quadraId: { type: Number, required: true },
-    datas: { type: Array, required: true } // Array de datas YYYY-MM-DD
+    datas: { type: Array, required: true }
   },
   data() {
     return {
-      horariosPorDia: {}, // { "2025-09-03": [ {hora, agendamento} ] }
+      horariosPorDia: {},
       agendamentoSelecionado: null
     };
   },
+  components: { DetalheAgendModal },
   watch: {
     datas: {
       immediate: true,
@@ -74,30 +67,31 @@ export default {
     },
     async carregarHorarios(data) {
       try {
-        const [anoStr, mesStr, diaStr] = data.split('-');
-        const ano = parseInt(anoStr, 10);
-        const mes = parseInt(mesStr, 10);
-        const dia = parseInt(diaStr, 10);
+        const { ano, mes, dia } = data;
 
         const { data: agendamentos } = await api.get(
-          `/agendamentos/quadra/${this.quadraId}/confirmados?ano=${ano}&mes=${mes}&dia=${dia}`
+          `/agendamentos/quadra/${this.quadraId}/confirmados`,
+          { params: { ano, mes, dia } }
         );
 
         const horarios = [];
         for (let h = 7; h <= 23; h++) {
           const agendamento = agendamentos.find(a => h >= a.hora && h < a.hora + a.duracao);
+          if (agendamento) {
+            agendamento.usuario = agendamento.usuario.nome;
+            agendamento.time = agendamento.time?.nome || 'Não vinculado';
+          }
           horarios.push({ hora: h, agendamento: agendamento || null, data });
         }
 
-        // Substituição direta para Vue 3
-        this.horariosPorDia[data] = horarios;
+        this.horariosPorDia[`${ano}-${mes}-${dia}`] = horarios;
 
       } catch (err) {
         console.error('Erro da API ao carregar horários:', err);
         Swal.fire({
           icon: 'error',
           title: 'Erro',
-          text: `Não foi possível carregar os horários de ${data}.`,
+          text: `Não foi possível carregar os horários de ${data.dia}/${data.mes}/${data.ano}.`,
           confirmButtonColor: '#1E3A8A'
         });
       }
@@ -106,8 +100,7 @@ export default {
       this.agendamentoSelecionado = agendamento;
     },
     formatarData(d) {
-      const parts = d.split('-');
-      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      return `${String(d.dia).padStart(2,'0')}/${String(d.mes).padStart(2,'0')}/${d.ano}`;
     }
   }
 };

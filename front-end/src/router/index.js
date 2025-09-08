@@ -10,6 +10,8 @@ import PartidaView from '@/views/PartidaView.vue';
 import UsuariosView from '../views/UsuariosView';
 import MeusAgendamentosView from '../views/MeusAgendamentosView';
 import AgendarQuadrasView from '@/views/AgendarQuadrasView.vue';
+import AgendarQuadrasAdmView from '@/views/AgendarQuadrasAdmView.vue';
+import HorariosView from '@/views/HorariosView.vue';
 import GoogleCallback from '@/views/GoogleCallback.vue';
 
 const routes = [
@@ -29,13 +31,19 @@ const routes = [
     path: '/agendamentos',
     name: 'Agendamentos', 
     component: AgendamentosView,
-    meta: { requiresAuth: true, roles: [2] }, 
+    meta: { requiresAuth: true, roles: [1, 2] }, 
   },
   {
     path: '/agendarquadra',
     name: 'agendar_quadra',
     component: AgendarQuadrasView,
     meta: { requiresAuth: true, roles: [3] }, 
+  },
+  {
+    path: '/agendarquadrasadm',
+    name: 'agendar_quadra_adm',
+    component: AgendarQuadrasAdmView,
+    meta: { requiresAuth: true, roles: [1, 2] },
   },
   {
     path: '/meusagendamentos',
@@ -47,7 +55,7 @@ const routes = [
     path: '/cadastrarquadra',
     name: 'cadastrar_quadra',
     component: CadastrarQuadraView,
-    meta: { requiresAuth: true, roles: [1] }, 
+    meta: { requiresAuth: true, roles: [1, 2] }, 
   },
   {
     path: '/controleplacar',
@@ -83,6 +91,12 @@ const routes = [
     path: '/cadastro',
     name: 'Cadastro',
     component: CadastroView,
+    meta: { public: true },
+  },
+  {
+    path: '/horarios',
+    name: 'Horarios',
+    component: HorariosView,
     meta: { public: true },
   }
 ];

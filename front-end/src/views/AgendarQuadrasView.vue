@@ -15,132 +15,157 @@
 
       <div v-else class="quadras-grid">
         <div class="card-quadra" v-for="quadra in quadras" :key="quadra.id">
-          <img :src="quadra.foto || require('@/assets/futibinha.png')" :alt="quadra.nome" class="imagem-quadra" />
+          <img
+            :src="quadra.foto || require('@/assets/futibinha.png')"
+            :alt="quadra.nome"
+            class="imagem-quadra"
+          />
           <div class="overlay">
             <h3 class="nome-quadra">{{ quadra.nome }}</h3>
             <h3 class="endereco">{{ quadra.endereco }}</h3>
-            <button class="btn-agendar" @click="abrirModalidadeModal(quadra)">Agendar</button>
+            <button class="btn-agendar" @click="abrirAgendamentoDireto(quadra)">
+              Agendar
+            </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Modal para escolher modalidade -->
-    <ModalidadeModal v-if="mostrarModalidadeModal" :quadra-id="quadraSelecionada?.id"
-      @fechar="mostrarModalidadeModal = false" @confirmar="abrirAgendamentoModal" />
-
     <!-- Modal final de agendamento -->
-    <AgendamentoModal v-if="mostrarModalAgendamento && modalidadeSelecionada" :quadra="quadraSelecionada"
-      :modalidade="modalidadeSelecionada" @fechar="mostrarModalAgendamento = false" @confirmar="confirmarAgendamento" />
+    <AgendamentoModal
+      v-if="mostrarModalAgendamento"
+      :quadra="quadraSelecionada"
+      @fechar="mostrarModalAgendamento = false"
+      @confirmar="confirmarAgendamento"
+    />
   </div>
 </template>
 
 <script>
-import Swal from 'sweetalert2'
-import NavBar from '@/components/NavBar.vue'
-import AgendamentoModal from '@/components/modals/Agendamentos/AgendModal.vue'
-import ModalidadeModal from '@/components/modals/Agendamentos/ModalidadeModal.vue'
-import api from '@/axios'
-import { useAuthStore } from '@/store'
+import Swal from "sweetalert2";
+import NavBar from "@/components/NavBar.vue";
+import AgendamentoModal from "@/components/modals/Agendamentos/AgendModal.vue";
+import api from "@/axios";
+import { useAuthStore } from "@/store";
 
 export default {
-  name: 'AgendarQuadras',
-  components: { NavBar, AgendamentoModal, ModalidadeModal },
+  name: "AgendarQuadras",
+  components: { NavBar, AgendamentoModal },
   data() {
     return {
       quadras: [],
       isLoadingQuadras: true,
-      mostrarModalidadeModal: false,
       mostrarModalAgendamento: false,
       quadraSelecionada: null,
-      modalidadeSelecionada: null
-    }
+    };
   },
   mounted() {
-    this.carregarQuadras()
+    this.carregarQuadras();
   },
   methods: {
     async carregarQuadras() {
-      this.isLoadingQuadras = true
+      this.isLoadingQuadras = true;
       try {
-        const { data } = await api.get('/quadra')
-        this.quadras = data
+        const { data } = await api.get("/quadra");
+        this.quadras = data;
       } catch (err) {
-        console.error('Erro ao carregar quadras:', err)
+        console.error("Erro ao carregar quadras:", err);
       } finally {
-        this.isLoadingQuadras = false
+        this.isLoadingQuadras = false;
       }
     },
 
-    abrirModalidadeModal(quadra) {
-      this.quadraSelecionada = quadra
-      this.mostrarModalidadeModal = true
-    },
-
-    abrirAgendamentoModal(modalidade) {
-      this.modalidadeSelecionada = modalidade
-      this.mostrarModalidadeModal = false
-      this.mostrarModalAgendamento = true
+    abrirAgendamentoDireto(quadra) {
+      this.quadraSelecionada = quadra;
+      this.mostrarModalAgendamento = true;
     },
 
     async confirmarAgendamento(agendamentoDoModal) {
-      const authStore = useAuthStore()
+      const authStore = useAuthStore();
+
       if (!authStore.usuario) {
         Swal.fire({
-          title: 'Você precisa estar logado',
-          text: 'Deseja ir para a tela de login?',
-          icon: 'warning',
+          title: "Você precisa estar logado",
+          text: "Deseja ir para a tela de login?",
+          icon: "warning",
           showCancelButton: true,
-          confirmButtonText: 'Ir para login',
-          cancelButtonText: 'Cancelar',
-          confirmButtonColor: '#1E3A8A'
-        }).then(result => {
-          if (result.isConfirmed) this.$router.push('/login')
-        })
-        return
+          confirmButtonText: "Ir para login",
+          cancelButtonText: "Cancelar",
+          confirmButtonColor: "#1E3A8A",
+        }).then((result) => {
+          if (result.isConfirmed) this.$router.push("/login");
+        });
+        return;
+      }
+
+      if (!this.quadraSelecionada) {
+        Swal.fire({
+          icon: "error",
+          title: "Erro",
+          text: "Nenhuma quadra foi selecionada para o agendamento.",
+          confirmButtonColor: "#1E3A8A",
+        });
+        return;
       }
 
       const agendamento = {
         ...agendamentoDoModal,
         usuarioId: authStore.usuario.id,
         quadraId: this.quadraSelecionada.id,
-        modalidadeId: this.modalidadeSelecionada.id
-      }
+      };
 
       try {
-        await api.post('/agendamento', agendamento)
+        await api.post("/agendamento", agendamento);
+
         Swal.fire({
-          icon: 'success',
-          title: 'Agendamento realizado!',
-          text: `Quadra: ${this.quadraSelecionada.nome} | Modalidade: ${this.modalidadeSelecionada.nome}`,
-          confirmButtonColor: '#1E3A8A',
+          icon: "success",
+          title: "Agendamento realizado!",
+          text: `Quadra: ${this.quadraSelecionada.nome}`,
+          confirmButtonColor: "#1E3A8A",
           timer: 5000,
           showConfirmButton: false,
-          timerProgressBar: true
-        })
-        this.mostrarModalAgendamento = false
+          timerProgressBar: true,
+        });
+
+        this.mostrarModalAgendamento = false;
       } catch (err) {
+        const msg = err.response?.data?.error || err.response?.data?.message;
+
         if (err.response?.status === 409) {
+          // Conflito de horário na quadra
           Swal.fire({
-            icon: 'warning',
-            title: 'Horário já agendado',
-            text: 'Escolha outro horário para esta quadra.',
-            confirmButtonColor: '#1E3A8A'
-          })
+            icon: "warning",
+            title: "Horário já agendado",
+            text: "Escolha outro horário para esta quadra.",
+            confirmButtonColor: "#1E3A8A",
+          });
+        } else if (
+          err.response?.status === 400 &&
+          msg?.includes("já possui 2 agendamentos nesta semana")
+        ) {
+          // Limite de 2 agendamentos por semana
+          Swal.fire({
+            icon: "warning",
+            title: "Limite de agendamentos atingido",
+            text: msg,
+            confirmButtonColor: "#1E3A8A",
+          });
         } else {
           Swal.fire({
-            icon: 'error',
-            title: 'Erro inesperado',
-            text: 'Ocorreu um problema ao tentar agendar. Tente novamente.',
-            confirmButtonColor: '#1E3A8A'
-          })
+            icon: "error",
+            title: "Erro inesperado",
+            text: "Ocorreu um problema ao tentar agendar. Tente novamente.",
+            confirmButtonColor: "#1E3A8A",
+          });
         }
-        console.error('Erro ao agendar:', err)
+
+        console.error("Erro ao agendar:", err);
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
+
 
 <style scoped>
 body {

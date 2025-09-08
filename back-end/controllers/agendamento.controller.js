@@ -4,6 +4,7 @@ const {
   listarTodosAgendamentosService, 
   listarAgendamentosPorQuadraService,
   listarAgendamentosConfirmadosService,
+  listarAgendamentosConfirmadosSemanaService,
   cancelarAgendamentoService,
   atualizarAgendamentoService,
   listarModalidadesPorQuadraService,
@@ -17,7 +18,7 @@ const criarAgendamentoController = async (req, res) => {
 
     const { dia, mes, ano, hora, duracao, tipo, quadraId, modalidadeId, timeId } = req.body;
 
-    if (!dia || !mes || !ano || !hora || !quadraId || !modalidadeId || !timeId) {
+    if (!dia || !mes || !ano || !hora || !quadraId || !modalidadeId) {
       return res.status(400).json({ error: 'Campos obrigatórios não preenchidos.' });
     }
 
@@ -31,7 +32,7 @@ const criarAgendamentoController = async (req, res) => {
       tipo: tipo ?? 'TREINO',
       quadraId: Number(quadraId),
       modalidadeId: Number(modalidadeId),
-      timeId: Number(timeId)
+      timeId: timeId ? Number(timeId) : null
     });
 
     return res.status(201).json(agendamento);
@@ -111,6 +112,16 @@ const listarAgendamentosConfirmadosController = async (req, res) => {
   }
 };
 
+const listarAgendamentosConfirmadosSemana = async (req, res) => {
+  try {
+    const { quadraId } = req.params;
+    const agendamentos = await listarAgendamentosConfirmadosSemanaService(Number(quadraId));
+    res.json(agendamentos);
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message || 'Erro interno.' });
+  }
+};
+
 const cancelarAgendamentoController = async (req, res) => {
   try {
     const { id } = req.params;
@@ -179,6 +190,7 @@ module.exports = {
   listarAgendamentosAdminController,
   listarAgendamentosPorQuadraController,
   listarAgendamentosConfirmadosController,
+  listarAgendamentosConfirmadosSemana,
   cancelarAgendamentoController,
   aceitarAgendamentoController,
   recusarAgendamentoController,
