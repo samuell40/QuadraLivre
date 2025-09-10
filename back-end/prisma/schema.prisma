@@ -21,6 +21,8 @@ model Usuario {
   permissao    Permissao     @relation(fields: [permissaoId], references: [id])
   agendamentos Agendamento[]
   times        UsuarioTime[] // Relação com times
+
+  partidasCriadas Partida[] @relation("UsuarioCriador")
 }
 
 model Quadra {
@@ -96,17 +98,30 @@ model Partida {
   timeBId Int
   timeB   Time @relation("TimeBPartidas", fields: [timeBId], references: [id])
 
-  pontosTimeA Int @default(0)
-  pontosTimeB Int @default(0)
-  woTimeA Boolean @default(false)  
-  woTimeB Boolean @default(false)  
-  tempoSegundos   Int      @default(0)
-  partidaIniciada Boolean  @default(false)
-  finalizada      Boolean  @default(false)
-  emIntervalo     Boolean   @default(false)
+  pontosTimeA Int     @default(0)
+  pontosTimeB Int     @default(0)
+  woTimeA     Boolean @default(false)  
+  woTimeB     Boolean @default(false)  
+  tempoSegundos   Int     @default(0)
+  partidaIniciada Boolean @default(false)
+  finalizada      Boolean @default(false)
+  emIntervalo     Boolean @default(false)
+
+  faltasTimeA         Int @default(0)
+  faltasTimeB         Int @default(0)
+  substituicoesTimeA  Int @default(0)
+  substituicoesTimeB  Int @default(0)
+
+  cartoesAmarelosTimeA  Int @default(0)
+  cartoesAmarelosTimeB  Int @default(0)
+  cartoesVermelhosTimeA Int @default(0)
+  cartoesVermelhosTimeB Int @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  usuarioCriadorId Int
+  usuarioCriador   Usuario @relation("UsuarioCriador", fields: [usuarioCriadorId], references: [id])
 }
 
 model Placar {
@@ -143,7 +158,7 @@ model UsuarioTime {
   usuario Usuario @relation(fields: [usuarioId], references: [id])
   time    Time    @relation(fields: [timeId], references: [id])
 
-  @@id([usuarioId, timeId]) // PK composta
+  @@id([usuarioId, timeId]) 
 }
 
 model Permissao {

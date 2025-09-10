@@ -5,34 +5,23 @@
     <div class="box">
       <p>Sets Vencidos</p>
       <div class="controls">
-        <button 
-          @click="decrement('setsVencidos')" 
-          :disabled="!temporizadorAtivo || localTime.wo === 1"
-        >−</button>
-        
+        <button @click="decrement('setsVencidos')" :disabled="!temporizadorAtivo || localTime.wo === 1">−</button>
+
         <span>{{ localTime.setsVencidos }}</span>
-        
-        <button 
-          @click="increment('setsVencidos')" 
-          :disabled="!temporizadorAtivo || localTime.setsVencidos >= 3 || setsAdversario >= 3 || localTime.wo === 1"
-        >+</button>
+
+        <button @click="increment('setsVencidos')"
+          :disabled="!temporizadorAtivo || localTime.setsVencidos >= 3 || setsAdversario >= 3 || localTime.wo === 1">+</button>
       </div>
     </div>
 
     <div class="box">
       <p>W.O</p>
       <div class="controls">
-        <button 
-          @click="decrement('wo')" 
-          :disabled="!temporizadorAtivo || localTime.wo <= 0"
-        >−</button>
-        
+        <button @click="decrement('wo')" :disabled="!temporizadorAtivo || localTime.wo <= 0">−</button>
+
         <span>{{ localTime.wo }}</span>
-        
-        <button 
-          @click="increment('wo')" 
-          :disabled="!temporizadorAtivo || localTime.wo >= 1"
-        >+</button>
+
+        <button @click="increment('wo')" :disabled="!temporizadorAtivo || localTime.wo >= 1">+</button>
       </div>
     </div>
   </div>
@@ -48,13 +37,18 @@ export default {
     timeData: { type: Object, required: true },
     partidaId: { type: [String, Number], required: true },
     setsAdversario: { type: Number, default: 0 },
-    temporizadorAtivo: { type: Boolean, default: false }
+    temporizadorAtivo: { type: Boolean, default: false },
+    woAdversario: { type: Number, default: 0 }
   },
   data() {
+    const wo = this.timeData.wo !== undefined
+      ? this.timeData.wo
+      : 0
+
     return {
       localTime: {
-        setsVencidos: 0,
-        wo: 0,
+        setsVencidos: this.timeData.setsVencidos || 0,
+        wo,
         ...this.timeData
       }
     }
@@ -62,9 +56,10 @@ export default {
   watch: {
     timeData: {
       handler(newVal) {
+        const wo = newVal.wo !== undefined ? newVal.wo : 0
         this.localTime = {
-          setsVencidos: 0,
-          wo: 0,
+          setsVencidos: newVal.setsVencidos || 0,
+          wo,
           ...newVal
         }
       },
@@ -73,62 +68,49 @@ export default {
     }
   },
   methods: {
-    async increment(campo) {
+    increment(campo) {
       if (campo === 'setsVencidos') {
-        if (this.localTime.wo === 0 && this.localTime.setsVencidos < 3 && this.setsAdversario < 3) {
+        if (this.localTime.wo === 0 && this.woAdversario === 0 && this.localTime.setsVencidos < 3 && this.setsAdversario < 3) {
           this.localTime.setsVencidos++
         }
       } else if (campo === 'wo') {
         if (this.localTime.wo < 1) {
-          this.localTime.wo++
+          this.localTime.wo = 1
           this.localTime.setsVencidos = 0
         }
       } else {
         this.localTime[campo]++
       }
 
-      this.$emit('update', { ...this.localTime })
-
-      if (this.partidaId) {
-        try {
-          const pontosA = this.$parent.time1.setsVencidos || 0
-          const pontosB = this.$parent.time2.setsVencidos || 0
-
-          await api.put(`/partida/${this.partidaId}`, {
-            pontosTimeA: pontosA,
-            pontosTimeB: pontosB,
-            tempoSegundos: this.$parent.tempoSegundos
-          })
-        } catch (e) {
-          console.error("Erro ao atualizar no backend:", e)
-        }
-      }
+      this.emitUpdate()
     },
 
-    async decrement(campo) {
+    decrement(campo) {
       if (this.localTime[campo] > 0) {
         this.localTime[campo]--
-
-        if (campo === 'wo' && this.localTime.wo === 0) {
-          this.localTime.setsVencidos = 0
-        }
+        if (campo === 'wo' && this.localTime.wo === 0) this.localTime.setsVencidos = 0
       }
 
+      this.emitUpdate()
+    },
+
+    emitUpdate() {
       this.$emit('update', { ...this.localTime })
+    },
 
-      if (this.partidaId) {
-        try {
-          const pontosA = this.$parent.time1.setsVencidos || 0
-          const pontosB = this.$parent.time2.setsVencidos || 0
+    async salvarPlacar() {
+      if (!this.partidaId) return
 
-          await api.put(`/partida/${this.partidaId}`, {
-            pontosTimeA: pontosA,
-            pontosTimeB: pontosB,
-            tempoSegundos: this.$parent.tempoSegundos
-          })
-        } catch (e) {
-          console.error("Erro ao atualizar no backend:", e)
-        }
+      try {
+        await api.put(`/partida/${this.partidaId}`, {
+          pontosTimeA: this.localTime.setsVencidos || 0,
+          pontosTimeB: this.$parent.time2?.setsVencidos || 0,
+          tempoSegundos: this.$parent.tempoSegundos || 0,
+          woTimeA: this.localTime.wo === 1,
+          woTimeB: this.$parent.time2?.wo === 1
+        })
+      } catch (e) {
+        console.error("Erro ao atualizar no backend:", e)
       }
     }
   }

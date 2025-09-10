@@ -12,9 +12,9 @@
             </div>
 
             <div class="placar">
-              <span>{{ partida.pontosTimeA }}</span>
+              <span>{{ exibirPlacar(partida, 'A') }}</span>
               <span>x</span>
-              <span>{{ partida.pontosTimeB }}</span>
+              <span>{{ exibirPlacar(partida, 'B') }}</span>
 
               <div class="status-partida" :class="{ encerrada: partida.finalizada }">
                 {{ statusPartida(partida) }}
@@ -33,49 +33,52 @@
 </template>
 
 <script>
-import { useWebSocketStore } from "@/webscoket";
-import { mapState } from "pinia";
+import { useWebSocketStore } from '@/webscoket'
+import { storeToRefs } from 'pinia'
 
 export default {
   name: "ListaPartidas",
+
+  setup() {
+    const wsStore = useWebSocketStore()
+    wsStore.iniciar() // inicia conexão WS
+
+    const { partidasAtivas, partidasEncerradas } = storeToRefs(wsStore)
+
+    return {
+      partidasAtivas,
+      partidasEncerradas
+    }
+  },
+
   data() {
     return {
       tempoDecorrido: 0,
       intervaloTempo: null,
     };
   },
+
   computed: {
-    ...mapState(useWebSocketStore, [
-      "partidasAtivas",
-      "partidasEncerradas",
-      "placares",
-    ]),
+    // Une partidas ativas e encerradas em uma só lista
+    partidas() {
+      return [...this.partidasAtivas, ...this.partidasEncerradas]
+    },
 
+    // Agrupa por modalidade
     partidasPorModalidade() {
-      const todas = [...this.partidasAtivas, ...this.partidasEncerradas];
-      return todas.reduce((acc, partida) => {
-        let modalidade = partida.modalidade?.nome;
+      if (!this.partidas.length) return {};
 
+      return this.partidas.reduce((acc, partida) => {
+        let modalidade = partida.modalidade?.nome || "Sem Modalidade";
         modalidade = modalidade.charAt(0).toUpperCase() + modalidade.slice(1);
 
         if (!acc[modalidade]) acc[modalidade] = [];
         acc[modalidade].push(partida);
         return acc;
       }, {});
-    },
+    }
+  },
 
-  },
-  watch: {
-    partidasAtivas: {
-      handler(novas) {
-        if (novas.length > 0) {
-          this.iniciarCronometro(novas[0]);
-        }
-      },
-      deep: true,
-      immediate: true,
-    },
-  },
   methods: {
     iniciarCronometro(partida) {
       if (this.intervaloTempo) clearInterval(this.intervaloTempo);
@@ -88,6 +91,19 @@ export default {
         }, 1000);
       }
     },
+
+    exibirPlacar(partida, lado) {
+      const { woTimeA: woA, woTimeB: woB } = partida;
+      if (woA && woB) return "W.O";
+
+      if (woA && !woB) return lado === "A" ? "W.O" : "3";
+      if (woB && !woA) return lado === "B" ? "W.O" : "3";
+
+      return lado === "A"
+        ? (partida.pontosTimeA ?? partida.setsVencidosTimeA ?? 0)
+        : (partida.pontosTimeB ?? partida.setsVencidosTimeB ?? 0);
+    },
+
     statusPartida(partida) {
       if (partida.finalizada) return "ENCERRADA";
       if (partida.emIntervalo) return "PAUSADA";
@@ -95,14 +111,16 @@ export default {
         return `${this.tempoDecorrido} MIN`;
       }
       return "EM ANDAMENTO";
-    },
+    }
   },
+
+  mounted() {
+    // Inicia cronômetro para a primeira partida ativa
+    if (this.partidasAtivas.length) this.iniciarCronometro(this.partidasAtivas[0]);
+  },
+
   beforeUnmount() {
     if (this.intervaloTempo) clearInterval(this.intervaloTempo);
-  },
-  mounted() {
-    const wsStore = useWebSocketStore();
-    wsStore.iniciar();
   },
 };
 </script>

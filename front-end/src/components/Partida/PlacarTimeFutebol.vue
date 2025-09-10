@@ -37,11 +37,23 @@
         <button @click="increment('faltas')" :disabled="!temporizadorAtivo">+</button>
       </div>
     </div>
+
+    <div class="box">
+      <p>Substituições</p>
+      <div class="controls">
+        <button @click="decrement('substituicoes')"
+          :disabled="!temporizadorAtivo || localTime.substituicoes <= 0">−</button>
+        <span>{{ localTime.substituicoes }}</span>
+        <button @click="increment('substituicoes')"
+          :disabled="!temporizadorAtivo || localTime.substituicoes >= 3">+</button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import api from '@/axios'
+import Swal from 'sweetalert2';
 
 export default {
   name: 'PlacarTime',
@@ -54,10 +66,13 @@ export default {
   data() {
     return {
       localTime: {
-        golspro: 0,
-        cartaoamarelo: 0,
-        cartaovermelho: 0,
-        faltas: 0,
+        golspro: this.timeData.golspro || 0,
+        cartaoamarelo: this.timeData.cartaoamarelo || 0,
+        cartaovermelho: this.timeData.cartaovermelho || 0,
+        faltas: this.timeData.faltas || 0,
+        substituicoes: this.timeData.substituicoes || 0,
+        nome: this.timeData.nome || '',
+        foto: this.timeData.foto || '',
         ...this.timeData
       }
     }
@@ -66,56 +81,59 @@ export default {
     timeData: {
       handler(newVal) {
         this.localTime = {
-          golspro: 0,
-          cartaoamarelo: 0,
-          cartaovermelho: 0,
-          faltas: 0,
+          golspro: newVal.golspro || 0,
+          cartaoamarelo: newVal.cartaoamarelo || 0,
+          cartaovermelho: newVal.cartaovermelho || 0,
+          faltas: newVal.faltas || 0,
+          substituicoes: newVal.substituicoes || 0,
+          nome: newVal.nome || '',
+          foto: newVal.foto || '',
           ...newVal
         }
       },
-      deep: true
+      deep: true,
+      immediate: true
     }
   },
   methods: {
-    async increment(campo) {
-      this.localTime[campo]++
-      this.$emit('update', { ...this.localTime })
+    increment(campo) {
+      if (campo === 'substituicoes' && this.localTime.substituicoes >= 3) return;
 
-      if (this.partidaId) {
-        try {
-          const pontosA = this.$parent.time1.golspro || 0
-          const pontosB = this.$parent.time2.golspro || 0
+      this.localTime[campo]++;
+      this.emitUpdate();
+    },
 
-          await api.put(`/partida/${this.partidaId}`, {
-            pontosTimeA: pontosA,
-            pontosTimeB: pontosB,
-            tempoSegundos: this.$parent.tempoSegundos
-          })
-        } catch (e) {
-          console.error("Erro ao atualizar no backend:", e)
-        }
+    decrement(campo) {
+      if (this.localTime[campo] > 0) {
+        this.localTime[campo]--;
+        this.emitUpdate();
       }
     },
 
-    async decrement(campo) {
-      if (this.localTime[campo] > 0) {
-        this.localTime[campo]--
-        this.$emit('update', { ...this.localTime })
+    emitUpdate() {
+      this.$emit('update', { ...this.localTime });
+    },
 
-        if (this.partidaId) {
-          try {
-            const pontosA = this.$parent.time1.golspro || 0
-            const pontosB = this.$parent.time2.golspro || 0
+    async salvarPlacar() {
+      if (!this.partidaId) return;
 
-            await api.put(`/partida/${this.partidaId}`, {
-              pontosTimeA: pontosA,
-              pontosTimeB: pontosB,
-              tempoSegundos: this.$parent.tempoSegundos
-            })
-          } catch (e) {
-            console.error("Erro ao atualizar no backend:", e)
-          }
-        }
+      try {
+        await api.put(`/partida/${this.partidaId}`, {
+          pontosTimeA: this.localTime.golspro,
+          pontosTimeB: this.localTime.golspro,
+          tempoSegundos: this.$parent?.tempoSegundos,
+          substituicoesTimeA: this.localTime.substituicoes,
+          substituicoesTimeB: this.localTime.substituicoes,
+          faltasTimeA: this.localTime.faltas,
+          faltasTimeB: this.localTime.faltas,
+          cartoesAmarelosTimeA: this.localTime.cartaoamarelo,
+          cartoesAmarelosTimeB: this.localTime.cartaoamarelo,
+          cartoesVermelhosTimeA: this.localTime.cartaovermelho,
+          cartoesVermelhosTimeB: this.localTime.cartaovermelho
+        });
+      } catch (e) {
+        console.error("Erro ao atualizar no backend:", e);
+        Swal.fire("Erro", "Não foi possível salvar o placar.", "error");
       }
     }
   }

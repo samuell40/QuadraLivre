@@ -1,17 +1,27 @@
 const { WebSocketServer } = require("ws");
-const { listarPartidasAtivas } = require("./services/partida.service"); 
-const { setServer } = require("./ws-utils"); 
+const { listarPartidasAtivasDoUsuario } = require("./services/partida.service");
+const { setServer, broadcast } = require("./ws-utils");
 
 function initWebSocket(server) {
   const wss = new WebSocketServer({ server, path: "/placares" });
+  setServer(wss);
 
-  setServer(wss); 
-
-  wss.on("connection", async (ws) => {
+  wss.on("connection", async (ws, req) => {
     console.log("Novo cliente conectado ao placar!");
 
+    const urlParams = new URLSearchParams(req.url.replace("/placares?", ""));
+    const usuarioId = urlParams.get("usuarioId");
+
+    if (!usuarioId) {
+      ws.send(JSON.stringify({ tipo: "erro", mensagem: "UsuarioId não fornecido" }));
+      ws.close();
+      return;
+    }
+
+    ws.usuarioId = Number(usuarioId);
+
     try {
-      const partidasAtivas = await listarPartidasAtivas();
+      const partidasAtivas = await listarPartidasAtivasDoUsuario(usuarioId);
       ws.send(JSON.stringify({
         tipo: "snapshotPartidas",
         partidas: partidasAtivas
@@ -20,13 +30,8 @@ function initWebSocket(server) {
       console.error("Erro ao enviar partidas ativas via WebSocket:", err);
     }
 
-    ws.on("close", () => {
-      console.log("Cliente desconectado do WebSocket");
-    });
-
-    ws.on("error", (err) => {
-      console.error("Erro no WebSocket:", err);
-    });
+    ws.on("close", () => console.log("Cliente desconectado do WebSocket"));
+    ws.on("error", (err) => console.error("Erro no WebSocket:", err));
   });
 }
 

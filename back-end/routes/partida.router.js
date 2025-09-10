@@ -1,25 +1,26 @@
 const express = require('express');
 const controller = require('../controllers/partida.controller')
+const validarJWT = require('../middlewares/auth');
 const router = express.Router();
 
-router.post('/partida', controller.criarPartidaController)
+router.post('/partida', [validarJWT], controller.criarPartidaController)
 
-router.put("/pausar/:id", controller.pausarPartidaController);
+router.put('/partida/:id/encerrar',  [validarJWT], controller.finalizarPartidaController);
 
-router.put("/retomar/:id", controller.retomarPartidaController);
+router.put('/partida/:id/parcial',  [validarJWT], controller.atualizarParcialController);
 
-router.put('/finalizar/:id', controller.finalizarPartidaController)
+router.put('/placar/:id/incrementar', [validarJWT], controller.incrementarPlacarController);
 
-router.get('/listar', controller.listarPartidasController)
+router.get('/partidas', controller.listarPartidasController);
 
-router.put( '/placar/incrementar/:id', controller.incrementarPlacarController);
+router.get('/partidas/ativas', controller.listarPartidasAtivasController);
 
-router.put('/partida/:id', controller.atualizarParcialController);
+router.get('/partidas/encerradas', controller.listarPartidasEncerradasController);
 
-router.get('/partida/listar/ativas', controller.listarPartidasAtivasController);
+router.put("/partidas/:id/pausar", controller.pausarPartidaController);
 
-router.get('/partida/listar/encerradas', controller.listarPartidasEncerradasController);
+router.put("/partidas/:id/retomar", controller.retomarPartidaController);
 
-router.delete("/partidas/limpar/:modalidadeId", controller.limparPartidasController);
+router.get("/partida/aberta", [validarJWT], controller.listarPartidaAtivasUsuarioController);
 
 module.exports = router;

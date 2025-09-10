@@ -184,7 +184,7 @@ export default {
     async carregarPartidasAtivas() {
       this.isLoadingPartidas = true
       try {
-        const res = await api.get('/partida/listar/ativas')
+        const res = await api.get('partidas/ativas')
         const partidasRecebidas = Array.isArray(res.data)
           ? res.data.filter(p => p.partidaIniciada).map(p => ({
             ...p,
@@ -217,7 +217,7 @@ export default {
 
     async carregarPartidasEncerradas() {
       try {
-        const res = await api.get('/partida/listar/encerradas')
+        const res = await api.get('/partidas/encerradas')
         this.partidasEncerradas = Array.isArray(res.data) ? res.data : []
       } catch (err) {
         console.error("Erro ao carregar partidas encerradas:", err)
