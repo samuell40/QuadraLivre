@@ -11,6 +11,7 @@
     <div v-if="sidebarVisible" class="sidebar">
       <img src="../assets/QuadraLivre.png" alt="Logo">
 
+        <div class="sidebar-links">
       <a href="/dashboard">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
           <g fill="#fff">
@@ -74,6 +75,7 @@
         Quadra
       </a>
 
+
       <button class="logout-button" @click="logout">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-coin"
           viewBox="0 0 16 16">
@@ -84,6 +86,7 @@
         </svg>
         Sair
       </button>
+      </div>
     </div>
   </div>
 </template>
@@ -176,25 +179,6 @@ body {
     color: white;
 }
 
-.logout-button {
-    justify-content: center;
-    position: absolute;
-    bottom: 35px;
-    font-size: 16px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    background-color: transparent;
-    color: white;
-    border: none;
-    padding: 10px;
-    cursor: pointer;
-    width: 80%;
-    text-align: center;
-    font-family: 'Montserrat', sans-serif;
-}
-
 .logout-button svg {
     margin-right: 8px;
 }
@@ -223,5 +207,24 @@ body {
 
 .button-sidebar.hidden {
     color: #152147;
+}
+
+.sidebar-links {
+    display: flex;
+    flex-direction: column;
+}
+
+.logout-button {
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    width: 80%;
+    margin: 0 auto 35px;
 }
 </style>

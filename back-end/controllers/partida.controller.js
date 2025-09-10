@@ -126,17 +126,13 @@ async function retomarPartidaController(req, res) {
 
 async function listarPartidaAtivasUsuarioController(req, res) {
   try {
-    const usuarioId = req.user?.id; 
+    const usuarioId = req.user?.id;
 
     if (!usuarioId) {
       return res.status(400).json({ error: "Usuário não informado." });
     }
 
     const partidaAtiva = await partidas.listarPartidaAtivaUsuario(usuarioId);
-
-    if (!partidaAtiva) {
-      return res.status(404).json({ message: "Nenhuma partida aberta encontrada" });
-    }
 
     res.json(partidaAtiva);
   } catch (err) {
@@ -145,6 +141,17 @@ async function listarPartidaAtivasUsuarioController(req, res) {
   }
 }
 
+async function limparPartidasPorModalidadeController(req, res) {
+  try {
+    const { modalidadeId } = req.params;
+
+    const resultado = await partidas.limparPartidasPorModalidade(modalidadeId);
+    return res.json(resultado);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: err.message });
+  }
+}
 
 module.exports = {
   criarPartidaController,
@@ -156,5 +163,6 @@ module.exports = {
   listarPartidasEncerradasController,
   pausarPartidaController,
   retomarPartidaController,
-  listarPartidaAtivasUsuarioController
+  listarPartidaAtivasUsuarioController,
+  limparPartidasPorModalidadeController
 };

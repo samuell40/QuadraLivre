@@ -23,4 +23,6 @@ router.put("/partidas/:id/retomar", controller.retomarPartidaController);
 
 router.get("/partida/aberta", [validarJWT], controller.listarPartidaAtivasUsuarioController);
 
+router.delete('/limpar/:modalidadeId', controller.limparPartidasPorModalidadeController);
+
 module.exports = router;

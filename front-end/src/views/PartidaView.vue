@@ -4,7 +4,7 @@
     <div class="conteudo">
       <div class="header">
         <h1 class="title">Partidas ao Vivo</h1>
-        <button v-if="!partidaIniciada" class="limparpartidas" @click="icons">
+        <button v-if="!partidaIniciada" class="limparpartidas" @click="abrirModalLimpar">
           Limpar Partidas
         </button>
 
@@ -100,6 +100,9 @@
         </div>
       </div>
     </div>
+    <LimparPartidas v-if="mostrarModalLimpar" :aberto="mostrarModalLimpar" :modalidade-id="modalidadeSelecionada"
+      :modalidadesDisponiveis="modalidadesDisponiveis" @confirmar="limparPartidas"
+      @fechar="mostrarModalLimpar = false" />
   </div>
 </template>
 
@@ -107,6 +110,7 @@
 import SideBar from '@/components/SideBar.vue'
 import PlacarTime from '@/components/Partida/PlacarTimeFutebol.vue'
 import PlacarTimeVolei from '@/components/Partida/PlacarTimeVolei.vue'
+import LimparPartidas from '@/components/Partida/LimparPartidas.vue'
 import NavBarUse from '@/components/NavBarUser.vue'
 import api from '@/axios'
 import Swal from 'sweetalert2'
@@ -115,7 +119,7 @@ import { mapState } from 'pinia'
 
 export default {
   name: 'PartidaView',
-  components: { SideBar, NavBarUse, PlacarTime, PlacarTimeVolei },
+  components: { SideBar, NavBarUse, PlacarTime, PlacarTimeVolei, LimparPartidas },
 
   data() {
     return {
@@ -136,7 +140,8 @@ export default {
       time2: { setsVencidos: 0, pontos: 0 },
       inicioPartida: null,
       tempoSegundos: 0,
-      intervaloTemporizador: null
+      intervaloTemporizador: null,
+      mostrarModalLimpar: false,
     }
   },
 
@@ -165,6 +170,10 @@ export default {
   },
 
   methods: {
+    abrirModalLimpar() {
+      this.mostrarModalLimpar = true
+    },
+
     async togglePartida() {
       if (!this.partidaIniciada) {
         await this.iniciarPartida();
@@ -416,49 +425,58 @@ export default {
     },
 
     async carregarPartidaAberta() {
-      const res = await api.get("/partida/aberta");
-      const partida = res.data;
+      const token = localStorage.getItem("token")
+      if (!token) {
+        console.warn("Token não encontrado. Usuário não autenticado.")
+        return
+      }
 
-      if (partida) {
-        this.partidaId = partida.id;
-        this.modalidadeSelecionada = partida.modalidade.id;
-        this.timeSelecionado1 = partida.timeA.id;
-        this.timeSelecionado2 = partida.timeB.id;
+      try {
+        const res = await api.get("/partida/aberta")
+        const partida = res.data
 
-        this.times = [partida.timeA, partida.timeB];
+        if (partida) {
+          this.partidaId = partida.id
+          this.modalidadeSelecionada = partida.modalidade.id
+          this.timeSelecionado1 = partida.timeA.id
+          this.timeSelecionado2 = partida.timeB.id
 
-        this.partidaIniciada = true;
+          this.times = [partida.timeA, partida.timeB]
+          this.partidaIniciada = true
 
-        const tempoSalvo = localStorage.getItem(`partidaTempo_${this.partidaId}`);
-        this.tempoSegundos = tempoSalvo ? Number(tempoSalvo) : partida.tempoSegundos || 0;
+          const tempoSalvo = localStorage.getItem(`partidaTempo_${this.partidaId}`)
+          this.tempoSegundos = tempoSalvo ? Number(tempoSalvo) : partida.tempoSegundos || 0
 
-        this.inicioPartida = Date.now() - (this.tempoSegundos * 1000);
-        this.temporizadorAtivo = !partida.emIntervalo;
-        this.iniciarTemporizador();
+          this.inicioPartida = Date.now() - (this.tempoSegundos * 1000)
+          this.temporizadorAtivo = !partida.emIntervalo
+          this.iniciarTemporizador()
 
-        this.time1 = {
-          ...this.time1,
-          golspro: partida.pontosTimeA || 0,
-          setsVencidos: partida.setsVencidosTimeA || 0,
-          faltas: partida.faltasTimeA || 0,
-          substituicoes: partida.substituicoesTimeA || 0,
-          cartaoamarelo: partida.cartoesAmarelosTimeA || 0,
-          cartaovermelho: partida.cartoesVermelhosTimeA || 0,
-          wo: partida.woTimeA || false,
-          placarId: partida.timeA?.placar?.id
-        };
+          this.time1 = {
+            ...this.time1,
+            golspro: partida.pontosTimeA || 0,
+            setsVencidos: partida.setsVencidosTimeA || 0,
+            faltas: partida.faltasTimeA || 0,
+            substituicoes: partida.substituicoesTimeA || 0,
+            cartaoamarelo: partida.cartoesAmarelosTimeA || 0,
+            cartaovermelho: partida.cartoesVermelhosTimeA || 0,
+            wo: partida.woTimeA ? 1 : 0,
+            placarId: partida.timeA?.placar?.id
+          }
 
-        this.time2 = {
-          ...this.time2,
-          golspro: partida.pontosTimeB || 0,
-          setsVencidos: partida.setsVencidosTimeB || 0,
-          faltas: partida.faltasTimeB || 0,
-          substituicoes: partida.substituicoesTimeB || 0,
-          cartaoamarelo: partida.cartoesAmarelosTimeB || 0,
-          cartaovermelho: partida.cartoesVermelhosTimeB || 0,
-          wo: partida.woTimeB || false,
-          placarId: partida.timeB?.placar?.id
-        };
+          this.time2 = {
+            ...this.time2,
+            golspro: partida.pontosTimeB || 0,
+            setsVencidos: partida.setsVencidosTimeB || 0,
+            faltas: partida.faltasTimeB || 0,
+            substituicoes: partida.substituicoesTimeB || 0,
+            cartaoamarelo: partida.cartoesAmarelosTimeB || 0,
+            cartaovermelho: partida.cartoesVermelhosTimeB || 0,
+            wo: partida.woTimeB ? 1 : 0,
+            placarId: partida.timeB?.placar?.id
+          }
+        }
+      } catch (err) {
+        console.error("Erro ao carregar partida aberta:", err)
       }
     },
 
@@ -522,6 +540,18 @@ export default {
         this.$forceUpdate();
       }
     },
+
+    async limparPartidas(modalidadeId) {
+      try {
+        const res = await api.delete(`/limpar/${modalidadeId}`)
+        Swal.fire('Sucesso', res.data.message, 'success')
+        this.mostrarModalLimpar = false
+      } catch (err) {
+        console.error(err)
+        Swal.fire('Erro', 'Não foi possível limpar as partidas.', 'error')
+      }
+    },
+
     carregarPlacarTime(time) {
       if (time === "time1") this.time1 = { setsVencidos: 0, pontos: 0 }
       else if (time === "time2") this.time2 = { setsVencidos: 0, pontos: 0 }

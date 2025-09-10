@@ -9,14 +9,12 @@ async function criarPartida(data, usuarioId) {
     where: { timeId: timeAId },
     update: {},
     create: { time: { connect: { id: timeAId } } },
-    include: { time: true }
   });
 
   const placarB = await prisma.placar.upsert({
     where: { timeId: timeBId },
     update: {},
     create: { time: { connect: { id: timeBId } } },
-    include: { time: true }
   });
 
   const partida = await prisma.partida.create({
@@ -35,6 +33,9 @@ async function criarPartida(data, usuarioId) {
       usuarioCriador: true
     }
   });
+
+  partida.timeA.placarId = placarA.id;
+  partida.timeB.placarId = placarB.id;
 
   broadcast({ tipo: "partidaIniciada", partida });
   return partida;
@@ -250,11 +251,33 @@ async function listarPartidaAtivaUsuario(usuarioId) {
       cartoesAmarelosTimeB: true,
       cartoesVermelhosTimeA: true,
       cartoesVermelhosTimeB: true,
+      woTimeA: true,
+      woTimeB: true,
       modalidade: { select: { id: true, nome: true } },
-      timeA: { select: { id: true, nome: true, foto: true } },
-      timeB: { select: { id: true, nome: true, foto: true } }
+      timeA: { select: { id: true, nome: true, foto: true, placar: true } },
+      timeB: { select: { id: true, nome: true, foto: true, placar: true } }
+
     }
   });
+}
+
+async function limparPartidasPorModalidade(modalidadeId) {
+  if (!modalidadeId) throw new Error("ID da modalidade é obrigatório");
+
+  const partidas = await prisma.partida.findMany({
+    where: { modalidadeId: Number(modalidadeId) },
+    include: {
+      timeA: true,
+      timeB: true,
+      modalidade: true,
+    }
+  });
+
+  await prisma.partida.deleteMany({
+    where: { modalidadeId: Number(modalidadeId) }
+  });
+
+  broadcast({ tipo: "partidasRemovidas", modalidadeId });
 }
 
 module.exports = {
@@ -267,5 +290,6 @@ module.exports = {
   listarPartidasEncerradas,
   pausarPartida,
   retomarPartida,
-  listarPartidaAtivaUsuario
+  listarPartidaAtivaUsuario,
+  limparPartidasPorModalidade
 };

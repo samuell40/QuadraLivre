@@ -41,7 +41,7 @@ export default {
 
   setup() {
     const wsStore = useWebSocketStore()
-    wsStore.iniciar() // inicia conexão WS
+    wsStore.iniciar()
 
     const { partidasAtivas, partidasEncerradas } = storeToRefs(wsStore)
 
@@ -59,12 +59,10 @@ export default {
   },
 
   computed: {
-    // Une partidas ativas e encerradas em uma só lista
     partidas() {
       return [...this.partidasAtivas, ...this.partidasEncerradas]
     },
 
-    // Agrupa por modalidade
     partidasPorModalidade() {
       if (!this.partidas.length) return {};
 

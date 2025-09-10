@@ -52,11 +52,12 @@ export default {
       if (!this.modalidadeSelecionada) return;
 
       try {
-        await api.delete(`/partidas/limpar/${this.modalidadeSelecionada}`);
+        await api.delete(`/limpar/${this.modalidadeSelecionada}`);
 
         Swal.fire("Sucesso", "Todas as partidas foram removidas!", "success");
 
-        this.$emit("confirmado", this.modalidadeSelecionada);
+        this.$emit("confirmar", this.modalidadeSelecionada);
+
         this.$emit("fechar");
         this.modalidadeSelecionada = "";
       } catch (error) {
