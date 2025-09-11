@@ -54,8 +54,6 @@ export default {
       try {
         await api.delete(`/limpar/${this.modalidadeSelecionada}`);
 
-        Swal.fire("Sucesso", "Todas as partidas foram removidas!", "success");
-
         this.$emit("confirmar", this.modalidadeSelecionada);
 
         this.$emit("fechar");

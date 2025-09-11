@@ -6,22 +6,11 @@ function initWebSocket(server) {
   const wss = new WebSocketServer({ server, path: "/placares" });
   setServer(wss);
 
-  wss.on("connection", async (ws, req) => {
+  wss.on("connection", async (ws) => {
     console.log("Novo cliente conectado ao placar!");
 
-    const urlParams = new URLSearchParams(req.url.replace("/placares?", ""));
-    const usuarioId = urlParams.get("usuarioId");
-
-    if (!usuarioId) {
-      ws.send(JSON.stringify({ tipo: "erro", mensagem: "UsuarioId não fornecido" }));
-      ws.close();
-      return;
-    }
-
-    ws.usuarioId = Number(usuarioId);
-
     try {
-      const partidasAtivas = await listarPartidasAtivasDoUsuario(usuarioId);
+      const partidasAtivas = await listarPartidasAtivasDoUsuario(); 
       ws.send(JSON.stringify({
         tipo: "snapshotPartidas",
         partidas: partidasAtivas

@@ -99,6 +99,46 @@ export const useWebSocketStore = defineStore("websocket", {
               break
             }
 
+            // Partida pausada
+            case "partidaPausada": {
+              const partida = {
+                ...data.partida,
+                woTimeA: toBool(data.partida.woTimeA),
+                woTimeB: toBool(data.partida.woTimeB),
+                finalizada: toBool(data.partida.finalizada),
+                emIntervalo: true
+              }
+
+              const index = this.partidasAtivas.findIndex(p => p.id === partida.id)
+              if (index !== -1) {
+                this.partidasAtivas[index] = {
+                  ...this.partidasAtivas[index],
+                  ...partida
+                }
+              }
+              break
+            }
+
+            // Partida retomada
+            case "partidaRetomada": {
+              const partida = {
+                ...data.partida,
+                woTimeA: toBool(data.partida.woTimeA),
+                woTimeB: toBool(data.partida.woTimeB),
+                finalizada: toBool(data.partida.finalizada),
+                emIntervalo: false
+              }
+
+              const index = this.partidasAtivas.findIndex(p => p.id === partida.id)
+              if (index !== -1) {
+                this.partidasAtivas[index] = {
+                  ...this.partidasAtivas[index],
+                  ...partida
+                }
+              }
+              break
+            }
+
             // Atualização de placar em tempo real
             case "placarUpdate": {
               this.placares[data.partidaId] = {
@@ -114,7 +154,6 @@ export const useWebSocketStore = defineStore("websocket", {
                 emIntervalo: toBool(data.emIntervalo),
               }
 
-              // Atualiza a partida ativa correspondente
               const index = this.partidasAtivas.findIndex(p => p.id === data.partidaId)
               if (index !== -1) {
                 this.partidasAtivas[index] = {

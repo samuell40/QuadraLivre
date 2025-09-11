@@ -35,6 +35,7 @@
 <script>
 import { useWebSocketStore } from '@/webscoket'
 import { storeToRefs } from 'pinia'
+import { watch, ref } from 'vue'
 
 export default {
   name: "ListaPartidas",
@@ -45,17 +46,37 @@ export default {
 
     const { partidasAtivas, partidasEncerradas } = storeToRefs(wsStore)
 
+    // Watch para iniciar cronômetro automaticamente quando uma nova partida aparecer
+    watch(partidasAtivas, (novasPartidas) => {
+      if (novasPartidas.length) {
+        const primeiraPartida = novasPartidas[0]
+        iniciarCronometro(primeiraPartida)
+      }
+    })
+
+    // Função para cronômetro (declarada aqui para uso dentro do watch)
+    const tempoDecorrido = ref(0)
+    let intervaloTempo = null
+
+    function iniciarCronometro(partida) {
+      if (intervaloTempo) clearInterval(intervaloTempo)
+
+      if (partida?.createdAt && !partida.finalizada) {
+        intervaloTempo = setInterval(() => {
+          const inicio = new Date(partida.createdAt)
+          const agora = new Date()
+          tempoDecorrido.value = Math.floor((agora - inicio) / 60000)
+        }, 1000)
+      }
+    }
+
     return {
       partidasAtivas,
-      partidasEncerradas
+      partidasEncerradas,
+      tempoDecorrido,
+      iniciarCronometro,
+      intervaloTempo
     }
-  },
-
-  data() {
-    return {
-      tempoDecorrido: 0,
-      intervaloTempo: null,
-    };
   },
 
   computed: {
@@ -64,63 +85,46 @@ export default {
     },
 
     partidasPorModalidade() {
-      if (!this.partidas.length) return {};
+      if (!this.partidas.length) return {}
 
       return this.partidas.reduce((acc, partida) => {
-        let modalidade = partida.modalidade?.nome || "Sem Modalidade";
-        modalidade = modalidade.charAt(0).toUpperCase() + modalidade.slice(1);
+        let modalidade = partida.modalidade?.nome || "Sem Modalidade"
+        modalidade = modalidade.charAt(0).toUpperCase() + modalidade.slice(1)
 
-        if (!acc[modalidade]) acc[modalidade] = [];
-        acc[modalidade].push(partida);
-        return acc;
-      }, {});
+        if (!acc[modalidade]) acc[modalidade] = []
+        acc[modalidade].push(partida)
+        return acc
+      }, {})
     }
   },
 
   methods: {
-    iniciarCronometro(partida) {
-      if (this.intervaloTempo) clearInterval(this.intervaloTempo);
-
-      if (partida?.createdAt && !partida.finalizada) {
-        this.intervaloTempo = setInterval(() => {
-          const inicio = new Date(partida.createdAt);
-          const agora = new Date();
-          this.tempoDecorrido = Math.floor((agora - inicio) / 60000);
-        }, 1000);
-      }
-    },
-
     exibirPlacar(partida, lado) {
-      const { woTimeA: woA, woTimeB: woB } = partida;
-      if (woA && woB) return "W.O";
+      const { woTimeA: woA, woTimeB: woB } = partida
+      if (woA && woB) return "W.O"
 
-      if (woA && !woB) return lado === "A" ? "W.O" : "3";
-      if (woB && !woA) return lado === "B" ? "W.O" : "3";
+      if (woA && !woB) return lado === "A" ? "W.O" : "3"
+      if (woB && !woA) return lado === "B" ? "W.O" : "3"
 
       return lado === "A"
         ? (partida.pontosTimeA ?? partida.setsVencidosTimeA ?? 0)
-        : (partida.pontosTimeB ?? partida.setsVencidosTimeB ?? 0);
+        : (partida.pontosTimeB ?? partida.setsVencidosTimeB ?? 0)
     },
 
     statusPartida(partida) {
-      if (partida.finalizada) return "ENCERRADA";
-      if (partida.emIntervalo) return "PAUSADA";
+      if (partida.finalizada) return "ENCERRADA"
+      if (partida.emIntervalo) return "PAUSADA"
       if (!partida.finalizada && this.partidasAtivas[0]?.id === partida.id) {
-        return `${this.tempoDecorrido} MIN`;
+        return `${this.tempoDecorrido} MIN`
       }
-      return "EM ANDAMENTO";
+      return "EM ANDAMENTO"
     }
   },
 
-  mounted() {
-    // Inicia cronômetro para a primeira partida ativa
-    if (this.partidasAtivas.length) this.iniciarCronometro(this.partidasAtivas[0]);
-  },
-
   beforeUnmount() {
-    if (this.intervaloTempo) clearInterval(this.intervaloTempo);
-  },
-};
+    if (this.intervaloTempo) clearInterval(this.intervaloTempo)
+  }
+}
 </script>
 
 <style scoped>

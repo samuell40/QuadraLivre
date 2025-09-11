@@ -276,7 +276,7 @@ export default {
       const width = 500, height = 600
       const left = window.screenX + (window.outerWidth - width) / 2
       const top = window.screenY + (window.outerHeight - height) / 2.5
-      const popup = window.open('http://localhost:3000/auth/google', 'Login com Google',
+      const popup = window.open('https://quadra-livre-backend.onrender.com/auth/google', 'Login com Google',
         `width=${width},height=${height},left=${left},top=${top}`)
 
       const listener = event => {

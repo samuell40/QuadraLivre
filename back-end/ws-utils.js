@@ -9,7 +9,8 @@ function setServer(server) {
 }
 
 /**
- * @param {Object} data 
+ * Envia mensagem para todos os clientes conectados
+ * @param {Object} data
  */
 function broadcast(data) {
   if (!wss) return;
@@ -22,21 +23,4 @@ function broadcast(data) {
   });
 }
 
-/**
-
- * @param {Object} data 
- * @param {Function} filterFn -
- */
-
-function broadcast(data, filterFn) {
-  if (!wss) return;
-  const msg = JSON.stringify(data);
-
-  wss.clients.forEach(client => {
-    if (client.readyState === client.OPEN && filterFn(client)) {
-      client.send(msg);
-    }
-  });
-}
-
-module.exports = { setServer, broadcast};
+module.exports = { setServer, broadcast };

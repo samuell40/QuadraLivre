@@ -11,7 +11,7 @@
     <div v-if="sidebarVisible" class="sidebar">
       <img src="../assets/QuadraLivre.png" alt="Logo">
 
-        <div class="sidebar-links">
+
       <a href="/dashboard">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
           <g fill="#fff">
@@ -25,28 +25,33 @@
 
       <a v-if="usuario?.permissaoId !== 1" href="/agendamentos">
         <svg width="16" height="16" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M9.375 7.5V1.25M21.875 7.5V1.25M26.875 21.25V26.875H4.375V23.125M26.7038 10.625H4.19M0.625 22.8125V23.125H23L23.1875 22.8125L23.48 22.1988C25.7152 17.5009 26.875 12.3638 26.875 7.16125V4.375H4.375V7.035C4.37505 12.2777 3.1973 17.4535 0.92875 22.18L0.625 22.8125Z" stroke="white" />
+          <path
+            d="M9.375 7.5V1.25M21.875 7.5V1.25M26.875 21.25V26.875H4.375V23.125M26.7038 10.625H4.19M0.625 22.8125V23.125H23L23.1875 22.8125L23.48 22.1988C25.7152 17.5009 26.875 12.3638 26.875 7.16125V4.375H4.375V7.035C4.37505 12.2777 3.1973 17.4535 0.92875 22.18L0.625 22.8125Z"
+            stroke="white" />
         </svg>
         Agendamentos
       </a>
 
       <a href="/agendarquadrasadm">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
-          <path fill="white" d="M3 4h18v2H3V4zm0 4h18v2H3V8zm0 4h18v2H3v-2zm0 4h12v2H3v-2z"/>
+          <path fill="white" d="M3 4h18v2H3V4zm0 4h18v2H3V8zm0 4h18v2H3v-2zm0 4h12v2H3v-2z" />
         </svg>
         Agendar Quadras
       </a>
 
       <a href="/horarios">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
-          <path fill="white" d="M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1zm0 20a9 9 0 1 1 9-9 9.01 9.01 0 0 1-9 9zm.5-9.25V6h-1v6l5.25 3.15.5-.86z"/>
+          <path fill="white"
+            d="M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1zm0 20a9 9 0 1 1 9-9 9.01 9.01 0 0 1-9 9zm.5-9.25V6h-1v6l5.25 3.15.5-.86z" />
         </svg>
         Horários
       </a>
 
       <a href="/usuarios">
         <svg width="16" height="16" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M15 12.5C16.3261 12.5 17.5979 11.9732 18.5355 11.0355C19.4732 10.0979 20 8.82608 20 7.5C20 6.17392 19.4732 4.90215 18.5355 3.96447C17.5979 3.02678 16.3261 2.5 15 2.5C13.6739 2.5 12.4021 3.02678 11.4645 3.96447C10.5268 4.90215 10 6.17392 10 7.5C10 8.82608 10.5268 10.0979 11.4645 11.0355C12.4021 11.9732 13.6739 12.5 15 12.5ZM6.875 16.25C7.7038 16.25 8.49866 15.9208 9.08471 15.3347C9.67076 14.7487 10 13.9538 10 13.125C10 12.2962 9.67076 11.5013 9.08471 10.9153C8.49866 10.3292 7.7038 10 6.875 10C6.0462 10 5.25134 10.3292 4.66529 10.9153C4.07924 11.5013 3.75 12.2962 3.75 13.125C3.75 13.9538 4.07924 14.7487 4.66529 15.3347C5.25134 15.9208 6.0462 16.25 6.875 16.25ZM26.25 13.125C26.25 13.9538 25.9208 14.7487 25.3347 15.3347C24.7487 15.9208 23.9538 16.25 23.125 16.25C22.2962 16.25 21.5013 15.9208 20.9153 15.3347C20.3292 14.7487 20 13.9538 20 13.125C20 12.2962 20.3292 11.5013 20.9153 10.9153C21.5013 10.3292 22.2962 10 23.125 10C23.9538 10 24.7487 10.3292 25.3347 10.9153C25.9208 11.5013 26.25 12.2962 26.25 13.125ZM15 13.75C16.6576 13.75 18.2473 14.4085 19.4194 15.5806C20.5915 16.7527 21.25 18.3424 21.25 20V27.5H8.75V20C8.75 18.3424 9.40848 16.7527 10.5806 15.5806C11.7527 14.4085 13.3424 13.75 15 13.75ZM6.25 20C6.25 19.1338 6.375 18.2975 6.61 17.5075L6.3975 17.525C5.3261 17.6426 4.33583 18.1516 3.61658 18.9544C2.89733 19.7571 2.49972 20.7972 2.5 21.875V27.5H6.25ZM27.5 27.5V21.875C27.5001 20.7605 27.0749 19.6879 26.3111 18.8762C25.5473 18.0646 24.5025 17.575 23.39 17.5075C23.6238 18.2975 23.75 19.1338 23.75 20V27.5H27.5Z" fill="white"/>
+          <path
+            d="M15 12.5C16.3261 12.5 17.5979 11.9732 18.5355 11.0355C19.4732 10.0979 20 8.82608 20 7.5C20 6.17392 19.4732 4.90215 18.5355 3.96447C17.5979 3.02678 16.3261 2.5 15 2.5C13.6739 2.5 12.4021 3.02678 11.4645 3.96447C10.5268 4.90215 10 6.17392 10 7.5C10 8.82608 10.5268 10.0979 11.4645 11.0355C12.4021 11.9732 13.6739 12.5 15 12.5ZM6.875 16.25C7.7038 16.25 8.49866 15.9208 9.08471 15.3347C9.67076 14.7487 10 13.9538 10 13.125C10 12.2962 9.67076 11.5013 9.08471 10.9153C8.49866 10.3292 7.7038 10 6.875 10C6.0462 10 5.25134 10.3292 4.66529 10.9153C4.07924 11.5013 3.75 12.2962 3.75 13.125C3.75 13.9538 4.07924 14.7487 4.66529 15.3347C5.25134 15.9208 6.0462 16.25 6.875 16.25ZM26.25 13.125C26.25 13.9538 25.9208 14.7487 25.3347 15.3347C24.7487 15.9208 23.9538 16.25 23.125 16.25C22.2962 16.25 21.5013 15.9208 20.9153 15.3347C20.3292 14.7487 20 13.9538 20 13.125C20 12.2962 20.3292 11.5013 20.9153 10.9153C21.5013 10.3292 22.2962 10 23.125 10C23.9538 10 24.7487 10.3292 25.3347 10.9153C25.9208 11.5013 26.25 12.2962 26.25 13.125ZM15 13.75C16.6576 13.75 18.2473 14.4085 19.4194 15.5806C20.5915 16.7527 21.25 18.3424 21.25 20V27.5H8.75V20C8.75 18.3424 9.40848 16.7527 10.5806 15.5806C11.7527 14.4085 13.3424 13.75 15 13.75ZM6.25 20C6.25 19.1338 6.375 18.2975 6.61 17.5075L6.3975 17.525C5.3261 17.6426 4.33583 18.1516 3.61658 18.9544C2.89733 19.7571 2.49972 20.7972 2.5 21.875V27.5H6.25ZM27.5 27.5V21.875C27.5001 20.7605 27.0749 19.6879 26.3111 18.8762C25.5473 18.0646 24.5025 17.575 23.39 17.5075C23.6238 18.2975 23.75 19.1338 23.75 20V27.5H27.5Z"
+            fill="white" />
         </svg>
         Usuarios
       </a>
@@ -54,7 +59,7 @@
       <a href="/controleplacar">
         <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
           <path fill="#ffffff"
-            d="M471.6 21.7c-21.9-21.9-57.3-21.9-79.2 0L368 46.1 465.9 144 490.3 119.6c21.9-21.9 21.9-57.3 0-79.2L471.6 21.7zm-299.2 220c-6.1 6.1-10.8 13.6-13.5 21.9l-29.6 88.8c-2.9 8.6-.6 18.1 5.8 24.6s15.9 8.7 24.6 5.8l88.8-29.6c8.2-2.7 15.7-7.4 21.9-13.5L432 177.9 334.1 80 172.4 241.7zM96 64C43 64 0 107 0 160L0 416c0 53 43 96 96 96l256 0c53 0 96-43 96-96l0-96c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7-14.3 32-32 32L96 448c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 64z"/>
+            d="M471.6 21.7c-21.9-21.9-57.3-21.9-79.2 0L368 46.1 465.9 144 490.3 119.6c21.9-21.9 21.9-57.3 0-79.2L471.6 21.7zm-299.2 220c-6.1 6.1-10.8 13.6-13.5 21.9l-29.6 88.8c-2.9 8.6-.6 18.1 5.8 24.6s15.9 8.7 24.6 5.8l88.8-29.6c8.2-2.7 15.7-7.4 21.9-13.5L432 177.9 334.1 80 172.4 241.7zM96 64C43 64 0 107 0 160L0 416c0 53 43 96 96 96l256 0c53 0 96-43 96-96l0-96c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7-14.3 32-32 32L96 448c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 64z" />
         </svg>
         Placar
       </a>
@@ -62,7 +67,7 @@
       <a href="/partida">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
           <path fill="currentColor"
-            d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h3V2h2v2h6V2h2v2h3q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm7.25-2h1.5v-1.5h-1.5zm4.25-3H18q.425 0 .713-.288T19 14v-4q0-.425-.288-.712T18 9h-2.5q-.425 0-.712.288T14.5 10v4q0 .425.288.713T15.5 15M5 15h4.5v-1.5h-3v-1h2q.425 0 .713-.288T9.5 11.5V10q0-.425-.288-.712T8.5 9H5v1.5h3v1H6q-.425 0-.712.288T5 12.5zm6.25-.5h1.5V13h-1.5zm4.75-1v-3h1.5v3zM11.25 11h1.5V9.5h-1.5zm0-3.5h1.5V6h-1.5z"/>
+            d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h3V2h2v2h6V2h2v2h3q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm7.25-2h1.5v-1.5h-1.5zm4.25-3H18q.425 0 .713-.288T19 14v-4q0-.425-.288-.712T18 9h-2.5q-.425 0-.712.288T14.5 10v4q0 .425.288.713T15.5 15M5 15h4.5v-1.5h-3v-1h2q.425 0 .713-.288T9.5 11.5V10q0-.425-.288-.712T8.5 9H5v1.5h3v1H6q-.425 0-.712.288T5 12.5zm6.25-.5h1.5V13h-1.5zm4.75-1v-3h1.5v3zM11.25 11h1.5V9.5h-1.5zm0-3.5h1.5V6h-1.5z" />
         </svg>
         Partida
       </a>
@@ -75,7 +80,6 @@
         Quadra
       </a>
 
-
       <button class="logout-button" @click="logout">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-coin"
           viewBox="0 0 16 16">
@@ -86,7 +90,6 @@
         </svg>
         Sair
       </button>
-      </div>
     </div>
   </div>
 </template>
@@ -95,136 +98,136 @@
 import router from '@/router';
 
 export default {
-    name: "SideBar",
-    data() {
-        return {
-            sidebarVisible: true,
-            isMobile: false,
-            usuario: null
-        };
+  name: "SideBar",
+  data() {
+    return {
+      sidebarVisible: true,
+      isMobile: false,
+      usuario: null
+    };
+  },
+  mounted() {
+    window.addEventListener('resize', this.handleResize);
+    this.handleResize();
+    this.usuario = JSON.parse(localStorage.getItem("usuario"));
+    console.log("Usuário logado no SideBar:", this.usuario);
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.handleResize);
+  },
+  methods: {
+    toggleSidebar() {
+      if (this.isMobile) {
+        this.sidebarVisible = !this.sidebarVisible;
+      } else {
+        this.sidebarVisible = true;
+      }
     },
-    mounted() {
-        window.addEventListener('resize', this.handleResize);
-        this.handleResize();
-        this.usuario = JSON.parse(localStorage.getItem("usuario"));
-        console.log("Usuário logado no SideBar:", this.usuario);
+    logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('usuario');
+      router.push('/');
     },
-    beforeUnmount() {
-        window.removeEventListener('resize', this.handleResize);
-    },
-    methods: {
-        toggleSidebar() {
-            if (this.isMobile) {
-                this.sidebarVisible = !this.sidebarVisible;
-            } else {
-                this.sidebarVisible = true;
-            }
-        },
-        logout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('usuario');
-            router.push('/');
-        },
-        handleResize() {
-            this.isMobile = window.innerWidth <= 768;
-            this.sidebarVisible = !this.isMobile;
-        }
-    },
+    handleResize() {
+      this.isMobile = window.innerWidth <= 768;
+      this.sidebarVisible = !this.isMobile;
+    }
+  },
 };
 </script>
 
 <style>
 body {
-    margin: 0;
-    font-family: 'Montserrat', sans-serif;
-    background-color: white;
+  margin: 0;
+  font-family: 'Montserrat', sans-serif;
+  background-color: white;
 }
 
 .sidebar {
-    height: 100%;
-    width: 250px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    background-color: #152147;
-    padding-top: 20px;
-    text-align: center;
-    box-shadow: 0 4px 10px -1px rgba(0, 0, 0, 0.10);
-    z-index: 10;
+  height: 100%;
+  width: 250px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: #152147;
+  padding-top: 20px;
+  text-align: center;
+  box-shadow: 0 4px 10px -1px rgba(0, 0, 0, 0.10);
+  z-index: 10;
 }
 
 .sidebar img {
-    width: 170px;
-    margin-top: 20px;
-    margin-bottom: 30px;
-    border: 1px solid;
+  width: 170px;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  border: 1px solid;
 }
 
 .sidebar a {
-    padding: 20px 15px;
-    text-decoration: none;
-    font-size: 16px;
-    text-align: left;
-    color: white;
-    display: block;
-    margin-left: 30px;
+  padding: 20px 15px;
+  text-decoration: none;
+  font-size: 16px;
+  text-align: left;
+  color: white;
+  display: block;
+  margin-left: 30px;
 }
 
 .sidebar a svg {
-    margin-right: 6px;
-    vertical-align: middle;
+  margin-right: 6px;
+  vertical-align: middle;
 }
 
 .sidebar a:hover {
-    color: white;
+  color: white;
 }
 
 .logout-button svg {
-    margin-right: 8px;
+  margin-right: 8px;
 }
 
 .logout-button:hover {
-    color: white;
+  color: white;
 }
 
 .button-sidebar {
-    position: fixed;
-    top: -4px;
-    left: -3px;
-    font-size: 7px;
-    padding: 10px 14px;
-    border: none;
-    outline: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 5px;
-    z-index: 1000;
-    cursor: pointer;
-    background: transparent;
-    color: rgb(240, 231, 231);
+  position: fixed;
+  top: -4px;
+  left: -3px;
+  font-size: 7px;
+  padding: 10px 14px;
+  border: none;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  z-index: 1000;
+  cursor: pointer;
+  background: transparent;
+  color: rgb(240, 231, 231);
 }
 
 .button-sidebar.hidden {
-    color: #152147;
+  color: #152147;
 }
 
 .sidebar-links {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .logout-button {
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: transparent;
-    color: white;
-    border: none;
-    padding: 10px;
-    cursor: pointer;
-    width: 80%;
-    margin: 0 auto 35px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  width: 80%;
+  margin: 0 auto 35px;
 }
 </style>
