@@ -114,8 +114,6 @@ import LimparPartidas from '@/components/Partida/LimparPartidas.vue'
 import NavBarUse from '@/components/NavBarUser.vue'
 import api from '@/axios'
 import Swal from 'sweetalert2'
-import { useWebSocketStore } from '@/webscoket'
-import { mapState } from 'pinia'
 
 export default {
   name: 'PartidaView',
@@ -146,8 +144,6 @@ export default {
   },
 
   computed: {
-    ...mapState(useWebSocketStore, ["partidasAtivas"]),
-
     isVolei() {
       const nome = this.modalidadeSelecionadaNome;
       return nome

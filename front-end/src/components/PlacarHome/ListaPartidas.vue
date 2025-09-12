@@ -33,49 +33,23 @@
 </template>
 
 <script>
-import { useWebSocketStore } from '@/webscoket'
-import { storeToRefs } from 'pinia'
-import { watch, ref } from 'vue'
-
 export default {
   name: "ListaPartidas",
 
-  setup() {
-    const wsStore = useWebSocketStore()
-    wsStore.iniciar()
-
-    const { partidasAtivas, partidasEncerradas } = storeToRefs(wsStore)
-
-    // Watch para iniciar cronômetro automaticamente quando uma nova partida aparecer
-    watch(partidasAtivas, (novasPartidas) => {
-      if (novasPartidas.length) {
-        const primeiraPartida = novasPartidas[0]
-        iniciarCronometro(primeiraPartida)
-      }
-    })
-
-    // Função para cronômetro (declarada aqui para uso dentro do watch)
-    const tempoDecorrido = ref(0)
-    let intervaloTempo = null
-
-    function iniciarCronometro(partida) {
-      if (intervaloTempo) clearInterval(intervaloTempo)
-
-      if (partida?.createdAt && !partida.finalizada) {
-        intervaloTempo = setInterval(() => {
-          const inicio = new Date(partida.createdAt)
-          const agora = new Date()
-          tempoDecorrido.value = Math.floor((agora - inicio) / 60000)
-        }, 1000)
-      }
+  props: {
+    partidasAtivas: {
+      type: Array,
+      default: () => []
+    },
+    partidasEncerradas: {
+      type: Array,
+      default: () => []
     }
+  },
 
+  data() {
     return {
-      partidasAtivas,
-      partidasEncerradas,
-      tempoDecorrido,
-      iniciarCronometro,
-      intervaloTempo
+      intervaloTempo: null
     }
   },
 
@@ -114,11 +88,24 @@ export default {
     statusPartida(partida) {
       if (partida.finalizada) return "ENCERRADA"
       if (partida.emIntervalo) return "PAUSADA"
-      if (!partida.finalizada && this.partidasAtivas[0]?.id === partida.id) {
-        return `${this.tempoDecorrido} MIN`
+
+      const tempo = partida.tempoDecorrido ?? 0
+      if (!partida.finalizada) {
+        return `${tempo} MIN`
       }
-      return "EM ANDAMENTO"
+    },
+
+    iniciarContagem() {
+      this.intervaloTempo = setInterval(() => {
+        this.partidasAtivas.forEach(partida => {
+          partida.tempoDecorrido = (partida.tempoDecorrido ?? 0) + 1
+        })
+      }, 1200000) 
     }
+  },
+
+  mounted() {
+    this.iniciarContagem()
   },
 
   beforeUnmount() {

@@ -1,5 +1,4 @@
 const { PrismaClient } = require('@prisma/client');
-const { broadcast } = require('../ws-utils');
 const prisma = new PrismaClient();
 
 async function criarPartida(data, usuarioId) {
@@ -37,7 +36,6 @@ async function criarPartida(data, usuarioId) {
   partida.timeA.placarId = placarA.id;
   partida.timeB.placarId = placarB.id;
 
-  broadcast({ tipo: "partidaIniciada", partida });
   return partida;
 }
 
@@ -65,7 +63,6 @@ async function finalizarPartida(id, { usuarioId }) {
     }
   });
 
-  broadcast({ tipo: "partidaEncerrada", partida: partidaEncerrada });
   return partidaEncerrada;
 }
 
@@ -113,7 +110,6 @@ async function atualizarParcial(
     }
   });
 
-  broadcast({ tipo: "placarUpdate", partidaId: partida.id, partida });
   return partida;
 }
 
@@ -151,7 +147,6 @@ async function incrementarPlacar(placarId, incremento, usuarioId) {
     include: { time: true }
   });
 
-  broadcast({ tipo: "placarIncrementado", placar });
   return placar;
 }
 
@@ -202,11 +197,6 @@ async function pausarPartida(id) {
     }
   });
 
-  broadcast({
-    tipo: "partidaPausada",
-    partida
-  });
-
   return partida;
 }
 
@@ -219,11 +209,6 @@ async function retomarPartida(id) {
       timeB: { include: { placar: true } },
       modalidade: true
     }
-  });
-
-  broadcast({
-    tipo: "partidaRetomada",
-    partida
   });
 
   return partida;
@@ -277,7 +262,6 @@ async function limparPartidasPorModalidade(modalidadeId) {
     where: { modalidadeId: Number(modalidadeId) }
   });
 
-  broadcast({ tipo: "partidasRemovidas", modalidadeId });
 }
 
 module.exports = {

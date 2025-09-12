@@ -8,7 +8,6 @@ const dotenv = require("dotenv");
 dotenv.config();
 const session = require("express-session");
 const passport = require("./auth/passport");
-const { initWebSocket } = require("./websocket");
 
 // Rotas
 const authRoutes = require("./routes/auth.router");
@@ -96,5 +95,4 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
-  initWebSocket(server);
 });

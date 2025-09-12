@@ -110,37 +110,23 @@ import VerificarLogin from '@/components/modals/Alertas/verificarLogin.vue'
 import api from '@/axios'
 import 'vue3-carousel/dist/carousel.css'
 
-import { useWebSocketStore } from '@/webscoket'
-import { storeToRefs } from 'pinia'
-
 export default {
   name: 'HomeView',
   components: { Carousel, Slide, PlacarGeral, ListaPartidas, VerificarLogin },
 
-  setup() {
-    const wsStore = useWebSocketStore()
-    wsStore.iniciar()
-
-    const { partidasAtivas, partidasEncerradas, placares } = storeToRefs(wsStore)
-
-    return {
-      wsStore,
-      partidasAtivas,
-      partidasEncerradas,
-      placares
-    }
-  },
-
   data() {
-    return {
-      isMenuOpen: false,
-      quadras: [],
-      isLoadingPlacares: true,
-      mostrarModalLogin: false,
-      modalidadesDisponiveis: [],
-      isLoadingQuadras: true,
-      isLoadingPartidas: true
-    }
+  return {
+    isMenuOpen: false,
+    quadras: [],
+    isLoadingPlacares: true,
+    mostrarModalLogin: false,
+    modalidadesDisponiveis: [],
+    isLoadingQuadras: true,
+    isLoadingPartidas: true,
+    partidasAtivas: [],
+    partidasEncerradas: [],
+    placares: {},
+  }
   },
 
   computed: {
@@ -280,7 +266,7 @@ export default {
         `width=${width},height=${height},left=${left},top=${top}`)
 
       const listener = event => {
-        if (event.origin !== 'http://localhost:8080') return
+        if (event.origin !== 'https://quadra-livre.vercel.app') return
         const { token, erro, email, usuario } = event.data
 
         if (erro === 'usuario_nao_cadastrado') {
