@@ -110,7 +110,6 @@ export default {
     window.addEventListener('resize', this.handleResize);
     this.handleResize();
     this.usuario = JSON.parse(localStorage.getItem("usuario"));
-    console.log("Usuário logado no SideBar:", this.usuario);
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize);

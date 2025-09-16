@@ -20,11 +20,9 @@ export default {
       payload = JSON.parse(decodeURIComponent(data));
     }
 
-    console.log("Payload recebido:", payload);
-
     if (window.opener) {
       window.opener.postMessage(payload, "http://localhost:8080");
-      window.close(); // fecha o popup
+      window.close(); 
     }
   }
 };

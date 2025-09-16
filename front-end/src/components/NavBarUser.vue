@@ -28,7 +28,6 @@ export default {
   },
   mounted() {
     this.usuario = JSON.parse(localStorage.getItem("usuario"))
-    console.log("Usuário logado no NavBarUse:", this.usuario)
   },
   methods: {
     formatarFuncao(funcao) {

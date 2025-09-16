@@ -5,7 +5,7 @@ const { findUserByEmail } = require('../services/auth.service');
 
 async function verificarUsuario(req, accessToken, refreshToken, profile, done) {
   try {
-    const email = profile?.emails?.[0]?.value; // pega email do Google
+    const email = profile?.emails?.[0]?.value; 
 
     if (!email) {
       return done(null, false, { message: 'Email não fornecido pelo Google' });

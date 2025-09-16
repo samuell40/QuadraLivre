@@ -48,6 +48,7 @@ model Agendamento {
   mes          Int
   ano          Int
   hora         Int
+  datahora     DateTime?
   duracao      Int             @default(1)
   status       String          @default("Pendente")
   tipo         TipoAgendamento @default(TREINO)
@@ -57,7 +58,6 @@ model Agendamento {
   quadra       Quadra?         @relation(fields: [quadraId], references: [id])
   modalidadeId Int?
   modalidade   Modalidade?     @relation("AgendamentoModalidade", fields: [modalidadeId], references: [id])
-
   timeId Int?
   time   Time? @relation("TimeAgendamentos", fields: [timeId], references: [id])
 }
@@ -78,12 +78,12 @@ model Time {
   modalidadeId Int
   modalidade   Modalidade    @relation(fields: [modalidadeId], references: [id])
   jogadores    UsuarioTime[]
-
   placar   Placar?
   partidasA Partida[] @relation("TimeAPartidas")
   partidasB Partida[] @relation("TimeBPartidas")
 
   agendamentos Agendamento[] @relation("TimeAgendamentos")
+  jogadoresPartida Jogador[]
 }
 
 model Partida {
@@ -112,16 +112,29 @@ model Partida {
   substituicoesTimeA  Int @default(0)
   substituicoesTimeB  Int @default(0)
 
-  cartoesAmarelosTimeA  Int @default(0)
-  cartoesAmarelosTimeB  Int @default(0)
-  cartoesVermelhosTimeA Int @default(0)
-  cartoesVermelhosTimeB Int @default(0)
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   usuarioCriadorId Int
   usuarioCriador   Usuario @relation("UsuarioCriador", fields: [usuarioCriadorId], references: [id])
+
+  jogadores Jogador[]
+}
+
+model Jogador {
+  id        Int     @id @default(autoincrement())
+  nome      String
+  foto      String? @db.VarChar(2048)
+
+  gols             Int @default(0)
+  cartoesAmarelos  Int @default(0)
+  cartoesVermelhos Int @default(0)
+
+  timeId    Int
+  time      Time @relation(fields: [timeId], references: [id])
+
+  partidaId Int
+  partida   Partida @relation(fields: [partidaId], references: [id])
 }
 
 model Placar {
@@ -140,14 +153,12 @@ model Placar {
   saldoDeGols  Int @default(0)
 
   setsVencidos Int @default(0)
-  vitoria2x0   Int @default(0)
-  vitoria2x1   Int @default(0)
-  derrota2x1   Int @default(0)
-  derrota2x0   Int @default(0)
+  vitoria3x0   Int @default(0)
+  vitoria3x2   Int @default(0)
+  derrota2x3   Int @default(0)
+  derrota0x3   Int @default(0)
   derrotaWo    Int @default(0)
 
-  cartoesAmarelos  Int     @default(0)
-  cartoesVermelhos Int     @default(0)
   visivel          Boolean @default(true)
 }
 

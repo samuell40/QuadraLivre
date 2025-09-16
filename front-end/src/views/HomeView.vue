@@ -115,18 +115,18 @@ export default {
   components: { Carousel, Slide, PlacarGeral, ListaPartidas, VerificarLogin },
 
   data() {
-  return {
-    isMenuOpen: false,
-    quadras: [],
-    isLoadingPlacares: true,
-    mostrarModalLogin: false,
-    modalidadesDisponiveis: [],
-    isLoadingQuadras: true,
-    isLoadingPartidas: true,
-    partidasAtivas: [],
-    partidasEncerradas: [],
-    placares: {},
-  }
+    return {
+      isMenuOpen: false,
+      quadras: [],
+      isLoadingPlacares: true,
+      mostrarModalLogin: false,
+      modalidadesDisponiveis: [],
+      isLoadingQuadras: true,
+      isLoadingPartidas: true,
+      partidasAtivas: [],
+      partidasEncerradas: [],
+      placares: {},
+    }
   },
 
   computed: {
@@ -144,10 +144,12 @@ export default {
   },
 
   async mounted() {
-    this.carregarQuadras()
-    this.carregarModalidades()
-    this.carregarPartidasAtivas()
-    this.carregarPartidasEncerradas()
+      await Promise.all([  //pra rodar todas as funções juntas
+        this.carregarQuadras(),
+        this.carregarModalidades(),
+        this.carregarPartidasAtivas(),
+        this.carregarPartidasEncerradas()
+      ])
   },
 
   methods: {
@@ -247,7 +249,7 @@ export default {
     },
 
     verificarLogin(quadra) {
-      const usuario = JSON.parse(localStorage.getItem('usuario') || '{}')
+      const usuario = JSON.parse(localStorage.getItem('usuario'))
       if (usuario?.token) {
         router.push({ name: 'agendar_quadra', query: { quadraId: quadra.id } })
       } else {
@@ -277,7 +279,7 @@ export default {
         if (token) {
           localStorage.setItem('token', token)
           localStorage.setItem('usuario', JSON.stringify(usuario))
-          const quadraSelecionada = JSON.parse(localStorage.getItem("quadraSelecionada") || "null")
+          const quadraSelecionada = JSON.parse(localStorage.getItem("quadraSelecionada"))
 
           if ([1, 2].includes(usuario.permissaoId)) {
             router.push({ name: "Dashboard" })
