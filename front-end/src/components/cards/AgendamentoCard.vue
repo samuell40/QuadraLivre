@@ -6,10 +6,9 @@
       </div>
     </div>
 
-    <p>Realizado por: <strong>{{ agendamento.usuario.nome }}</strong></p>
-    <p>
-      <strong>{{ formatarData(agendamento) }}</strong>, às <strong>{{ agendamento.hora }}:00</strong>
-    </p>
+    <p>Realizado por: <strong>{{ agendamento.usuario }}</strong></p>
+    <p>Time: <strong>{{ agendamento.time }}</strong></p>
+    <p><strong>{{ formatarData(agendamento) }}</strong>, às <strong>{{ agendamento.hora }}:00</strong></p>
     <p>Duração: <strong>{{ agendamento.duracao }} hora(s)</strong></p>
     <p>Tipo: <strong>{{ agendamento.tipo }}</strong></p>
 
@@ -17,15 +16,16 @@
     <div v-if="loading" class="overlay-loader">
       <div class="loader"></div>
     </div>
-
-    <div class="buttons" v-else-if="!readonly && agendamento.status === 'Pendente'">
-      <button @click="confirmar">Aceitar</button>
-      <button @click="recusar">Recusar</button>
+    <div v-else>
+      <div v-if="!readonly && agendamento.status === 'Pendente'" class="buttons">
+        <button @click="confirmar">Aceitar</button>
+        <button @click="recusar">Recusar</button>
+      </div>
+      <p v-else>Status: <strong>{{ agendamento.status }}</strong></p>
     </div>
-
-    <p v-else>Status: <strong>{{ agendamento.status }}</strong></p>
   </div>
 </template>
+
 
 <script>
 export default {

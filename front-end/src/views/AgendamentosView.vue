@@ -37,8 +37,11 @@
                 v-for="ag in agendamentosPorTipo(tipo)" 
                 :key="ag.id" 
                 :agendamento="normalizarAgendamento(ag)"
+                :loading="loadingCards.includes(ag.id)"
                 :class="{ finalizado: ag.status === 'Finalizado' }"
                 @ver-horarios="() => abrirModal(ag.dia, ag.mes, ag.ano)" 
+                @confirmar="aceitarAgendamento(ag.id)"
+                @recusar="recusarAgendamento(ag.id)"
               />
             </div>
           </div>
@@ -82,7 +85,7 @@ const quadraId = ref(null);
 const detalheAberto = ref(false);
 const agendamentoSelecionado = ref(null);
 
-// controle dos accordions
+// Accordion para pendentes, confirmados e recusados
 const accordionAberto = ref(null);
 const toggleAccordion = (tipo) => {
   accordionAberto.value = accordionAberto.value === tipo ? null : tipo;
@@ -99,7 +102,7 @@ const agendamentosPorTipo = (tipo) => {
 const normalizarAgendamento = (ag) => ({
   ...ag,
   usuario: ag.usuario?.nome || 'Sem usuário',
-  time: ag.time?.nome || 'Nenhum'
+  time: ag.time?.nome || 'Não especificado',
 });
 
 const carregarAgendamentos = async () => {
@@ -116,12 +119,43 @@ const carregarAgendamentos = async () => {
   }
 };
 
-// const formatarData = (date) => {
-//   const ano = date.getFullYear();
-//   const mes = String(date.getMonth() + 1).padStart(2, "0");
-//   const dia = String(date.getDate()).padStart(2, "0");
-//   return `${ano}-${mes}-${dia}`;
-// };
+const loadingCards = ref([]);
+
+const aceitarAgendamento = async (id) => {
+  if (loadingCards.value.includes(id)) return;
+  loadingCards.value.push(id);
+
+  try {
+    await api.patch(`/agendamento/${id}/aceitar`);
+    agendamentos.value = agendamentos.value.map(a =>
+      a.id === id ? { ...a, status: "Confirmado" } : a
+    );
+    Swal.fire("Sucesso", "Agendamento aceito!", "success");
+  } catch (err) {
+    console.error(err);
+    Swal.fire("Erro", "Não foi possível aceitar o agendamento.", "error");
+  } finally {
+    loadingCards.value = loadingCards.value.filter(item => item !== id);
+  }
+};
+
+const recusarAgendamento = async (id) => {
+  if (loadingCards.value.includes(id)) return;
+  loadingCards.value.push(id);
+
+  try {
+    await api.patch(`/agendamento/${id}/recusar`);
+    agendamentos.value = agendamentos.value.map(a =>
+      a.id === id ? { ...a, status: "Recusado" } : a
+    );
+    Swal.fire("Sucesso", "Agendamento recusado!", "success");
+  } catch (err) {
+    console.error(err);
+    Swal.fire("Erro", "Não foi possível recusar o agendamento.", "error");
+  } finally {
+    loadingCards.value = loadingCards.value.filter(item => item !== id);
+  }
+};
 
 const abrirModal = (dia, mes, ano) => {
   datasModal.value = [{ dia, mes, ano }];

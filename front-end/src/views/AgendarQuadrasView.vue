@@ -166,7 +166,6 @@ export default {
 };
 </script>
 
-
 <style scoped>
 body {
   margin: 0 auto;
@@ -180,7 +179,7 @@ body {
   min-height: 100vh;
   width: 100%;
   max-width: none;
-  padding: 24px 80px;
+  padding: 24px 80px; 
 }
 
 .titulo {
