@@ -15,6 +15,15 @@
     <div v-if="sidebarVisible" class="sidebar">
       <img src="../assets/QuadraLivre.png" alt="Logo" />
 
+      <!-- DASHBOARD -->
+      <div class="sidebar-category">
+        <div class="sidebar-category-header no-toggle">
+          <a href="/dashboard" :class="{ active: isActive('/dashboard') }">
+            <span>Dashboard</span>
+          </a>
+        </div>
+      </div>
+
       <!-- ADMINISTRAÇÃO -->
       <div class="sidebar-category">
         <div class="sidebar-category-header" @click="toggleCategory('admin')">
@@ -22,18 +31,8 @@
           <span>{{ openCategory === 'admin' ? '▲' : '▼' }}</span>
         </div>
         <div v-show="openCategory === 'admin'">
-          <a href="/dashboard" :class="{ active: isActive('/dashboard') }">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
-              <g fill="#fff">
-                <rect width="5" height="18" x="16" y="3" rx="2" />
-                <rect width="5" height="12" x="9.5" y="9" rx="2" />
-                <rect width="5" height="5" x="3" y="16" rx="2" />
-              </g>
-            </svg>
-            <span>Dashboard</span>
-          </a>
 
-          <a v-if="usuario?.permissaoId !== 2" href="/cadastrarquadra">
+          <a v-if="usuario?.permissaoId !== 2" href="/cadastrarquadra" :class="{ active: isActive('/cadastrarquadra') }">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 56 56">
               <path fill="currentColor"
                 d="M7.219 36.822c.985 0 1.548-.563 1.548-1.548V23.531c0-.985-.563-1.548-1.548-1.548H0v14.84Zm13.814-7.44c0 3.218 2.292 5.972 5.288 6.696V22.747a6.744 6.744 0 0 0-5.288 6.636m8.525 6.696c3.016-.724 5.248-3.478 5.288-6.696c.02-3.217-2.251-5.911-5.288-6.635Zm19.223-14.095c-.985 0-1.548.563-1.548 1.548v11.743c0 .985.563 1.548 1.548 1.548H56v-14.84ZM56 40.06h-7.28c-2.975 0-4.724-1.75-4.724-4.726V23.471c0-2.976 1.749-4.725 4.725-4.725H56v-2.072c0-4.142-2.111-6.233-6.314-6.233H29.558v9.27c4.705.764 8.184 4.765 8.244 9.692c.06 4.966-3.519 8.968-8.244 9.732v9.25h20.128c4.203 0 6.314-2.092 6.314-6.234Zm-56 0v2.09c0 4.143 2.131 6.234 6.314 6.234H26.32v-9.25c-4.705-.743-8.244-4.745-8.244-9.731c0-4.947 3.539-9.009 8.244-9.732v-9.23H6.314C2.13 10.441 0 12.512 0 16.674v2.072h7.279c2.976 0 4.725 1.749 4.725 4.725v11.863c0 2.976-1.75 4.726-4.725 4.726Z" />
@@ -226,6 +225,11 @@ body {
   color: white;
 }
 
+.sidebar a.active {
+  color: #3B82F6;
+  text-decoration: none;
+}
+
 .logout-button svg {
   margin-right: 8px;
 }
@@ -283,8 +287,16 @@ body {
   display: flex;
   justify-content: space-between;
 }
-.sidebar a.active {
-  font-weight: bold;
-  text-decoration: underline;
+
+.sidebar-category-header.no-toggle {
+  justify-content: flex-start;
+}
+
+.sidebar-category-header.no-toggle a {
+  margin-left: 0;
+  padding: 0;
+  font-size: 16px;
+  display: block;
+  width: 100%;
 }
 </style>
