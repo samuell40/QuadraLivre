@@ -4,12 +4,21 @@
     <div class="conteudo">
       <div class="header">
         <h1 class="title">Partidas ao Vivo</h1>
+
         <button v-if="!partidaIniciada" class="limparpartidas" @click="abrirModalLimpar">
           Limpar Partidas
         </button>
 
-        <div v-else class="temporizador-topo">
-          <p class="temporizador">{{ minutos }}:{{ segundos }}</p>
+        <div v-else class="temporizador-container">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" class="icon-add"
+            @click="mostrarModalAssistente = true">
+            <path fill="#3B82F6"
+              d="M136 128a120 120 0 1 1 240 0 120 120 0 1 1 -240 0zM48 482.3C48 383.8 127.8 304 226.3 304l59.4 0c98.5 0 178.3 79.8 178.3 178.3 0 16.4-13.3 29.7-29.7 29.7L77.7 512C61.3 512 48 498.7 48 482.3zM544 96c13.3 0 24 10.7 24 24l0 48 48 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-48 0 0 48c0 13.3-10.7 24-24 24s-24-10.7-24-24l0-48-48 0c-13.3 0-24-10.7-24-24s10.7-24 24-24l48 0 0-48c0-13.3 10.7-24 24-24z" />
+          </svg>
+
+          <div class="temporizador-topo">
+            <p class="temporizador">{{ minutos }}:{{ segundos }}</p>
+          </div>
         </div>
       </div>
 
@@ -19,14 +28,14 @@
 
       <div v-else>
         <div class="dropdowns">
-          <div class="dropdown-row modalidade">
+          <div class="dropdown-row">
             <div class="team">
-              <label>Modalidade:</label>
-              <select v-model="modalidadeSelecionada" @change="handleModalidadeChange" class="dropdown"
+              <label>Quadra:</label>
+              <select v-model="quadraSelecionada" @change="handleQuadraChange" class="dropdown"
                 :disabled="partidaIniciada">
-                <option disabled value="">Selecione a modalidade</option>
-                <option v-for="m in modalidadesDisponiveis" :key="m.id" :value="m.id">
-                  {{ m.nome }}
+                <option disabled value="">Selecione uma quadra</option>
+                <option v-for="q in quadrasDisponiveis" :key="q.id" :value="q.id">
+                  {{ q.nome }}
                 </option>
               </select>
             </div>
@@ -34,57 +43,65 @@
 
           <div class="dropdown-row">
             <div class="team">
-              <label>Time 1:</label>
-              <div class="dropdown-container">
-                <select v-model="timeSelecionado1" @change="carregarPlacarTime('time1')" class="dropdown"
-                  :disabled="partidaIniciada || carregandoTimes || times.length === 0">
-                  <option disabled value="">Selecione o time</option>
-                  <option v-for="t in times" :key="t.id" :value="t.id" :disabled="timeSelecionado2 === t.id">
-                    {{ t.nome }}
-                  </option>
-                </select>
-                <span v-if="carregandoTimes" class="loader-pequeno-dropdown"></span>
-              </div>
+              <label>Modalidade:</label>
+              <select v-model="modalidadeSelecionada" @change="handleModalidadeChange" class="dropdown"
+                :disabled="partidaIniciada || !quadraSelecionada">
+                <option disabled value="">Selecione uma modalidade</option>
+                <option v-for="m in modalidadesDisponiveis" :key="m.id" :value="m.id">
+                  {{ m.nome }}
+                </option>
+              </select>
+
             </div>
 
+            <!-- Time 1 -->
+            <div class="team">
+              <label>Time 1:</label>
+              <select v-model="timeSelecionado1" @change="carregarJogadoresPorTime('time1')" class="dropdown">
+                <option disabled value="">Selecione um time</option>
+                <option v-for="t in timesDisponiveisTime1" :key="t.id" :value="t.id">
+                  {{ t.nome }}
+                </option>
+              </select>
+            </div>
+
+
+            <!-- Time 2 -->
             <div class="team">
               <label>Time 2:</label>
-              <div class="dropdown-container">
-                <select v-model="timeSelecionado2" @change="carregarPlacarTime('time2')" class="dropdown"
-                  :disabled="partidaIniciada || carregandoTimes || times.length === 0">
-                  <option disabled value="">Selecione o time</option>
-                  <option v-for="t in times" :key="t.id" :value="t.id" :disabled="timeSelecionado1 === t.id">
-                    {{ t.nome }}
-                  </option>
-                </select>
-                <span v-if="carregandoTimes" class="loader-pequeno-dropdown"></span>
-              </div>
+              <select v-model="timeSelecionado2" @change="carregarJogadoresPorTime('time2')" class="dropdown">
+                <option disabled value="">Selecione um time</option>
+                <option v-for="t in timesDisponiveisTime2" :key="t.id" :value="t.id">
+                  {{ t.nome }}
+                </option>
+              </select>
             </div>
 
+
             <div class="team">
-              <button class="dropdown botao-iniciar" @click="togglePartida"
+              <button class="dropdown botao-iniciar" @click="abrirModalJogadores"
                 :disabled="!timeSelecionado1 || !timeSelecionado2 || !modalidadeSelecionada">
-                {{ !partidaIniciada ? 'Iniciar Partida' : (temporizadorAtivo ? 'Pausar Partida' : 'Retomar Partida') }}
+                Continuar
               </button>
+
             </div>
           </div>
         </div>
 
         <div v-if="!partidaIniciada" class="mensagem-inicial">
           <p>
-            Para iniciar uma partida, selecione uma modalidade, escolha os times e clique em "Iniciar Partida".
+            Para iniciar uma partida, selecione a quadra desejada, em seguida escolha a modalidade, selecione os times e
+            clique no botão “Iniciar Partida.
           </p>
         </div>
 
         <div class="placares" v-if="partidaIniciada">
-          <!-- Time 1 -->
           <component
             :is="['volei', 'volei de areia', 'futevolei'].includes(modalidadeSelecionadaNome.toLowerCase()) ? 'PlacarTimeVolei' : 'PlacarTime'"
             :timeNome="times.find(t => t.id === timeSelecionado1)?.nome || ''" :timeData="time1"
             :setsAdversario="time2.setsVencidos || 0" :partida-id="partidaId" :temporizadorAtivo="temporizadorAtivo"
             @update="atualizarTime('time1', $event)" @remover="resetTime('time1')" />
 
-          <!-- Time 2 -->
           <component
             :is="['volei', 'volei de areia', 'futevolei'].includes(modalidadeSelecionadaNome.toLowerCase()) ? 'PlacarTimeVolei' : 'PlacarTime'"
             :timeNome="times.find(t => t.id === timeSelecionado2)?.nome || ''" :timeData="time2"
@@ -103,6 +120,15 @@
     <LimparPartidas v-if="mostrarModalLimpar" :aberto="mostrarModalLimpar" :modalidade-id="modalidadeSelecionada"
       :modalidadesDisponiveis="modalidadesDisponiveis" @confirmar="limparPartidas"
       @fechar="mostrarModalLimpar = false" />
+
+    <AdicionarAssistente v-if="mostrarModalAssistente" :aberto="mostrarModalAssistente" :partida-id="partidaId"
+      @fechar="mostrarModalAssistente = false" />
+
+    <SelecionarJogadores v-if="mostrarModalJogadores" :aberto="mostrarModalJogadores" :jogadoresTime1="jogadoresTime1"
+      :jogadoresTime2="jogadoresTime2" :time1Nome="times.find(t => t.id === timeSelecionado1)?.nome"
+      :time2Nome="times.find(t => t.id === timeSelecionado2)?.nome" @confirmar="confirmarJogadores"
+      @fechar="mostrarModalJogadores = false" />
+
   </div>
 </template>
 
@@ -111,16 +137,20 @@ import SideBar from '@/components/SideBar.vue'
 import PlacarTime from '@/components/Partida/PlacarTimeFutebol.vue'
 import PlacarTimeVolei from '@/components/Partida/PlacarTimeVolei.vue'
 import LimparPartidas from '@/components/Partida/LimparPartidas.vue'
+import AdicionarAssistente from '@/components/Partida/AdicionarAssistente.vue'
+import SelecionarJogadores from '@/components/Partida/SelecionarJogadores.vue'
 import NavBarUse from '@/components/NavBarUser.vue'
 import api from '@/axios'
 import Swal from 'sweetalert2'
 
 export default {
   name: 'PartidaView',
-  components: { SideBar, NavBarUse, PlacarTime, PlacarTimeVolei, LimparPartidas },
+  components: { SideBar, NavBarUse, PlacarTime, PlacarTimeVolei, LimparPartidas, AdicionarAssistente, SelecionarJogadores },
 
   data() {
     return {
+      quadraSelecionada: "",
+      quadrasDisponiveis: [],
       modalidadeSelecionada: "",
       modalidadesDisponiveis: [],
       timeSelecionado1: "",
@@ -140,9 +170,17 @@ export default {
       tempoSegundos: 0,
       intervaloTemporizador: null,
       mostrarModalLimpar: false,
+      mostrarModalAssistente: false,
+      jogadoresTime1: [],
+      jogadoresTime2: [],
+      jogadorSelecionadoTime1: "",
+      jogadorSelecionadoTime2: "",
+      carregandoJogadores: false,
+      jogadoresPorTime: {},
+      mostrarModalJogadores: false,
+      isLoadingQuadras: false,
     }
   },
-
   computed: {
     isVolei() {
       const nome = this.modalidadeSelecionadaNome;
@@ -157,12 +195,32 @@ export default {
     modalidadeSelecionadaNome() {
       const mod = this.modalidadesDisponiveis.find(m => m.id === Number(this.modalidadeSelecionada))
       return mod ? mod.nome : ""
+    },
+
+    timesDisponiveisTime1() {
+      return this.times.filter(t => t.id !== Number(this.timeSelecionado2));
+    },
+    timesDisponiveisTime2() {
+      return this.times.filter(t => t.id !== Number(this.timeSelecionado1));
     }
   },
-
+  watch: {
+    aberto(novo) {
+      if (novo && this.time?.id) {
+        this.carregarJogadores();
+        this.carregarQuadras();
+      }
+    },
+    time(novo) {
+      if (novo?.id) {
+        this.carregarJogadores();
+        this.carregarQuadras();
+      }
+    }
+  },
   mounted() {
-    this.carregarModalidades()
     this.carregarPartidaAberta();
+    this.carregarQuadras()
   },
 
   methods: {
@@ -219,39 +277,102 @@ export default {
       }, 1000);
     },
 
-    async iniciarPartida() {
+    async iniciarPartidaEConfirmarJogadores({ time1, time2 }) {
       try {
-        const body = {
-          modalidadeId: Number(this.modalidadeSelecionada),
-          timeAId: Number(this.timeSelecionado1),
-          timeBId: Number(this.timeSelecionado2)
-        };
+        const usuario = JSON.parse(localStorage.getItem("usuario"));
+        if (!usuario?.id) {
+          Swal.fire("Erro", "Usuário não autenticado.", "error");
+          return;
+        }
 
-        const res = await api.post("/partida", body);
-        console.log("Partida criada:", res.data);
+        if (!this.modalidadeSelecionada || !this.timeSelecionado1 || !this.timeSelecionado2) {
+          Swal.fire("Erro", "Selecione a modalidade e os dois times.", "error");
+          return;
+        }
 
-        this.partidaId = res.data.id;
+        if (!this.partidaId) {
+          const body = {
+            usuarioId: usuario.id,
+            quadraId: Number(this.quadraSelecionada),
+            modalidadeId: Number(this.modalidadeSelecionada),
+            timeAId: Number(this.timeSelecionado1),
+            timeBId: Number(this.timeSelecionado2)
+          };
 
-        this.time1.placarId = res.data.timeA?.placar?.id;
-        this.time2.placarId = res.data.timeB?.placar?.id;
+          console.log("Enviando body:", body); 
+          const res = await api.post("/partida", body);
 
-        this.partidaIniciada = true;
+          if (!res || !res.data || !res.data.id) {
+            Swal.fire("Erro", "A API não retornou ID da partida.", "error");
+            return;
+          }
+
+          this.partidaId = res.data.id;
+          this.time1.placarId = res.data.timeA?.placar?.id;
+          this.time2.placarId = res.data.timeB?.placar?.id;
+
+          this.partidaIniciada = true;
+          this.inicioPartida = Date.now();
+          this.temporizadorAtivo = true;
+          this.iniciarTemporizador();
+        }
+
+        for (const jogadorId of time1) {
+          await api.post(`/${this.partidaId}/jogador/${jogadorId}`, {
+            gols: 0,
+            cartoesAmarelos: 0,
+            cartoesVermelhos: 0
+          });
+        }
+
+        for (const jogadorId of time2) {
+          await api.post(`/${this.partidaId}/jogador/${jogadorId}`, {
+            gols: 0,
+            cartoesAmarelos: 0,
+            cartoesVermelhos: 0
+          });
+        }
+
+        Swal.fire("Sucesso", "Partida iniciada e jogadores vinculados com sucesso!", "success");
+        this.mostrarModalJogadores = false;
+
       } catch (err) {
-        console.error("Erro ao iniciar partida:", err);
-        Swal.fire("Erro", "Não foi possível iniciar a partida.", "error");
+        console.error("Erro ao iniciar partida e vincular jogadores:", err);
+        Swal.fire("Erro", "Não foi possível iniciar a partida ou vincular os jogadores.", "error");
+      }
+    },
+    async carregarQuadras() {
+      this.isLoadingQuadras = true;
+      try {
+        const res = await api.get('/quadra');
+        this.quadrasDisponiveis = res.data;
+      } catch (err) {
+        console.error('Erro ao carregar quadras:', err);
+        this.quadrasDisponiveis = [];
+      } finally {
+        this.isLoadingQuadras = false;
       }
     },
 
-    async carregarModalidades() {
-      this.carregandoModalidades = true
+    async handleQuadraChange() {
+      this.modalidadeSelecionada = ""
+      this.modalidadesDisponiveis = []
+      this.timeSelecionado1 = ""
+      this.timeSelecionado2 = ""
+      this.times = []
+
+      if (!this.quadraSelecionada) return
+
       try {
-        const res = await api.get('/listar/modalidade')
+        const res = await api.get(`/quadra/${this.quadraSelecionada}/modalidades`)
         this.modalidadesDisponiveis = res.data || []
-      } catch (error) {
-        console.error(error)
+
+        if (this.modalidadesDisponiveis.length === 0) {
+          Swal.fire('Aviso', 'Não há modalidades cadastradas nesta quadra.', 'info')
+        }
+      } catch (err) {
+        console.error(err)
         Swal.fire('Erro', 'Não foi possível carregar as modalidades.', 'error')
-      } finally {
-        this.carregandoModalidades = false
       }
     },
 
@@ -259,7 +380,42 @@ export default {
       this.timeSelecionado1 = ""
       this.timeSelecionado2 = ""
       this.times = []
-      await this.carregarTimes()
+      this.timesDisponiveisTime1 = []
+      this.timesDisponiveisTime2 = []
+
+      if (!this.modalidadeSelecionada) return
+
+      try {
+        const res = await api.get(`/times/modalidade/${this.modalidadeSelecionada}`)
+        this.times = res.data || []
+        this.timesDisponiveisTime1 = [...this.times]
+        this.timesDisponiveisTime2 = [...this.times]
+
+        if (this.times.length === 0) {
+          Swal.fire('Aviso', 'Não há times cadastrados nesta modalidade.', 'info')
+        }
+      } catch (err) {
+        console.error(err)
+        Swal.fire('Erro', 'Não foi possível carregar os times.', 'error')
+      }
+    },
+
+    async carregarJogadoresPorTime(time) {
+      try {
+        this.carregandoJogadores = true
+        const timeId = time === 'time1' ? this.timeSelecionado1 : this.timeSelecionado2
+
+        if (!timeId) return
+
+        const res = await api.get(`/time/${timeId}`)
+        if (time === 'time1') this.jogadoresTime1 = res.data
+        else this.jogadoresTime2 = res.data
+      } catch (error) {
+        console.error("Erro ao carregar jogadores:", error)
+        Swal.fire("Erro", "Não foi possível carregar os jogadores deste time.", "error")
+      } finally {
+        this.carregandoJogadores = false
+      }
     },
 
     async carregarTimes() {
@@ -287,17 +443,17 @@ export default {
         const isVolei = this.isVolei;
 
         await api.put(`/partida/${this.partidaId}/parcial`, {
-          pontosTimeA: isVolei ? this.time1.setsVencidos || 0 : this.time1.golspro || 0,
-          pontosTimeB: isVolei ? this.time2.setsVencidos || 0 : this.time2.golspro || 0,
-          faltasTimeA: this.time1.faltas || 0,
-          faltasTimeB: this.time2.faltas || 0,
-          substituicoesTimeA: this.time1.substituicoes || 0,
-          substituicoesTimeB: this.time2.substituicoes || 0,
-          cartoesAmarelosTimeA: this.time1.cartaoamarelo || 0,
-          cartoesAmarelosTimeB: this.time2.cartaoamarelo || 0,
-          cartoesVermelhosTimeA: this.time1.cartaovermelho || 0,
-          cartoesVermelhosTimeB: this.time2.cartaovermelho || 0,
-          tempoSegundos: this.tempoSegundos || 0,
+          pontosTimeA: isVolei ? this.time1.setsVencidos : this.time1.golspro,
+          pontosTimeB: isVolei ? this.time2.setsVencidos : this.time2.golspro,
+          faltasTimeA: this.time1.faltas,
+          faltasTimeB: this.time2.faltas,
+          substituicoesTimeA: this.time1.substituicoes,
+          substituicoesTimeB: this.time2.substituicoes,
+          cartoesAmarelosTimeA: this.time1.cartaoamarelo,
+          cartoesAmarelosTimeB: this.time2.cartaoamarelo,
+          cartoesVermelhosTimeA: this.time1.cartaovermelho,
+          cartoesVermelhosTimeB: this.time2.cartaovermelho,
+          tempoSegundos: this.tempoSegundos,
           woTimeA: !!this.time1.wo,
           woTimeB: !!this.time2.wo,
           emIntervalo: false
@@ -431,46 +587,53 @@ export default {
         const res = await api.get("/partida/aberta")
         const partida = res.data
 
-        if (partida) {
-          this.partidaId = partida.id
-          this.modalidadeSelecionada = partida.modalidade.id
-          this.timeSelecionado1 = partida.timeA.id
-          this.timeSelecionado2 = partida.timeB.id
+        if (!partida) return
 
-          this.times = [partida.timeA, partida.timeB]
-          this.partidaIniciada = true
+        this.partidaId = partida.id
 
-          const tempoSalvo = localStorage.getItem(`partidaTempo_${this.partidaId}`)
-          this.tempoSegundos = tempoSalvo ? Number(tempoSalvo) : partida.tempoSegundos || 0
+        await this.carregarQuadras()
+        this.quadraSelecionada = partida.quadra.id
 
-          this.inicioPartida = Date.now() - (this.tempoSegundos * 1000)
-          this.temporizadorAtivo = !partida.emIntervalo
-          this.iniciarTemporizador()
+        await this.handleQuadraChange()
+        this.modalidadeSelecionada = partida.modalidade.id
 
-          this.time1 = {
-            ...this.time1,
-            golspro: partida.pontosTimeA || 0,
-            setsVencidos: partida.setsVencidosTimeA || 0,
-            faltas: partida.faltasTimeA || 0,
-            substituicoes: partida.substituicoesTimeA || 0,
-            cartaoamarelo: partida.cartoesAmarelosTimeA || 0,
-            cartaovermelho: partida.cartoesVermelhosTimeA || 0,
-            wo: partida.woTimeA ? 1 : 0,
-            placarId: partida.timeA?.placar?.id
-          }
+        await this.handleModalidadeChange()
+        this.timeSelecionado1 = partida.timeA.id
+        this.timeSelecionado2 = partida.timeB.id
 
-          this.time2 = {
-            ...this.time2,
-            golspro: partida.pontosTimeB || 0,
-            setsVencidos: partida.setsVencidosTimeB || 0,
-            faltas: partida.faltasTimeB || 0,
-            substituicoes: partida.substituicoesTimeB || 0,
-            cartaoamarelo: partida.cartoesAmarelosTimeB || 0,
-            cartaovermelho: partida.cartoesVermelhosTimeB || 0,
-            wo: partida.woTimeB ? 1 : 0,
-            placarId: partida.timeB?.placar?.id
-          }
+        this.times = [partida.timeA, partida.timeB]
+
+        this.partidaIniciada = true
+        const tempoSalvo = localStorage.getItem(`partidaTempo_${this.partidaId}`)
+        this.tempoSegundos = tempoSalvo ? Number(tempoSalvo) : partida.tempoSegundos || 0
+        this.inicioPartida = Date.now() - (this.tempoSegundos * 1000)
+        this.temporizadorAtivo = !partida.emIntervalo
+        this.iniciarTemporizador()
+
+        this.time1 = {
+          ...this.time1,
+          golspro: partida.pontosTimeA || 0,
+          setsVencidos: partida.setsVencidosTimeA || 0,
+          faltas: partida.faltasTimeA || 0,
+          substituicoes: partida.substituicoesTimeA || 0,
+          cartaoamarelo: partida.cartoesAmarelosTimeA || 0,
+          cartaovermelho: partida.cartoesVermelhosTimeA || 0,
+          wo: partida.woTimeA ? 1 : 0,
+          placarId: partida.timeA?.placar?.id
         }
+
+        this.time2 = {
+          ...this.time2,
+          golspro: partida.pontosTimeB || 0,
+          setsVencidos: partida.setsVencidosTimeB || 0,
+          faltas: partida.faltasTimeB || 0,
+          substituicoes: partida.substituicoesTimeB || 0,
+          cartaoamarelo: partida.cartoesAmarelosTimeB || 0,
+          cartaovermelho: partida.cartoesVermelhosTimeB || 0,
+          wo: partida.woTimeB ? 1 : 0,
+          placarId: partida.timeB?.placar?.id
+        }
+
       } catch (err) {
         console.error("Erro ao carregar partida aberta:", err)
       }
@@ -552,6 +715,14 @@ export default {
       if (time === "time1") this.time1 = { setsVencidos: 0, pontos: 0 }
       else if (time === "time2") this.time2 = { setsVencidos: 0, pontos: 0 }
     },
+    abrirModalJogadores() {
+      this.carregarJogadoresPorTime('time1')
+      this.carregarJogadoresPorTime('time2')
+      this.mostrarModalJogadores = true
+    },
+    confirmarJogadores({ time1, time2 }) {
+      this.iniciarPartidaEConfirmarJogadores({ time1, time2 });
+    }
   }
 }
 </script>
@@ -635,6 +806,14 @@ export default {
   margin: 0;
 }
 
+.icon-add {
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  margin-left: -460%;
+  margin-top: -15%;
+}
+
 .botao-pausar {
   padding: 6px 8px;
   font-size: 12px;
@@ -665,7 +844,9 @@ export default {
 
 .dropdown-row {
   display: flex;
-  gap: 30px;
+  flex-wrap: wrap;
+  /* Permite quebra para nova linha se faltar espaço */
+  gap: 20px;
   margin-bottom: 15px;
   justify-content: flex-start;
   width: 100%;
@@ -678,7 +859,10 @@ export default {
 }
 
 .dropdown-row .team {
-  width: 380px;
+  flex: 1;
+  /* Cada dropdown ocupa o mesmo espaço disponível */
+  min-width: 200px;
+  /* Para não ficarem muito pequenos em telas menores */
   display: flex;
   flex-direction: column;
 }
@@ -696,7 +880,8 @@ export default {
 }
 
 .finalizar-container {
-  margin: 30px auto;
+  padding-top: 30px;
+  margin: 0;
   width: 100%;
 }
 
@@ -802,6 +987,18 @@ h2 {
   border-radius: 6px;
   cursor: pointer;
   z-index: 300;
+}
+
+.lista-jogadores {
+  margin-top: 10px;
+  padding-left: 15px;
+  font-size: 14px;
+  color: #333;
+}
+
+.lista-jogadores li {
+  list-style: disc;
+  margin-bottom: 4px;
 }
 
 @media (max-width: 768px) {

@@ -13,6 +13,7 @@ import AgendarQuadrasView from '@/views/AgendarQuadrasView.vue';
 import AgendarQuadrasAdmView from '@/views/AgendarQuadrasAdmView.vue';
 import HorariosView from '@/views/HorariosView.vue';
 import GoogleCallback from '@/views/GoogleCallback.vue';
+import GerenciartimesView from '@/views/GerenciartimesView.vue';
 
 const routes = [
   {
@@ -61,6 +62,12 @@ const routes = [
     path: '/controleplacar',
     name: 'controle_placar',
     component: ControlePlacarView,
+    meta: { requiresAuth: true, roles: [1, 2] }, 
+  },
+    {
+    path: '/gerenciartimes',
+    name: 'gerenciar_times',
+    component: GerenciartimesView,
     meta: { requiresAuth: true, roles: [1, 2] }, 
   },
     {

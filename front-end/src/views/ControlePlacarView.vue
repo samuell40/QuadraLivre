@@ -8,7 +8,6 @@
         <div class="botoes">
           <button class="btn-placar" @click="abrirModalPlacar">Visualizar Placar</button>
           <button class="btn-modalidade" @click="abrirModalGerenciarModalidade">Gerenciar Modalidades</button>
-          <button class="btn-add" @click="abrirModalGerenciarTime">Gerenciar Times</button>
         </div>
       </div>
 
@@ -96,12 +95,6 @@ import PlacarFutebol from '@/components/ControlesPlacar/PlacarFutebol.vue';
 import PlacarVolei from '@/components/ControlesPlacar/PlacarVolei.vue';
 import VisualizarPlacarModal from '@/components/modals/Visualizar_Placar/VisualizarPlacarModal.vue';
 import ResetarPlacarModal from '@/components/modals/Visualizar_Placar/ResetarPlacarModal.vue';
-import GerenciarModalidadesModal from '@/components/modals/modalidades/GerenciarModalidadesModal.vue';
-import AdicionarModalidadeModal from '@/components/modals/modalidades/AdicionarModalidadeModal.vue';
-import RemoverModalidadeModal from '@/components/modals/modalidades/RemoverModalidadeModal.vue';
-import GerenciarTimesModal from '@/components/modals/times/GerenciarTimesModal.vue';
-import AdicionarTimeModal from '@/components/modals/times/AdicionarTimesModal.vue';
-import RemoverTimeModal from '@/components/modals/times/RemoverTimesModal.vue';
 import OcultarPlacar from '@/components/modals/Visualizar_Placar/OcultarPlacar.vue';
 import Swal from 'sweetalert2';
 import api from '@/axios';
@@ -110,9 +103,7 @@ export default {
   name: 'ControlePlacarView',
   components: {
     SideBar, PlacarFutebol,
-    PlacarVolei, VisualizarPlacarModal, ResetarPlacarModal, GerenciarModalidadesModal,
-    AdicionarModalidadeModal, RemoverModalidadeModal, GerenciarTimesModal,
-    AdicionarTimeModal, RemoverTimeModal, OcultarPlacar
+    PlacarVolei, VisualizarPlacarModal, ResetarPlacarModal,OcultarPlacar
   },
   data() {
     return {
@@ -259,7 +250,7 @@ export default {
       }
     },
 
-  async carregarTimes() {
+    async carregarTimes() {
       if (!this.modalidadeSelecionada) return;
       this.isLoadingTimes = true;
       try {
@@ -449,7 +440,7 @@ export default {
 }
 
 .btn-placar {
-  background-color: #7E7E7E;
+  background-color: #3B82F6;
   color: white;
   padding: 8px 14px;
   border: none;
@@ -459,15 +450,6 @@ export default {
 
 .btn-modalidade {
   background-color: #3B82F6;
-  color: white;
-  padding: 8px 14px;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-}
-
-.btn-add {
-  background-color: #152147;
   color: white;
   padding: 8px 14px;
   border: none;

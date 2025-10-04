@@ -65,9 +65,10 @@ async function getUsuarios() {
     telefone: user.telefone,
     foto: user.foto,
     funcao: user.funcao,
+    permissaoId: true,
     quadra: user.quadra ? { id: user.quadra.id, nome: user.quadra.nome } : null,
     times: user.times.map(ut => ut.time),
-    totalAgendamentos: user.agendamentos.length,
+    totalAgendamentos: user.agendamentos.length
   }));
 }
 

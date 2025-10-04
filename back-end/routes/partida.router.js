@@ -3,7 +3,7 @@ const controller = require('../controllers/partida.controller')
 const validarJWT = require('../middlewares/auth');
 const router = express.Router();
 
-router.post('/partida', [validarJWT], controller.criarPartidaController)
+router.post('/partida', controller.criarPartidaController)
 
 router.put('/partida/:id/encerrar',  [validarJWT], controller.finalizarPartidaController);
 
@@ -21,8 +21,12 @@ router.put("/partidas/:id/pausar", controller.pausarPartidaController);
 
 router.put("/partidas/:id/retomar", controller.retomarPartidaController);
 
-router.get("/partida/aberta", [validarJWT], controller.listarPartidaAtivasUsuarioController);
+router.get("/partida/aberta", controller.listarPartidaAtivasUsuarioController);
 
 router.delete('/limpar/:modalidadeId', controller.limparPartidasPorModalidadeController);
+
+router.post('/vincular/partida', controller.vincularUsuarioController);
+
+router.post("/:partidaId/jogador/:jogadorId", controller.adicionarJogadorPartidaController);
 
 module.exports = router;

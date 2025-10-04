@@ -148,7 +148,7 @@
         </div>
 
         <div v-else>
-          <div class="campo">
+          <div class="campo" v-if="usuarioLogado.funcao !== 'ADMINISTRADOR'">
             <strong>Função:</strong>
             <select v-model="form.funcao">
               <option disabled value="">Selecione a função</option>
@@ -257,11 +257,11 @@ export default {
         const response = await api.get('/usuarios');
         this.usuarios = response.data.map(u => ({
           ...u,
+          funcao: u.funcao,
           times: u.times || [],
         }));
       } catch (error) {
         console.error('Erro ao carregar usuários:', error);
-        Swal.fire({ icon: 'error', title: 'Erro', text: 'Falha ao carregar usuários.' });
       } finally {
         this.isLoading = false;
       }
@@ -294,9 +294,18 @@ export default {
     async editarUsuario(usuario) {
       this.usuarioSelecionado = usuario;
       this.form.email = usuario.email;
-      this.form.funcao = usuario.funcao;
       this.form.quadra = usuario.quadra?.id || '';
-      this.form.timeId = usuario.time?.id || '';
+
+      this.form.timeId = usuario.times && usuario.times.length > 0
+        ? usuario.times[0].id
+        : '';
+
+      if (this.usuarioLogado.funcao === 'ADMINISTRADOR') {
+        this.form.funcao = 'USUARIO';
+      } else {
+        this.form.funcao = usuario.funcao;
+      }
+
       this.mostrarEditar = true;
 
       this.isCarregandoModal = true;
@@ -309,6 +318,7 @@ export default {
         this.isCarregandoModal = false;
       }
     },
+
     async salvarEdicao() {
       this.isSalvando = true;
       try {
@@ -335,8 +345,8 @@ export default {
           email: this.form.email,
           funcao: this.form.funcao,
           permissaoId: permissaoSelecionada.id,
-          quadra: this.form.quadra || null,
-          timeId: this.form.timeId || null
+          quadra: this.form.quadra,
+          timeId: this.form.timeId
         };
 
         if (this.form.funcao === 'USUARIO') {
@@ -611,7 +621,7 @@ export default {
   background: white;
   padding: 30px 40px;
   border-radius: 10px;
-  width: 800px;
+  width: 600px;
   max-width: 90%;
 }
 

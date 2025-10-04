@@ -62,7 +62,7 @@ export default {
       if (!this.partidas.length) return {}
 
       return this.partidas.reduce((acc, partida) => {
-        let modalidade = partida.modalidade?.nome || "Sem Modalidade"
+        let modalidade = partida.modalidade?.nome
         modalidade = modalidade.charAt(0).toUpperCase() + modalidade.slice(1)
 
         if (!acc[modalidade]) acc[modalidade] = []

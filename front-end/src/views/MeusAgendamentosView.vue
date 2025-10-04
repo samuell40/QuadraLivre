@@ -26,7 +26,7 @@
 
         <!-- Passados -->
         <div v-if="agendamentosPassados.length > 0">
-          <h4>Agendamentos Passados</h4>
+          <h4>Historico de agendamentos</h4>
           <MeusAgendamentoCard
             v-for="ag in agendamentosPassados"
             :key="ag.id"

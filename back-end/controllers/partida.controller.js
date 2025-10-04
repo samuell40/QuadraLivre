@@ -2,13 +2,13 @@ const partidas = require('../services/partida.service');
 
 async function criarPartidaController(req, res) {
   try {
-    const usuarioId = req.user?.id;
+    const { usuarioId, modalidadeId, timeAId, timeBId, quadraId } = req.body;
 
-    if (!usuarioId) {
-      return res.status(400).json({ erro: "Usuário não informado." });
-    }
+    const partida = await partidas.criarPartida(
+      { modalidadeId, timeAId, timeBId, quadraId },
+      usuarioId
+    );
 
-    const partida = await partidas.criarPartida(req.body, usuarioId);
     res.status(201).json(partida);
   } catch (error) {
     console.error(error);
@@ -126,7 +126,7 @@ async function retomarPartidaController(req, res) {
 
 async function listarPartidaAtivasUsuarioController(req, res) {
   try {
-    const usuarioId = req.user?.id;
+    const usuarioId = req.query.usuarioId;
 
     if (!usuarioId) {
       return res.status(400).json({ error: "Usuário não informado." });
@@ -153,6 +153,46 @@ async function limparPartidasPorModalidadeController(req, res) {
   }
 }
 
+async function vincularUsuarioController(req, res) {
+  try {
+    const { partidaId, usuarioId, permissaoId } = req.body;
+
+    if (!partidaId || !usuarioId || !permissaoId) {
+      return res.status(400).json({ message: "partidaId, usuarioId e permissaoId são obrigatórios" });
+    }
+
+    const vinculo = await partidas.vincularUsuarioAPartida(
+      Number(partidaId),
+      Number(usuarioId),
+      Number(permissaoId)
+    );
+
+
+    return res.status(201).json(vinculo);
+  } catch (error) {
+    console.error("Erro ao vincular usuário:", error);
+    return res.status(400).json({ message: error.message });
+  }
+}
+
+
+async function adicionarJogadorPartidaController(req, res) {
+  const { partidaId, jogadorId } = req.params;
+  const stats = req.body;
+
+  try {
+    const vinculo = await partidas.vincularJogadorPartida(
+      Number(partidaId),
+      Number(jogadorId),
+      stats
+    );
+
+    res.status(201).json(vinculo);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+}
+
 module.exports = {
   criarPartidaController,
   finalizarPartidaController,
@@ -164,5 +204,7 @@ module.exports = {
   pausarPartidaController,
   retomarPartidaController,
   listarPartidaAtivasUsuarioController,
-  limparPartidasPorModalidadeController
+  limparPartidasPorModalidadeController,
+  vincularUsuarioController,
+  adicionarJogadorPartidaController
 };

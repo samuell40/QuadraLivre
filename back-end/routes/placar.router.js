@@ -5,52 +5,6 @@ const verificarPermissao  = require('../services/permissions/permissions.usuario
 
 const router = express.Router();
 
-/* ===================== MODALIDADES ===================== */
-router.post(
-  '/modalidade',
-  [validarJWT],
-  verificarPermissao.devAdmin,
-  controller.cadastrarModalidadeController
-);
-
-router.delete(
-  '/modalidade/:id',
-  [validarJWT],
-  verificarPermissao.devAdmin,
-  controller.removerModalidadeController
-);
-
-router.get(
-  '/listar/modalidade',
-  controller.listarModalidadesController
-);
-
-/* ===================== TIMES ===================== */
-router.post(
-  '/time',
-  [validarJWT],
-  verificarPermissao.devAdmin,
-  controller.criarTimeController
-);
-
-router.delete(
-  '/time/:id',
-  [validarJWT],
-  verificarPermissao.devAdmin,
-  controller.removerTimeController
-);
-
-router.get(
-  '/times/modalidade/:modalidadeId',
-  controller.listarTimesPorModalidadeController
-);
-
-router.get(
-  '/times',
-  controller.getTodosTimes
-);
-
-/* ===================== PLACAR ===================== */
 router.post(
   '/placar',
   [validarJWT],
@@ -77,7 +31,6 @@ router.put(
   controller.resetarPlacarPorModalidadeController
 );
 
-/* ===================== VISIBILIDADE DO PLACAR===================== */
 router.put(
   '/ocultar',
   [validarJWT],
