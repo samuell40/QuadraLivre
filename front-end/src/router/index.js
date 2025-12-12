@@ -14,6 +14,7 @@ import AgendarQuadrasAdmView from '@/views/AgendarQuadrasAdmView.vue';
 import HorariosView from '@/views/HorariosView.vue';
 import GoogleCallback from '@/views/GoogleCallback.vue';
 import GerenciartimesView from '@/views/GerenciartimesView.vue';
+import GerenciarModalidadesView from '@/views/GerenciarModalidadesView.vue';
 
 const routes = [
   {
@@ -104,6 +105,13 @@ const routes = [
     path: '/horarios',
     name: 'Horarios',
     component: HorariosView,
+    meta: { public: true },
+  },
+  
+  {
+    path: '/modalidades',
+    name: 'Modalidades',
+    component: GerenciarModalidadesView,
     meta: { public: true },
   }
 ];

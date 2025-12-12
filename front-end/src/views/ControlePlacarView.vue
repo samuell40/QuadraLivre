@@ -7,7 +7,6 @@
         <h1 class="title">Controles do Placar</h1>
         <div class="botoes">
           <button class="btn-placar" @click="abrirModalPlacar">Visualizar Placar</button>
-          <button class="btn-modalidade" @click="abrirModalGerenciarModalidade">Gerenciar Modalidades</button>
         </div>
       </div>
 
@@ -120,11 +119,8 @@ export default {
       voleibol: { timeA: this.criarTime('volei') },
       volei_de_areia: { timeA: this.criarTime('volei') },
       futevolei: { timeA: this.criarTime('volei') },
-      modalGerenciarModalidadeAberto: false,
       modalResetarPlacarAberto: false,
       modalPlacarAberto: false,
-      modalAdicionarModalidadeAberto: false,
-      modalRemoverModalidadeAberto: false,
       modalGerenciarTimeAberto: false,
       modalAdicionarTimeAberto: false,
       modalRemoverTimeAberto: false,

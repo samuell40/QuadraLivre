@@ -160,21 +160,17 @@ async function vincularUsuarioController(req, res) {
     if (!partidaId || !usuarioId || !permissaoId) {
       return res.status(400).json({ message: "partidaId, usuarioId e permissaoId são obrigatórios" });
     }
-
     const vinculo = await partidas.vincularUsuarioAPartida(
       Number(partidaId),
       Number(usuarioId),
       Number(permissaoId)
     );
-
-
     return res.status(201).json(vinculo);
   } catch (error) {
     console.error("Erro ao vincular usuário:", error);
     return res.status(400).json({ message: error.message });
   }
 }
-
 
 async function adicionarJogadorPartidaController(req, res) {
   const { partidaId, jogadorId } = req.params;
@@ -193,6 +189,31 @@ async function adicionarJogadorPartidaController(req, res) {
   }
 }
 
+async function carregarUltimaPartida(req, res) {
+  try {
+    const usuarioId = req.user.id; // PEGAR DO TOKEN
+
+    if (!usuarioId) {
+      return res.status(401).json({
+        error: "Usuário não autenticado. Token inválido ou ausente."
+      });
+    }
+
+    const partida = await partidas.UltimaPartidaAbertaDoUsuario(usuarioId);
+
+    if (!partida) {
+      return res.status(404).json({
+        message: "Nenhuma partida aberta encontrada para este usuário.",
+      });
+    }
+
+    res.json(partida);
+  } catch (error) {
+    console.error("Erro ao carregar partida:", error);
+    res.status(500).json({ error: "Erro interno no servidor" });
+  }
+}
+
 module.exports = {
   criarPartidaController,
   finalizarPartidaController,
@@ -206,5 +227,6 @@ module.exports = {
   listarPartidaAtivasUsuarioController,
   limparPartidasPorModalidadeController,
   vincularUsuarioController,
-  adicionarJogadorPartidaController
+  adicionarJogadorPartidaController,
+  carregarUltimaPartida
 };

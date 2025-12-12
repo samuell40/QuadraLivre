@@ -275,7 +275,6 @@ async function vincularJogadorPartida(partidaId, jogadorId, stats = {}) {
     return vinculo;
 }
 
-
 module.exports = {
   criarPartida,
   finalizarPartida,

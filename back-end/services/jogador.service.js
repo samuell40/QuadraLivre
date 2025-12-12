@@ -10,7 +10,7 @@ async function adicionarJogador(dados) {
     throw new Error("Time não encontrado");
   }
 
-  const jogadorExistente = await prisma.jogador.findFirst({
+ await prisma.jogador.findFirst({
     where: {
       nome: dados.nome,
       time: {
@@ -18,10 +18,6 @@ async function adicionarJogador(dados) {
       }
     }
   });
-
-  if (jogadorExistente) {
-    throw new Error(`O jogador "${dados.nome}" já faz parte de outro time na modalidade "${time.modalidade.nome}"`);
-  }
 
   const jogador = await prisma.jogador.create({
     data: {
@@ -43,16 +39,10 @@ async function removerJogadorTime(jogadorId) {
   const jogador = await prisma.jogador.findUnique({
     where: { id: jogadorId },
   });
-
-  if (!jogador) {
-    throw new Error("Jogador não encontrado");
-  }
-
   await prisma.jogador.delete({
     where: { id: jogadorId },
   });
-
-  return { message: "Jogador removido com sucesso" };
+  return jogador;
 }
 
 async function listarJogadoresPorTime(timeId) {
@@ -143,6 +133,28 @@ async function atualizarAtuacaoJogador({ jogadorId, partidaId, gols = 0, cartoes
   return atuacao;
 }
 
+async function listarJogadoresPartida(timeId, partidaId) {
+  const jogadores = await prisma.jogador.findMany({
+    where: { timeId: Number(timeId) },
+    include: {
+      atuacoes: {
+        where: { partidaId: Number(partidaId) },
+      },
+    },
+  });
+
+  // Mapeia para facilitar no frontend
+  return jogadores.map(j => ({
+    id: j.id,
+    nome: j.nome,
+    foto: j.foto,
+    gols: j.atuacoes[0]?.gols || 0,
+    cartoesAmarelos: j.atuacoes[0]?.cartoesAmarelos || 0,
+    cartoesVermelhos: j.atuacoes[0]?.cartoesVermelhos || 0
+  }));
+}
+
+
 module.exports = {
   adicionarJogador,
   removerJogadorTime,
@@ -150,5 +162,6 @@ module.exports = {
   adicionarFuncaoJogador,
   listarFuncoesJogador,
   atualizarFuncaoJogador,
-  atualizarAtuacaoJogador
+  atualizarAtuacaoJogador,
+  listarJogadoresPartida
 };

@@ -12,7 +12,7 @@ async function adicionarJogadorController(req, res) {
       timeId: Number(timeId),
       nome,
       foto,
-      funcaoId: funcaoId ? Number(funcaoId) : null,
+      funcaoId: Number(funcaoId),
     });
 
     return res.status(201).json(novoJogador);
@@ -120,6 +120,19 @@ async function atualizarAtuacaoController(req, res) {
   }
 }
 
+async function listarJogadoresPartidaController(req, res) {
+  const { partidaId, timeId } = req.params;
+
+  try {
+    const jogadores = await jogadorService.listarJogadoresPartida(timeId, partidaId);
+    res.json(jogadores);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao buscar jogadores da partida" });
+  }
+}
+
+
 module.exports = {
   adicionarJogadorController,
   removerJogadorController,
@@ -127,5 +140,6 @@ module.exports = {
   adicionarFuncaoJogadorController,
   listarFuncoesJogadorController,
   atualizarFuncaoJogadorController,
-  atualizarAtuacaoController
+  atualizarAtuacaoController,
+  listarJogadoresPartidaController
 };

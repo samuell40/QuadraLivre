@@ -5,9 +5,9 @@
     <div class="box">
       <p>Gols Marcados</p>
       <div class="controls">
-        <button @click="decrement('golspro')" :disabled="!temporizadorAtivo">−</button>
+        <button @click="abrirModalJogadores('decrement')" :disabled="!temporizadorAtivo">−</button>
         <span>{{ localTime.golspro }}</span>
-        <button @click="increment('golspro')" :disabled="!temporizadorAtivo">+</button>
+        <button @click="abrirModalJogadores('increment')" :disabled="!temporizadorAtivo">+</button>
       </div>
     </div>
 
@@ -48,6 +48,32 @@
           :disabled="!temporizadorAtivo || localTime.substituicoes >= 3">+</button>
       </div>
     </div>
+
+    <div v-if="modalAberto" class="modal-overlay" @click.self="fecharModal">
+      <div class="modal-content">
+        <h2> Selecione o jogador</h2>
+
+        <div v-if="carregando" class="loader">Carregando jogadores...</div>
+
+        <div v-else>
+          <div v-for="jogador in jogadores" :key="jogador.id" class="jogador-item">
+            <div class="jogador-info">
+              <img v-if="jogador.foto" :src="jogador.foto" class="foto-jogador" alt="foto" />
+              <span>{{ jogador.nome }}</span>
+            </div>
+            <div class="controls">
+              <button @click="alterarGolJogador(jogador, 'decrement')">−</button>
+              <span>{{ jogador.gols || 0 }}</span>
+              <button @click="alterarGolJogador(jogador, 'increment')">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="botoes">
+          <button class="btn-save1" @click="fecharModal">Fechar</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -66,47 +92,101 @@ export default {
   data() {
     return {
       localTime: {
-        golspro: this.timeData.golspro || 0,
-        cartaoamarelo: this.timeData.cartaoamarelo || 0,
-        cartaovermelho: this.timeData.cartaovermelho || 0,
-        faltas: this.timeData.faltas || 0,
-        substituicoes: this.timeData.substituicoes || 0,
-        nome: this.timeData.nome || '',
-        foto: this.timeData.foto || '',
-        ...this.timeData
-      }
-    }
-  },
-  watch: {
-    timeData: {
-      handler(newVal) {
-        this.localTime = {
-          golspro: newVal.golspro || 0,
-          cartaoamarelo: newVal.cartaoamarelo || 0,
-          cartaovermelho: newVal.cartaovermelho || 0,
-          faltas: newVal.faltas || 0,
-          substituicoes: newVal.substituicoes || 0,
-          nome: newVal.nome || '',
-          foto: newVal.foto || '',
-          ...newVal
-        }
+        golspro: this.timeData?.golspro || 0,
+        cartaoamarelo: this.timeData?.cartaoamarelo || 0,
+        cartaovermelho: this.timeData?.cartaovermelho || 0,
+        faltas: this.timeData?.faltas || 0,
+        substituicoes: this.timeData?.substituicoes || 0
       },
-      deep: true,
-      immediate: true
+      modalAberto: false,
+      acaoModal: null,
+      jogadores: [],
+      carregando: false
     }
   },
   methods: {
-    increment(campo) {
-      if (campo === 'substituicoes' && this.localTime.substituicoes >= 3) return;
+    async abrirModalJogadores(acao) {
+      this.acaoModal = acao;
+      this.modalAberto = true;
+      await this.carregarJogadores();
+    },
 
-      this.localTime[campo]++;
-      this.emitUpdate();
+    fecharModal() {
+      this.modalAberto = false;
+    },
+
+    async carregarJogadores() {
+      this.carregando = true;
+      try {
+        const timeId = this.timeData?.id;
+
+        if (!timeId || !this.partidaId) {
+          this.jogadores = [];
+          return;
+        }
+
+        const res = await api.get(`/partida/${this.partidaId}/time/${timeId}/jogadores`);
+
+        this.jogadores = res.data.map(j => ({
+          ...j,
+          gols: j.gols || 0,
+          cartoesAmarelos: j.cartoesAmarelos || 0,
+          cartoesVermelhos: j.cartoesVermelhos || 0
+        }));
+
+      } catch (err) {
+        console.error("Erro ao carregar jogadores:", err);
+        Swal.fire("Erro", "Não foi possível carregar os jogadores deste time.", "error");
+      } finally {
+        this.carregando = false;
+      }
+    },
+
+    async alterarGolJogador(jogador, acao) {
+      try {
+        let gols = 0;
+
+        if (acao === 'increment') {
+          jogador.gols = (jogador.gols || 0) + 1;
+          this.localTime.golspro++;
+          gols = 1; // jogador marcou 1 gol
+        } else if (acao === 'decrement' && jogador.gols > 0) {
+          jogador.gols--;
+          this.localTime.golspro = Math.max(0, this.localTime.golspro - 1);
+          gols = -1; // remove 1 gol da contagem
+        }
+
+        this.emitUpdate();
+        await this.salvarPlacar();
+        await api.post('/atuacao', {
+          jogadorId: jogador.id,
+          partidaId: this.partidaId,
+          gols: gols > 0 ? 1 : 0 // apenas incrementa no backend se for gol marcado
+        });
+
+      } catch (err) {
+        console.error(err);
+        Swal.fire("Erro", "Falha ao atualizar gols do jogador.", "error");
+      }
+    },
+
+    increment(campo) {
+      if (campo === 'golspro') {
+        this.abrirModalJogadores('increment');
+      } else {
+        this.localTime[campo]++;
+        this.emitUpdate();
+        this.salvarPlacar();
+      }
     },
 
     decrement(campo) {
-      if (this.localTime[campo] > 0) {
+      if (campo === 'golspro') {
+        this.abrirModalJogadores('decrement');
+      } else if (this.localTime[campo] > 0) {
         this.localTime[campo]--;
         this.emitUpdate();
+        this.salvarPlacar();
       }
     },
 
@@ -116,20 +196,13 @@ export default {
 
     async salvarPlacar() {
       if (!this.partidaId) return;
-
       try {
-        await api.put(`/partida/${this.partidaId}`, {
-          pontosTimeA: this.localTime.golspro,
-          pontosTimeB: this.localTime.golspro,
-          tempoSegundos: this.$parent?.tempoSegundos,
-          substituicoesTimeA: this.localTime.substituicoes,
-          substituicoesTimeB: this.localTime.substituicoes,
-          faltasTimeA: this.localTime.faltas,
-          faltasTimeB: this.localTime.faltas,
-          cartoesAmarelosTimeA: this.localTime.cartaoamarelo,
-          cartoesAmarelosTimeB: this.localTime.cartaoamarelo,
-          cartoesVermelhosTimeA: this.localTime.cartaovermelho,
-          cartoesVermelhosTimeB: this.localTime.cartaovermelho
+        await api.put(`/partida/${this.partidaId}/parcial`, {
+          golspro: this.localTime.golspro,
+          cartaoamarelo: this.localTime.cartaoamarelo,
+          cartaovermelho: this.localTime.cartaovermelho,
+          faltas: this.localTime.faltas,
+          substituicoes: this.localTime.substituicoes
         });
       } catch (e) {
         console.error("Erro ao atualizar no backend:", e);
@@ -142,9 +215,7 @@ export default {
 
 <style scoped>
 .placar {
-  flex: none;
   width: 580px;
-  max-width: 100%;
   background: #fff;
   border-radius: 12px;
   padding: 30px;
@@ -153,7 +224,6 @@ export default {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   gap: 15px;
   margin: 0 auto;
 }
@@ -162,8 +232,6 @@ export default {
   background: #f9f9f9;
   border-bottom: 1px solid #ddd;
   padding: 10px;
-  margin: -30px -30px 20px -30px;
-  border-radius: 8px 8px 0 0;
   color: #3b82f6;
   font-weight: bold;
   font-size: 20px;
@@ -187,7 +255,6 @@ export default {
 .controls span {
   font-size: 18px;
   font-weight: bold;
-  color: #333;
 }
 
 .controls button {
@@ -200,54 +267,66 @@ export default {
   font-size: 18px;
   cursor: pointer;
   transition: 0.2s;
-  flex-shrink: 0;
-}
-
-.controls button:hover {
-  opacity: 0.85;
 }
 
 .controls button:last-child {
   background-color: #3b82f6;
 }
 
-.btn-remove {
-  background-color: #3b82f6;
-  color: white;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  width: 100%;
-  margin-top: auto;
+/* ======== MODAL ======== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
 }
 
-@media (max-width: 768px) {
-  .placar {
-    width: 100%;
-    padding: 20px;
-  }
+.modal-content {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  width: 800px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
 
-  .placar h2 {
-    font-size: 18px;
-    padding: 8px;
-  }
+.jogador-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f5f5f5;
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
 
-  .controls {
-    flex-direction: row;
-    justify-content: center;
-    gap: 20px;
-  }
+.jogador-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-  .controls span {
-    font-size: 16px;
-  }
+.foto-jogador {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  object-fit: cover;
+}
 
-  .controls button {
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
-  }
+.botoes {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.btn-save1 {
+  background: #3b82f6;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
 }
 </style>

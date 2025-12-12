@@ -25,8 +25,9 @@ router.get("/partida/aberta", controller.listarPartidaAtivasUsuarioController);
 
 router.delete('/limpar/:modalidadeId', controller.limparPartidasPorModalidadeController);
 
-router.post('/vincular/partida', controller.vincularUsuarioController);
 
 router.post("/:partidaId/jogador/:jogadorId", controller.adicionarJogadorPartidaController);
+
+router.get("/ultima/partida",  [validarJWT], controller.carregarUltimaPartida);
 
 module.exports = router;

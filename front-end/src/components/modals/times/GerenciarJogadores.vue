@@ -5,11 +5,7 @@
 
       <div class="form-group">
         <label for="acaoGerenciarJogadores">Escolha a ação:</label>
-        <select
-          id="acaoGerenciarJogadores"
-          v-model="acaoLocal"
-          class="dropdown"
-        >
+        <select id="acaoGerenciarJogadores" v-model="acaoLocal" class="dropdown">
           <option disabled value="">Selecione uma opção</option>
           <option value="adicionar">Adicionar Jogador</option>
           <option value="remover">Remover Jogador</option>
@@ -18,22 +14,10 @@
 
       <div v-if="acaoLocal === 'adicionar'" class="form-group">
         <label for="nomeJogador">Nome do jogador:</label>
-        <input
-          type="text"
-          id="nomeJogador"
-          v-model="nomeJogador"
-          placeholder="Digite o nome"
-          class="dropdown"
-        />
+        <input type="text" id="nomeJogador" v-model="nomeJogador" placeholder="Digite o nome" class="dropdown" />
 
         <label for="fotoJogador">Foto (opcional):</label>
-        <input
-          type="file"
-          id="fotoJogador"
-          @change="handleImagemUpload"
-          accept=".jpg,.jpeg,.png"
-          class="dropdown"
-        />
+        <input type="file" id="fotoJogador" @change="handleImagemUpload" accept=".jpg,.jpeg,.png" class="dropdown" />
       </div>
 
       <div v-if="acaoLocal === 'remover'" class="form-group">
@@ -46,10 +30,8 @@
 
       <div class="botoes">
         <button
-          :disabled="!acaoLocal || (acaoLocal==='adicionar' && !nomeJogador) || (acaoLocal==='remover' && !jogadorSelecionado)"
-          @click="confirmar"
-          class="btn-save1"
-        >
+          :disabled="!acaoLocal || (acaoLocal === 'adicionar' && !nomeJogador) || (acaoLocal === 'remover' && !jogadorSelecionado)"
+          @click="confirmar" class="btn-save1">
           Confirmar
         </button>
         <button class="btn-cancel-placar" @click="fecharModal">Cancelar</button>
@@ -68,6 +50,7 @@ export default {
     aberto: Boolean,
     time: Object
   },
+
   data() {
     return {
       acaoLocal: '',
@@ -78,6 +61,7 @@ export default {
       jogadores: []
     };
   },
+
   watch: {
     aberto(novo) {
       if (novo && this.time?.id) this.carregarJogadores();
@@ -86,6 +70,7 @@ export default {
       if (novo?.id) this.carregarJogadores();
     }
   },
+
   methods: {
     fecharModal() {
       this.acaoLocal = '';
@@ -114,43 +99,55 @@ export default {
       }
     },
 
+    async uploadImagem() {
+      if (!this.arquivoFoto) return null;
+
+      const formData = new FormData();
+      formData.append('file', this.arquivoFoto);
+
+      const uploadResponse = await api.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      return uploadResponse.data.fileUrl || uploadResponse.data.url || null;
+    },
+
+    async adicionarJogador() {
+      const urlImagem = await this.uploadImagem();
+
+      await api.post('/adicionar', {
+        nome: this.nomeJogador.trim(),
+        foto: urlImagem,
+        timeId: this.time.id
+      });
+
+      Swal.fire('Sucesso', 'Jogador adicionado!', 'success');
+    },
+
+    async removerJogador() {
+      await api.delete(`/remover/${this.time.id}/${this.jogadorSelecionado}`);
+      Swal.fire('Sucesso', 'Jogador removido!', 'success');
+    },
+
+    handleError(err) {
+      console.error(err);
+      const mensagem = err.response?.data?.message;
+      Swal.fire('Erro', mensagem, 'error');
+    },
+
     async confirmar() {
       try {
         if (this.acaoLocal === 'adicionar') {
-          let urlImagem = null;
-
-          if (this.arquivoFoto) {
-            const formData = new FormData();
-            formData.append('file', this.arquivoFoto);
-
-            const uploadResponse = await api.post('/upload', formData, {
-              headers: { 'Content-Type': 'multipart/form-data' }
-            });
-
-            urlImagem = uploadResponse.data.fileUrl || uploadResponse.data.url || null;
-          }
-
-          await api.post('/adicionar', {
-            nome: this.nomeJogador.trim(),
-            foto: urlImagem,
-            timeId: this.time.id
-          });
-
-          Swal.fire('Sucesso', 'Jogador adicionado!', 'success');
-
+          await this.adicionarJogador();
         } else if (this.acaoLocal === 'remover') {
-          await api.delete(`/${this.time.id}/${this.jogadorSelecionado}`);
-          Swal.fire('Sucesso', 'Jogador removido!', 'success');
+          await this.removerJogador();
         }
 
         this.$emit('atualizar-lista');
         this.fecharModal();
 
       } catch (err) {
-        console.error(err);
-
-        const mensagem = err.response?.data?.message;
-        Swal.fire('Erro', mensagem, 'error');
+        this.handleError(err);
       }
     }
   }
@@ -164,7 +161,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0,0,0,0.5);
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -179,10 +176,10 @@ export default {
   max-width: 90%;
 }
 
-.modal-content h2 { 
+.modal-content h2 {
   margin-bottom: 20px;
-   color: #3b82f6; 
-  }
+  color: #3b82f6;
+}
 
 .dropdown {
   width: 100%;
@@ -210,8 +207,13 @@ export default {
   font-size: 16px;
 }
 
-.btn-save1 { background-color: #3b82f6; }
-.btn-cancel-placar { background-color: #7e7e7e; }
+.btn-save1 {
+  background-color: #3b82f6;
+}
+
+.btn-cancel-placar {
+  background-color: #7e7e7e;
+}
 
 .preview-imagem img {
   margin-top: 10px;

@@ -13,7 +13,7 @@
     </button>
 
     <div v-if="sidebarVisible" class="sidebar">
-      <img src="../assets/QuadraLivre.png" alt="Logo" />
+    <img src="../assets/Cópia de xxxxx (2).png" class= "logo" alt="Logo" />
 
       <!-- DASHBOARD -->
       <div class="sidebar-category">
@@ -120,7 +120,15 @@
             </svg>
             <span>Gerenciar Times</span>
           </a>
-        </div>
+         <a href="/modalidades" :class="{ active: isActive('/modalidades') }">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+              viewBox="0 0 24 24">
+              <path fill="currentColor"
+                d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h3V2h2v2h6V2h2v2h3q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm7.25-2h1.5v-1.5h-1.5zm4.25-3H18q.425 0 .713-.288T19 14v-4q0-.425-.288-.712T18 9h-2.5q-.425 0-.712.288T14.5 10v4q0 .425.288.713T15.5 15M5 15h4.5v-1.5h-3v-1h2q.425 0 .713-.288T9.5 11.5V10q0-.425-.288-.712T8.5 9H5v1.5h3v1H6q-.425 0-.712.288T5 12.5zm6.25-.5h1.5V13h-1.5zm4.75-1v-3h1.5v3zM11.25 11h1.5V9.5h-1.5zm0-3.5h1.5V6h-1.5z" />
+            </svg>
+            <span>Gerenciar Modalidades</span>
+          </a>
+      </div>
       </div>
 
       <!-- LOGOUT -->
@@ -307,4 +315,10 @@ body {
   display: block;
   width: 100%;
 }
+
+.logo {
+  width: 170px;
+  height: 170px;
+}
+
 </style>

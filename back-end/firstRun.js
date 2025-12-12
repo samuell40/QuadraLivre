@@ -23,9 +23,10 @@ async function criarPermissoes() {
 
   await prisma.permissao.createMany({
     data: [
-      { descricao: 'DESENVOLVEDOR_DE_SISTEMA' },
+      { descricao: 'DESENVOLVEDOR' },
       { descricao: 'ADMINISTRADOR' },
       { descricao: 'USUARIO' }, 
+      { descricao: 'MESÁRIO' },
     ],
   });
 

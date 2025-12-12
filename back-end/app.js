@@ -18,6 +18,7 @@ const quadra = require('./routes/quadra.router');
 const placar = require('./routes/placar.router');
 const agendamento = require('./routes/agendamento.router');
 const time = require('./routes/time.router');
+const modalidade = require('./routes/modalidade.router');
 //const { FirstRun } = require('./firstRun');
 
 // Inicialização
@@ -53,6 +54,7 @@ app.use(placar);
 app.use(partida)
 app.use(agendamento);
 app.use(time)
+app.use(modalidade)
 //FirstRun();
 
 // Rota base
