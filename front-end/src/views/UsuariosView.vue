@@ -159,7 +159,7 @@
           </div>
 
           <div class="campo"
-            v-if="form.funcao === 'ADMINISTRADOR' && usuarioLogado.funcao === 'DESENVOLVEDOR_DE_SISTEMA'">
+            v-if="form.funcao === 'ADMINISTRADOR' && usuarioLogado.funcao === 'DESENVOLVEDOR'">
             <strong>Quadra:</strong>
             <select v-model="form.quadra">
               <option disabled value="">Selecione a quadra</option>

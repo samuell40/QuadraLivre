@@ -65,26 +65,71 @@ async function listarJogadoresPorTime(timeId) {
 }
 
 async function adicionarFuncaoJogador(dados) {
+  const { nome, modalidadeId } = dados;
+
   const existente = await prisma.funcaoJogador.findFirst({
-    where: { nome: dados.nome.trim() },
+    where: {
+      nome: nome.trim(),
+      modalidadeId: modalidadeId,
+    },
   });
+
   if (existente) {
-    throw new Error("Essa função já existe");
+    throw new Error("Essa função já existe para essa modalidade");
   }
 
   const funcao = await prisma.funcaoJogador.create({
     data: {
-      nome: dados.nome.trim(),
+      nome: nome.trim(),
+      modalidadeId: modalidadeId,
     },
   });
 
   return funcao;
 }
 
-async function listarFuncoesJogador() {
-  const funcoes = await prisma.funcaoJogador.findMany();
+async function removerFuncaoJogador(dados) {
+  const { id, modalidadeId } = dados;
+
+  const existente = await prisma.funcaoJogador.findFirst({
+    where: {
+      id: Number(id),
+      modalidadeId: Number(modalidadeId),
+    },
+  });
+
+  if (!existente) {
+    throw new Error("Função não encontrada para essa modalidade");
+  }
+
+  await prisma.jogador.updateMany({
+    where: {
+      funcaoId: Number(id),
+    },
+    data: {
+      funcaoId: null,
+    },
+  });
+
+  await prisma.funcaoJogador.delete({
+    where: { id: Number(id) },
+  });
+
+  return { message: "Função removida com sucesso" };
+}
+
+async function listarFuncoesJogador(modalidadeId) {
+  const funcoes = await prisma.funcaoJogador.findMany({
+    where: { modalidadeId: Number(modalidadeId) },
+    include: {
+      _count: {
+        select: { jogadores: true } 
+      }
+    }
+  });
   return funcoes;
 }
+
 
 async function atualizarFuncaoJogador(jogadorId, funcaoId) {
   const jogador = await prisma.jogador.findUnique({ where: { id: jogadorId } });
@@ -143,7 +188,6 @@ async function listarJogadoresPartida(timeId, partidaId) {
     },
   });
 
-  // Mapeia para facilitar no frontend
   return jogadores.map(j => ({
     id: j.id,
     nome: j.nome,
@@ -154,12 +198,12 @@ async function listarJogadoresPartida(timeId, partidaId) {
   }));
 }
 
-
 module.exports = {
   adicionarJogador,
   removerJogadorTime,
   listarJogadoresPorTime,
   adicionarFuncaoJogador,
+  removerFuncaoJogador,
   listarFuncoesJogador,
   atualizarFuncaoJogador,
   atualizarAtuacaoJogador,

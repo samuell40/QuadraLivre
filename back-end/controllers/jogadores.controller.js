@@ -57,13 +57,20 @@ async function listarJogadoresController(req, res) {
 
 async function adicionarFuncaoJogadorController(req, res) {
   try {
-    const { nome } = req.body;
+    const { nome, modalidadeId } = req.body;
 
     if (!nome) {
       return res.status(400).json({ message: "Nome da função é obrigatório" });
     }
 
-    const novaFuncao = await jogadorService.adicionarFuncaoJogador({ nome });
+    if (!modalidadeId) {
+      return res.status(400).json({ message: "modalidadeId é obrigatório" });
+    }
+
+    const novaFuncao = await jogadorService.adicionarFuncaoJogador({
+      nome,
+      modalidadeId: Number(modalidadeId),
+    });
 
     return res.status(201).json(novaFuncao);
   } catch (error) {
@@ -72,13 +79,45 @@ async function adicionarFuncaoJogadorController(req, res) {
   }
 }
 
-async function listarFuncoesJogadorController(req, res) {
+async function removerFuncaoJogadorController(req, res) {
   try {
-    const funcoes = await jogadorService.listarFuncoesJogador();
-    return res.status(200).json(funcoes);
+    const { id, modalidadeId } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ message: "id é obrigatório" });
+    }
+
+    if (!modalidadeId) {
+      return res.status(400).json({ message: "modalidadeId é obrigatório" });
+    }
+
+    const resultado = await jogadorService.removerFuncaoJogador({
+      id: Number(id),
+      modalidadeId: Number(modalidadeId),
+    });
+
+    return res.status(200).json(resultado);
   } catch (error) {
     console.error("Erro no controller:", error);
-    return res.status(500).json({ message: error.message });
+    return res.status(400).json({ message: error.message });
+  }
+}
+
+async function listarFuncoesJogadorController(req, res) {
+  try {
+    const { modalidadeId } = req.query;
+
+    if (!modalidadeId) {
+      return res.status(400).json({ 
+        message: "É necessário informar o modalidadeId" 
+      });
+    }
+
+    const funcoes = await jogadorService.listarFuncoesJogador(modalidadeId);
+    return res.status(200).json(funcoes);
+  } catch (error) {
+    console.error("Erro ao listar funções:", error);
+    return res.status(500).json({ message: "Erro ao listar funções." });
   }
 }
 
@@ -138,6 +177,7 @@ module.exports = {
   removerJogadorController,
   listarJogadoresController,
   adicionarFuncaoJogadorController,
+  removerFuncaoJogadorController,
   listarFuncoesJogadorController,
   atualizarFuncaoJogadorController,
   atualizarAtuacaoController,

@@ -30,9 +30,8 @@ async function cadastrarModalidade(nome) {
 
 async function removerModalidade(id) {
   const modalidadeId = Number(id);
-
   const times = await prisma.time.findMany({
-    where: { modalidadeId: modalidadeId },
+    where: { modalidadeId },
     select: { id: true }
   });
 
@@ -57,13 +56,35 @@ async function removerModalidade(id) {
     }
 
     await prisma.time.deleteMany({
-      where: { modalidadeId: modalidadeId }
+      where: { modalidadeId }
     });
   }
-  
+
+  await prisma.modalidade.update({
+    where: { id: modalidadeId },
+    data: {
+      quadras: {
+        set: []
+      }
+    }
+  });
+
+  await prisma.agendamento.deleteMany({
+    where: { modalidadeId }
+  });
+
+  await prisma.funcaoJogador.deleteMany({
+    where: { modalidadeId }
+  });
+
+  await prisma.partida.deleteMany({
+    where: { modalidadeId }
+  });
+
   const removida = await prisma.modalidade.delete({
     where: { id: modalidadeId }
   });
+
   return removida;
 }
 

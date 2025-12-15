@@ -69,6 +69,7 @@ model Modalidade {
   quadras      Quadra[]      @relation("QuadraModalidade")
   agendamentos Agendamento[] @relation("AgendamentoModalidade")
   partidas     Partida[]
+  funcoes      FuncaoJogador[]  
 }
 
 model Time {
@@ -139,9 +140,11 @@ model JogadorPartida {
 }
 
 model FuncaoJogador {
-  id       Int       @id @default(autoincrement())
-  nome     String
-  jogadores Jogador[]
+  id          Int        @id @default(autoincrement())
+  nome        String
+  modalidadeId Int      
+  modalidade   Modalidade @relation(fields: [modalidadeId], references: [id])
+  jogadores    Jogador[]
 }
 
 model PartidaUsuario {

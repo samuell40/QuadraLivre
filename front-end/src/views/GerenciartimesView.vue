@@ -18,12 +18,14 @@
         <div class="dropdown-row">
           <div class="team dropdown-container">
             <p>Modalidade:</p>
-            <select id="modalidade" v-model="modalidadeSelecionada" @change="carregarTimes" class="dropdown">
+            <select id="modalidade" v-model="modalidadeSelecionada" class="dropdown">
               <option disabled value="">Selecione uma modalidade</option>
-              <option v-for="(modalidade, i) in modalidadesDisponiveis" :key="i" :value="modalidade.nome">
+              <option v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" :value="modalidade.id">
                 {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
               </option>
             </select>
+
+
           </div>
         </div>
 
@@ -33,8 +35,9 @@
         <RemoverTimeModal :aberto="modalRemoverTimeAberto" :modalidadesDisponiveis="modalidadesDisponiveis"
           @fechar="fecharModalRemoverTime" @atualizar="carregarTimes" />
 
-        <DetalharTimes :aberto="modalDetalharTimeAberto" :time="timeSelecionadoDetalhe" ref="detalharJogadores"
-          @fechar="fecharModalDetalharTime" @gerenciar-jogadores="modalGerenciarJogadoresAberto = true" />
+        <DetalharTimes :aberto="modalDetalharTimeAberto" :time="timeSelecionadoDetalhe"
+          :modalidadeSelecionada="modalidadeSelecionada" ref="detalharJogadores" @fechar="fecharModalDetalharTime"
+          @gerenciar-jogadores="modalGerenciarJogadoresAberto = true" />
 
         <GerenciarJogadores :aberto="modalGerenciarJogadoresAberto" :time="timeSelecionadoDetalhe"
           @fechar="modalGerenciarJogadoresAberto = false" @atualizar-lista="atualizarJogadores" />
@@ -99,7 +102,7 @@ export default {
     return {
       isLoading: true,
       modalidadesDisponiveis: [],
-      modalidadeSelecionada: '',
+      modalidadeSelecionada: null,  // só uma vez, armazenará o ID da modalidade
       times: [],
       timeSelecionadoDetalhe: null,
       modalAdicionarTimeAberto: false,
@@ -157,8 +160,9 @@ export default {
       try {
         const res = await api.get('/listar/modalidade');
         this.modalidadesDisponiveis = res.data || [];
+
         if (this.modalidadesDisponiveis.length) {
-          this.modalidadeSelecionada = this.modalidadesDisponiveis[0].nome;
+          this.modalidadeSelecionada = this.modalidadesDisponiveis[0].id; // agora ID
           this.carregarTimes();
         }
       } catch (error) {
@@ -167,12 +171,15 @@ export default {
     },
 
     async carregarTimes() {
-      if (!this.modalidadeSelecionada) { this.times = []; return; }
+      if (!this.modalidadeSelecionada) {
+        this.times = [];
+        return;
+      }
+
       this.isLoadingTimes = true;
 
       try {
-        const modalidade = this.modalidadesDisponiveis.find(m => m.nome === this.modalidadeSelecionada);
-        const res = await api.get(`/times/modalidade/${modalidade.id}`);
+        const res = await api.get(`/times/modalidade/${this.modalidadeSelecionada}`); // já é o ID
         this.times = (res.data || []).map(t => ({
           ...t,
           qtdJogadores: t._count?.jogadores ?? t.jogadores?.length ?? t.qtdJogadores ?? 0,
@@ -186,6 +193,7 @@ export default {
         this.isLoadingTimes = false;
       }
     },
+
     async removerTime(id) {
       const confirmacao = await Swal.fire({
         title: 'Tem certeza?',

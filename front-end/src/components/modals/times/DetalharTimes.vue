@@ -31,29 +31,25 @@
                 </td>
                 <td>
                   <select v-model="j.funcaoId" @change="alterarFuncao(j.id, j.funcaoId)" class="select-funcao">
-                    <option value="">Sem função</option>
-                    <option v-for="f in funcoes" :key="f.id" :value="f.id">{{ f.nome }}</option>
+                    <option v-for="f in funcoes" :key="f.id" :value="f.id">
+                      {{ f.nome }}
+                    </option>
                   </select>
                 </td>
-
-
                 <td>{{ j.gols || 0 }}</td>
                 <td>
                   <template v-if="j.cartoesVermelhos && j.cartoesVermelhos > 0">
-                    <!-- Se houver pelo menos 1 vermelho, mostra um quadrado vermelho -->
                     <span class="cartao-vermelho"></span>
                   </template>
                   <template v-else>
-                    <!-- Se não houver vermelho, mostra quadrados amarelos -->
-                    <span v-for="n in j.cartoesAmarelos" :key="n" class="cartao-amarelo">
-                    </span>
+                    <span v-for="n in j.cartoesAmarelos" :key="n" class="cartao-amarelo"></span>
                   </template>
                 </td>
-
               </tr>
             </tbody>
           </table>
         </div>
+
         <div v-else class="sem-dados-centralizado">
           Nenhum jogador encontrado para este time.
         </div>
@@ -68,7 +64,12 @@
 import api from '@/axios';
 
 export default {
-  props: { aberto: Boolean, time: Object },
+  props: {
+    aberto: Boolean,
+    time: Object,
+    modalidadeSelecionada: String,
+    modalidadesDisponiveis: Array
+  },
   data() {
     return {
       jogadores: [],
@@ -79,18 +80,39 @@ export default {
   watch: {
     aberto(novo) {
       if (novo && this.time?.id) {
+        console.log('Modal aberto, modalidade selecionada:', this.modalidadeSelecionada);
         this.carregarFuncoes();
         this.carregarJogadores(this.time.id);
       }
+    },
+    modalidadeSelecionada(novoValor) {
+      console.log('modalidadeSelecionada mudou no filho:', novoValor);
+      if (this.aberto) {
+        this.carregarFuncoes();
+      }
+    }
+  },
+  computed: {
+    modalidadeSelecionadaId() {
+      return this.modalidadeSelecionada; // se for id direto
     }
   },
   methods: {
     async carregarFuncoes() {
+      console.log('Carregando funções para modalidadeId:', this.modalidadeSelecionadaId);
+
+      if (!this.modalidadeSelecionadaId) {
+        this.funcoes = [];
+        return;
+      }
+
       try {
-        const res = await api.get('/listar/funcao');
+        const res = await api.get(`/listar/funcoes`, {
+          params: { modalidadeId: this.modalidadeSelecionadaId }
+        });
         this.funcoes = res.data || [];
       } catch (err) {
-        console.error(err);
+        console.error('Erro da API:', err);
         this.funcoes = [];
       }
     },

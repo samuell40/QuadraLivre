@@ -36,13 +36,22 @@
               </div>
             </div>
 
-            <button class="btn-detalhar" @click="removerModalidade(mod.id)">
-              Remover
-            </button>
+            <div class="acoes">
+              <button class="btn-detalhar" @click="abrirModalDetalhar(mod)">
+                Detalhar
+              </button>
+
+              <button class="btn-remover" @click="removerModalidade(mod.id)">
+                Remover
+              </button>
+            </div>
           </div>
         </div>
       </div>
       <AdicionarModalidadeModal :aberto="modalAdd" @fechar="modalAdd = false" @atualizar="carregarModalidades" />
+
+      <DetalharModalidadeModal :aberto="modalDetalhar" :modalidade="modalidadeSelecionada"
+        @fechar="modalDetalhar = false" />
 
     </div>
   </div>
@@ -51,13 +60,14 @@
 <script>
 import SideBar from '@/components/SideBar.vue'
 import AdicionarModalidadeModal from '@/components/modals/modalidades/AdicionarModalidadeModal.vue'
+import DetalharModalidadeModal from '@/components/modals/modalidades/DetalharModalidadeModal.vue'
 import api from '@/axios'
 import Swal from 'sweetalert2'
 
 export default {
   name: 'GerenciarModalidadesView',
 
-  components: { SideBar, AdicionarModalidadeModal },
+  components: { SideBar, AdicionarModalidadeModal, DetalharModalidadeModal },
 
   data() {
     return {
@@ -65,7 +75,8 @@ export default {
       isLoading: true,
       pesquisa: "",
       modalAdd: false,
-      modalidadeSelecionada: null
+      modalidadeSelecionada: null,
+      modalDetalhar: false
     }
   },
 
@@ -89,6 +100,11 @@ export default {
         .split(' ')
         .map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
         .join(' ');
+    },
+
+    abrirModalDetalhar(mod) {
+      this.modalidadeSelecionada = mod
+      this.modalDetalhar = true
     },
 
     async carregarModalidades() {
@@ -134,7 +150,7 @@ export default {
       } catch (error) {
         Swal.fire(
           'Erro',
-          error.response?.data?.erro || 'Erro ao remover modalidade.',
+          error.response?.data?.erro,
           'error'
         );
       }
@@ -249,6 +265,33 @@ export default {
   padding: 6px 12px;
   border-radius: 20px;
   cursor: pointer;
+}
+
+.acoes {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.btn-detalhar,
+.btn-remover {
+  flex: 1;
+  padding: 5px 0;       /* 👈 igual ao exemplo */
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-detalhar {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.btn-remover {
+  background-color: #7E7E7E;
+  color: white;
 }
 
 .loader-container-centralizado {

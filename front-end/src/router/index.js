@@ -15,6 +15,7 @@ import HorariosView from '@/views/HorariosView.vue';
 import GoogleCallback from '@/views/GoogleCallback.vue';
 import GerenciartimesView from '@/views/GerenciartimesView.vue';
 import GerenciarModalidadesView from '@/views/GerenciarModalidadesView.vue';
+import GerenciarFuncoesView from '@/views/GerenciarFuncoesView.vue';
 
 const routes = [
   {
@@ -23,23 +24,23 @@ const routes = [
     component: HomeView,
     meta: { public: true },
   },
-   {
+  {
     path: '/dashboard',
-    name: 'Dashboard', 
+    name: 'Dashboard',
     component: DashboardView,
-    meta: { requiresAuth: true, roles: [1, 2] }, 
+    meta: { requiresAuth: true, roles: [1, 2] },
   },
   {
     path: '/agendamentos',
-    name: 'Agendamentos', 
+    name: 'Agendamentos',
     component: AgendamentosView,
-    meta: { requiresAuth: true, roles: [1, 2] }, 
+    meta: { public: true },
   },
   {
     path: '/agendarquadra',
     name: 'agendar_quadra',
     component: AgendarQuadrasView,
-    meta: { requiresAuth: true, roles: [3] }, 
+    meta: { requiresAuth: true, roles: [3] },
   },
   {
     path: '/agendarquadrasadm',
@@ -51,37 +52,37 @@ const routes = [
     path: '/meusagendamentos',
     name: 'meus_agendamentos',
     component: MeusAgendamentosView,
-    meta: { requiresAuth: true, roles: [3] }, 
+    meta: { requiresAuth: true, roles: [3] },
   },
   {
     path: '/cadastrarquadra',
     name: 'cadastrar_quadra',
     component: CadastrarQuadraView,
-    meta: { requiresAuth: true, roles: [1, 2] }, 
+    meta: { requiresAuth: true, roles: [1, 2] },
   },
   {
     path: '/controleplacar',
     name: 'controle_placar',
     component: ControlePlacarView,
-    meta: { requiresAuth: true, roles: [1, 2] }, 
+    meta: { requiresAuth: true, roles: [1, 2] },
   },
-    {
+  {
     path: '/gerenciartimes',
     name: 'gerenciar_times',
     component: GerenciartimesView,
-    meta: { requiresAuth: true, roles: [1, 2] }, 
+    meta: { requiresAuth: true, roles: [1, 2] },
   },
-    {
+  {
     path: '/partida',
     name: 'partida',
     component: PartidaView,
-    meta: { requiresAuth: true, roles: [1, 2] }, 
+    meta: { requiresAuth: true, roles: [1, 2] },
   },
   {
     path: '/usuarios',
     name: 'usuarios',
     component: UsuariosView,
-    meta: { requiresAuth: true, roles: [1, 2] }, 
+    meta: { requiresAuth: true, roles: [1, 2] },
   },
   {
     path: '/NaoAutorizado',
@@ -107,11 +108,18 @@ const routes = [
     component: HorariosView,
     meta: { public: true },
   },
-  
+
   {
     path: '/modalidades',
     name: 'Modalidades',
     component: GerenciarModalidadesView,
+    meta: { public: true },
+  },
+
+  {
+    path: '/funcoes',
+    name: 'Funcoes',
+    component: GerenciarFuncoesView,
     meta: { public: true },
   }
 ];

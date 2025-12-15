@@ -56,7 +56,6 @@ export default {
       acaoLocal: '',
       nomeJogador: '',
       arquivoFoto: null,
-      previewImagem: null,
       jogadorSelecionado: null,
       jogadores: []
     };
@@ -76,7 +75,6 @@ export default {
       this.acaoLocal = '';
       this.nomeJogador = '';
       this.arquivoFoto = null;
-      this.previewImagem = null;
       this.jogadorSelecionado = null;
       this.$emit('fechar');
     },
@@ -85,7 +83,6 @@ export default {
       const file = event.target.files[0];
       if (file) {
         this.arquivoFoto = file;
-        this.previewImagem = URL.createObjectURL(file);
       }
     },
 
@@ -109,7 +106,7 @@ export default {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      return uploadResponse.data.fileUrl || uploadResponse.data.url || null;
+      return uploadResponse.data.fileUrl || uploadResponse.data.url;
     },
 
     async adicionarJogador() {

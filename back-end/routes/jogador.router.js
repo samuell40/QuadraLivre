@@ -10,7 +10,9 @@ router.get('/time/:timeId', controller.listarJogadoresController);
 
 router.post('/adicionar/funcao', controller.adicionarFuncaoJogadorController);
 
-router.get('/listar/funcao', controller.listarFuncoesJogadorController);
+router.delete('/remover/funcao', controller.removerFuncaoJogadorController);
+
+router.get('/listar/funcoes', controller.listarFuncoesJogadorController);
 
 router.put('/funcao/:jogadorId', controller.atualizarFuncaoJogadorController);
 
