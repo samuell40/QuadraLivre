@@ -94,7 +94,7 @@ export default {
   },
   computed: {
     modalidadeSelecionadaId() {
-      return this.modalidadeSelecionada; // se for id direto
+      return this.modalidadeSelecionada; 
     }
   },
   methods: {
@@ -168,9 +168,9 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  width: 900px;
-  max-width: 95%;
-  height: auto;
+  width: fit-content;
+  min-width: 700px;
+  max-width: 95vw;
   max-height: 90vh;
   box-sizing: border-box;
 }
@@ -181,8 +181,10 @@ export default {
 }
 
 .placar-table {
+  max-height: 55vh; 
   overflow-y: auto;
   overflow-x: auto;
+
   border-radius: 12px;
   background-color: white;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -330,11 +332,9 @@ export default {
 
 .cartao-amarelo {
   background-color: #facc15;
-  /* amarelo */
 }
 
 .cartao-vermelho {
   background-color: #ef4444;
-  /* vermelho */
 }
 </style>

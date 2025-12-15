@@ -105,21 +105,27 @@ export default {
 
 .modal-content {
   background: white;
-  padding: 30px 40px;
-  border-radius: 10px;
+  padding: 24px 32px;
+  border-radius: 12px;
   width: 900px;
   max-width: 95%;
+  max-height: 90vh;
+
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-content h2 {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   color: #3b82f6;
-  text-align: left;
 }
 
+/* Área principal que cresce */
 .colunas {
   display: flex;
   gap: 20px;
+  flex: 1;
+  overflow: hidden;
 }
 
 .coluna {
@@ -129,28 +135,42 @@ export default {
   display: flex;
   flex-direction: column;
   padding: 10px 15px;
+  overflow-y: auto;
+}
+
+/* Scroll bonito */
+.coluna::-webkit-scrollbar {
+  width: 6px;
+}
+.coluna::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
 }
 
 .coluna h3 {
   border-bottom: 1px solid #3b82f6;
   padding: 10px;
-  margin: 0 -10px 10px -10px;
+  margin: -10px -15px 10px -15px;
   color: #3b82f6;
   font-weight: bold;
   font-size: 20px;
   text-align: center;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .funcao-titulo {
   margin: 10px 0 8px;
-  color: #7E7E7E;
+  color: #7e7e7e;
   border-bottom: 1px solid #eee;
   padding-bottom: 4px;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .jogador-card {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .jogador-label {
@@ -167,45 +187,43 @@ export default {
 }
 
 .foto-jogador {
-  width: 45px;
-  height: 45px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid #ccc;
 }
 
-.dados-jogador {
-  display: flex;
-  flex-direction: column;
-}
-
 .nome {
-  font-weight: bold;
+  font-weight: 600;
   font-size: 14px;
 }
 
+/* Rodapé fixo */
 .botoes {
   display: flex;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: 16px;
 }
 
-.btn-save1,
-.btn-cancel-placar {
+.btn-save1 {
   flex: 1;
-  padding: 10px 0;
+  padding: 12px 0;
   border-radius: 20px;
   border: none;
   cursor: pointer;
   color: white;
   font-size: 16px;
-}
-
-.btn-save1 {
   background-color: #3b82f6;
 }
 
-.btn-cancel-placar {
-  background-color: #7e7e7e;
+@media (max-width: 768px) {
+  .colunas {
+    flex-direction: column;
+  }
+
+  .coluna {
+    max-height: 35vh;
+  }
 }
 </style>
