@@ -15,7 +15,6 @@ import HorariosView from '@/views/HorariosView.vue';
 import GoogleCallback from '@/views/GoogleCallback.vue';
 import GerenciartimesView from '@/views/GerenciartimesView.vue';
 import GerenciarModalidadesView from '@/views/GerenciarModalidadesView.vue';
-import GerenciarFuncoesView from '@/views/GerenciarFuncoesView.vue';
 
 const routes = [
   {
@@ -115,13 +114,6 @@ const routes = [
     component: GerenciarModalidadesView,
     meta: { public: true },
   },
-
-  {
-    path: '/funcoes',
-    name: 'Funcoes',
-    component: GerenciarFuncoesView,
-    meta: { public: true },
-  }
 ];
 
 const router = createRouter({

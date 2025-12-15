@@ -11,9 +11,13 @@ async function adicionarQuadra(req, res) {
   }
 };
 
+
 async function getQuadra(req, res) {
   try {
-    const quadras = await quadraService.getQuadras();
+    const { modalidadeId } = req.query;
+
+    const quadras = await quadraService.getQuadras(modalidadeId);
+
     res.status(200).json(quadras);
   } catch (error) {
     console.error('Erro ao buscar quadras:', error);

@@ -19,13 +19,22 @@ async function criarQuadra(dados) {
   return quadra;
 }
 
-async function getQuadras() {
-  const buscarQuadras = await prisma.quadra.findMany({
+async function getQuadras(modalidadeId) {
+  return prisma.quadra.findMany({
+    where: modalidadeId
+      ? {
+          modalidades: {
+            some: {
+              id: Number(modalidadeId),
+            },
+          },
+        }
+      : undefined,
+
     include: {
       modalidades: true,
     },
   });
-  return buscarQuadras;
 }
 
 module.exports = { criarQuadra, getQuadras};
