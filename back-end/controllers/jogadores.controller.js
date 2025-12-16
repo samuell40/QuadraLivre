@@ -136,42 +136,6 @@ async function atualizarFuncaoJogadorController(req, res) {
   }
 }
 
-async function atualizarAtuacaoController(req, res) {
-  try {
-    const { jogadorId, partidaId, gols, cartoesAmarelos, cartoesVermelhos } = req.body;
-
-    if (!jogadorId || !partidaId) {
-      return res.status(400).json({ message: "jogadorId e partidaId são obrigatórios" });
-    }
-
-    const atuacao = await jogadorService.atualizarAtuacaoJogador({
-      jogadorId,
-      partidaId,
-      gols: gols || 0,
-      cartoesAmarelos: cartoesAmarelos || 0,
-      cartoesVermelhos: cartoesVermelhos || 0
-    });
-
-    return res.status(200).json(atuacao);
-  } catch (error) {
-    console.error("Erro ao atualizar atuação do jogador:", error);
-    return res.status(500).json({ message: error.message });
-  }
-}
-
-async function listarJogadoresPartidaController(req, res) {
-  const { partidaId, timeId } = req.params;
-
-  try {
-    const jogadores = await jogadorService.listarJogadoresPartida(timeId, partidaId);
-    res.json(jogadores);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao buscar jogadores da partida" });
-  }
-}
-
-
 module.exports = {
   adicionarJogadorController,
   removerJogadorController,
@@ -179,7 +143,5 @@ module.exports = {
   adicionarFuncaoJogadorController,
   removerFuncaoJogadorController,
   listarFuncoesJogadorController,
-  atualizarFuncaoJogadorController,
-  atualizarAtuacaoController,
-  listarJogadoresPartidaController
+  atualizarFuncaoJogadorController
 };

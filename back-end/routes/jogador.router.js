@@ -16,8 +16,4 @@ router.get('/listar/funcoes', controller.listarFuncoesJogadorController);
 
 router.put('/funcao/:jogadorId', controller.atualizarFuncaoJogadorController);
 
-router.post('/atuacao', controller.atualizarAtuacaoController);
-
-router.get('/partida/:partidaId/time/:timeId/jogadores', controller.listarJogadoresPartidaController);
-
 module.exports = router;

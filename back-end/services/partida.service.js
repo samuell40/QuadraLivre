@@ -219,7 +219,7 @@ async function listarPartidaAtivaUsuario(usuarioId) {
       modalidade: true,
       quadra: {
         include: {
-          modalidades: true, // pega as modalidades da quadra
+          modalidades: true,
         },
       },
       jogadoresPartida: { include: { jogador: true } },
@@ -256,23 +256,89 @@ async function vincularUsuarioAPartida(partidaId, usuarioId, permissaoId) {
 }
 
 async function vincularJogadorPartida(partidaId, jogadorId, stats = {}) {
-    const partida = await prisma.partida.findUnique({ where: { id: partidaId } });
-    if (!partida) throw new Error("Partida não encontrada");
+  const partida = await prisma.partida.findUnique({ where: { id: partidaId } });
+  if (!partida) throw new Error("Partida não encontrada");
 
-    const jogador = await prisma.jogador.findUnique({ where: { id: jogadorId } });
-    if (!jogador) throw new Error("Jogador não encontrado");
+  const jogador = await prisma.jogador.findUnique({ where: { id: jogadorId } });
+  if (!jogador) throw new Error("Jogador não encontrado");
 
-    const vinculo = await prisma.jogadorPartida.create({
-      data: {
-        partidaId,
-        jogadorId,
-        gols: stats.gols || 0,
-        cartoesAmarelos: stats.cartoesAmarelos || 0,
-        cartoesVermelhos: stats.cartoesVermelhos || 0
+  const vinculo = await prisma.jogadorPartida.create({
+    data: {
+      partidaId,
+      jogadorId,
+      gols: stats.gols || 0,
+      cartoesAmarelos: stats.cartoesAmarelos || 0,
+      cartoesVermelhos: stats.cartoesVermelhos || 0
+    }
+  });
+
+  return vinculo;
+}
+
+async function listarJogadoresSelecionados(partidaId) {
+  const jogadores = await prisma.jogadorPartida.findMany({
+    where: { partidaId: Number(partidaId) },
+    include: {
+      jogador: {
+        select: {
+          id: true,
+          nome: true,
+          foto: true,
+          funcao: { select: { nome: true } },
+          timeId: true
+        }
       }
-    });
+    }
+  });
 
-    return vinculo;
+  return jogadores.map(jp => ({
+    id: jp.jogador.id,
+    nome: jp.jogador.nome,
+    foto: jp.jogador.foto,
+    funcao: jp.jogador.funcao?.nome || "Nenhuma",
+    timeId: jp.jogador.timeId,
+    gols: jp.gols || 0,
+    cartoesAmarelos: jp.cartoesAmarelos || 0,
+    cartoesVermelhos: jp.cartoesVermelhos || 0
+  }));
+}
+
+async function atualizarAtuacaoJogadorPartida({
+  jogadorId,
+  partidaId,
+  gols = 0,
+  cartoesAmarelos = 0,
+  cartoesVermelhos = 0
+}) {
+  let atuacao = await prisma.jogadorPartida.findFirst({
+    where: {
+      jogadorId: Number(jogadorId),
+      partidaId: Number(partidaId),
+    },
+  });
+
+  if (!atuacao) {
+    atuacao = await prisma.jogadorPartida.create({
+      data: {
+        jogadorId: Number(jogadorId),
+        partidaId: Number(partidaId),
+        gols: Math.max(0, Number(gols)),
+        cartoesAmarelos: Math.max(0, Number(cartoesAmarelos)),
+        cartoesVermelhos: Math.max(0, Number(cartoesVermelhos)),
+      },
+    });
+  } else {
+    atuacao = await prisma.jogadorPartida.update({
+      where: { id: atuacao.id },
+      data: {
+        gols: Math.max(0, atuacao.gols + Number(gols)),
+        cartoesAmarelos: Math.max(0, atuacao.cartoesAmarelos + Number(cartoesAmarelos)),
+        cartoesVermelhos: Math.max(0, atuacao.cartoesVermelhos + Number(cartoesVermelhos)),
+      },
+    });
+  }
+
+  return atuacao;
 }
 
 module.exports = {
@@ -288,5 +354,7 @@ module.exports = {
   listarPartidaAtivaUsuario,
   limparPartidasPorModalidade,
   vincularUsuarioAPartida,
-  vincularJogadorPartida
+  vincularJogadorPartida,
+  listarJogadoresSelecionados,
+  atualizarAtuacaoJogadorPartida
 };

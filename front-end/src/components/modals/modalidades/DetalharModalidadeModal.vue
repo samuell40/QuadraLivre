@@ -290,6 +290,8 @@ export default {
   max-width: 95%;
   max-height: 85vh;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .header-modal {
@@ -333,6 +335,7 @@ export default {
   font-size: 16px;
 }
 
+/* 🎯 Ajustes no Accordion para que o conteúdo se adapte */
 .accordion {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
@@ -352,6 +355,9 @@ export default {
 
 .accordion-body {
   padding: 12px 16px;
+  max-height: 300px; /* Limitar a altura máxima para scroll */
+  overflow-y: auto; /* Habilitar scroll se o conteúdo exceder */
+  display: block;
 }
 
 .accordion-body ul {

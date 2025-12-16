@@ -1,12 +1,14 @@
 <template>
   <div class="placar">
-    <h2>{{ timeNome }}</h2>
+    <h2 class="nome-time">{{ timeNome }}</h2>
 
     <div class="box">
       <p>Gols Marcados</p>
       <div class="controls">
-        <button @click="abrirModalJogadores('decrement')" :disabled="!temporizadorAtivo">−</button>
+        <!-- Decrement direto -->
+        <button @click="alterarGols('decrement')" :disabled="!temporizadorAtivo || localTime.golspro <= 0">−</button>
         <span>{{ localTime.golspro }}</span>
+        <!-- Increment abre modal -->
         <button @click="abrirModalJogadores('increment')" :disabled="!temporizadorAtivo">+</button>
       </div>
     </div>
@@ -49,20 +51,26 @@
       </div>
     </div>
 
+    <!-- Modal de seleção de jogador -->
     <div v-if="modalAberto" class="modal-overlay" @click.self="fecharModal">
       <div class="modal-content">
-        <h2> Selecione o jogador</h2>
+        <h2 class="modal-titulo">Selecione o Jogador Que Marcou o GOL</h2>
 
-        <div v-if="carregando" class="loader">Carregando jogadores...</div>
+        <div v-if="carregando" class="loader">
+          Carregando jogadores...
+        </div>
 
-        <div v-else>
-          <div v-for="jogador in jogadores" :key="jogador.id" class="jogador-item">
+        <div v-else class="coluna">
+          <div v-for="jogador in jogadores" :key="jogador.id" class="jogador-card">
             <div class="jogador-info">
               <img v-if="jogador.foto" :src="jogador.foto" class="foto-jogador" alt="foto" />
-              <span>{{ jogador.nome }}</span>
+              <div class="dados-jogador">
+                <span class="nome">{{ jogador.nome }}</span>
+              </div>
             </div>
+
             <div class="controls">
-              <button @click="alterarGolJogador(jogador, 'decrement')">−</button>
+              <button @click="alterarGolJogador(jogador, 'decrement')" :disabled="jogador.gols <= 0">−</button>
               <span>{{ jogador.gols || 0 }}</span>
               <button @click="alterarGolJogador(jogador, 'increment')">+</button>
             </div>
@@ -119,21 +127,23 @@ export default {
       this.carregando = true;
       try {
         const timeId = this.timeData?.id;
-
         if (!timeId || !this.partidaId) {
           this.jogadores = [];
           return;
         }
-
-        const res = await api.get(`/partida/${this.partidaId}/time/${timeId}/jogadores`);
-
-        this.jogadores = res.data.map(j => ({
-          ...j,
-          gols: j.gols || 0,
-          cartoesAmarelos: j.cartoesAmarelos || 0,
-          cartoesVermelhos: j.cartoesVermelhos || 0
-        }));
-
+        const res = await api.get(`/partida/${this.partidaId}`);
+        this.jogadores = res.data
+          .filter(j => j.timeId === Number(timeId))
+          .map(j => ({
+            id: j.id,
+            nome: j.nome,
+            foto: j.foto,
+            funcao: j.funcao || "Nenhuma",
+            timeId: j.timeId,
+            gols: j.gols || 0,
+            cartoesAmarelos: j.cartoesAmarelos || 0,
+            cartoesVermelhos: j.cartoesVermelhos || 0
+          }));
       } catch (err) {
         console.error("Erro ao carregar jogadores:", err);
         Swal.fire("Erro", "Não foi possível carregar os jogadores deste time.", "error");
@@ -142,27 +152,41 @@ export default {
       }
     },
 
+    alterarGols(acao) {
+      if (acao === 'increment' || acao === 'decrement') {
+        this.abrirModalJogadores(acao);
+      }
+    },
     async alterarGolJogador(jogador, acao) {
       try {
         let gols = 0;
 
         if (acao === 'increment') {
-          jogador.gols = (jogador.gols || 0) + 1;
+          jogador.gols++;
           this.localTime.golspro++;
-          gols = 1; // jogador marcou 1 gol
+          gols = 1;
         } else if (acao === 'decrement' && jogador.gols > 0) {
           jogador.gols--;
           this.localTime.golspro = Math.max(0, this.localTime.golspro - 1);
-          gols = -1; // remove 1 gol da contagem
+          gols = -1;
         }
 
         this.emitUpdate();
+
+        // Primeiro atualiza o placar do time
         await this.salvarPlacar();
+
         await api.post('/atuacao', {
           jogadorId: jogador.id,
           partidaId: this.partidaId,
-          gols: gols > 0 ? 1 : 0 // apenas incrementa no backend se for gol marcado
+          gols: gols  // envia -1 quando for decremento
         });
+
+
+        // Só recarrega a lista se for incremento para não sobrescrever decremento
+        if (acao === 'increment') {
+          await this.carregarJogadores();
+        }
 
       } catch (err) {
         console.error(err);
@@ -181,9 +205,7 @@ export default {
     },
 
     decrement(campo) {
-      if (campo === 'golspro') {
-        this.abrirModalJogadores('decrement');
-      } else if (this.localTime[campo] > 0) {
+      if (campo !== 'golspro' && this.localTime[campo] > 0) {
         this.localTime[campo]--;
         this.emitUpdate();
         this.salvarPlacar();
@@ -228,13 +250,13 @@ export default {
   margin: 0 auto;
 }
 
-.placar h2 {
+.nome-time {
   background: #f9f9f9;
   border-bottom: 1px solid #ddd;
   padding: 10px;
   color: #3b82f6;
   font-weight: bold;
-  font-size: 20px;
+  font-size: 30px;
 }
 
 .box {
@@ -273,7 +295,6 @@ export default {
   background-color: #3b82f6;
 }
 
-/* ======== MODAL ======== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -281,26 +302,55 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+  z-index: 1000;
 }
 
 .modal-content {
   background: white;
-  padding: 25px;
-  border-radius: 10px;
-  width: 800px;
-  max-height: 80vh;
+  padding: 24px 32px;
+  border-radius: 12px;
+  width: 900px;
+  max-width: 95%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-titulo {
+  border-bottom: none;
+  padding: 0 0 12px 0;
+  text-align: left;
+  color: #3b82f6;
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.coluna {
+  flex: 1;
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  padding: 10px 15px;
   overflow-y: auto;
 }
 
-.jogador-item {
+.coluna::-webkit-scrollbar {
+  width: 6px;
+}
+
+.coluna::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.jogador-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #f5f5f5;
-  padding: 8px 10px;
+  background: #f9fafb;
   border-radius: 8px;
-  margin-bottom: 10px;
+  padding: 10px;
+  margin-bottom: 8px;
+  border: 2px solid #3b82f6;
 }
 
 .jogador-info {
@@ -310,23 +360,36 @@ export default {
 }
 
 .foto-jogador {
-  width: 35px;
-  height: 35px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   object-fit: cover;
+  border: 1px solid #ccc;
+}
+
+.nome {
+  font-weight: 600;
+  font-size: 14px;
 }
 
 .botoes {
-  margin-top: 20px;
-  text-align: center;
+  margin-top: 16px;
 }
 
 .btn-save1 {
-  background: #3b82f6;
+  width: 100%;
+  padding: 12px 0;
+  border-radius: 20px;
   border: none;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
   cursor: pointer;
+  color: white;
+  font-size: 16px;
+  background-color: #3b82f6;
+}
+
+.loader {
+  text-align: center;
+  padding: 20px;
+  color: #555;
 }
 </style>

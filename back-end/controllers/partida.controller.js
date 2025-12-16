@@ -191,7 +191,7 @@ async function adicionarJogadorPartidaController(req, res) {
 
 async function carregarUltimaPartida(req, res) {
   try {
-    const usuarioId = req.user.id; // PEGAR DO TOKEN
+    const usuarioId = req.user.id;
 
     if (!usuarioId) {
       return res.status(401).json({
@@ -214,6 +214,46 @@ async function carregarUltimaPartida(req, res) {
   }
 }
 
+async function listarJogadoresSelecionadosController(req, res) {
+  try {
+    const { partidaId } = req.params;
+
+    if (!partidaId) {
+      return res.status(400).json({ error: "O ID da partida é obrigatório." });
+    }
+
+    const jogadores = await partidas.listarJogadoresSelecionados(partidaId);
+    return res.json(jogadores);
+
+  } catch (error) {
+    console.error("Erro ao listar jogadores selecionados:", error);
+    return res.status(500).json({ error: "Erro ao listar jogadores selecionados." });
+  }
+}
+
+async function atualizarAtuacaoJogadorController(req, res) {
+  try {
+    const { jogadorId, partidaId, gols, cartoesAmarelos, cartoesVermelhos } = req.body;
+
+    if (!jogadorId || !partidaId) {
+      return res.status(400).json({ message: "jogadorId e partidaId são obrigatórios" });
+    }
+
+    const atuacao = await partidas.atualizarAtuacaoJogadorPartida({
+      jogadorId,
+      partidaId,
+      gols: gols,
+      cartoesAmarelos: cartoesAmarelos,
+      cartoesVermelhos: cartoesVermelhos
+    });
+
+    return res.status(200).json(atuacao);
+  } catch (error) {
+    console.error("Erro ao atualizar atuação do jogador:", error);
+    return res.status(500).json({ message: error.message });
+  }
+}
+
 module.exports = {
   criarPartidaController,
   finalizarPartidaController,
@@ -228,5 +268,7 @@ module.exports = {
   limparPartidasPorModalidadeController,
   vincularUsuarioController,
   adicionarJogadorPartidaController,
-  carregarUltimaPartida
+  carregarUltimaPartida,
+  listarJogadoresSelecionadosController,
+  atualizarAtuacaoJogadorController
 };

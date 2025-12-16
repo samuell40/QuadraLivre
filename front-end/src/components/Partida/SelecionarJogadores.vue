@@ -120,7 +120,6 @@ export default {
   color: #3b82f6;
 }
 
-/* Área principal que cresce */
 .colunas {
   display: flex;
   gap: 20px;
@@ -138,7 +137,6 @@ export default {
   overflow-y: auto;
 }
 
-/* Scroll bonito */
 .coluna::-webkit-scrollbar {
   width: 6px;
 }
@@ -199,7 +197,6 @@ export default {
   font-size: 14px;
 }
 
-/* Rodapé fixo */
 .botoes {
   display: flex;
   gap: 10px;

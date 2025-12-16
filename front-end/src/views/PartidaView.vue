@@ -51,13 +51,12 @@
                   {{ m.nome }}
                 </option>
               </select>
-
             </div>
 
-            <!-- Time 1 -->
             <div class="team">
               <label>Time 1:</label>
-              <select v-model="timeSelecionado1" @change="carregarJogadoresPorTime('time1')" class="dropdown">
+              <select v-model="timeSelecionado1" @change="carregarJogadoresPorTime('time1')" class="dropdown"
+                :disabled="partidaIniciada || !modalidadeSelecionada">
                 <option disabled value="">Selecione um time</option>
                 <option v-for="t in timesDisponiveisTime1" :key="t.id" :value="t.id">
                   {{ t.nome }}
@@ -65,11 +64,10 @@
               </select>
             </div>
 
-
-            <!-- Time 2 -->
             <div class="team">
               <label>Time 2:</label>
-              <select v-model="timeSelecionado2" @change="carregarJogadoresPorTime('time2')" class="dropdown">
+              <select v-model="timeSelecionado2" @change="carregarJogadoresPorTime('time2')" class="dropdown"
+                :disabled="partidaIniciada || !modalidadeSelecionada">
                 <option disabled value="">Selecione um time</option>
                 <option v-for="t in timesDisponiveisTime2" :key="t.id" :value="t.id">
                   {{ t.nome }}
@@ -77,13 +75,14 @@
               </select>
             </div>
 
-
             <div class="team">
-              <button class="dropdown botao-iniciar" @click="abrirModalJogadores"
-                :disabled="!timeSelecionado1 || !timeSelecionado2 || !modalidadeSelecionada">
-                Continuar
+              <button class="dropdown botao-iniciar"
+                :disabled="!modalidadeSelecionada || !timeSelecionado1 || !timeSelecionado2"
+                @click="iniciarPausarOuRetomarPartida">
+                <span v-if="!partidaIniciada">Continuar</span>
+                <span v-else-if="temporizadorAtivo">Pausar Partida</span>
+                <span v-else>Retomar Partida</span>
               </button>
-
             </div>
           </div>
         </div>
@@ -96,19 +95,17 @@
         </div>
 
         <div class="placares" v-if="partidaIniciada">
-          <component
-            :is="['volei', 'volei de areia', 'futevolei'].includes(modalidadeSelecionadaNome.toLowerCase()) ? 'PlacarTimeVolei' : 'PlacarTime'"
-            :timeNome="times.find(t => t.id === timeSelecionado1)?.nome || ''" :timeData="time1"
-            :setsAdversario="time2.setsVencidos || 0" :partida-id="partidaId" :temporizadorAtivo="temporizadorAtivo"
-            @update="atualizarTime('time1', $event)" @remover="resetTime('time1')" />
+          <component :is="isVolei ? 'PlacarTimeVolei' : 'PlacarTime'"
+            :timeNome="times.find(t => t.id === timeSelecionado1)?.nome || ''"
+            :timeData="{ ...time1, id: timeSelecionado1 }" :partida-id="partidaId"
+            :temporizadorAtivo="temporizadorAtivo" @update="atualizarTime('time1', $event)" />
 
-          <component
-            :is="['volei', 'volei de areia', 'futevolei'].includes(modalidadeSelecionadaNome.toLowerCase()) ? 'PlacarTimeVolei' : 'PlacarTime'"
-            :timeNome="times.find(t => t.id === timeSelecionado2)?.nome || ''" :timeData="time2"
-            :setsAdversario="time1.setsVencidos || 0" :partida-id="partidaId" :temporizadorAtivo="temporizadorAtivo"
-            @update="atualizarTime('time2', $event)" @remover="resetTime('time2')" />
-
+          <component :is="isVolei ? 'PlacarTimeVolei' : 'PlacarTime'"
+            :timeNome="times.find(t => t.id === timeSelecionado2)?.nome || ''"
+            :timeData="{ ...time2, id: timeSelecionado2 }" :partida-id="partidaId"
+            :temporizadorAtivo="temporizadorAtivo" @update="atualizarTime('time2', $event)" />
         </div>
+
         <div v-if="partidaIniciada" class="finalizar-container">
           <button class="botao-finalizar" @click="finalizarPartida" :disabled="finalizandoPartida">
             <span v-if="finalizandoPartida" class="loader-pequeno"></span>
@@ -128,7 +125,6 @@
       :jogadoresTime2="jogadoresTime2" :time1Nome="times.find(t => t.id === timeSelecionado1)?.nome"
       :time2Nome="times.find(t => t.id === timeSelecionado2)?.nome" @confirmar="confirmarJogadores"
       @fechar="mostrarModalJogadores = false" />
-
   </div>
 </template>
 
@@ -299,7 +295,7 @@ export default {
             timeBId: Number(this.timeSelecionado2)
           };
 
-          console.log("Enviando body:", body); 
+          console.log("Enviando body:", body);
           const res = await api.post("/partida", body);
 
           if (!res || !res.data || !res.data.id) {
@@ -340,6 +336,13 @@ export default {
         console.error("Erro ao iniciar partida e vincular jogadores:", err);
         Swal.fire("Erro", "Não foi possível iniciar a partida ou vincular os jogadores.", "error");
       }
+    },
+    iniciarPausarOuRetomarPartida() {
+      if (!this.partidaIniciada) {
+        this.abrirModalJogadores();
+        return;
+      }
+      this.togglePartida();
     },
     async carregarQuadras() {
       this.isLoadingQuadras = true;
