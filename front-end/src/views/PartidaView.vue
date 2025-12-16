@@ -491,26 +491,26 @@ export default {
     calcularIncrementosFutebol(timeA, timeB) {
       const incA = {
         jogos: 1,
-        golsPro: timeA.golspro || 0,
-        golsSofridos: timeB.golspro || 0,
-        cartoesAmarelos: timeA.cartaoamarelo || 0,
-        cartoesVermelhos: timeA.cartaovermelho || 0,
-        saldoDeGols: (timeA.golspro || 0) - (timeB.golspro || 0),
+        golsPro: timeA.golspro,
+        golsSofridos: timeB.golspro,
+        cartoesAmarelos: timeA.cartaoamarelo,
+        cartoesVermelhos: timeA.cartaovermelho,
+        saldoDeGols: (timeA.golspro) - (timeB.golspro),
         vitorias: 0, empates: 0, derrotas: 0, pontuacao: 0
       }
       const incB = {
         jogos: 1,
-        golsPro: timeB.golspro || 0,
-        golsSofridos: timeA.golspro || 0,
-        cartoesAmarelos: timeB.cartaoamarelo || 0,
-        cartoesVermelhos: timeB.cartaovermelho || 0,
-        saldoDeGols: (timeB.golspro || 0) - (timeA.golspro || 0),
+        golsPro: timeB.golspro,
+        golsSofridos: timeA.golspro,
+        cartoesAmarelos: timeB.cartaoamarelo,
+        cartoesVermelhos: timeB.cartaovermelho,
+        saldoDeGols: (timeB.golspro) - (timeA.golspro),
         vitorias: 0, empates: 0, derrotas: 0, pontuacao: 0
       }
 
-      if ((timeA.golspro || 0) > (timeB.golspro || 0)) {
+      if ((timeA.golspro) > (timeB.golspro)) {
         incA.vitorias = 1; incA.pontuacao = 3; incB.derrotas = 1
-      } else if ((timeA.golspro || 0) < (timeB.golspro || 0)) {
+      } else if ((timeA.golspro) < (timeB.golspro)) {
         incB.vitorias = 1; incB.pontuacao = 3; incA.derrotas = 1
       } else {
         incA.empates = 1; incB.empates = 1; incA.pontuacao = 1; incB.pontuacao = 1
@@ -521,7 +521,7 @@ export default {
     calcularIncrementosVolei(timeA, timeB) {
       const incA = {
         jogos: 1,
-        setsVencidos: timeA.setsVencidos || 0,
+        setsVencidos: timeA.setsVencidos,
         derrotaWo: !!timeA.wo,
         vitorias: 0, derrotas: 0,
         vitoria2x0: 0, vitoria2x1: 0,
@@ -530,7 +530,7 @@ export default {
       }
       const incB = {
         jogos: 1,
-        setsVencidos: timeB.setsVencidos || 0,
+        setsVencidos: timeB.setsVencidos,
         derrotaWo: !!timeB.wo,
         vitorias: 0, derrotas: 0,
         vitoria2x0: 0, vitoria2x1: 0,
@@ -608,31 +608,31 @@ export default {
 
         this.partidaIniciada = true
         const tempoSalvo = localStorage.getItem(`partidaTempo_${this.partidaId}`)
-        this.tempoSegundos = tempoSalvo ? Number(tempoSalvo) : partida.tempoSegundos || 0
+        this.tempoSegundos = tempoSalvo ? Number(tempoSalvo) : partida.tempoSegundos
         this.inicioPartida = Date.now() - (this.tempoSegundos * 1000)
         this.temporizadorAtivo = !partida.emIntervalo
         this.iniciarTemporizador()
 
         this.time1 = {
           ...this.time1,
-          golspro: partida.pontosTimeA || 0,
-          setsVencidos: partida.setsVencidosTimeA || 0,
-          faltas: partida.faltasTimeA || 0,
-          substituicoes: partida.substituicoesTimeA || 0,
-          cartaoamarelo: partida.cartoesAmarelosTimeA || 0,
-          cartaovermelho: partida.cartoesVermelhosTimeA || 0,
+          golspro: partida.pontosTimeA,
+          setsVencidos: partida.setsVencidosTimeA,
+          faltas: partida.faltasTimeA,
+          substituicoes: partida.substituicoesTimeA,
+          cartaoamarelo: partida.cartoesAmarelosTimeA,
+          cartaovermelho: partida.cartoesVermelhosTimeA,
           wo: partida.woTimeA ? 1 : 0,
           placarId: partida.timeA?.placar?.id
         }
 
         this.time2 = {
           ...this.time2,
-          golspro: partida.pontosTimeB || 0,
-          setsVencidos: partida.setsVencidosTimeB || 0,
-          faltas: partida.faltasTimeB || 0,
-          substituicoes: partida.substituicoesTimeB || 0,
-          cartaoamarelo: partida.cartoesAmarelosTimeB || 0,
-          cartaovermelho: partida.cartoesVermelhosTimeB || 0,
+          golspro: partida.pontosTimeB,
+          setsVencidos: partida.setsVencidosTimeB,
+          faltas: partida.faltasTimeB,
+          substituicoes: partida.substituicoesTimeB,
+          cartaoamarelo: partida.cartoesAmarelosTimeB,
+          cartaovermelho: partida.cartoesVermelhosTimeB,
           wo: partida.woTimeB ? 1 : 0,
           placarId: partida.timeB?.placar?.id
         }
@@ -662,13 +662,13 @@ export default {
 
         if (this.partidaId) {
           await api.put(`/partida/${this.partidaId}/encerrar`, {
-            pontosTimeA: this.time1.golspro || this.time1.setsVencidos || 0,
-            pontosTimeB: this.time2.golspro || this.time2.setsVencidos || 0,
+            pontosTimeA: this.time1.golspro || this.time1.setsVencidos,
+            pontosTimeB: this.time2.golspro || this.time2.setsVencidos,
             tempoSegundos: this.tempoSegundos,
-            cartoesAmarelosTimeA: this.time1.cartaoamarelo || 0,
-            cartoesAmarelosTimeB: this.time2.cartaoamarelo || 0,
-            cartoesVermelhosTimeA: this.time1.cartaovermelho || 0,
-            cartoesVermelhosTimeB: this.time2.cartaovermelho || 0,
+            cartoesAmarelosTimeA: this.time1.cartaoamarelo,
+            cartoesAmarelosTimeB: this.time2.cartaoamarelo,
+            cartoesVermelhosTimeA: this.time1.cartaovermelho,
+            cartoesVermelhosTimeB: this.time2.cartaovermelho,
             usuarioId: usuario?.id
           });
         }

@@ -5,56 +5,61 @@
     <div class="box">
       <p>Gols Marcados</p>
       <div class="controls">
-        <!-- Decrement direto -->
-        <button @click="alterarGols('decrement')" :disabled="!temporizadorAtivo || localTime.golspro <= 0">−</button>
-        <span>{{ localTime.golspro }}</span>
-        <!-- Increment abre modal -->
-        <button @click="abrirModalJogadores('increment')" :disabled="!temporizadorAtivo">+</button>
+        <button @click="abrirModalJogadores('gol')" :disabled="!temporizadorAtivo">−</button>
+        <span class="valor">{{ localTime.golspro }}</span>
+        <button @click="abrirModalJogadores('gol')" :disabled="!temporizadorAtivo">+</button>
       </div>
     </div>
 
     <div class="box">
       <p>Cartão Amarelo</p>
       <div class="controls">
-        <button @click="decrement('cartaoamarelo')" :disabled="!temporizadorAtivo">−</button>
-        <span>{{ localTime.cartaoamarelo }}</span>
-        <button @click="increment('cartaoamarelo')" :disabled="!temporizadorAtivo">+</button>
+        <button @click="abrirModalJogadores('amarelo')" :disabled="!temporizadorAtivo">−</button>
+        <span class="valor">{{ localTime.cartaoamarelo }}</span>
+        <button @click="abrirModalJogadores('amarelo')" :disabled="!temporizadorAtivo">+</button>
       </div>
     </div>
 
     <div class="box">
       <p>Cartão Vermelho</p>
       <div class="controls">
-        <button @click="decrement('cartaovermelho')" :disabled="!temporizadorAtivo">−</button>
-        <span>{{ localTime.cartaovermelho }}</span>
-        <button @click="increment('cartaovermelho')" :disabled="!temporizadorAtivo">+</button>
+        <button @click="abrirModalJogadores('vermelho')" :disabled="!temporizadorAtivo">−</button>
+        <span class="valor">{{ localTime.cartaovermelho }}</span>
+        <button @click="abrirModalJogadores('vermelho')" :disabled="!temporizadorAtivo">+</button>
       </div>
     </div>
 
     <div class="box">
       <p>Faltas</p>
       <div class="controls">
-        <button @click="decrement('faltas')" :disabled="!temporizadorAtivo">−</button>
-        <span>{{ localTime.faltas }}</span>
-        <button @click="increment('faltas')" :disabled="!temporizadorAtivo">+</button>
+        <button @click="decrementSimples('faltas')" :disabled="!temporizadorAtivo">−</button>
+        <span class="valor">{{ localTime.faltas }}</span>
+        <button @click="incrementSimples('faltas')" :disabled="!temporizadorAtivo">+</button>
       </div>
     </div>
 
     <div class="box">
       <p>Substituições</p>
       <div class="controls">
-        <button @click="decrement('substituicoes')"
-          :disabled="!temporizadorAtivo || localTime.substituicoes <= 0">−</button>
-        <span>{{ localTime.substituicoes }}</span>
-        <button @click="increment('substituicoes')"
-          :disabled="!temporizadorAtivo || localTime.substituicoes >= 3">+</button>
+        <button
+          @click="decrementSimples('substituicoes')"
+          :disabled="!temporizadorAtivo || localTime.substituicoes <= 0"
+        >−</button>
+
+        <span class="valor">{{ localTime.substituicoes }}</span>
+
+        <button
+          @click="incrementSimples('substituicoes')"
+          :disabled="!temporizadorAtivo || localTime.substituicoes >= 3"
+        >+</button>
       </div>
     </div>
 
-    <!-- Modal de seleção de jogador -->
     <div v-if="modalAberto" class="modal-overlay" @click.self="fecharModal">
       <div class="modal-content">
-        <h2 class="modal-titulo">Selecione o Jogador Que Marcou o GOL</h2>
+        <h2 class="modal-titulo">
+          Selecione o Jogador – <span>{{ tituloEvento }}</span>
+        </h2>
 
         <div v-if="carregando" class="loader">
           Carregando jogadores...
@@ -63,16 +68,20 @@
         <div v-else class="coluna">
           <div v-for="jogador in jogadores" :key="jogador.id" class="jogador-card">
             <div class="jogador-info">
-              <img v-if="jogador.foto" :src="jogador.foto" class="foto-jogador" alt="foto" />
+              <img v-if="jogador.foto" :src="jogador.foto" class="foto-jogador" />
               <div class="dados-jogador">
                 <span class="nome">{{ jogador.nome }}</span>
               </div>
             </div>
 
             <div class="controls">
-              <button @click="alterarGolJogador(jogador, 'decrement')" :disabled="jogador.gols <= 0">−</button>
-              <span>{{ jogador.gols || 0 }}</span>
-              <button @click="alterarGolJogador(jogador, 'increment')">+</button>
+              <button @click="alterarEventoJogador(jogador, 'decrement')">−</button>
+
+              <span class="valor">
+                {{ obterValorEvento(jogador) }}
+              </span>
+
+              <button @click="alterarEventoJogador(jogador, 'increment')">+</button>
             </div>
           </div>
         </div>
@@ -87,16 +96,18 @@
 
 <script>
 import api from '@/axios'
-import Swal from 'sweetalert2';
+import Swal from 'sweetalert2'
 
 export default {
   name: 'PlacarTime',
+
   props: {
-    timeNome: { type: String, default: 'Time' },
-    timeData: { type: Object, required: true },
-    partidaId: { type: [String, Number], required: true },
-    temporizadorAtivo: { type: Boolean, default: false }
+    timeNome: String,
+    timeData: Object,
+    partidaId: [String, Number],
+    temporizadorAtivo: Boolean
   },
+
   data() {
     return {
       localTime: {
@@ -107,129 +118,121 @@ export default {
         substituicoes: this.timeData?.substituicoes || 0
       },
       modalAberto: false,
-      acaoModal: null,
+      tipoEvento: 'gol',
       jogadores: [],
       carregando: false
     }
   },
+
+  computed: {
+    tituloEvento() {
+      if (this.tipoEvento === 'gol') return 'Gol'
+      if (this.tipoEvento === 'amarelo') return 'Cartão Amarelo'
+      if (this.tipoEvento === 'vermelho') return 'Cartão Vermelho'
+      return ''
+    }
+  },
+
   methods: {
-    async abrirModalJogadores(acao) {
-      this.acaoModal = acao;
-      this.modalAberto = true;
-      await this.carregarJogadores();
+    obterValorEvento(jogador) {
+      if (this.tipoEvento === 'gol') return jogador.gols
+      if (this.tipoEvento === 'amarelo') return jogador.cartoesAmarelos
+      if (this.tipoEvento === 'vermelho') return jogador.cartoesVermelhos
+      return 0
+    },
+
+    async abrirModalJogadores(tipo) {
+      this.tipoEvento = tipo
+      this.modalAberto = true
+      await this.carregarJogadores()
     },
 
     fecharModal() {
-      this.modalAberto = false;
+      this.modalAberto = false
     },
 
     async carregarJogadores() {
-      this.carregando = true;
+      this.carregando = true
       try {
-        const timeId = this.timeData?.id;
-        if (!timeId || !this.partidaId) {
-          this.jogadores = [];
-          return;
-        }
-        const res = await api.get(`/partida/${this.partidaId}`);
+        const res = await api.get(`/partida/${this.partidaId}`)
         this.jogadores = res.data
-          .filter(j => j.timeId === Number(timeId))
+          .filter(j => j.timeId === this.timeData.id)
           .map(j => ({
-            id: j.id,
-            nome: j.nome,
-            foto: j.foto,
-            funcao: j.funcao || "Nenhuma",
-            timeId: j.timeId,
+            ...j,
             gols: j.gols || 0,
             cartoesAmarelos: j.cartoesAmarelos || 0,
             cartoesVermelhos: j.cartoesVermelhos || 0
-          }));
-      } catch (err) {
-        console.error("Erro ao carregar jogadores:", err);
-        Swal.fire("Erro", "Não foi possível carregar os jogadores deste time.", "error");
+          }))
+      } catch {
+        Swal.fire('Erro', 'Erro ao carregar jogadores', 'error')
       } finally {
-        this.carregando = false;
+        this.carregando = false
       }
     },
 
-    alterarGols(acao) {
-      if (acao === 'increment' || acao === 'decrement') {
-        this.abrirModalJogadores(acao);
-      }
-    },
-    async alterarGolJogador(jogador, acao) {
-      try {
-        let gols = 0;
+    async alterarEventoJogador(jogador, acao) {
+      const incremento = acao === 'increment' ? 1 : -1
+      const payload = { jogadorId: jogador.id, partidaId: this.partidaId }
 
-        if (acao === 'increment') {
-          jogador.gols++;
-          this.localTime.golspro++;
-          gols = 1;
-        } else if (acao === 'decrement' && jogador.gols > 0) {
-          jogador.gols--;
-          this.localTime.golspro = Math.max(0, this.localTime.golspro - 1);
-          gols = -1;
+      if (this.tipoEvento === 'gol') {
+        if (jogador.gols + incremento < 0) return
+        jogador.gols += incremento
+        this.localTime.golspro += incremento
+        payload.gols = incremento
+      }
+
+      if (this.tipoEvento === 'amarelo') {
+        if (jogador.cartoesAmarelos + incremento < 0) return
+
+        jogador.cartoesAmarelos += incremento
+        this.localTime.cartaoamarelo += incremento
+        payload.cartoesAmarelos = incremento
+
+        if (incremento === 1 && jogador.cartoesAmarelos % 2 === 0) {
+          jogador.cartoesVermelhos++
+          this.localTime.cartaovermelho++
+          payload.cartoesVermelhos = 1
+
+          Swal.fire(
+            'Cartão Vermelho!',
+            'Jogador recebeu cartão vermelho após 2 amarelos.',
+            'info'
+          )
         }
-
-        this.emitUpdate();
-
-        // Primeiro atualiza o placar do time
-        await this.salvarPlacar();
-
-        await api.post('/atuacao', {
-          jogadorId: jogador.id,
-          partidaId: this.partidaId,
-          gols: gols  // envia -1 quando for decremento
-        });
-
-
-        // Só recarrega a lista se for incremento para não sobrescrever decremento
-        if (acao === 'increment') {
-          await this.carregarJogadores();
-        }
-
-      } catch (err) {
-        console.error(err);
-        Swal.fire("Erro", "Falha ao atualizar gols do jogador.", "error");
       }
+
+      if (this.tipoEvento === 'vermelho') {
+        if (jogador.cartoesVermelhos + incremento < 0) return
+        jogador.cartoesVermelhos += incremento
+        this.localTime.cartaovermelho += incremento
+        payload.cartoesVermelhos = incremento
+      }
+
+      this.emitUpdate()
+      await this.salvarPlacar()
+      await api.post('/atuacao', payload)
     },
 
-    increment(campo) {
-      if (campo === 'golspro') {
-        this.abrirModalJogadores('increment');
-      } else {
-        this.localTime[campo]++;
-        this.emitUpdate();
-        this.salvarPlacar();
-      }
+    incrementSimples(campo) {
+      this.localTime[campo]++
+      this.emitUpdate()
+      this.salvarPlacar()
     },
 
-    decrement(campo) {
-      if (campo !== 'golspro' && this.localTime[campo] > 0) {
-        this.localTime[campo]--;
-        this.emitUpdate();
-        this.salvarPlacar();
+    decrementSimples(campo) {
+      if (this.localTime[campo] > 0) {
+        this.localTime[campo]--
+        this.emitUpdate()
+        this.salvarPlacar()
       }
     },
 
     emitUpdate() {
-      this.$emit('update', { ...this.localTime });
+      this.$emit('update', { ...this.localTime })
     },
 
     async salvarPlacar() {
-      if (!this.partidaId) return;
-      try {
-        await api.put(`/partida/${this.partidaId}/parcial`, {
-          golspro: this.localTime.golspro,
-          cartaoamarelo: this.localTime.cartaoamarelo,
-          cartaovermelho: this.localTime.cartaovermelho,
-          faltas: this.localTime.faltas,
-          substituicoes: this.localTime.substituicoes
-        });
-      } catch (e) {
-        console.error("Erro ao atualizar no backend:", e);
-        Swal.fire("Erro", "Não foi possível salvar o placar.", "error");
-      }
+      await api.put(`/partida/${this.partidaId}/parcial`, this.localTime)
     }
   }
 }

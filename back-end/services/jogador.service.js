@@ -61,14 +61,15 @@ async function removerJogadorTime(jogadorId) {
 
 async function listarJogadoresPorTime(timeId) {
   const time = await prisma.time.findUnique({
-    where: { id: timeId },
+    where: { id: Number(timeId) },
     include: {
       jogadores: {
         include: {
-          funcao: true, 
-        },
-      },
-    },
+          funcao: true,
+          atuacoes: true 
+        }
+      }
+    }
   });
 
   if (!time) {

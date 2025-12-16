@@ -38,12 +38,15 @@
                 </td>
                 <td>{{ j.gols || 0 }}</td>
                 <td>
-                  <template v-if="j.cartoesVermelhos && j.cartoesVermelhos > 0">
+                  <div v-if="j.cartoesVermelhos && j.cartoesVermelhos > 0" class="cartao-container">
+                    <span v-if="j.cartoesVermelhos > 1" class="cartao-quantidade">
+                      {{ j.cartoesVermelhos }}
+                    </span>
                     <span class="cartao-vermelho"></span>
-                  </template>
-                  <template v-else>
+                  </div>
+                  <div v-else>
                     <span v-for="n in j.cartoesAmarelos" :key="n" class="cartao-amarelo"></span>
-                  </template>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -94,7 +97,7 @@ export default {
   },
   computed: {
     modalidadeSelecionadaId() {
-      return this.modalidadeSelecionada; 
+      return this.modalidadeSelecionada;
     }
   },
   methods: {
@@ -181,7 +184,7 @@ export default {
 }
 
 .placar-table {
-  max-height: 55vh; 
+  max-height: 55vh;
   overflow-y: auto;
   overflow-x: auto;
 
@@ -274,6 +277,13 @@ export default {
   width: 80px;
   height: 80px;
   animation: spin 1s linear infinite;
+}
+
+.cartao-vermelho {
+  width: 14px;
+  height: 18px;
+  background-color: red;
+  border-radius: 2px;
 }
 
 @keyframes spin {
