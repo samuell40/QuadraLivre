@@ -7,11 +7,18 @@
         <div class="coluna">
           <h3>{{ time1Nome }}</h3>
 
+          <div class="contador">
+            Selecionados: {{ selecionadosTime1.length }} / 11
+          </div>
+
           <div v-for="(jogadores, funcao) in jogadoresPorFuncaoTime1" :key="funcao">
             <h4 class="funcao-titulo">{{ funcao }}</h4>
+
             <div v-for="j in jogadores" :key="j.id" class="jogador-card">
               <label class="jogador-label">
-                <input type="checkbox" v-model="selecionadosTime1" :value="j.id" />
+                <input type="checkbox" v-model="selecionadosTime1" :value="j.id"
+                  :disabled="selecionadosTime1.length >= 11 && !selecionadosTime1.includes(j.id)" />
+
                 <div class="jogador-info">
                   <img :src="j.foto" alt="Foto" class="foto-jogador" />
                   <div class="dados-jogador">
@@ -26,11 +33,18 @@
         <div class="coluna">
           <h3>{{ time2Nome }}</h3>
 
+          <div class="contador">
+            Selecionados: {{ selecionadosTime2.length }} / 11
+          </div>
+
           <div v-for="(jogadores, funcao) in jogadoresPorFuncaoTime2" :key="funcao">
             <h4 class="funcao-titulo">{{ funcao }}</h4>
+
             <div v-for="j in jogadores" :key="j.id" class="jogador-card">
               <label class="jogador-label">
-                <input type="checkbox" v-model="selecionadosTime2" :value="j.id" />
+                <input type="checkbox" v-model="selecionadosTime2" :value="j.id"
+                  :disabled="selecionadosTime2.length >= 11 && !selecionadosTime2.includes(j.id)" />
+
                 <div class="jogador-info">
                   <img :src="j.foto" alt="Foto" class="foto-jogador" />
                   <div class="dados-jogador">
@@ -44,13 +58,17 @@
       </div>
 
       <div class="botoes">
-        <button class="btn-save1" @click="confirmar">Iniciar Partida</button>
+        <button class="btn-save1" @click="confirmar">
+          Iniciar Partida
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import Swal from 'sweetalert2'
+
 export default {
   props: {
     aberto: Boolean,
@@ -76,13 +94,31 @@ export default {
   methods: {
     agruparPorFuncao(jogadores) {
       return jogadores.reduce((acc, jogador) => {
-        const funcao = jogador.funcao && jogador.funcao.nome ? jogador.funcao.nome : "Sem Função";
-        if (!acc[funcao]) acc[funcao] = [];
-        acc[funcao].push(jogador);
-        return acc;
-      }, {});
+        const funcao =
+          jogador.funcao && jogador.funcao.nome
+            ? jogador.funcao.nome
+            : 'Sem Função'
+
+        if (!acc[funcao]) acc[funcao] = []
+        acc[funcao].push(jogador)
+        return acc
+      }, {})
     },
     confirmar() {
+      const totalJogadores =
+        this.selecionadosTime1.length +
+        this.selecionadosTime2.length
+
+      if (totalJogadores !== 22) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Numero de Jogadores Insuficientes',
+          text: 'Cada time deve ter exatamente 11 jogadores para iniciar a partida.',
+          confirmButtonColor: '#3b82f6'
+        })
+        return
+      }
+
       this.$emit('confirmar', {
         time1: this.selecionadosTime1,
         time2: this.selecionadosTime2
@@ -120,6 +156,19 @@ export default {
   color: #3b82f6;
 }
 
+.contador {
+  font-size: 17px;
+  font-weight: 600;
+  color: #374151;
+  text-align: center;
+  background: #fff;
+  padding: 6px 0;
+  position: sticky;
+  top: 48px;
+  z-index: 1;
+  border-bottom: 1px solid #e5e7eb;
+}
+
 .colunas {
   display: flex;
   gap: 20px;
@@ -140,6 +189,7 @@ export default {
 .coluna::-webkit-scrollbar {
   width: 6px;
 }
+
 .coluna::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 10px;
