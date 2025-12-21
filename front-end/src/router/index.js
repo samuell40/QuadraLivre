@@ -15,6 +15,7 @@ import HorariosView from '@/views/HorariosView.vue';
 import GoogleCallback from '@/views/GoogleCallback.vue';
 import GerenciartimesView from '@/views/GerenciartimesView.vue';
 import GerenciarModalidadesView from '@/views/GerenciarModalidadesView.vue';
+import GerenicarCampeonatosView from '@/views/GerenciarCampeonatosView.vue';
 
 const routes = [
   {
@@ -112,6 +113,12 @@ const routes = [
     path: '/modalidades',
     name: 'Modalidades',
     component: GerenciarModalidadesView,
+    meta: { public: true },
+  },
+  {
+    path: '/campeonatos',
+    name: 'Campeonatos',
+    component: GerenicarCampeonatosView,
     meta: { public: true },
   },
 ];

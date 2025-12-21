@@ -1,62 +1,93 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const { criarPlacar } = require('./placar.service');
 
 async function criarTime({ nome, foto, modalidadeId }) {
   const time = await prisma.time.create({
-    data: { 
-      nome: nome.trim(), 
-      foto, 
-      modalidadeId: Number(modalidadeId) 
+    data: {
+      nome: nome.trim(),
+      foto,
+      modalidadeId: Number(modalidadeId),
     },
   });
 
-  await criarPlacar({ timeId: time.id });
   return time;
 }
 
 async function removerTime(id) {
   const timeId = Number(id);
 
-  await prisma.usuarioTime.deleteMany({ where: { timeId } });
+  // 1️⃣ Usuários vinculados ao time
+  await prisma.usuarioTime.deleteMany({
+    where: { timeId }
+  });
 
-  await prisma.agendamento.deleteMany({ where: { timeId } });
+  // 2️⃣ Agendamentos do time
+  await prisma.agendamento.deleteMany({
+    where: { timeId }
+  });
 
-  const jogadores = await prisma.jogador.findMany({ where: { timeId } });
-  if (jogadores.length > 0) {
-    const jogadorIds = jogadores.map(j => j.id);
+  // 3️⃣ Buscar jogadores do time
+  const jogadores = await prisma.jogador.findMany({
+    where: { timeId },
+    select: { id: true }
+  });
 
+  const jogadorIds = jogadores.map(j => j.id);
+
+  // 4️⃣ Atuações dos jogadores
+  if (jogadorIds.length) {
     await prisma.jogadorPartida.deleteMany({
       where: { jogadorId: { in: jogadorIds } }
     });
 
-    await prisma.jogador.deleteMany({ where: { timeId } });
+    // 5️⃣ Jogadores
+    await prisma.jogador.deleteMany({
+      where: { timeId }
+    });
   }
 
-  await prisma.placar.deleteMany({ where: { timeId } });
+  // 6️⃣ Placares
+  await prisma.placar.deleteMany({
+    where: { timeId }
+  });
 
-  const partidasDoTime = await prisma.partida.findMany({
-    where: { OR: [{ timeAId: timeId }, { timeBId: timeId }] },
+  // 🔥 7️⃣ CampeonatoTime (FALTAVA)
+  await prisma.campeonatoTime.deleteMany({
+    where: { timeId }
+  });
+
+  // 8️⃣ Partidas do time
+  const partidas = await prisma.partida.findMany({
+    where: {
+      OR: [{ timeAId: timeId }, { timeBId: timeId }]
+    },
     select: { id: true }
   });
 
-  if (partidasDoTime.length > 0) {
-    const partidaIds = partidasDoTime.map(p => p.id);
+  const partidaIds = partidas.map(p => p.id);
 
+  if (partidaIds.length) {
+    // 9️⃣ Usuários nas partidas
     await prisma.partidaUsuario.deleteMany({
       where: { partidaId: { in: partidaIds } }
     });
 
+    // 🔁 Atuações por partida (segurança)
     await prisma.jogadorPartida.deleteMany({
       where: { partidaId: { in: partidaIds } }
     });
   }
 
+  // 🔟 Partidas
   await prisma.partida.deleteMany({
-    where: { OR: [{ timeAId: timeId }, { timeBId: timeId }] }
+    where: {
+      OR: [{ timeAId: timeId }, { timeBId: timeId }]
+    }
   });
 
-  return prisma.time.delete({ where: { id: timeId } });
+  return prisma.time.delete({
+    where: { id: timeId }
+  });
 }
 
 async function listarTimesPorModalidade(modalidadeId) {
@@ -64,17 +95,22 @@ async function listarTimesPorModalidade(modalidadeId) {
     where: { modalidadeId: Number(modalidadeId) },
     include: {
       modalidade: true,
-      placar: true,
-      _count: { select: { jogadores: true } }
+      placares: true, 
+      _count: {
+        select: { jogadores: true }
+      }
     },
-    orderBy: { nome: 'asc' },
+    orderBy: { nome: 'asc' }
   });
 }
 
 async function listarTodosTimes() {
   return prisma.time.findMany({
-    include: { modalidade: true, placar: true },
-    orderBy: { nome: 'asc' },
+    include: {
+      modalidade: true,
+      placares: true 
+    },
+    orderBy: { nome: 'asc' }
   });
 }
 

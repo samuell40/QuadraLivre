@@ -2,38 +2,66 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function criarPartida(data, usuarioId) {
-  const { modalidadeId, timeAId, timeBId, quadraId } = data;
+  const { modalidadeId, timeAId, timeBId, quadraId, campeonatoId } = data;
 
-  await prisma.placar.upsert({
-    where: { timeId: timeAId },
-    update: {},
-    create: { timeId: timeAId },
-  });
+  if (campeonatoId) {
+    await prisma.placar.upsert({
+      where: {
+        campeonatoId_timeId: {
+          campeonatoId: Number(campeonatoId),
+          timeId: Number(timeAId),
+        },
+      },
+      update: {},
+      create: {
+        campeonatoId: Number(campeonatoId),
+        timeId: Number(timeAId),
+      },
+    });
 
-  await prisma.placar.upsert({
-    where: { timeId: timeBId },
-    update: {},
-    create: { timeId: timeBId },
-  });
+    await prisma.placar.upsert({
+      where: {
+        campeonatoId_timeId: {
+          campeonatoId: Number(campeonatoId),
+          timeId: Number(timeBId),
+        },
+      },
+      update: {},
+      create: {
+        campeonatoId: Number(campeonatoId),
+        timeId: Number(timeBId),
+      },
+    });
+  }
+
+  const dataPartida = {
+    partidaIniciada: true,
+    finalizada: false,
+    modalidadeId: Number(modalidadeId),
+    timeAId: Number(timeAId),
+    timeBId: Number(timeBId),
+    usuarioCriadorId: Number(usuarioId),
+  };
+
+  if (quadraId) {
+    dataPartida.quadraId = Number(quadraId);
+  }
+
+  if (campeonatoId) {
+    dataPartida.campeonatoId = Number(campeonatoId);
+  }
 
   const partida = await prisma.partida.create({
-    data: {
-      partidaIniciada: true,
-      finalizada: false,
-      modalidadeId,
-      quadraId,
-      timeAId,
-      timeBId,
-      usuarioCriadorId: usuarioId ? Number(usuarioId) : undefined
-    },
+    data: dataPartida,
     include: {
-      timeA: { include: { placar: true } },
-      timeB: { include: { placar: true } },
+      campeonato: true,
       modalidade: true,
+      timeA: { include: { placares: true } },
+      timeB: { include: { placares: true } },
       usuarioCriador: true,
       jogadoresPartida: { include: { jogador: true } },
-      participantes: { include: { usuario: true } }
-    }
+      participantes: { include: { usuario: true } },
+    },
   });
 
   return partida;

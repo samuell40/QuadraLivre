@@ -1,4 +1,4 @@
-generator client {
+ generator client {
   provider = "prisma-client-js"
 }
 
@@ -16,8 +16,10 @@ model Usuario {
   permissaoId Int
   foto        String? @db.VarChar(2048)
   quadraId    Int?
-  quadra       Quadra?       @relation(fields: [quadraId], references: [id])
-  permissao    Permissao     @relation(fields: [permissaoId], references: [id])
+
+  quadra       Quadra?   @relation(fields: [quadraId], references: [id])
+  permissao    Permissao @relation(fields: [permissaoId], references: [id])
+
   agendamentos Agendamento[]
   times        UsuarioTime[]
   partidasCriadas Partida[] @relation("UsuarioCriador")
@@ -32,7 +34,8 @@ model Quadra {
   usuarios     Usuario[]
   modalidades  Modalidade[]  @relation("QuadraModalidade")
   agendamentos Agendamento[]
-  partidas Partida[]
+  partidas     Partida[]
+  campeonatos  Campeonato[]
 }
 
 enum TipoAgendamento {
@@ -53,13 +56,13 @@ model Agendamento {
   status       String          @default("Pendente")
   tipo         TipoAgendamento @default(TREINO)
   usuarioId    Int?
-  usuario      Usuario?        @relation(fields: [usuarioId], references: [id])
   quadraId     Int?
-  quadra       Quadra?         @relation(fields: [quadraId], references: [id])
   modalidadeId Int?
-  modalidade   Modalidade?     @relation("AgendamentoModalidade", fields: [modalidadeId], references: [id])
   timeId       Int?
-  time         Time?           @relation("TimeAgendamentos", fields: [timeId], references: [id])
+  usuario    Usuario?    @relation(fields: [usuarioId], references: [id])
+  quadra     Quadra?     @relation(fields: [quadraId], references: [id])
+  modalidade Modalidade? @relation("AgendamentoModalidade", fields: [modalidadeId], references: [id])
+  time       Time?       @relation("TimeAgendamentos", fields: [timeId], references: [id])
 }
 
 model Modalidade {
@@ -69,7 +72,34 @@ model Modalidade {
   quadras      Quadra[]      @relation("QuadraModalidade")
   agendamentos Agendamento[] @relation("AgendamentoModalidade")
   partidas     Partida[]
-  funcoes      FuncaoJogador[]  
+  campeonatos  Campeonato[]
+  funcoes      FuncaoJogador[]
+}
+
+model Campeonato {
+  id           Int        @id @default(autoincrement())
+  nome         String
+  descricao    String?
+  dataInicio   DateTime
+  dataFim      DateTime?
+  status       String     @default("EM_ANDAMENTO")
+  modalidadeId Int
+  quadraId     Int?
+  modalidade Modalidade @relation(fields: [modalidadeId], references: [id])
+  quadra     Quadra?    @relation(fields: [quadraId], references: [id])
+  times     CampeonatoTime[]
+  partidas  Partida[]
+  placares  Placar[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CampeonatoTime {
+  campeonatoId Int
+  timeId       Int
+  campeonato Campeonato @relation(fields: [campeonatoId], references: [id])
+  time        Time       @relation(fields: [timeId], references: [id])
+  @@id([campeonatoId, timeId])
 }
 
 model Time {
@@ -77,91 +107,96 @@ model Time {
   nome         String
   foto         String?       @db.VarChar(2048)
   modalidadeId Int
-  modalidade   Modalidade    @relation(fields: [modalidadeId], references: [id])
+  modalidade   Modalidade @relation(fields: [modalidadeId], references: [id])
   usuarios     UsuarioTime[]
-  placar       Placar?
+  campeonatos  CampeonatoTime[]
+  placares     Placar[]
   partidasA    Partida[] @relation("TimeAPartidas")
   partidasB    Partida[] @relation("TimeBPartidas")
   agendamentos Agendamento[] @relation("TimeAgendamentos")
-  jogadores    Jogador[]  // Jogadores cadastrados no time
+  jogadores    Jogador[]
 }
 
 model Partida {
   id            Int        @id @default(autoincrement())
   data          DateTime   @default(now())
-  modalidadeId  Int
-  modalidade    Modalidade @relation(fields: [modalidadeId], references: [id])
+  campeonatoId Int?
+  modalidadeId Int
+  quadraId     Int?
   timeAId Int
-  timeA   Time @relation("TimeAPartidas", fields: [timeAId], references: [id])
   timeBId Int
-  timeB   Time @relation("TimeBPartidas", fields: [timeBId], references: [id])
-  quadraId Int?
-  quadra   Quadra? @relation(fields: [quadraId], references: [id])
+  campeonato Campeonato? @relation(fields: [campeonatoId], references: [id])
+  modalidade Modalidade  @relation(fields: [modalidadeId], references: [id])
+  quadra     Quadra?     @relation(fields: [quadraId], references: [id])
+  timeA Time @relation("TimeAPartidas", fields: [timeAId], references: [id])
+  timeB Time @relation("TimeBPartidas", fields: [timeBId], references: [id])
   pontosTimeA     Int     @default(0)
   pontosTimeB     Int     @default(0)
-  woTimeA         Boolean @default(false)  
-  woTimeB         Boolean @default(false)  
+  woTimeA         Boolean @default(false)
+  woTimeB         Boolean @default(false)
   tempoSegundos   Int     @default(0)
   partidaIniciada Boolean @default(false)
   finalizada      Boolean @default(false)
   emIntervalo     Boolean @default(false)
-  faltasTimeA         Int @default(0)
-  faltasTimeB         Int @default(0)
-  substituicoesTimeA  Int @default(0)
-  substituicoesTimeB  Int @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  faltasTimeA        Int @default(0)
+  faltasTimeB        Int @default(0)
+  substituicoesTimeA Int @default(0)
+  substituicoesTimeB Int @default(0)
   usuarioCriadorId Int
   usuarioCriador   Usuario @relation("UsuarioCriador", fields: [usuarioCriadorId], references: [id])
   jogadoresPartida JogadorPartida[]
   participantes    PartidaUsuario[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Jogador {
-  id        Int      @id @default(autoincrement())
-  nome      String
-  foto      String?  @db.VarChar(2048)
-  funcaoId  Int?
-  funcao    FuncaoJogador?  @relation(fields: [funcaoId], references: [id])
-  timeId    Int
-  time      Time     @relation(fields: [timeId], references: [id])
+  id       Int     @id @default(autoincrement())
+  nome     String
+  foto     String? @db.VarChar(2048)
+  funcaoId Int?
+  timeId   Int
+  funcao FuncaoJogador? @relation(fields: [funcaoId], references: [id])
+  time   Time          @relation(fields: [timeId], references: [id])
   atuacoes JogadorPartida[]
 }
 
 model JogadorPartida {
-  id        Int    @id @default(autoincrement())
+  id        Int @id @default(autoincrement())
   jogadorId Int
-  jogador   Jogador @relation(fields: [jogadorId], references: [id])
   partidaId Int
-  partida   Partida @relation(fields: [partidaId], references: [id])
+  jogador Jogador @relation(fields: [jogadorId], references: [id])
+  partida Partida @relation(fields: [partidaId], references: [id])
   gols             Int @default(0)
   cartoesAmarelos  Int @default(0)
   cartoesVermelhos Int @default(0)
 }
 
 model FuncaoJogador {
-  id          Int        @id @default(autoincrement())
-  nome        String
-  modalidadeId Int      
-  modalidade   Modalidade @relation(fields: [modalidadeId], references: [id])
-  jogadores    Jogador[]
+  id           Int @id @default(autoincrement())
+  nome         String
+  modalidadeId Int
+  modalidade Modalidade @relation(fields: [modalidadeId], references: [id])
+  jogadores  Jogador[]
 }
 
 model PartidaUsuario {
-  id          Int       @id @default(autoincrement())
+  id          Int @id @default(autoincrement())
   partidaId   Int
-  partida     Partida   @relation(fields: [partidaId], references: [id])
   usuarioId   Int
-  usuario     Usuario   @relation(fields: [usuarioId], references: [id])
   permissaoId Int
-  permissao   Permissao @relation(fields: [permissaoId], references: [id])
-  createdAt   DateTime  @default(now())
+  partida   Partida   @relation(fields: [partidaId], references: [id])
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id])
+  permissao Permissao @relation(fields: [permissaoId], references: [id])
+  createdAt DateTime @default(now())
 }
 
 model Placar {
-  id     Int  @id @default(autoincrement())
-  timeId Int  @unique
-  time   Time @relation(fields: [timeId], references: [id])
+  id            Int @id @default(autoincrement())
+  campeonatoId Int
+  timeId       Int
+  campeonato Campeonato @relation(fields: [campeonatoId], references: [id])
+  time        Time       @relation(fields: [timeId], references: [id])
   jogos        Int @default(0)
   posicao      Int @default(0)
   pontuacao    Int @default(0)
@@ -178,6 +213,7 @@ model Placar {
   derrota0x3   Int @default(0)
   derrotaWo    Int @default(0)
   visivel Boolean @default(true)
+  @@unique([campeonatoId, timeId])
 }
 
 model UsuarioTime {
@@ -185,12 +221,12 @@ model UsuarioTime {
   timeId    Int
   usuario Usuario @relation(fields: [usuarioId], references: [id])
   time    Time    @relation(fields: [timeId], references: [id])
-  @@id([usuarioId, timeId]) 
+  @@id([usuarioId, timeId])
 }
 
 model Permissao {
-  id        Int       @id @default(autoincrement())
+  id        Int @id @default(autoincrement())
   descricao String
-  usuarios  Usuario[]
-  partidasUsuarios PartidaUsuario[]
+  usuarios          Usuario[]
+  partidasUsuarios  PartidaUsuario[]
 }
