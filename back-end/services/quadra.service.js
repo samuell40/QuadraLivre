@@ -8,7 +8,7 @@ async function criarQuadra(dados) {
       endereco: dados.endereco,
       foto: dados.foto,
       modalidades: {
-        connect: dados.modalidades, 
+        connect: dados.modalidades,
       },
     },
     include: {
@@ -19,22 +19,42 @@ async function criarQuadra(dados) {
   return quadra;
 }
 
-async function getQuadras(modalidadeId) {
-  return prisma.quadra.findMany({
-    where: modalidadeId
-      ? {
-          modalidades: {
-            some: {
-              id: Number(modalidadeId),
-            },
-          },
+async function listarTodasQuadras(modalidadeId) {
+  if (modalidadeId) {
+    return prisma.quadra.findMany({
+      where: {
+        modalidades: {
+          some: {
+            id: Number(modalidadeId)
+          }
         }
-      : undefined,
+      },
+      include: {
+        modalidades: true
+      }
+    })
+  }
 
+  return prisma.quadra.findMany({
     include: {
-      modalidades: true,
-    },
-  });
+      modalidades: true
+    }
+  })
 }
 
-module.exports = { criarQuadra, getQuadras};
+ async function listarQuadrasPorModalidade(modalidadeId) {
+  return prisma.quadra.findMany({
+    where: {
+      modalidades: {
+        some: {
+          id: Number(modalidadeId)
+        }
+      }
+    },
+    include: {
+      modalidades: true
+    }
+  })
+}
+
+module.exports = { criarQuadra, listarTodasQuadras, listarQuadrasPorModalidade };
