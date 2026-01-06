@@ -6,6 +6,7 @@ import NaoAutorizado from '@/views/NaoAutorizado.vue';
 import CadastroView from '../views/CadastroView.vue';
 import CadastrarQuadraView from '../views/CadastrarQuadraView.vue';
 import ControlePlacarView from '../views/ControlePlacarView';
+import GerenciarPartidaView from '@/views/GerenciarPartidaView.vue';
 import PartidaView from '@/views/PartidaView.vue';
 import UsuariosView from '../views/UsuariosView';
 import MeusAgendamentosView from '../views/MeusAgendamentosView';
@@ -70,6 +71,12 @@ const routes = [
     path: '/gerenciartimes',
     name: 'gerenciar_times',
     component: GerenciartimesView,
+    meta: { requiresAuth: true, roles: [1, 2] },
+  },
+  {
+    path: '/gerenciarpartida',
+    name: 'gerenciar_partida',
+    component: GerenciarPartidaView,
     meta: { requiresAuth: true, roles: [1, 2] },
   },
   {

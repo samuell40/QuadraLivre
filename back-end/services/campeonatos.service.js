@@ -2,44 +2,58 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function criarCampeonato(data) {
-  const {
-    nome,
-    descricao,
-    dataInicio,
-    dataFim,
-    status,
-    modalidadeId,
-    quadraId,
-  } = data;
-
-  const campeonatoData = {
-    nome,
-    descricao,
-    dataInicio: new Date(dataInicio),
-    modalidadeId: Number(modalidadeId),
-  };
-
-  if (status) {
-    campeonatoData.status = status;
-  }
-
-  if (dataFim) {
-    campeonatoData.dataFim = new Date(dataFim);
-  }
-
-  if (quadraId) {
-    campeonatoData.quadraId = Number(quadraId);
-  }
+  const { nome, descricao, dataInicio, dataFim, status, modalidadeId, quadraId, times } = data;
 
   const campeonato = await prisma.campeonato.create({
-    data: campeonatoData,
+    data: {
+      nome,
+      descricao,
+      dataInicio: new Date(dataInicio),
+      dataFim: dataFim ? new Date(dataFim) : null,
+      status,
+      modalidadeId: Number(modalidadeId),
+      quadraId: quadraId ? Number(quadraId) : null,
+
+      times: {
+        create: times.map(timeId => ({
+          timeId: Number(timeId)
+        }))
+      }
+    },
     include: {
       modalidade: true,
       quadra: true,
-    },
+      times: {
+        include: {
+          time: true
+        }
+      }
+    }
   });
 
   return campeonato;
+}
+
+async function removerCampeonato(campeonatoId) {
+  if (!campeonatoId) {
+    throw new Error('ID do campeonato é obrigatório.');
+  }
+
+  const campeonato = await prisma.campeonato.findUnique({
+    where: { id: Number(campeonatoId) }
+  });
+
+  if (!campeonato) {
+    throw new Error('Campeonato não encontrado.');
+  }
+
+  await prisma.partida.deleteMany({ where: { campeonatoId: Number(campeonatoId) } });
+  await prisma.placar.deleteMany({ where: { campeonatoId: Number(campeonatoId) } });
+  await prisma.campeonatoTime.deleteMany({ where: { campeonatoId: Number(campeonatoId) } });
+
+  await prisma.campeonato.delete({ where: { id: Number(campeonatoId) } });
+
+  return { mensagem: 'Campeonato removido com sucesso.' };
 }
 
 async function listarCampeonatosPorModalidade(modalidadeId) {
@@ -49,8 +63,8 @@ async function listarCampeonatosPorModalidade(modalidadeId) {
         modalidadeId: modalidadeId
       },
       include: {
-        modalidade: true, // Inclui detalhes da modalidade
-        quadra: true,     // Inclui detalhes da quadra
+        modalidade: true,
+        quadra: true,
         times: {
           include: {
             time: true
@@ -70,4 +84,4 @@ async function listarCampeonatosPorModalidade(modalidadeId) {
 }
 
 
-module.exports = { criarCampeonato, listarCampeonatosPorModalidade };
+module.exports = { criarCampeonato, removerCampeonato, listarCampeonatosPorModalidade };

@@ -2,10 +2,10 @@ const partidas = require('../services/partida.service');
 
 async function criarPartidaController(req, res) {
   try {
-    const { usuarioId, modalidadeId, timeAId, timeBId, quadraId } = req.body;
+    const { usuarioId, modalidadeId, timeAId, timeBId, quadraId,  campeonatoId} = req.body;
 
     const partida = await partidas.criarPartida(
-      { modalidadeId, timeAId, timeBId, quadraId },
+      { modalidadeId, timeAId, timeBId, quadraId, campeonatoId },
       usuarioId
     );
 
@@ -30,6 +30,23 @@ async function finalizarPartidaController(req, res) {
   } catch (error) {
     console.error(error);
     res.status(500).json({ erro: error.message });
+  }
+}
+
+async function excluirPartidaController(req, res) {
+  try {
+    const { partidaId } = req.params;
+
+    const partida = await partidas.excluirPartida(partidaId);
+    return res.json(partida);
+  } catch (err) {
+    console.error(err);
+
+    if (err.code === 'P2025') {
+      return res.status(404).json({ error: "Partida não encontrada" });
+    }
+
+    return res.status(500).json({ error: err.message });
   }
 }
 
@@ -70,35 +87,50 @@ async function incrementarPlacarController(req, res) {
   }
 }
 
-async function listarPartidasController(req, res) {
-  try {
-    const partidalistadas = await partidas.listarPartidas();
-    res.json(partidalistadas);
-  } catch (error) {
-    console.error('Erro ao listar partidas:', error);
-    res.status(500).json({ error: 'Erro ao listar partidas' });
-  }
-}
-
 async function listarPartidasAtivasController(req, res) {
   try {
-    const ativas = await partidas.listarPartidasAtivas();
-    res.json(ativas);
+    const { modalidadeId, campeonatoId } = req.params;
+
+    if (!modalidadeId) {
+      return res.status(400).json({ error: 'modalidadeId é obrigatório' });
+    }
+
+    const partidas_ativas = await partidas.listarPartidasAtivas(
+      modalidadeId,
+      campeonatoId
+    );
+
+    res.json(partidas_ativas);
   } catch (error) {
-    console.error("Erro ao listar partidas ativas:", error);
-    res.status(500).json({ error: "Erro ao listar partidas ativas" });
+    console.error('Erro ao listar partidas ativas:', error);
+    res.status(500).json({ error: 'Erro ao listar partidas ativas' });
   }
 }
 
 async function listarPartidasEncerradasController(req, res) {
   try {
-    const encerradas = await partidas.listarPartidasEncerradas();
-    res.json(encerradas);
+    const { modalidadeId, campeonatoId } = req.params
+
+    if (!modalidadeId || !campeonatoId) {
+      return res.status(400).json({
+        error: 'modalidadeId e campeonatoId são obrigatórios'
+      })
+    }
+
+    const partidas_encerradas = await partidas.listarPartidasEncerradas(
+      modalidadeId,
+      campeonatoId
+    )
+
+    res.json(partidas_encerradas)
   } catch (error) {
-    console.error("Erro ao listar partidas encerradas:", error);
-    res.status(500).json({ error: "Erro ao listar partidas encerradas" });
+    console.error('Erro ao listar partidas encerradas:', error)
+    res.status(500).json({
+      error: 'Erro ao listar partidas encerradas'
+    })
   }
 }
+
 
 async function pausarPartidaController(req, res) {
   try {
@@ -138,18 +170,6 @@ async function listarPartidaAtivasUsuarioController(req, res) {
   } catch (err) {
     console.error("Erro ao buscar partida aberta:", err);
     res.status(500).json({ error: "Erro ao buscar partida aberta" });
-  }
-}
-
-async function limparPartidasPorModalidadeController(req, res) {
-  try {
-    const { modalidadeId } = req.params;
-
-    const resultado = await partidas.limparPartidasPorModalidade(modalidadeId);
-    return res.json(resultado);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: err.message });
   }
 }
 
@@ -257,15 +277,14 @@ async function atualizarAtuacaoJogadorController(req, res) {
 module.exports = {
   criarPartidaController,
   finalizarPartidaController,
+   excluirPartidaController,
   atualizarParcialController,
   incrementarPlacarController,
-  listarPartidasController,
   listarPartidasAtivasController,
   listarPartidasEncerradasController,
   pausarPartidaController,
   retomarPartidaController,
   listarPartidaAtivasUsuarioController,
-  limparPartidasPorModalidadeController,
   vincularUsuarioController,
   adicionarJogadorPartidaController,
   carregarUltimaPartida,

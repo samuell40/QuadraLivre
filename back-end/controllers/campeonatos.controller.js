@@ -1,14 +1,24 @@
-const { criarCampeonato, listarCampeonatosPorModalidade } = require('../services/campeonatos.service');
+const campeonatoService = require('../services/campeonatos.service');
 
 async function criarCampeonatoController(req, res) {
   try {
-    const novocampeonato = await criarCampeonato(req.body); 
+    const novocampeonato = await campeonatoService.criarCampeonato(req.body);
     return res.status(201).json(novocampeonato);
   } catch (error) {
     console.error(error);
     return res.status(400).json({
       erro: "Erro ao criar campeonato",
     });
+  }
+}
+
+async function removerCampeonatoController(req, res, next) {
+  try {
+    const resultado = await campeonatoService.removerCampeonato(req.params.id);
+    res.status(200).json({ mensagem: resultado.mensagem });
+  } catch (err) {
+    console.error(`Erro ao remover campeonato:`, err.message);
+    next(err);
   }
 }
 
@@ -19,7 +29,7 @@ async function listarCampeonatosPorModalidadeController(req, res) {
       return res.status(400).json({ error: 'ID da modalidade é obrigatório.' });
     }
 
-    const campeonatos = await listarCampeonatosPorModalidade(Number(modalidadeId));
+    const campeonatos = await campeonatoService.listarCampeonatosPorModalidade(Number(modalidadeId));
     return res.status(200).json(campeonatos);
   } catch (error) {
     console.error(error);
@@ -27,4 +37,4 @@ async function listarCampeonatosPorModalidadeController(req, res) {
   }
 }
 
-module.exports = { criarCampeonatoController, listarCampeonatosPorModalidadeController };
+module.exports = { criarCampeonatoController, removerCampeonatoController, listarCampeonatosPorModalidadeController };

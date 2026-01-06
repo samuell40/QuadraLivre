@@ -13,7 +13,6 @@
         </div>
       </div>
 
-      <!-- Dropdown de modalidades -->
       <div class="dropdown-container">
         <select v-model="modalidadeSelecionada" @change="carregarCampeonatos">
           <option disabled value="">Selecione uma modalidade</option>
@@ -39,20 +38,23 @@
                 <h2>{{ camp.nome }}</h2>
                 <p>Quadra: {{ camp.quadra ? camp.quadra.nome : "Não definida" }}</p>
                 <p>Status: {{ camp.status }}</p>
-                <p>Times Participantes: {{ camp.times.length }}</p>
+                <p>Times Participantes:  {{ camp.times.length}}</p>
               </div>
             </div>
 
             <div class="acoes">
               <button class="btn-detalhar">Detalhar</button>
-              <button class="btn-remover">Remover</button>
+              <button class="btn-remover" @click="removerCampeonato(camp.id)">Remover</button>
             </div>
           </div>
         </div>
       </div>
-      <AdicionarCampeonatoModal :aberto="modalAdicionarCampeonato" @fechar="modalAdicionarCampeonato = false"
-        @atualizar="carregarCampeonatos" />
 
+      <AdicionarCampeonatoModal
+        :aberto="modalAdicionarCampeonato"
+        @fechar="modalAdicionarCampeonato = false"
+        @atualizar="carregarCampeonatos"
+      />
     </div>
   </div>
 </template>
@@ -61,6 +63,7 @@
 import SideBar from '@/components/SideBar.vue'
 import AdicionarCampeonatoModal from '@/components/modals/Campeonatos/AdicionarCampeonatoModal.vue';
 import api from '@/axios'
+import Swal from 'sweetalert2'
 
 export default {
   name: 'GerenciarCampeonatosView',
@@ -105,6 +108,27 @@ export default {
         console.error('Erro ao carregar campeonatos:', err);
       } finally {
         this.isLoading = false;
+      }
+    },
+
+    async removerCampeonato(campeonatoId) {
+      const confirmacao = await Swal.fire({
+        title: 'Tem certeza que deseja remover este campeonato?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sim, remover',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (!confirmacao.isConfirmed) return;
+
+      try {
+        await api.delete(`/removerCampeonato/${campeonatoId}`);
+        Swal.fire('Removido!', 'Campeonato removido com sucesso.', 'success');
+        this.carregarCampeonatos(); 
+      } catch (err) {
+        console.error('Erro ao remover campeonato:', err);
+        Swal.fire('Erro', 'Não foi possível remover o campeonato.', 'error');
       }
     }
   }

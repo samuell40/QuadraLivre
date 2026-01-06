@@ -5,17 +5,17 @@ const router = express.Router();
 
 router.post('/partida', controller.criarPartidaController)
 
-router.put('/partida/:id/encerrar',  [validarJWT], controller.finalizarPartidaController);
+router.put('/partida/:id/encerrar', [validarJWT], controller.finalizarPartidaController);
 
-router.put('/partida/:id/parcial',  [validarJWT], controller.atualizarParcialController);
+router.delete('/partidas/:partidaId', controller.excluirPartidaController);
+
+router.put('/partida/:id/parcial', [validarJWT], controller.atualizarParcialController);
 
 router.put('/placar/:id/incrementar', [validarJWT], controller.incrementarPlacarController);
 
-router.get('/partidas', controller.listarPartidasController);
+router.get('/partidas/ativas/:modalidadeId/:campeonatoId', controller.listarPartidasAtivasController);
 
-router.get('/partidas/ativas', controller.listarPartidasAtivasController);
-
-router.get('/partidas/encerradas', controller.listarPartidasEncerradasController);
+router.get('/partidas/encerradas/:modalidadeId/:campeonatoId', controller.listarPartidasEncerradasController)
 
 router.put("/partidas/:id/pausar", controller.pausarPartidaController);
 
@@ -23,11 +23,9 @@ router.put("/partidas/:id/retomar", controller.retomarPartidaController);
 
 router.get("/partida/aberta", controller.listarPartidaAtivasUsuarioController);
 
-router.delete('/limpar/:modalidadeId', controller.limparPartidasPorModalidadeController);
-
 router.post("/:partidaId/jogador/:jogadorId", controller.adicionarJogadorPartidaController);
 
-router.get("/ultima/partida",  [validarJWT], controller.carregarUltimaPartida);
+router.get("/ultima/partida", [validarJWT], controller.carregarUltimaPartida);
 
 router.get('/partida/:partidaId', controller.listarJogadoresSelecionadosController);
 

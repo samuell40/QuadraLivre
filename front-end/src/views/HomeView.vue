@@ -144,7 +144,7 @@ export default {
   },
 
   async mounted() {
-      await Promise.all([  //pra rodar todas as funções juntas
+      await Promise.all([  
         this.carregarQuadras(),
         this.carregarModalidades(),
         this.carregarPartidasAtivas(),
@@ -170,46 +170,9 @@ export default {
     },
 
     async carregarPartidasAtivas() {
-      this.isLoadingPartidas = true
-      try {
-        const res = await api.get('partidas/ativas')
-        const partidasRecebidas = Array.isArray(res.data)
-          ? res.data.filter(p => p.partidaIniciada).map(p => ({
-            ...p,
-            emIntervalo: p.emIntervalo ?? false
-          }))
-          : []
-
-        if (partidasRecebidas.length > 0) {
-          partidasRecebidas.forEach(p => {
-            const index = this.partidasAtivas.findIndex(pa => pa.id === p.id)
-            if (index >= 0) {
-              this.partidasAtivas[index] = { ...this.partidasAtivas[index], ...p }
-            } else {
-              this.partidasAtivas.push(p)
-            }
-          })
-
-          this.partidasAtivas = this.partidasAtivas.filter(pa =>
-            partidasRecebidas.some(pr => pr.id === pa.id)
-          )
-        } else {
-          this.partidasAtivas = []
-        }
-      } catch (err) {
-        console.error("Erro ao carregar partidas ativas:", err)
-      } finally {
-        this.isLoadingPartidas = false
-      }
     },
 
     async carregarPartidasEncerradas() {
-      try {
-        const res = await api.get('/partidas/encerradas')
-        this.partidasEncerradas = Array.isArray(res.data) ? res.data : []
-      } catch (err) {
-        console.error("Erro ao carregar partidas encerradas:", err)
-      }
     },
 
     async carregarModalidades() {

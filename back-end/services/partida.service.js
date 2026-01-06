@@ -68,31 +68,70 @@ async function criarPartida(data, usuarioId) {
 }
 
 async function finalizarPartida(id, { usuarioId }) {
-  const partidaAtual = await prisma.partida.findUnique({ where: { id: Number(id) } });
-  if (!partidaAtual) throw new Error("Partida não encontrada");
+  const partidaAtual = await prisma.partida.findUnique({
+    where: { id: Number(id) }
+  })
+
+  if (!partidaAtual) {
+    throw new Error('Partida não encontrada')
+  }
 
   const dataAtualizacao = {
     finalizada: true,
     partidaIniciada: false
-  };
+  }
 
   if (usuarioId) {
-    dataAtualizacao.usuarioCriadorId = Number(usuarioId);
+    dataAtualizacao.usuarioCriadorId = Number(usuarioId)
   }
 
   return prisma.partida.update({
     where: { id: Number(id) },
     data: dataAtualizacao,
     include: {
-      timeA: { include: { placar: true } },
-      timeB: { include: { placar: true } },
+      timeA: {
+        include: {
+          placares: true
+        }
+      },
+      timeB: {
+        include: {
+          placares: true
+        }
+      },
       modalidade: true,
       usuarioCriador: true,
-      jogadoresPartida: { include: { jogador: true } },
-      participantes: { include: { usuario: true } }
+      jogadoresPartida: {
+        include: {
+          jogador: true
+        }
+      },
+      participantes: {
+        include: {
+          usuario: true
+        }
+      }
     }
+  })
+}
+
+async function excluirPartida(partidaId) {
+  if (!partidaId) throw new Error("ID da partida é obrigatório");
+
+  const id = Number(partidaId);
+  await prisma.jogadorPartida.deleteMany({
+    where: { partidaId: id }
+  });
+
+  await prisma.partidaUsuario.deleteMany({
+    where: { partidaId: id }
+  });
+
+  return await prisma.partida.delete({
+    where: { id }
   });
 }
+
 
 async function atualizarParcial(
   id,
@@ -164,46 +203,85 @@ async function incrementarPlacar(placarId, incremento) {
   });
 }
 
-async function listarPartidas() {
+async function listarPartidasAtivas(modalidadeId, campeonatoId) {
+  const where = {
+    finalizada: false,
+    modalidadeId: Number(modalidadeId),
+  };
+
+  if (campeonatoId) {
+    where.campeonatoId = Number(campeonatoId);
+  }
+
   return prisma.partida.findMany({
-    orderBy: { data: 'desc' },
+    where,
+    orderBy: {
+      data: 'desc',
+    },
     include: {
       modalidade: { select: { id: true, nome: true } },
-      timeA: { select: { id: true, nome: true, foto: true, placar: true } },
-      timeB: { select: { id: true, nome: true, foto: true, placar: true } },
-      usuarioCriador: { select: { id: true, nome: true, email: true } },
-      jogadoresPartida: { include: { jogador: true } },
-      participantes: { include: { usuario: true } }
-    }
+      campeonato: { select: { id: true, nome: true } },
+      quadra: { select: { id: true, nome: true, foto: true } },
+
+      timeA: { select: { id: true, nome: true, foto: true } },
+      timeB: { select: { id: true, nome: true, foto: true } },
+
+      jogadoresPartida: {
+        include: {
+          jogador: { select: { id: true, nome: true, foto: true } },
+        },
+      },
+      participantes: {
+        include: {
+          usuario: { select: { id: true, nome: true, foto: true } },
+        },
+      },
+    },
   });
 }
 
-async function listarPartidasAtivas() {
+async function listarPartidasEncerradas(modalidadeId, campeonatoId) {
   return prisma.partida.findMany({
-    where: { finalizada: false },
-    orderBy: { data: 'desc' },
+    where: {
+      finalizada: true,
+      modalidadeId: Number(modalidadeId),
+      campeonatoId: Number(campeonatoId),
+    },
+    orderBy: {
+      data: 'desc',
+    },
     include: {
-      modalidade: { select: { id: true, nome: true } },
-      timeA: { select: { id: true, nome: true, foto: true, placar: true } },
-      timeB: { select: { id: true, nome: true, foto: true, placar: true } },
-      jogadoresPartida: { include: { jogador: true } },
-      participantes: { include: { usuario: true } }
-    }
-  });
-}
-
-async function listarPartidasEncerradas() {
-  return prisma.partida.findMany({
-    where: { finalizada: true },
-    orderBy: { data: 'desc' },
-    include: {
-      modalidade: { select: { id: true, nome: true } },
-      timeA: { select: { id: true, nome: true, foto: true, placar: true } },
-      timeB: { select: { id: true, nome: true, foto: true, placar: true } },
-      jogadoresPartida: { include: { jogador: true } },
-      participantes: { include: { usuario: true } }
-    }
-  });
+      modalidade: {
+        select: { id: true, nome: true },
+      },
+      campeonato: {
+        select: { id: true, nome: true },
+      },
+      quadra: {
+        select: { id: true, nome: true },
+      },
+      timeA: {
+        select: { id: true, nome: true, foto: true },
+      },
+      timeB: {
+        select: { id: true, nome: true, foto: true },
+      },
+      jogadoresPartida: {
+        include: {
+          jogador: {
+            select: { id: true, nome: true, foto: true },
+          },
+        },
+      },
+      participantes: {
+        include: {
+          usuario: {
+            select: { id: true, nome: true, foto: true },
+          },
+        },
+      },
+    },
+  })
 }
 
 async function pausarPartida(id) {
@@ -253,14 +331,6 @@ async function listarPartidaAtivaUsuario(usuarioId) {
       jogadoresPartida: { include: { jogador: true } },
       participantes: { include: { usuario: true } }
     }
-  });
-}
-
-async function limparPartidasPorModalidade(modalidadeId) {
-  if (!modalidadeId) throw new Error("ID da modalidade é obrigatório");
-
-  await prisma.partida.deleteMany({
-    where: { modalidadeId: Number(modalidadeId) }
   });
 }
 
@@ -372,15 +442,14 @@ async function atualizarAtuacaoJogadorPartida({
 module.exports = {
   criarPartida,
   finalizarPartida,
+  excluirPartida,
   atualizarParcial,
   incrementarPlacar,
-  listarPartidas,
   listarPartidasAtivas,
   listarPartidasEncerradas,
   pausarPartida,
   retomarPartida,
   listarPartidaAtivaUsuario,
-  limparPartidasPorModalidade,
   vincularUsuarioAPartida,
   vincularJogadorPartida,
   listarJogadoresSelecionados,

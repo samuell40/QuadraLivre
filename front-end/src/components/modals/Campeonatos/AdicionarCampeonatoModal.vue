@@ -4,7 +4,6 @@
       <h2>Adicionar Campeonato</h2>
 
       <form @submit.prevent="cadastrarCampeonato">
-
         <div class="form-row">
           <div class="form-group">
             <label for="modalidade">Modalidade</label>
@@ -22,11 +21,9 @@
               <option value="" disabled v-if="!modalidadeSelecionada">
                 Selecione uma modalidade primeiro
               </option>
-
               <option value="" disabled v-else>
                 Selecione a quadra
               </option>
-
               <option v-for="q in quadras" :key="q.id" :value="q.id">
                 {{ q.nome }}
               </option>
@@ -52,6 +49,18 @@
         </div>
 
         <div class="form-group">
+          <label><strong>Selecione os Dias:</strong></label>
+
+          <div class="dias">
+            <label v-for="dia in diasSemana" :key="dia.id" class="dia-label">
+              <input type="checkbox" :value="dia.id" v-model="diasSelecionados"
+                @change="verificarTodosDiasSelecionados" />
+              {{ dia.nome }}
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
           <label><strong>Selecione os Horários em que vão Decorrer as Partidas:</strong></label>
 
           <div class="horarios">
@@ -60,6 +69,7 @@
               {{ h }}
             </button>
           </div>
+
           <div class="select-all">
             <label>
               <input type="checkbox" v-model="todosHorariosSelecionados" @change="toggleTodosHorarios" />
@@ -67,14 +77,44 @@
             </label>
           </div>
         </div>
+        <div class="botoes">
+          <button type="button" class="btn-save" @click="abrirModalTimes">
+            Continuar
+          </button>
+          <button type="button" class="btn-cancel" @click="$emit('fechar')">Cancelar</button>
+        </div>
+
+      </form>
+    </div>
+    <!-- MODAL DE TIMES -->
+    <div v-if="mostrarModalTimes" class="modal-overlay" @click.self="mostrarModalTimes = false">
+      <div class="modal-content modal-times">
+        <h2>Selecione os Times</h2>
+
+        <div class="contador">
+          {{ timesSelecionados.length }} selecionado(s)
+        </div>
+
+        <div class="lista-times">
+          <div v-for="time in times" :key="time.id" class="time-card"
+            :class="{ selecionado: timesSelecionados.includes(time.id) }" @click="toggleTime(time.id)">
+            <div class="time-info">
+              <h3>{{ time.nome }}</h3>
+              <span>{{ time._count.jogadores }} jogadores</span>
+            </div>
+          </div>
+        </div>
 
         <div class="botoes">
-          <button type="submit" class="btn-save">Cadastrar</button>
-          <button type="button" class="btn-cancel" @click="$emit('fechar')">
-            Cancelar
+          <button class="btn-cancel" @click="mostrarModalTimes = false">
+            Voltar
+          </button>
+
+          <button class="btn-save" @click="finalizarCadastro">
+            Salvar Campeonato
           </button>
         </div>
-      </form>
+      </div>
     </div>
   </div>
 </template>
@@ -105,7 +145,21 @@ export default {
       horariosDisponiveis: [],
       horariosSelecionados: [],
       todosHorariosSelecionados: false,
-      carregandoQuadras: false
+      diasSemana: [
+        { id: 'segunda', nome: 'Segunda' },
+        { id: 'terca', nome: 'Terça' },
+        { id: 'quarta', nome: 'Quarta' },
+        { id: 'quinta', nome: 'Quinta' },
+        { id: 'sexta', nome: 'Sexta' },
+        { id: 'sabado', nome: 'Sábado' },
+        { id: 'domingo', nome: 'Domingo' }
+      ],
+      diasSelecionados: [],
+      todosDiasSelecionados: false,
+      carregandoQuadras: false,
+      mostrarModalTimes: false,
+      times: [],
+      timesSelecionados: []
     }
   },
 
@@ -120,6 +174,9 @@ export default {
 
     modalidadeSelecionada(valor) {
       this.quadraSelecionada = ''
+      this.times = []
+      this.timesSelecionados = []
+
       if (valor) {
         this.carregarQuadras(valor)
       } else {
@@ -137,32 +194,41 @@ export default {
       this.dataFim = ''
       this.horariosSelecionados = []
       this.todosHorariosSelecionados = false
+      this.diasSelecionados = []
+      this.todosDiasSelecionados = false
       this.quadras = []
+      this.times = []
+      this.timesSelecionados = []
+      this.mostrarModalTimes = false
+    },
+
+    gerarHorarios() {
+      this.horariosDisponiveis = Array.from(
+        { length: 24 },
+        (_, h) => `${String(h).padStart(2, '0')}:00`
+      )
     },
 
     toggleHorario(horario) {
       if (this.horariosSelecionados.includes(horario)) {
-        this.horariosSelecionados =
-          this.horariosSelecionados.filter(h => h !== horario)
+        this.horariosSelecionados = this.horariosSelecionados.filter(h => h !== horario)
       } else {
         this.horariosSelecionados.push(horario)
       }
+
       this.todosHorariosSelecionados =
         this.horariosSelecionados.length === this.horariosDisponiveis.length
     },
 
-    toggleTodosHorarios() {
-      this.horariosSelecionados = []
-      if (this.todosHorariosSelecionados) {
-        this.horariosDisponiveis.forEach(horario => {
-          this.horariosSelecionados.push(horario)
-        })
-      }
+    verificarTodosDiasSelecionados() {
+      this.todosDiasSelecionados =
+        this.diasSelecionados.length === this.diasSemana.length
     },
+
     async carregarModalidades() {
       try {
-        const res = await api.get('/listar/modalidade')
-        this.modalidades = res.data
+        const { data } = await api.get('/listar/modalidade')
+        this.modalidades = data
       } catch {
         Swal.fire('Erro', 'Erro ao carregar modalidades.', 'error')
       }
@@ -171,8 +237,8 @@ export default {
     async carregarQuadras(modalidadeId) {
       try {
         this.carregandoQuadras = true
-        const res = await api.get(`/listar/quadras/${modalidadeId}`)
-        this.quadras = res.data
+        const response = await api.get(`/listar/quadras/${modalidadeId}`)
+        this.quadras = response.data
       } catch {
         Swal.fire('Erro', 'Erro ao carregar quadras.', 'error')
       } finally {
@@ -180,46 +246,76 @@ export default {
       }
     },
 
-    gerarHorarios() {
-      const horarios = []
-      for (let h = 0; h < 24; h++) {
-        horarios.push(`${String(h).padStart(2, '0')}:00`)
+    validarDadosBasicos() {
+      if (!this.modalidadeSelecionada)
+        return 'Selecione uma modalidade.'
+      if (!this.quadraSelecionada)
+        return 'Selecione uma quadra.'
+      if (!this.nomeCampeonato.trim())
+        return 'Informe o nome do campeonato.'
+      if (!this.dataInicio || !this.dataFim)
+        return 'Informe as datas do campeonato.'
+      if (this.dataFim < this.dataInicio)
+        return 'Data de fim não pode ser menor que a de início.'
+      if (this.horariosSelecionados.length === 0)
+        return 'Selecione pelo menos um horário.'
+      if (this.diasSelecionados.length === 0)
+        return 'Selecione pelo menos um dia da semana.'
+      return null
+    },
+    
+    async nomeCampeonatoJaExiste() {
+      try {
+        const res = await api.get('/listar/campeonatos')
+
+        const nomeNovo = this.nomeCampeonato.trim().toLowerCase()
+
+        return res.some(campeonato =>
+          campeonato.nome.trim().toLowerCase() === nomeNovo
+        )
+      } catch {
+        Swal.fire('Erro', 'Erro ao verificar campeonatos existentes.', 'error')
+        return true
       }
-      this.horariosDisponiveis = horarios
     },
 
-    async cadastrarCampeonato() {
-      if (!this.modalidadeSelecionada) {
-        Swal.fire('Atenção', 'Selecione uma modalidade.', 'warning')
+    async abrirModalTimes() {
+      const erro = this.validarDadosBasicos()
+      if (erro) {
+        Swal.fire('Atenção', erro, 'warning')
+        return
+      }
+      try {
+        const response = await api.get(`/times/modalidade/${this.modalidadeSelecionada}`)
+        this.times = response.data
+        this.timesSelecionados = []
+        this.mostrarModalTimes = true
+      } catch {
+        Swal.fire('Erro', 'Erro ao carregar os times.', 'error')
+      }
+    },
+
+    toggleTime(timeId) {
+      if (this.timesSelecionados.includes(timeId)) {
+        this.timesSelecionados = this.timesSelecionados.filter(id => id !== timeId)
+      } else {
+        this.timesSelecionados.push(timeId)
+      }
+    },
+
+    async finalizarCadastro() {
+      if (this.timesSelecionados.length < 2) {
+        Swal.fire('Atenção', 'Selecione pelo menos 2 times.', 'warning')
         return
       }
 
-      if (!this.quadraSelecionada) {
-        Swal.fire('Atenção', 'Selecione uma quadra.', 'warning')
-        return
-      }
-
-      if (!this.nomeCampeonato.trim()) {
-        Swal.fire('Atenção', 'Informe o nome do campeonato.', 'warning')
-        return
-      }
-
-      if (!this.dataInicio || !this.dataFim) {
-        Swal.fire('Atenção', 'Informe as datas do campeonato.', 'warning')
-        return
-      }
-
-      if (this.dataFim < this.dataInicio) {
+      const jaExiste = await this.nomeCampeonatoJaExiste()
+      if (jaExiste) {
         Swal.fire(
           'Atenção',
-          'Data de fim não pode ser menor que a de início.',
+          'Já existe um campeonato cadastrado com esse nome.',
           'warning'
         )
-        return
-      }
-
-      if (this.horariosSelecionados.length === 0) {
-        Swal.fire('Atenção', 'Selecione pelo menos um horário.', 'warning')
         return
       }
 
@@ -230,16 +326,17 @@ export default {
           quadraId: this.quadraSelecionada,
           dataInicio: this.dataInicio,
           dataFim: this.dataFim,
-          horarios: this.horariosSelecionados
+          horarios: this.horariosSelecionados,
+          dias: this.diasSelecionados,
+          times: this.timesSelecionados
         })
 
         Swal.fire('Sucesso', 'Campeonato cadastrado com sucesso!', 'success')
         this.$emit('atualizar')
         this.$emit('fechar')
+        this.limparCampos()
       } catch (error) {
-        const msg =
-          error.response?.data?.erro
-        Swal.fire('Erro', msg, 'error')
+        Swal.fire('Erro', error.response?.data?.erro, 'error')
       }
     }
   }
@@ -357,5 +454,118 @@ select {
 .horarios button.selecionado {
   background-color: #1E3A8A;
   color: #fff;
+}
+
+.dias {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 5px;
+}
+
+.dia-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ===== MODAL TIMES ===== */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-times {
+  background: white;
+  padding: 24px 32px;
+  border-radius: 12px;
+  width: 900px;
+  max-width: 95%;
+  max-height: 90vh;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-times h2 {
+  margin-bottom: 12px;
+  color: #3b82f6;
+}
+
+/* contador fixo */
+.contador {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  text-align: center;
+  padding: 8px 0;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* lista com scroll */
+.lista-times {
+  flex: 1;
+  overflow-y: auto;
+  margin: 16px 0;
+
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.lista-times::-webkit-scrollbar {
+  width: 6px;
+}
+
+.lista-times::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+/* card do time */
+.time-card {
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: 0.2s;
+  background: #fff;
+}
+
+.time-card:hover {
+  background: #eff6ff;
+}
+
+.time-card.selecionado {
+  background: #3b82f6;
+  color: white;
+  border-color: #1e40af;
+}
+
+.time-info h3 {
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.time-info span {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+/* responsivo */
+@media (max-width: 768px) {
+  .lista-times {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

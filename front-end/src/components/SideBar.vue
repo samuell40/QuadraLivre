@@ -14,8 +14,7 @@
 
     <div v-if="sidebarVisible" class="sidebar">
     <img src="../assets/Cópia de xxxxx (2).png" class= "logo" alt="Logo" />
-
-      <!-- DASHBOARD -->
+    
       <div class="sidebar-category">
         <div class="sidebar-category-header no-toggle">
           <a href="/dashboard" :class="{ active: isActive('/dashboard') }">
@@ -49,7 +48,7 @@
             </svg>
             <span>Gerenciar Usuários</span>
           </a>
-             <a href="/gerenciartimes" :class="{ active: isActive('/times') }">
+             <a href="/gerenciartimes" :class="{ active: isActive('/gerenciartimes') }">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
               viewBox="0 0 24 24">
               <path fill="currentColor"
@@ -120,7 +119,7 @@
             <span>Gerenciar Placar</span>
           </a>
 
-          <a href="/partida" :class="{ active: isActive('/partida') }">
+          <a href="/gerenciarpartida" :class="{ active: isActive('/gerenciarpartida') }">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
               viewBox="0 0 24 24">
               <path fill="currentColor"
@@ -240,8 +239,12 @@ body {
   margin-left: 20px;
 }
 
+.sidebar a span {
+  white-space: nowrap;     
+}
+
 .sidebar a svg {
-  margin-right: 6px;
+  margin-right: 5px;
   vertical-align: middle;
 }
 

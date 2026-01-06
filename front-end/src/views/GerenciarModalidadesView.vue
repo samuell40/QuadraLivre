@@ -277,7 +277,7 @@ export default {
 .btn-detalhar,
 .btn-remover {
   flex: 1;
-  padding: 5px 0;       /* 👈 igual ao exemplo */
+  padding: 5px 0;      
   border: none;
   border-radius: 20px;
   cursor: pointer;

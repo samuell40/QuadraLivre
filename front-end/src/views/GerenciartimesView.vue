@@ -156,7 +156,7 @@ export default {
         this.modalidadesDisponiveis = res.data;
 
         if (this.modalidadesDisponiveis.length) {
-          this.modalidadeSelecionada = this.modalidadesDisponiveis[0].id; 
+          this.modalidadeSelecionada = this.modalidadesDisponiveis[0].id;
           this.carregarTimes();
         }
       } catch (error) {
@@ -169,26 +169,23 @@ export default {
         this.times = [];
         return;
       }
+
       this.isLoadingTimes = true;
       try {
-        const res = await api.get('/times/modalidade/1');
+        const res = await api.get(`/times/modalidade/${this.modalidadeSelecionada}`);
         const data = res.data;
-        this.times = data.map(t => {
-          return {
-            id: t.id,
-            nome: t.nome,
-            foto: t.foto,
-            qtdJogadores: t._count?.jogadores
-          };
-        });
-
+        this.times = data.map(t => ({
+          id: t.id,
+          nome: t.nome,
+          foto: t.foto,
+          qtdJogadores: t._count?.jogadores
+        }));
       } catch (err) {
         Swal.fire('Erro', 'Não foi possível carregar os times.', 'error');
       } finally {
         this.isLoadingTimes = false;
       }
     },
-
     async removerTime(id) {
       const confirmacao = await Swal.fire({
         title: 'Tem certeza?',
