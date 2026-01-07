@@ -135,6 +135,7 @@ model Partida {
   woTimeA         Boolean @default(false)
   woTimeB         Boolean @default(false)
   tempoSegundos   Int     @default(0)
+  inicioPartida DateTime?
   partidaIniciada Boolean @default(false)
   finalizada      Boolean @default(false)
   emIntervalo     Boolean @default(false)

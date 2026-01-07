@@ -25,11 +25,12 @@ async function removerCampeonatoController(req, res, next) {
 async function listarCampeonatosPorModalidadeController(req, res) {
   try {
     const { modalidadeId } = req.params;
+    const { ano } = req.query; 
     if (!modalidadeId) {
       return res.status(400).json({ error: 'ID da modalidade é obrigatório.' });
     }
-
-    const campeonatos = await campeonatoService.listarCampeonatosPorModalidade(Number(modalidadeId));
+    const campeonatos = await campeonatoService.listarCampeonatosPorModalidade(Number(modalidadeId), ano);
+    
     return res.status(200).json(campeonatos);
   } catch (error) {
     console.error(error);

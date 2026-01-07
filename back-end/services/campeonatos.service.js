@@ -56,11 +56,17 @@ async function removerCampeonato(campeonatoId) {
   return { mensagem: 'Campeonato removido com sucesso.' };
 }
 
-async function listarCampeonatosPorModalidade(modalidadeId) {
+async function listarCampeonatosPorModalidade(modalidadeId, ano) {
   try {
+    const anoFiltro = ano ? Number(ano) : new Date().getFullYear();
+
     const campeonatos = await prisma.campeonato.findMany({
       where: {
-        modalidadeId: modalidadeId
+        modalidadeId: modalidadeId,
+        dataInicio: {
+          gte: new Date(`${anoFiltro}-01-01`),
+          lte: new Date(`${anoFiltro}-12-31`)
+        }
       },
       include: {
         modalidade: true,
@@ -76,12 +82,12 @@ async function listarCampeonatosPorModalidade(modalidadeId) {
         dataInicio: 'desc'
       }
     });
+
     return campeonatos;
   } catch (error) {
     console.error(error);
     throw new Error('Erro ao listar campeonatos por modalidade.');
   }
 }
-
 
 module.exports = { criarCampeonato, removerCampeonato, listarCampeonatosPorModalidade };

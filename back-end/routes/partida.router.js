@@ -13,19 +13,19 @@ router.put('/partida/:id/parcial', [validarJWT], controller.atualizarParcialCont
 
 router.put('/placar/:id/incrementar', [validarJWT], controller.incrementarPlacarController);
 
-router.get('/partidas/ativas/:modalidadeId/:campeonatoId', controller.listarPartidasAtivasController);
+router.get('/partidas/ativas/:modalidadeId/:campeonatoId', controller.listarPartidaAndamentoController);
 
-router.get('/partidas/encerradas/:modalidadeId/:campeonatoId', controller.listarPartidasEncerradasController)
+router.get( '/partidas/pausadas/:modalidadeId/:campeonatoId', controller.listarPartidasPausadasController);
+
+router.get('/partidas/encerradas/:modalidadeId/:campeonatoId', controller.listarPartidasEncerradasController);
 
 router.put("/partidas/:id/pausar", controller.pausarPartidaController);
 
 router.put("/partidas/:id/retomar", controller.retomarPartidaController);
 
-router.get("/partida/aberta", controller.listarPartidaAtivasUsuarioController);
+router.get('/partidas/:id/retornar', controller.retornarPartidaEmAndamentoController);
 
 router.post("/:partidaId/jogador/:jogadorId", controller.adicionarJogadorPartidaController);
-
-router.get("/ultima/partida", [validarJWT], controller.carregarUltimaPartida);
 
 router.get('/partida/:partidaId', controller.listarJogadoresSelecionadosController);
 
