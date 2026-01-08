@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.post('/time', [validarJWT], verificarPermissao.devAdmin, controller.criarTimeController);
 
-router.delete('/remover/time/:id', controller.removerTimeController );
+router.delete('/time/remover/:id', controller.removerTimeController);
 
 router.get('/times/modalidade/:modalidadeId', controller.listarTimesPorModalidadeController );
 

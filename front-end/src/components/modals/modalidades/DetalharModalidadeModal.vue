@@ -4,7 +4,6 @@
 
       <div class="header-modal">
         <h2>Detalhes da Modalidade - {{ formatarNome(modalidade?.nome) }}</h2>
-
         <button class="btn-gerenciar" @click="abrirModalFuncoes">
           Gerenciar Funções
         </button>
@@ -147,14 +146,12 @@ export default {
 
   watch: {
     async aberto(v) {
-      if (v && this.modalidade?.id) {
-        await Promise.all([
-          this.carregarTimes(),
-          this.carregarQuadras()
-        ])
-      }
-
-      if (!v) {
+      if (v) {
+        if (this.modalidade && this.modalidade.id) {
+          await this.carregarTimes()
+          await this.carregarQuadras()
+        }
+      } else {
         this.resetarEstado()
       }
     }
@@ -162,17 +159,20 @@ export default {
 
   methods: {
     toggleAccordion(tipo) {
-      this.accordionAberto =
-        this.accordionAberto === tipo ? null : tipo
+      if (this.accordionAberto === tipo) {
+        this.accordionAberto = null
+      } else {
+        this.accordionAberto = tipo
+      }
     },
 
     formatarNome(nome) {
+      if (!nome) return ''
+
       return nome
-        ? nome
-            .split(' ')
-            .map(p => p[0].toUpperCase() + p.slice(1).toLowerCase())
-            .join(' ')
-        : ''
+        .split(' ')
+        .map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+        .join(' ')
     },
 
     resetarEstado() {
@@ -188,9 +188,8 @@ export default {
 
     async carregarTimes() {
       try {
-        const { data } = await api.get(`/times/modalidade/${this.modalidade.id}`
-        )
-        this.times = data
+        const res = await api.get(`/times/modalidade/${this.modalidade.id}`)
+        this.times = res.data
       } catch {
         Swal.fire('Erro', 'Erro ao carregar times', 'error')
       }
@@ -198,10 +197,8 @@ export default {
 
     async carregarQuadras() {
       try {
-        const { data } = await api.get('/quadra', {
-          params: { modalidadeId: this.modalidade.id }
-        })
-        this.quadras = data
+        const res = await api.get(`/listar/quadras/${this.modalidade.id}`)
+        this.quadras = res.data
       } catch {
         Swal.fire('Erro', 'Erro ao carregar quadras', 'error')
       }
@@ -216,10 +213,10 @@ export default {
       this.isLoadingFuncoes = true
 
       try {
-        const { data } = await api.get('/listar/funcoes', {
+        const res = await api.get('/listar/funcoes', {
           params: { modalidadeId: this.modalidade.id }
         })
-        this.funcoes = data
+        this.funcoes = res.data
       } catch {
         Swal.fire('Erro', 'Erro ao carregar funções', 'error')
       } finally {
@@ -262,6 +259,7 @@ export default {
         await api.delete('/remover/funcao', {
           data: { id, modalidadeId: this.modalidade.id }
         })
+
         this.carregarFuncoes()
       } catch {
         Swal.fire('Erro', 'Erro ao remover função', 'error')
@@ -304,7 +302,6 @@ export default {
 .header-modal h2 {
   font-size: 30px;
   color: #3b82f6;
-  font-weight: bold;
 }
 
 .botoes {
@@ -335,7 +332,6 @@ export default {
   font-size: 16px;
 }
 
-/* 🎯 Ajustes no Accordion para que o conteúdo se adapte */
 .accordion {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
@@ -355,8 +351,8 @@ export default {
 
 .accordion-body {
   padding: 12px 16px;
-  max-height: 300px; /* Limitar a altura máxima para scroll */
-  overflow-y: auto; /* Habilitar scroll se o conteúdo exceder */
+  max-height: 300px;
+  overflow-y: auto;
   display: block;
 }
 
@@ -453,7 +449,6 @@ export default {
   color: #3B82F6;
 }
 
-/* CSS DO MODAL DE ADICIONAR FUNÇÕES */
 .modal-add {
   background: white;
   padding: 30px 40px;

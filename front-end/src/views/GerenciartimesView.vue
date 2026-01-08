@@ -32,9 +32,6 @@
         <AdicionarTimeModal :aberto="modalAdicionarTimeAberto" :modalidadesDisponiveis="modalidadesDisponiveis"
           @fechar="fecharModalAdicionarTime" @atualizar="carregarTimes" />
 
-        <RemoverTimeModal :aberto="modalRemoverTimeAberto" :modalidadesDisponiveis="modalidadesDisponiveis"
-          @fechar="fecharModalRemoverTime" @atualizar="carregarTimes" />
-
         <DetalharTimes :aberto="modalDetalharTimeAberto" :time="timeSelecionadoDetalhe"
           :modalidadeSelecionada="modalidadeSelecionada" ref="detalharJogadores" @fechar="fecharModalDetalharTime"
           @gerenciar-jogadores="modalGerenciarJogadoresAberto = true" />
@@ -83,7 +80,6 @@
 <script>
 import SideBar from '@/components/SideBar.vue';
 import AdicionarTimeModal from '@/components/modals/times/AdicionarTimesModal.vue';
-import RemoverTimeModal from '@/components/modals/times/RemoverTimesModal.vue';
 import DetalharTimes from '@/components/modals/times/DetalharTimes.vue';
 import GerenciarJogadores from '@/components/modals/times/GerenciarJogadores.vue';
 import Swal from 'sweetalert2';
@@ -94,7 +90,6 @@ export default {
   components: {
     SideBar,
     AdicionarTimeModal,
-    RemoverTimeModal,
     DetalharTimes,
     GerenciarJogadores
   },
@@ -102,11 +97,10 @@ export default {
     return {
       isLoading: true,
       modalidadesDisponiveis: [],
-      modalidadeSelecionada: null,  // só uma vez, armazenará o ID da modalidade
+      modalidadeSelecionada: null,
       times: [],
       timeSelecionadoDetalhe: null,
       modalAdicionarTimeAberto: false,
-      modalRemoverTimeAberto: false,
       modalDetalharTimeAberto: false,
       modalGerenciarJogadoresAberto: false,
       acaoGerenciarModalidade: '',
@@ -159,10 +153,10 @@ export default {
     async carregarModalidades() {
       try {
         const res = await api.get('/listar/modalidade');
-        this.modalidadesDisponiveis = res.data || [];
+        this.modalidadesDisponiveis = res.data;
 
         if (this.modalidadesDisponiveis.length) {
-          this.modalidadeSelecionada = this.modalidadesDisponiveis[0].id; // agora ID
+          this.modalidadeSelecionada = this.modalidadesDisponiveis[0].id;
           this.carregarTimes();
         }
       } catch (error) {
@@ -177,23 +171,21 @@ export default {
       }
 
       this.isLoadingTimes = true;
-
       try {
-        const res = await api.get(`/times/modalidade/${this.modalidadeSelecionada}`); // já é o ID
-        this.times = (res.data || []).map(t => ({
-          ...t,
-          qtdJogadores: t._count?.jogadores ?? t.jogadores?.length ?? t.qtdJogadores ?? 0,
-          treinador: t.treinador || 'N/A',
-          agendamentos: t.agendamentos || 0,
-          foto: t.foto || null
+        const res = await api.get(`/times/modalidade/${this.modalidadeSelecionada}`);
+        const data = res.data;
+        this.times = data.map(t => ({
+          id: t.id,
+          nome: t.nome,
+          foto: t.foto,
+          qtdJogadores: t._count?.jogadores
         }));
-      } catch (error) {
+      } catch (err) {
         Swal.fire('Erro', 'Não foi possível carregar os times.', 'error');
       } finally {
         this.isLoadingTimes = false;
       }
     },
-
     async removerTime(id) {
       const confirmacao = await Swal.fire({
         title: 'Tem certeza?',
@@ -209,12 +201,10 @@ export default {
       if (!confirmacao.isConfirmed) {
         return;
       }
-
       this.isLoadingTimes = true;
 
       try {
-        await api.delete(`/remover/time/${id}`);
-
+        await api.delete(`/time/remover/${id}`);
         Swal.fire('Removido!', 'O time foi removido com sucesso.', 'success');
         await this.carregarTimes();
       } catch (error) {

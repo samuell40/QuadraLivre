@@ -4,17 +4,22 @@
 
     <div class="conteudo">
       <div class="header">
-        <h1 class="title">Gerenciar Modalidades</h1>
+        <h1 class="title">Gerenciar Campeonatos</h1>
 
         <div class="botoes">
-          <button class="btn-add" @click="abrirModalAdicionar">
-            Adicionar Modalidade
+          <button class="btn-add" @click="modalAdicionarCampeonato = true">
+            Adicionar Campeonato
           </button>
         </div>
       </div>
 
-      <div class="search-container">
-        <input type="text" v-model="pesquisa" placeholder="Pesquisar modalidade..." class="search-input" />
+      <div class="dropdown-container">
+        <select v-model="modalidadeSelecionada" @change="carregarCampeonatos">
+          <option disabled value="">Selecione uma modalidade</option>
+          <option v-for="mod in modalidades" :key="mod.id" :value="mod.id">
+            {{ mod.nome }}
+          </option>
+        </select>
       </div>
 
       <div v-if="isLoading" class="loader-container-centralizado">
@@ -22,71 +27,56 @@
       </div>
 
       <div v-else>
-        <div v-if="modalidadesFiltradas.length === 0" class="mensagem-placar">
-          Nenhuma modalidade encontrada.
+        <div v-if="campeonatos.length === 0" class="mensagem-placar">
+          Nenhum campeonato encontrado.
         </div>
 
-        <div v-else class="lista-modalidades">
-          <div class="card" v-for="mod in modalidadesFiltradas" :key="mod.id">
+        <div v-else class="lista-campeonatos">
+          <div class="card" v-for="camp in campeonatos" :key="camp.id">
             <div class="card-conteudo">
               <div class="info">
-                <h2>{{ formatarNome(mod.nome) }}</h2>
-                <p>{{ mod.totalTimes }} time(s) cadastrados</p>
-                <p>{{ mod.totalQuadras }} quadra(s) associadas</p>
+                <h2>{{ camp.nome }}</h2>
+                <p>Quadra: {{ camp.quadra ? camp.quadra.nome : "Não definida" }}</p>
+                <p>Status: {{ camp.status }}</p>
+                <p>Times Participantes:  {{ camp.times.length}}</p>
               </div>
             </div>
 
             <div class="acoes">
-              <button class="btn-detalhar" @click="abrirModalDetalhar(mod)">
-                Detalhar
-              </button>
-
-              <button class="btn-remover" @click="removerModalidade(mod.id)">
-                Remover
-              </button>
+              <button class="btn-detalhar">Detalhar</button>
+              <button class="btn-remover" @click="removerCampeonato(camp.id)">Remover</button>
             </div>
           </div>
         </div>
       </div>
-      <AdicionarModalidadeModal :aberto="modalAdd" @fechar="modalAdd = false" @atualizar="carregarModalidades" />
 
-      <DetalharModalidadeModal :aberto="modalDetalhar" :modalidade="modalidadeSelecionada"
-        @fechar="modalDetalhar = false" />
-
+      <AdicionarCampeonatoModal
+        :aberto="modalAdicionarCampeonato"
+        @fechar="modalAdicionarCampeonato = false"
+        @atualizar="carregarCampeonatos"
+      />
     </div>
   </div>
 </template>
 
 <script>
 import SideBar from '@/components/SideBar.vue'
-import AdicionarModalidadeModal from '@/components/modals/modalidades/AdicionarModalidadeModal.vue'
-import DetalharModalidadeModal from '@/components/modals/modalidades/DetalharModalidadeModal.vue'
+import AdicionarCampeonatoModal from '@/components/modals/Campeonatos/AdicionarCampeonatoModal.vue';
 import api from '@/axios'
 import Swal from 'sweetalert2'
 
 export default {
-  name: 'GerenciarModalidadesView',
+  name: 'GerenciarCampeonatosView',
 
-  components: { SideBar, AdicionarModalidadeModal, DetalharModalidadeModal },
+  components: { SideBar, AdicionarCampeonatoModal },
 
   data() {
     return {
       modalidades: [],
-      isLoading: true,
-      pesquisa: "",
-      modalAdd: false,
-      modalidadeSelecionada: null,
-      modalDetalhar: false
-    }
-  },
-
-  computed: {
-    modalidadesFiltradas() {
-      if (!this.pesquisa.trim()) return this.modalidades;
-
-      return this.modalidades.filter(mod =>
-        mod.nome.toLowerCase().includes(this.pesquisa.toLowerCase())
-      );
+      modalidadeSelecionada: "",
+      campeonatos: [],
+      isLoading: false,
+      modalAdicionarCampeonato: false
     }
   },
 
@@ -95,64 +85,50 @@ export default {
   },
 
   methods: {
-    formatarNome(nome) {
-      return nome
-        .split(' ')
-        .map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
-        .join(' ');
-    },
-
-    abrirModalDetalhar(mod) {
-      this.modalidadeSelecionada = mod
-      this.modalDetalhar = true
-    },
-
     async carregarModalidades() {
-      this.isLoading = true
       try {
-        const { data } = await api.get('/listar/modalidade')
-        this.modalidades = data
+        const { data } = await api.get('/listar/modalidade');
+        this.modalidades = data;
       } catch (err) {
-        console.error("Erro ao carregar modalidades:", err)
-      } finally {
-        this.isLoading = false
+        console.error('Erro ao carregar modalidades:', err);
       }
     },
 
-    abrirGerenciarModalidade(mod) {
-      this.modalidadeSelecionada = mod
-      console.log("Modalidade selecionada:", mod)
+    async carregarCampeonatos() {
+      if (!this.modalidadeSelecionada) {
+        this.campeonatos = [];
+        return;
+      }
+
+      this.isLoading = true;
+      try {
+        const { data } = await api.get(`/listar/${this.modalidadeSelecionada}`);
+        this.campeonatos = data;
+      } catch (err) {
+        console.error('Erro ao carregar campeonatos:', err);
+      } finally {
+        this.isLoading = false;
+      }
     },
 
-    abrirModalAdicionar() {
-      this.modalAdd = true
-    },
-
-    async removerModalidade(id) {
+    async removerCampeonato(campeonatoId) {
       const confirmacao = await Swal.fire({
-        title: 'Tem certeza?',
-        text: 'Essa ação removerá a modalidade permanentemente.',
+        title: 'Tem certeza que deseja remover este campeonato?',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Sim, remover',
         cancelButtonText: 'Cancelar'
       });
 
-      if (!confirmacao.isConfirmed) {
-        return;
-      }
+      if (!confirmacao.isConfirmed) return;
 
       try {
-        await api.delete(`/modalidade/${id}`);
-        Swal.fire('Removida!', 'A modalidade foi removida com sucesso.', 'success');
-        this.carregarModalidades();
-
-      } catch (error) {
-        Swal.fire(
-          'Erro',
-          error.response?.data?.erro,
-          'error'
-        );
+        await api.delete(`/removerCampeonato/${campeonatoId}`);
+        Swal.fire('Removido!', 'Campeonato removido com sucesso.', 'success');
+        this.carregarCampeonatos(); 
+      } catch (err) {
+        console.error('Erro ao remover campeonato:', err);
+        Swal.fire('Erro', 'Não foi possível remover o campeonato.', 'error');
       }
     }
   }
@@ -222,6 +198,13 @@ export default {
   margin-top: 20px;
 }
 
+.lista-campeonatos {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 22px;
+  margin-top: 20px;
+}
+
 .card {
   background: #fff;
   padding: 20px;
@@ -277,7 +260,7 @@ export default {
 .btn-detalhar,
 .btn-remover {
   flex: 1;
-  padding: 5px 0;      
+  padding: 5px 0;
   border: none;
   border-radius: 20px;
   cursor: pointer;
@@ -292,6 +275,18 @@ export default {
 .btn-remover {
   background-color: #7E7E7E;
   color: white;
+}
+
+.dropdown-container {
+  margin-bottom: 20px;
+}
+
+.dropdown-container select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  font-size: 16px;
 }
 
 .loader-container-centralizado {

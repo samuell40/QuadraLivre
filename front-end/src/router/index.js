@@ -6,6 +6,7 @@ import NaoAutorizado from '@/views/NaoAutorizado.vue';
 import CadastroView from '../views/CadastroView.vue';
 import CadastrarQuadraView from '../views/CadastrarQuadraView.vue';
 import ControlePlacarView from '../views/ControlePlacarView';
+import GerenciarPartidaView from '@/views/GerenciarPartidaView.vue';
 import PartidaView from '@/views/PartidaView.vue';
 import UsuariosView from '../views/UsuariosView';
 import MeusAgendamentosView from '../views/MeusAgendamentosView';
@@ -15,6 +16,7 @@ import HorariosView from '@/views/HorariosView.vue';
 import GoogleCallback from '@/views/GoogleCallback.vue';
 import GerenciartimesView from '@/views/GerenciartimesView.vue';
 import GerenciarModalidadesView from '@/views/GerenciarModalidadesView.vue';
+import GerenicarCampeonatosView from '@/views/GerenciarCampeonatosView.vue';
 
 const routes = [
   {
@@ -72,6 +74,12 @@ const routes = [
     meta: { requiresAuth: true, roles: [1, 2] },
   },
   {
+    path: '/gerenciarpartida',
+    name: 'gerenciar_partida',
+    component: GerenciarPartidaView,
+    meta: { requiresAuth: true, roles: [1, 2] },
+  },
+  {
     path: '/partida',
     name: 'partida',
     component: PartidaView,
@@ -112,6 +120,12 @@ const routes = [
     path: '/modalidades',
     name: 'Modalidades',
     component: GerenciarModalidadesView,
+    meta: { public: true },
+  },
+  {
+    path: '/campeonatos',
+    name: 'Campeonatos',
+    component: GerenicarCampeonatosView,
     meta: { public: true },
   },
 ];

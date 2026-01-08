@@ -2,69 +2,149 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function criarPartida(data, usuarioId) {
-  const { modalidadeId, timeAId, timeBId, quadraId } = data;
+  const { modalidadeId, timeAId, timeBId, quadraId, campeonatoId, jogadores = [] } = data;
 
-  await prisma.placar.upsert({
-    where: { timeId: timeAId },
-    update: {},
-    create: { timeId: timeAId },
-  });
+  if (campeonatoId) {
+    await prisma.placar.upsert({
+      where: {
+        campeonatoId_timeId: {
+          campeonatoId: Number(campeonatoId),
+          timeId: Number(timeAId),
+        },
+      },
+      update: {},
+      create: {
+        campeonatoId: Number(campeonatoId),
+        timeId: Number(timeAId),
+      },
+    });
 
-  await prisma.placar.upsert({
-    where: { timeId: timeBId },
-    update: {},
-    create: { timeId: timeBId },
-  });
+    await prisma.placar.upsert({
+      where: {
+        campeonatoId_timeId: {
+          campeonatoId: Number(campeonatoId),
+          timeId: Number(timeBId),
+        },
+      },
+      update: {},
+      create: {
+        campeonatoId: Number(campeonatoId),
+        timeId: Number(timeBId),
+      },
+    });
+  }
 
-  const partida = await prisma.partida.create({
-    data: {
-      partidaIniciada: true,
-      finalizada: false,
-      modalidadeId,
-      quadraId,
-      timeAId,
-      timeBId,
-      usuarioCriadorId: usuarioId ? Number(usuarioId) : undefined
+  // Monta dados da partida
+  const dataPartida = {
+    partidaIniciada: true,
+    finalizada: false,
+    modalidadeId: Number(modalidadeId),
+    timeAId: Number(timeAId),
+    timeBId: Number(timeBId),
+    usuarioCriadorId: Number(usuarioId),
+
+    // CRIA OS JOGADORES DA PARTIDA
+    jogadoresPartida: {
+      create: jogadores.map(j => ({
+        jogadorId: Number(j.jogadorId)
+      })),
     },
+  };
+
+  if (quadraId) {
+    dataPartida.quadraId = Number(quadraId);
+  }
+
+  if (campeonatoId) {
+    dataPartida.campeonatoId = Number(campeonatoId);
+  }
+
+  //Cria partida e as relações
+  const partida = await prisma.partida.create({
+    data: dataPartida,
     include: {
-      timeA: { include: { placar: true } },
-      timeB: { include: { placar: true } },
+      campeonato: true,
       modalidade: true,
+      timeA: { include: { placares: true } },
+      timeB: { include: { placares: true } },
       usuarioCriador: true,
-      jogadoresPartida: { include: { jogador: true } },
-      participantes: { include: { usuario: true } }
-    }
+      jogadoresPartida: {
+        include: { jogador: true },
+      },
+      participantes: {
+        include: { usuario: true },
+      },
+    },
   });
 
   return partida;
 }
 
 async function finalizarPartida(id, { usuarioId }) {
-  const partidaAtual = await prisma.partida.findUnique({ where: { id: Number(id) } });
-  if (!partidaAtual) throw new Error("Partida não encontrada");
+  const partidaAtual = await prisma.partida.findUnique({
+    where: { id: Number(id) }
+  })
+
+  if (!partidaAtual) {
+    throw new Error('Partida não encontrada')
+  }
 
   const dataAtualizacao = {
     finalizada: true,
     partidaIniciada: false
-  };
+  }
 
   if (usuarioId) {
-    dataAtualizacao.usuarioCriadorId = Number(usuarioId);
+    dataAtualizacao.usuarioCriadorId = Number(usuarioId)
   }
 
   return prisma.partida.update({
     where: { id: Number(id) },
     data: dataAtualizacao,
     include: {
-      timeA: { include: { placar: true } },
-      timeB: { include: { placar: true } },
+      timeA: {
+        include: {
+          placares: true
+        }
+      },
+      timeB: {
+        include: {
+          placares: true
+        }
+      },
       modalidade: true,
       usuarioCriador: true,
-      jogadoresPartida: { include: { jogador: true } },
-      participantes: { include: { usuario: true } }
+      jogadoresPartida: {
+        include: {
+          jogador: true
+        }
+      },
+      participantes: {
+        include: {
+          usuario: true
+        }
+      }
     }
+  })
+}
+
+async function excluirPartida(partidaId) {
+  if (!partidaId) throw new Error("ID da partida é obrigatório");
+
+  const id = Number(partidaId);
+  await prisma.jogadorPartida.deleteMany({
+    where: { partidaId: id }
+  });
+
+  await prisma.partidaUsuario.deleteMany({
+    where: { partidaId: id }
+  });
+
+  return await prisma.partida.delete({
+    where: { id }
   });
 }
+
 
 async function atualizarParcial(
   id,
@@ -96,8 +176,8 @@ async function atualizarParcial(
       substituicoesTimeB
     },
     include: {
-      timeA: { include: { placar: true } },
-      timeB: { include: { placar: true } },
+      timeA: { include: { placares: true } },
+      timeB: { include: { placares: true } },
       modalidade: true,
       jogadoresPartida: { include: { jogador: true } },
       participantes: { include: { usuario: true } }
@@ -136,46 +216,114 @@ async function incrementarPlacar(placarId, incremento) {
   });
 }
 
-async function listarPartidas() {
+async function listarPartidasemAndamento(modalidadeId, campeonatoId) {
+  const where = {
+    finalizada: false,
+    emIntervalo: false, // ✅ AQUI
+    modalidadeId: Number(modalidadeId),
+  };
+
+  if (campeonatoId) {
+    where.campeonatoId = Number(campeonatoId);
+  }
+
   return prisma.partida.findMany({
-    orderBy: { data: 'desc' },
+    where,
+    orderBy: {
+      data: 'desc',
+    },
     include: {
       modalidade: { select: { id: true, nome: true } },
-      timeA: { select: { id: true, nome: true, foto: true, placar: true } },
-      timeB: { select: { id: true, nome: true, foto: true, placar: true } },
-      usuarioCriador: { select: { id: true, nome: true, email: true } },
-      jogadoresPartida: { include: { jogador: true } },
-      participantes: { include: { usuario: true } }
-    }
+      campeonato: { select: { id: true, nome: true } },
+      quadra: { select: { id: true, nome: true, foto: true } },
+
+      timeA: { select: { id: true, nome: true, foto: true } },
+      timeB: { select: { id: true, nome: true, foto: true } },
+
+      jogadoresPartida: {
+        include: {
+          jogador: { select: { id: true, nome: true, foto: true } },
+        },
+      },
+      participantes: {
+        include: {
+          usuario: { select: { id: true, nome: true, foto: true } },
+        },
+      },
+    },
   });
 }
 
-async function listarPartidasAtivas() {
-  return prisma.partida.findMany({
-    where: { finalizada: false },
-    orderBy: { data: 'desc' },
-    include: {
-      modalidade: { select: { id: true, nome: true } },
-      timeA: { select: { id: true, nome: true, foto: true, placar: true } },
-      timeB: { select: { id: true, nome: true, foto: true, placar: true } },
-      jogadoresPartida: { include: { jogador: true } },
-      participantes: { include: { usuario: true } }
-    }
-  });
+
+async function listarPartidasPausadas(modalidadeId, campeonatoId) {
+  try {
+    const partidasPausadas = await prisma.partida.findMany({
+      where: {
+        modalidadeId: Number(modalidadeId),
+        campeonatoId: Number(campeonatoId),
+        partidaIniciada: true,
+        finalizada: false,
+        emIntervalo: true // indica que está pausada
+      },
+      include: {
+        timeA: true,
+        timeB: true,
+        quadra: true
+      },
+      orderBy: {
+        data: 'desc'
+      }
+    });
+
+    return partidasPausadas;
+  } catch (error) {
+    console.error('Erro no service listarPartidasPausadas:', error);
+    throw error;
+  }
 }
 
-async function listarPartidasEncerradas() {
+async function listarPartidasEncerradas(modalidadeId, campeonatoId) {
   return prisma.partida.findMany({
-    where: { finalizada: true },
-    orderBy: { data: 'desc' },
+    where: {
+      finalizada: true,
+      modalidadeId: Number(modalidadeId),
+      campeonatoId: Number(campeonatoId),
+    },
+    orderBy: {
+      data: 'desc',
+    },
     include: {
-      modalidade: { select: { id: true, nome: true } },
-      timeA: { select: { id: true, nome: true, foto: true, placar: true } },
-      timeB: { select: { id: true, nome: true, foto: true, placar: true } },
-      jogadoresPartida: { include: { jogador: true } },
-      participantes: { include: { usuario: true } }
-    }
-  });
+      modalidade: {
+        select: { id: true, nome: true },
+      },
+      campeonato: {
+        select: { id: true, nome: true },
+      },
+      quadra: {
+        select: { id: true, nome: true },
+      },
+      timeA: {
+        select: { id: true, nome: true, foto: true },
+      },
+      timeB: {
+        select: { id: true, nome: true, foto: true },
+      },
+      jogadoresPartida: {
+        include: {
+          jogador: {
+            select: { id: true, nome: true, foto: true },
+          },
+        },
+      },
+      participantes: {
+        include: {
+          usuario: {
+            select: { id: true, nome: true, foto: true },
+          },
+        },
+      },
+    },
+  })
 }
 
 async function pausarPartida(id) {
@@ -183,8 +331,8 @@ async function pausarPartida(id) {
     where: { id: Number(id) },
     data: { emIntervalo: true },
     include: {
-      timeA: { include: { placar: true } },
-      timeB: { include: { placar: true } },
+      timeA: { include: { placares: true } },
+      timeB: { include: { placares: true } },
       modalidade: true,
       jogadoresPartida: { include: { jogador: true } },
       participantes: { include: { usuario: true } }
@@ -197,8 +345,8 @@ async function retomarPartida(id) {
     where: { id: Number(id) },
     data: { emIntervalo: false },
     include: {
-      timeA: { include: { placar: true } },
-      timeB: { include: { placar: true } },
+      timeA: { include: { placares: true } },
+      timeB: { include: { placares: true } },
       modalidade: true,
       jogadoresPartida: { include: { jogador: true } },
       participantes: { include: { usuario: true } }
@@ -206,34 +354,56 @@ async function retomarPartida(id) {
   });
 }
 
-async function listarPartidaAtivaUsuario(usuarioId) {
-  return prisma.partida.findFirst({
+async function retornarPartidaEmAndamento(partidaId) {
+  const partida = await prisma.partida.findFirst({
     where: {
+      id: Number(partidaId),
       finalizada: false,
-      usuarioCriadorId: Number(usuarioId)
+      partidaIniciada: true,
+      emIntervalo: false
     },
-    orderBy: { data: 'desc' },
     include: {
-      timeA: { include: { placar: true } },
-      timeB: { include: { placar: true } },
       modalidade: true,
-      quadra: {
+      quadra: true,
+
+      timeA: {
         include: {
-          modalidades: true,
-        },
+          placares: true
+        }
       },
-      jogadoresPartida: { include: { jogador: true } },
-      participantes: { include: { usuario: true } }
+      timeB: {
+        include: {
+          placares: true
+        }
+      },
+
+      jogadoresPartida: {
+        include: {
+          jogador: {
+            include: {
+              funcao: true,
+              time: true
+            }
+          }
+        }
+      },
+
+      participantes: {
+        include: {
+          usuario: true,
+          permissao: true
+        }
+      },
+
+      usuarioCriador: true
     }
   });
-}
 
-async function limparPartidasPorModalidade(modalidadeId) {
-  if (!modalidadeId) throw new Error("ID da modalidade é obrigatório");
+  if (!partida) {
+    throw new Error('Partida não encontrada ou não está em andamento');
+  }
 
-  await prisma.partida.deleteMany({
-    where: { modalidadeId: Number(modalidadeId) }
-  });
+  return partida;
 }
 
 async function vincularUsuarioAPartida(partidaId, usuarioId, permissaoId) {
@@ -295,7 +465,7 @@ async function listarJogadoresSelecionados(partidaId) {
     id: jp.jogador.id,
     nome: jp.jogador.nome,
     foto: jp.jogador.foto,
-    funcao: jp.jogador.funcao?.nome || "Nenhuma",
+    funcao: jp.jogador.funcao?.nome,
     timeId: jp.jogador.timeId,
     gols: jp.gols || 0,
     cartoesAmarelos: jp.cartoesAmarelos || 0,
@@ -344,15 +514,15 @@ async function atualizarAtuacaoJogadorPartida({
 module.exports = {
   criarPartida,
   finalizarPartida,
+  excluirPartida,
   atualizarParcial,
   incrementarPlacar,
-  listarPartidas,
-  listarPartidasAtivas,
+  listarPartidasemAndamento,
+  listarPartidasPausadas,
   listarPartidasEncerradas,
   pausarPartida,
   retomarPartida,
-  listarPartidaAtivaUsuario,
-  limparPartidasPorModalidade,
+  retornarPartidaEmAndamento,
   vincularUsuarioAPartida,
   vincularJogadorPartida,
   listarJogadoresSelecionados,

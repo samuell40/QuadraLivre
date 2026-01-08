@@ -38,7 +38,7 @@ export default {
   watch: {
     aberto(novoValor) {
       if (novoValor) {
-        this.novaModalidade = ''; // limpa o input sempre que o modal abrir
+        this.novaModalidade = ''; 
       }
     }
   },
@@ -57,7 +57,7 @@ export default {
         this.$emit('atualizar');
         this.$emit('fechar');
       } catch (error) {
-        const mensagemErro = error.response?.data?.erro || 'Erro ao cadastrar modalidade.';
+        const mensagemErro = error.response?.data?.erro;
         Swal.fire('Erro', mensagemErro, 'error');
       }
     }

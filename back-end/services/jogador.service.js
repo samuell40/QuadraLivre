@@ -50,13 +50,16 @@ async function adicionarJogador(dados) {
 }
 
 async function removerJogadorTime(jogadorId) {
-  const jogador = await prisma.jogador.findUnique({
-    where: { id: jogadorId },
+  jogadorId = Number(jogadorId);
+  await prisma.jogadorPartida.deleteMany({
+    where: { jogadorId }
   });
-  await prisma.jogador.delete({
-    where: { id: jogadorId },
+
+  await prisma.jogador.deleteMany({
+    where: { id: jogadorId }
   });
-  return jogador;
+
+  return { message: 'Jogador removido (se existia)' };
 }
 
 async function listarJogadoresPorTime(timeId) {
@@ -66,7 +69,7 @@ async function listarJogadoresPorTime(timeId) {
       jogadores: {
         include: {
           funcao: true,
-          atuacoes: true 
+          atuacoes: true
         }
       }
     }
@@ -138,7 +141,7 @@ async function listarFuncoesJogador(modalidadeId) {
     where: { modalidadeId: Number(modalidadeId) },
     include: {
       _count: {
-        select: { jogadores: true } 
+        select: { jogadores: true }
       }
     }
   });

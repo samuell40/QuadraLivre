@@ -14,8 +14,7 @@
 
     <div v-if="sidebarVisible" class="sidebar">
     <img src="../assets/Cópia de xxxxx (2).png" class= "logo" alt="Logo" />
-
-      <!-- DASHBOARD -->
+    
       <div class="sidebar-category">
         <div class="sidebar-category-header no-toggle">
           <a href="/dashboard" :class="{ active: isActive('/dashboard') }">
@@ -48,6 +47,22 @@
                 fill="white" />
             </svg>
             <span>Gerenciar Usuários</span>
+          </a>
+             <a href="/gerenciartimes" :class="{ active: isActive('/gerenciartimes') }">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+              viewBox="0 0 24 24">
+              <path fill="currentColor"
+                d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h3V2h2v2h6V2h2v2h3q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm7.25-2h1.5v-1.5h-1.5zm4.25-3H18q.425 0 .713-.288T19 14v-4q0-.425-.288-.712T18 9h-2.5q-.425 0-.712.288T14.5 10v4q0 .425.288.713T15.5 15M5 15h4.5v-1.5h-3v-1h2q.425 0 .713-.288T9.5 11.5V10q0-.425-.288-.712T8.5 9H5v1.5h3v1H6q-.425 0-.712.288T5 12.5zm6.25-.5h1.5V13h-1.5zm4.75-1v-3h1.5v3zM11.25 11h1.5V9.5h-1.5zm0-3.5h1.5V6h-1.5z" />
+            </svg>
+            <span>Gerenciar Times</span>
+          </a>
+         <a href="/modalidades" :class="{ active: isActive('/modalidades') }">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+              viewBox="0 0 24 24">
+              <path fill="currentColor"
+                d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h3V2h2v2h6V2h2v2h3q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm7.25-2h1.5v-1.5h-1.5zm4.25-3H18q.425 0 .713-.288T19 14v-4q0-.425-.288-.712T18 9h-2.5q-.425 0-.712.288T14.5 10v4q0 .425.288.713T15.5 15M5 15h4.5v-1.5h-3v-1h2q.425 0 .713-.288T9.5 11.5V10q0-.425-.288-.712T8.5 9H5v1.5h3v1H6q-.425 0-.712.288T5 12.5zm6.25-.5h1.5V13h-1.5zm4.75-1v-3h1.5v3zM11.25 11h1.5V9.5h-1.5zm0-3.5h1.5V6h-1.5z" />
+            </svg>
+            <span>Gerenciar Modalidades</span>
           </a>
         </div>
       </div>
@@ -104,7 +119,7 @@
             <span>Gerenciar Placar</span>
           </a>
 
-          <a href="/partida" :class="{ active: isActive('/partida') }">
+          <a href="/gerenciarpartida" :class="{ active: isActive('/gerenciarpartida') }">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
               viewBox="0 0 24 24">
               <path fill="currentColor"
@@ -112,21 +127,13 @@
             </svg>
             <span>Gerenciar Partida</span>
           </a>
-          <a href="/gerenciartimes" :class="{ active: isActive('/times') }">
+             <a href="/campeonatos" :class="{ active: isActive('/campeonatos') }">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
               viewBox="0 0 24 24">
               <path fill="currentColor"
                 d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h3V2h2v2h6V2h2v2h3q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm7.25-2h1.5v-1.5h-1.5zm4.25-3H18q.425 0 .713-.288T19 14v-4q0-.425-.288-.712T18 9h-2.5q-.425 0-.712.288T14.5 10v4q0 .425.288.713T15.5 15M5 15h4.5v-1.5h-3v-1h2q.425 0 .713-.288T9.5 11.5V10q0-.425-.288-.712T8.5 9H5v1.5h3v1H6q-.425 0-.712.288T5 12.5zm6.25-.5h1.5V13h-1.5zm4.75-1v-3h1.5v3zM11.25 11h1.5V9.5h-1.5zm0-3.5h1.5V6h-1.5z" />
             </svg>
-            <span>Gerenciar Times</span>
-          </a>
-         <a href="/modalidades" :class="{ active: isActive('/modalidades') }">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-              viewBox="0 0 24 24">
-              <path fill="currentColor"
-                d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h3V2h2v2h6V2h2v2h3q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm7.25-2h1.5v-1.5h-1.5zm4.25-3H18q.425 0 .713-.288T19 14v-4q0-.425-.288-.712T18 9h-2.5q-.425 0-.712.288T14.5 10v4q0 .425.288.713T15.5 15M5 15h4.5v-1.5h-3v-1h2q.425 0 .713-.288T9.5 11.5V10q0-.425-.288-.712T8.5 9H5v1.5h3v1H6q-.425 0-.712.288T5 12.5zm6.25-.5h1.5V13h-1.5zm4.75-1v-3h1.5v3zM11.25 11h1.5V9.5h-1.5zm0-3.5h1.5V6h-1.5z" />
-            </svg>
-            <span>Gerenciar Modalidades</span>
+            <span>Gerenciar Campeonatos</span>
           </a>
       </div>
       </div>
@@ -232,8 +239,12 @@ body {
   margin-left: 20px;
 }
 
+.sidebar a span {
+  white-space: nowrap;     
+}
+
 .sidebar a svg {
-  margin-right: 6px;
+  margin-right: 5px;
   vertical-align: middle;
 }
 

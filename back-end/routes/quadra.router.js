@@ -6,6 +6,8 @@ const router = express.Router();
 
 router.post('/quadra', [validarJWT], verificarPermissao.dev, controller.adicionarQuadra);
 
-router.get('/quadra', controller.getQuadra)
+router.get('/quadra', controller.listarTodasQuadrasController)
+
+router.get('/listar/quadras/:modalidadeId', controller.listarQuadrasPorModalidadeController)
 
 module.exports = router;

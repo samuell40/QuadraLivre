@@ -86,7 +86,6 @@ export default {
   methods: {
     async cadastrarUsuario() {
       try {
-        // 🔴 validação de telefone obrigatório
         if (!this.form.telefone || this.form.telefone.length < 14) {
           Swal.fire({
             icon: 'warning',
@@ -143,7 +142,7 @@ export default {
         Swal.fire({
           icon: 'error',
           title: 'Erro',
-          text: error.response?.data?.error || 'Erro ao cadastrar usuário. Tente novamente.',
+          text: error.response?.data?.error,
         });
       }
     },
