@@ -164,6 +164,7 @@ export default {
           jogadores.push({
             id: j.id,
             nome: j.nome,
+            foto: j.foto, 
             timeId: j.timeId,
             gols: j.gols,
             cartoesAmarelos: j.cartoesAmarelos,

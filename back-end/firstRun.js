@@ -1,96 +1,82 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient()
 
 async function FirstRun() {
   try {
-    await criarPermissoes();
-    const quadra = await criarQuadra();
-    await criarUsuarioAdmin(quadra.id);
-    console.log('Setup inicial concluído!');
+    await criarPermissoes()
+    const quadra = await criarQuadraPadrao()
+    await criarUsuarioDesenvolvedor(quadra.id)
+
+    console.log('Setup inicial concluído com sucesso!')
   } catch (error) {
-    console.error('Erro no setup inicial:', error);
+    console.error(' Erro no setup inicial:', error)
   } finally {
-    await prisma.$disconnect();
+    await prisma.$disconnect()
   }
 }
 
 async function criarPermissoes() {
-  const existentes = await prisma.permissao.findMany();
-  if (existentes.length > 0) {
-    console.log('Permissões já existem');
-    return;
+  const permissoes = [
+    'DESENVOLVEDOR',
+    'ADMINISTRADOR',
+    'USUARIO',
+    'MESARIO'
+  ]
+
+  for (const descricao of permissoes) {
+    await prisma.permissao.upsert({
+      where: { descricao },
+      update: {},
+      create: { descricao }
+    })
   }
 
-  await prisma.permissao.createMany({
-    data: [
-      { descricao: 'DESENVOLVEDOR' },
-      { descricao: 'ADMINISTRADOR' },
-      { descricao: 'USUARIO' }, 
-      { descricao: 'MESÁRIO' },
-    ],
-  });
-
-  console.log('Permissões criadas');
+  console.log('✔ Permissões verificadas/criadas')
 }
 
-async function criarQuadra() {
-  let quadra = await prisma.quadra.findFirst({
+async function criarQuadraPadrao() {
+  const quadra = await prisma.quadra.upsert({
     where: { nome: 'Quadra Livre' },
-  });
-
-  if (quadra) {
-    console.log('Quadra já existe');
-    return quadra;
-  }
-
-  quadra = await prisma.quadra.create({
-    data: {
+    update: {},
+    create: {
       nome: 'Quadra Livre',
-      foto: 'https://example.com/foto.png',
       endereco: 'Rua das Quadras, 123',
-    },
-  });
+      foto: 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/Imagem%20padrao.png'
+    }
+  })
 
-  console.log('Quadra criada');
-  return quadra;
+  console.log('✔ Quadra padrão verificada/criada')
+  return quadra
 }
 
-async function criarUsuarioAdmin(quadraId) {
-  const existe = await prisma.usuario.findFirst({
-    where: { email: 'samuelpc4567@gmail.com' },
-  });
-
-  if (existe) {
-    console.log('Usuário admin já existe');
-    return;
-  }
-
+async function criarUsuarioDesenvolvedor(quadraId) {
   const permissao = await prisma.permissao.findFirst({
-    where: { descricao: 'DESENVOLVEDOR_DE_SISTEMA' },
-  });
+    where: { descricao: 'DESENVOLVEDOR' }
+  })
 
   if (!permissao) {
-    console.error('Permissão ADMIN não encontrada');
-    return;
+    throw new Error('Permissão DESENVOLVEDOR não encontrada')
   }
 
-  await prisma.usuario.create({
-    data: {
+  await prisma.usuario.upsert({
+    where: { email: 'samuelpc4567@gmail.com' },
+    update: {},
+    create: {
       nome: 'Samuel',
       email: 'samuelpc4567@gmail.com',
       telefone: '84999999999',
-      funcao: 'usuario', 
+      funcao: 'DESENVOLVEDOR',
       foto: 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/Imagem%20padrao.png',
       permissaoId: permissao.id,
-      quadraId: quadraId,
-    },
-  });
+      quadraId
+    }
+  })
 
-  console.log('Usuário admin criado');
+  console.log('✔ Usuário desenvolvedor verificado/criado')
 }
 
 if (require.main === module) {
-  FirstRun().then(() => process.exit(0));
+  FirstRun().then(() => process.exit(0))
 }
 
-module.exports = { FirstRun };
+module.exports = { FirstRun }
