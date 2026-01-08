@@ -194,9 +194,10 @@ export default {
   margin-bottom: 20px;
 }
 .title {
-  font-size: 22px;
+  margin-top: 20px;
+  font-size: 32px;
   font-weight: bold;
-  color: #1e40af;
+  color: #3B82F6;
 }
 .select-quadra {
   border: 1px solid #ccc;

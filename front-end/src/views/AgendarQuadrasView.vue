@@ -108,10 +108,61 @@ export default {
         return;
       }
 
+      // Regras de antecedência em horas
+      const regrasAntecedencia = {
+        TREINO: 24,
+        AMISTOSO: 7 * 24,
+        CAMPEONATO: 30 * 24,
+        EVENTO: 180 * 24,
+        OUTRO: 24
+      };
+
+      const tipo = agendamentoDoModal.tipo?.toUpperCase();
+      const antecedenciaHoras = regrasAntecedencia[tipo] || regrasAntecedencia.OUTRO;
+
+      let hora = 0;
+      let minuto = 0;
+
+      if (typeof agendamentoDoModal.hora === 'string' && agendamentoDoModal.hora.includes(':')) {
+        [hora, minuto] = agendamentoDoModal.hora.split(':').map(Number);
+      } else {
+        hora = Number(agendamentoDoModal.hora ?? 0);
+      }
+
+      const dataAgendamento = new Date(Date.UTC (
+        Number(agendamentoDoModal.ano),
+        Number(agendamentoDoModal.mes) - 1,
+        Number(agendamentoDoModal.dia),
+        hora,
+        minuto,
+        0
+      ));
+
+      const agora = new Date();
+      const diferencaMs = dataAgendamento.getTime() - agora.getTime();
+      const diferencaHoras = diferencaMs / (1000 * 60 * 60);
+
+      console.log({ dataAgendamento, agora, diferencaHoras, antecedenciaHoras });
+
+      if (diferencaHoras < antecedenciaHoras) {
+        Swal.fire({
+          icon: "warning",
+          title: "Antecedência mínima não respeitada",
+          text: `Para ${tipo}, o agendamento deve ser feito com pelo menos ${
+            antecedenciaHoras >= 24
+              ? antecedenciaHoras / 24 + " dias"
+              : antecedenciaHoras + " horas"
+          } de antecedência.`,
+          confirmButtonColor: "#1E3A8A",
+        });
+        return;
+      }
+
       const agendamento = {
         ...agendamentoDoModal,
         usuarioId: authStore.usuario.id,
         quadraId: this.quadraSelecionada.id,
+        datahora: dataAgendamento
       };
 
       try {
@@ -132,7 +183,6 @@ export default {
         const msg = err.response?.data?.error || err.response?.data?.message;
 
         if (err.response?.status === 409) {
-          // Conflito de horário na quadra
           Swal.fire({
             icon: "warning",
             title: "Horário já agendado",
@@ -143,7 +193,6 @@ export default {
           err.response?.status === 400 &&
           msg?.includes("já possui 2 agendamentos nesta semana")
         ) {
-          // Limite de 2 agendamentos por semana
           Swal.fire({
             icon: "warning",
             title: "Limite de agendamentos atingido",
@@ -161,7 +210,7 @@ export default {
 
         console.error("Erro ao agendar:", err);
       }
-    },
+    }
   },
 };
 </script>
@@ -247,7 +296,6 @@ body {
   cursor: pointer;
   width: 80px;
   height: 36px;
-  /* ✅ Corrigido */
   border-radius: 6px;
   font-size: 12px;
   font-weight: bold;

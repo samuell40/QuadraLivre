@@ -36,7 +36,7 @@ model Quadra {
 }
 
 enum TipoAgendamento {
-  PARTIDA
+  AMISTOSO
   TREINO
   EVENTO
   OUTRO

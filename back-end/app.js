@@ -19,7 +19,7 @@ const placar = require('./routes/placar.router');
 const agendamento = require('./routes/agendamento.router');
 const time = require('./routes/time.router');
 const modalidade = require('./routes/modalidade.router');
-//const { FirstRun } = require('./firstRun');
+const { FirstRun } = require('./firstRun');
 
 // Inicialização
 const app = express();
@@ -55,7 +55,7 @@ app.use(partida)
 app.use(agendamento);
 app.use(time)
 app.use(modalidade)
-//FirstRun();
+FirstRun();
 
 // Rota base
 app.get('/', (req, res) => {

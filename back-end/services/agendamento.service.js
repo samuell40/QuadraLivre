@@ -190,16 +190,35 @@ const criarAgendamentoService = async ({
     const time = await prisma.time.findUnique({ where: { id: Number(timeId) } });
     if (!time) throw { status: 400, message: "Time não existe." };
 
-    // Verifica agendamentos do mesmo time na semana
+    // Verifica agendamentos do mesmo time na semana 
+    const horaNum = Number(hora);
+    const duracaoNum = Number(duracao ?? 1);
     const dataAgendamento = new Date(ano, mes - 1, dia);
+    dataAgendamento.setHours(horaNum, 0, 0, 0);
     const inicioSemana = startOfWeek(dataAgendamento, { weekStartsOn: 1 });
     const fimSemana = endOfWeek(dataAgendamento, { weekStartsOn: 1 });
 
     const agendamentosSemana = await prisma.agendamento.findMany({
       where: {
         timeId,
-        status: { in: ["Confirmado"] },
-        ano: { gte: inicioSemana.getFullYear(), lte: fimSemana.getFullYear() },
+        status: "Confirmado",
+        AND: [
+          {
+            ano: { gte: inicioSemana.getFullYear(), lte: fimSemana.getFullYear() },
+          },
+          {
+            OR: [
+              { mes: { gt: inicioSemana.getMonth() + 1 } },
+              { mes: inicioSemana.getMonth() + 1, dia: { gte: inicioSemana.getDate() } }
+            ]
+          },
+          {
+            OR: [
+              { mes: { lt: fimSemana.getMonth() + 1 } },
+              { mes: fimSemana.getMonth() + 1, dia: { lte: fimSemana.getDate() } }
+            ]
+          }
+        ]
       },
     });
 

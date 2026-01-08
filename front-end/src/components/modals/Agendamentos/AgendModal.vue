@@ -78,8 +78,9 @@
       <label for="tipo"><strong>Tipo de agendamento:</strong></label>
       <select v-model="tipo" class="select-tempo">
         <option disabled value="">Selecione</option>
-        <option value="PARTIDA">Partida</option>
         <option value="TREINO">Treino</option>
+        <option value="AMISTOSO">Amistoso</option>
+        <option value="CAMPEONATO">Campeonato</option>
         <option value="EVENTO">Evento</option>
         <option value="OUTRO">Outro</option>
       </select>
@@ -241,6 +242,7 @@ export default {
       const dataStr = this.formatDateAPI(this.data)
       const [ano, mes, dia] = dataStr.split('-').map(n => parseInt(n))
       const duracaoFinal = this.exibirDuracao ? parseInt(this.duracao) : 1
+      const datahora = new Date(ano, mes - 1, dia, horaSelecionada, 0, 0);
 
       this.$emit('confirmar', {
         usuarioId: this.authStore.usuario.id,
@@ -251,9 +253,9 @@ export default {
         mes,
         ano,
         hora: horaSelecionada,
+        datahora,
         duracao: duracaoFinal,
-        tipo: this.tipo,
-        status: 'Pendente'
+        tipo: this.tipo
       })
     }
   }

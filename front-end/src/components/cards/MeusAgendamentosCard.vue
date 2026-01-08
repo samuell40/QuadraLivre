@@ -85,7 +85,7 @@ p {
   border: 2px solid #91c98b;
 }
 
-.status.negado {
+.status.recusado {
   background-color: #ff6961;
   border: 2px solid #d94d47;
 }
