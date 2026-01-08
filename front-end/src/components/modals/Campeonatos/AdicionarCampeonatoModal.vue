@@ -263,19 +263,20 @@ export default {
         return 'Selecione pelo menos um dia da semana.'
       return null
     },
-    
+
     async nomeCampeonatoJaExiste() {
       try {
         const res = await api.get('/listar/campeonatos')
 
         const nomeNovo = this.nomeCampeonato.trim().toLowerCase()
 
-        return res.some(campeonato =>
+        return res.data.some(campeonato =>
           campeonato.nome.trim().toLowerCase() === nomeNovo
         )
-      } catch {
+      } catch (error) {
+        console.error(error)
         Swal.fire('Erro', 'Erro ao verificar campeonatos existentes.', 'error')
-        return true
+        return false
       }
     },
 

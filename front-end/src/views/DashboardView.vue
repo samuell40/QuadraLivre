@@ -323,6 +323,7 @@ export default {
   font-family: 'Montserrat', sans-serif;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   text-align: center;
+  border: 2px solid #3b82f6; /* borda a volta dos cards*/
 }
 
 .card_contagem h3 {

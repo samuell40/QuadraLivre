@@ -7,7 +7,6 @@ import CadastroView from '../views/CadastroView.vue';
 import CadastrarQuadraView from '../views/CadastrarQuadraView.vue';
 import ControlePlacarView from '../views/ControlePlacarView';
 import GerenciarPartidaView from '@/views/GerenciarPartidaView.vue';
-import PartidaView from '@/views/PartidaView.vue';
 import UsuariosView from '../views/UsuariosView';
 import MeusAgendamentosView from '../views/MeusAgendamentosView';
 import AgendarQuadrasView from '@/views/AgendarQuadrasView.vue';
@@ -81,9 +80,9 @@ const routes = [
   },
   {
     path: '/partida',
-    name: 'partida',
-    component: PartidaView,
-    meta: { requiresAuth: true, roles: [1, 2] },
+    name: 'Partida',
+    component: () => import('@/views/PartidaView.vue'),
+    meta: { requiresAuth: true, roles: [1, 2]}
   },
   {
     path: '/usuarios',

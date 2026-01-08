@@ -13,6 +13,12 @@
         </div>
       </div>
 
+      <p v-if="!partidaIniciada" class="texto-instrucao">
+        Para iniciar uma partida, selecione a quadra desejada, em seguida escolha a modalidade,
+        selecione o campeonato, defina os times participantes e, por fim, clique no botão
+        <strong>“Continuar”</strong> para abrir o modal de seleção dos jogadores da partida.
+      </p>
+
       <div class="dropdowns">
         <div class="dropdown-row">
           <div class="team">
@@ -86,22 +92,19 @@
           </div>
         </div>
       </div>
-      <p v-if="!partidaIniciada" class="texto-instrucao">
-        Para iniciar uma partida, selecione a quadra desejada, em seguida escolha a modalidade,
-        selecione o campeonato, defina os times participantes e, por fim, clique no botão
-        <strong>“Continuar”</strong> para abrir o modal de seleção dos jogadores da partida.
-      </p>
 
       <div class="placares" v-if="partidaIniciada">
         <component :is="isVolei ? 'PlacarTimeVolei' : 'PlacarTime'"
-          :timeNome="times.find(t => t.id === timeSelecionado1)?.nome || ''"
-          :timeData="{ ...time1, id: timeSelecionado1 }" :partida-id="partidaId" :temporizadorAtivo="temporizadorAtivo"
-          @update="atualizarTime('time1', $event)" />
+          :timeNome="times.find(t => t.id === timeSelecionado1)?.nome || ''" :timeData="{
+            ...times.find(t => t.id === timeSelecionado1),
+            ...time1
+          }" :partida-id="partidaId" :temporizadorAtivo="temporizadorAtivo" @update="atualizarTime('time1', $event)" />
 
         <component :is="isVolei ? 'PlacarTimeVolei' : 'PlacarTime'"
-          :timeNome="times.find(t => t.id === timeSelecionado2)?.nome || ''"
-          :timeData="{ ...time2, id: timeSelecionado2 }" :partida-id="partidaId" :temporizadorAtivo="temporizadorAtivo"
-          @update="atualizarTime('time2', $event)" />
+          :timeNome="times.find(t => t.id === timeSelecionado2)?.nome || ''" :timeData="{
+            ...times.find(t => t.id === timeSelecionado2),
+            ...time2
+          }" :partida-id="partidaId" :temporizadorAtivo="temporizadorAtivo" @update="atualizarTime('time2', $event)" />
       </div>
 
       <div v-if="partidaIniciada" class="finalizar-container">
@@ -111,7 +114,6 @@
         </button>
       </div>
 
-      <!-- MODAL SELECIONAR JOGADORES -->
       <SelecionarJogadores v-if="mostrarModalJogadores" :aberto="mostrarModalJogadores" :jogadoresTime1="jogadoresTime1"
         :jogadoresTime2="jogadoresTime2" :time1Nome="nomeTime1" :time2Nome="nomeTime2" @confirmar="confirmarJogadores"
         @fechar="mostrarModalJogadores = false" />
@@ -126,6 +128,7 @@ import SelecionarJogadores from '@/components/Partida/SelecionarJogadores.vue'
 import PlacarTime from '@/components/Partida/PlacarTimeFutebol.vue'
 import PlacarTimeVolei from '@/components/Partida/PlacarTimeVolei.vue'
 import api from '@/axios'
+import Swal from 'sweetalert2'
 
 export default {
   components: {
@@ -146,6 +149,22 @@ export default {
       quadrasDisponiveis: [],
       modalidadesDisponiveis: [],
       times: [],
+      time1: {
+        golspro: 0,
+        faltas: 0,
+        substituicoes: 0,
+        cartaoamarelo: 0,
+        cartaovermelho: 0,
+        wo: false
+      },
+      time2: {
+        golspro: 0,
+        faltas: 0,
+        substituicoes: 0,
+        cartaoamarelo: 0,
+        cartaovermelho: 0,
+        wo: false
+      },
       jogadoresTime1: [],
       jogadoresTime2: [],
       mostrarModalJogadores: false,
@@ -153,7 +172,8 @@ export default {
       temporizadorAtivo: false,
       tempoSegundos: 0,
       intervaloTimer: null,
-      mostrarPlacar: false
+      mostrarPlacar: false,
+      partidaId: null
     }
   },
 
@@ -186,6 +206,12 @@ export default {
         t => t.id !== Number(this.timeSelecionado1)
       )
     },
+    isVolei() {
+      const modalidade = this.modalidadesDisponiveis.find(
+        m => m.id === this.modalidadeSelecionada
+      )
+      return modalidade?.nome?.toLowerCase().includes('vôlei')
+    },
 
     nomeTime1() {
       return this.times.find(
@@ -201,7 +227,14 @@ export default {
   },
 
   mounted() {
-    this.buscarQuadras()
+    const partidaId = this.$route.query.partidaId
+
+    if (partidaId) {
+      this.carregarPartidaEmAndamento(partidaId)
+    } else {
+      this.buscarQuadras()
+      this.limparDados()
+    }
   },
 
   methods: {
@@ -269,24 +302,27 @@ export default {
       }
     },
 
-    iniciarPausarOuRetomarPartida() {
-      if (!this.partidaIniciada) {
-        this.mostrarModalJogadores = true
-        return
-      }
-
-      if (this.temporizadorAtivo) {
-        this.pausarTemporizador()
-      } else {
-        this.retomarTemporizador()
-      }
-    },
-
     async confirmarJogadores() {
       try {
         if (!this.usuarioLogadoId) {
           throw new Error('Usuário não autenticado')
         }
+
+        const jogadores = []
+
+        this.jogadoresTime1.forEach(j => {
+          jogadores.push({
+            jogadorId: j.id,
+            time: 'A'
+          })
+        })
+
+        this.jogadoresTime2.forEach(j => {
+          jogadores.push({
+            jogadorId: j.id,
+            time: 'B'
+          })
+        })
 
         const payload = {
           usuarioId: Number(this.usuarioLogadoId),
@@ -294,7 +330,8 @@ export default {
           campeonatoId: Number(this.campeonatoSelecionado),
           modalidadeId: Number(this.modalidadeSelecionada),
           timeAId: Number(this.timeSelecionado1),
-          timeBId: Number(this.timeSelecionado2)
+          timeBId: Number(this.timeSelecionado2),
+          jogadores
         }
 
         const resposta = await api.post('/partida', payload)
@@ -312,7 +349,7 @@ export default {
         console.error('Erro ao criar partida:', error)
       }
     },
-    
+
     componentePlacar() {
       const modalidade = this.modalidadesDisponiveis.find(
         m => m.id === this.modalidadeSelecionada
@@ -343,22 +380,89 @@ export default {
         await this.buscarTimes();
       }
     },
+    async atualizarParcial() {
+      if (!this.partidaId) return;
+
+      try {
+        const isVolei = this.isVolei;
+
+        await api.put(`/partida/${this.partidaId}/parcial`, {
+          pontosTimeA: isVolei ? this.time1.setsVencidos : this.time1.golspro,
+          pontosTimeB: isVolei ? this.time2.setsVencidos : this.time2.golspro,
+          faltasTimeA: this.time1.faltas,
+          faltasTimeB: this.time2.faltas,
+          substituicoesTimeA: this.time1.substituicoes,
+          substituicoesTimeB: this.time2.substituicoes,
+          cartoesAmarelosTimeA: this.time1.cartaoamarelo,
+          cartoesAmarelosTimeB: this.time2.cartaoamarelo,
+          cartoesVermelhosTimeA: this.time1.cartaovermelho,
+          cartoesVermelhosTimeB: this.time2.cartaovermelho,
+          tempoSegundos: this.tempoSegundos,
+          woTimeA: !!this.time1.wo,
+          woTimeB: !!this.time2.wo,
+          emIntervalo: false
+        });
+
+      } catch (err) {
+        console.error("Erro ao atualizar parcial:", err);
+        Swal.fire("Erro", "Não foi possível atualizar o placar parcial.", "error");
+      }
+    },
+
+    atualizarTime(time, novoTime) {
+      this[time] = { ...novoTime };
+      this.atualizarParcial();
+    },
+
     iniciarTemporizador() {
       if (this.intervaloTimer) return
 
+      const inicio = Date.now() - this.tempoSegundos * 1000
+
       this.intervaloTimer = setInterval(() => {
         if (this.temporizadorAtivo) {
-          this.tempoSegundos++
+          this.tempoSegundos = Math.floor((Date.now() - inicio) / 1000)
         }
-      }, 1000)
+      }, 500)
     },
 
-    pausarTemporizador() {
-      this.temporizadorAtivo = false
+    iniciarPausarOuRetomarPartida() {
+      if (!this.partidaIniciada) {
+        this.mostrarModalJogadores = true;
+        return;
+      }
+
+      if (this.temporizadorAtivo) {
+        this.pausarTemporizador();
+      } else {
+        this.retomarTemporizador();
+      }
     },
 
-    retomarTemporizador() {
-      this.temporizadorAtivo = true
+    async pausarTemporizador() {
+      if (!this.partidaId) return;
+
+      try {
+        await api.put(`/partidas/${this.partidaId}/pausar`);
+        this.temporizadorAtivo = false;
+        Swal.fire("Sucesso", "Partida pausada com sucesso!", "success");
+      } catch (err) {
+        console.error("Erro ao pausar partida:", err);
+        Swal.fire("Erro", "Não foi possível pausar a partida.", "error");
+      }
+    },
+
+    async retomarTemporizador() {
+      if (!this.partidaId) return;
+
+      try {
+        await api.put(`/partidas/${this.partidaId}/retomar`);
+        this.temporizadorAtivo = true;
+        Swal.fire("Sucesso", "Partida retomada com sucesso!", "success");
+      } catch (err) {
+        console.error("Erro ao retomar partida:", err);
+        Swal.fire("Erro", "Não foi possível retomar a partida.", "error");
+      }
     },
 
     async finalizarPartida() {
@@ -385,6 +489,44 @@ export default {
 
       } catch (error) {
         console.error('Erro ao finalizar partida:', error)
+      }
+    },
+
+    async carregarPartidaEmAndamento(partidaId) {
+      try {
+        const { data } = await api.get(`/partidas/${partidaId}/retornar`)
+
+        await this.buscarQuadras()
+
+        this.partidaId = data.id
+        this.partidaIniciada = true
+        this.temporizadorAtivo = true
+        this.tempoSegundos = data.tempoSegundos
+
+        this.quadraSelecionada = data.quadraId
+        this.modalidadeSelecionada = data.modalidadeId
+        this.campeonatoSelecionado = data.campeonatoId
+
+        this.timeSelecionado1 = data.timeAId
+        this.timeSelecionado2 = data.timeBId
+
+        this.time1.golspro = data.pontosTimeA
+        this.time2.golspro = data.pontosTimeB
+
+        await this.buscarModalidades()
+        await this.buscarCampeonatos()
+        await this.buscarTimes()
+
+        this.iniciarTemporizador()
+
+      } catch (error) {
+        Swal.fire(
+          'Erro',
+          'Partida não está mais disponível.',
+          'error'
+        )
+
+        this.$router.push('/gerenciar-partidas')
       }
     },
 
@@ -523,7 +665,6 @@ export default {
 .dropdown-row {
   display: flex;
   flex-wrap: wrap;
-  /* Permite quebra para nova linha se faltar espaço */
   gap: 20px;
   margin-bottom: 15px;
   justify-content: flex-start;
@@ -570,18 +711,6 @@ export default {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-}
-
-.mensagem-inicial {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 400px;
-  font-size: 18px;
-  font-weight: 500;
-  color: #3b82f6;
-  text-align: center;
-  margin: 35px auto;
 }
 
 .loader-container-centralizado {
@@ -678,19 +807,14 @@ h2 {
 }
 
 .texto-instrucao {
-  width: 100%;
-  max-width: 800px;
+  margin-top: 24px;
+  margin-bottom: 32px;
+  padding: 20px;
+  background-color: #f1f5f9;
+  border-radius: 6px;
+  border: 2px solid #3b82f6;
+  font-size: 15px;
 
-  margin: 30px auto 0 auto;
-  padding: 0 10px;
-
-  font-size: 18px;
-  font-weight: 500;
-  color: #3b82f6;
-  text-align: center;
-  line-height: 1.6;
-
-  display: block;
 }
 
 @media (max-width: 768px) {

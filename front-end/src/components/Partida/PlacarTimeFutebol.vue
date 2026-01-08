@@ -1,6 +1,10 @@
 <template>
   <div class="placar">
-    <h2 class="nome-time">{{ timeNome }}</h2>
+    <h2 class="nome-time">
+      <img v-if="timeData?.foto" :src="timeData.foto" alt="Escudo do time" class="foto-time" />
+      <span>{{ timeNome }}</span>
+    </h2>
+
 
     <div class="box">
       <p>Gols Marcados</p>
@@ -41,17 +45,13 @@
     <div class="box">
       <p>Substituições</p>
       <div class="controls">
-        <button
-          @click="decrementSimples('substituicoes')"
-          :disabled="!temporizadorAtivo || localTime.substituicoes <= 0"
-        >−</button>
+        <button @click="decrementSimples('substituicoes')"
+          :disabled="!temporizadorAtivo || localTime.substituicoes <= 0">−</button>
 
         <span class="valor">{{ localTime.substituicoes }}</span>
 
-        <button
-          @click="incrementSimples('substituicoes')"
-          :disabled="!temporizadorAtivo || localTime.substituicoes >= 3"
-        >+</button>
+        <button @click="incrementSimples('substituicoes')"
+          :disabled="!temporizadorAtivo || localTime.substituicoes >= 3">+</button>
       </div>
     </div>
 
@@ -111,11 +111,11 @@ export default {
   data() {
     return {
       localTime: {
-        golspro: this.timeData?.golspro || 0,
-        cartaoamarelo: this.timeData?.cartaoamarelo || 0,
-        cartaovermelho: this.timeData?.cartaovermelho || 0,
-        faltas: this.timeData?.faltas || 0,
-        substituicoes: this.timeData?.substituicoes || 0
+        golspro: this.timeData?.golspro,
+        cartaoamarelo: this.timeData?.cartaoamarelo,
+        cartaovermelho: this.timeData?.cartaovermelho,
+        faltas: this.timeData?.faltas,
+        substituicoes: this.timeData?.substituicoes
       },
       modalAberto: false,
       tipoEvento: 'gol',
@@ -155,14 +155,23 @@ export default {
       this.carregando = true
       try {
         const res = await api.get(`/partida/${this.partidaId}`)
-        this.jogadores = res.data
-          .filter(j => j.timeId === this.timeData.id)
-          .map(j => ({
-            ...j,
-            gols: j.gols || 0,
-            cartoesAmarelos: j.cartoesAmarelos || 0,
-            cartoesVermelhos: j.cartoesVermelhos || 0
-          }))
+
+        const jogadores = []
+
+        res.data.forEach(j => {
+          if (j.timeId !== this.timeData.id) return
+
+          jogadores.push({
+            id: j.id,
+            nome: j.nome,
+            timeId: j.timeId,
+            gols: j.gols,
+            cartoesAmarelos: j.cartoesAmarelos,
+            cartoesVermelhos: j.cartoesVermelhos
+          })
+        })
+
+        this.jogadores = jogadores
       } catch {
         Swal.fire('Erro', 'Erro ao carregar jogadores', 'error')
       } finally {
@@ -172,7 +181,10 @@ export default {
 
     async alterarEventoJogador(jogador, acao) {
       const incremento = acao === 'increment' ? 1 : -1
-      const payload = { jogadorId: jogador.id, partidaId: this.partidaId }
+      const payload = {
+        jogadorId: jogador.id,
+        partidaId: this.partidaId
+      }
 
       if (this.tipoEvento === 'gol') {
         if (jogador.gols + incremento < 0) return
@@ -209,8 +221,8 @@ export default {
       }
 
       this.emitUpdate()
-      await this.salvarPlacar()
       await api.post('/atuacao', payload)
+      await this.salvarPlacar()
     },
 
     incrementSimples(campo) {
@@ -228,7 +240,7 @@ export default {
     },
 
     emitUpdate() {
-      this.$emit('update', { ...this.localTime })
+      this.$emit('update', this.localTime)
     },
 
     async salvarPlacar() {
@@ -256,10 +268,15 @@ export default {
 .nome-time {
   background: #f9f9f9;
   border-bottom: 1px solid #ddd;
-  padding: 10px;
+  padding: 12px;
   color: #3b82f6;
   font-weight: bold;
   font-size: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 2px solid #3b82f6; /* Borda a volta do nome dos times */
 }
 
 .box {
@@ -394,5 +411,13 @@ export default {
   text-align: center;
   padding: 20px;
   color: #555;
+}
+
+.foto-time {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 50%;
+  background-color: #f1f5f9;
 }
 </style>

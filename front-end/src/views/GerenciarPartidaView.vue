@@ -10,6 +10,12 @@
         </router-link>
       </div>
 
+      <div v-if="!modalidadeSelecionada || !campeonatoSelecionado" class="mensagem-orientacao">
+        Para <strong class="destaque-retomar">retomar</strong> ou
+        <strong class="destaque-excluir">excluir</strong> uma partida, selecione
+        primeiramente a modalidade e, em seguida, o campeonato correspondente.
+      </div>
+
       <div class="dropdowns">
         <div class="dropdown-row">
           <div class="dropdown-container">
@@ -35,25 +41,24 @@
         </div>
       </div>
 
-      <div v-if="!modalidadeSelecionada || !campeonatoSelecionado" class="mensagem-orientacao">
-        Para retomar ou excluir uma partida, selecione primeiramente a modalidade
-        e, em seguida, o campeonato correspondente.
-      </div>
-
-      <!-- ACCORDION PARTIDAS ATIVAS -->
+      <!-- ACCORDION PARTIDAS EM ANDAMENTO (ATIVAS + PAUSADAS) -->
       <div v-if="modalidadeSelecionada && campeonatoSelecionado" class="accordion">
-        <div class="accordion-header" @click="accordionAtivas = !accordionAtivas">
-          <span>Partidas Ativas</span>
-          <span>{{ accordionAtivas ? '−' : '+' }}</span>
+        <div class="accordion-header" @click="accordionEmAndamento = !accordionEmAndamento">
+          <span>Partidas em Andamento</span>
+          <span>{{ accordionEmAndamento ? '−' : '+' }}</span>
         </div>
 
-        <div v-if="accordionAtivas" class="accordion-body">
+        <div v-if="accordionEmAndamento" class="accordion-body">
+
+          <!-- ===== ATIVAS ===== -->
+          <h3 class="subtitulo">Em Andamento</h3>
+
           <div v-if="partidas.length === 0" class="vazio">
-            Nenhuma partida ativa encontrada
+            Nenhuma partida em andamento
           </div>
 
           <div v-else class="partidas-lista">
-            <div v-for="partida in partidas" :key="partida.id" class="card-partida">
+            <div v-for="partida in partidas" :key="`ativa-${partida.id}`" class="card-partida">
               <div class="card-info">
                 <div class="times">
                   <div class="time">
@@ -75,13 +80,56 @@
               </div>
 
               <div class="card-acoes">
-                <button class="btn-retomar">Retomar</button>
+                <button class="btn-retomar" @click="retomarPartida(partida.id)">
+                  Voltar
+                </button>
                 <button class="btn-excluir" @click="excluirPartida(partida.id)">
                   Excluir
                 </button>
               </div>
             </div>
           </div>
+
+          <!-- ===== PAUSADAS ===== -->
+          <h3 class="subtitulo">Pausadas</h3>
+
+          <div v-if="partidasPausadas.length === 0" class="vazio">
+            Nenhuma partida pausada
+          </div>
+
+          <div v-else class="partidas-lista">
+            <div v-for="partida in partidasPausadas" :key="`pausada-${partida.id}`" class="card-partida pausada">
+              <div class="card-info">
+                <div class="times">
+                  <div class="time">
+                    <img v-if="partida.timeA.foto" :src="partida.timeA.foto" class="time-foto" />
+                    <span class="time-nome">{{ partida.timeA.nome }}</span>
+                  </div>
+
+                  <div class="placar">
+                    {{ partida.pontosTimeA }} : {{ partida.pontosTimeB }}
+                  </div>
+
+                  <div class="time">
+                    <img v-if="partida.timeB.foto" :src="partida.timeB.foto" class="time-foto" />
+                    <span class="time-nome">{{ partida.timeB.nome }}</span>
+                  </div>
+                </div>
+
+                <p class="quadra">Quadra: {{ partida.quadra.nome }}</p>
+              </div>
+
+              <div class="card-acoes">
+                <button class="btn-retomar" @click="despausarPartida(partida.id)">
+                  Retomar
+                </button>
+                <button class="btn-excluir" @click="excluirPartida(partida.id)">
+                  Excluir
+                </button>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -140,10 +188,11 @@ export default {
       modalidades: [],
       campeonatos: [],
       partidas: [],
+      partidasPausadas: [],
       partidasEncerradas: [],
       modalidadeSelecionada: '',
       campeonatoSelecionado: '',
-      accordionAtivas: false,
+      accordionEmAndamento: true,
       accordionEncerradas: false
     }
   },
@@ -190,15 +239,20 @@ export default {
     },
 
     async onCampeonatoChange() {
-      this.partidas = []
-      this.partidasEncerradas = []
-      this.accordionAtivas = false
-      this.accordionEncerradas = false
+      this.partidas = [];
+      this.partidasEncerradas = [];
+      this.partidasPausadas = [];
 
-      if (!this.campeonatoSelecionado) return
-      await this.buscarPartidasAtivas()
-      await this.buscarPartidasEncerradas()
-      this.accordionAtivas = true
+      if (!this.campeonatoSelecionado) return;
+
+      await this.buscarPartidasAtivas();
+      await this.buscarPartidasEncerradas();
+      await this.buscarPartidasPausadas();
+
+      // ✅ abre por padrão
+      this.accordionAtivas = true;
+      this.accordionPausadas = true;
+      this.accordionEncerradas = false;
     },
 
     async buscarPartidasAtivas() {
@@ -227,45 +281,93 @@ export default {
       }
     },
     async excluirPartida(partidaId) {
-  const resultado = await Swal.fire({
-    title: 'Tem certeza?',
-    text: 'Essa ação não poderá ser desfeita!',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#3085d6',
-    confirmButtonText: 'Sim, excluir',
-    cancelButtonText: 'Cancelar'
-  })
+      const resultado = await Swal.fire({
+        title: 'Tem certeza?',
+        text: 'Essa ação não poderá ser desfeita!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sim, excluir',
+        cancelButtonText: 'Cancelar'
+      })
 
-  if (!resultado.isConfirmed) return
+      if (!resultado.isConfirmed) return
 
-  try {
-    await api.delete(`/partidas/${partidaId}`)
+      try {
+        await api.delete(`/partidas/${partidaId}`)
 
-    await Swal.fire({
-      title: 'Excluída!',
-      text: 'A partida foi excluída com sucesso.',
-      icon: 'success',
-      timer: 1500,
-      showConfirmButton: false
-    })
+        await Swal.fire({
+          title: 'Excluída!',
+          text: 'A partida foi excluída com sucesso.',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        })
 
-    // Atualiza a lista após excluir
-    await this.buscarPartidasAtivas()
-    await this.buscarPartidasEncerradas()
+        await this.buscarPartidasAtivas()
+        await this.buscarPartidasEncerradas()
 
-  } catch (error) {
-    console.error(error)
+      } catch (error) {
+        console.error(error)
 
-    Swal.fire({
-      title: 'Erro',
-      text: 'Não foi possível excluir a partida.',
-      icon: 'error'
-    })
-  }
-}
+        Swal.fire({
+          title: 'Erro',
+          text: 'Não foi possível excluir a partida.',
+          icon: 'error'
+        })
+      }
+    },
 
+    async retomarPartida(partidaId) {
+      this.finalizandoPartida = true;
+      try {
+        const response = await api.get(`/partidas/${partidaId}/retornar`);
+        const partida = response.data;
+
+        this.$router.push({
+          path: '/partida',
+          query: { partidaId: partida.id }
+        });
+      } catch (error) {
+        console.error(error);
+        Swal.fire('Erro', 'Não foi possível retomar essa partida.', 'error');
+      } finally {
+        this.finalizandoPartida = false;
+      }
+    },
+    async buscarPartidasPausadas() {
+      if (!this.modalidadeSelecionada || !this.campeonatoSelecionado) return;
+
+      try {
+        const response = await api.get(
+          `/partidas/pausadas/${this.modalidadeSelecionada}/${this.campeonatoSelecionado}`
+        );
+        this.partidasPausadas = response.data;
+      } catch (error) {
+        console.error('Erro ao buscar partidas pausadas:', error);
+      }
+    },
+
+    async despausarPartida(partidaId) {
+      this.finalizandoPartida = true;
+      try {
+        await api.put(`/partidas/${partidaId}/retomar`);
+
+        const response = await api.get(`/partidas/${partidaId}/retornar`);
+        const partida = response.data;
+
+        this.$router.push({
+          path: '/partida',
+          query: { partidaId: partida.id }
+        });
+      } catch (error) {
+        console.error(error);
+        Swal.fire('Erro', 'Não foi possível despausar essa partida.', 'error');
+      } finally {
+        this.finalizandoPartida = false;
+      }
+    },
   }
 }
 </script>
@@ -378,7 +480,6 @@ export default {
   color: #555;
 }
 
-/* AÇÕES */
 .card-acoes {
   display: flex;
   flex-direction: column;
@@ -463,11 +564,21 @@ export default {
 .mensagem-orientacao {
   margin-top: 24px;
   margin-bottom: 32px;
-  padding: 35px;
+  padding: 20px;
   background-color: #f1f5f9;
-  border-left: 4px solid #3b82f6;
-  /*color: #3b82f6;*/
   border-radius: 6px;
-  font-size: 20px;
+  border: 2px solid #3b82f6;
+  font-size: 15px;
+}
+
+.subtitulo {
+  margin: 20px 0 10px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.card-partida.pausada {
+  border-color: #f59e0b;
 }
 </style>

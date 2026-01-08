@@ -13,13 +13,32 @@
         </div>
       </div>
 
-      <div class="dropdown-container">
-        <select v-model="modalidadeSelecionada" @change="carregarCampeonatos">
-          <option disabled value="">Selecione uma modalidade</option>
-          <option v-for="mod in modalidades" :key="mod.id" :value="mod.id">
-            {{ mod.nome }}
-          </option>
-        </select>
+      <div v-if="!modalidadeSelecionada" class="mensagem-orientacao">
+        Selecione uma modalidade para <strong>visualizar</strong> e
+        <strong>gerenciar</strong> os campeonatos disponíveis.
+      </div>
+
+      <div class="dropdowns">
+        <div class="dropdown-row">
+          <div class="dropdown-container">
+            <label class="dropdown-label">Selecione a modalidade</label>
+            <select class="dropdown" v-model="modalidadeSelecionada" @change="carregarCampeonatos">
+              <option value="">Selecione</option>
+              <option v-for="mod in modalidades" :key="mod.id" :value="mod.id">
+                {{ mod.nome }}
+              </option>
+            </select>
+          </div>
+
+          <div class="dropdown-container">
+            <label class="dropdown-label">Ano</label>
+            <select class="dropdown" v-model="anoSelecionado" @change="carregarCampeonatos">
+              <option v-for="ano in anosDisponiveis" :key="ano" :value="ano">
+                {{ ano }}
+              </option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <div v-if="isLoading" class="loader-container-centralizado">
@@ -38,7 +57,7 @@
                 <h2>{{ camp.nome }}</h2>
                 <p>Quadra: {{ camp.quadra ? camp.quadra.nome : "Não definida" }}</p>
                 <p>Status: {{ camp.status }}</p>
-                <p>Times Participantes:  {{ camp.times.length}}</p>
+                <p>Times Participantes: {{ camp.times.length }}</p>
               </div>
             </div>
 
@@ -50,11 +69,8 @@
         </div>
       </div>
 
-      <AdicionarCampeonatoModal
-        :aberto="modalAdicionarCampeonato"
-        @fechar="modalAdicionarCampeonato = false"
-        @atualizar="carregarCampeonatos"
-      />
+      <AdicionarCampeonatoModal :aberto="modalAdicionarCampeonato" @fechar="modalAdicionarCampeonato = false"
+        @atualizar="carregarCampeonatos" />
     </div>
   </div>
 </template>
@@ -76,12 +92,15 @@ export default {
       modalidadeSelecionada: "",
       campeonatos: [],
       isLoading: false,
-      modalAdicionarCampeonato: false
+      modalAdicionarCampeonato: false,
+      anoSelecionado: new Date().getFullYear(),
+      anosDisponiveis: []
     }
   },
 
   mounted() {
-    this.carregarModalidades()
+    this.carregarModalidades(),
+      this.gerarAnos()
   },
 
   methods: {
@@ -96,18 +115,27 @@ export default {
 
     async carregarCampeonatos() {
       if (!this.modalidadeSelecionada) {
-        this.campeonatos = [];
-        return;
+        this.campeonatos = []
+        return
       }
 
-      this.isLoading = true;
+      this.isLoading = true
+
       try {
-        const { data } = await api.get(`/listar/${this.modalidadeSelecionada}`);
-        this.campeonatos = data;
+        const { data } = await api.get(
+          `/listar/${this.modalidadeSelecionada}`,
+          {
+            params: {
+              ano: this.anoSelecionado || new Date().getFullYear()
+            }
+          }
+        )
+
+        this.campeonatos = data
       } catch (err) {
-        console.error('Erro ao carregar campeonatos:', err);
+        console.error('Erro ao carregar campeonatos:', err)
       } finally {
-        this.isLoading = false;
+        this.isLoading = false
       }
     },
 
@@ -125,12 +153,23 @@ export default {
       try {
         await api.delete(`/removerCampeonato/${campeonatoId}`);
         Swal.fire('Removido!', 'Campeonato removido com sucesso.', 'success');
-        this.carregarCampeonatos(); 
+        this.carregarCampeonatos();
       } catch (err) {
         console.error('Erro ao remover campeonato:', err);
         Swal.fire('Erro', 'Não foi possível remover o campeonato.', 'error');
       }
+    },
+
+    gerarAnos() {
+      const anoAtual = new Date().getFullYear()
+      const totalAnos = 5 
+
+      this.anosDisponiveis = []
+      for (let i = 0; i <= totalAnos; i++) {
+        this.anosDisponiveis.push(anoAtual - i)
+      }
     }
+
   }
 }
 </script>
@@ -189,6 +228,13 @@ export default {
   border: 1px solid #ccc;
   border-radius: 12px;
   font-size: 16px;
+}
+
+.label-dropdown {
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 16px;
+  color: #374151;
 }
 
 .lista-modalidades {
@@ -287,6 +333,17 @@ export default {
   border: 1px solid #ccc;
   border-radius: 12px;
   font-size: 16px;
+}
+
+.mensagem-orientacao {
+  margin-top: 24px;
+  margin-bottom: 32px;
+  padding: 20px;
+  background-color: #f1f5f9;
+  border-radius: 6px;
+  border: 2px solid #3b82f6;
+  font-size: 15px;
+  color: #374151;
 }
 
 .loader-container-centralizado {
