@@ -2,17 +2,26 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function criarCampeonato(data) {
-  const { nome, descricao, dataInicio, dataFim, status, modalidadeId, quadraId, times } = data;
+  const {
+    nome,
+    descricao,
+    dataInicio,
+    dataFim,
+    status,
+    modalidadeId,
+    quadraId,
+    times
+  } = data;
 
   const campeonato = await prisma.campeonato.create({
     data: {
       nome,
       descricao,
       dataInicio: new Date(dataInicio),
-      dataFim: dataFim ? new Date(dataFim) : null,
+      dataFim: new Date(dataFim),
       status,
       modalidadeId: Number(modalidadeId),
-      quadraId: quadraId ? Number(quadraId) : null,
+      quadraId: Number(quadraId),
 
       times: {
         create: times.map(timeId => ({

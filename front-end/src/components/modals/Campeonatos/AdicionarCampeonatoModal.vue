@@ -265,8 +265,10 @@ export default {
     },
 
     async nomeCampeonatoJaExiste() {
+      if (!this.modalidadeSelecionada) return false
+
       try {
-        const res = await api.get('/listar/campeonatos')
+        const res = await api.get(`/listar/campeonatos/${this.modalidadeSelecionada}`)
 
         const nomeNovo = this.nomeCampeonato.trim().toLowerCase()
 
@@ -275,7 +277,11 @@ export default {
         )
       } catch (error) {
         console.error(error)
-        Swal.fire('Erro', 'Erro ao verificar campeonatos existentes.', 'error')
+        Swal.fire(
+          'Erro',
+          'Erro ao verificar campeonatos existentes.',
+          'error'
+        )
         return false
       }
     },

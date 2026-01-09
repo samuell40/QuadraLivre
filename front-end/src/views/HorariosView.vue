@@ -20,7 +20,6 @@
 
       <!-- Tabela de horários com loader -->
       <div class="tabela-container">
-        <!-- Loader overlay -->
         <div v-if="isLoading" class="loader-overlay">
           <div class="loader"></div>
         </div>
