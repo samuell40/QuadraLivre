@@ -24,6 +24,7 @@ model Usuario {
   times        UsuarioTime[]
   partidasCriadas Partida[] @relation("UsuarioCriador")
   partidasParticipando PartidaUsuario[]
+  avisosCriados Aviso[]
 }
 
 model Quadra {
@@ -36,6 +37,7 @@ model Quadra {
   agendamentos Agendamento[]
   partidas     Partida[]
   campeonatos  Campeonato[]
+  avisos       Aviso[]
 }
 
 enum TipoAgendamento {
@@ -230,4 +232,18 @@ model Permissao {
   descricao String
   usuarios          Usuario[]
   partidasUsuarios  PartidaUsuario[]
+}
+
+model Aviso {
+  id          Int      @id @default(autoincrement())
+  titulo      String
+  descricao   String   @db.Text // Usei Text pra caber textão se precisar
+  foto        String?  @db.VarChar(2048)
+  data        DateTime @default(now())
+  
+  quadraId    Int
+  quadra      Quadra   @relation(fields: [quadraId], references: [id])
+
+  autorId     Int
+  autor       Usuario  @relation(fields: [autorId], references: [id])
 }

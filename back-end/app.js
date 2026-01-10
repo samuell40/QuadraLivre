@@ -20,6 +20,7 @@ const agendamento = require('./routes/agendamento.router');
 const time = require('./routes/time.router');
 const modalidade = require('./routes/modalidade.router');
 const campeonato = require('./routes/campeonatos.router');
+const avisos = require('./routes/aviso.router');
 //const { FirstRun } = require('./firstRun');
 
 // Inicialização
@@ -57,6 +58,7 @@ app.use(agendamento);
 app.use(time)
 app.use(modalidade)
 app.use(campeonato)
+app.use(avisos)
 //FirstRun();
 
 // Rota base
