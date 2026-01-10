@@ -40,6 +40,11 @@
           <label for="data"><strong>Data:</strong></label>
           <Datepicker
             v-model="data"
+            teleport="body"
+            locale="pt-BR" 
+            cancelText="Cancelar"
+            selectText="Selecionar"
+            :day-names="diasSemana"
             :min-date="minDateObj"
             :max-date="maxDateObj"
             :day-class="getDayClass"
@@ -47,6 +52,7 @@
             @update:model-value="gerarHorariosDisponiveis"
             :format="formatDate"
             placeholder="Escolha um dia"
+            :alt-position="calcularPosicao" 
           />
         </div>
 
@@ -80,7 +86,7 @@
         <option disabled value="">Selecione</option>
         <option value="TREINO">Treino</option>
         <option value="AMISTOSO">Amistoso</option>
-        <option value="CAMPEONATO">Campeonato</option>
+        <!-- <option value="CAMPEONATO">Campeonato</option> -->
         <option value="EVENTO">Evento</option>
         <option value="OUTRO">Outro</option>
       </select>
@@ -133,9 +139,19 @@ export default {
       authStore: useAuthStore(),
       horariosDisponiveis: [],
       horariosIndisponiveis: [],
-      datasDisponiveis: []
+      datasDisponiveis: [],
+      diasSemana: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'],
     }
   },
+
+  created() {
+    document.body.style.overflow = 'hidden';
+  },
+
+  unmounted() {
+    document.body.style.overflow = '';
+  },
+
   computed: {
     modalidadePadronizada() {
       if (!this.modalidadeSelecionada) return ""
@@ -182,6 +198,21 @@ export default {
     getDayClass(date) {
       const dStr = this.formatDateAPI(date)
       return this.datasDisponiveis.includes(dStr) ? 'dia-disponivel' : ''
+    },
+    calcularPosicao() {
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+
+      const dpWidth = 260; 
+      const dpHeight = -40;
+
+      const top = (windowHeight / 2) - (dpHeight / 2);
+      const left = (windowWidth / 2) - (dpWidth / 2);
+
+      return { 
+        top: `${top}px`, 
+        left: `${left}px` 
+      };
     },
     async gerarHorariosDisponiveis() {
       if (!this.data) return
@@ -427,7 +458,17 @@ select:hover, input:hover {
   opacity: 0.8;
 }
 
-/* Destaque de datas disponíveis */
+/* Datepicker */
+:deep(.dp__arrow_top), :deep(.dp__arrow_bottom) {
+  display: none !important;
+}
+
+:deep(.dp__calendar_header_item) {
+  font-weight: bold;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
 :deep(.dia-disponivel) {
   background-color: #3B82F6 !important;
   color: white !important;
@@ -450,25 +491,61 @@ select:hover, input:hover {
 }
 
 :deep(.dp__input) {
-  padding-left: 34px !important;
-  height: 42px !important;
-  line-height: 42px !important;
-  border: 1px solid #D9D9D9 !important;
+  height: 40 !important;
+  padding-left: 42px !important;
+  padding-right: 10px !important;
   border-radius: 4px !important;
-  font-size: 14px !important;
+  border-color: #D9D9D9 !important;
+  color: #7E7E7E !important;
 }
 
 :deep(.dp__menu) {
-  width: auto;
-  max-width: 280px;
-  font-size: 0.85rem;
-  padding: 8px;
   border-radius: 8px;
-  z-index: 2000 !important;
-  position: fixed !important;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  border: 1px solid #e5e7eb;
+  font-family: inherit;
+  margin-top: -10px;
 }
 
-:deep(.dp__calendar) {
-  min-width: 250px;
+:deep(.dp__outer_menu_wrap) {
+  padding: 10px 0;
+}
+
+:deep(.dp__action_row) {
+  padding: 10px 15px;
+  border-top: 1px solid #eee;
+}
+
+:deep(.dp__action_select) {
+  background-color: #1E3A8A !important;
+  border: none;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 6px;
+  text-transform: none;
+  height: 36px;
+}
+
+:deep(.dp__action_select:hover) {
+  background-color: #152c6e !important;
+}
+
+:deep(.dp__action_cancel) {
+  color: #7E7E7E !important;
+  font-weight: 500;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 8px 16px;
+}
+
+:deep(.dp__action_cancel:hover) {
+  text-decoration: underline;
+  color: #555 !important;
+}
+
+:deep(.dp__cell_inner.dp__active_date),
+:deep(.dp__main.dp__theme_light) {
+    --dp-primary-color: #1E3A8A;
 }
 </style>
