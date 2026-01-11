@@ -24,7 +24,9 @@ model Usuario {
   times        UsuarioTime[]
   partidasCriadas Partida[] @relation("UsuarioCriador")
   partidasParticipando PartidaUsuario[]
+
   avisosCriados Aviso[]
+  avisosLidos AvisoLeitura[]
 }
 
 model Quadra {
@@ -240,10 +242,26 @@ model Aviso {
   descricao   String   @db.Text // Usei Text pra caber textão se precisar
   foto        String?  @db.VarChar(2048)
   data        DateTime @default(now())
-  
+  fixado      Boolean @default(false)
+
   quadraId    Int
   quadra      Quadra   @relation(fields: [quadraId], references: [id])
 
   autorId     Int
   autor       Usuario  @relation(fields: [autorId], references: [id])
+
+  leituras    AvisoLeitura[]
+}
+
+model AvisoLeitura {
+  id        Int      @id @default(autoincrement())
+  lidoEm    DateTime @default(now())
+  
+  usuarioId Int
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  
+  avisoId   Int
+  aviso     Aviso    @relation(fields: [avisoId], references: [id])
+
+  @@unique([usuarioId, avisoId])
 }

@@ -134,4 +134,33 @@ async function enviarEmailStatusAgendamento(agendamento) {
   });
 }
 
-module.exports = { enviarEmail, enviarEmailNovaModalidade, enviarEmailAlteracaoPermissao, enviarEmailVinculoTime, enviarEmailStatusAgendamento };
+async function enviarEmailNovoAviso(emailsDestinatarios, aviso) {
+  if (!emailsDestinatarios || emailsDestinatarios.length === 0) return;
+
+  const html = `
+  <div style="font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px;">
+    <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 10px; color: #333; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
+      <h2 style="color: #1E3A8A; margin-top: 0; font-size: 24px;">Novo Aviso no Mural!</h2>
+      <h3 style="color: #3b82f6;">${aviso.titulo}</h3>
+      <p style="margin: 12px 0; font-size: 16px; line-height: 1.5; white-space: pre-line;">
+        ${aviso.descricao}
+      </p>
+      <p style="font-size: 14px; color: #666; margin-top: 20px;">
+        Acesse a plataforma para conferir mais detalhes.
+      </p>
+      <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
+        Atenciosamente,<br/>Equipe Quadra Livre
+      </p>
+    </div>
+  </div>
+  `;
+
+  return transporter.sendMail({
+    from: '"Avisos - Quadra Livre" <quadralivre3@gmail.com>',
+    bcc: emailsDestinatarios, 
+    subject: `📢 Novo Aviso: ${aviso.titulo}`,
+    html
+  });
+}
+
+module.exports = { enviarEmail, enviarEmailNovaModalidade, enviarEmailAlteracaoPermissao, enviarEmailVinculoTime, enviarEmailStatusAgendamento, enviarEmailNovoAviso };

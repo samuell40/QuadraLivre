@@ -28,20 +28,16 @@
         </div>
       </section>
 
-      <!-- Card Avisos -->
       <section class="section_avisos">
         <div class="card_avisos_container">
           <div class="header_avisos">
             <h3>Mural de Avisos</h3>
             <div class="header_actions">
-              <button 
-                v-if="avisos.length > 1" 
-                @click="exibirTodosAvisos = !exibirTodosAvisos" 
-                class="btn-padrao btn-ver-mais"
-              >
+              <button v-if="avisos.length > 1" type="button" @click="exibirTodosAvisos = !exibirTodosAvisos"
+                class="btn-padrao btn-ver-mais">
                 {{ exibirTodosAvisos ? 'Ver menos' : 'Ver todos (' + avisos.length + ')' }}
               </button>
-              <button v-if="podePostar" @click="exibirModalAviso = true" class="btn-padrao btn-novo-aviso">
+              <button v-if="podePostar" type="button" @click="abrirModal" class="btn-padrao btn-novo-aviso">
                 + Novo Aviso
               </button>
             </div>
@@ -52,33 +48,79 @@
           </div>
 
           <div class="lista_avisos" v-else>
-            <div v-for="aviso in avisosExibidos" :key="aviso.id" class="card_aviso_item">
-              <div class="aviso_meta">
-                <span class="aviso_data">{{ formatarData(aviso.data) }}</span>
-                <span class="aviso_autor">Autor: {{ aviso.autor?.nome }}</span>
+            <div v-for="aviso in avisosExibidos" :key="aviso.id" class="card_aviso_item"
+              :class="{ 'aviso-fixado': aviso.fixado }">
+              <div class="aviso_conteudo">
+                <div class="aviso_meta">
+                  <span class="aviso_data">
+                    <svg v-if="aviso.fixado" xmlns="http://www.w3.org/2000/svg" class="icon-mini" viewBox="0 0 24 24"
+                      fill="currentColor">
+                      <path d="M18 3v2h-2v7l2 2v2h-6v5l-1 1-1-1v-5H4v-2l2-2V5H4V3h14z" />
+                    </svg>
+                    {{ formatarData(aviso.data) }}
+                  </span>
+                </div>
+                <h4>{{ aviso.titulo }}</h4>
+                <p>{{ aviso.descricao }}</p>
               </div>
-              <h4>{{ aviso.titulo }}</h4>
-              <p>{{ aviso.descricao }}</p>
+
+              <div class="aviso_right_side">
+                <span class="aviso_autor">Autor: {{ aviso.autor?.nome }}</span>
+
+                <div class="aviso_actions" v-if="podePostar">
+                  <button class="btn-icon btn-fixar" :class="{ 'btn-ativo': aviso.fixado }"
+                    @click="alternarFixado(aviso)" :title="aviso.fixado ? 'Desafixar Aviso' : 'Fixar Aviso'">
+                    <svg v-if="aviso.fixado" xmlns="http://www.w3.org/2000/svg" class="icon-svg" fill="none"
+                      viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M3 3l18 18M16 3v2h-2v5.172l2 2V14h-3.172l3 3H18v2h-6v5l-1 1-1-1v-5H6.828l2-2H4v-2l2-2V7.828l-2-2V3h12z" />
+                    </svg>
+
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="icon-svg" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M18 3v2h-2v7l2 2v2h-6v5l-1 1-1-1v-5H4v-2l2-2V5H4V3h14z" />
+                    </svg>
+                  </button>
+
+                  <button v-if="usuarioLogado.id === aviso.autorId" class="btn-icon btn-excluir"
+                    @click="deletarAviso(aviso.id)" title="Excluir Aviso">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-svg" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <div v-if="exibirModalAviso" class="modal-overlay">
-        <div class="modal-content">
-          <h3>Cadastrar Novo Aviso</h3>
-          <input v-model="novoAviso.titulo" placeholder="Título do aviso" class="input-estilizado" />
-          <textarea v-model="novoAviso.descricao" placeholder="O que você quer avisar?" class="input-estilizado"></textarea>
-          <div class="modal-actions">
-            <button @click="enviarAviso" class="btn-confirmar" :disabled="enviando">
-              {{ enviando ? 'Postando...' : 'Postar Aviso' }}
-            </button>
-            <button @click="exibirModalAviso = false" class="btn-cancelar">Cancelar</button>
+      <Teleport to="body">
+        <div v-if="exibirModalAviso" class="modal-overlay" @click.self="exibirModalAviso = false">
+          <div class="modal-content">
+            <h3>Cadastrar Novo Aviso</h3>
+            <input v-model="novoAviso.titulo" placeholder="Título do aviso" class="input-estilizado" />
+            <textarea v-model="novoAviso.descricao" placeholder="O que você quer avisar?"
+              class="input-estilizado"></textarea>
+
+            <div class="form-group-checkbox">
+              <input type="checkbox" id="fixarNovo" v-model="novoAviso.fixado">
+              <label for="fixarNovo">Fixar este aviso no topo?</label>
+            </div>
+
+            <div class="modal-actions">
+              <button @click="enviarAviso" class="btn-confirmar" :disabled="enviando">
+                {{ enviando ? 'Postando...' : 'Postar Aviso' }}
+              </button>
+              <button @click="exibirModalAviso = false" class="btn-cancelar">Cancelar</button>
+            </div>
           </div>
         </div>
-      </div>
+      </Teleport>
 
-      <!-- Gráficos -->
       <section class="section_graficos_top">
         <div class="chart-container">
           <canvas id="agendamentosModalidadeChart"></canvas>
@@ -131,23 +173,30 @@ export default {
       exibirTodosAvisos: false,
       exibirModalAviso: false,
       enviando: false,
+      usuarioLogado: {},
       novoAviso: {
         titulo: '',
-        descricao: ''
+        descricao: '',
+        fixado: false
       }
     }
   },
   computed: {
     podePostar() {
-      const usuario = JSON.parse(localStorage.getItem("usuario") || "null");
-      return usuario?.permissaoId === 1 || usuario?.permissaoId === 2;
+      return this.usuarioLogado?.permissaoId === 1 || this.usuarioLogado?.permissaoId === 2;
     },
     avisosExibidos() {
-      if (this.exibirTodosAvisos) return this.avisos;
-      return this.avisos.length > 0 ? [this.avisos[0]] : [];
+      const lista = [...this.avisos].sort((a, b) => {
+        if (a.fixado === b.fixado) return 0;
+        return a.fixado ? -1 : 1;
+      });
+
+      if (this.exibirTodosAvisos) return lista;
+      return lista.length > 0 ? [lista[0]] : [];
     },
   },
   mounted() {
+    this.usuarioLogado = JSON.parse(localStorage.getItem("usuario") || "{}");
     window.scrollTo(0, 0)
     this.carregarAgendamentos()
     this.carregarUsuarios()
@@ -156,6 +205,9 @@ export default {
     this.carregarAvisos()
   },
   methods: {
+    abrirModal() {
+      this.exibirModalAviso = true;
+    },
     async carregarUsuarios() {
       try {
         const res = await api.get('/usuarios')
@@ -164,7 +216,6 @@ export default {
         console.error('Erro ao carregar usuários:', error)
       }
     },
-
     async carregarTimes() {
       try {
         const res = await api.get('/times')
@@ -173,7 +224,6 @@ export default {
         console.error('Erro ao carregar times:', error)
       }
     },
-
     async carregarModalidades() {
       try {
         const res = await api.get('/listar/modalidade')
@@ -182,25 +232,22 @@ export default {
         console.error('Erro ao carregar modalidades:', error)
       }
     },
-
     async carregarAgendamentos() {
       try {
         this.loading = true
-        const usuario = JSON.parse(localStorage.getItem("usuario") || "null")
         let data = []
 
-        if (usuario?.permissaoId === 1) {
+        if (this.usuarioLogado?.permissaoId === 1) {
           const res = await api.get('/agendamentos/todos')
           data = res.data
-        } else if (usuario?.permissaoId === 2) {
-          if (!usuario.quadraId) {
+        } else if (this.usuarioLogado?.permissaoId === 2) {
+          if (!this.usuarioLogado.quadraId) {
             console.warn("Usuário com permissão 2 não possui quadra vinculada.")
             return
           }
-          const res = await api.get(`/agendamentos/quadra/${usuario.quadraId}`)
+          const res = await api.get(`/agendamentos/quadra/${this.usuarioLogado.quadraId}`)
           data = res.data
         } else {
-          console.warn("Permissão não autorizada para acessar agendamentos.")
           return
         }
 
@@ -226,90 +273,108 @@ export default {
         this.loading = false
       }
     },
-
     formatarData(data) {
       return new Date(data).toLocaleDateString('pt-BR');
     },
-
     async carregarAvisos() {
       try {
-        const usuario = JSON.parse(localStorage.getItem("usuario") || "null");
-        if (!usuario?.quadraId) return;
-
-        const res = await api.get(`/quadras/${usuario.quadraId}/avisos`);
+        if (!this.usuarioLogado?.quadraId) return;
+        const res = await api.get(`/quadras/${this.usuarioLogado.quadraId}/avisos`);
         this.avisos = Array.isArray(res.data) ? res.data : [];
       } catch (error) {
         Swal.fire({
           icon: 'error',
           title: 'Erro de Conectividade',
-          text: 'Não foi possível recuperar o mural de avisos do servidor.',
+          text: 'Não foi possível recuperar o mural de avisos.',
           confirmButtonColor: '#1E3A8A',
         });
       }
     },
-
     async enviarAviso() {
       if (!this.novoAviso.titulo || !this.novoAviso.descricao) {
         Swal.fire({
           icon: 'warning',
           title: 'Campos Incompletos',
-          text: 'Todos os campos obrigatórios devem ser preenchidos para publicar o aviso.',
+          text: 'Preencha título e descrição.',
           confirmButtonColor: '#1E3A8A',
         });
         return;
       }
-
       try {
         this.enviando = true;
-        const usuario = JSON.parse(localStorage.getItem("usuario") || "null");
-
         await api.post('/avisos', {
           titulo: this.novoAviso.titulo,
           descricao: this.novoAviso.descricao,
-          quadraId: usuario.quadraId,
-          autorId: usuario.id
+          fixado: this.novoAviso.fixado,
+          quadraId: this.usuarioLogado.quadraId,
+          autorId: this.usuarioLogado.id
         });
-
-        this.novoAviso = { titulo: '', descricao: '' };
+        this.novoAviso = { titulo: '', descricao: '', fixado: false };
         this.exibirModalAviso = false;
         await this.carregarAvisos();
-
         Swal.fire({
           icon: 'success',
-          title: 'Sucesso',
-          text: 'O aviso foi publicado e já está visível para os usuários.',
+          title: 'Aviso Publicado',
+          text: 'O aviso foi salvo e os usuários serão notificados por e-mail.',
           confirmButtonColor: '#1E3A8A',
         });
       } catch (error) {
         Swal.fire({
           icon: 'error',
           title: 'Erro na Operação',
-          text: 'Falha ao registrar o aviso no banco de dados.',
+          text: 'Falha ao registrar o aviso.',
           confirmButtonColor: '#1E3A8A',
         });
       } finally {
         this.enviando = false;
       }
     },
-
+    async deletarAviso(id) {
+      const result = await Swal.fire({
+        title: 'Excluir Aviso?',
+        text: "Essa ação não pode ser desfeita.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#1E3A8A',
+        confirmButtonText: 'Sim, excluir',
+        cancelButtonText: 'Cancelar'
+      });
+      if (result.isConfirmed) {
+        try {
+          await api.delete(`/avisos/${id}`);
+          await this.carregarAvisos();
+          Swal.fire('Excluído!', 'O aviso foi removido.', 'success');
+        } catch (error) {
+          Swal.fire('Erro', 'Não foi possível excluir o aviso.', 'error');
+        }
+      }
+    },
+    async alternarFixado(aviso) {
+      try {
+        const novoStatus = !aviso.fixado;
+        const index = this.avisos.findIndex(a => a.id === aviso.id);
+        if (index !== -1) this.avisos[index].fixado = novoStatus;
+        await api.patch(`/avisos/${aviso.id}/fixar`, { fixado: novoStatus });
+        await this.carregarAvisos();
+      } catch (error) {
+        console.error("Erro ao fixar aviso", error);
+        Swal.fire('Erro', 'Falha ao alterar status fixado.', 'error');
+      }
+    },
     renderAgendamentosModalidadeChart() {
       const canvas = document.getElementById('agendamentosModalidadeChart')
       if (this.agendamentosModalidadeChart) this.agendamentosModalidadeChart.destroy()
       const ctx = canvas.getContext('2d')
-
       const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1)
-
       const nomesModalidades = this.agendamentos.map(a => {
         let nome = 'Não definido'
         if (a.modalidade?.nome) nome = a.modalidade.nome
         else if (a.quadra?.modalidades?.length > 0) nome = a.quadra.modalidades[0].nome
         return capitalize(nome)
       })
-
       const modalidades = [...new Set(nomesModalidades)]
-
       const quantidade = modalidades.map(m => nomesModalidades.filter(n => n === m).length)
-
       this.agendamentosModalidadeChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -323,14 +388,7 @@ export default {
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                precision: 0
-              }
-            }
-          }
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
         }
       })
     },
@@ -338,10 +396,8 @@ export default {
       const canvas = document.getElementById('agendamentosTipoChart')
       if (this.agendamentosTipoChart) this.agendamentosTipoChart.destroy()
       const ctx = canvas.getContext('2d')
-
       const tipos = ['PARTIDA', 'TREINO', 'EVENTO', 'OUTRO', 'CAMPEONATO']
       const quantidade = tipos.map(t => this.agendamentos.filter(a => a.tipo === t).length)
-
       this.agendamentosTipoChart = new Chart(ctx, {
         type: 'pie',
         data: {
@@ -351,19 +407,15 @@ export default {
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
       })
     },
-
     renderAgendamentosMesChart() {
       const canvas = document.getElementById('agendamentosMesChart')
       if (this.agendamentosMesChart) this.agendamentosMesChart.destroy()
       const ctx = canvas.getContext('2d')
-
       const mesesNomes = [
         'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
         'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
       ]
-
       const mesesAgendamentos = this.agendamentos.map(a => a.mes)
-
       if (mesesAgendamentos.length === 0) {
         this.agendamentosMesChart = new Chart(ctx, {
           type: 'bar',
@@ -374,24 +426,16 @@ export default {
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: { precision: 0 }
-              }
-            }
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
           }
         })
         return
       }
-
       const mesInicial = Math.min(...mesesAgendamentos) - 1
       const mesesFiltrados = mesesNomes.slice(mesInicial)
-
       const quantidade = mesesFiltrados.map((_, idx) =>
         this.agendamentos.filter(a => a.mes === (mesInicial + idx + 1)).length
       )
-
       this.agendamentosMesChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -401,12 +445,7 @@ export default {
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { precision: 0 }
-            }
-          }
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
         }
       })
     }
@@ -516,7 +555,6 @@ export default {
   animation: spin 1s linear infinite;
 }
 
-/* Avisos */
 .section_avisos {
   margin-bottom: 30px;
 }
@@ -576,11 +614,14 @@ export default {
 
 .btn-novo-aviso:hover {
   background: #152c6e;
-  opacity: 0.8;
+  opacity: 0.9;
 }
 
 .lista_avisos {
   overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .sem-avisos {
@@ -594,32 +635,115 @@ export default {
   background: #f7f9fc;
   padding: 15px;
   border-radius: 8px;
-  margin-bottom: 10px;
   border-left: 5px solid #3b82f6;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 15px;
+  transition: all 0.3s ease;
+}
+
+.aviso-fixado {
+  background: #EFF6FF;
+  border-left-color: #1E3A8A;
+}
+
+.aviso_conteudo {
+  flex: 1;
 }
 
 .aviso_meta {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
   font-size: 12px;
   color: #888;
   margin-bottom: 5px;
 }
 
+.icon-mini {
+  width: 14px;
+  height: 14px;
+  color: #1E3A8A;
+}
+
 .card_aviso_item h4 {
   color: #1E3A8A;
   margin: 5px 0;
+  font-size: 16px;
+  font-weight: 700;
 }
 
-/* Modal de avisos */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.6);
+.aviso_right_side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.aviso_autor {
+  font-size: 12px;
+  color: #666;
+}
+
+.aviso_actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-icon {
+  background: white;
+  border: 1px solid #e5e7eb;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(2px); 
+  transition: all 0.2s;
+  color: #6b7280;
+}
+
+.btn-icon:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.icon-svg {
+  width: 20px;
+  height: 20px;
+}
+
+.btn-fixar.btn-ativo {
+  background: #EFF6FF;
+  border-color: #1E3A8A;
+  color: #1E3A8A;
+}
+
+.btn-fixar.btn-ativo:hover {
+  background: #DBEafe;
+}
+
+.btn-excluir:hover {
+  background: #FEF2F2;
+  border-color: #FECACA;
+  color: #DC2626;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
 }
 
 .modal-content {
@@ -628,14 +752,23 @@ export default {
   border-radius: 12px;
   width: 100%;
   max-width: 450px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 20px;
+}
+
+.form-group-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  color: #555;
+  font-size: 14px;
 }
 
 .input-estilizado {
@@ -654,23 +787,23 @@ export default {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
-.btn-confirmar { 
-  background: #1E3A8A; 
-  color: white; 
-  border: none; 
-  padding: 10px 20px; 
-  border-radius: 6px; 
-  cursor: pointer; 
+.btn-confirmar {
+  background: #1E3A8A;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
   font-weight: 600;
 }
 
-.btn-cancelar { 
-  background: #f3f4f6; 
+.btn-cancelar {
+  background: #f3f4f6;
   color: #4b5563;
-  border: none; 
-  padding: 10px 20px; 
-  border-radius: 6px; 
-  cursor: pointer; 
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
   font-weight: 600;
 }
 
@@ -689,6 +822,7 @@ export default {
   }
 }
 
+/* Responsivo */
 @media (max-width: 768px) {
   .SideBar {
     position: fixed;
@@ -726,12 +860,17 @@ export default {
     width: 100%;
   }
 
-  .card_contagem p {
-    font-size: 24px;
+  .card_aviso_item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
   }
 
-  .title {
-    font-size: 24px;
+  .aviso_right_side {
+    align-items: flex-start;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
   }
 }
 </style>
