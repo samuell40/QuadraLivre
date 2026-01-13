@@ -21,7 +21,7 @@
 
               <div class="info">
                 <h2>{{ usuario.nome }}</h2>
-                <p>{{ usuario.funcao }}</p>
+                <p>{{ usuario.permissao?.descricao }}</p>
                 <p class="detalhe-contato">
                   <span>{{ usuario.email }}</span>
                   <svg v-if="usuario.email" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
@@ -37,7 +37,7 @@
                   </svg>
                 </p>
                 <p class="detalhe-contato">
-                  <span>{{ usuario.telefone || 'Não informado' }}</span>
+                  <span>{{ usuario.telefone }}</span>
                   <svg v-if="usuario.telefone" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#25D366"
                     class="icon" viewBox="0 0 16 16" @click="contatoWhatsApp(usuario)"
                     style="cursor:pointer; margin-left: 8px;">
@@ -55,7 +55,6 @@
 
               <button class="btn-detalhar" @click="detalhesUsuario(usuario)">Detalhar</button>
             </div>
-
           </div>
         </div>
         <p v-else class="sem-resultados">Nenhum usuário encontrado.</p>
@@ -93,14 +92,13 @@
                 </svg>
               </div>
             </div>
-
           </div>
         </div>
 
         <div class="campo">
           <strong>Telefone:</strong>
           <div class="detalhe detalhe-contato">
-            <span>{{ usuarioSelecionado.telefone || 'Não informado' }}</span>
+            <span>{{ usuarioSelecionado.telefone}}</span>
             <svg v-if="usuarioSelecionado.telefone" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
               fill="#25D366" class="icon" viewBox="0 0 16 16" @click="contatoWhatsApp(usuarioSelecionado)"
               style="cursor:pointer; margin-left: 8px;">
@@ -111,19 +109,22 @@
         </div>
 
         <div class="campo">
-          <strong>Função:</strong>
-          <p class="detalhe">{{ usuarioSelecionado.funcao }}</p>
+          <strong>Permissão:</strong>
+          <p class="detalhe">{{ usuarioSelecionado.permissao?.descricao }}</p>
+
         </div>
 
-        <div class="campo" v-if="usuarioSelecionado.funcao === 'ADMINISTRADOR'">
+        <!-- ADMINISTRADOR -->
+        <div class="campo" v-if="usuarioSelecionado.permissaoId === 2">
           <strong>Quadra:</strong>
-          <p class="detalhe">{{ usuarioSelecionado.quadra?.nome.trim() || 'Nenhuma' }}</p>
+          <p class="detalhe">{{ usuarioSelecionado.quadra?.nome }}</p>
         </div>
 
-        <div class="campo" v-if="usuarioSelecionado.funcao === 'USUARIO'">
+        <!-- USUARIO -->
+        <div class="campo" v-if="usuarioSelecionado.permissaoId === 3">
           <strong>Times:</strong>
           <p class="detalhe">
-            <span v-if="usuarioSelecionado.times && usuarioSelecionado.times.length">
+            <span v-if="usuarioSelecionado.times?.length">
               {{usuarioSelecionado.times.map(t => t.nome).join(', ')}}
             </span>
             <span v-else>Nenhum</span>
@@ -143,25 +144,27 @@
     <div v-if="mostrarEditar" class="modal-overlay">
       <div class="modal-content">
         <h2>Editar Usuário</h2>
+
         <div v-if="isCarregandoModal" class="loader-wrapper">
           <div class="loader loader-small"></div>
         </div>
 
         <div v-else>
-          <div class="campo" v-if="usuarioLogado.funcao !== 'ADMINISTRADOR'">
-            <strong>Função:</strong>
-            <select v-model="form.funcao">
-              <option disabled value="">Selecione a função</option>
-              <option v-for="p in permissoesFiltradas" :key="p.id" :value="p.descricao">
+          <!-- PERMISSÃO -->
+          <div class="campo" v-if="usuarioLogado.permissaoId !== 2">
+            <strong>Permissão:</strong>
+            <select v-model.number="form.permissaoId">
+              <option disabled value="">Selecione</option>
+              <option v-for="p in permissoesFiltradas" :key="p.id" :value="p.id">
                 {{ p.descricao }}
               </option>
             </select>
           </div>
 
-          <div class="campo"
-            v-if="form.funcao === 'ADMINISTRADOR' && usuarioLogado.funcao === 'DESENVOLVEDOR'">
+          <!-- DESENVOLVEDOR -> ADMIN -->
+          <div class="campo" v-if="form.permissaoId === 2 && usuarioLogado.permissaoId === 1">
             <strong>Quadra:</strong>
-            <select v-model="form.quadra">
+            <select v-model.number="form.quadra">
               <option disabled value="">Selecione a quadra</option>
               <option v-for="q in quadras" :key="q.id" :value="q.id">
                 {{ q.nome }}
@@ -169,9 +172,10 @@
             </select>
           </div>
 
-          <div class="campo" v-if="form.funcao === 'USUARIO'">
+          <!-- USUARIO -->
+          <div class="campo" v-if="form.permissaoId === 3">
             <strong>Time:</strong>
-            <select v-model="form.timeId">
+            <select v-model.number="form.timeId">
               <option disabled value="">Selecione o time</option>
               <option v-for="t in times" :key="t.id" :value="t.id">
                 {{ t.nome }}
@@ -180,7 +184,10 @@
           </div>
 
           <div class="botoes" style="margin-top: 20px;">
-            <button class="btn-salvarEdicao" @click="salvarEdicao" :disabled="isSalvando">Salvar</button>
+            <button class="btn-salvarEdicao" @click="salvarEdicao" :disabled="isSalvando">
+              <span v-if="!isSalvando">Salvar</span>
+              <span v-else class="loader-pequeno"></span>
+            </button>
             <button class="btn-fecharEdicao" @click="fecharEditar" :disabled="isSalvando">Cancelar</button>
           </div>
         </div>
@@ -190,15 +197,16 @@
 </template>
 
 <script>
-import SideBar from '@/components/SideBar.vue';
-import NavBarUse from '@/components/NavBarUser.vue';
-import api from '@/axios';
-import Swal from 'sweetalert2';
-import { useAuthStore } from '@/store';
+import SideBar from '@/components/SideBar.vue'
+import NavBarUse from '@/components/NavBarUser.vue'
+import api from '@/axios'
+import Swal from 'sweetalert2'
+import { useAuthStore } from '@/store'
 
 export default {
   name: 'UsuariosView',
   components: { SideBar, NavBarUse },
+
   data() {
     return {
       usuarios: [],
@@ -215,192 +223,189 @@ export default {
       mostrarContato: false,
       form: {
         email: '',
-        funcao: '',
+        permissaoId: null,
         quadra: '',
         timeId: '',
       },
-    };
-  },
-  computed: {
-    usuarioLogado() {
-      const authStore = useAuthStore();
-      return authStore.usuario || {};
-    },
-    usuarioLogadoEmail() {
-      return this.usuarioLogado.email || '';
-    },
-    usuariosFiltrados() {
-      return this.usuarios
-        .filter(u => u.nome.toLowerCase().includes(this.busca.toLowerCase()))
-        .filter(u => u.email !== this.usuarioLogadoEmail)
-        .filter(u => {
-          if (this.usuarioLogado.funcao === 'ADMINISTRADOR') {
-            return u.funcao !== 'DESENVOLVEDOR_DE_SISTEMA' && u.funcao !== 'ADMINISTRADOR';
-          }
-          return true;
-        });
-    },
-    permissoesFiltradas() {
-      if (this.usuarioLogado.funcao === 'ADMINISTRADOR') {
-        return this.permissoes.filter(p => p.descricao === 'USUARIO');
-      }
-      return this.permissoes;
     }
   },
-  mounted() {
-    this.carregarUsuarios();
+
+  computed: {
+    usuarioLogado() {
+      const authStore = useAuthStore()
+      return authStore.usuario || {}
+    },
+
+    usuarioLogadoEmail() {
+      return this.usuarioLogado.email || ''
+    },
+
+    usuariosFiltrados() {
+      return this.usuarios
+        .filter(u =>
+          u.nome.toLowerCase().includes(this.busca.toLowerCase())
+        )
+        .filter(u => u.email !== this.usuarioLogadoEmail)
+        .filter(u => {
+          if (this.usuarioLogado.permissaoId === 2) { // ADMIN (2) não vê DEV (1) nem ADMIN (2)
+            return u.permissaoId === 3
+          }
+          return true
+        })
+    },
+
+    permissoesFiltradas() {
+      if (this.usuarioLogado.permissaoId === 2) {  // ADMIN só pode ver USUARIO
+        return this.permissoes.filter(
+          p =>
+            p.id === 3 || p.id === this.form.permissaoId
+        )
+      }
+      return this.permissoes
+    },
   },
+
+  mounted() {
+    this.carregarUsuarios()
+  },
+
   methods: {
     async carregarUsuarios() {
-      this.isLoading = true;
+      this.isLoading = true
       try {
-        const response = await api.get('/usuarios');
+        const response = await api.get('/usuarios')
         this.usuarios = response.data.map(u => ({
           ...u,
-          funcao: u.funcao,
           times: u.times || [],
-        }));
+        }))
       } catch (error) {
-        console.error('Erro ao carregar usuários:', error);
+        console.error('Erro ao carregar usuários:', error)
       } finally {
-        this.isLoading = false;
+        this.isLoading = false
       }
     },
 
     detalhesUsuario(usuario) {
-      this.usuarioSelecionado = usuario;
-      this.mostrarDetalhes = true;
+      this.usuarioSelecionado = usuario
+      this.mostrarDetalhes = true
     },
 
     fecharDetalhes() {
-      this.mostrarDetalhes = false;
+      this.mostrarDetalhes = false
     },
 
     async listarPermissoes() {
-      const resPerm = await api.get('/permissoes');
-      this.permissoes = resPerm.data;
+      const resPerm = await api.get('/permissoes')
+      this.permissoes = resPerm.data
     },
 
     async listarQuadras() {
-      const resQuadra = await api.get('/quadra');
-      this.quadras = resQuadra.data;
+      const resQuadra = await api.get('/quadra')
+      this.quadras = resQuadra.data
     },
 
     async listarTimes() {
-      const resTimes = await api.get('/times');
-      this.times = resTimes.data;
+      const resTimes = await api.get('/times')
+      this.times = resTimes.data
     },
 
     async editarUsuario(usuario) {
-      this.usuarioSelecionado = usuario;
-      this.form.email = usuario.email;
-      this.form.quadra = usuario.quadra?.id || '';
+      this.usuarioSelecionado = usuario
+      this.isCarregandoModal = true
+      this.mostrarEditar = true
 
-      this.form.timeId = usuario.times && usuario.times.length > 0
-        ? usuario.times[0].id
-        : '';
-
-      if (this.usuarioLogado.funcao === 'ADMINISTRADOR') {
-        this.form.funcao = 'USUARIO';
-      } else {
-        this.form.funcao = usuario.funcao;
-      }
-
-      this.mostrarEditar = true;
-
-      this.isCarregandoModal = true;
       try {
-        await Promise.all([this.listarPermissoes(), this.listarQuadras(), this.listarTimes()]);
-      } catch (err) {
-        console.error('Erro ao carregar dados do modal:', err);
-        Swal.fire({ icon: 'error', title: 'Erro', text: 'Falha ao carregar dados do modal.' });
+        await Promise.all([
+          this.listarPermissoes(),
+          this.listarQuadras(),
+          this.listarTimes(),
+        ])
+
+        this.form.email = usuario.email
+        this.form.permissaoId = Number(usuario.permissaoId)
+        this.form.quadra = usuario.quadra?.id
+        this.form.timeId = usuario.times?.[0]?.id
       } finally {
-        this.isCarregandoModal = false;
+        this.isCarregandoModal = false
       }
     },
 
     async salvarEdicao() {
-      this.isSalvando = true;
+      this.isSalvando = true
       try {
-        if (!this.form.funcao) {
-          await Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Selecione uma função válida antes de salvar.' });
-          return;
-        }
-        const permissaoSelecionada = this.permissoes.find(p => p.descricao === this.form.funcao);
-        if (!permissaoSelecionada) {
-          await Swal.fire({ icon: 'error', title: 'Erro', text: 'Permissão inválida.' });
-          return;
-        }
-
-        if (this.form.funcao === 'USUARIO' && !this.form.timeId) {
-          await Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Usuários precisam estar vinculados a um time.' });
-          return;
+        if (!this.form.permissaoId) {
+          await Swal.fire({
+            icon: 'warning',
+            title: 'Atenção',
+            text: 'Selecione uma permissão válida.',
+          })
+          return
         }
 
-        if (this.form.funcao === 'ADMINISTRADOR' && !this.form.quadra) {
-          await Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Administradores precisam estar vinculados a uma quadra.' });
-          return;
+        if (this.form.permissaoId === 2 && !this.form.quadra) {
+          await Swal.fire({
+            icon: 'warning',
+            title: 'Atenção',
+            text: 'Administrador precisa estar vinculado a uma quadra.',
+          })
+          return
         }
-        const payload = {
+
+        if (this.form.permissaoId === 3 && !this.form.timeId) {
+          await Swal.fire({
+            icon: 'warning',
+            title: 'Atenção',
+            text: 'Usuário precisa estar vinculado a um time.',
+          })
+          return
+        }
+
+        if (this.form.permissaoId === 3) {
+          await api.post('/vincular', {
+            usuarioId: this.usuarioSelecionado.id,
+            timeId: this.form.timeId,
+          })
+        }
+
+        await api.put('/editar/usuario', {
           email: this.form.email,
-          funcao: this.form.funcao,
-          permissaoId: permissaoSelecionada.id,
-          quadra: this.form.quadra,
-          timeId: this.form.timeId
-        };
+          permissaoId: this.form.permissaoId,
+          quadraId: this.form.quadra
+        })
 
-        if (this.form.funcao === 'USUARIO') {
-          const timeSelecionado = this.times.find(t => t.id === Number(this.form.timeId));
-          const jaTemTimeNaModalidade = this.usuarioSelecionado.times?.find(
-            t => t.modalidadeId === timeSelecionado.modalidadeId
-          );
-
-          if (jaTemTimeNaModalidade && jaTemTimeNaModalidade.id !== timeSelecionado.id) {
-            const confirmacao = await Swal.fire({
-              title: 'Trocar de time?',
-              text: `Você já faz parte do time "${jaTemTimeNaModalidade.nome}" na modalidade "${timeSelecionado.modalidade.nome}". Deseja trocar para o time "${timeSelecionado.nome}"?`,
-              icon: 'warning',
-              showCancelButton: true,
-              confirmButtonText: 'Sim, trocar',
-              cancelButtonText: 'Cancelar',
-              confirmButtonColor: '#3b82f6',
-              cancelButtonColor: '#7E7E7E',
-            });
-
-            if (!confirmacao.isConfirmed) return;
-          }
-          await api.post('/vincular', { usuarioId: this.usuarioSelecionado.id, timeId: timeSelecionado.id });
-        }
-
-        await api.put('/editar/usuario', payload);
-        await Swal.fire({ icon: 'success', title: 'Sucesso', text: 'Usuário atualizado com sucesso!' });
-        this.mostrarEditar = false;
-        this.carregarUsuarios();
+        Swal.fire('Sucesso', 'Usuário atualizado com sucesso!', 'success')
+        this.mostrarEditar = false
+        this.carregarUsuarios()
       } catch (err) {
-        console.error('Erro ao salvar edição:', err);
-        await Swal.fire({ icon: 'error', title: 'Erro', text: err.response?.data?.error || 'Falha ao salvar edição do usuário.' });
+        console.error(err)
+        Swal.fire('Erro', err.response?.data?.error, 'error')
       } finally {
-        this.isSalvando = false;
+        this.isSalvando = false
       }
     },
+
     abrirModalContato(usuario) {
-      this.usuarioSelecionado = usuario;
-      this.mostrarContato = true;
+      this.usuarioSelecionado = usuario
+      this.mostrarContato = true
     },
 
     fecharModalContato() {
-      this.mostrarContato = false;
+      this.mostrarContato = false
     },
 
     contatoWhatsApp(usuario) {
       if (!usuario.telefone) {
-        Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Usuário não possui telefone cadastrado.' });
-        return;
+        Swal.fire({
+          icon: 'warning',
+          title: 'Atenção',
+          text: 'Usuário não possui telefone cadastrado.',
+        })
+        return
       }
-      const numeroLimpo = usuario.telefone.replace(/\D/g, '');
-      const url = `https://wa.me/${numeroLimpo}`;
-      window.open(url, '_blank');
-      this.fecharModalContato();
+
+      const numeroLimpo = usuario.telefone.replace(/\D/g, '')
+      window.open(`https://wa.me/${numeroLimpo}`, '_blank')
+      this.fecharModalContato()
     },
 
     contatoGmail(usuario) {
@@ -408,22 +413,23 @@ export default {
         Swal.fire({
           icon: 'warning',
           title: 'Atenção',
-          text: 'Usuário não possui e-mail cadastrado.'
-        });
-        return;
+          text: 'Usuário não possui e-mail cadastrado.',
+        })
+        return
       }
 
-      const url = `https://mail.google.com/mail/?view=cm&fs=1&to=${usuario.email}`;
-      window.open(url, '_blank');
+      window.open(
+        `https://mail.google.com/mail/?view=cm&fs=1&to=${usuario.email}`,
+        '_blank'
+      )
 
-      this.fecharModalContato();
+      this.fecharModalContato()
     },
 
-
     fecharEditar() {
-      this.mostrarEditar = false;
-    }
-  }
+      this.mostrarEditar = false
+    },
+  },
 }
 </script>
 
@@ -719,6 +725,17 @@ select {
   justify-content: center;
   align-items: center;
   height: 150px;
+}
+
+.loader-pequeno {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #fff;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  animation: spin 1s linear infinite;
+  vertical-align: middle;
 }
 
 @keyframes spin {

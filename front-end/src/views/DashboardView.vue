@@ -2,7 +2,7 @@
   <div class="layout">
     <SideBar />
     <div class="conteudo">
-      <h1 class="title">Dashboard</h1>
+      <h1 class="title">{{ tituloDashboard }}</h1>
       <NavBarUse />
 
       <section class="section_totalAgendamentos">
@@ -255,6 +255,20 @@ export default {
       }
       return this.listaPendentes.length > 0 ? [this.listaPendentes[0]] : [];
     },
+    tituloDashboard() {
+      const usuario = JSON.parse(localStorage.getItem("usuario"));
+
+      // Desenvolvedor → só "Dashboard"
+      if (usuario?.permissaoId === 1) {
+        return 'Dashboard';
+      }
+
+      // Administrador → "Dashboard - Nome da Quadra"
+      if (usuario?.permissaoId === 2 && usuario?.quadra?.nome) {
+        return `Dashboard (${usuario.quadra.nome})`;
+      }
+      return 'Dashboard';
+    }
     listaLidos() {
         return this.todosAvisos.filter(a => this.verificarSeLi(a));
     },
@@ -915,6 +929,11 @@ export default {
 
 .modal-overlay {
   position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
   top: 0;
   left: 0;
   right: 0;

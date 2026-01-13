@@ -442,12 +442,14 @@ export default {
 }
 
 .mensagem-placar {
-  text-align: center;
-  margin-top: 80px;
-  font-size: 20px;
-  font-weight: bold;
-  color: #3B82F6;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 250px;
+  font-size: 18px;
+  color: #555;
 }
+
 
 .modal-add {
   background: white;

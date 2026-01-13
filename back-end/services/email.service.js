@@ -45,14 +45,14 @@ async function enviarEmailNovaModalidade(dev, modalidadeNome) {
 }
 
 async function enviarEmailAlteracaoPermissao(usuario) {
-  if (![1, 2].includes(usuario.permissaoId)) return; 
+  if (![1, 2].includes(usuario.permissaoId)) return;
 
   const descricaoFormatada = formatarPermissao(usuario.permissao.descricao);
 
   let mensagem;
-
-  if (usuario.permissaoId === 2) {
-    mensagem = `Informamos que você foi promovido para <strong>${descricaoFormatada}</strong> e vinculado à quadra: <strong>${usuario.quadra.nome}</strong>.`;
+  if (usuario.permissaoId === 2 && usuario.quadra) {
+    mensagem = `Informamos que você foi promovido para <strong>${descricaoFormatada}</strong> 
+  e vinculado à quadra: <strong>${usuario.quadra.nome}</strong>.`;
   } else {
     mensagem = `Informamos que sua função foi atualizada para <strong>${descricaoFormatada}</strong>.`;
   }
@@ -110,7 +110,7 @@ async function enviarEmailVinculoTime(usuario, time) {
 
 async function enviarEmailStatusAgendamento(agendamento) {
   const statusFormatado = agendamento.status === 'Confirmado' ? 'confirmado' : 'recusado';
-  
+
   const html = `
   <div style="font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px;">
     <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 10px; color: #333; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
@@ -118,7 +118,7 @@ async function enviarEmailStatusAgendamento(agendamento) {
       <p style="margin: 12px 0; font-size: 18px; line-height: 1.5;">
         Seu agendamento na quadra <strong>${agendamento.quadra.nome}</strong> para a modalidade 
         <strong>${agendamento.modalidade.nome}</strong> no dia <strong>${agendamento.dia}/${agendamento.mes}/${agendamento.ano}</strong> 
-        às <strong>${agendamento.hora.toString().padStart(2,'0')}:00</strong> foi <strong>${statusFormatado}</strong>.
+        às <strong>${agendamento.hora.toString().padStart(2, '0')}:00</strong> foi <strong>${statusFormatado}</strong>.
       </p>
       <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
         Atenciosamente,<br/>Equipe Quadra Livre

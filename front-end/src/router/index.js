@@ -35,7 +35,7 @@ const routes = [
     path: '/agendamentos',
     name: 'Agendamentos',
     component: AgendamentosView,
-    meta: { public: true },
+    meta: { public: true, roles: [2] },
   },
   {
     path: '/agendarquadra',

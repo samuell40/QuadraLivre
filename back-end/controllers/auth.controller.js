@@ -5,7 +5,7 @@ const { findUserByEmail } = require('../services/auth.service');
 
 async function verificarUsuario(req, accessToken, refreshToken, profile, done) {
   try {
-    const email = profile?.emails?.[0]?.value; 
+    const email = profile?.emails?.[0]?.value;
 
     if (!email) {
       return done(null, false, { message: 'Email não fornecido pelo Google' });
@@ -17,7 +17,7 @@ async function verificarUsuario(req, accessToken, refreshToken, profile, done) {
       return done(null, false, { message: 'usuario_nao_cadastrado', email });
     }
 
-    return done(null, user); 
+    return done(null, user);
   } catch (err) {
     return done(err);
   }
@@ -55,11 +55,12 @@ function callbackLoginGoogle(req, res, next) {
         id: user.id,
         nome: user.nome,
         email: user.email,
-        telefone: user.telefone || null,
-        funcao: user.funcao || null,
-        permissaoId: user.permissaoId || null,
-        foto: user.foto || null,
-        quadraId: user.quadraId || null
+        telefone: user.telefone,
+        foto: user.foto,
+        permissaoId: user.permissaoId,
+        permissao: user.permissao,
+        quadraId: user.quadraId,
+        quadra: user.quadra
       };
 
       const token = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: config.JWT_EXPIRATION });
