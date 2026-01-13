@@ -1,17 +1,15 @@
 <template>
   <div class="container position-absolute top-0 end-0 p-3">
     <div class="row align-items-center justify-content-end">
-      <div class="col-md-6 user-info d-flex align-items-center justify-content-end"> 
+      <div class="col-md-6 user-info d-flex align-items-center justify-content-end">
         <div class="foto">
-          <img 
-            :src="usuario?.foto" 
-            alt="Foto" 
-            class="rounded-circle user-photo"
-          >
+          <img :src="usuario?.foto" alt="Foto" class="rounded-circle user-photo">
         </div>
         <div>
           <div class="user-name fw-bold">{{ usuario?.nome }}</div>
-          <div class="user-role text-muted">{{ formatarFuncao(usuario?.funcao) }}</div>
+          <div class="user-role text-muted">
+            {{ usuario?.permissao?.descricao }}
+          </div>
         </div>
       </div>
     </div>
@@ -27,16 +25,7 @@ export default {
     }
   },
   mounted() {
-    this.usuario = JSON.parse(localStorage.getItem("usuario"))
-  },
-  methods: {
-    formatarFuncao(funcao) {
-      if (!funcao) return '';
-      return funcao
-        .split('_') 
-        .map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()) 
-        .join(' '); 
-    }
+    this.usuario = JSON.parse(localStorage.getItem('usuario'))
   }
 }
 </script>
@@ -45,14 +34,14 @@ export default {
 .user-info {
   display: flex;
   align-items: center;
-  margin-right: 20px; 
+  margin-right: 20px;
 }
 
 .user-photo {
   width: 55px;
   height: 55px;
   object-fit: cover;
-  margin-right: 1px; 
+  margin-right: 1px;
 }
 
 .user-info .user-name {

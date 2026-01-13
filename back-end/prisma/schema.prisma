@@ -12,19 +12,24 @@ model Usuario {
   nome        String
   email       String  @unique
   telefone    String?
-  funcao      String
   permissaoId Int
   foto        String? @db.VarChar(2048)
   quadraId    Int?
 
   quadra       Quadra?   @relation(fields: [quadraId], references: [id])
   permissao    Permissao @relation(fields: [permissaoId], references: [id])
-
   agendamentos Agendamento[]
   times        UsuarioTime[]
   partidasCriadas Partida[] @relation("UsuarioCriador")
   partidasParticipando PartidaUsuario[]
   avisosCriados Aviso[]
+}
+
+model Permissao {
+  id        Int @id @default(autoincrement())
+  descricao String
+  usuarios          Usuario[]
+  partidasUsuarios  PartidaUsuario[]
 }
 
 model Quadra {
@@ -225,13 +230,6 @@ model UsuarioTime {
   usuario Usuario @relation(fields: [usuarioId], references: [id])
   time    Time    @relation(fields: [timeId], references: [id])
   @@id([usuarioId, timeId])
-}
-
-model Permissao {
-  id        Int @id @default(autoincrement())
-  descricao String
-  usuarios          Usuario[]
-  partidasUsuarios  PartidaUsuario[]
 }
 
 model Aviso {

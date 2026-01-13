@@ -9,7 +9,7 @@ router.post('/cadastrar/usuario', controller.postUsuarioController);
 
 router.put('/editar/usuario', [validarJWT], verificarPermissao.devAdmin , controller.updateUsuarioController);
 
-router.get('/usuarios', [validarJWT],  verificarPermissao.devAdmin, controller.getUsuariosController);
+router.get('/usuarios',  controller.getUsuariosController);
 
 router.get('/permissoes',[validarJWT], verificarPermissao.devAdmin, controller.getPermissoesController);
 

@@ -8,9 +8,12 @@ async function postUsuario(user) {
       nome: user.nome,
       email: user.email,
       telefone: user.telefone,
-      funcao: "USUARIO",
       foto: user.foto,
       permissaoId: 3,
+      quadraId: null,
+    },
+    include: {
+      permissao: true,
     },
   });
 }
@@ -18,30 +21,35 @@ async function postUsuario(user) {
 async function updateUsuario(user) {
   const usuarioDb = await prisma.usuario.findUnique({
     where: { email: user.email },
-    include: { quadra: true, permissao: true }
+    include: { quadra: true, permissao: true },
   });
 
-  if (!usuarioDb) throw new Error('Usuário não encontrado');
+  if (!usuarioDb) {
+    throw new Error('Usuário não encontrado');
+  }
 
-  let dadosAtualizados = {
-    funcao: user.funcao,
+  const dadosAtualizados = {
     permissaoId: user.permissaoId,
     quadraId: null,
   };
 
-  if (user.permissaoId === 2 && user.quadra) {
-    const quadra = await prisma.quadra.findUnique({ where: { id: user.quadra } });
+  if (user.permissaoId === 2 && user.quadraId) {
+    const quadra = await prisma.quadra.findUnique({
+      where: { id: user.quadraId },
+    });
     dadosAtualizados.quadraId = quadra ? quadra.id : null;
   }
 
   if (user.permissaoId !== 3) {
-    await prisma.usuarioTime.deleteMany({ where: { usuarioId: usuarioDb.id } });
+    await prisma.usuarioTime.deleteMany({
+      where: { usuarioId: usuarioDb.id },
+    });
   }
 
   const usuarioAtualizado = await prisma.usuario.update({
     where: { email: user.email },
     data: dadosAtualizados,
-    include: { quadra: true, permissao: true }
+    include: { quadra: true, permissao: true },
   });
 
   await enviarEmailAlteracaoPermissao(usuarioAtualizado);
@@ -54,7 +62,10 @@ async function getUsuarios() {
     include: {
       agendamentos: true,
       quadra: true,
-      times: { include: { time: true } },
+      permissao: true,
+      times: {
+        include: { time: true },
+      },
     },
   });
 
@@ -64,29 +75,33 @@ async function getUsuarios() {
     email: user.email,
     telefone: user.telefone,
     foto: user.foto,
-    funcao: user.funcao,
-    permissaoId: true,
-    quadra: user.quadra ? { id: user.quadra.id, nome: user.quadra.nome } : null,
+    permissaoId: user.permissaoId,
+    permissao: user.permissao,
+    quadra: user.quadra, 
     times: user.times.map(ut => ut.time),
-    totalAgendamentos: user.agendamentos.length
+    totalAgendamentos: user.agendamentos.length,
   }));
 }
 
 async function listarPermissoes() {
-  return prisma.permissao.findMany();
+  return prisma.permissao.findMany({
+    orderBy: { id: 'asc' },
+  });
 }
 
 async function vincularUsuarioTime(usuarioId, timeId) {
   const usuario = await prisma.usuario.findUnique({
     where: { id: usuarioId },
-    include: { quadra: true, permissao: true } 
+    include: { permissao: true },
   });
+
   if (!usuario) throw new Error('Usuário não encontrado');
 
   const time = await prisma.time.findUnique({
     where: { id: timeId },
     include: { modalidade: true },
   });
+
   if (!time) throw new Error('Time não encontrado');
 
   const vinculoMesmoModalidade = await prisma.usuarioTime.findFirst({
@@ -103,7 +118,12 @@ async function vincularUsuarioTime(usuarioId, timeId) {
     }
 
     await prisma.usuarioTime.delete({
-      where: { usuarioId_timeId: { usuarioId, timeId: vinculoMesmoModalidade.time.id } },
+      where: {
+        usuarioId_timeId: {
+          usuarioId,
+          timeId: vinculoMesmoModalidade.time.id,
+        },
+      },
     });
   }
 
@@ -117,20 +137,20 @@ async function vincularUsuarioTime(usuarioId, timeId) {
 }
 
 async function getUsuarioTimesService(usuarioId) {
-  return await prisma.usuario.findUnique({
+  return prisma.usuario.findUnique({
     where: { id: Number(usuarioId) },
     include: {
       times: {
         include: {
           time: {
             include: {
-              modalidade: true 
-            }
-          }
-        }
-      }
-    }
-  })
+              modalidade: true,
+            },
+          },
+        },
+      },
+    },
+  });
 }
 
 module.exports = {

@@ -9,7 +9,7 @@ async function FirstRun() {
 
     console.log('Setup inicial concluído com sucesso!')
   } catch (error) {
-    console.error(' Erro no setup inicial:', error)
+    console.error('Erro no setup inicial:', error)
   } finally {
     await prisma.$disconnect()
   }
@@ -24,26 +24,34 @@ async function criarPermissoes() {
   ]
 
   for (const descricao of permissoes) {
-    await prisma.permissao.upsert({
-      where: { descricao },
-      update: {},
-      create: { descricao }
+    const permissaoExistente = await prisma.permissao.findFirst({
+      where: { descricao }
     })
+
+    if (!permissaoExistente) {
+      await prisma.permissao.create({
+        data: { descricao }
+      })
+    }
   }
 
   console.log('✔ Permissões verificadas/criadas')
 }
 
 async function criarQuadraPadrao() {
-  const quadra = await prisma.quadra.upsert({
-    where: { nome: 'Quadra Livre' },
-    update: {},
-    create: {
-      nome: 'Quadra Livre',
-      endereco: 'Rua das Quadras, 123',
-      foto: 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/Imagem%20padrao.png'
-    }
+  let quadra = await prisma.quadra.findFirst({
+    where: { nome: 'Quadra Livre' }
   })
+
+  if (!quadra) {
+    quadra = await prisma.quadra.create({
+      data: {
+        nome: 'Quadra Livre',
+        endereco: 'Rua das Quadras, 123',
+        foto: 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/C%C3%B3pia%20de%20xxxxx%20(2).png'
+      }
+    })
+  }
 
   console.log('✔ Quadra padrão verificada/criada')
   return quadra
@@ -59,7 +67,7 @@ async function criarUsuarioDesenvolvedor(quadraId) {
   }
 
   await prisma.usuario.upsert({
-    where: { email: 'samuelpc4567@gmail.com' },
+    where: { email: 'samuelpc4567@gmail.com' }, 
     update: {},
     create: {
       nome: 'Samuel',
@@ -75,8 +83,11 @@ async function criarUsuarioDesenvolvedor(quadraId) {
   console.log('✔ Usuário desenvolvedor verificado/criado')
 }
 
+
 if (require.main === module) {
-  FirstRun().then(() => process.exit(0))
+  FirstRun()
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1))
 }
 
 module.exports = { FirstRun }
