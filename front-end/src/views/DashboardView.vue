@@ -2,7 +2,7 @@
   <div class="layout">
     <SideBar />
     <div class="conteudo">
-      <h1 class="title">Dashboard</h1>
+      <h1 class="title">{{ tituloDashboard }}</h1>
       <NavBarUse />
 
       <section class="section_totalAgendamentos">
@@ -34,11 +34,8 @@
           <div class="header_avisos">
             <h3>Mural de Avisos</h3>
             <div class="header_actions">
-              <button 
-                v-if="avisos.length > 1" 
-                @click="exibirTodosAvisos = !exibirTodosAvisos" 
-                class="btn-padrao btn-ver-mais"
-              >
+              <button v-if="avisos.length > 1" @click="exibirTodosAvisos = !exibirTodosAvisos"
+                class="btn-padrao btn-ver-mais">
                 {{ exibirTodosAvisos ? 'Ver menos' : 'Ver todos (' + avisos.length + ')' }}
               </button>
               <button v-if="podePostar" @click="exibirModalAviso = true" class="btn-padrao btn-novo-aviso">
@@ -68,7 +65,8 @@
         <div class="modal-content">
           <h3>Cadastrar Novo Aviso</h3>
           <input v-model="novoAviso.titulo" placeholder="Título do aviso" class="input-estilizado" />
-          <textarea v-model="novoAviso.descricao" placeholder="O que você quer avisar?" class="input-estilizado"></textarea>
+          <textarea v-model="novoAviso.descricao" placeholder="O que você quer avisar?"
+            class="input-estilizado"></textarea>
           <div class="modal-actions">
             <button @click="enviarAviso" class="btn-confirmar" :disabled="enviando">
               {{ enviando ? 'Postando...' : 'Postar Aviso' }}
@@ -139,13 +137,27 @@ export default {
   },
   computed: {
     podePostar() {
-      const usuario = JSON.parse(localStorage.getItem("usuario") || "null");
+      const usuario = JSON.parse(localStorage.getItem("usuario"));
       return usuario?.permissaoId === 1 || usuario?.permissaoId === 2;
     },
     avisosExibidos() {
       if (this.exibirTodosAvisos) return this.avisos;
       return this.avisos.length > 0 ? [this.avisos[0]] : [];
     },
+    tituloDashboard() {
+      const usuario = JSON.parse(localStorage.getItem("usuario"));
+
+      // Desenvolvedor → só "Dashboard"
+      if (usuario?.permissaoId === 1) {
+        return 'Dashboard';
+      }
+
+      // Administrador → "Dashboard - Nome da Quadra"
+      if (usuario?.permissaoId === 2 && usuario?.quadra?.nome) {
+        return `Dashboard (${usuario.quadra.nome})`;
+      }
+      return 'Dashboard';
+    }
   },
   mounted() {
     window.scrollTo(0, 0)
@@ -614,12 +626,15 @@ export default {
 /* Modal de avisos */
 .modal-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.6);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(2px); 
+  backdrop-filter: blur(2px);
 }
 
 .modal-content {
@@ -628,7 +643,7 @@ export default {
   border-radius: 12px;
   width: 100%;
   max-width: 450px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
 .modal-actions {
@@ -654,23 +669,23 @@ export default {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
-.btn-confirmar { 
-  background: #1E3A8A; 
-  color: white; 
-  border: none; 
-  padding: 10px 20px; 
-  border-radius: 6px; 
-  cursor: pointer; 
+.btn-confirmar {
+  background: #1E3A8A;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
   font-weight: 600;
 }
 
-.btn-cancelar { 
-  background: #f3f4f6; 
+.btn-cancelar {
+  background: #f3f4f6;
   color: #4b5563;
-  border: none; 
-  padding: 10px 20px; 
-  border-radius: 6px; 
-  cursor: pointer; 
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
   font-weight: 600;
 }
 
