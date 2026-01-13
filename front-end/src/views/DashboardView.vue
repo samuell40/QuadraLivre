@@ -33,20 +33,29 @@
           <div class="header_avisos">
             <h3>Mural de Avisos</h3>
             <div class="header_actions">
-              <button v-if="avisos.length > 1" type="button" @click="exibirTodosAvisos = !exibirTodosAvisos"
-                class="btn-padrao btn-ver-mais">
-                {{ exibirTodosAvisos ? 'Ver menos' : 'Ver todos (' + avisos.length + ')' }}
+              
+              <button v-if="listaPendentes.length > 1" type="button" 
+                      @click="exibirTodosAvisos = !exibirTodosAvisos"
+                      class="btn-padrao btn-ver-mais">
+                {{ exibirTodosAvisos ? 'Ver menos' : 'Ver todos (' + listaPendentes.length + ')' }}
               </button>
+
+              <button type="button" @click="abrirHistorico" class="btn-padrao btn-historico">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon-mini" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Histórico
+              </button>
+              
               <button v-if="podePostar" type="button" @click="abrirModal" class="btn-padrao btn-novo-aviso">
                 + Novo Aviso
               </button>
             </div>
           </div>
 
-          <div v-if="avisos.length === 0" class="sem-avisos">
-            Nenhuma atualização de sistema ou manutenção registrada.
+          <div v-if="listaPendentes.length === 0" class="sem-avisos">
+            Nenhum aviso pendente. Consulte o histórico para ver mensagens antigas.
           </div>
-
           <div class="lista_avisos" v-else>
             <div v-for="aviso in avisosExibidos" :key="aviso.id" class="card_aviso_item"
               :class="{ 'aviso-fixado': aviso.fixado }">
@@ -56,6 +65,7 @@
                   <span class="aviso_origem" style="font-weight: bold; color: #3B82F6; margin-right: 8px;">
                     {{ aviso.quadra?.nome || ' EQUIPE QUADRA LIVRE ' }}
                   </span>
+                  <span style="font-size: 11px; color: #666;">• {{ formatarData(aviso.data) }}</span>
                 </div>
                 <h4>{{ aviso.titulo }}</h4>
                 <p>{{ aviso.descricao }}</p>
@@ -63,28 +73,33 @@
 
               <div class="aviso_right_side">
                 <span class="aviso_autor">Autor: {{ aviso.autor?.nome }}</span>
-                <div class="aviso_actions" v-if="podePostar">
-
-                  <button class="btn-icon btn-fixar" :class="{ 'btn-ativo': aviso.fixado }" @click="alternarFixado(aviso)"
-                    :title="aviso.fixado ? 'Desafixar Aviso' : 'Fixar Aviso'">
-                    <img v-if="aviso.fixado" :src="require('@/assets/icons/pin-slash.svg')" class="icon-svg"
-                      alt="Desafixar" />
-
-                    <img v-else :src="require('@/assets/icons/pin.svg')" class="icon-svg" alt="Fixar" />
+                
+                <div class="aviso_actions_wrapper">
+                  <button class="btn-ler" @click="marcarComoLido(aviso)">
+                    Marcar como lido
                   </button>
 
-                  <button v-if="usuarioLogado.id === aviso.autorId" class="btn-icon btn-excluir"
-                    @click="deletarAviso(aviso.id)" title="Excluir Aviso">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-svg" fill="none" viewBox="0 0 24 24"
-                      stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+                  <div class="aviso_actions" v-if="podePostar">
+                    <button class="btn-icon btn-fixar" :class="{ 'btn-ativo': aviso.fixado }" @click="alternarFixado(aviso)"
+                      :title="aviso.fixado ? 'Desafixar Aviso' : 'Fixar Aviso'">
+                      <img v-if="aviso.fixado" :src="require('@/assets/icons/pin-slash.svg')" class="icon-svg" alt="Desafixar" />
+                      <img v-else :src="require('@/assets/icons/pin.svg')" class="icon-svg" alt="Fixar" />
+                    </button>
+
+                    <button v-if="usuarioLogado.id === aviso.autorId || usuarioLogado.permissaoId === 1" 
+                      class="btn-icon btn-excluir"
+                      @click="deletarAviso(aviso.id)" title="Excluir Aviso">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon-svg" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
-            
-            </div> </div>
+            </div> 
+          </div>
         </div>
       </section>
 
@@ -118,6 +133,43 @@
                 {{ enviando ? 'Postando...' : 'Postar Aviso' }}
               </button>
               <button @click="exibirModalAviso = false" class="btn-cancelar">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </Teleport>
+
+      <Teleport to="body">
+        <div v-if="exibirModalHistorico" class="modal-overlay" @click.self="exibirModalHistorico = false">
+          <div class="modal-content modal-large">
+            <div class="header_avisos" style="margin-bottom: 10px; border:none;">
+               <h3>Histórico de Avisos Lidos</h3>
+               <button @click="exibirModalHistorico = false" class="btn-icon" style="border:none;">✕</button>
+            </div>
+            
+            <div class="filter-row">
+              <label style="font-weight: 600; margin-right: 10px;">Filtrar por ano:</label>
+              <select v-model="filtroAno" class="input-estilizado" style="width: auto; margin-bottom: 0;">
+                <option v-for="ano in anosDisponiveis" :key="ano" :value="ano">{{ ano }}</option>
+              </select>
+            </div>
+
+            <div class="lista_avisos" style="margin-top: 20px; max-height: 400px; overflow-y: auto;">
+              <div v-if="listaLidosFiltrada.length === 0" class="sem-avisos">
+                Nenhum aviso lido encontrado em {{ filtroAno }}.
+              </div>
+              <div v-else v-for="aviso in listaLidosFiltrada" :key="aviso.id" class="card_aviso_item" style="opacity: 0.8; background: #f9f9f9;">
+                <div class="aviso_conteudo">
+                  <div class="aviso_meta">
+                    <span style="font-weight: bold; color: #3B82F6;">{{ aviso.quadra?.nome || 'GERAL' }}</span>
+                    <span> • {{ formatarData(aviso.data) }}</span>
+                  </div>
+                  <h4>{{ aviso.titulo }}</h4>
+                  <p>{{ aviso.descricao }}</p>
+                </div>
+                <div class="aviso_right_side">
+                   <span style="color: #10B981; font-weight: bold; font-size: 12px;">✓ Lido</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -171,10 +223,12 @@ export default {
       agendamentosTipoChart: null,
       loading: false,
 
-      avisos: [],
-      listaQuadras: [],
       exibirTodosAvisos: false,
+      todosAvisos: [], 
+      listaQuadras: [],
       exibirModalAviso: false,
+      exibirModalHistorico: false,
+      filtroAno: new Date().getFullYear(),
       enviando: false,
       usuarioLogado: {},
       novoAviso: {
@@ -189,14 +243,35 @@ export default {
     podePostar() {
       return this.usuarioLogado?.permissaoId === 1 || this.usuarioLogado?.permissaoId === 2;
     },
-    avisosExibidos() {
-      const lista = [...this.avisos].sort((a, b) => {
-        if (a.fixado === b.fixado) return 0;
+    listaPendentes() {
+      return this.todosAvisos.filter(a => !this.verificarSeLi(a)).sort((a, b) => {
+        if (a.fixado === b.fixado) return new Date(b.data) - new Date(a.data);
         return a.fixado ? -1 : 1;
       });
-      if (this.exibirTodosAvisos) return lista;
-      return lista.length > 0 ? [lista[0]] : [];
     },
+    avisosExibidos() {
+      if (this.exibirTodosAvisos) {
+        return this.listaPendentes;
+      }
+      return this.listaPendentes.length > 0 ? [this.listaPendentes[0]] : [];
+    },
+    listaLidos() {
+        return this.todosAvisos.filter(a => this.verificarSeLi(a));
+    },
+    listaLidosFiltrada() {
+        return this.listaLidos.filter(a => {
+            const dataAviso = new Date(a.data);
+            return dataAviso.getFullYear() === Number(this.filtroAno);
+        }).sort((a, b) => new Date(b.data) - new Date(a.data));
+    },
+    anosDisponiveis() {
+        const anos = this.listaLidos.map(a => new Date(a.data).getFullYear());
+        const unicos = [...new Set(anos)];
+        if (!unicos.includes(new Date().getFullYear())) {
+            unicos.push(new Date().getFullYear());
+        }
+        return unicos.sort((a, b) => b - a);
+    }
   },
   async mounted() {
     this.usuarioLogado = JSON.parse(localStorage.getItem("usuario") || "{}");
@@ -217,6 +292,11 @@ export default {
     this.carregarAgendamentos();
   },
   methods: {
+    verificarSeLi(aviso) {
+      if (!this.usuarioLogado?.id || !aviso.leituras) return false;
+      return aviso.leituras.some(leitura => String(leitura.usuarioId) === String(this.usuarioLogado.id));
+    },
+
     abrirModal() {
       if (this.usuarioLogado.permissaoId === 2 && this.usuarioLogado.quadraId) {
         this.novoAviso.quadraId = this.usuarioLogado.quadraId;
@@ -226,9 +306,12 @@ export default {
       this.exibirModalAviso = true;
     },
 
+    abrirHistorico() {
+        this.exibirModalHistorico = true;
+    },
+
     async carregarQuadrasParaSelect() {
       if (this.listaQuadras.length > 0) return;
-
       try {
         const res = await api.get('/quadra');
         this.listaQuadras = res.data;
@@ -245,7 +328,6 @@ export default {
       try {
         this.loading = true
         let data = []
-
         if (this.usuarioLogado?.permissaoId === 1) {
           const res = await api.get('/agendamentos/todos')
           data = res.data
@@ -256,14 +338,12 @@ export default {
         } else {
           return
         }
-
         const anoAtual = new Date().getFullYear()
         this.agendamentos = data.filter(a => {
           if (a.ano) return a.ano === anoAtual
           if (a.data) return new Date(a.data).getFullYear() === anoAtual
           return false
         })
-
         this.totalAgendamentos = this.agendamentos.length
         this.totalPendentes = this.agendamentos.filter(a => a.status === 'Pendente').length
         this.totalConfirmados = this.agendamentos.filter(a => a.status === 'Confirmado').length
@@ -285,10 +365,7 @@ export default {
         let requests = [];
 
         requests.push(
-            api.get(`/quadras/geral/avisos`).catch(err => {
-                console.warn("Aviso Geral não retornou:", err.response?.status); 
-                return { data: [] }; 
-            })
+            api.get(`/quadras/geral/avisos`).catch(() => ({ data: [] }))
         );
 
         if (this.usuarioLogado.permissaoId === 1) {
@@ -296,36 +373,42 @@ export default {
             await this.carregarQuadrasParaSelect();
           }
           this.listaQuadras.forEach(q => {
-             requests.push(
-                api.get(`/quadras/${q.id}/avisos`).catch(() => ({ data: [] }))
-             );
+             requests.push(api.get(`/quadras/${q.id}/avisos`).catch(() => ({ data: [] })));
           });
         } 
         else if (this.usuarioLogado.quadraId) {
-           requests.push(
-             api.get(`/quadras/${this.usuarioLogado.quadraId}/avisos`).catch(() => ({ data: [] }))
-           );
+           requests.push(api.get(`/quadras/${this.usuarioLogado.quadraId}/avisos`).catch(() => ({ data: [] })));
         }
 
         const respostas = await Promise.all(requests);
-
-        let todosAvisos = [];
+        let tempAvisos = [];
         respostas.forEach(res => {
           if (res && Array.isArray(res.data)) {
-            todosAvisos.push(...res.data);
+            tempAvisos.push(...res.data);
           }
         });
 
-        const avisosUnicos = [...new Map(todosAvisos.map(item => [item.id, item])).values()];
-        
-        this.avisos = avisosUnicos.sort((a, b) => {
-             if (a.fixado === b.fixado) return b.id - a.id; 
-             return a.fixado ? -1 : 1; 
-        });
+        this.todosAvisos = [...new Map(tempAvisos.map(item => [item.id, item])).values()];
 
       } catch (error) {
         console.error('Erro ao carregar avisos', error);
       }
+    },
+
+    async marcarComoLido(aviso) {
+        try {
+            await api.post(`/avisos/${aviso.id}/ler`, { usuarioId: this.usuarioLogado.id });
+            
+            if (!aviso.leituras) aviso.leituras = [];
+            aviso.leituras.push({ usuarioId: this.usuarioLogado.id });
+            
+            const Toast = Swal.mixin({
+                toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, timerProgressBar: true
+            });
+            Toast.fire({ icon: 'success', title: 'Lido' });
+        } catch (error) {
+            console.error("Erro ao ler", error);
+        }
     },
 
     async enviarAviso() {
@@ -353,7 +436,6 @@ export default {
         });
 
         const quadraMantida = this.usuarioLogado.permissaoId === 2 ? this.usuarioLogado.quadraId : "";
-
         this.novoAviso = { titulo: '', descricao: '', fixado: false, quadraId: quadraMantida };
 
         this.exibirModalAviso = false;
@@ -404,8 +486,8 @@ export default {
     async alternarFixado(aviso) {
        try {
         const novoStatus = !aviso.fixado;
-        const index = this.avisos.findIndex(a => a.id === aviso.id);
-        if (index !== -1) this.avisos[index].fixado = novoStatus;
+        const index = this.todosAvisos.findIndex(a => a.id === aviso.id);
+        if (index !== -1) this.todosAvisos[index].fixado = novoStatus;
         await api.patch(`/avisos/${aviso.id}/fixar`, { fixado: novoStatus });
         await this.carregarAvisos();
       } catch (error) {
@@ -413,6 +495,7 @@ export default {
         Swal.fire('Erro', 'Falha ao alterar status fixado.', 'error');
       }
     },
+    
     renderAgendamentosModalidadeChart() {
       const canvas = document.getElementById('agendamentosModalidadeChart')
       if (this.agendamentosModalidadeChart) this.agendamentosModalidadeChart.destroy()
@@ -651,6 +734,16 @@ export default {
   transition: all 0.2s ease;
 }
 
+.btn-historico {
+  background: white;
+  color: #3b82f6;
+  border: 1px solid #3b82f6;
+  gap: 8px;
+}
+.btn-historico:hover {
+  background: #f0f7ff;
+}
+
 .btn-ver-mais {
   background: transparent;
   color: #3b82f6;
@@ -726,9 +819,8 @@ export default {
 }
 
 .icon-mini {
-  width: 14px;
-  height: 14px;
-  margin-right: 4px;
+  width: 18px;
+  height: 18px;
   vertical-align: middle;
 }
 
@@ -751,11 +843,32 @@ export default {
   color: #666;
 }
 
+.aviso_actions_wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
 .aviso_actions {
   display: flex;
   gap: 8px;
   align-items: center;
   flex-shrink: 0;
+}
+
+.btn-ler {
+  background: transparent;
+  border: none;
+  color: #3B82F6;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+.btn-ler:hover {
+  color: #1E3A8A;
 }
 
 .btn-icon {
@@ -811,6 +924,7 @@ export default {
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(2px);
+  z-index: 1000;
 }
 
 .modal-content {
@@ -820,6 +934,10 @@ export default {
   width: 100%;
   max-width: 450px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-large {
+    max-width: 600px;
 }
 
 .modal-actions {
@@ -877,6 +995,12 @@ export default {
 .btn-confirmar:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.filter-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
 @keyframes spin {
@@ -938,6 +1062,13 @@ export default {
     flex-direction: row;
     justify-content: space-between;
     width: 100%;
+  }
+  
+  .aviso_actions_wrapper {
+      align-items: flex-end;
+      flex-direction: row;
+      justify-content: space-between;
+      width: 100%;
   }
 }
 </style>
