@@ -2,6 +2,34 @@
   <div class="container">
     <NavBar />
 
+    <div v-if="avisoDestaque" class="aviso-banner">
+      <div class="aviso-body">
+        <div class="aviso-icon-wrapper">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon-atencao" viewBox="0 0 24 24" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
+              clip-rule="evenodd" />
+          </svg>
+        </div>
+
+        <div class="aviso-content-col">
+          <div class="aviso-quadra-tag">
+            {{ avisoDestaque.quadra?.nome || ' EQUIPE QUADRA LIVRE ' }}
+          </div>
+
+          <h4 class="aviso-titulo">{{ avisoDestaque.titulo }}</h4>
+
+          <p class="aviso-descricao">
+            {{ avisoDestaque.descricao }}
+          </p>
+
+          <div class="btn-ler-container">
+            <span class="btn-ler" @click="marcarLido" role="button">Marcar como lido</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="titulo">
       <h1>Agendar Quadra</h1>
     </div>
@@ -15,11 +43,7 @@
 
       <div v-else class="quadras-grid">
         <div class="card-quadra" v-for="quadra in quadras" :key="quadra.id">
-          <img
-            :src="quadra.foto || require('@/assets/futibinha.png')"
-            :alt="quadra.nome"
-            class="imagem-quadra"
-          />
+          <img :src="quadra.foto || require('@/assets/futibinha.png')" :alt="quadra.nome" class="imagem-quadra" />
           <div class="overlay">
             <h3 class="nome-quadra">{{ quadra.nome }}</h3>
             <h3 class="endereco">{{ quadra.endereco }}</h3>
@@ -31,13 +55,8 @@
       </div>
     </div>
 
-    <!-- Modal final de agendamento -->
-    <AgendamentoModal
-      v-if="mostrarModalAgendamento"
-      :quadra="quadraSelecionada"
-      @fechar="mostrarModalAgendamento = false"
-      @confirmar="confirmarAgendamento"
-    />
+    <AgendamentoModal v-if="mostrarModalAgendamento" :quadra="quadraSelecionada"
+      @fechar="mostrarModalAgendamento = false" @confirmar="confirmarAgendamento" />
   </div>
 </template>
 
@@ -57,17 +76,98 @@ export default {
       isLoadingQuadras: true,
       mostrarModalAgendamento: false,
       quadraSelecionada: null,
+      avisoDestaque: null,
     };
   },
   mounted() {
     this.carregarQuadras();
   },
   methods: {
+    async carregarAvisoDestaque() {
+      try {
+        const authStore = useAuthStore();
+        const usuarioId = authStore.usuario?.id;
+        let todosAvisos = [];
+
+        const reqGerais = api.get("/quadras/geral/avisos").catch(() => ({ data: [] }));
+
+        let promessasQuadras = [];
+        if (this.quadras.length > 0) {
+          promessasQuadras = this.quadras.map(q => api.get(`/quadras/${q.id}/avisos`));
+        }
+
+        const [resGerais, ...respostasQuadras] = await Promise.all([reqGerais, ...promessasQuadras]);
+
+        if (Array.isArray(resGerais.data)) {
+          const geraisNaoLidos = resGerais.data.filter(aviso => {
+            if (!aviso.leituras) return true;
+            return !aviso.leituras.some(leitura => String(leitura.usuarioId) === String(usuarioId));
+          });
+          
+          const geraisFormatados = geraisNaoLidos.map(a => ({ ...a, quadra: null }));
+          todosAvisos.push(...geraisFormatados);
+        }
+
+        respostasQuadras.forEach((res, index) => {
+          if (Array.isArray(res.data) && res.data.length > 0) {
+            const naoLidos = res.data.filter(aviso => {
+              if (!aviso.leituras) return true;
+              return !aviso.leituras.some(leitura => String(leitura.usuarioId) === String(usuarioId));
+            });
+
+            const avisosComQuadra = naoLidos.map(aviso => ({
+              ...aviso,
+              quadra: this.quadras[index]
+            }));
+            todosAvisos.push(...avisosComQuadra);
+          }
+        });
+
+        if (todosAvisos.length === 0) {
+          this.avisoDestaque = null;
+          return;
+        }
+
+        todosAvisos.sort((a, b) => {
+          if (a.fixado === b.fixado) {
+            return new Date(b.data) - new Date(a.data);
+          }
+          return a.fixado ? -1 : 1;
+        });
+
+        this.avisoDestaque = todosAvisos[0];
+
+      } catch (err) {
+        console.error("Erro ao carregar avisos para destaque:", err);
+      }
+    },
+
+    async marcarLido() {
+      const authStore = useAuthStore();
+
+      if (this.avisoDestaque && authStore.usuario) {
+        try {
+          await api.post(`/avisos/${this.avisoDestaque.id}/ler`, {
+            usuarioId: authStore.usuario.id
+          });
+          
+          this.avisoDestaque = null;
+
+
+        } catch (error) {
+          console.warn("Não foi possível marcar como lido no servidor", error);
+        }
+      }
+    },
+
     async carregarQuadras() {
       this.isLoadingQuadras = true;
       try {
         const { data } = await api.get("/quadra");
         this.quadras = data;
+
+        this.carregarAvisoDestaque();
+        
       } catch (err) {
         console.error("Erro ao carregar quadras:", err);
       } finally {
@@ -108,7 +208,6 @@ export default {
         return;
       }
 
-      // Regras de antecedência em horas
       const regrasAntecedencia = {
         TREINO: 24,
         AMISTOSO: 7 * 24,
@@ -129,7 +228,7 @@ export default {
         hora = Number(agendamentoDoModal.hora ?? 0);
       }
 
-      const dataAgendamento = new Date(Date.UTC (
+      const dataAgendamento = new Date(Date.UTC(
         Number(agendamentoDoModal.ano),
         Number(agendamentoDoModal.mes) - 1,
         Number(agendamentoDoModal.dia),
@@ -142,17 +241,14 @@ export default {
       const diferencaMs = dataAgendamento.getTime() - agora.getTime();
       const diferencaHoras = diferencaMs / (1000 * 60 * 60);
 
-      console.log({ dataAgendamento, agora, diferencaHoras, antecedenciaHoras });
-
       if (diferencaHoras < antecedenciaHoras) {
         Swal.fire({
           icon: "warning",
           title: "Antecedência mínima não respeitada",
-          text: `Para ${tipo}, o agendamento deve ser feito com pelo menos ${
-            antecedenciaHoras >= 24
-              ? antecedenciaHoras / 24 + " dias"
-              : antecedenciaHoras + " horas"
-          } de antecedência.`,
+          text: `Para ${tipo}, o agendamento deve ser feito com pelo menos ${antecedenciaHoras >= 24
+            ? antecedenciaHoras / 24 + " dias"
+            : antecedenciaHoras + " horas"
+            } de antecedência.`,
           confirmButtonColor: "#1E3A8A",
         });
         return;
@@ -183,32 +279,12 @@ export default {
         const msg = err.response?.data?.error || err.response?.data?.message;
 
         if (err.response?.status === 409) {
-          Swal.fire({
-            icon: "warning",
-            title: "Horário já agendado",
-            text: "Escolha outro horário para esta quadra.",
-            confirmButtonColor: "#1E3A8A",
-          });
-        } else if (
-          err.response?.status === 400 &&
-          msg?.includes("já possui 2 agendamentos nesta semana")
-        ) {
-          Swal.fire({
-            icon: "warning",
-            title: "Limite de agendamentos atingido",
-            text: msg,
-            confirmButtonColor: "#1E3A8A",
-          });
+          Swal.fire({ icon: "warning", title: "Horário já agendado", text: "Escolha outro horário.", confirmButtonColor: "#1E3A8A" });
+        } else if (err.response?.status === 400 && msg?.includes("já possui 2 agendamentos")) {
+          Swal.fire({ icon: "warning", title: "Limite atingido", text: msg, confirmButtonColor: "#1E3A8A" });
         } else {
-          Swal.fire({
-            icon: "error",
-            title: "Erro inesperado",
-            text: "Ocorreu um problema ao tentar agendar. Tente novamente.",
-            confirmButtonColor: "#1E3A8A",
-          });
+          Swal.fire({ icon: "error", title: "Erro inesperado", text: "Tente novamente.", confirmButtonColor: "#1E3A8A" });
         }
-
-        console.error("Erro ao agendar:", err);
       }
     }
   },
@@ -228,11 +304,108 @@ body {
   min-height: 100vh;
   width: 100%;
   max-width: none;
-  padding: 24px 80px; 
+  padding: 24px 80px;
+}
+
+.aviso-banner {
+  background-color: #EFF6FF;
+  border-left: 5px solid #3B82F6;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-top: 80px;
+  margin-bottom: -20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.aviso-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.aviso-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #DBEafe;
+  padding: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.icon-atencao {
+  width: 24px;
+  height: 24px;
+  color: #1E3A8A;
+}
+
+.aviso-content-col {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.aviso-quadra-tag {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #60A5FA;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  text-align: left;
+}
+
+.aviso-titulo {
+  color: #1E3A8A;
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0 0 6px 0;
+}
+
+.aviso-descricao {
+  color: #1e3a8a;
+  font-size: 14px;
+  margin: 0 0 8px 0;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.btn-ler-container {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.btn-ler {
+  font-size: 13px;
+  font-weight: 700;
+  color: #3B82F6;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.btn-ler:hover {
+  color: #1E3A8A;
 }
 
 .titulo {
-  margin-top: 80px;
+  margin-top: 40px;
   margin-bottom: 32px;
 }
 

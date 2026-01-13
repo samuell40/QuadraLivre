@@ -50,14 +50,11 @@
           <div class="lista_avisos" v-else>
             <div v-for="aviso in avisosExibidos" :key="aviso.id" class="card_aviso_item"
               :class="{ 'aviso-fixado': aviso.fixado }">
+              
               <div class="aviso_conteudo">
                 <div class="aviso_meta">
-                  <span class="aviso_data">
-                    <svg v-if="aviso.fixado" xmlns="http://www.w3.org/2000/svg" class="icon-mini" viewBox="0 0 24 24"
-                      fill="currentColor">
-                      <path d="M18 3v2h-2v7l2 2v2h-6v5l-1 1-1-1v-5H4v-2l2-2V5H4V3h14z" />
-                    </svg>
-                    {{ formatarData(aviso.data) }}
+                  <span class="aviso_origem" style="font-weight: bold; color: #3B82F6; margin-right: 8px;">
+                    {{ aviso.quadra?.nome || ' EQUIPE QUADRA LIVRE ' }}
                   </span>
                 </div>
                 <h4>{{ aviso.titulo }}</h4>
@@ -66,21 +63,14 @@
 
               <div class="aviso_right_side">
                 <span class="aviso_autor">Autor: {{ aviso.autor?.nome }}</span>
-
                 <div class="aviso_actions" v-if="podePostar">
-                  <button class="btn-icon btn-fixar" :class="{ 'btn-ativo': aviso.fixado }"
-                    @click="alternarFixado(aviso)" :title="aviso.fixado ? 'Desafixar Aviso' : 'Fixar Aviso'">
-                    <svg v-if="aviso.fixado" xmlns="http://www.w3.org/2000/svg" class="icon-svg" fill="none"
-                      viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M3 3l18 18M16 3v2h-2v5.172l2 2V14h-3.172l3 3H18v2h-6v5l-1 1-1-1v-5H6.828l2-2H4v-2l2-2V7.828l-2-2V3h12z" />
-                    </svg>
 
-                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="icon-svg" fill="none" viewBox="0 0 24 24"
-                      stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M18 3v2h-2v7l2 2v2h-6v5l-1 1-1-1v-5H4v-2l2-2V5H4V3h14z" />
-                    </svg>
+                  <button class="btn-icon btn-fixar" :class="{ 'btn-ativo': aviso.fixado }" @click="alternarFixado(aviso)"
+                    :title="aviso.fixado ? 'Desafixar Aviso' : 'Fixar Aviso'">
+                    <img v-if="aviso.fixado" :src="require('@/assets/icons/pin-slash.svg')" class="icon-svg"
+                      alt="Desafixar" />
+
+                    <img v-else :src="require('@/assets/icons/pin.svg')" class="icon-svg" alt="Fixar" />
                   </button>
 
                   <button v-if="usuarioLogado.id === aviso.autorId" class="btn-icon btn-excluir"
@@ -93,8 +83,8 @@
                   </button>
                 </div>
               </div>
-            </div>
-          </div>
+            
+            </div> </div>
         </div>
       </section>
 
@@ -102,9 +92,21 @@
         <div v-if="exibirModalAviso" class="modal-overlay" @click.self="exibirModalAviso = false">
           <div class="modal-content">
             <h3>Cadastrar Novo Aviso</h3>
+
+            <div class="form-group" v-if="usuarioLogado.permissaoId === 1">
+              <label class="label-input">Quadra de Destino</label>
+              <select v-model="novoAviso.quadraId" class="input-estilizado">
+                <option value="" disabled>Selecione uma quadra</option>
+                <option :value="null">Aviso Geral</option>
+                <option v-for="q in listaQuadras" :key="q.id" :value="q.id">
+                  {{ q.nome }}
+                </option>
+              </select>
+            </div>
+
             <input v-model="novoAviso.titulo" placeholder="Título do aviso" class="input-estilizado" />
             <textarea v-model="novoAviso.descricao" placeholder="O que você quer avisar?"
-              class="input-estilizado"></textarea>
+              class="input-estilizado area-texto"></textarea>
 
             <div class="form-group-checkbox">
               <input type="checkbox" id="fixarNovo" v-model="novoAviso.fixado">
@@ -129,7 +131,6 @@
           <canvas id="agendamentosTipoChart"></canvas>
         </div>
       </section>
-
       <section class="section_graficos_bottom">
         <div v-if="loading" class="loader-container-centralizado">
           <div class="loader"></div>
@@ -169,7 +170,9 @@ export default {
       agendamentosModalidadeChart: null,
       agendamentosTipoChart: null,
       loading: false,
+
       avisos: [],
+      listaQuadras: [],
       exibirTodosAvisos: false,
       exibirModalAviso: false,
       enviando: false,
@@ -177,7 +180,8 @@ export default {
       novoAviso: {
         titulo: '',
         descricao: '',
-        fixado: false
+        fixado: false,
+        quadraId: ""
       }
     }
   },
@@ -190,48 +194,53 @@ export default {
         if (a.fixado === b.fixado) return 0;
         return a.fixado ? -1 : 1;
       });
-
       if (this.exibirTodosAvisos) return lista;
       return lista.length > 0 ? [lista[0]] : [];
     },
   },
-  mounted() {
+  async mounted() {
     this.usuarioLogado = JSON.parse(localStorage.getItem("usuario") || "{}");
     window.scrollTo(0, 0)
-    this.carregarAgendamentos()
-    this.carregarUsuarios()
-    this.carregarTimes()
-    this.carregarModalidades()
-    this.carregarAvisos()
+
+    if (this.usuarioLogado.quadraId) {
+      this.novoAviso.quadraId = this.usuarioLogado.quadraId;
+    }
+
+    await Promise.all([
+      this.carregarQuadrasParaSelect(),
+      this.carregarUsuarios(),
+      this.carregarTimes(),
+      this.carregarModalidades()
+    ]);
+
+    this.carregarAvisos();
+    this.carregarAgendamentos();
   },
   methods: {
     abrirModal() {
+      if (this.usuarioLogado.permissaoId === 2 && this.usuarioLogado.quadraId) {
+        this.novoAviso.quadraId = this.usuarioLogado.quadraId;
+      } else {
+        this.novoAviso.quadraId = "";
+      }
       this.exibirModalAviso = true;
     },
-    async carregarUsuarios() {
+
+    async carregarQuadrasParaSelect() {
+      if (this.listaQuadras.length > 0) return;
+
       try {
-        const res = await api.get('/usuarios')
-        this.totalUsuarios = Array.isArray(res.data) ? res.data.length : 0
+        const res = await api.get('/quadra');
+        this.listaQuadras = res.data;
       } catch (error) {
-        console.error('Erro ao carregar usuários:', error)
+        console.error("Erro ao carregar lista de quadras", error);
       }
     },
-    async carregarTimes() {
-      try {
-        const res = await api.get('/times')
-        this.totalTimes = Array.isArray(res.data) ? res.data.length : 0
-      } catch (error) {
-        console.error('Erro ao carregar times:', error)
-      }
-    },
-    async carregarModalidades() {
-      try {
-        const res = await api.get('/listar/modalidade')
-        this.totalModalidades = Array.isArray(res.data) ? res.data.length : 0
-      } catch (error) {
-        console.error('Erro ao carregar modalidades:', error)
-      }
-    },
+
+    async carregarUsuarios() { try { const res = await api.get('/usuarios'); this.totalUsuarios = Array.isArray(res.data) ? res.data.length : 0; } catch (error) { console.error(error); } },
+    async carregarTimes() { try { const res = await api.get('/times'); this.totalTimes = Array.isArray(res.data) ? res.data.length : 0; } catch (error) { console.error(error); } },
+    async carregarModalidades() { try { const res = await api.get('/listar/modalidade'); this.totalModalidades = Array.isArray(res.data) ? res.data.length : 0; } catch (error) { console.error(error); } },
+    
     async carregarAgendamentos() {
       try {
         this.loading = true
@@ -241,10 +250,7 @@ export default {
           const res = await api.get('/agendamentos/todos')
           data = res.data
         } else if (this.usuarioLogado?.permissaoId === 2) {
-          if (!this.usuarioLogado.quadraId) {
-            console.warn("Usuário com permissão 2 não possui quadra vinculada.")
-            return
-          }
+          if (!this.usuarioLogado.quadraId) return
           const res = await api.get(`/agendamentos/quadra/${this.usuarioLogado.quadraId}`)
           data = res.data
         } else {
@@ -273,52 +279,94 @@ export default {
         this.loading = false
       }
     },
-    formatarData(data) {
-      return new Date(data).toLocaleDateString('pt-BR');
-    },
+
     async carregarAvisos() {
       try {
-        if (!this.usuarioLogado?.quadraId) return;
-        const res = await api.get(`/quadras/${this.usuarioLogado.quadraId}/avisos`);
-        this.avisos = Array.isArray(res.data) ? res.data : [];
-      } catch (error) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Erro de Conectividade',
-          text: 'Não foi possível recuperar o mural de avisos.',
-          confirmButtonColor: '#1E3A8A',
+        let requests = [];
+
+        requests.push(
+            api.get(`/quadras/geral/avisos`).catch(err => {
+                console.warn("Aviso Geral não retornou:", err.response?.status); 
+                return { data: [] }; 
+            })
+        );
+
+        if (this.usuarioLogado.permissaoId === 1) {
+          if (this.listaQuadras.length === 0) {
+            await this.carregarQuadrasParaSelect();
+          }
+          this.listaQuadras.forEach(q => {
+             requests.push(
+                api.get(`/quadras/${q.id}/avisos`).catch(() => ({ data: [] }))
+             );
+          });
+        } 
+        else if (this.usuarioLogado.quadraId) {
+           requests.push(
+             api.get(`/quadras/${this.usuarioLogado.quadraId}/avisos`).catch(() => ({ data: [] }))
+           );
+        }
+
+        const respostas = await Promise.all(requests);
+
+        let todosAvisos = [];
+        respostas.forEach(res => {
+          if (res && Array.isArray(res.data)) {
+            todosAvisos.push(...res.data);
+          }
         });
+
+        const avisosUnicos = [...new Map(todosAvisos.map(item => [item.id, item])).values()];
+        
+        this.avisos = avisosUnicos.sort((a, b) => {
+             if (a.fixado === b.fixado) return b.id - a.id; 
+             return a.fixado ? -1 : 1; 
+        });
+
+      } catch (error) {
+        console.error('Erro ao carregar avisos', error);
       }
     },
+
     async enviarAviso() {
-      if (!this.novoAviso.titulo || !this.novoAviso.descricao) {
+      const ehAdmin = this.usuarioLogado.permissaoId === 1;
+      const quadraObrigatoria = !ehAdmin;
+
+      if (!this.novoAviso.titulo || !this.novoAviso.descricao || (quadraObrigatoria && !this.novoAviso.quadraId) || (ehAdmin && this.novoAviso.quadraId === "")) {
         Swal.fire({
           icon: 'warning',
           title: 'Campos Incompletos',
-          text: 'Preencha título e descrição.',
+          text: 'Preencha título, descrição e escolha o destino.',
           confirmButtonColor: '#1E3A8A',
         });
         return;
       }
+
       try {
         this.enviando = true;
         await api.post('/avisos', {
           titulo: this.novoAviso.titulo,
           descricao: this.novoAviso.descricao,
           fixado: this.novoAviso.fixado,
-          quadraId: this.usuarioLogado.quadraId,
+          quadraId: this.novoAviso.quadraId,
           autorId: this.usuarioLogado.id
         });
-        this.novoAviso = { titulo: '', descricao: '', fixado: false };
+
+        const quadraMantida = this.usuarioLogado.permissaoId === 2 ? this.usuarioLogado.quadraId : "";
+
+        this.novoAviso = { titulo: '', descricao: '', fixado: false, quadraId: quadraMantida };
+
         this.exibirModalAviso = false;
         await this.carregarAvisos();
+
         Swal.fire({
           icon: 'success',
           title: 'Aviso Publicado',
-          text: 'O aviso foi salvo e os usuários serão notificados por e-mail.',
+          text: 'O aviso foi salvo com sucesso.',
           confirmButtonColor: '#1E3A8A',
         });
       } catch (error) {
+        console.error(error);
         Swal.fire({
           icon: 'error',
           title: 'Erro na Operação',
@@ -329,8 +377,10 @@ export default {
         this.enviando = false;
       }
     },
+    
+    formatarData(data) { return new Date(data).toLocaleDateString('pt-BR'); },
     async deletarAviso(id) {
-      const result = await Swal.fire({
+       const result = await Swal.fire({
         title: 'Excluir Aviso?',
         text: "Essa ação não pode ser desfeita.",
         icon: 'warning',
@@ -340,6 +390,7 @@ export default {
         confirmButtonText: 'Sim, excluir',
         cancelButtonText: 'Cancelar'
       });
+
       if (result.isConfirmed) {
         try {
           await api.delete(`/avisos/${id}`);
@@ -351,7 +402,7 @@ export default {
       }
     },
     async alternarFixado(aviso) {
-      try {
+       try {
         const novoStatus = !aviso.fixado;
         const index = this.avisos.findIndex(a => a.id === aviso.id);
         if (index !== -1) this.avisos[index].fixado = novoStatus;
@@ -582,6 +633,11 @@ export default {
   align-items: center;
 }
 
+.area-texto {
+  min-height: 100px;
+  resize: vertical;
+}
+
 .btn-padrao {
   height: 38px;
   padding: 0 16px;
@@ -661,10 +717,19 @@ export default {
   margin-bottom: 5px;
 }
 
+.label-input {
+  display: block;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
 .icon-mini {
   width: 14px;
   height: 14px;
-  color: #1E3A8A;
+  margin-right: 4px;
+  vertical-align: middle;
 }
 
 .card_aviso_item h4 {
@@ -690,6 +755,7 @@ export default {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .btn-icon {
@@ -704,6 +770,7 @@ export default {
   justify-content: center;
   transition: all 0.2s;
   color: #6b7280;
+  flex-shrink: 0;
 }
 
 .btn-icon:hover {

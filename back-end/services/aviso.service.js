@@ -3,46 +3,68 @@ const prisma = new PrismaClient();
 const emailService = require('./email.service');
 
 async function criarAviso(dados) {
+  let idQuadraTratado = null;
+  
+  if (dados.quadraId && dados.quadraId !== "null" && dados.quadraId !== "" && Number(dados.quadraId) !== 0) {
+      idQuadraTratado = Number(dados.quadraId);
+  }
+
+  const idAutorTratado = Number(dados.autorId);
+
   const novoAviso = await prisma.aviso.create({
     data: {
       titulo: dados.titulo,
       descricao: dados.descricao,
       foto: dados.foto,
       fixado: dados.fixado || false,
-      quadraId: Number(dados.quadraId),
-      autorId: Number(dados.autorId)
+      quadraId: idQuadraTratado,
+      autorId: idAutorTratado
     },
     include: { quadra: true }
   });
 
-  const usuarios = await prisma.usuario.findMany({
-    where: { 
-      NOT: { id: Number(dados.autorId) }
-    },
-    select: { email: true }
-  });
-
-  const listaEmails = usuarios.map(u => u.email);
-
-  emailService.enviarEmailNovoAviso(listaEmails, novoAviso).catch(err => {
-    console.error("Erro ao enviar email de aviso:", err);
-  });
+  try {
+    const usuarios = await prisma.usuario.findMany({
+        where: { NOT: { id: idAutorTratado } },
+        select: { email: true }
+    });
+    const listaEmails = usuarios.map(u => u.email);
+    emailService.enviarEmailNovoAviso(listaEmails, novoAviso).catch(err => console.error("Erro email:", err));
+  } catch (error) {
+    console.error("Erro ao buscar emails:", error);
+  }
 
   return novoAviso;
 }
 
-async function listarAvisosPorQuadra(idDaQuadra) {
-  return await prisma.aviso.findMany({
-    where: { quadraId: Number(idDaQuadra) },
+async function listarAvisosPorQuadra(quadraId) {
+  let whereClause = {};
+
+  if (quadraId === null || quadraId === 'geral' || quadraId === 'null') {
+    whereClause = { quadraId: null };
+  } else {
+    const idNumero = Number(quadraId);
+    if (idNumero === 0 || isNaN(idNumero)) {
+        whereClause = { quadraId: null }; 
+    } else {
+        whereClause = { quadraId: idNumero };
+    }
+  }
+
+  const avisos = await prisma.aviso.findMany({
+    where: whereClause,
+    include: {
+      autor: true,
+      quadra: true,
+      leituras: true
+    },
     orderBy: [
       { fixado: 'desc' },
       { data: 'desc' }
-    ],
-    include: { 
-      autor: true,
-      leituras: true
-    }
+    ]
   });
+
+  return avisos;
 }
 
 async function deletarAviso(id) {

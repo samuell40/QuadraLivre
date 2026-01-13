@@ -244,8 +244,8 @@ model Aviso {
   data        DateTime @default(now())
   fixado      Boolean @default(false)
 
-  quadraId    Int
-  quadra      Quadra   @relation(fields: [quadraId], references: [id])
+  quadraId    Int?
+  quadra      Quadra?   @relation(fields: [quadraId], references: [id])
 
   autorId     Int
   autor       Usuario  @relation(fields: [autorId], references: [id])
@@ -261,7 +261,7 @@ model AvisoLeitura {
   usuario   Usuario  @relation(fields: [usuarioId], references: [id])
   
   avisoId   Int
-  aviso     Aviso    @relation(fields: [avisoId], references: [id])
+  aviso     Aviso    @relation(fields: [avisoId], references: [id], onDelete: Cascade)
 
   @@unique([usuarioId, avisoId])
 }

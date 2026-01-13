@@ -12,12 +12,17 @@ async function criarAvisoController(req, res) {
 
 async function listarAvisosController(req, res) {
   try {
-    const { quadraId } = req.params;
+    let { quadraId } = req.params;
+
+    if (quadraId === 'geral') {
+      quadraId = null; 
+    }
+
     const lista = await avisoService.listarAvisosPorQuadra(quadraId);
     return res.status(200).json(lista);
   } catch (error) {
-    console.error("Erro ao buscar avisos:", error);
-    return res.status(500).json({ error: 'Erro ao buscar avisos.' });
+    console.error("Erro ao listar avisos:", error);
+    return res.status(500).json({ error: 'Erro interno ao buscar avisos.' });
   }
 }
 

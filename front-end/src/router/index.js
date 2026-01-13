@@ -16,6 +16,7 @@ import GoogleCallback from '@/views/GoogleCallback.vue';
 import GerenciartimesView from '@/views/GerenciartimesView.vue';
 import GerenciarModalidadesView from '@/views/GerenciarModalidadesView.vue';
 import GerenicarCampeonatosView from '@/views/GerenciarCampeonatosView.vue';
+import MeusAvisosView from '../views/MeusAvisosView.vue';
 
 const routes = [
   {
@@ -52,6 +53,12 @@ const routes = [
     path: '/meusagendamentos',
     name: 'meus_agendamentos',
     component: MeusAgendamentosView,
+    meta: { requiresAuth: true, roles: [3] },
+  },
+  {
+    path: '/meusavisos',
+    name: 'meus_avisos',
+    component: MeusAvisosView,
     meta: { requiresAuth: true, roles: [3] },
   },
   {
