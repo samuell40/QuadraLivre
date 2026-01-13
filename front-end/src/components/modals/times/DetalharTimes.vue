@@ -172,7 +172,7 @@ export default {
   flex-direction: column;
   gap: 20px;
   width: fit-content;
-  min-width: 700px;
+  min-width: 900px;
   max-width: 95vw;
   max-height: 90vh;
   box-sizing: border-box;

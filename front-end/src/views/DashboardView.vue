@@ -31,22 +31,23 @@
       <section class="section_avisos">
         <div class="card_avisos_container">
           <div class="header_avisos">
-            <h3>Mural de Avisos</h3>
+            <h3 class="avisos">Mural de Avisos</h3>
             <div class="header_actions">
-              
-              <button v-if="listaPendentes.length > 1" type="button" 
-                      @click="exibirTodosAvisos = !exibirTodosAvisos"
-                      class="btn-padrao btn-ver-mais">
+
+              <button v-if="listaPendentes.length > 1" type="button" @click="exibirTodosAvisos = !exibirTodosAvisos"
+                class="btn-padrao btn-ver-mais">
                 {{ exibirTodosAvisos ? 'Ver menos' : 'Ver todos (' + listaPendentes.length + ')' }}
               </button>
 
               <button type="button" @click="abrirHistorico" class="btn-padrao btn-historico">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon-mini" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon-mini" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 Histórico
               </button>
-              
+
               <button v-if="podePostar" type="button" @click="abrirModal" class="btn-padrao btn-novo-aviso">
                 + Novo Aviso
               </button>
@@ -59,7 +60,7 @@
           <div class="lista_avisos" v-else>
             <div v-for="aviso in avisosExibidos" :key="aviso.id" class="card_aviso_item"
               :class="{ 'aviso-fixado': aviso.fixado }">
-              
+
               <div class="aviso_conteudo">
                 <div class="aviso_meta">
                   <span class="aviso_origem" style="font-weight: bold; color: #3B82F6; margin-right: 8px;">
@@ -73,22 +74,22 @@
 
               <div class="aviso_right_side">
                 <span class="aviso_autor">Autor: {{ aviso.autor?.nome }}</span>
-                
+
                 <div class="aviso_actions_wrapper">
                   <button class="btn-ler" @click="marcarComoLido(aviso)">
                     Marcar como lido
                   </button>
 
                   <div class="aviso_actions" v-if="podePostar">
-                    <button class="btn-icon btn-fixar" :class="{ 'btn-ativo': aviso.fixado }" @click="alternarFixado(aviso)"
-                      :title="aviso.fixado ? 'Desafixar Aviso' : 'Fixar Aviso'">
-                      <img v-if="aviso.fixado" :src="require('@/assets/icons/pin-slash.svg')" class="icon-svg" alt="Desafixar" />
+                    <button class="btn-icon btn-fixar" :class="{ 'btn-ativo': aviso.fixado }"
+                      @click="alternarFixado(aviso)" :title="aviso.fixado ? 'Desafixar Aviso' : 'Fixar Aviso'">
+                      <img v-if="aviso.fixado" :src="require('@/assets/icons/pin-slash.svg')" class="icon-svg"
+                        alt="Desafixar" />
                       <img v-else :src="require('@/assets/icons/pin.svg')" class="icon-svg" alt="Fixar" />
                     </button>
 
-                    <button v-if="usuarioLogado.id === aviso.autorId || usuarioLogado.permissaoId === 1" 
-                      class="btn-icon btn-excluir"
-                      @click="deletarAviso(aviso.id)" title="Excluir Aviso">
+                    <button v-if="usuarioLogado.id === aviso.autorId || usuarioLogado.permissaoId === 1"
+                      class="btn-icon btn-excluir" @click="deletarAviso(aviso.id)" title="Excluir Aviso">
                       <svg xmlns="http://www.w3.org/2000/svg" class="icon-svg" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -98,42 +99,58 @@
                   </div>
                 </div>
               </div>
-            </div> 
+            </div>
           </div>
         </div>
       </section>
 
       <Teleport to="body">
         <div v-if="exibirModalAviso" class="modal-overlay" @click.self="exibirModalAviso = false">
-          <div class="modal-content">
-            <h3>Cadastrar Novo Aviso</h3>
-
-            <div class="form-group" v-if="usuarioLogado.permissaoId === 1">
-              <label class="label-input">Quadra de Destino</label>
-              <select v-model="novoAviso.quadraId" class="input-estilizado">
-                <option value="" disabled>Selecione uma quadra</option>
-                <option :value="null">Aviso Geral</option>
-                <option v-for="q in listaQuadras" :key="q.id" :value="q.id">
-                  {{ q.nome }}
-                </option>
-              </select>
+          <div class="modal-content modal-large">
+            <div class="header_avisos" style="border:none;">
+              <h3 class="avisos_lidos">Cadastrar Novo Aviso</h3>
             </div>
 
-            <input v-model="novoAviso.titulo" placeholder="Título do aviso" class="input-estilizado" />
-            <textarea v-model="novoAviso.descricao" placeholder="O que você quer avisar?"
-              class="input-estilizado area-texto"></textarea>
+            <div style="flex: 1; overflow-y: auto;">
 
-            <div class="form-group-checkbox">
-              <input type="checkbox" id="fixarNovo" v-model="novoAviso.fixado">
-              <label for="fixarNovo">Fixar este aviso no topo?</label>
+              <div class="form-group" v-if="usuarioLogado.permissaoId === 1">
+                <label class="label-input">Quadra de Destino</label>
+                <select v-model="novoAviso.quadraId" class="input-estilizado">
+                  <option value="" disabled>Selecione uma quadra</option>
+                  <option :value="null">Aviso Geral</option>
+                  <option v-for="q in listaQuadras" :key="q.id" :value="q.id">
+                    {{ q.nome }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="label-input">Título</label>
+                <input v-model="novoAviso.titulo" placeholder="Digite o título do aviso" class="input-estilizado" />
+              </div>
+
+              <div class="form-group">
+                <label class="label-input">Descrição</label>
+                <textarea v-model="novoAviso.descricao" placeholder="O que você quer avisar?"
+                  class="input-estilizado area-texto"></textarea>
+              </div>
+
+              <div class="form-group-checkbox">
+                <input type="checkbox" id="fixarNovo" v-model="novoAviso.fixado">
+                <label for="fixarNovo">Fixar este aviso no topo?</label>
+              </div>
+
             </div>
 
             <div class="modal-actions">
               <button @click="enviarAviso" class="btn-confirmar" :disabled="enviando">
                 {{ enviando ? 'Postando...' : 'Postar Aviso' }}
               </button>
-              <button @click="exibirModalAviso = false" class="btn-cancelar">Cancelar</button>
+              <button @click="exibirModalAviso = false" class="btn-cancelar">
+                Cancelar
+              </button>
             </div>
+
           </div>
         </div>
       </Teleport>
@@ -142,35 +159,52 @@
         <div v-if="exibirModalHistorico" class="modal-overlay" @click.self="exibirModalHistorico = false">
           <div class="modal-content modal-large">
             <div class="header_avisos" style="margin-bottom: 10px; border:none;">
-               <h3>Histórico de Avisos Lidos</h3>
-               <button @click="exibirModalHistorico = false" class="btn-icon" style="border:none;">✕</button>
+              <h3 class="avisos_lidos">Histórico de Avisos Lidos</h3>
             </div>
-            
-            <div class="filter-row">
-              <label style="font-weight: 600; margin-right: 10px;">Filtrar por ano:</label>
-              <select v-model="filtroAno" class="input-estilizado" style="width: auto; margin-bottom: 0;">
-                <option v-for="ano in anosDisponiveis" :key="ano" :value="ano">{{ ano }}</option>
-              </select>
+
+            <div class="filter-row filtros-full">
+              <div class="filtro-item">
+                <label class="filtro-label">Filtrar por ano</label>
+                <select v-model="filtroAno" class="input-estilizado">
+                  <option value="todos">Todos</option>
+                  <option v-for="ano in anosDisponiveis" :key="ano" :value="ano">
+                    {{ ano }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="filtro-item">
+                <label class="filtro-label">Origem</label>
+                <select v-model="filtroOrigem" class="input-estilizado">
+                  <option value="todos">Todos</option>
+                  <option value="geral">Geral</option>
+                  <option value="quadra">Própria Quadra</option>
+                </select>
+              </div>
             </div>
 
             <div class="lista_avisos" style="margin-top: 20px; max-height: 400px; overflow-y: auto;">
               <div v-if="listaLidosFiltrada.length === 0" class="sem-avisos">
                 Nenhum aviso lido encontrado em {{ filtroAno }}.
               </div>
-              <div v-else v-for="aviso in listaLidosFiltrada" :key="aviso.id" class="card_aviso_item" style="opacity: 0.8; background: #f9f9f9;">
+              <div v-else v-for="aviso in listaLidosFiltrada" :key="aviso.id" class="card_aviso_item"
+                style="opacity: 0.8; background: #f9f9f9;">
                 <div class="aviso_conteudo">
                   <div class="aviso_meta">
-                    <span style="font-weight: bold; color: #3B82F6;">{{ aviso.quadra?.nome || 'GERAL' }}</span>
+                    <span style="font-weight: bold; color: #3B82F6;">{{ aviso.quadra?.nome }}</span>
                     <span> • {{ formatarData(aviso.data) }}</span>
                   </div>
                   <h4>{{ aviso.titulo }}</h4>
                   <p>{{ aviso.descricao }}</p>
                 </div>
                 <div class="aviso_right_side">
-                   <span style="color: #10B981; font-weight: bold; font-size: 12px;">✓ Lido</span>
+                  <span style="color: #10B981; font-weight: bold; font-size: 12px;">✓ Lido</span>
                 </div>
               </div>
             </div>
+            <button class="btn-fechar-historico" @click="exibirModalHistorico = false">
+              Fechar
+            </button>
           </div>
         </div>
       </Teleport>
@@ -224,11 +258,12 @@ export default {
       loading: false,
 
       exibirTodosAvisos: false,
-      todosAvisos: [], 
+      todosAvisos: [],
       listaQuadras: [],
       exibirModalAviso: false,
       exibirModalHistorico: false,
       filtroAno: new Date().getFullYear(),
+      filtroOrigem: 'todos',
       enviando: false,
       usuarioLogado: {},
       novoAviso: {
@@ -270,21 +305,32 @@ export default {
       return 'Dashboard';
     },
     listaLidos() {
-        return this.todosAvisos.filter(a => this.verificarSeLi(a));
+      return this.todosAvisos.filter(a => this.verificarSeLi(a));
     },
     listaLidosFiltrada() {
-        return this.listaLidos.filter(a => {
-            const dataAviso = new Date(a.data);
-            return dataAviso.getFullYear() === Number(this.filtroAno);
-        }).sort((a, b) => new Date(b.data) - new Date(a.data));
+      return this.listaLidos.filter(aviso => {
+        const anoAviso = new Date(aviso.data).getFullYear()
+
+        // filtro por ano
+        const passaAno =
+          this.filtroAno === 'todos' || anoAviso === Number(this.filtroAno)
+
+        // filtro por origem
+        const passaOrigem =
+          this.filtroOrigem === 'todos' ||
+          (this.filtroOrigem === 'geral' && !aviso.quadra) ||
+          (this.filtroOrigem === 'quadra' && aviso.quadra)
+
+        return passaAno && passaOrigem
+      })
     },
     anosDisponiveis() {
-        const anos = this.listaLidos.map(a => new Date(a.data).getFullYear());
-        const unicos = [...new Set(anos)];
-        if (!unicos.includes(new Date().getFullYear())) {
-            unicos.push(new Date().getFullYear());
-        }
-        return unicos.sort((a, b) => b - a);
+      const anos = this.listaLidos.map(a => new Date(a.data).getFullYear());
+      const unicos = [...new Set(anos)];
+      if (!unicos.includes(new Date().getFullYear())) {
+        unicos.push(new Date().getFullYear());
+      }
+      return unicos.sort((a, b) => b - a);
     }
   },
   async mounted() {
@@ -321,7 +367,7 @@ export default {
     },
 
     abrirHistorico() {
-        this.exibirModalHistorico = true;
+      this.exibirModalHistorico = true;
     },
 
     async carregarQuadrasParaSelect() {
@@ -337,7 +383,7 @@ export default {
     async carregarUsuarios() { try { const res = await api.get('/usuarios'); this.totalUsuarios = Array.isArray(res.data) ? res.data.length : 0; } catch (error) { console.error(error); } },
     async carregarTimes() { try { const res = await api.get('/times'); this.totalTimes = Array.isArray(res.data) ? res.data.length : 0; } catch (error) { console.error(error); } },
     async carregarModalidades() { try { const res = await api.get('/listar/modalidade'); this.totalModalidades = Array.isArray(res.data) ? res.data.length : 0; } catch (error) { console.error(error); } },
-    
+
     async carregarAgendamentos() {
       try {
         this.loading = true
@@ -379,7 +425,7 @@ export default {
         let requests = [];
 
         requests.push(
-            api.get(`/quadras/geral/avisos`).catch(() => ({ data: [] }))
+          api.get(`/quadras/geral/avisos`).catch(() => ({ data: [] }))
         );
 
         if (this.usuarioLogado.permissaoId === 1) {
@@ -387,11 +433,11 @@ export default {
             await this.carregarQuadrasParaSelect();
           }
           this.listaQuadras.forEach(q => {
-             requests.push(api.get(`/quadras/${q.id}/avisos`).catch(() => ({ data: [] })));
+            requests.push(api.get(`/quadras/${q.id}/avisos`).catch(() => ({ data: [] })));
           });
-        } 
+        }
         else if (this.usuarioLogado.quadraId) {
-           requests.push(api.get(`/quadras/${this.usuarioLogado.quadraId}/avisos`).catch(() => ({ data: [] })));
+          requests.push(api.get(`/quadras/${this.usuarioLogado.quadraId}/avisos`).catch(() => ({ data: [] })));
         }
 
         const respostas = await Promise.all(requests);
@@ -410,19 +456,19 @@ export default {
     },
 
     async marcarComoLido(aviso) {
-        try {
-            await api.post(`/avisos/${aviso.id}/ler`, { usuarioId: this.usuarioLogado.id });
-            
-            if (!aviso.leituras) aviso.leituras = [];
-            aviso.leituras.push({ usuarioId: this.usuarioLogado.id });
-            
-            const Toast = Swal.mixin({
-                toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, timerProgressBar: true
-            });
-            Toast.fire({ icon: 'success', title: 'Lido' });
-        } catch (error) {
-            console.error("Erro ao ler", error);
-        }
+      try {
+        await api.post(`/avisos/${aviso.id}/ler`, { usuarioId: this.usuarioLogado.id });
+
+        if (!aviso.leituras) aviso.leituras = [];
+        aviso.leituras.push({ usuarioId: this.usuarioLogado.id });
+
+        const Toast = Swal.mixin({
+          toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, timerProgressBar: true
+        });
+        Toast.fire({ icon: 'success', title: 'Lido' });
+      } catch (error) {
+        console.error("Erro ao ler", error);
+      }
     },
 
     async enviarAviso() {
@@ -473,10 +519,10 @@ export default {
         this.enviando = false;
       }
     },
-    
+
     formatarData(data) { return new Date(data).toLocaleDateString('pt-BR'); },
     async deletarAviso(id) {
-       const result = await Swal.fire({
+      const result = await Swal.fire({
         title: 'Excluir Aviso?',
         text: "Essa ação não pode ser desfeita.",
         icon: 'warning',
@@ -498,7 +544,7 @@ export default {
       }
     },
     async alternarFixado(aviso) {
-       try {
+      try {
         const novoStatus = !aviso.fixado;
         const index = this.todosAvisos.findIndex(a => a.id === aviso.id);
         if (index !== -1) this.todosAvisos[index].fixado = novoStatus;
@@ -509,7 +555,7 @@ export default {
         Swal.fire('Erro', 'Falha ao alterar status fixado.', 'error');
       }
     },
-    
+
     renderAgendamentosModalidadeChart() {
       const canvas = document.getElementById('agendamentosModalidadeChart')
       if (this.agendamentosModalidadeChart) this.agendamentosModalidadeChart.destroy()
@@ -732,7 +778,7 @@ export default {
 
 .area-texto {
   min-height: 100px;
-  resize: vertical;
+  resize: none;
 }
 
 .btn-padrao {
@@ -754,6 +800,7 @@ export default {
   border: 1px solid #3b82f6;
   gap: 8px;
 }
+
 .btn-historico:hover {
   background: #f0f7ff;
 }
@@ -881,6 +928,7 @@ export default {
   text-decoration: underline;
   padding: 0;
 }
+
 .btn-ler:hover {
   color: #1E3A8A;
 }
@@ -952,18 +1000,26 @@ export default {
   border-radius: 12px;
   width: 100%;
   max-width: 450px;
+  max-height: 80vh;
+  overflow: hidden;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-large {
-    max-width: 600px;
+  max-width: 900px;
 }
 
 .modal-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+  gap: 12px;
   margin-top: 20px;
+}
+
+.modal-actions .btn-confirmar,
+.modal-actions .btn-cancelar {
+  flex: 1;
 }
 
 .form-group-checkbox {
@@ -992,7 +1048,7 @@ export default {
 }
 
 .btn-confirmar {
-  background: #1E3A8A;
+  background: #3b82f6;
   color: white;
   border: none;
   padding: 10px 20px;
@@ -1017,9 +1073,56 @@ export default {
 }
 
 .filter-row {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.filtros-full {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 15px;
+}
+
+.filtro-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.filtro-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+}
+.avisos {
+  font-size: 25px;
+  color: #3b82f6;
+  font-weight: bold;
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin: 12px 0 20px 0;
+}
+
+.avisos_lidos {
+  font-size: 30px;
+  color: #3b82f6;
+}
+
+.btn-fechar-historico {
+  background-color: #3b82f6;
+  color: white;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  margin-top: 20px;
+  width: 100%;
+  font-size: 15px;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
 }
 
 @keyframes spin {
@@ -1082,12 +1185,12 @@ export default {
     justify-content: space-between;
     width: 100%;
   }
-  
+
   .aviso_actions_wrapper {
-      align-items: flex-end;
-      flex-direction: row;
-      justify-content: space-between;
-      width: 100%;
+    align-items: flex-end;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
   }
 }
 </style>

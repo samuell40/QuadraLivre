@@ -205,7 +205,7 @@ export default {
 
 form {
   display: grid;
-  gap: 30px;
+  gap: 17px;
   margin-top: 20px;
   align-items: start;
 }
