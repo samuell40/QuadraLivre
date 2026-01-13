@@ -268,7 +268,7 @@ export default {
         return `Dashboard (${usuario.quadra.nome})`;
       }
       return 'Dashboard';
-    }
+    },
     listaLidos() {
         return this.todosAvisos.filter(a => this.verificarSeLi(a));
     },
