@@ -9,8 +9,7 @@
           Visualizar Horários
         </button>
       </div>
-
-      <!-- Loader -->
+      
       <div v-if="isLoading" class="loader-agendamento"></div>
 
       <div v-else>
@@ -188,10 +187,12 @@ onMounted(() => carregarAgendamentos());
   display: flex;
   min-height: 100vh;
 }
+
 .conteudo-agendamento {
   flex: 1;
-  padding: 32px 75px;
+  padding: 32px;      
   margin-left: 250px;
+  overflow-x: hidden; 
 }
 
 .titulo-container-agendamento {
@@ -206,6 +207,7 @@ onMounted(() => carregarAgendamentos());
   font-weight: bold;
   margin-top: 12px;
 }
+
 .btn-visualizar-agendamento {
   background-color: #3B82F6;
   color: white;
@@ -216,9 +218,6 @@ onMounted(() => carregarAgendamentos());
   cursor: pointer;
   transition: 0.2s;
 }
-.btn-visualizar-agendamento:hover {
-  background-color: #2563eb;
-}
 
 .loader-agendamento {
   height: 200px;
@@ -226,6 +225,7 @@ onMounted(() => carregarAgendamentos());
   justify-content: center;
   align-items: center;
 }
+
 .loader-agendamento::after {
   content: '';
   width: 50px;
@@ -235,6 +235,7 @@ onMounted(() => carregarAgendamentos());
   border-radius: 50%;
   animation: girar 1s linear infinite;
 }
+
 @keyframes girar {
   0% {
     transform: rotate(0deg);
@@ -250,6 +251,7 @@ onMounted(() => carregarAgendamentos());
   margin-bottom: 12px;
   overflow: hidden;
 }
+
 .accordion-header-agendamento {
   cursor: pointer;
   display: flex;

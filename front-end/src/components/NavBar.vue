@@ -7,14 +7,20 @@
           <span :class="{ open: isMenuOpen }"></span>
           <span :class="{ open: isMenuOpen }"></span>
         </div>
-        <div class="logo">Quadra Livre</div>
+
+        <!-- LOGO -->
+        <div class="logo-container">
+          <img src="@/assets/Cópia de xxxxx (2).png" alt="Quadra Livre" class="logo-img" />
+        </div>
       </div>
 
       <ul class="nav-links" :class="{ active: isMenuOpen }">
         <li><a href="/agendarquadra">Agendar Quadra</a></li>
         <li><a href="/meusagendamentos">Meus Agendamentos</a></li>
         <li><a href="/meusavisos">Meus Avisos</a></li>
-        <li class="sair-item"><a href="#" @click.prevent="logout" class="sair">Sair</a></li>
+        <li class="sair-item">
+          <a href="#" @click.prevent="logout" class="sair">Sair</a>
+        </li>
       </ul>
 
       <a href="#" @click.prevent="logout" class="sair-btn-mobile">Sair</a>
@@ -69,14 +75,17 @@ export default {
 .esquerda-section {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
 }
 
-.logo {
-  color: #ffffff;
-  font-size: 20px;
-  white-space: nowrap;
-  margin-left: 80px;
+.logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.logo-img {
+  height: 60px;
+  width: auto;
 }
 
 .nav-links {
@@ -86,7 +95,6 @@ export default {
   margin: 0;
   padding: 0;
   align-items: center;
-  margin-right: 80px;
 }
 
 .nav-links li a {
@@ -134,16 +142,11 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .logo {
-    margin-left: 0;
-  }
-
   .nav-links {
     display: none;
     flex-direction: column;
     align-items: center;
     width: 100%;
-    margin-right: 0;
     padding: 0;
   }
 
@@ -178,6 +181,10 @@ export default {
     color: white;
     font-weight: 500;
     text-decoration: none;
+  }
+
+  .logo-img {
+    height: 34px;
   }
 }
 </style>

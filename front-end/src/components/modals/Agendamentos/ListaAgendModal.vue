@@ -3,29 +3,25 @@
     <div class="modal-content">
       <h2>Horários da Quadra</h2>
 
-      <div v-for="d in datas" :key="`${d.ano}-${d.mes}-${d.dia}`" class="dia-container">
-        <h3>{{ formatarData(d) }}</h3>
-        <div class="horarios-linha">
-          <div 
-            v-for="h in horariosPorDia[`${d.ano}-${d.mes}-${d.dia}`]" 
-            :key="h.hora" 
-            class="horario"
-            :class="h.agendamento ? 'agendado' : 'disponivel'"
-            @click="h.agendamento && selecionarAgendamento(h.agendamento)"
-          >
-            <span>{{ h.hora.toString().padStart(2,'0') }}:00</span>
+      <div class="dias-wrapper">
+        <div v-for="d in datas" :key="`${d.ano}-${d.mes}-${d.dia}`" class="dia-container">
+          <h3>{{ formatarData(d) }}</h3>
+
+          <div class="horarios-linha">
+            <div v-for="h in horariosPorDia[`${d.ano}-${d.mes}-${d.dia}`]" :key="h.hora" class="horario"
+              :class="h.agendamento ? 'agendado' : 'disponivel'"
+              @click="h.agendamento && selecionarAgendamento(h.agendamento)">
+              <span>{{ h.hora.toString().padStart(2, '0') }}:00</span>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Modal de detalhe do agendamento -->
-      <DetalheAgendModal 
-        v-if="agendamentoSelecionado" 
-        :agendamento="agendamentoSelecionado" 
-        @fechar="agendamentoSelecionado = null"
-      />
+      <DetalheAgendModal v-if="agendamentoSelecionado" :agendamento="agendamentoSelecionado"
+        @fechar="agendamentoSelecionado = null" />
 
-      <button class="btn-cancelar" @click="$emit('fechar')">Fechar Modal</button>
+      <button class="btn-cancelar" @click="$emit('fechar')">Fechar</button>
     </div>
   </div>
 </template>
@@ -100,7 +96,7 @@ export default {
       this.agendamentoSelecionado = agendamento;
     },
     formatarData(d) {
-      return `${String(d.dia).padStart(2,'0')}/${String(d.mes).padStart(2,'0')}/${d.ano}`;
+      return `${String(d.dia).padStart(2, '0')}/${String(d.mes).padStart(2, '0')}/${d.ano}`;
     }
   }
 };
@@ -109,24 +105,28 @@ export default {
 <style scoped>
 .modal-overlay {
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.5);
-  display: flex; align-items: center; justify-content: center;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .modal-content {
   background: #fff;
   padding: 1.5rem;
   border-radius: 10px;
-  width: 600px;
+  width: 900px;
   max-height: 80vh;
   overflow-y: auto;
 }
 
 .modal-content h2 {
-  color: #3B82F6;
-  margin-bottom: 1rem;
+  font-size: 30px;
+  color: #3b82f6;
 }
 
 .dia-container h3 {
@@ -136,7 +136,15 @@ export default {
 }
 
 .dia-container {
-  margin-bottom: 1rem;
+  padding: 12px 0;
+}
+
+.dias-wrapper {
+  border: 2px solid #3B82F6;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 16px;
+  background-color: #ffffff;
 }
 
 .horarios-linha {
@@ -164,7 +172,7 @@ export default {
 .horario.agendado {
   background-color: #3B82F6;
   color: #fff;
-} 
+}
 
 .horario.disponivel {
   background-color: #E5E7EB;
@@ -180,14 +188,16 @@ export default {
 }
 
 .btn-cancelar {
-  margin-top: 10px;
-  padding: 0.5rem 1rem;
-  background-color: #3B82F6;
-  color: #fff;
+  margin-top: 15px;
+  background-color: #3b82f6;
+  color: white;
+  padding: 8px 16px;
   border: none;
-  border-radius: 6px;
+  border-radius: 20px;
   cursor: pointer;
 }
 
-.btn-cancelar:hover { background-color: #2563EB; }
+.btn-cancelar:hover {
+  background-color: #2563EB;
+}
 </style>

@@ -68,7 +68,7 @@ export default {
 }
 
 .quadra-info h3 {
-  color: #1E3A8A;
+  color: #3b82f6;
   font-weight: bolder;
   margin: 0;
 }
@@ -97,7 +97,7 @@ button:hover {
 }
 
 button:first-child {
-  background-color: #1E3A8A;
+  background-color: #3b82f6;
   color: white;
   margin-right: 12px;
 }

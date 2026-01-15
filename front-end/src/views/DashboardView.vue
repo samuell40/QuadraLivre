@@ -407,7 +407,7 @@ export default {
         this.totalAgendamentos = this.agendamentos.length
         this.totalPendentes = this.agendamentos.filter(a => a.status === 'Pendente').length
         this.totalConfirmados = this.agendamentos.filter(a => a.status === 'Confirmado').length
-        this.totalCancelados = this.agendamentos.filter(a => a.status === 'Negado').length
+        this.totalCancelados = this.agendamentos.filter(a => a.status === 'Recusado').length
 
         await nextTick()
         this.renderAgendamentosModalidadeChart()
@@ -1096,6 +1096,7 @@ export default {
   color: #374151;
   margin-bottom: 6px;
 }
+
 .avisos {
   font-size: 25px;
   color: #3b82f6;

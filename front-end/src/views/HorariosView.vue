@@ -5,13 +5,9 @@
     <div class="conteudo">
       <div class="topo">
         <h1 class="title">Horário Semanal da Quadra</h1>
-
+        <NavBarUse />
         <!-- Dropdown Quadras -->
-        <select
-          v-model="quadraSelecionada"
-          @change="buscarHorarios"
-          class="select-quadra"
-        >
+        <select v-model="quadraSelecionada" @change="buscarHorarios" class="select-quadra">
           <option v-for="quadra in quadras" :key="quadra.id" :value="quadra.id">
             {{ quadra.nome }}
           </option>
@@ -33,21 +29,12 @@
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="(hora, idx) in horarios"
-              :key="hora"
-              :class="idx % 2 === 0 ? 'linha-branca' : 'linha-cinza'"
-            >
+            <tr v-for="(hora, idx) in horarios" :key="hora" :class="idx % 2 === 0 ? 'linha-branca' : 'linha-cinza'">
               <td class="col-hora">{{ hora }}</td>
-              <td
-                v-for="(dia, index) in diasSemana"
-                :key="dia + hora"
-                :class="{
-                  reservado: agenda[`${index}-${hora}`]?.time || agenda[`${index}-${hora}`]?.usuario,
-                  disponivel: !agenda[`${index}-${hora}`]
-                }"
-                @click="agenda[`${index}-${hora}`] && (agendamentoSelecionado = agenda[`${index}-${hora}`])"
-              >
+              <td v-for="(dia, index) in diasSemana" :key="dia + hora" :class="{
+                reservado: agenda[`${index}-${hora}`]?.time || agenda[`${index}-${hora}`]?.usuario,
+                disponivel: !agenda[`${index}-${hora}`]
+              }" @click="agenda[`${index}-${hora}`] && (agendamentoSelecionado = agenda[`${index}-${hora}`])">
                 <span v-if="agenda[`${index}-${hora}`]">
                   <span v-if="agenda[`${index}-${hora}`].time">
                     Time: {{ agenda[`${index}-${hora}`].time }}
@@ -66,11 +53,8 @@
     </div>
 
     <!-- Modal de detalhe do agendamento -->
-    <DetalheAgendModal
-      v-if="agendamentoSelecionado"
-      :agendamento="agendamentoSelecionado"
-      @fechar="agendamentoSelecionado = null"
-    />
+    <DetalheAgendModal v-if="agendamentoSelecionado" :agendamento="agendamentoSelecionado"
+      @fechar="agendamentoSelecionado = null" />
   </div>
 </template>
 
@@ -80,11 +64,12 @@ import { startOfWeek, addDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import api from "@/axios";
 import SideBar from "@/components/SideBar.vue";
+import NavBarUse from '@/components/NavBarUser.vue'
 import DetalheAgendModal from "@/components/modals/Agendamentos/DetalharAgendModal.vue";
 
 export default {
   name: "HorariosView",
-  components: { SideBar, DetalheAgendModal },
+  components: { SideBar, NavBarUse, DetalheAgendModal },
   setup() {
     const quadras = ref([]);
     const quadraSelecionada = ref(null);
@@ -142,7 +127,7 @@ export default {
             if (diffDias >= 0 && diffDias < 7) {
               for (let i = 0; i < (a.duracao ?? 1); i++) {
                 const horaInicio = a.hora + i;
-                const chave = `${diffDias}-${String(horaInicio).padStart(2,'0')}:00 - ${String(horaInicio+1).padStart(2,'0')}:00`;
+                const chave = `${diffDias}-${String(horaInicio).padStart(2, '0')}:00 - ${String(horaInicio + 1).padStart(2, '0')}:00`;
                 novaAgenda[chave] = {
                   ...a,
                   time: a.time?.nome || null,
@@ -181,27 +166,33 @@ export default {
 .layout {
   display: flex;
 }
+
 .conteudo {
   flex: 1;
   margin-left: 260px;
   padding: 20px;
 }
+
 .topo {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 12px;
   margin-bottom: 20px;
 }
+
 .title {
   margin-top: 20px;
   font-size: 32px;
   font-weight: bold;
   color: #3B82F6;
 }
+
 .select-quadra {
+  width: 100%;
   border: 1px solid #ccc;
   border-radius: 6px;
-  padding: 6px 10px;
+  padding: 10px;
+  font-size: 14px;
 }
 
 .tabela-container {
@@ -209,6 +200,7 @@ export default {
   position: relative;
   min-height: 300px;
 }
+
 .loader-overlay {
   position: absolute;
   top: 0;
@@ -221,6 +213,7 @@ export default {
   background: rgba(255, 255, 255, 0.7);
   z-index: 10;
 }
+
 .loader {
   width: 40px;
   height: 40px;
@@ -229,10 +222,12 @@ export default {
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
+
 @keyframes spin {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

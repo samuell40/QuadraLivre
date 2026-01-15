@@ -7,6 +7,9 @@
         <h1>Agendar Quadra</h1>
       </div>
 
+      <!-- ✅ NAV BAR USER -->
+      <NavBarUse />
+
       <div v-if="isLoadingQuadras" class="loader"></div>
 
       <div v-else>
@@ -32,7 +35,6 @@
         </div>
       </div>
 
-      <!-- Modal final de agendamento -->
       <AgendamentoModal
         v-if="mostrarModalAgendamento"
         :quadra="quadraSelecionada"
@@ -46,13 +48,14 @@
 <script>
 import Swal from 'sweetalert2'
 import SideBar from '@/components/SideBar.vue'
+import NavBarUse from '@/components/NavBarUser.vue'
 import AgendamentoModal from '@/components/modals/Agendamentos/AgendModal.vue'
 import api from '@/axios'
 import { useAuthStore } from '@/store'
 
 export default {
   name: 'AgendarQuadrasAdm',
-  components: { SideBar, AgendamentoModal },
+  components: { SideBar, NavBarUse, AgendamentoModal },
   data() {
     return {
       quadras: [],

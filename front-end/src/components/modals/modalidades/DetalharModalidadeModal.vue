@@ -106,7 +106,7 @@
 
                 <div class="botoes">
                   <button type="submit" class="btn-save">Cadastrar</button>
-                  <button type="button" class="btn-cancel" @click="modalAddFuncao = false">
+                  <button type="button" class="btn-fechar" @click="modalAddFuncao = false">
                     Cancelar
                   </button>
                 </div>
@@ -328,6 +328,18 @@ export default {
   border: none;
   cursor: pointer;
   background-color: #3b82f6;
+  color: white;
+  font-size: 16px;
+}
+
+
+.btn-fechar {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  background-color: #7e7e7e;
   color: white;
   font-size: 16px;
 }

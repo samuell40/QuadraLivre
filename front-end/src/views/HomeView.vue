@@ -144,12 +144,12 @@ export default {
   },
 
   async mounted() {
-      await Promise.all([  
-        this.carregarQuadras(),
-        this.carregarModalidades(),
-        this.carregarPartidasAtivas(),
-        this.carregarPartidasEncerradas()
-      ])
+    await Promise.all([
+      this.carregarQuadras(),
+      this.carregarModalidades(),
+      this.carregarPartidasAtivas(),
+      this.carregarPartidasEncerradas()
+    ])
   },
 
   methods: {
@@ -222,39 +222,66 @@ export default {
     },
 
     irParaLogin() { this.mostrarModalLogin = true },
-
     loginComGoogle() {
       const width = 500, height = 600
       const left = window.screenX + (window.outerWidth - width) / 2
       const top = window.screenY + (window.outerHeight - height) / 2.5
-      const popup = window.open('http://localhost:3000/auth/google', 'Login com Google',
-        `width=${width},height=${height},left=${left},top=${top}`)
+
+      const popup = window.open(
+        'http://localhost:3000/auth/google',
+        'Login com Google',
+        `width=${width},height=${height},left=${left},top=${top}`
+      )
 
       const listener = event => {
         if (event.origin !== 'https://quadra-livre.vercel.app') return
+
         const { token, erro, email, usuario } = event.data
 
         if (erro === 'usuario_nao_cadastrado') {
-          Swal.fire({ icon: 'error', title: 'Conta não encontrada!', text: 'Redirecionando para cadastro...', timer: 3000, timerProgressBar: true, showConfirmButton: false, didOpen: () => Swal.showLoading() })
-            .then(() => window.location.href = `/cadastro?email=${encodeURIComponent(email)}`)
+          Swal.fire({
+            icon: 'error',
+            title: 'Conta não encontrada!',
+            text: 'Redirecionando para cadastro...',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            didOpen: () => Swal.showLoading()
+          }).then(() => {
+            window.location.href = `/cadastro?email=${encodeURIComponent(email)}`
+          })
+          return
         }
 
-        if (token) {
+        if (token && usuario) {
           localStorage.setItem('token', token)
           localStorage.setItem('usuario', JSON.stringify(usuario))
-          const quadraSelecionada = JSON.parse(localStorage.getItem("quadraSelecionada"))
 
+          const quadraSelecionada = JSON.parse(
+            localStorage.getItem('quadraSelecionada')
+          )
+
+          // Desenvolvedor e Administrador
           if ([1, 2].includes(usuario.permissaoId)) {
-            router.push({ name: "Dashboard" })
+            router.push({ name: 'Dashboard' })
+
+            // Mesário
+          } else if (usuario.permissaoId === 4) {
+            router.push({ name: 'gerenciar_partida' })
+
+            // Usuário comum
           } else if (usuario.permissaoId === 3) {
             if (quadraSelecionada) {
-              router.push({ name: "agendar_quadra", query: { quadraId: quadraSelecionada.id } })
-              localStorage.removeItem("quadraSelecionada")
+              router.push({
+                name: 'agendar_quadra',
+                query: { quadraId: quadraSelecionada.id }
+              })
+              localStorage.removeItem('quadraSelecionada')
             } else {
-              router.push({ name: "agendar_quadra" })
+              router.push({ name: 'agendar_quadra' })
             }
           } else {
-            router.push({ name: "Home" })
+            router.push({ name: 'Home' })
           }
         }
 

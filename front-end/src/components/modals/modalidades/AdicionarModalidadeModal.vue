@@ -83,7 +83,7 @@ export default {
     background: white;
     padding: 30px 40px;
     border-radius: 10px;
-    width: 400px;
+    width: 900px;
     max-width: 90%;
 }
 

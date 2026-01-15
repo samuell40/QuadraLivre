@@ -140,10 +140,11 @@ export default {
       this.modalGerenciarJogadoresAberto = true;
     },
 
-    atualizarJogadores() {
+    async atualizarJogadores() {
       if (this.$refs.detalharJogadores && this.timeSelecionadoDetalhe?.id) {
         this.$refs.detalharJogadores.carregarJogadores(this.timeSelecionadoDetalhe.id);
       }
+      await this.carregarTimes();
     },
 
     editarTime(time) {

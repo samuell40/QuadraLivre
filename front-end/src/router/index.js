@@ -68,12 +68,6 @@ const routes = [
     meta: { requiresAuth: true, roles: [1, 2] },
   },
   {
-    path: '/controleplacar',
-    name: 'controle_placar',
-    component: ControlePlacarView,
-    meta: { requiresAuth: true, roles: [1, 2] },
-  },
-  {
     path: '/gerenciartimes',
     name: 'gerenciar_times',
     component: GerenciartimesView,
@@ -83,13 +77,19 @@ const routes = [
     path: '/gerenciarpartida',
     name: 'gerenciar_partida',
     component: GerenciarPartidaView,
-    meta: { requiresAuth: true, roles: [1, 2] },
+    meta: { requiresAuth: true, roles: [1, 2, 4] },
   },
   {
     path: '/partida',
     name: 'Partida',
     component: () => import('@/views/PartidaView.vue'),
-    meta: { requiresAuth: true, roles: [1, 2]}
+    meta: { requiresAuth: true, roles: [1, 2, 4]}
+  },
+    {
+    path: '/controleplacar',
+    name: 'controle_placar',
+    component: ControlePlacarView,
+    meta: { requiresAuth: true, roles: [1, 2, 4] },
   },
   {
     path: '/usuarios',
