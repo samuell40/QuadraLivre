@@ -219,7 +219,7 @@ async function incrementarPlacar(placarId, incremento) {
 async function listarPartidasemAndamento(modalidadeId, campeonatoId) {
   const where = {
     finalizada: false,
-    emIntervalo: false, // ✅ AQUI
+    emIntervalo: false, 
     modalidadeId: Number(modalidadeId),
   };
 

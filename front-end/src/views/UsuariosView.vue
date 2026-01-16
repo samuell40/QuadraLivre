@@ -98,7 +98,7 @@
         <div class="campo">
           <strong>Telefone:</strong>
           <div class="detalhe detalhe-contato">
-            <span>{{ usuarioSelecionado.telefone}}</span>
+            <span>{{ usuarioSelecionado.telefone }}</span>
             <svg v-if="usuarioSelecionado.telefone" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
               fill="#25D366" class="icon" viewBox="0 0 16 16" @click="contatoWhatsApp(usuarioSelecionado)"
               style="cursor:pointer; margin-left: 8px;">
@@ -111,7 +111,6 @@
         <div class="campo">
           <strong>Permissão:</strong>
           <p class="detalhe">{{ usuarioSelecionado.permissao?.descricao }}</p>
-
         </div>
 
         <!-- ADMINISTRADOR -->
@@ -128,6 +127,17 @@
               {{usuarioSelecionado.times.map(t => t.nome).join(', ')}}
             </span>
             <span v-else>Nenhum</span>
+          </p>
+        </div>
+
+        <!-- JOGADOR -->
+        <div class="campo" v-if="usuarioSelecionado.permissaoId === 3">
+          <strong>Jogador:</strong>
+          <p class="detalhe">
+            <span v-if="usuarioSelecionado.jogador">
+              {{ usuarioSelecionado.jogador.nome }}
+            </span>
+            <span v-else>Não vinculado</span>
           </p>
         </div>
 
@@ -175,12 +185,32 @@
           <!-- USUARIO -->
           <div class="campo" v-if="form.permissaoId === 3">
             <strong>Time:</strong>
-            <select v-model.number="form.timeId">
+            <select v-model.number="form.timeId" @change="carregarJogadoresTime">
               <option disabled value="">Selecione o time</option>
               <option v-for="t in times" :key="t.id" :value="t.id">
                 {{ t.nome }}
               </option>
             </select>
+          </div>
+
+          <div class="campo" v-if="form.permissaoId === 3">
+            <strong>Jogador:</strong>
+
+            <div class="dropdown-custom" ref="dropdownJogador">
+              <div class="dropdown-selected" @click="abrirDropdown = !abrirDropdown">
+                <img v-if="jogadorSelecionadoObj?.foto" :src="jogadorSelecionadoObj.foto" class="avatar" />
+                <span>
+                  {{ jogadorSelecionadoObj?.nome || 'Selecione o jogador' }}
+                </span>
+              </div>
+
+              <ul v-if="abrirDropdown" class="dropdown-list">
+                <li v-for="j in jogadoresDisponiveis" :key="j.id" @click.stop="selecionarJogador(j)">
+                  <img :src="j.foto" class="avatar" />
+                  <span>{{ j.nome }}</span>
+                </li>
+              </ul>
+            </div>
           </div>
 
           <div class="botoes" style="margin-top: 20px;">
@@ -220,12 +250,15 @@ export default {
       permissoes: [],
       quadras: [],
       times: [],
+      jogadores: [],
       mostrarContato: false,
+      abrirDropdown: false,
       form: {
         email: '',
         permissaoId: null,
         quadra: '',
         timeId: '',
+        jogadorId: null,
       },
     }
   },
@@ -235,9 +268,12 @@ export default {
       const authStore = useAuthStore()
       return authStore.usuario || {}
     },
+    jogadorSelecionadoObj() {
+      return this.jogadores.find(j => j.id === this.form.jogadorId)
+    },
 
     usuarioLogadoEmail() {
-      return this.usuarioLogado.email || ''
+      return this.usuarioLogado.email
     },
 
     usuariosFiltrados() {
@@ -247,19 +283,27 @@ export default {
         )
         .filter(u => u.email !== this.usuarioLogadoEmail)
         .filter(u => {
-          if (this.usuarioLogado.permissaoId === 2) { // ADMIN (2) não vê DEV (1) nem ADMIN (2)
+          if (this.usuarioLogado.permissaoId === 2) {
             return u.permissaoId === 3
           }
           return true
         })
     },
+    jogadoresDisponiveis() {
+      const jogadoresVinculadosIds = this.usuarios
+        .map(u => u.jogador?.id)
+        .filter(Boolean)
+
+      return this.jogadores.filter(j =>
+        !jogadoresVinculadosIds.includes(j.id)
+        || j.id === this.form.jogadorId
+      )
+    },
 
     permissoesFiltradas() {
-      if (this.usuarioLogado.permissaoId === 2) {  // ADMIN só pode ver USUARIO
+      if (this.usuarioLogado.permissaoId === 2) {
         return this.permissoes.filter(
-          p =>
-            p.id === 3 || p.id === this.form.permissaoId
-        )
+          p => p.id === 3 || p.id === this.form.permissaoId)
       }
       return this.permissoes
     },
@@ -267,27 +311,26 @@ export default {
 
   mounted() {
     this.carregarUsuarios()
+    document.addEventListener('click', this.fecharModal)
+
   },
 
   methods: {
-    async carregarUsuarios() {
-      this.isLoading = true
-      try {
-        const response = await api.get('/usuarios')
-        this.usuarios = response.data.map(u => ({
-          ...u,
-          times: u.times || [],
-        }))
-      } catch (error) {
-        console.error('Erro ao carregar usuários:', error)
-      } finally {
-        this.isLoading = false
+    fecharModal(event) {
+      const dropdown = this.$refs.dropdownJogador
+      if (dropdown && !dropdown.contains(event.target)) {
+        this.abrirDropdown = false
       }
     },
 
     detalhesUsuario(usuario) {
       this.usuarioSelecionado = usuario
       this.mostrarDetalhes = true
+    },
+
+    selecionarJogador(jogador) {
+      this.form.jogadorId = jogador.id
+      this.abrirDropdown = false
     },
 
     fecharDetalhes() {
@@ -309,6 +352,19 @@ export default {
       this.times = resTimes.data
     },
 
+    async carregarUsuarios() {
+      this.isLoading = true
+      try {
+        const response = await api.get('/usuarios')
+        this.usuarios = response.data || []
+      } catch (error) {
+        console.error('Erro ao carregar usuários:', error)
+        this.usuarios = []
+      } finally {
+        this.isLoading = false
+      }
+    },
+
     async editarUsuario(usuario) {
       this.usuarioSelecionado = usuario
       this.isCarregandoModal = true
@@ -324,9 +380,34 @@ export default {
         this.form.email = usuario.email
         this.form.permissaoId = Number(usuario.permissaoId)
         this.form.quadra = usuario.quadra?.id
-        this.form.timeId = usuario.times?.[0]?.id
+        this.form.timeId = usuario.times?.[0]?.id || ''
+        this.form.jogadorId
+
+        if (this.form.permissaoId === 3 && this.form.timeId) {
+          await this.carregarJogadoresTime()
+
+          if (usuario.jogador) {
+            this.form.jogadorId = usuario.jogador.id
+          }
+        }
+
       } finally {
         this.isCarregandoModal = false
+      }
+    },
+
+    async carregarJogadoresTime() {
+      this.jogadores = []
+      this.form.jogadorId = null
+
+      if (!this.form.timeId) return
+
+      try {
+        const { data } = await api.get(`/time/${this.form.timeId}`)
+        this.jogadores = data
+      } catch (err) {
+        console.error('Erro ao carregar jogadores do time:', err)
+        this.jogadores = []
       }
     },
 
@@ -351,19 +432,20 @@ export default {
           return
         }
 
-        if (this.form.permissaoId === 3 && !this.form.timeId) {
-          await Swal.fire({
-            icon: 'warning',
-            title: 'Atenção',
-            text: 'Usuário precisa estar vinculado a um time.',
-          })
-          return
-        }
-
         if (this.form.permissaoId === 3) {
+          if (!this.form.jogadorId) {
+            await Swal.fire({
+              icon: 'warning',
+              title: 'Atenção',
+              text: 'Selecione um jogador.',
+            })
+            return
+          }
+
           await api.post('/vincular', {
             usuarioId: this.usuarioSelecionado.id,
             timeId: this.form.timeId,
+            jogadorId: this.form.jogadorId,
           })
         }
 
@@ -698,6 +780,52 @@ select {
 .navbar-use {
   display: flex;
   width: 435px;
+}
+
+.dropdown-custom {
+  position: relative;
+  cursor: pointer;
+  margin-top: 5px;
+}
+
+.dropdown-selected {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
+  font-size: 15px;
+  color: #333;
+  min-height: 38px;
+}
+
+.dropdown-list {
+  position: absolute;
+  width: 100%;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-top: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.dropdown-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  cursor: pointer;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .loader-container-centralizado {

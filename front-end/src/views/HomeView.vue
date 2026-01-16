@@ -144,9 +144,11 @@ export default {
   },
 
   async mounted() {
+    await this.carregarQuadras()
+
+    await this.carregarModalidades()
+
     await Promise.all([
-      this.carregarQuadras(),
-      this.carregarModalidades(),
       this.carregarPartidasAtivas(),
       this.carregarPartidasEncerradas()
     ])
@@ -170,9 +172,53 @@ export default {
     },
 
     async carregarPartidasAtivas() {
+      this.isLoadingPartidas = true
+      this.partidasAtivas = []
+
+      try {
+        for (const modalidade of this.modalidadesDisponiveis) {
+          if (!modalidade.campeonatos || modalidade.campeonatos.length === 0) continue
+
+          for (const campeonato of modalidade.campeonatos) {
+            const res = await api.get(
+              `/partidas/ativas/${modalidade.id}/${campeonato.id}`
+            )
+
+            if (Array.isArray(res.data)) {
+              this.partidasAtivas.push(...res.data)
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao carregar partidas ativas:', err)
+      } finally {
+        this.isLoadingPartidas = false
+      }
     },
 
     async carregarPartidasEncerradas() {
+      this.isLoadingPartidas = true
+      this.partidasEncerradas = []
+
+      try {
+        for (const modalidade of this.modalidadesDisponiveis) {
+          if (!modalidade.campeonatos || modalidade.campeonatos.length === 0) continue
+
+          for (const campeonato of modalidade.campeonatos) {
+            const res = await api.get(
+              `/partidas/encerradas/${modalidade.id}/${campeonato.id}`
+            )
+
+            if (Array.isArray(res.data)) {
+              this.partidasEncerradas.push(...res.data)
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao carregar partidas encerradas:', err)
+      } finally {
+        this.isLoadingPartidas = false
+      }
     },
 
     async carregarModalidades() {

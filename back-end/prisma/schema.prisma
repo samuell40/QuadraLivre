@@ -165,6 +165,7 @@ model Jogador {
   nome     String
   foto     String? @db.VarChar(2048)
   funcaoId Int?
+  usuarioId Int?
   timeId   Int
   funcao FuncaoJogador? @relation(fields: [funcaoId], references: [id])
   time   Time          @relation(fields: [timeId], references: [id])

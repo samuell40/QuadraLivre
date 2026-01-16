@@ -78,19 +78,24 @@ async function getPermissoesController(req, res) {
 
 async function vincularUsuarioTimeController(req, res) {
   try {
-    const { usuarioId, timeId } = req.body;
+    const { usuarioId, timeId, jogadorId } = req.body;
 
-    if (!usuarioId || !timeId) {
+    if (!usuarioId || !timeId || !jogadorId) {
       return res.status(400).json({
-        error: 'Usuário e time são obrigatórios.',
+        error: 'Usuário, time e jogador são obrigatórios.',
       });
     }
 
-    const vinculo = await Usuario.vincularUsuarioTime(usuarioId, timeId);
+    const resultado = await Usuario.vincularUsuarioTime(
+      usuarioId,
+      timeId,
+      jogadorId
+    );
 
     return res.status(201).json({
-      message: 'Usuário vinculado ao time com sucesso',
-      vinculo,
+      message: 'Usuário vinculado ao time e jogador associado com sucesso',
+      vinculo: resultado.vinculo,
+      jogador: resultado.jogador,
     });
   } catch (error) {
     if (error.message.includes('já está vinculado')) {
@@ -103,6 +108,7 @@ async function vincularUsuarioTimeController(req, res) {
     });
   }
 }
+
 
 async function getUsuarioTimesController(req, res) {
   try {

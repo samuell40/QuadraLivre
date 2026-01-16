@@ -86,26 +86,37 @@ function formatarPermissao(descricao) {
 }
 
 
-async function enviarEmailVinculoTime(usuario, time) {
+async function enviarEmailVinculoTime(usuario, time, jogador) {
   const html = `
   <div style="font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px;">
     <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 10px; color: #333; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
-      <h2 style="color: #3b82f6; margin-top: 0; font-size: 24px;">Olá, ${usuario.nome}!</h2>
+      <h2 style="color: #3b82f6; margin-top: 0; font-size: 24px;">
+        Olá, ${usuario.nome}!
+      </h2>
+
       <p style="margin: 12px 0; font-size: 18px; line-height: 1.5;">
-        Você foi vinculado ao time <strong>${time.nome}</strong> da modalidade <strong>${time.modalidade.nome}</strong>.
+        Você foi vinculado ao time <strong>${time.nome}</strong>
+        da modalidade <strong>${time.modalidade.nome}</strong>.
       </p>
+
       <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
-        Atenciosamente,<br/>Equipe QuadraLivre
+        Seu registro como jogador foi criado com o nome:
+        <strong>${jogador.nome}</strong>.
+      </p>
+
+      <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
+        Atenciosamente,<br/>
+        <strong>Equipe QuadraLivre</strong>
       </p>
     </div>
   </div>
-  `;
+  `
 
   return enviarEmail({
     to: usuario.email,
-    subject: `Vinculação a novo time`,
-    html
-  });
+    subject: 'Vinculação a novo time',
+    html,
+  })
 }
 
 async function enviarEmailStatusAgendamento(agendamento) {

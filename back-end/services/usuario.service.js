@@ -33,16 +33,26 @@ async function updateUsuario(user) {
     quadraId: null,
   };
 
+  // Se for ADMIN (2), pode ter quadra
   if (user.permissaoId === 2 && user.quadraId) {
     const quadra = await prisma.quadra.findUnique({
       where: { id: user.quadraId },
     });
+
     dadosAtualizados.quadraId = quadra ? quadra.id : null;
   }
 
+  // 🔴 Se NÃO for Jogador
   if (user.permissaoId !== 3) {
+    // Remove vínculo com times
     await prisma.usuarioTime.deleteMany({
       where: { usuarioId: usuarioDb.id },
+    });
+
+    // Remove vínculo com jogador
+    await prisma.jogador.updateMany({
+      where: { usuarioId: usuarioDb.id },
+      data: { usuarioId: null },
     });
   }
 
@@ -67,20 +77,48 @@ async function getUsuarios() {
         include: { time: true },
       },
     },
-  });
+  })
 
-  return usuarios.map(user => ({
-    id: user.id,
-    nome: user.nome,
-    email: user.email,
-    telefone: user.telefone,
-    foto: user.foto,
-    permissaoId: user.permissaoId,
-    permissao: user.permissao,
-    quadra: user.quadra, 
-    times: user.times.map(ut => ut.time),
-    totalAgendamentos: user.agendamentos.length,
-  }));
+  const usuariosComJogador = []
+
+  for (const user of usuarios) {
+    const jogador = await prisma.jogador.findFirst({
+      where: { usuarioId: user.id },
+      include: { time: true },
+    })
+
+    let jogadorFormatado = null
+
+    if (jogador) {
+      let nomeTime = null
+
+      if (jogador.time) {
+        nomeTime = jogador.time.nome
+      }
+
+      jogadorFormatado = {
+        id: jogador.id,
+        nome: jogador.nome,
+        time: nomeTime,
+      }
+    }
+
+    usuariosComJogador.push({
+      id: user.id,
+      nome: user.nome,
+      email: user.email,
+      telefone: user.telefone,
+      foto: user.foto,
+      permissaoId: user.permissaoId,
+      permissao: user.permissao,
+      quadra: user.quadra,
+      times: user.times.map(ut => ut.time),
+      jogador: jogadorFormatado,
+      totalAgendamentos: user.agendamentos.length,
+    })
+  }
+
+  return usuariosComJogador
 }
 
 async function listarPermissoes() {
@@ -89,7 +127,7 @@ async function listarPermissoes() {
   });
 }
 
-async function vincularUsuarioTime(usuarioId, timeId) {
+async function vincularUsuarioTime(usuarioId, timeId, jogadorId) {
   const usuario = await prisma.usuario.findUnique({
     where: { id: usuarioId },
     include: { permissao: true },
@@ -103,6 +141,17 @@ async function vincularUsuarioTime(usuarioId, timeId) {
   });
 
   if (!time) throw new Error('Time não encontrado');
+
+  const jogador = await prisma.jogador.findUnique({
+    where: { id: jogadorId },
+    include: { time: { include: { modalidade: true } } },
+  });
+
+  if (!jogador) throw new Error('Jogador não encontrado');
+
+  if (jogador.timeId !== timeId) {
+    throw new Error('Jogador não pertence a este time');
+  }
 
   const vinculoMesmoModalidade = await prisma.usuarioTime.findFirst({
     where: {
@@ -131,9 +180,20 @@ async function vincularUsuarioTime(usuarioId, timeId) {
     data: { usuarioId, timeId },
   });
 
-  await enviarEmailVinculoTime(usuario, time);
+  const jogadorAtualizado = await prisma.jogador.update({
+    where: { id: jogadorId },
+    data: {
+      usuarioId: usuario.id,
+      timeId: time.id,
+    },
+  });
 
-  return vinculo;
+  await enviarEmailVinculoTime(usuario, time, jogadorAtualizado);
+
+  return {
+    vinculo,
+    jogador: jogadorAtualizado,
+  };
 }
 
 async function getUsuarioTimesService(usuarioId) {
