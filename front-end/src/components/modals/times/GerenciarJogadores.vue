@@ -2,7 +2,7 @@
   <div v-if="aberto" class="modal-overlay" @click.self="fecharModal">
     <div class="modal-content">
       <h2>Gerenciar Jogadores - {{ time?.nome }}</h2>
-      
+
       <div class="form-group">
         <label for="acaoGerenciarJogadores">Escolha a ação:</label>
         <select id="acaoGerenciarJogadores" v-model="acaoLocal" class="dropdown">
@@ -26,6 +26,11 @@
               <span>{{ usuarioSelecionado?.nome || 'Selecione um usuário (opcional)' }}</span>
             </div>
             <ul v-if="abrirDropdownUsuarios" class="dropdown-list">
+              <li v-if="usuariosDisponiveis.length === 0" class="nenhum-disponivel">
+                Nenhum usuário disponível
+              </li>
+
+              <!-- Lista de usuários disponíveis -->
               <li v-for="u in usuariosDisponiveis" :key="u.id" @click.stop="selecionarUsuario(u)">
                 <img :src="u.foto" class="avatar" />
                 <span>{{ u.nome }}</span>
@@ -53,12 +58,16 @@
             </li>
             <li v-for="j in jogadoresExistentesFiltrados" :key="j.id" @click.stop="selecionarJogadorExistente(j)">
               <img :src="j.foto" class="avatar" />
-              <span>{{ j.nome }} ({{ j.time?.nome || 'Sem time' }})</span>
+              <span>
+                {{ j.nome }}
+                <span v-if="j.times.length">
+                  ({{ j.times[0].nome }})
+                </span>
+              </span>
             </li>
           </ul>
         </div>
       </div>
-
 
       <!-- Remover jogador -->
       <div v-if="acaoLocal === 'remover'" class="form-group">
@@ -111,7 +120,12 @@ export default {
 
   computed: {
     jogadoresExistentesFiltrados() {
-      return this.jogadores.filter(j => j.timeId !== this.time.id);
+      if (!this.time) return [];
+      const timeIdAtual = this.time.id;
+      return this.jogadores.filter(j => {
+        const estaNesteTime = j.times.some(t => t.id === timeIdAtual);
+        return !estaNesteTime;
+      });
     }
   },
 
@@ -147,10 +161,22 @@ export default {
       const file = event.target.files[0];
       if (file) this.arquivoFoto = file;
     },
+    
+    selecionarUsuario(u) {
+      this.usuarioSelecionado = u;
+      this.abrirDropdownUsuarios = false;
+    },
+
+    selecionarJogadorExistente(j) {
+      this.jogadorSelecionadoExistente = j;
+      this.abrirDropdownJogadores = false;
+    },
 
     async carregarJogadores() {
+      if (!this.time?.modalidadeId) return;
+
       try {
-        const res = await api.get('/jogadores');
+        const res = await api.get(`/jogadores/${this.time.modalidadeId}`);
         this.jogadores = res.data || [];
       } catch (err) {
         console.error(err);
@@ -170,16 +196,6 @@ export default {
       }
     },
 
-    selecionarUsuario(u) {
-      this.usuarioSelecionado = u;
-      this.abrirDropdownUsuarios = false;
-    },
-
-    selecionarJogadorExistente(j) {
-      this.jogadorSelecionadoExistente = j;
-      this.abrirDropdownJogadores = false;
-    },
-
     async uploadImagem() {
       if (!this.arquivoFoto) return null;
       const formData = new FormData();
@@ -196,7 +212,7 @@ export default {
         nome: this.nomeJogador.trim(),
         foto: urlImagem,
         timeId: this.time.id,
-        usuarioId: this.usuarioSelecionado?.id 
+        usuarioId: this.usuarioSelecionado?.id
       });
       Swal.fire('Sucesso', 'Jogador adicionado!', 'success');
     },

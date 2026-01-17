@@ -1,7 +1,6 @@
 <template>
   <div class="layout">
     <SideBar />
-
     <div class="conteudo">
       <div class="header">
         <h1 class="title">Gerenciar Times</h1>
@@ -177,8 +176,10 @@ export default {
           id: t.id,
           nome: t.nome,
           foto: t.foto,
+          modalidadeId: t.modalidadeId,
           qtdJogadores: t._count?.jogadores
         }));
+
       } catch (err) {
         Swal.fire('Erro', 'Não foi possível carregar os times.', 'error');
       } finally {

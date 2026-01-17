@@ -25,7 +25,8 @@ model Usuario {
 
   avisosCriados Aviso[]
   avisosLidos   AvisoLeitura[]
-  jogadores     Jogador[]
+
+  jogador Jogador? @relation("UsuarioJogador") // 1:1
 }
 
 model Permissao {
@@ -86,6 +87,7 @@ model Modalidade {
   partidas     Partida[]
   campeonatos  Campeonato[]
   funcoes      FuncaoJogador[]
+  jogadorTimes JogadorTime[]
 }
 
 model Campeonato {
@@ -128,7 +130,7 @@ model Time {
   partidasA    Partida[]        @relation("TimeAPartidas")
   partidasB    Partida[]        @relation("TimeBPartidas")
   agendamentos Agendamento[]    @relation("TimeAgendamentos")
-  jogadores    Jogador[]
+  jogadores    JogadorTime[] // relação com jogadores via JogadorTime
 }
 
 model Partida {
@@ -170,12 +172,24 @@ model Jogador {
   nome      String
   foto      String?          @db.VarChar(2048)
   funcaoId  Int?
-  usuarioId Int?
-  timeId    Int
+  usuarioId Int?             @unique // 1 usuário = 1 jogador
   funcao    FuncaoJogador?   @relation(fields: [funcaoId], references: [id])
-  time      Time             @relation(fields: [timeId], references: [id])
-  usuario   Usuario?         @relation(fields: [usuarioId], references: [id])
+  usuario   Usuario?         @relation("UsuarioJogador", fields: [usuarioId], references: [id])
   atuacoes  JogadorPartida[]
+  times     JogadorTime[] // relação de times por modalidade
+}
+
+model JogadorTime {
+  id           Int @id @default(autoincrement())
+  jogadorId    Int
+  timeId       Int
+  modalidadeId Int
+
+  jogador    Jogador    @relation(fields: [jogadorId], references: [id])
+  time       Time       @relation(fields: [timeId], references: [id])
+  modalidade Modalidade @relation(fields: [modalidadeId], references: [id])
+
+  @@unique([jogadorId, modalidadeId])
 }
 
 model JogadorPartida {
@@ -246,7 +260,7 @@ model UsuarioTime {
 model Aviso {
   id        Int      @id @default(autoincrement())
   titulo    String
-  descricao String   @db.Text // Usei Text pra caber textão se precisar
+  descricao String   @db.Text
   foto      String?  @db.VarChar(2048)
   data      DateTime @default(now())
   fixado    Boolean  @default(false)
@@ -261,14 +275,12 @@ model Aviso {
 }
 
 model AvisoLeitura {
-  id     Int      @id @default(autoincrement())
-  lidoEm DateTime @default(now())
-
+  id        Int      @id @default(autoincrement())
+  lidoEm    DateTime @default(now())
   usuarioId Int
-  usuario   Usuario @relation(fields: [usuarioId], references: [id])
-
-  avisoId Int
-  aviso   Aviso @relation(fields: [avisoId], references: [id], onDelete: Cascade)
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  avisoId   Int
+  aviso     Aviso    @relation(fields: [avisoId], references: [id], onDelete: Cascade)
 
   @@unique([usuarioId, avisoId])
 }

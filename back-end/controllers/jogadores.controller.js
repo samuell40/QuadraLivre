@@ -65,7 +65,13 @@ async function listarJogadoresController(req, res) {
 
 async function listarTodosJogadoresController(req, res) {
   try {
-    const jogadores = await jogadorService.listarTodosJogadores();
+    const { modalidadeId } = req.params;
+
+    if (!modalidadeId) {
+      return res.status(400).json({ message: 'modalidadeId é obrigatório' });
+    }
+
+    const jogadores = await jogadorService.listarTodosJogadores(modalidadeId);
     return res.json(jogadores);
   } catch (err) {
     console.error(err);

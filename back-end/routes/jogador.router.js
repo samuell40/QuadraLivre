@@ -8,7 +8,7 @@ router.delete('/remover/:timeId/:jogadorId', controller.removerJogadorController
 
 router.get('/time/:timeId', controller.listarJogadoresController);
 
-router.get('/jogadores', controller.listarTodosJogadoresController);
+router.get('/jogadores/:modalidadeId', controller.listarTodosJogadoresController)
 
 router.post('/adicionar/funcao', controller.adicionarFuncaoJogadorController);
 

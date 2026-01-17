@@ -74,33 +74,38 @@ async function getUsuarios() {
       quadra: true,
       permissao: true,
       times: {
-        include: { time: true },
+        include: { time: true }, // vínculo de usuário com times
       },
     },
-  })
+  });
 
-  const usuariosComJogador = []
+  const usuariosComJogador = [];
 
   for (const user of usuarios) {
+    // Busca o jogador vinculado ao usuário
     const jogador = await prisma.jogador.findFirst({
       where: { usuarioId: user.id },
-      include: { time: true },
-    })
+      include: {
+        times: {
+          include: {
+            time: true,       // pega o time
+            modalidade: true, // opcional, se quiser mostrar modalidade
+          },
+        },
+      },
+    });
 
-    let jogadorFormatado = null
+    let jogadorFormatado = null;
 
     if (jogador) {
-      let nomeTime = null
-
-      if (jogador.time) {
-        nomeTime = jogador.time.nome
-      }
+      // Pega todos os nomes de times do jogador
+      const nomesTimes = jogador.times.map(t => t.time.nome);
 
       jogadorFormatado = {
         id: jogador.id,
         nome: jogador.nome,
-        time: nomeTime,
-      }
+        times: nomesTimes, // array de todos os nomes de times
+      };
     }
 
     usuariosComJogador.push({
@@ -112,13 +117,13 @@ async function getUsuarios() {
       permissaoId: user.permissaoId,
       permissao: user.permissao,
       quadra: user.quadra,
-      times: user.times.map(ut => ut.time),
-      jogador: jogadorFormatado,
+      times: user.times.map(ut => ut.time), // times do usuário
+      jogador: jogadorFormatado,             // agora com todos os times
       totalAgendamentos: user.agendamentos.length,
-    })
+    });
   }
 
-  return usuariosComJogador
+  return usuariosComJogador;
 }
 
 async function listarPermissoes() {
@@ -130,70 +135,58 @@ async function listarPermissoes() {
 async function vincularUsuarioTime(usuarioId, timeId, jogadorId) {
   const usuario = await prisma.usuario.findUnique({
     where: { id: usuarioId },
-    include: { permissao: true },
+    include: { permissao: true, jogador: true },
   });
-
   if (!usuario) throw new Error('Usuário não encontrado');
 
   const time = await prisma.time.findUnique({
     where: { id: timeId },
     include: { modalidade: true },
   });
-
   if (!time) throw new Error('Time não encontrado');
 
   const jogador = await prisma.jogador.findUnique({
     where: { id: jogadorId },
-    include: { time: { include: { modalidade: true } } },
+    include: { times: { include: { modalidade: true, time: true } } },
   });
-
   if (!jogador) throw new Error('Jogador não encontrado');
 
-  if (jogador.timeId !== timeId) {
-    throw new Error('Jogador não pertence a este time');
-  }
+  const modalidadeId = time.modalidadeId;
 
-  const vinculoMesmoModalidade = await prisma.usuarioTime.findFirst({
-    where: {
-      usuarioId,
-      time: { modalidadeId: time.modalidadeId },
-    },
-    include: { time: true },
+  const jogadorTimeExistente = await prisma.jogadorTime.findUnique({
+    where: { jogadorId_modalidadeId: { jogadorId, modalidadeId } },
   });
 
-  if (vinculoMesmoModalidade) {
-    if (vinculoMesmoModalidade.time.id === timeId) {
-      throw new Error('Usuário já está vinculado a este time');
-    }
-
-    await prisma.usuarioTime.delete({
-      where: {
-        usuarioId_timeId: {
-          usuarioId,
-          timeId: vinculoMesmoModalidade.time.id,
-        },
+  if (jogadorTimeExistente) {
+    await prisma.jogadorTime.update({
+      where: { jogadorId_modalidadeId: { jogadorId, modalidadeId } },
+      data: { timeId },
+    });
+  } else {
+    await prisma.jogadorTime.create({
+      data: {
+        jogadorId,
+        timeId,
+        modalidadeId,
       },
     });
   }
 
-  const vinculo = await prisma.usuarioTime.create({
-    data: { usuarioId, timeId },
-  });
+  if (!jogador.usuarioId || jogador.usuarioId !== usuarioId) {
+    await prisma.jogador.update({
+      where: { id: jogadorId },
+      data: { usuarioId },
+    });
+  }
 
-  const jogadorAtualizado = await prisma.jogador.update({
+  const jogadorAtualizado = await prisma.jogador.findUnique({
     where: { id: jogadorId },
-    data: {
-      usuarioId: usuario.id,
-      timeId: time.id,
-    },
+    include: { times: { include: { time: true, modalidade: true } } },
   });
 
   await enviarEmailVinculoTime(usuario, time, jogadorAtualizado);
 
-  return {
-    vinculo,
-    jogador: jogadorAtualizado,
-  };
+  return jogadorAtualizado;
 }
 
 async function getUsuarioTimesService(usuarioId) {
