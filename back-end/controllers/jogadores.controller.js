@@ -2,18 +2,26 @@ const jogadorService = require('../services/jogador.service');
 
 async function adicionarJogadorController(req, res) {
   try {
-    const { timeId, nome, foto, funcaoId } = req.body;
+    const { timeId, nome, foto, funcaoId, usuarioId } = req.body;
 
     if (!timeId) {
       return res.status(400).json({ message: "timeId é obrigatório" });
     }
-
-    const novoJogador = await jogadorService.adicionarJogador({
+    const dadosJogador = {
       timeId: Number(timeId),
       nome,
-      foto,
-      funcaoId: Number(funcaoId),
-    });
+      foto
+    };
+
+    if (funcaoId) {
+      dadosJogador.funcaoId = Number(funcaoId);
+    }
+
+    if (usuarioId) {
+      dadosJogador.usuarioId = Number(usuarioId);
+    }
+
+    const novoJogador = await jogadorService.adicionarJogador(dadosJogador);
 
     return res.status(201).json(novoJogador);
   } catch (error) {
@@ -52,6 +60,16 @@ async function listarJogadoresController(req, res) {
   } catch (error) {
     console.error("Erro no controller:", error);
     return res.status(500).json({ message: error.message });
+  }
+}
+
+async function listarTodosJogadoresController(req, res) {
+  try {
+    const jogadores = await jogadorService.listarTodosJogadores();
+    return res.json(jogadores);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: err.message });
   }
 }
 
@@ -136,12 +154,34 @@ async function atualizarFuncaoJogadorController(req, res) {
   }
 }
 
+async function moverJogadorTimeController(req, res) {
+  try {
+    const { jogadorId, novoTimeId } = req.body;
+
+    if (!jogadorId || !novoTimeId) {
+      return res.status(400).json({ message: "jogadorId e novoTimeId são obrigatórios" });
+    }
+
+    const jogadorAtualizado = await jogadorService.moverJogadorDeTime(
+      Number(jogadorId),
+      Number(novoTimeId)
+    );
+
+    return res.status(200).json(jogadorAtualizado);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: error.message });
+  }
+}
+
 module.exports = {
   adicionarJogadorController,
   removerJogadorController,
   listarJogadoresController,
+  listarTodosJogadoresController,
   adicionarFuncaoJogadorController,
   removerFuncaoJogadorController,
   listarFuncoesJogadorController,
-  atualizarFuncaoJogadorController
+  atualizarFuncaoJogadorController,
+  moverJogadorTimeController
 };

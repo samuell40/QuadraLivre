@@ -24,8 +24,6 @@
                 {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
               </option>
             </select>
-
-
           </div>
         </div>
 
