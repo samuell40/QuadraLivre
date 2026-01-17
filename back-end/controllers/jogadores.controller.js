@@ -63,6 +63,16 @@ async function listarJogadoresController(req, res) {
   }
 }
 
+async function listarTodosJogadoresController(req, res) {
+  try {
+    const jogadores = await jogadorService.listarTodosJogadores();
+    return res.json(jogadores);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: err.message });
+  }
+}
+
 async function adicionarFuncaoJogadorController(req, res) {
   try {
     const { nome, modalidadeId } = req.body;
@@ -144,12 +154,34 @@ async function atualizarFuncaoJogadorController(req, res) {
   }
 }
 
+async function moverJogadorTimeController(req, res) {
+  try {
+    const { jogadorId, novoTimeId } = req.body;
+
+    if (!jogadorId || !novoTimeId) {
+      return res.status(400).json({ message: "jogadorId e novoTimeId são obrigatórios" });
+    }
+
+    const jogadorAtualizado = await jogadorService.moverJogadorDeTime(
+      Number(jogadorId),
+      Number(novoTimeId)
+    );
+
+    return res.status(200).json(jogadorAtualizado);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: error.message });
+  }
+}
+
 module.exports = {
   adicionarJogadorController,
   removerJogadorController,
   listarJogadoresController,
+  listarTodosJogadoresController,
   adicionarFuncaoJogadorController,
   removerFuncaoJogadorController,
   listarFuncoesJogadorController,
-  atualizarFuncaoJogadorController
+  atualizarFuncaoJogadorController,
+  moverJogadorTimeController
 };
