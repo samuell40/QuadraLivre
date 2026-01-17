@@ -418,6 +418,17 @@ export default {
   font-weight: 500;
 }
 
+.nav-links li a:hover {
+  color: #3B82F6;
+  text-decoration-color: #3B82F6;
+}
+
+.nav-links li a:focus,
+.nav-links li a:active {
+  color: #ffffff;
+  text-decoration-color: #3B82F6;
+}
+
 .login {
   background-color: #1E3A8A;
   padding: 6px 16px;

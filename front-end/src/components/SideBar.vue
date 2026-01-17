@@ -97,13 +97,11 @@
       <!-- PLACAR -->
       <!-- PLACAR -->
       <div class="sidebar-category">
-        <!-- Header só aparece se NÃO for permissão 4 -->
         <div v-if="!isPermissao4" class="sidebar-category-header" @click="toggleCategory('placar')">
           <span>Placar</span>
           <span>{{ openCategory === 'placar' ? '▲' : '▼' }}</span>
         </div>
 
-        <!-- Conteúdo -->
         <div v-show="openCategory === 'placar' || isPermissao4">
           <!-- GERENCIAR PLACAR -->
           <a href="/controleplacar" :class="{ active: isActive('/controleplacar') }">
@@ -123,7 +121,7 @@
             <span>Gerenciar Partida</span>
           </a>
 
-          <!-- GERENCIAR CAMPEONATOS (não aparece para permissão 4) -->
+          <!-- GERENCIAR CAMPEONATOS -->
           <a v-if="!isPermissao4" href="/campeonatos" :class="{ active: isActive('/campeonatos') }">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
               <path fill="currentColor"
@@ -159,7 +157,7 @@ export default {
       sidebarVisible: true,
       isMobile: false,
       usuario: null,
-      openCategory: localStorage.getItem("openCategory") || "admin", // admin aberto por padrão
+      openCategory: localStorage.getItem("openCategory") || "admin",
     };
   },
   mounted() {
@@ -256,6 +254,12 @@ body {
 .sidebar a.active {
   color: #3B82F6;
   text-decoration: none;
+}
+
+.sidebar a:hover {
+  color: #3B82F6;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
 }
 
 .logout-button svg {

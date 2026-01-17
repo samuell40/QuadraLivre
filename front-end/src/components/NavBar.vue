@@ -8,16 +8,30 @@
           <span :class="{ open: isMenuOpen }"></span>
         </div>
 
-        <!-- LOGO -->
         <div class="logo-container">
           <img src="@/assets/Cópia de xxxxx (2).png" alt="Quadra Livre" class="logo-img" />
         </div>
       </div>
 
       <ul class="nav-links" :class="{ active: isMenuOpen }">
-        <li><a href="/agendarquadra">Agendar Quadra</a></li>
-        <li><a href="/meusagendamentos">Meus Agendamentos</a></li>
-        <li><a href="/meusavisos">Meus Avisos</a></li>
+        <li>
+          <router-link to="/agendarquadra" exact-active-class="active-link">
+            Agendar Quadra
+          </router-link>
+        </li>
+
+        <li>
+          <router-link to="/meusagendamentos" exact-active-class="active-link">
+            Meus Agendamentos
+          </router-link>
+        </li>
+
+        <li>
+          <router-link to="/meusavisos" exact-active-class="active-link">
+            Meus Avisos
+          </router-link>
+        </li>
+
         <li class="sair-item">
           <a href="#" @click.prevent="logout" class="sair">Sair</a>
         </li>
@@ -102,6 +116,17 @@ export default {
   text-decoration: none;
   font-weight: 500;
 }
+
+.nav-links li a:hover {
+  color: #3B82F6;
+}
+
+:deep(.active-link) {
+  text-decoration: underline !important;
+  text-decoration-color: #3B82F6 !important;
+  text-underline-offset: 6px !important;
+}
+
 
 .sair {
   background-color: #1E3A8A;

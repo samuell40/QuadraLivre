@@ -72,6 +72,8 @@ model Agendamento {
   quadra     Quadra?     @relation(fields: [quadraId], references: [id])
   modalidade Modalidade? @relation("AgendamentoModalidade", fields: [modalidadeId], references: [id])
   time       Time?       @relation("TimeAgendamentos", fields: [timeId], references: [id])
+  campeonatoId Int?
+  campeonato   Campeonato? @relation(fields: [campeonatoId], references: [id])
 }
 
 model Modalidade {
@@ -99,6 +101,7 @@ model Campeonato {
   times     CampeonatoTime[]
   partidas  Partida[]
   placares  Placar[]
+  agendamentos Agendamento[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

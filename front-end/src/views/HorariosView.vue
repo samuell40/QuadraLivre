@@ -6,22 +6,31 @@
       <div class="topo">
         <h1 class="title">Horário Semanal da Quadra</h1>
         <NavBarUse />
-        <!-- Dropdown Quadras -->
-        <select v-model="quadraSelecionada" @change="buscarHorarios" class="select-quadra">
-          <option v-for="quadra in quadras" :key="quadra.id" :value="quadra.id">
-            {{ quadra.nome }}
-          </option>
-        </select>
+
+        <div class="controles-topo">
+          <select v-model="quadraSelecionada" @change="buscarHorarios" class="select-quadra">
+            <option v-for="quadra in quadras" :key="quadra.id" :value="quadra.id">
+              {{ quadra.nome }}
+            </option>
+          </select>
+
+          <button @click="gerarPDF" class="btn-pdf" :disabled="isLoading || !quadraSelecionada">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+            </svg>
+            Gerar PDF
+          </button>
+        </div>
       </div>
 
-      <!-- Tabela de horários com loader -->
       <div class="tabela-container">
         <div v-if="isLoading" class="loader-overlay">
           <div class="loader"></div>
         </div>
 
-        <!-- Tabela -->
-        <table v-if="!isLoading" class="tabela-horarios">
+        <table v-if="!isLoading" class="tabela-horarios" id="tabela-agenda">
           <thead>
             <tr>
               <th class="col-hora">Hora</th>
@@ -40,7 +49,7 @@
                     Time: {{ agenda[`${index}-${hora}`].time }}
                   </span>
                   <span v-else>
-                    Usuário: {{ agenda[`${index}-${hora}`].usuario }}
+                    {{ agenda[`${index}-${hora}`].usuario }}
                   </span>
                 </span>
                 <span v-else>Disponível</span>
@@ -52,7 +61,6 @@
       </div>
     </div>
 
-    <!-- Modal de detalhe do agendamento -->
     <DetalheAgendModal v-if="agendamentoSelecionado" :agendamento="agendamentoSelecionado"
       @fechar="agendamentoSelecionado = null" />
   </div>
@@ -62,6 +70,8 @@
 import { ref, onMounted } from "vue";
 import { startOfWeek, addDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import api from "@/axios";
 import SideBar from "@/components/SideBar.vue";
 import NavBarUse from '@/components/NavBarUser.vue'
@@ -80,7 +90,6 @@ export default {
     const hoje = new Date();
     const inicioSemana = startOfWeek(hoje, { weekStartsOn: 1 });
 
-    // Dias semana no formato: Segunda, 08/09
     const diasSemana = Array.from({ length: 7 }).map((_, i) => {
       const d = addDays(inicioSemana, i);
       const diaStr = format(d, 'dd/MM');
@@ -88,7 +97,6 @@ export default {
       return nomeDia.charAt(0).toUpperCase() + nomeDia.slice(1) + ', ' + diaStr;
     });
 
-    // Horários 7h às 23h
     const horarios = Array.from({ length: 17 }).map((_, i) => {
       const inicio = 7 + i;
       const fim = inicio + 1;
@@ -144,6 +152,62 @@ export default {
       }
     };
 
+    const gerarPDF = () => {
+      const doc = new jsPDF('l', 'mm', 'a4');
+
+      const nomeQuadra = quadras.value.find(q => q.id === quadraSelecionada.value)?.nome || 'Quadra';
+
+      doc.setFontSize(18);
+      doc.text(`Relatório Semanal - ${nomeQuadra}`, 14, 15);
+      doc.setFontSize(10);
+      doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 22);
+
+      const head = [['Hora', ...diasSemana]];
+
+      const body = horarios.map(hora => {
+        const linha = [hora];
+
+        for (let i = 0; i < 7; i++) {
+          const chave = `${i}-${hora}`;
+          const agendamento = agenda.value[chave];
+
+          if (agendamento) {
+            // PDF também atualizado: Se tiver time mostra "Time: X", senão mostra só o nome
+            linha.push(agendamento.time ? `Time: ${agendamento.time}` : agendamento.usuario);
+          } else {
+            linha.push('Disponível');
+          }
+        }
+        return linha;
+      });
+
+      autoTable(doc, {
+        head: head,
+        body: body,
+        startY: 25,
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 2, halign: 'center', valign: 'middle' },
+        headStyles: { fillColor: [30, 58, 138], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 25 }
+        },
+        didParseCell: function (data) {
+          if (data.section === 'body' && data.column.index > 0) {
+            const texto = data.cell.raw;
+            if (texto !== 'Disponível') {
+              data.cell.styles.textColor = [37, 99, 235];
+              data.cell.styles.fontStyle = 'bold';
+            } else {
+              data.cell.styles.textColor = [107, 114, 128];
+            }
+          }
+        }
+      });
+
+      doc.save(`agenda_${nomeQuadra}_${format(new Date(), 'dd-MM')}.pdf`);
+    };
+
     onMounted(() => {
       buscarQuadras();
     });
@@ -156,7 +220,8 @@ export default {
       agenda,
       isLoading,
       agendamentoSelecionado,
-      buscarHorarios
+      buscarHorarios,
+      gerarPDF
     };
   },
 };
@@ -180,6 +245,14 @@ export default {
   margin-bottom: 20px;
 }
 
+/* Novo Container para alinhar Select e Botão */
+.controles-topo {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  /* Centraliza verticalmente */
+}
+
 .title {
   margin-top: 20px;
   font-size: 32px;
@@ -191,8 +264,47 @@ export default {
   width: 100%;
   border: 1px solid #ccc;
   border-radius: 6px;
-  padding: 10px;
+  padding: 0 10px;
   font-size: 14px;
+  height: 45px;
+  /* Altura fixa */
+  background-color: white;
+}
+
+.btn-pdf {
+  background-color: #3B82F6;
+  /* Azul */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  /* Flexbox para ícone e texto */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  /* Dimensões fixas para alinhar com o select */
+  height: 45px;
+  padding: 0 20px;
+  white-space: nowrap;
+  /* Não quebra linha */
+}
+
+.btn-pdf:hover {
+  background-color: #2563EB;
+}
+
+.btn-pdf:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.btn-pdf svg {
+  width: 20px;
+  height: 20px;
 }
 
 .tabela-container {
