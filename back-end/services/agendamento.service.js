@@ -174,10 +174,16 @@ const listarAgendamentosConfirmadosSemanaService = async (quadraId) => {
 };
 
 const criarAgendamentoService = async ({
-  usuarioId, dia, mes, ano, hora, duracao = 1, tipo = "TREINO", quadraId, modalidadeId, timeId,
+  usuarioId, dia, mes, ano, hora, duracao = 1, tipo = "TREINO", quadraId, modalidadeId, timeId, ignorarRegra = false
 }) => {
   if (!dia || !mes || !ano || !hora || !usuarioId || !quadraId || !modalidadeId) {
     throw { status: 400, message: "Campos obrigatórios não preenchidos." };
+  }
+
+  const agora = new Date();
+  const dataAgendamentoCheck = new Date(ano, mes - 1, dia, hora);
+  if (dataAgendamentoCheck < agora) {
+      throw { status: 400, message: "Não é possível realizar agendamentos no passado." };
   }
 
   const [quadra, modalidade] = await Promise.all([
@@ -193,7 +199,6 @@ const criarAgendamentoService = async ({
     if (!time) throw { status: 400, message: "Time não existe." };
 
     const horaNum = Number(hora);
-    const duracaoNum = Number(duracao ?? 1);
     const dataAgendamento = new Date(ano, mes - 1, dia);
     dataAgendamento.setHours(horaNum, 0, 0, 0);
     const inicioSemana = startOfWeek(dataAgendamento, { weekStartsOn: 1 });
@@ -204,9 +209,7 @@ const criarAgendamentoService = async ({
         timeId,
         status: "Confirmado",
         AND: [
-          {
-            ano: { gte: inicioSemana.getFullYear(), lte: fimSemana.getFullYear() },
-          },
+          { ano: { gte: inicioSemana.getFullYear(), lte: fimSemana.getFullYear() } },
           {
             OR: [
               { mes: { gt: inicioSemana.getMonth() + 1 } },
@@ -228,7 +231,7 @@ const criarAgendamentoService = async ({
       return data >= inicioSemana && data <= fimSemana;
     }).length;
 
-    if (countSemana >= 2) {
+    if (countSemana >= 2 && !ignorarRegra) {
       throw {
         status: 400,
         message: "Este time já possui 2 agendamentos nesta semana.",
@@ -238,14 +241,8 @@ const criarAgendamentoService = async ({
 
   const conflito = await prisma.agendamento.findFirst({
     where: {
-      dia,
-      mes,
-      ano,
-      quadraId,
-      hora: {
-        gte: hora,
-        lt: hora + duracao,
-      },
+      dia, mes, ano, quadraId,
+      hora: { gte: hora, lt: hora + duracao },
     },
   });
 
@@ -255,33 +252,17 @@ const criarAgendamentoService = async ({
 
   const agendamento = await prisma.agendamento.create({
     data: {
-      dia,
-      mes,
-      ano,
-      hora,
-      duracao,
-      tipo,
-      status: "Pendente",
-      usuarioId,
-      quadraId,
-      modalidadeId,
-      timeId: timeId ?? null,
+      dia, mes, ano, hora, duracao, tipo, status: "Pendente",
+      usuarioId, quadraId, modalidadeId, timeId: timeId ?? null,
     },
     include: {
       modalidade: true,
-      usuario: {
-        include: {
-          times: { include: { time: true } },
-        },
-      },
+      usuario: { include: { times: { include: { time: true } } } },
       time: true,
     },
   });
 
-  return {
-    ...agendamento,
-    duracao: agendamento.duracao ?? 1,
-  };
+  return { ...agendamento, duracao: agendamento.duracao ?? 1 };
 };
 
 const cancelarAgendamentoService = async (id) => {

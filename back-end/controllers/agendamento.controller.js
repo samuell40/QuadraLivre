@@ -11,12 +11,14 @@ const {
   listarAgendamentosPorTimeService } = require('../services/agendamento.service');
 
 const criarAgendamentoController = async (req, res) => {
-  console.log('Payload criar agendamento:', req.body);
   try {
     const usuarioId = req.user?.id || req.body.usuarioId;
     if (!usuarioId) return res.status(400).json({ error: 'Usuário não informado.' });
 
-    const { dia, mes, ano, hora, duracao, tipo, quadraId, modalidadeId, timeId } = req.body;
+    const { 
+      dia, mes, ano, hora, duracao, tipo, 
+      quadraId, modalidadeId, timeId, ignorarRegra 
+    } = req.body;
 
     if (!dia || !mes || !ano || !hora || !quadraId || !modalidadeId) {
       return res.status(400).json({ error: 'Campos obrigatórios não preenchidos.' });
@@ -32,7 +34,8 @@ const criarAgendamentoController = async (req, res) => {
       tipo: tipo ?? 'TREINO',
       quadraId: Number(quadraId),
       modalidadeId: Number(modalidadeId),
-      timeId: timeId ? Number(timeId) : null
+      timeId: timeId ? Number(timeId) : null,
+      ignorarRegra
     });
 
     return res.status(201).json(agendamento);
