@@ -16,13 +16,10 @@
           <div class="aviso-quadra-tag">
             {{ avisoDestaque.quadra?.nome || ' EQUIPE QUADRA LIVRE ' }}
           </div>
-
           <h4 class="aviso-titulo">{{ avisoDestaque.titulo }}</h4>
-
           <p class="aviso-descricao">
             {{ avisoDestaque.descricao }}
           </p>
-
           <div class="btn-ler-container">
             <span class="btn-ler" @click="marcarLido" role="button">Marcar como lido</span>
           </div>
@@ -55,7 +52,7 @@
       </div>
     </div>
 
-    <AgendamentoModal v-if="mostrarModalAgendamento" :quadra="quadraSelecionada"
+    <AgendamentoModal v-if="mostrarModalAgendamento" :quadra="quadraSelecionada" :times="times"
       @fechar="mostrarModalAgendamento = false" @confirmar="confirmarAgendamento" />
   </div>
 </template>
@@ -66,6 +63,7 @@ import NavBar from "@/components/NavBar.vue";
 import AgendamentoModal from "@/components/modals/Agendamentos/AgendModal.vue";
 import api from "@/axios";
 import { useAuthStore } from "@/store";
+import { mapState } from "pinia";
 
 export default {
   name: "AgendarQuadras",
@@ -77,18 +75,58 @@ export default {
       mostrarModalAgendamento: false,
       quadraSelecionada: null,
       avisoDestaque: null,
+      times: [],
     };
   },
+
+  computed: {
+    ...mapState(useAuthStore, ['usuario'])
+  },
+
+  watch: {
+    usuario: {
+      handler(novoUsuario) {
+        if (novoUsuario?.id) {
+          this.carregarTimes(novoUsuario.id);
+        }
+      },
+      immediate: true
+    }
+  },
+
   mounted() {
     this.carregarQuadras();
+    if (this.usuario?.id) {
+      this.carregarTimes(this.usuario.id);
+    }
   },
+
   methods: {
+    async carregarTimes(userId) {
+      if (!userId) return;
+      try {
+        const { data } = await api.get(`/usuarios/${userId}/times`);
+        this.times = Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error("Erro ao carregar times na tela principal:", error);
+      }
+    },
+
+    async abrirAgendamentoDireto(quadra) {
+      this.quadraSelecionada = quadra;
+
+      if (this.times.length === 0 && this.usuario?.id) {
+        await this.carregarTimes(this.usuario.id);
+      }
+
+      this.mostrarModalAgendamento = true;
+    },
+
     async carregarAvisoDestaque() {
       try {
         const authStore = useAuthStore();
         const usuarioId = authStore.usuario?.id;
         let todosAvisos = [];
-
         const reqGerais = api.get("/quadras/geral/avisos").catch(() => ({ data: [] }));
 
         let promessasQuadras = [];
@@ -103,7 +141,6 @@ export default {
             if (!aviso.leituras) return true;
             return !aviso.leituras.some(leitura => String(leitura.usuarioId) === String(usuarioId));
           });
-          
           const geraisFormatados = geraisNaoLidos.map(a => ({ ...a, quadra: null }));
           todosAvisos.push(...geraisFormatados);
         }
@@ -114,11 +151,7 @@ export default {
               if (!aviso.leituras) return true;
               return !aviso.leituras.some(leitura => String(leitura.usuarioId) === String(usuarioId));
             });
-
-            const avisosComQuadra = naoLidos.map(aviso => ({
-              ...aviso,
-              quadra: this.quadras[index]
-            }));
+            const avisosComQuadra = naoLidos.map(aviso => ({ ...aviso, quadra: this.quadras[index] }));
             todosAvisos.push(...avisosComQuadra);
           }
         });
@@ -129,14 +162,10 @@ export default {
         }
 
         todosAvisos.sort((a, b) => {
-          if (a.fixado === b.fixado) {
-            return new Date(b.data) - new Date(a.data);
-          }
+          if (a.fixado === b.fixado) return new Date(b.data) - new Date(a.data);
           return a.fixado ? -1 : 1;
         });
-
         this.avisoDestaque = todosAvisos[0];
-
       } catch (err) {
         console.error("Erro ao carregar avisos para destaque:", err);
       }
@@ -144,18 +173,12 @@ export default {
 
     async marcarLido() {
       const authStore = useAuthStore();
-
       if (this.avisoDestaque && authStore.usuario) {
         try {
-          await api.post(`/avisos/${this.avisoDestaque.id}/ler`, {
-            usuarioId: authStore.usuario.id
-          });
-          
+          await api.post(`/avisos/${this.avisoDestaque.id}/ler`, { usuarioId: authStore.usuario.id });
           this.avisoDestaque = null;
-
-
         } catch (error) {
-          console.warn("Não foi possível marcar como lido no servidor", error);
+          console.warn("Não foi possível marcar como lido", error);
         }
       }
     },
@@ -165,9 +188,7 @@ export default {
       try {
         const { data } = await api.get("/quadra");
         this.quadras = data;
-
         this.carregarAvisoDestaque();
-        
       } catch (err) {
         console.error("Erro ao carregar quadras:", err);
       } finally {
@@ -175,14 +196,8 @@ export default {
       }
     },
 
-    abrirAgendamentoDireto(quadra) {
-      this.quadraSelecionada = quadra;
-      this.mostrarModalAgendamento = true;
-    },
-
     async confirmarAgendamento(agendamentoDoModal) {
       const authStore = useAuthStore();
-
       if (!authStore.usuario) {
         Swal.fire({
           title: "Você precisa estar logado",
@@ -197,31 +212,16 @@ export default {
         });
         return;
       }
-
       if (!this.quadraSelecionada) {
-        Swal.fire({
-          icon: "error",
-          title: "Erro",
-          text: "Nenhuma quadra foi selecionada para o agendamento.",
-          confirmButtonColor: "#1E3A8A",
-        });
+        Swal.fire({ icon: "error", title: "Erro", text: "Nenhuma quadra selecionada.", confirmButtonColor: "#1E3A8A" });
         return;
       }
 
-      const regrasAntecedencia = {
-        TREINO: 24,
-        AMISTOSO: 7 * 24,
-        CAMPEONATO: 30 * 24,
-        EVENTO: 180 * 24,
-        OUTRO: 24
-      };
-
+      const regrasAntecedencia = { TREINO: 24, AMISTOSO: 7 * 24, CAMPEONATO: 30 * 24, EVENTO: 180 * 24, OUTRO: 24 };
       const tipo = agendamentoDoModal.tipo?.toUpperCase();
       const antecedenciaHoras = regrasAntecedencia[tipo] || regrasAntecedencia.OUTRO;
 
-      let hora = 0;
-      let minuto = 0;
-
+      let hora = 0; let minuto = 0;
       if (typeof agendamentoDoModal.hora === 'string' && agendamentoDoModal.hora.includes(':')) {
         [hora, minuto] = agendamentoDoModal.hora.split(':').map(Number);
       } else {
@@ -229,12 +229,8 @@ export default {
       }
 
       const dataAgendamento = new Date(Date.UTC(
-        Number(agendamentoDoModal.ano),
-        Number(agendamentoDoModal.mes) - 1,
-        Number(agendamentoDoModal.dia),
-        hora,
-        minuto,
-        0
+        Number(agendamentoDoModal.ano), Number(agendamentoDoModal.mes) - 1, Number(agendamentoDoModal.dia),
+        hora, minuto, 0
       ));
 
       const agora = new Date();
@@ -245,10 +241,7 @@ export default {
         Swal.fire({
           icon: "warning",
           title: "Antecedência mínima não respeitada",
-          text: `Para ${tipo}, o agendamento deve ser feito com pelo menos ${antecedenciaHoras >= 24
-            ? antecedenciaHoras / 24 + " dias"
-            : antecedenciaHoras + " horas"
-            } de antecedência.`,
+          text: `Para ${tipo}, o agendamento deve ser feito com pelo menos ${antecedenciaHoras >= 24 ? antecedenciaHoras / 24 + " dias" : antecedenciaHoras + " horas"} de antecedência.`,
           confirmButtonColor: "#1E3A8A",
         });
         return;
@@ -263,21 +256,13 @@ export default {
 
       try {
         await api.post("/agendamento", agendamento);
-
         Swal.fire({
-          icon: "success",
-          title: "Agendamento realizado!",
-          text: `Quadra: ${this.quadraSelecionada.nome}`,
-          confirmButtonColor: "#1E3A8A",
-          timer: 5000,
-          showConfirmButton: false,
-          timerProgressBar: true,
+          icon: "success", title: "Agendamento realizado!", text: `Quadra: ${this.quadraSelecionada.nome}`,
+          confirmButtonColor: "#1E3A8A", timer: 5000, showConfirmButton: false, timerProgressBar: true,
         });
-
         this.mostrarModalAgendamento = false;
       } catch (err) {
         const msg = err.response?.data?.error || err.response?.data?.message;
-
         if (err.response?.status === 409) {
           Swal.fire({ icon: "warning", title: "Horário já agendado", text: "Escolha outro horário.", confirmButtonColor: "#1E3A8A" });
         } else if (err.response?.status === 400 && msg?.includes("já possui 2 agendamentos")) {
@@ -304,7 +289,7 @@ body {
   min-height: 100vh;
   width: 100%;
   max-width: none;
-  padding: 24px 80px;
+  padding: 100px 80px 24px 80px;
 }
 
 .aviso-banner {
@@ -312,8 +297,8 @@ body {
   border-left: 5px solid #3B82F6;
   border-radius: 8px;
   padding: 16px 20px;
-  margin-top: 80px;
-  margin-bottom: -20px;
+  margin-top: 0;
+  margin-bottom: 24px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   animation: slideIn 0.5s ease-out;
 }
@@ -405,7 +390,7 @@ body {
 }
 
 .titulo {
-  margin-top: 40px;
+  margin-top: 0;
   margin-bottom: 32px;
 }
 

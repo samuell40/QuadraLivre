@@ -3,14 +3,11 @@
     <div class="modal-content">
       <h2 class="title"><strong>{{ quadra?.nome }}</strong></h2>
 
-      <!-- Escolha de Time e Modalidade -->
       <div class="linha-selects">
-        <!-- Time -->
         <div class="campo">
           <label for="time"><strong>Time:</strong></label>
           <div class="select-wrapper">
-            <div v-if="isLoadingTimes" class="loader"></div>
-            <select v-else v-model="timeSelecionado" class="select-tempo">
+            <select v-model="timeSelecionado" class="select-tempo">
               <option :value="null">(Nenhum, casual)</option>
               <option v-for="t in times" :key="t.id" :value="Number(t.id)">
                 {{ t.nome }}
@@ -19,7 +16,6 @@
           </div>
         </div>
 
-        <!-- Modalidade -->
         <div class="campo">
           <label for="modalidade"><strong>Modalidade:</strong></label>
           <div class="select-wrapper">
@@ -34,26 +30,13 @@
         </div>
       </div>
 
-      <!-- Escolha da Data e Duração -->
       <div class="linha-selects">
         <div class="campo">
           <label for="data"><strong>Data:</strong></label>
-          <Datepicker
-            v-model="data"
-            teleport="body"
-            locale="pt-BR" 
-            cancelText="Cancelar"
-            selectText="Selecionar"
-            :day-names="diasSemana"
-            :min-date="minDateObj"
-            :max-date="maxDateObj"
-            :day-class="getDayClass"
-            :enable-time-picker="false"
-            @update:model-value="gerarHorariosDisponiveis"
-            :format="formatDate"
-            placeholder="Escolha um dia"
-            :alt-position="calcularPosicao" 
-          />
+          <Datepicker v-model="data" teleport="body" locale="pt-BR" cancelText="Cancelar" selectText="Selecionar"
+            :day-names="diasSemana" :min-date="minDateObj" :max-date="maxDateObj" :day-class="getDayClass"
+            :enable-time-picker="false" @update:model-value="gerarHorariosDisponiveis" :format="formatDate"
+            placeholder="Escolha um dia" :alt-position="calcularPosicao" />
         </div>
 
         <div class="campo" v-if="exibirDuracao">
@@ -66,38 +49,26 @@
         </div>
       </div>
 
-      <!-- Lista de horários -->
       <label for="hora"><strong>Escolha o horário:</strong></label>
       <div class="horarios">
-        <button
-          v-for="h in horariosDisponiveis"
-          :key="h"
-          :class="{ selecionado: h === hora }"
-          :disabled="horariosIndisponiveis.includes(h)"
-          @click="hora = h"
-        >
+        <button v-for="h in horariosDisponiveis" :key="h" :class="{ selecionado: h === hora }"
+          :disabled="horariosIndisponiveis.includes(h)" @click="hora = h">
           {{ h }}
         </button>
       </div>
 
-      <!-- Tipo de agendamento -->
       <label for="tipo"><strong>Tipo de agendamento:</strong></label>
       <select v-model="tipo" class="select-tempo">
         <option disabled value="">Selecione</option>
         <option value="TREINO">Treino</option>
         <option value="AMISTOSO">Amistoso</option>
-        <!-- <option value="CAMPEONATO">Campeonato</option> -->
         <option value="EVENTO">Evento</option>
         <option value="OUTRO">Outro</option>
       </select>
 
-      <!-- Ações -->
       <div class="modal-actions">
-        <button
-          @click="confirmar"
-          class="btn-confirmar"
-          :disabled="!data || !hora || !modalidadeSelecionada || (exibirDuracao && !duracao) || !tipo"
-        >
+        <button @click="confirmar" class="btn-confirmar"
+          :disabled="!data || !hora || !modalidadeSelecionada || (exibirDuracao && !duracao) || !tipo">
           Confirmar
         </button>
         <button @click="$emit('fechar')" class="btn-cancelar">Cancelar</button>
@@ -116,17 +87,24 @@ import '@vuepic/vue-datepicker/dist/main.css'
 export default {
   name: 'AgendamentoModal',
   components: { Datepicker },
-  props: { quadra: Object },
+  props: {
+    quadra: Object,
+    times: { type: Array, default: () => [] }
+  },
   emits: ['confirmar', 'fechar'],
+
+  setup() {
+    const authStore = useAuthStore()
+    return { authStore }
+  },
+
   data() {
     const agora = new Date()
     const umMes = new Date()
     umMes.setMonth(agora.getMonth() + 1)
 
     return {
-      times: [],
       timeSelecionado: null,
-      isLoadingTimes: true,
       modalidades: [],
       modalidadeSelecionada: null,
       isLoadingModalidades: true,
@@ -136,7 +114,6 @@ export default {
       tipo: "",
       minDateObj: agora,
       maxDateObj: umMes,
-      authStore: useAuthStore(),
       horariosDisponiveis: [],
       horariosIndisponiveis: [],
       datasDisponiveis: [],
@@ -165,6 +142,7 @@ export default {
       return modalidadesDuracao.includes(this.modalidadePadronizada)
     }
   },
+
   async mounted() {
     try {
       if (this.quadra?.id) {
@@ -176,20 +154,12 @@ export default {
     } finally {
       this.isLoadingModalidades = false
     }
-
-    try {
-      const { data } = await api.get(`/usuarios/${this.authStore.usuario.id}/times`)
-      this.times = data
-    } catch (err) {
-      console.error("Erro ao carregar times:", err)
-    } finally {
-      this.isLoadingTimes = false
-    }
   },
+
   methods: {
     formatDate(date) {
       const d = new Date(date)
-      return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`
+      return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`
     },
     formatDateAPI(date) {
       const d = new Date(date)
@@ -202,17 +172,11 @@ export default {
     calcularPosicao() {
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight;
-
-      const dpWidth = 260; 
+      const dpWidth = 260;
       const dpHeight = -40;
-
       const top = (windowHeight / 2) - (dpHeight / 2);
       const left = (windowWidth / 2) - (dpWidth / 2);
-
-      return { 
-        top: `${top}px`, 
-        left: `${left}px` 
-      };
+      return { top: `${top}px`, left: `${left}px` };
     },
     async gerarHorariosDisponiveis() {
       if (!this.data) return
@@ -221,7 +185,7 @@ export default {
       this.horariosIndisponiveis = []
 
       for (let h = 7; h <= 23; h++) {
-        this.horariosDisponiveis.push(`${h.toString().padStart(2,'0')}:00`)
+        this.horariosDisponiveis.push(`${h.toString().padStart(2, '0')}:00`)
       }
 
       try {
@@ -237,7 +201,7 @@ export default {
           for (let i = 0; i < (a.duracao ?? 1); i++) {
             const h = a.hora + i
             if (h > 23) continue
-            const hString = String(h).padStart(2,'0') + ':00'
+            const hString = String(h).padStart(2, '0') + ':00'
             this.horariosIndisponiveis.push(hString)
           }
         })
@@ -259,6 +223,9 @@ export default {
       }
     },
     confirmar() {
+      if (!this.authStore.usuario?.id) {
+        Swal.fire({ icon: 'error', title: 'Erro', text: 'Usuário não logado.', confirmButtonColor: '#1E3A8A' }); return;
+      }
       if (!this.data || !this.hora || !this.modalidadeSelecionada || (this.exibirDuracao && !this.duracao) || !this.tipo) {
         Swal.fire({
           icon: 'warning',
@@ -334,7 +301,8 @@ select,
   font-size: 14px;
 }
 
-select:hover, input:hover {
+select:hover,
+input:hover {
   border-color: #3b82f6;
 }
 
@@ -383,11 +351,15 @@ select:hover, input:hover {
 }
 
 @keyframes spin {
-  0% { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
 }
 
-/* Horários grid */
 .horarios {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
@@ -458,8 +430,8 @@ select:hover, input:hover {
   opacity: 0.8;
 }
 
-/* Datepicker */
-:deep(.dp__arrow_top), :deep(.dp__arrow_bottom) {
+:deep(.dp__arrow_top),
+:deep(.dp__arrow_bottom) {
   display: none !important;
 }
 
@@ -502,7 +474,7 @@ select:hover, input:hover {
 :deep(.dp__menu) {
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   border: 1px solid #e5e7eb;
   font-family: inherit;
   margin-top: -10px;
@@ -546,6 +518,6 @@ select:hover, input:hover {
 
 :deep(.dp__cell_inner.dp__active_date),
 :deep(.dp__main.dp__theme_light) {
-    --dp-primary-color: #1E3A8A;
+  --dp-primary-color: #1E3A8A;
 }
 </style>

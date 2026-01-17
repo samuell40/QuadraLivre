@@ -44,7 +44,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999; /* Garante que fique acima de tudo */
+  z-index: 999;
 }
 
 .modal-content {
@@ -52,7 +52,7 @@ export default {
   padding: 2rem;
   border-radius: 12px;
   width: 100%;
-  max-width: 600px; /* Reduzi um pouco pra ficar mais elegante, mas pode manter 900 se preferir */
+  max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);

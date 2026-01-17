@@ -4,10 +4,9 @@
 
     <div class="conteudo">
       <div class="titulo">
-        <h1>Agendar Quadra</h1>
+        <h1>Agendar Quadra (Admin)</h1>
       </div>
 
-      <!-- ✅ NAV BAR USER -->
       <NavBarUse />
 
       <div v-if="isLoadingQuadras" class="loader"></div>
@@ -19,11 +18,7 @@
 
         <div v-else class="quadras-grid">
           <div class="card-quadra" v-for="quadra in quadras" :key="quadra.id">
-            <img
-              :src="quadra.foto || require('@/assets/futibinha.png')"
-              :alt="quadra.nome"
-              class="imagem-quadra"
-            />
+            <img :src="quadra.foto || require('@/assets/futibinha.png')" :alt="quadra.nome" class="imagem-quadra" />
             <div class="overlay">
               <h3 class="nome-quadra">{{ quadra.nome }}</h3>
               <h3 class="endereco">{{ quadra.endereco }}</h3>
@@ -35,12 +30,8 @@
         </div>
       </div>
 
-      <AgendamentoModal
-        v-if="mostrarModalAgendamento"
-        :quadra="quadraSelecionada"
-        @fechar="mostrarModalAgendamento = false"
-        @confirmar="confirmarAgendamento"
-      />
+      <AgendamentoModal v-if="mostrarModalAgendamento" :quadra="quadraSelecionada" :times="times"
+        @fechar="mostrarModalAgendamento = false" @confirmar="confirmarAgendamento" />
     </div>
   </div>
 </template>
@@ -52,6 +43,7 @@ import NavBarUse from '@/components/NavBarUser.vue'
 import AgendamentoModal from '@/components/modals/Agendamentos/AgendModal.vue'
 import api from '@/axios'
 import { useAuthStore } from '@/store'
+import { mapState } from 'pinia'
 
 export default {
   name: 'AgendarQuadrasAdm',
@@ -62,12 +54,54 @@ export default {
       isLoadingQuadras: true,
       mostrarModalAgendamento: false,
       quadraSelecionada: null,
+      times: [],
     }
   },
-  mounted() {
-    this.carregarQuadras()
+
+  computed: {
+    ...mapState(useAuthStore, ['usuario'])
   },
+
+  watch: {
+    usuario: {
+      handler(novoUsuario) {
+        if (novoUsuario?.id) {
+          this.carregarTimes(novoUsuario.id);
+        }
+      },
+      immediate: true
+    }
+  },
+
+  mounted() {
+    this.carregarQuadras();
+    if (this.usuario?.id) {
+      this.carregarTimes(this.usuario.id);
+    }
+  },
+
   methods: {
+    async carregarTimes(userId) {
+      if (!userId) return;
+
+      try {
+        let response;
+
+        // Permissão 1 (Admin) ou 2 (Gestor) vê todos os times
+        if (this.usuario.permissaoId === 1 || this.usuario.permissaoId === 2) {
+          response = await api.get('/times');
+        } else {
+          response = await api.get(`/usuarios/${userId}/times`);
+        }
+
+        this.times = Array.isArray(response.data) ? response.data : [];
+
+      } catch (error) {
+        console.error("Erro ao carregar times:", error);
+        this.times = [];
+      }
+    },
+
     async carregarQuadras() {
       this.isLoadingQuadras = true
       try {
@@ -80,13 +114,19 @@ export default {
       }
     },
 
-    abrirAgendamentoDireto(quadra) {
-      this.quadraSelecionada = quadra
-      this.mostrarModalAgendamento = true
+    async abrirAgendamentoDireto(quadra) {
+      this.quadraSelecionada = quadra;
+
+      if (this.times.length === 0 && this.usuario?.id) {
+        await this.carregarTimes(this.usuario.id);
+      }
+
+      this.mostrarModalAgendamento = true;
     },
 
-    async confirmarAgendamento(agendamentoDoModal) {
+    async confirmarAgendamento(agendamentoDoModal, forcarAgendamento = false) {
       const authStore = useAuthStore()
+
       if (!authStore.usuario) {
         Swal.fire({
           title: 'Você precisa estar logado',
@@ -106,11 +146,12 @@ export default {
         ...agendamentoDoModal,
         usuarioId: authStore.usuario.id,
         quadraId: this.quadraSelecionada.id,
-        modalidadeId: agendamentoDoModal.modalidadeId // ✅ vem do modal
+        ignorarRegra: forcarAgendamento
       }
 
       try {
         await api.post('/agendamento', agendamento)
+
         Swal.fire({
           icon: 'success',
           title: 'Agendamento realizado!',
@@ -120,16 +161,58 @@ export default {
           showConfirmButton: false,
           timerProgressBar: true
         })
+
         this.mostrarModalAgendamento = false
+
       } catch (err) {
-        if (err.response?.status === 409) {
+        const msgErro = err.response?.data?.message || err.response?.data?.error;
+        const status = err.response?.status;
+
+        // 1. TRATAMENTO DE LIMITE DE AGENDAMENTOS (Visual Customizado)
+        if (status === 400 && msgErro?.includes('já possui 2 agendamentos')) {
+          Swal.fire({
+            title: 'Limite Atingido',
+            text: `${msgErro} Como administrador, deseja ignorar a regra e agendar mesmo assim?`,
+            icon: 'warning', // Ícone de alerta
+            showCancelButton: true,
+            confirmButtonText: 'Sim, forçar',
+            cancelButtonText: 'Cancelar',
+            // Desabilita o estilo padrão para usarmos nossas classes
+            buttonsStyling: false,
+            // Injeta nossas classes CSS personalizadas (definidas lá embaixo)
+            customClass: {
+              actions: 'swal2-custom-actions',
+              confirmButton: 'swal2-custom-confirm-red',
+              cancelButton: 'swal2-custom-cancel-white'
+            }
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.confirmarAgendamento(agendamentoDoModal, true);
+            }
+          });
+          return;
+        }
+
+        // 2. Erro de Conflito de Horário
+        if (status === 409) {
           Swal.fire({
             icon: 'warning',
             title: 'Horário já agendado',
             text: 'Escolha outro horário para esta quadra.',
             confirmButtonColor: '#1E3A8A'
           })
-        } else {
+        }
+        // 3. Outros Erros 400
+        else if (status === 400) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Atenção',
+            text: msgErro || 'Dados inválidos para o agendamento.',
+            confirmButtonColor: '#1E3A8A'
+          })
+        }
+        // 4. Erro Genérico
+        else {
           Swal.fire({
             icon: 'error',
             title: 'Erro inesperado',
@@ -145,6 +228,7 @@ export default {
 </script>
 
 <style scoped>
+/* Estilos do componente (Layout, Cards, etc) */
 .layout {
   display: flex;
   min-height: 100vh;
@@ -152,7 +236,7 @@ export default {
   background-color: #f9f9f9;
 }
 
-.layout > :first-child {
+.layout> :first-child {
   width: 240px;
   flex-shrink: 0;
   position: fixed;
@@ -270,5 +354,58 @@ export default {
   100% {
     transform: rotate(360deg);
   }
+}
+</style>
+
+<style>
+.swal2-custom-actions {
+  display: flex !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  gap: 16px !important;
+  padding: 0 1.6em !important;
+  box-sizing: border-box !important;
+  margin-top: 20px !important;
+}
+
+.swal2-custom-confirm-red,
+.swal2-custom-cancel-white {
+  flex: 1 !important;
+  /* Ocupa espaço igual */
+  height: 42px !important;
+  /* Mesma altura do modal */
+  font-size: 14px !important;
+  font-weight: bold !important;
+  border-radius: 5px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+/* Botão Cancelar Branco/Cinza (Igual ao Modal) */
+.swal2-custom-cancel-white {
+  background-color: #F7F9FC !important;
+  color: #7E7E7E !important;
+  border: 1px solid #D9D9D9 !important;
+}
+
+.swal2-custom-cancel-white:hover {
+  opacity: 0.8;
+}
+
+/* Botão Confirmar Vermelho (Ação Destrutiva/Forçar) */
+.swal2-custom-confirm-red {
+  background-color: #d33 !important;
+  color: white !important;
+  border: none !important;
+  margin: 0 !important;
+  /* Remove margem padrão do SWAL */
+}
+
+.swal2-custom-confirm-red:hover {
+  opacity: 0.8;
 }
 </style>
