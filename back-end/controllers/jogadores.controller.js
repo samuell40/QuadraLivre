@@ -2,18 +2,26 @@ const jogadorService = require('../services/jogador.service');
 
 async function adicionarJogadorController(req, res) {
   try {
-    const { timeId, nome, foto, funcaoId } = req.body;
+    const { timeId, nome, foto, funcaoId, usuarioId } = req.body;
 
     if (!timeId) {
       return res.status(400).json({ message: "timeId é obrigatório" });
     }
-
-    const novoJogador = await jogadorService.adicionarJogador({
+    const dadosJogador = {
       timeId: Number(timeId),
       nome,
-      foto,
-      funcaoId: Number(funcaoId),
-    });
+      foto
+    };
+
+    if (funcaoId) {
+      dadosJogador.funcaoId = Number(funcaoId);
+    }
+
+    if (usuarioId) {
+      dadosJogador.usuarioId = Number(usuarioId);
+    }
+
+    const novoJogador = await jogadorService.adicionarJogador(dadosJogador);
 
     return res.status(201).json(novoJogador);
   } catch (error) {

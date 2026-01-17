@@ -16,10 +16,27 @@
         <label for="nomeJogador">Nome do jogador:</label>
         <input type="text" id="nomeJogador" v-model="nomeJogador" placeholder="Digite o nome" class="dropdown" />
 
+        <div class="campo">
+          <label>Vincular usuário</label>
+          <div class="dropdown-custom" ref="dropdownUsuario">
+            <div class="dropdown-selected" @click="abrirDropdownUsuarios = !abrirDropdownUsuarios">
+              <img v-if="usuarioSelecionado?.foto" :src="usuarioSelecionado.foto" class="avatar" />
+              <span>{{ usuarioSelecionado?.nome || 'Selecione um usuário (opcional)' }}</span>
+            </div>
+
+            <ul v-if="abrirDropdownUsuarios" class="dropdown-list">
+              <li v-for="u in usuariosDisponiveis" :key="u.id" @click.stop="selecionarUsuario(u)">
+                <img :src="u.foto" class="avatar" />
+                <span>{{ u.nome }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
         <label for="fotoJogador">Foto (opcional):</label>
         <input type="file" id="fotoJogador" @change="handleImagemUpload" accept=".jpg,.jpeg,.png" class="dropdown" />
-      </div>
 
+      </div>
       <div v-if="acaoLocal === 'remover'" class="form-group">
         <label for="selecionarJogador">Escolha o jogador:</label>
         <select id="selecionarJogador" v-model="jogadorSelecionado" class="dropdown">
@@ -57,16 +74,25 @@ export default {
       nomeJogador: '',
       arquivoFoto: null,
       jogadorSelecionado: null,
+      usuariosDisponiveis: [],
+      usuarioSelecionado: null,
+      abrirDropdownUsuarios: false,
       jogadores: []
     };
   },
 
   watch: {
     aberto(novo) {
-      if (novo && this.time?.id) this.carregarJogadores();
+      if (novo && this.time?.id) {
+        this.carregarJogadores();
+        this.carregarUsuariosDisponiveis();
+      }
     },
     time(novo) {
-      if (novo?.id) this.carregarJogadores();
+      if (novo?.id) {
+        this.carregarJogadores();
+        this.carregarUsuariosDisponiveis();
+      }
     }
   },
 
@@ -76,6 +102,8 @@ export default {
       this.nomeJogador = '';
       this.arquivoFoto = null;
       this.jogadorSelecionado = null;
+      this.usuarioSelecionado = null;
+      this.abrirDropdownUsuarios = false;
       this.$emit('fechar');
     },
 
@@ -94,6 +122,22 @@ export default {
         console.error(err);
         this.jogadores = [];
       }
+    },
+
+    async carregarUsuariosDisponiveis() {
+      try {
+        const res = await api.get('/usuarios');
+        this.usuariosDisponiveis = res.data.filter(
+          u => (!u.jogador && (!u.times || u.times.length === 0)) && u.permissaoId === 3);
+      } catch (err) {
+        console.error(err);
+        this.usuariosDisponiveis = [];
+      }
+    },
+
+    selecionarUsuario(u) {
+      this.usuarioSelecionado = u;
+      this.abrirDropdownUsuarios = false;
     },
 
     async uploadImagem() {
@@ -115,7 +159,8 @@ export default {
       await api.post('/adicionar', {
         nome: this.nomeJogador.trim(),
         foto: urlImagem,
-        timeId: this.time.id
+        timeId: this.time.id,
+        usuarioId: this.usuarioSelecionado?.id || null
       });
 
       Swal.fire('Sucesso', 'Jogador adicionado!', 'success');
@@ -212,11 +257,59 @@ export default {
   background-color: #7e7e7e;
 }
 
-.preview-imagem img {
+.dropdown-custom {
+  position: relative;
+  cursor: pointer;
   margin-top: 10px;
-  max-width: 100%;
-  max-height: 150px;
-  border-radius: 6px;
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+.dropdown-selected {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
+  font-size: 15px;
+  color: #333;
+  min-height: 38px;
+}
+
+.dropdown-selected img.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.dropdown-list {
+  position: absolute;
+  width: 100%;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-top: 4px;
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.dropdown-list img.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
   object-fit: cover;
 }
 </style>

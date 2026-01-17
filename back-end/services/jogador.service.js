@@ -33,18 +33,49 @@ async function adicionarJogador(dados) {
     funcaoIdFinal = funcaoNenhuma.id;
   }
 
+  const dataCriacao = {
+    nome: dados.nome,
+    foto: dados.foto,
+    timeId: dados.timeId,
+    funcaoId: funcaoIdFinal,
+  };
+
+  if (dados.usuarioId) {
+    const usuario = await prisma.usuario.findUnique({
+      where: { id: dados.usuarioId }
+    });
+
+    if (!usuario) {
+      throw new Error("Usuário informado não existe");
+    }
+
+    dataCriacao.usuarioId = dados.usuarioId;
+  }
+
   const jogador = await prisma.jogador.create({
-    data: {
-      nome: dados.nome,
-      foto: dados.foto,
-      timeId: dados.timeId,
-      funcaoId: funcaoIdFinal
-    },
+    data: dataCriacao,
     include: {
       time: true,
-      funcao: true
+      funcao: true,
+      usuario: true
     }
   });
+
+  if (dados.usuarioId) {
+    await prisma.usuarioTime.upsert({
+      where: {
+        usuarioId_timeId: {
+          usuarioId: dados.usuarioId,
+          timeId: dados.timeId
+        }
+      },
+      update: {},
+      create: {
+        usuarioId: dados.usuarioId,
+        timeId: dados.timeId
+      }
+    });
+  }
 
   return jogador;
 }

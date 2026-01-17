@@ -66,23 +66,20 @@ async function criarUsuarioDesenvolvedor(quadraId) {
     throw new Error('Permissão DESENVOLVEDOR não encontrada')
   }
 
-  await prisma.usuario.upsert({
-    where: { email: 'samuelpc4567@gmail.com' }, 
-    update: {},
-    create: {
-      nome: 'Samuel',
-      email: 'samuelpc4567@gmail.com',
-      telefone: '84999999999',
-      funcao: 'DESENVOLVEDOR',
-      foto: 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/Imagem%20padrao.png',
-      permissaoId: permissao.id,
-      quadraId
-    }
-  })
-
+ await prisma.usuario.upsert({
+  where: { email: "samuelpc4567@gmail.com" },
+  update: {},
+  create: {
+    nome: "Samuel",
+    email: "samuelpc4567@gmail.com",
+    telefone: "84999999999",
+    foto: "https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/Imagem%20padrao.png",
+    permissaoId: 1,
+    quadraId: 1,
+  }
+});
   console.log('✔ Usuário desenvolvedor verificado/criado')
 }
-
 
 if (require.main === module) {
   FirstRun()
