@@ -46,7 +46,7 @@
               }" @click="agenda[`${index}-${hora}`] && (agendamentoSelecionado = agenda[`${index}-${hora}`])">
                 <span v-if="agenda[`${index}-${hora}`]">
                   <span v-if="agenda[`${index}-${hora}`].time">
-                    Time: {{ agenda[`${index}-${hora}`].time }}
+                    {{ agenda[`${index}-${hora}`].time }}
                   </span>
                   <span v-else>
                     {{ agenda[`${index}-${hora}`].usuario }}
@@ -123,7 +123,7 @@ export default {
         const { data } = await api.get(
           `/agendamentos/quadra/${quadraSelecionada.value}/confirmados/semana`
         );
-
+        console.log("DADOS RECEBIDOS:", data);
         const novaAgenda = {};
         data
           .filter(a => a.status === 'Confirmado' || a.status === 'confirmado')
@@ -172,8 +172,7 @@ export default {
           const agendamento = agenda.value[chave];
 
           if (agendamento) {
-            // PDF também atualizado: Se tiver time mostra "Time: X", senão mostra só o nome
-            linha.push(agendamento.time ? `Time: ${agendamento.time}` : agendamento.usuario);
+            linha.push(agendamento.time ? `${agendamento.time}` : agendamento.usuario);
           } else {
             linha.push('Disponível');
           }

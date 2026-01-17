@@ -4,18 +4,19 @@
       <h2>Detalhes do Agendamento</h2>
 
       <div class="detalhes-box">
-        <h3>{{ agendamento.titulo }}</h3>
+        <h3>{{ agendamento.tipo || 'Agendamento' }}</h3>
 
         <p><strong>Realizado por:</strong> {{ agendamento.usuario }}</p>
 
         <p>
-          <strong>Data:</strong> {{ agendamento.data }}
-          às {{ agendamento.hora.toString().padStart(2, '0') }}:00
+          <strong>Data:</strong> {{ agendamento.dia }}/{{ agendamento.mes }}/{{ agendamento.ano }}
+          às {{ String(agendamento.hora).padStart(2, '0') }}:00
         </p>
 
         <p><strong>Duração:</strong> {{ agendamento.duracao }} hora(s)</p>
         <p><strong>Tipo:</strong> {{ agendamento.tipo }}</p>
-        <p><strong>Time:</strong> {{ agendamento.usuario?.times?.[0]?.time?.nome || 'Não vinculado' }}</p>
+        
+        <p><strong>Time:</strong> {{ agendamento.time || 'Não vinculado' }}</p>
       </div>
 
       <button class="btn-cancelar" @click="$emit('fechar')">Fechar</button>
@@ -28,15 +29,6 @@ export default {
   name: "DetalheAgendModal",
   props: {
     agendamento: { type: Object, required: true }
-  },
-  computed: {
-    nomeTime() {
-      const times = this.agendamento.usuario?.times;
-      if (times && times.length > 0 && times[0].time?.nome) {
-        return times[0].time.nome;
-      }
-      return 'Não vinculado';
-    }
   }
 };
 </script>
@@ -52,6 +44,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 999; /* Garante que fique acima de tudo */
 }
 
 .modal-content {
@@ -59,32 +52,52 @@ export default {
   padding: 2rem;
   border-radius: 12px;
   width: 100%;
-  max-width: 900px;
-  max-height: 100vh;
+  max-width: 600px; /* Reduzi um pouco pra ficar mais elegante, mas pode manter 900 se preferir */
+  max-height: 90vh;
   overflow-y: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .detalhes-box {
   border: 2px solid #3B82F6;
   border-radius: 10px;
-  padding: 16px;
+  padding: 20px;
   margin-top: 12px;
   margin-bottom: 20px;
+  background-color: #f8fafc;
+}
+
+.detalhes-box p {
+  margin: 10px 0;
+  font-size: 16px;
+  color: #374151;
 }
 
 h2 {
   color: #3B82F6;
   margin-bottom: 1rem;
+  text-align: center;
+}
+
+h3 {
+  color: #1e40af;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 5px;
 }
 
 .btn-cancelar {
+  display: block;
+  width: 100%;
   margin-top: 15px;
   background-color: #3b82f6;
   color: white;
-  padding: 8px 16px;
+  padding: 12px 16px;
   border: none;
-  border-radius: 20px;
+  border-radius: 8px;
+  font-weight: bold;
   cursor: pointer;
+  transition: background 0.2s;
 }
 
 .btn-cancelar:hover {

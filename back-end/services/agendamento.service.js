@@ -13,6 +13,7 @@ const listarAgendamentosService = async (usuarioId) => {
     include: {
       quadra: true,
       modalidade: true,
+      time: true,
       usuario: {
         include: {
           times: {
@@ -40,6 +41,7 @@ const listarTodosAgendamentosService = async () => {
     include: {
       quadra: true,
       modalidade: true,
+      time: true,
       usuario: {
         include: {
           times: {
@@ -72,6 +74,7 @@ const listarAgendamentosPorQuadraService = async (quadraId) => {
     include: {
       quadra: true,
       modalidade: true,
+      time: true,
       usuario: {
         include: {
           times: {
@@ -94,7 +97,6 @@ const listarAgendamentosPorQuadraService = async (quadraId) => {
   }));
 };
 
-// Listar agendamentos confirmados por quadra e data
 const listarAgendamentosConfirmadosService = async (quadraId, ano, mes, dia) => {
   if (!quadraId) {
     throw { status: 400, message: 'Quadra não informada.' };
@@ -110,6 +112,7 @@ const listarAgendamentosConfirmadosService = async (quadraId, ano, mes, dia) => 
     },
     include: {
       modalidade: true,
+      time: true,
       usuario: {
         include: {
           times: {
@@ -161,6 +164,7 @@ const listarAgendamentosConfirmadosSemanaService = async (quadraId) => {
     },
     include: {
       modalidade: true,
+      time: true,
       usuario: { include: { times: { include: { time: true } } } },
     },
     orderBy: [{ hora: 'asc' }],
@@ -176,7 +180,6 @@ const criarAgendamentoService = async ({
     throw { status: 400, message: "Campos obrigatórios não preenchidos." };
   }
 
-  // Valida a existência da quadra e modalidade
   const [quadra, modalidade] = await Promise.all([
     prisma.quadra.findUnique({ where: { id: Number(quadraId) } }),
     prisma.modalidade.findUnique({ where: { id: Number(modalidadeId) } }),
@@ -185,12 +188,10 @@ const criarAgendamentoService = async ({
   if (!quadra) throw { status: 400, message: "Quadra não existe." };
   if (!modalidade) throw { status: 400, message: "Modalidade não existe." };
 
-  // Se o time foi informado, valida existência e limite semanal
   if (timeId) {
     const time = await prisma.time.findUnique({ where: { id: Number(timeId) } });
     if (!time) throw { status: 400, message: "Time não existe." };
 
-    // Verifica agendamentos do mesmo time na semana 
     const horaNum = Number(hora);
     const duracaoNum = Number(duracao ?? 1);
     const dataAgendamento = new Date(ano, mes - 1, dia);
@@ -235,7 +236,6 @@ const criarAgendamentoService = async ({
     }
   }
 
-  // Checa conflito de horários na quadra
   const conflito = await prisma.agendamento.findFirst({
     where: {
       dia,
@@ -253,7 +253,6 @@ const criarAgendamentoService = async ({
     throw { status: 409, message: "Horário já agendado." };
   }
 
-  // Cria o agendamento
   const agendamento = await prisma.agendamento.create({
     data: {
       dia,
@@ -309,7 +308,7 @@ const atualizarAgendamentoService = async (id, status) => {
   const atualizado = await prisma.agendamento.update({
     where: { id: Number(id) },
     data: { status },
-    include: { usuario: true, quadra: true, modalidade: true }
+    include: { usuario: true, quadra: true, modalidade: true, time: true }
   });
 
   try {

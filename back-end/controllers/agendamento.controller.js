@@ -97,7 +97,7 @@ const listarAgendamentosAdminController = async (req, res) => {
 const listarAgendamentosConfirmadosController = async (req, res) => {
   try {
     const { quadraId } = req.params;
-    const { ano, mes, dia } = req.query; // você pode passar pela URL
+    const { ano, mes, dia } = req.query;
 
     const agendamentos = await listarAgendamentosConfirmadosService(
       Number(quadraId),
