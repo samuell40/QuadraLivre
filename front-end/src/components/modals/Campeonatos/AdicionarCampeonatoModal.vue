@@ -86,7 +86,7 @@
 
       </form>
     </div>
-    <!-- MODAL DE TIMES -->
+    
     <div v-if="mostrarModalTimes" class="modal-overlay" @click.self="mostrarModalTimes = false">
       <div class="modal-content modal-times">
         <h2>Selecione os Times</h2>
@@ -125,14 +125,9 @@ import api from '@/axios'
 
 export default {
   name: 'AdicionarCampeonatoModal',
-
   props: {
-    aberto: {
-      type: Boolean,
-      default: false
-    }
+    aberto: { type: Boolean, default: false }
   },
-
   data() {
     return {
       modalidades: [],
@@ -146,13 +141,13 @@ export default {
       horariosSelecionados: [],
       todosHorariosSelecionados: false,
       diasSemana: [
-        { id: 'segunda', nome: 'Segunda' },
-        { id: 'terca', nome: 'Terça' },
-        { id: 'quarta', nome: 'Quarta' },
-        { id: 'quinta', nome: 'Quinta' },
-        { id: 'sexta', nome: 'Sexta' },
-        { id: 'sabado', nome: 'Sábado' },
-        { id: 'domingo', nome: 'Domingo' }
+        { id: 'segunda', nome: 'Segunda', valor: 1 },
+        { id: 'terca', nome: 'Terça', valor: 2 },
+        { id: 'quarta', nome: 'Quarta', valor: 3 },
+        { id: 'quinta', nome: 'Quinta', valor: 4 },
+        { id: 'sexta', nome: 'Sexta', valor: 5 },
+        { id: 'sabado', nome: 'Sábado', valor: 6 },
+        { id: 'domingo', nome: 'Domingo', valor: 0 }
       ],
       diasSelecionados: [],
       todosDiasSelecionados: false,
@@ -162,7 +157,6 @@ export default {
       timesSelecionados: []
     }
   },
-
   watch: {
     aberto(valor) {
       if (valor) {
@@ -171,20 +165,14 @@ export default {
         this.gerarHorarios()
       }
     },
-
     modalidadeSelecionada(valor) {
       this.quadraSelecionada = ''
       this.times = []
       this.timesSelecionados = []
-
-      if (valor) {
-        this.carregarQuadras(valor)
-      } else {
-        this.quadras = []
-      }
+      if (valor) this.carregarQuadras(valor)
+      else this.quadras = []
     }
   },
-
   methods: {
     limparCampos() {
       this.modalidadeSelecionada = ''
@@ -201,105 +189,66 @@ export default {
       this.timesSelecionados = []
       this.mostrarModalTimes = false
     },
-
     gerarHorarios() {
-      this.horariosDisponiveis = Array.from(
-        { length: 24 },
-        (_, h) => `${String(h).padStart(2, '0')}:00`
-      )
+      this.horariosDisponiveis = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}:00`)
     },
-
     toggleHorario(horario) {
       if (this.horariosSelecionados.includes(horario)) {
         this.horariosSelecionados = this.horariosSelecionados.filter(h => h !== horario)
       } else {
         this.horariosSelecionados.push(horario)
       }
-
-      this.todosHorariosSelecionados =
-        this.horariosSelecionados.length === this.horariosDisponiveis.length
     },
-
+    toggleTodosHorarios() {
+      this.horariosSelecionados = this.todosHorariosSelecionados ? [...this.horariosDisponiveis] : []
+    },
     verificarTodosDiasSelecionados() {
-      this.todosDiasSelecionados =
-        this.diasSelecionados.length === this.diasSemana.length
+      this.todosDiasSelecionados = this.diasSelecionados.length === this.diasSemana.length
     },
-
     async carregarModalidades() {
       try {
         const { data } = await api.get('/listar/modalidade')
         this.modalidades = data
-      } catch {
-        Swal.fire('Erro', 'Erro ao carregar modalidades.', 'error')
-      }
+      } catch { Swal.fire('Erro', 'Erro ao carregar modalidades.', 'error') }
     },
-
     async carregarQuadras(modalidadeId) {
       try {
         this.carregandoQuadras = true
         const response = await api.get(`/listar/quadras/${modalidadeId}`)
         this.quadras = response.data
-      } catch {
-        Swal.fire('Erro', 'Erro ao carregar quadras.', 'error')
-      } finally {
-        this.carregandoQuadras = false
-      }
+      } catch { Swal.fire('Erro', 'Erro ao carregar quadras.', 'error') }
+      finally { this.carregandoQuadras = false }
     },
-
     validarDadosBasicos() {
-      if (!this.modalidadeSelecionada)
-        return 'Selecione uma modalidade.'
-      if (!this.quadraSelecionada)
-        return 'Selecione uma quadra.'
-      if (!this.nomeCampeonato.trim())
-        return 'Informe o nome do campeonato.'
-      if (!this.dataInicio || !this.dataFim)
-        return 'Informe as datas do campeonato.'
-      if (this.dataFim < this.dataInicio)
-        return 'Data de fim não pode ser menor que a de início.'
-      if (this.horariosSelecionados.length === 0)
-        return 'Selecione pelo menos um horário.'
-      if (this.diasSelecionados.length === 0)
-        return 'Selecione pelo menos um dia da semana.'
+      if (!this.modalidadeSelecionada) return 'Selecione uma modalidade.'
+      if (!this.quadraSelecionada) return 'Selecione uma quadra.'
+      if (!this.nomeCampeonato.trim()) return 'Informe o nome.'
+      if (!this.dataInicio || !this.dataFim) return 'Informe as datas.'
+      if (this.horariosSelecionados.length === 0) return 'Selecione horários.'
+      if (this.diasSelecionados.length === 0) return 'Selecione os dias.'
       return null
     },
 
     async nomeCampeonatoJaExiste() {
       if (!this.modalidadeSelecionada) return false
-
       try {
-        const res = await api.get(`/listar/campeonatos/${this.modalidadeSelecionada}`)
-
+        const res = await api.get(`/listar/${this.modalidadeSelecionada}`)
         const nomeNovo = this.nomeCampeonato.trim().toLowerCase()
-
-        return res.data.some(campeonato =>
-          campeonato.nome.trim().toLowerCase() === nomeNovo
-        )
+        return res.data.some(c => c.nome.trim().toLowerCase() === nomeNovo)
       } catch (error) {
-        console.error(error)
-        Swal.fire(
-          'Erro',
-          'Erro ao verificar campeonatos existentes.',
-          'error'
-        )
+        console.error("Erro ao verificar nome:", error)
         return false
       }
     },
 
     async abrirModalTimes() {
       const erro = this.validarDadosBasicos()
-      if (erro) {
-        Swal.fire('Atenção', erro, 'warning')
-        return
-      }
+      if (erro) { Swal.fire('Atenção', erro, 'warning'); return }
       try {
         const response = await api.get(`/times/modalidade/${this.modalidadeSelecionada}`)
         this.times = response.data
-        this.timesSelecionados = []
         this.mostrarModalTimes = true
-      } catch {
-        Swal.fire('Erro', 'Erro ao carregar os times.', 'error')
-      }
+      } catch { Swal.fire('Erro', 'Erro ao carregar times.', 'error') }
     },
 
     toggleTime(timeId) {
@@ -310,21 +259,40 @@ export default {
       }
     },
 
+    gerarDatasCalculadas() {
+      const datas = [];
+      const mapa = { 'domingo': 0, 'segunda': 1, 'terca': 2, 'quarta': 3, 'quinta': 4, 'sexta': 5, 'sabado': 6 };
+      const diasPermitidos = this.diasSelecionados.map(d => mapa[d]);
+      
+      let cursor = new Date(this.dataInicio + 'T00:00:00');
+      const fim = new Date(this.dataFim + 'T23:59:59');
+
+      while (cursor <= fim) {
+        if (diasPermitidos.includes(cursor.getDay())) {
+          this.horariosSelecionados.forEach(hStr => {
+            const [hora] = hStr.split(':');
+            const d = new Date(cursor);
+            d.setHours(parseInt(hora), 0, 0, 0);
+            datas.push(d.toISOString());
+          });
+        }
+        cursor.setDate(cursor.getDate() + 1);
+      }
+      return datas;
+    },
+
     async finalizarCadastro() {
       if (this.timesSelecionados.length < 2) {
-        Swal.fire('Atenção', 'Selecione pelo menos 2 times.', 'warning')
-        return
+        Swal.fire('Atenção', 'Selecione pelo menos 2 times.', 'warning'); return
       }
 
       const jaExiste = await this.nomeCampeonatoJaExiste()
       if (jaExiste) {
-        Swal.fire(
-          'Atenção',
-          'Já existe um campeonato cadastrado com esse nome.',
-          'warning'
-        )
-        return
+        Swal.fire('Atenção', 'Nome de campeonato já em uso.', 'warning'); return
       }
+
+      const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+      const datasParaAgendar = this.gerarDatasCalculadas();
 
       try {
         await api.post('/criar/campeonato', {
@@ -333,17 +301,19 @@ export default {
           quadraId: this.quadraSelecionada,
           dataInicio: this.dataInicio,
           dataFim: this.dataFim,
-          horarios: this.horariosSelecionados,
-          dias: this.diasSelecionados,
-          times: this.timesSelecionados
+          times: this.timesSelecionados,
+          usuarioId: usuario.id, 
+          datasJogos: datasParaAgendar,
+          status: "EM_ANDAMENTO"
         })
 
-        Swal.fire('Sucesso', 'Campeonato cadastrado com sucesso!', 'success')
+        Swal.fire('Sucesso', 'Campeonato e agendamentos criados!', 'success')
         this.$emit('atualizar')
         this.$emit('fechar')
         this.limparCampos()
       } catch (error) {
-        Swal.fire('Erro', error.response?.data?.erro, 'error')
+        const msg = error.response?.data?.detalhes || "Erro ao salvar";
+        Swal.fire('Erro', msg, 'error')
       }
     }
   }
