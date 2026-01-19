@@ -219,7 +219,7 @@ async function incrementarPlacar(placarId, incremento) {
 async function listarPartidasemAndamento(modalidadeId, campeonatoId) {
   const where = {
     finalizada: false,
-    emIntervalo: false, 
+    emIntervalo: false,
     modalidadeId: Number(modalidadeId),
   };
 
@@ -382,12 +382,15 @@ async function retornarPartidaEmAndamento(partidaId) {
           jogador: {
             include: {
               funcao: true,
-              time: true
+              times: {
+                include: {
+                  time: true
+                }
+              }
             }
           }
         }
       },
-
       participantes: {
         include: {
           usuario: true,

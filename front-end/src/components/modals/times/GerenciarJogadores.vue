@@ -81,7 +81,7 @@
           </ul>
         </div>
       </div>
-      
+
       <div v-if="acaoLocal === 'remover'" class="form-group">
         <label for="selecionarJogador">Escolha o jogador:</label>
         <select id="selecionarJogador" v-model="jogadorSelecionado" class="dropdown">
@@ -234,16 +234,33 @@ export default {
     },
 
     async adicionarJogador() {
+      const nome = this.nomeJogador.trim().toLowerCase();
+
+      const jaExiste = this.jogadores.some(
+        j => j.nome.toLowerCase() === nome
+      );
+
+      if (jaExiste) {
+        Swal.fire(
+          'Atenção',
+          'Já existe um jogador com esse nome nesta modalidade',
+          'warning'
+        );
+        return;
+      }
+
       const urlImagem = await this.uploadImagem();
+
       await api.post('/adicionar', {
         nome: this.nomeJogador.trim(),
         foto: urlImagem,
         timeId: this.time.id,
         usuarioId: this.usuarioSelecionado?.id
       });
+
       Swal.fire('Sucesso', 'Jogador adicionado!', 'success');
     },
-
+    
     async adicionarJogadorExistente() {
       if (!this.jogadorSelecionadoExistente) return;
       await api.post('/mover', {
