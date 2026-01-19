@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-async function criarTime({ nome, foto, modalidadeId }) {
+async function criarTime({ nome, foto, modalidadeId, treinadorId }) {
   const time = await prisma.time.create({
     data: {
       nome: nome.trim(),
@@ -10,21 +10,35 @@ async function criarTime({ nome, foto, modalidadeId }) {
     },
   });
 
+  // se veio treinador, cria o vínculo
+  if (treinadorId) {
+    await prisma.treinadorTime.create({
+      data: {
+        usuarioId: Number(treinadorId),
+        timeId: time.id,
+      },
+    });
+  }
+
   return time;
 }
 
 async function removerTime(id) {
   const timeId = Number(id);
+
+  // treinador do time (❌ estava faltando)
+  await prisma.treinadorTime.deleteMany({
+    where: { timeId }
+  });
+
   await prisma.usuarioTime.deleteMany({
     where: { timeId }
   });
 
-  // Remover agendamentos do time
   await prisma.agendamento.deleteMany({
     where: { timeId }
   });
 
-  // Buscar partidas do time
   const partidas = await prisma.partida.findMany({
     where: {
       OR: [{ timeAId: timeId }, { timeBId: timeId }]
@@ -34,7 +48,6 @@ async function removerTime(id) {
 
   const partidaIds = partidas.map(p => p.id);
 
-  // Remover vínculos de usuários e jogadores nas partidas
   if (partidaIds.length) {
     await prisma.partidaUsuario.deleteMany({
       where: { partidaId: { in: partidaIds } }
@@ -55,7 +68,6 @@ async function removerTime(id) {
     where: { timeId }
   });
 
-  // Remover placares do time
   await prisma.placar.deleteMany({
     where: { timeId }
   });
@@ -69,13 +81,22 @@ async function removerTime(id) {
   });
 }
 
-
 async function listarTimesPorModalidade(modalidadeId) {
   return prisma.time.findMany({
     where: { modalidadeId: Number(modalidadeId) },
     include: {
       modalidade: true,
       placares: true,
+      treinador: {
+        include: {
+          usuario: {
+            select: {
+              id: true,
+              nome: true
+            }
+          }
+        }
+      },
       _count: {
         select: { jogadores: true }
       }

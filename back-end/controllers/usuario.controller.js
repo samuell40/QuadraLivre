@@ -93,22 +93,17 @@ async function vincularUsuarioTimeController(req, res) {
     );
 
     return res.status(201).json({
-      message: 'Usuário vinculado ao time e jogador associado com sucesso',
+      message: 'Vínculo realizado com sucesso',
       vinculo: resultado.vinculo,
       jogador: resultado.jogador,
     });
   } catch (error) {
-    if (error.message.includes('já está vinculado')) {
-      return res.status(409).json({ error: error.message });
-    }
-
     console.error('Erro ao vincular usuário ao time:', error);
     return res.status(400).json({
       error: error.message || 'Erro ao vincular usuário ao time.',
     });
   }
 }
-
 
 async function getUsuarioTimesController(req, res) {
   try {

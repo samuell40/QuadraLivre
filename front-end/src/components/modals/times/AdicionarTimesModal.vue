@@ -18,6 +18,36 @@
           <input type="text" id="novoTime" v-model="timeParaAdicionar" required />
         </div>
 
+        <div class="campo">
+          <label>Treinador:</label>
+
+          <div class="dropdown-custom" @click.stop>
+            <div class="dropdown-selected" @click="abrirDropdownTreinador = !abrirDropdownTreinador">
+              <img v-if="treinadorSelecionado?.foto" :src="treinadorSelecionado.foto" class="avatar" />
+              <span>
+                {{ treinadorSelecionado?.nome || 'Selecione o treinador' }}
+              </span>
+              <span class="seta">▼</span>
+            </div>
+
+            <div v-if="abrirDropdownTreinador" class="dropdown-list">
+              <input type="text" v-model="buscaTreinador" placeholder="Buscar treinador..."
+                class="input-busca-jogador" />
+
+              <ul>
+                <li v-for="u in treinadoresFiltrados" :key="u.id" @click="selecionarTreinador(u)">
+                  <img :src="u.foto" class="avatar" />
+                  <span>{{ u.nome }}</span>
+                </li>
+
+                <li v-if="treinadoresFiltrados.length === 0" class="sem-jogador">
+                  Nenhum treinador encontrado
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         <div class="form-group">
           <label for="fotoTime">Foto (opcional):</label>
           <input type="file" id="fotoTime" @change="handleImagemUpload" accept=".jpg, .jpeg, .png" />
@@ -44,22 +74,58 @@ export default {
   },
   data() {
     return {
-      modalidadeSelecionada: '', 
+      modalidadeSelecionada: '',
       timeParaAdicionar: '',
-      arquivoFoto: null
+      arquivoFoto: null,
+      treinadores: [],
+      treinadorSelecionado: null,
+      abrirDropdownTreinador: false,
+      buscaTreinador: ''
     };
+  },
+  computed: {
+    treinadoresFiltrados() {
+      return this.treinadores
+        .filter(u => u.permissaoId !== 1 && u.permissaoId !== 2)
+        .filter(u =>
+          u.nome.toLowerCase().includes(this.buscaTreinador.toLowerCase())
+        );
+    }
+  },
+  watch: {
+    aberto(novo) {
+      if (novo) {
+        this.carregarTreinadores();
+      }
+    }
   },
   methods: {
     fecharModalAdicionarTime() {
       this.modalidadeSelecionada = '';
       this.timeParaAdicionar = '';
       this.arquivoFoto = null;
-      this.$emit('fechar'); 
+      this.$emit('fechar');
     },
 
     handleImagemUpload(event) {
       const file = event.target.files[0];
       if (file) this.arquivoFoto = file;
+    },
+
+    selecionarTreinador(u) {
+      this.treinadorSelecionado = u;
+      this.buscaTreinador = '';
+      this.abrirDropdownTreinador = false;
+    },
+
+    async carregarTreinadores() {
+      try {
+        const res = await api.get('/usuarios');
+        this.treinadores = res.data;
+      } catch (err) {
+        console.error(err);
+        this.treinadores = [];
+      }
     },
 
     async adicionarTime() {
@@ -83,9 +149,10 @@ export default {
         }
 
         const payload = {
-          nome: this.timeParaAdicionar.trim(),                     
-          modalidadeId: Number(this.modalidadeSelecionada),          
-          foto: urlImagem                   
+          nome: this.timeParaAdicionar.trim(),
+          modalidadeId: Number(this.modalidadeSelecionada),
+          treinadorId: this.treinadorSelecionado?.id,
+          foto: urlImagem
         };
 
         await api.post('/time', payload);
@@ -173,5 +240,95 @@ input[type='file'] {
 
 .btn-cancel {
   background-color: #7e7e7e;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dropdown-custom {
+  position: relative;
+  width: 100%;
+}
+
+.dropdown-selected {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  background: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.dropdown-selected:hover {
+  border-color: #3b82f6;
+}
+
+.dropdown-selected .seta {
+  margin-left: auto;
+  font-size: 12px;
+  color: #555;
+}
+
+.dropdown-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  z-index: 50;
+  overflow: hidden;
+}
+
+.dropdown-list ul {
+  max-height: 220px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dropdown-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-list li:hover {
+  background-color: #f3f4f6;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #ddd;
+}
+
+.input-busca-jogador {
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
+  outline: none;
+  font-size: 14px;
+}
+
+.sem-jogador {
+  padding: 12px;
+  text-align: center;
+  font-size: 13px;
+  color: #9ca3af;
 }
 </style>

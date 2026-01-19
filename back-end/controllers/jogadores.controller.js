@@ -30,19 +30,26 @@ async function adicionarJogadorController(req, res) {
   }
 }
 
-async function removerJogadorController(req, res) {
+async function removerJogadorTimeController(req, res) {
   try {
-    const { jogadorId } = req.params;
+    const { jogadorId, timeId } = req.params;
 
-    if (!jogadorId) {
-      return res.status(400).json({ message: "jogadorId é obrigatório" });
+    if (!jogadorId || !timeId) {
+      return res.status(400).json({
+        message: 'jogadorId e timeId são obrigatórios',
+      });
     }
 
-    const resultado = await jogadorService.removerJogadorTime(Number(jogadorId));
+    const resultado = await jogadorService.removerJogadorTime(
+      Number(jogadorId),
+      Number(timeId)
+    );
 
     return res.status(200).json(resultado);
   } catch (error) {
-    return res.status(400).json({ message: error.message });
+    return res.status(400).json({
+      message: error.message,
+    });
   }
 }
 
@@ -76,6 +83,21 @@ async function listarTodosJogadoresController(req, res) {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: err.message });
+  }
+}
+
+async function atualizarFuncaoJogadorController(req, res) {
+  try {
+    const { jogadorId } = req.params;
+    const { funcaoId } = req.body;
+
+    if (!jogadorId) return res.status(400).json({ message: "jogadorId é obrigatório" });
+
+    const jogadorAtualizado = await jogadorService.atualizarFuncaoJogador(Number(jogadorId), funcaoId ? Number(funcaoId) : null);
+
+    return res.status(200).json(jogadorAtualizado);
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
   }
 }
 
@@ -145,20 +167,6 @@ async function listarFuncoesJogadorController(req, res) {
   }
 }
 
-async function atualizarFuncaoJogadorController(req, res) {
-  try {
-    const { jogadorId } = req.params;
-    const { funcaoId } = req.body;
-
-    if (!jogadorId) return res.status(400).json({ message: "jogadorId é obrigatório" });
-
-    const jogadorAtualizado = await jogadorService.atualizarFuncaoJogador(Number(jogadorId), funcaoId ? Number(funcaoId) : null);
-
-    return res.status(200).json(jogadorAtualizado);
-  } catch (error) {
-    return res.status(400).json({ message: error.message });
-  }
-}
 
 async function moverJogadorTimeController(req, res) {
   try {
@@ -182,7 +190,7 @@ async function moverJogadorTimeController(req, res) {
 
 module.exports = {
   adicionarJogadorController,
-  removerJogadorController,
+  removerJogadorTimeController,
   listarJogadoresController,
   listarTodosJogadoresController,
   adicionarFuncaoJogadorController,

@@ -2,28 +2,37 @@ const time = require('../services/time.service')
 
 async function criarTimeController(req, res) {
   try {
-    const { nome, foto, modalidadeId } = req.body;
+    const { nome, foto, modalidadeId, treinadorId } = req.body;
 
     if (!nome || !modalidadeId) {
-      return res.status(400).json({ erro: 'Nome e modalidadeId são obrigatórios.' });
+      return res.status(400).json({
+        erro: 'Nome e modalidadeId são obrigatórios.'
+      });
     }
 
     const timesExistentes = await time.listarTimesPorModalidade(Number(modalidadeId));
+
     const timeExistente = timesExistentes.find(
       t => t.nome.trim().toLowerCase() === nome.trim().toLowerCase()
     );
 
     if (timeExistente) {
-      return res.status(400).json({ erro: 'Já existe um time com esse nome nesta modalidade.' });
+      return res.status(400).json({
+        erro: 'Já existe um time com esse nome nesta modalidade.'
+      });
     }
 
     const novoTime = await time.criarTime({
       nome: nome.trim(),
       foto,
-      modalidadeId: Number(modalidadeId)
+      modalidadeId: Number(modalidadeId),
+      treinadorId: treinadorId ? Number(treinadorId) : null
     });
 
-    return res.status(201).json({ mensagem: 'Time criado com sucesso.', time: novoTime });
+    return res.status(201).json({
+      mensagem: 'Time criado com sucesso.',
+      time: novoTime
+    });
 
   } catch (error) {
     console.error('Erro ao criar time:', error);

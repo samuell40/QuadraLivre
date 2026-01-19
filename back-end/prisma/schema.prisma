@@ -18,6 +18,8 @@ model Usuario {
 
   quadra               Quadra?          @relation(fields: [quadraId], references: [id])
   permissao            Permissao        @relation(fields: [permissaoId], references: [id])
+  jogadorId  Int?      @unique
+  jogador    Jogador?  @relation(fields: [jogadorId], references: [id])
   agendamentos         Agendamento[]
   times                UsuarioTime[]
   partidasCriadas      Partida[]        @relation("UsuarioCriador")
@@ -25,8 +27,7 @@ model Usuario {
 
   avisosCriados Aviso[]
   avisosLidos   AvisoLeitura[]
-
-  jogador Jogador? @relation("UsuarioJogador") // 1:1
+  treinadorTimes       TreinadorTime[]
 }
 
 model Permissao {
@@ -130,7 +131,8 @@ model Time {
   partidasA    Partida[]        @relation("TimeAPartidas")
   partidasB    Partida[]        @relation("TimeBPartidas")
   agendamentos Agendamento[]    @relation("TimeAgendamentos")
-  jogadores    JogadorTime[] // relação com jogadores via JogadorTime
+  jogadores    JogadorTime[] 
+  treinador    TreinadorTime? 
 }
 
 model Partida {
@@ -167,14 +169,24 @@ model Partida {
   updatedAt          DateTime         @updatedAt
 }
 
+model TreinadorTime {
+  id        Int @id @default(autoincrement())
+  usuarioId Int
+  timeId    Int
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+  time    Time    @relation(fields: [timeId], references: [id])
+
+  @@unique([timeId])       // garante 1 treinador por time
+}
+
 model Jogador {
   id        Int              @id @default(autoincrement())
   nome      String
   foto      String?          @db.VarChar(2048)
   funcaoId  Int?
-  usuarioId Int?             @unique // 1 usuário = 1 jogador
+  usuario   Usuario?
   funcao    FuncaoJogador?   @relation(fields: [funcaoId], references: [id])
-  usuario   Usuario?         @relation("UsuarioJogador", fields: [usuarioId], references: [id])
   atuacoes  JogadorPartida[]
   times     JogadorTime[] // relação de times por modalidade
 }

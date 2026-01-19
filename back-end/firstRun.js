@@ -20,7 +20,8 @@ async function criarPermissoes() {
     'DESENVOLVEDOR',
     'ADMINISTRADOR',
     'USUARIO',
-    'MESARIO'
+    'MESARIO',
+    'TREINADOR'
   ]
 
   for (const descricao of permissoes) {
@@ -67,13 +68,13 @@ async function criarUsuarioDesenvolvedor(quadraId) {
   }
 
  await prisma.usuario.upsert({
-  where: { email: "samuelpc4567@gmail.com" },
+  where: { email: "quadralivre3@gmail.com" },
   update: {},
   create: {
-    nome: "Samuel",
-    email: "samuelpc4567@gmail.com",
+    nome: "Quadra Livre",
+    email: "quadralivre3@gmail.com",
     telefone: "84999999999",
-    foto: "https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/Imagem%20padrao.png",
+    foto: "https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/1768604796354_C%C3%83%C2%B3pia%20de%20xxxxx%20(2).png",
     permissaoId: 1,
     quadraId: 1,
   }

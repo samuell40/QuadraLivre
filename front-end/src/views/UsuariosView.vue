@@ -113,6 +113,17 @@
           <p class="detalhe">{{ usuarioSelecionado.permissao?.descricao }}</p>
         </div>
 
+        <!-- USUARIO -->
+        <div class="campo" v-if="usuarioSelecionado.permissaoId === 5">
+          <strong>Times como Treinador:</strong>
+          <p class="detalhe">
+            <span v-if="usuarioSelecionado.timesComoTreinador?.length">
+              {{usuarioSelecionado.timesComoTreinador.map(t => t.nome).join(', ')}}
+            </span>
+            <span v-else>Nenhum</span>
+          </p>
+        </div>
+
         <!-- ADMINISTRADOR -->
         <div class="campo" v-if="usuarioSelecionado.permissaoId === 2">
           <strong>Quadra:</strong>
@@ -131,13 +142,10 @@
         </div>
 
         <!-- JOGADOR -->
-        <div class="campo" v-if="usuarioSelecionado.permissaoId === 3">
+        <div class="campo" v-if="usuarioSelecionado.permissaoId === 3 && usuarioSelecionado.jogador">
           <strong>Jogador:</strong>
           <p class="detalhe">
-            <span v-if="usuarioSelecionado.jogador">
-              {{ usuarioSelecionado.jogador.nome }}
-            </span>
-            <span v-else>Não vinculado</span>
+            {{ usuarioSelecionado.jogador.nome }}
           </p>
         </div>
 
@@ -183,7 +191,7 @@
           </div>
 
           <!-- USUARIO -->
-          <div class="campo" v-if="form.permissaoId === 3">
+          <div class="campo" v-if="form.permissaoId === 3 || form.permissaoId === 5">
             <strong>Time:</strong>
             <select v-model.number="form.timeId" @change="carregarJogadoresTime">
               <option disabled value="">Selecione o time</option>
@@ -197,6 +205,7 @@
             <strong>Jogador:</strong>
 
             <div class="dropdown-custom" ref="dropdownJogador">
+              <!-- SELECIONADO -->
               <div class="dropdown-selected" @click="abrirDropdown = !abrirDropdown">
                 <img v-if="jogadorSelecionadoObj?.foto" :src="jogadorSelecionadoObj.foto" class="avatar" />
                 <span>
@@ -204,12 +213,23 @@
                 </span>
               </div>
 
-              <ul v-if="abrirDropdown" class="dropdown-list">
-                <li v-for="j in jogadoresDisponiveis" :key="j.id" @click.stop="selecionarJogador(j)">
-                  <img :src="j.foto" class="avatar" />
-                  <span>{{ j.nome }}</span>
-                </li>
-              </ul>
+              <!-- LISTA -->
+              <div v-if="abrirDropdown" class="dropdown-list">
+                <!-- 🔍 BARRA DE PESQUISA -->
+                <input type="text" v-model="buscaJogador" placeholder="Buscar jogador..." class="input-busca-jogador"
+                  @click.stop />
+
+                <ul>
+                  <li v-for="j in jogadoresFiltrados" :key="j.id" @click.stop="selecionarJogador(j)">
+                    <img :src="j.foto" class="avatar" />
+                    <span>{{ j.nome }}</span>
+                  </li>
+
+                  <li v-if="jogadoresFiltrados.length === 0" class="sem-jogador">
+                    Nenhum jogador encontrado
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
 
@@ -241,6 +261,7 @@ export default {
     return {
       usuarios: [],
       busca: '',
+      buscaJogador: '',
       isLoading: true,
       isCarregandoModal: false,
       isSalvando: false,
@@ -290,22 +311,21 @@ export default {
         })
     },
     jogadoresDisponiveis() {
-      const jogadoresVinculadosIds = this.usuarios
-        .map(u => u.jogador?.id)
-        .filter(Boolean)
-
       return this.jogadores.filter(j =>
-        !jogadoresVinculadosIds.includes(j.id)
-        || j.id === this.form.jogadorId
+        !j.vinculado || j.id === this.form.jogadorId
       )
     },
-
     permissoesFiltradas() {
       if (this.usuarioLogado.permissaoId === 2) {
         return this.permissoes.filter(
           p => p.id === 3 || p.id === this.form.permissaoId)
       }
       return this.permissoes
+    },
+    jogadoresFiltrados() {
+      return this.jogadoresDisponiveis.filter(j =>
+        j.nome.toLowerCase().includes(this.buscaJogador.toLowerCase())
+      )
     },
   },
 
@@ -330,6 +350,7 @@ export default {
 
     selecionarJogador(jogador) {
       this.form.jogadorId = jogador.id
+      this.buscaJogador = ''
       this.abrirDropdown = false
     },
 
@@ -432,16 +453,24 @@ export default {
           return
         }
 
-        if (this.form.permissaoId === 3) {
-          if (!this.form.jogadorId) {
-            await Swal.fire({
-              icon: 'warning',
-              title: 'Atenção',
-              text: 'Selecione um jogador.',
-            })
-            return
-          }
+        if (this.form.permissaoId === 5 && !this.form.timeId) {
+          await Swal.fire({
+            icon: 'warning',
+            title: 'Atenção',
+            text: 'Selecione um time para o treinador.',
+          })
+          return
+        }
 
+        // ✅ 1. ATUALIZA USUÁRIO PRIMEIRO
+        await api.put('/editar/usuario', {
+          email: this.form.email,
+          permissaoId: this.form.permissaoId,
+          quadraId: this.form.quadra,
+        })
+
+        // ✅ 2. DEPOIS VINCULA
+        if (this.form.permissaoId === 3 && this.form.jogadorId) {
           await api.post('/vincular', {
             usuarioId: this.usuarioSelecionado.id,
             timeId: this.form.timeId,
@@ -449,18 +478,19 @@ export default {
           })
         }
 
-        await api.put('/editar/usuario', {
-          email: this.form.email,
-          permissaoId: this.form.permissaoId,
-          quadraId: this.form.quadra
-        })
+        if (this.form.permissaoId === 5) {
+          await api.post('/vincular/treinador', {
+            usuarioId: this.usuarioSelecionado.id,
+            timeId: this.form.timeId,
+          })
+        }
 
         Swal.fire('Sucesso', 'Usuário atualizado com sucesso!', 'success')
         this.mostrarEditar = false
         this.carregarUsuarios()
       } catch (err) {
         console.error(err)
-        Swal.fire('Erro', err.response?.data?.error, 'error')
+        Swal.fire('Erro', err.response?.data?.error || err.message, 'error')
       } finally {
         this.isSalvando = false
       }
@@ -826,6 +856,27 @@ select {
   height: 28px;
   border-radius: 50%;
   object-fit: cover;
+}
+
+.input-busca-jogador {
+  width: 100%;
+  padding: 8px;
+  border: none;
+  border-bottom: 1px solid #ddd;
+  outline: none;
+  font-size: 14px;
+}
+
+.dropdown-list ul {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.sem-jogador {
+  padding: 10px;
+  text-align: center;
+  color: #999;
+  font-size: 13px;
 }
 
 .loader-container-centralizado {

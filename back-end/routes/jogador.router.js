@@ -4,7 +4,7 @@ const controller = require('../controllers/jogadores.controller');
 
 router.post('/adicionar', controller.adicionarJogadorController);
 
-router.delete('/remover/:timeId/:jogadorId', controller.removerJogadorController);
+router.delete('/remover/:timeId/:jogadorId', controller.removerJogadorTimeController);
 
 router.get('/time/:timeId', controller.listarJogadoresController);
 

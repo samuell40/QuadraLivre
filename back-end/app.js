@@ -13,7 +13,8 @@ const passport = require("./auth/passport");
 const authRoutes = require("./routes/auth.router");
 const partida = require('./routes/partida.router')
 const usuario = require('./routes/usuario.router');
-const jogador = require('./routes/jogador.router')
+const jogador = require('./routes/jogador.router');
+const treinador = require('./routes/treinador.router');
 const quadra = require('./routes/quadra.router');
 const placar = require('./routes/placar.router');
 const agendamento = require('./routes/agendamento.router');
@@ -51,6 +52,7 @@ app.use(passport.session());
 app.use("/auth", authRoutes);
 app.use(usuario);
 app.use(jogador);
+app.use(treinador);
 app.use(quadra);
 app.use(placar);
 app.use(partida)

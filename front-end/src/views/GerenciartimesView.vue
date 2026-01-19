@@ -52,7 +52,7 @@
                 <div class="info">
                   <h2>{{ time.nome }}</h2>
                   <p>{{ obterQtdJogadores(time) }} jogador{{ obterQtdJogadores(time) === 1 ? '' : 'es' }}</p>
-                  <p>Treinador: {{ time.treinador || 'N/A' }}</p>
+                  <p>Treinador: {{ time.treinador }}</p>
                   <p>Agendamentos: {{ time.agendamentos || 0 }}</p>
                 </div>
               </div>
@@ -177,7 +177,8 @@ export default {
           nome: t.nome,
           foto: t.foto,
           modalidadeId: t.modalidadeId,
-          qtdJogadores: t._count?.jogadores
+          qtdJogadores: t._count?.jogadores,
+          treinador: t.treinador?.usuario?.nome
         }));
 
       } catch (err) {

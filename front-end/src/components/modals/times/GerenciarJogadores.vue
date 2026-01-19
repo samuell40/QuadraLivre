@@ -20,22 +20,30 @@
 
         <div class="campo">
           <label>Vincular usuário</label>
+
           <div class="dropdown-custom" ref="dropdownUsuario">
             <div class="dropdown-selected" @click="abrirDropdownUsuarios = !abrirDropdownUsuarios">
               <img v-if="usuarioSelecionado?.foto" :src="usuarioSelecionado.foto" class="avatar" />
-              <span>{{ usuarioSelecionado?.nome || 'Selecione um usuário (opcional)' }}</span>
+              <span>
+                {{ usuarioSelecionado?.nome || 'Selecione um usuário (opcional)' }}
+              </span>
             </div>
-            <ul v-if="abrirDropdownUsuarios" class="dropdown-list">
-              <li v-if="usuariosDisponiveis.length === 0" class="nenhum-disponivel">
-                Nenhum usuário disponível
-              </li>
 
-              <!-- Lista de usuários disponíveis -->
-              <li v-for="u in usuariosDisponiveis" :key="u.id" @click.stop="selecionarUsuario(u)">
-                <img :src="u.foto" class="avatar" />
-                <span>{{ u.nome }}</span>
-              </li>
-            </ul>
+            <div v-if="abrirDropdownUsuarios" class="dropdown-list">
+              <input type="text" v-model="buscaUsuario" placeholder="Buscar usuário..." class="input-busca-jogador"
+                @click.stop />
+
+              <ul>
+                <li v-for="u in usuariosFiltradosComBusca" :key="u.id" @click.stop="selecionarUsuario(u)">
+                  <img :src="u.foto" class="avatar" />
+                  <span>{{ u.nome }}</span>
+                </li>
+
+                <li v-if="usuariosFiltradosComBusca.length === 0" class="sem-jogador">
+                  Nenhum usuário encontrado
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
@@ -53,10 +61,15 @@
           </div>
 
           <ul v-if="abrirDropdownJogadores" class="dropdown-list">
-            <li v-if="jogadoresExistentesFiltrados.length === 0" class="nenhum-disponivel">
+            <input type="text" v-model="buscaJogador" placeholder="Buscar jogador..." class="input-busca-jogador"
+              @click.stop />
+
+            <li v-if="jogadoresExistentesFiltradosComBusca.length === 0" class="sem-jogador">
               Nenhum jogador disponível
             </li>
-            <li v-for="j in jogadoresExistentesFiltrados" :key="j.id" @click.stop="selecionarJogadorExistente(j)">
+
+            <li v-for="j in jogadoresExistentesFiltradosComBusca" :key="j.id"
+              @click.stop="selecionarJogadorExistente(j)">
               <img :src="j.foto" class="avatar" />
               <span>
                 {{ j.nome }}
@@ -68,8 +81,7 @@
           </ul>
         </div>
       </div>
-
-      <!-- Remover jogador -->
+      
       <div v-if="acaoLocal === 'remover'" class="form-group">
         <label for="selecionarJogador">Escolha o jogador:</label>
         <select id="selecionarJogador" v-model="jogadorSelecionado" class="dropdown">
@@ -78,7 +90,6 @@
         </select>
       </div>
 
-      <!-- Botões -->
       <div class="botoes">
         <button :disabled="!acaoLocal ||
           (acaoLocal === 'adicionar' && !nomeJogador) ||
@@ -107,6 +118,8 @@ export default {
     return {
       acaoLocal: '',
       nomeJogador: '',
+      buscaJogador: '',
+      buscaUsuario: '',
       arquivoFoto: null,
       jogadorSelecionado: null,
       usuariosDisponiveis: [],
@@ -126,6 +139,18 @@ export default {
         const estaNesteTime = j.times.some(t => t.id === timeIdAtual);
         return !estaNesteTime;
       });
+    },
+    jogadoresExistentesFiltradosComBusca() {
+      return this.jogadoresExistentesFiltrados.filter(j =>
+        j.nome.toLowerCase().includes(this.buscaJogador.toLowerCase())
+      );
+    },
+    usuariosFiltradosComBusca() {
+      return this.usuariosDisponiveis
+        .filter(u => u.permissaoId !== 1)
+        .filter(u =>
+          u.nome.toLowerCase().includes(this.buscaUsuario.toLowerCase())
+        );
     }
   },
 
@@ -161,14 +186,16 @@ export default {
       const file = event.target.files[0];
       if (file) this.arquivoFoto = file;
     },
-    
+
     selecionarUsuario(u) {
       this.usuarioSelecionado = u;
+      this.buscaUsuario = '';
       this.abrirDropdownUsuarios = false;
     },
 
     selecionarJogadorExistente(j) {
       this.jogadorSelecionadoExistente = j;
+      this.buscaJogador = '';
       this.abrirDropdownJogadores = false;
     },
 
@@ -368,5 +395,26 @@ export default {
   height: 28px;
   border-radius: 50%;
   object-fit: cover;
+}
+
+.input-busca-jogador {
+  width: 100%;
+  padding: 8px;
+  border: none;
+  border-bottom: 1px solid #ddd;
+  outline: none;
+  font-size: 14px;
+}
+
+.dropdown-list ul {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.sem-jogador {
+  padding: 10px;
+  text-align: center;
+  color: #999;
+  font-size: 13px;
 }
 </style>

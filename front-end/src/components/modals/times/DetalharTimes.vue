@@ -122,14 +122,44 @@ export default {
 
     async carregarJogadores(timeId) {
       this.isLoading = true;
+
       try {
         const res = await api.get(`/time/${timeId}`);
-        this.jogadores = res.data.map(j => ({
-          ...j,
-          cartoesAmarelos: j.atuacoes?.reduce((acc, a) => acc + a.cartoesAmarelos, 0) || 0,
-          cartoesVermelhos: j.atuacoes?.reduce((acc, a) => acc + a.cartoesVermelhos, 0) || 0,
-          gols: j.atuacoes?.reduce((acc, a) => acc + a.gols, 0) || 0
-        }));
+
+        const lista = [];
+
+        res.data.forEach(j => {
+          let cartoesAmarelos = 0;
+          let cartoesVermelhos = 0;
+          let gols = 0;
+
+          if (j.atuacoes) {
+            j.atuacoes.forEach(a => {
+              cartoesAmarelos += a.cartoesAmarelos;
+              cartoesVermelhos += a.cartoesVermelhos;
+              gols += a.gols;
+            });
+          }
+
+          let funcaoId = '';
+          if (j.funcao) {
+            funcaoId = j.funcao.id;
+          }
+
+          lista.push({
+            id: j.id,
+            nome: j.nome,
+            foto: j.foto,
+            funcao: j.funcao,
+            funcaoId: funcaoId,
+            cartoesAmarelos: cartoesAmarelos,
+            cartoesVermelhos: cartoesVermelhos,
+            gols: gols
+          });
+        });
+
+        this.jogadores = lista;
+
       } catch (err) {
         console.error(err);
         this.jogadores = [];
@@ -137,7 +167,6 @@ export default {
         this.isLoading = false;
       }
     },
-
     async alterarFuncao(jogadorId, funcaoId) {
       try {
         await api.put(`/funcao/${jogadorId}`, { funcaoId });
