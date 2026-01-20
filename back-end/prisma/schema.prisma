@@ -133,6 +133,7 @@ model Time {
   agendamentos Agendamento[]    @relation("TimeAgendamentos")
   jogadores    JogadorTime[] 
   treinador    TreinadorTime? 
+  jogadoresPartida JogadorPartida[]
 }
 
 model Partida {
@@ -208,11 +209,15 @@ model JogadorPartida {
   id               Int     @id @default(autoincrement())
   jogadorId        Int
   partidaId        Int
+  timeId           Int
   jogador          Jogador @relation(fields: [jogadorId], references: [id])
   partida          Partida @relation(fields: [partidaId], references: [id])
+  time             Time    @relation(fields: [timeId], references: [id])
   gols             Int     @default(0)
   cartoesAmarelos  Int     @default(0)
   cartoesVermelhos Int     @default(0)
+  @@index([partidaId])
+  @@index([timeId])
 }
 
 model FuncaoJogador {

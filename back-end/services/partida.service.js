@@ -34,7 +34,6 @@ async function criarPartida(data, usuarioId) {
     });
   }
 
-  // Monta dados da partida
   const dataPartida = {
     partidaIniciada: true,
     finalizada: false,
@@ -42,41 +41,36 @@ async function criarPartida(data, usuarioId) {
     timeAId: Number(timeAId),
     timeBId: Number(timeBId),
     usuarioCriadorId: Number(usuarioId),
-
-    // CRIA OS JOGADORES DA PARTIDA
     jogadoresPartida: {
       create: jogadores.map(j => ({
-        jogadorId: Number(j.jogadorId)
+        jogadorId: Number(j.jogadorId),
+        timeId: Number(j.timeId), 
       })),
     },
   };
 
-  if (quadraId) {
-    dataPartida.quadraId = Number(quadraId);
-  }
+  if (quadraId) dataPartida.quadraId = Number(quadraId);
+  if (campeonatoId) dataPartida.campeonatoId = Number(campeonatoId);
 
-  if (campeonatoId) {
-    dataPartida.campeonatoId = Number(campeonatoId);
-  }
-
-  //Cria partida e as relações
   const partida = await prisma.partida.create({
     data: dataPartida,
     include: {
       campeonato: true,
       modalidade: true,
-      timeA: { include: { placares: true } },
-      timeB: { include: { placares: true } },
+      timeA: true,
+      timeB: true,
       usuarioCriador: true,
       jogadoresPartida: {
-        include: { jogador: true },
+        include: {
+          jogador: true,
+          time: true,
+        },
       },
       participantes: {
         include: { usuario: true },
       },
     },
   });
-
   return partida;
 }
 
@@ -254,7 +248,6 @@ async function listarPartidasemAndamento(modalidadeId, campeonatoId) {
   });
 }
 
-
 async function listarPartidasPausadas(modalidadeId, campeonatoId) {
   try {
     const partidasPausadas = await prisma.partida.findMany({
@@ -263,7 +256,7 @@ async function listarPartidasPausadas(modalidadeId, campeonatoId) {
         campeonatoId: Number(campeonatoId),
         partidaIniciada: true,
         finalizada: false,
-        emIntervalo: true // indica que está pausada
+        emIntervalo: true 
       },
       include: {
         timeA: true,
@@ -428,51 +421,68 @@ async function vincularUsuarioAPartida(partidaId, usuarioId, permissaoId) {
   return vinculo;
 }
 
-async function vincularJogadorPartida(partidaId, jogadorId, stats = {}) {
+async function vincularJogadorPartida(partidaId, jogadorId, timeId, stats = {}) {
   const partida = await prisma.partida.findUnique({ where: { id: partidaId } });
   if (!partida) throw new Error("Partida não encontrada");
 
   const jogador = await prisma.jogador.findUnique({ where: { id: jogadorId } });
   if (!jogador) throw new Error("Jogador não encontrado");
 
+  if (timeId !== partida.timeAId && timeId !== partida.timeBId) {
+    throw new Error("Time não pertence a esta partida");
+  }
+
   const vinculo = await prisma.jogadorPartida.create({
     data: {
-      partidaId,
-      jogadorId,
+      partidaId: Number(partidaId),
+      jogadorId: Number(jogadorId),
+      timeId: Number(timeId), 
       gols: stats.gols || 0,
       cartoesAmarelos: stats.cartoesAmarelos || 0,
-      cartoesVermelhos: stats.cartoesVermelhos || 0
-    }
+      cartoesVermelhos: stats.cartoesVermelhos || 0,
+    },
   });
 
   return vinculo;
 }
 
 async function listarJogadoresSelecionados(partidaId) {
-  const jogadores = await prisma.jogadorPartida.findMany({
+  const jogadoresPartida = await prisma.jogadorPartida.findMany({
     where: { partidaId: Number(partidaId) },
     include: {
+      time: {
+        select: {
+          id: true,
+          nome: true,
+          foto: true
+        }
+      },
       jogador: {
         select: {
           id: true,
           nome: true,
           foto: true,
-          funcao: { select: { nome: true } },
-          timeId: true
+          funcao: {
+            select: { nome: true }
+          }
         }
       }
     }
   });
 
-  return jogadores.map(jp => ({
+  return jogadoresPartida.map(jp => ({
     id: jp.jogador.id,
     nome: jp.jogador.nome,
     foto: jp.jogador.foto,
     funcao: jp.jogador.funcao?.nome,
-    timeId: jp.jogador.timeId,
-    gols: jp.gols || 0,
-    cartoesAmarelos: jp.cartoesAmarelos || 0,
-    cartoesVermelhos: jp.cartoesVermelhos || 0
+
+    timeId: jp.time.id,
+    timeNome: jp.time.nome,
+    timeFoto: jp.time.foto,
+
+    gols: jp.gols,
+    cartoesAmarelos: jp.cartoesAmarelos,
+    cartoesVermelhos: jp.cartoesVermelhos
   }));
 }
 
@@ -514,6 +524,107 @@ async function atualizarAtuacaoJogadorPartida({
   return atuacao;
 }
 
+async function substituirJogadorPartida(partidaId, jogadorSaiId, jogadorEntraId) {
+  const partida = await prisma.partida.findUnique({
+    where: { id: Number(partidaId) }
+  });
+  if (!partida) throw new Error("Partida não encontrada");
+
+  if (partida.finalizada)
+    throw new Error("Não é possível substituir jogadores em partida finalizada");
+
+  const jogadorEntraExistente = await prisma.jogadorPartida.findFirst({
+    where: {
+      partidaId: Number(partidaId),
+      jogadorId: Number(jogadorEntraId)
+    }
+  });
+  if (jogadorEntraExistente)
+    throw new Error("Jogador que entra já está na partida");
+
+  const jogadorSai = await prisma.jogadorPartida.findFirst({
+    where: {
+      partidaId: Number(partidaId),
+      jogadorId: Number(jogadorSaiId)
+    }
+  });
+  if (!jogadorSai)
+    throw new Error("Jogador que sai não está na partida");
+
+
+  let tipoTime;
+  if (partida.timeAId === jogadorSai.timeId) tipoTime = 'A';
+  else if (partida.timeBId === jogadorSai.timeId) tipoTime = 'B';
+  else throw new Error("Time do jogador não pertence à partida");
+
+  if (
+    (tipoTime === 'A' && partida.substituicoesTimeA >= 3) ||
+    (tipoTime === 'B' && partida.substituicoesTimeB >= 3)
+  ) {
+    throw new Error("Limite de 3 substituições por time atingido");
+  }
+
+  await prisma.jogadorPartida.delete({
+    where: { id: jogadorSai.id }
+  });
+
+  // cria quem entra NO MESMO TIME
+  const novoJogador = await prisma.jogadorPartida.create({
+    data: {
+      partidaId: Number(partidaId),
+      jogadorId: Number(jogadorEntraId),
+      timeId: jogadorSai.timeId, 
+      gols: 0,
+      cartoesAmarelos: 0,
+      cartoesVermelhos: 0
+    }
+  });
+
+  const updateData =
+    tipoTime === 'A'
+      ? { substituicoesTimeA: { increment: 1 } }
+      : { substituicoesTimeB: { increment: 1 } };
+
+  await prisma.partida.update({
+    where: { id: Number(partidaId) },
+    data: updateData
+  });
+
+  return novoJogador;
+}
+
+ async function getJogadoresForaDaPartida(partidaId, timeId) {
+    const jogadoresNaPartida = await prisma.jogadorPartida.findMany({
+      where: { partidaId },
+      select: { jogadorId: true }
+    })
+
+    const idsNaPartida = jogadoresNaPartida.map(j => j.jogadorId)
+    const jogadoresFora = await prisma.jogadorTime.findMany({
+      where: {
+        timeId,
+        jogadorId: {
+          notIn: idsNaPartida.length ? idsNaPartida : [0]
+        }
+      },
+      include: {
+        jogador: {
+          include: {
+            funcao: true
+          }
+        }
+      }
+    })
+
+    return jogadoresFora.map(jt => ({
+      id: jt.jogador.id,
+      nome: jt.jogador.nome,
+      foto: jt.jogador.foto,
+      funcao: jt.jogador.funcao?.nome,
+      timeId
+    }))
+  }
+
 module.exports = {
   criarPartida,
   finalizarPartida,
@@ -529,5 +640,7 @@ module.exports = {
   vincularUsuarioAPartida,
   vincularJogadorPartida,
   listarJogadoresSelecionados,
-  atualizarAtuacaoJogadorPartida
+  atualizarAtuacaoJogadorPartida,
+  substituirJogadorPartida,
+  getJogadoresForaDaPartida
 };

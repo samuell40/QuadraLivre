@@ -83,6 +83,14 @@ export default {
       selecionadosTime2: []
     }
   },
+  watch: {
+    aberto(valor) {
+      if (valor) {
+        this.selecionadosTime1 = []
+        this.selecionadosTime2 = []
+      }
+    }
+  },
   computed: {
     jogadoresPorFuncaoTime1() {
       return this.agruparPorFuncao(this.jogadoresTime1)

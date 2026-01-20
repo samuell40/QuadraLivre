@@ -130,7 +130,6 @@
           <p class="detalhe">{{ usuarioSelecionado.quadra?.nome }}</p>
         </div>
 
-        <!-- USUARIO -->
         <div class="campo" v-if="usuarioSelecionado.permissaoId === 3">
           <strong>Times:</strong>
           <p class="detalhe">
@@ -141,7 +140,6 @@
           </p>
         </div>
 
-        <!-- JOGADOR -->
         <div class="campo" v-if="usuarioSelecionado.permissaoId === 3 && usuarioSelecionado.jogador">
           <strong>Jogador:</strong>
           <p class="detalhe">
@@ -205,7 +203,6 @@
             <strong>Jogador:</strong>
 
             <div class="dropdown-custom" ref="dropdownJogador">
-              <!-- SELECIONADO -->
               <div class="dropdown-selected" @click="abrirDropdown = !abrirDropdown">
                 <img v-if="jogadorSelecionadoObj?.foto" :src="jogadorSelecionadoObj.foto" class="avatar" />
                 <span>
@@ -215,7 +212,6 @@
 
               <!-- LISTA -->
               <div v-if="abrirDropdown" class="dropdown-list">
-                <!-- 🔍 BARRA DE PESQUISA -->
                 <input type="text" v-model="buscaJogador" placeholder="Buscar jogador..." class="input-busca-jogador"
                   @click.stop />
 
@@ -462,14 +458,13 @@ export default {
           return
         }
 
-        // ✅ 1. ATUALIZA USUÁRIO PRIMEIRO
+        // ATUALIZA USUÁRIO 
         await api.put('/editar/usuario', {
           email: this.form.email,
           permissaoId: this.form.permissaoId,
           quadraId: this.form.quadra,
         })
 
-        // ✅ 2. DEPOIS VINCULA
         if (this.form.permissaoId === 3 && this.form.jogadorId) {
           await api.post('/vincular', {
             usuarioId: this.usuarioSelecionado.id,

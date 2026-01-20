@@ -5,7 +5,6 @@
       <span>{{ timeNome }}</span>
     </h2>
 
-
     <div class="box">
       <p>Gols Marcados</p>
       <div class="controls">
@@ -50,8 +49,10 @@
 
         <span class="valor">{{ localTime.substituicoes }}</span>
 
-        <button @click="incrementSimples('substituicoes')"
-          :disabled="!temporizadorAtivo || localTime.substituicoes >= 3">+</button>
+        <button @click="abrirModalSubstituicao" :disabled="!temporizadorAtivo || localTime.substituicoes >= 3">
+          +
+        </button>
+
       </div>
     </div>
 
@@ -91,6 +92,74 @@
         </div>
       </div>
     </div>
+
+    <div v-if="substituicaoModal" class="modal-overlay" @click.self="fecharModalSubstituicao">
+      <div class="modal-content">
+        <h2 class="titulo-substituicao"> Substituição de Jogadores</h2>
+
+        <div v-if="carregando" class="loader">
+          Carregando jogadores...
+        </div>
+
+        <div v-else class="colunas">
+          <div class="coluna">
+            <h3 class="subtitulo">Jogador que sai</h3>
+            <div v-for="j in jogadoresEmCampo" :key="j.id" class="jogador-card"
+              :class="{ selecionado: jogadorSai?.id === j.id }" @click="toggleJogadorSai(j)">
+              <div class="jogador-info">
+                <img v-if="j.foto" :src="j.foto" class="foto-jogador" />
+                <span class="nome">{{ j.nome }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="coluna">
+            <h3 class="subtitulo">Jogador que entra</h3>
+            <div v-for="j in jogadoresBanco" :key="j.id" class="jogador-card"
+              :class="{ selecionado: jogadorEntra?.id === j.id }" @click="toggleJogadorEntra(j)">
+              <div class="jogador-info">
+                <img v-if="j.foto" :src="j.foto" class="foto-jogador" />
+                <span class="nome">{{ j.nome }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LISTA DE SUBSTITUIÇÕES PENDENTES -->
+        <div v-if="substituicoesPendentes.length" class="coluna coluna-substituicoes">
+          <h3 class="subtitulo">Substituições selecionadas</h3>
+
+          <div v-for="(s, index) in substituicoesPendentes" :key="index" class="jogador-card substituicao-card">
+            <div class="jogador-info">
+              <span class="nome">{{ s.sai.nome }}</span>
+            </div>
+            <span class="seta">→</span>
+
+            <div class="jogador-info">
+              <span class="nome">{{ s.entra.nome }}</span>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="botoes">
+          <button class="btn-save1" :disabled="!jogadorSai ||
+            !jogadorEntra ||
+            substituicoesPendentes.length >= 3
+            " @click="adicionarSubstituicao">
+            Adicionar Substituição
+          </button>
+
+          <button class="btn-save1" v-if="substituicoesPendentes.length > 0" @click="confirmarTodasSubstituicoes">
+            Confirmar {{ substituicoesPendentes.length }}
+          </button>
+
+          <button class="btn-cancel" @click="fecharModalSubstituicao">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -120,7 +189,13 @@ export default {
       modalAberto: false,
       tipoEvento: 'gol',
       jogadores: [],
-      carregando: false
+      carregando: false,
+      substituicaoModal: false,
+      jogadoresEmCampo: [],
+      jogadoresBanco: [],
+      jogadorSai: null,
+      jogadorEntra: null,
+      substituicoesPendentes: []
     }
   },
 
@@ -130,6 +205,10 @@ export default {
       if (this.tipoEvento === 'amarelo') return 'Cartão Amarelo'
       if (this.tipoEvento === 'vermelho') return 'Cartão Vermelho'
       return ''
+    },
+
+    substituicoesRestantes() {
+      return 3 - this.localTime.substituicoes - this.substituicoesPendentes.length
     }
   },
 
@@ -155,33 +234,27 @@ export default {
       this.carregando = true
       try {
         const res = await api.get(`/partida/${this.partidaId}`)
-
-        const jogadores = []
-
-        res.data.forEach(j => {
-          if (j.timeId !== this.timeData.id) return
-
-          jogadores.push({
+        this.jogadores = res.data
+          .filter(j => j.timeId === this.timeData.id)
+          .map(j => ({
             id: j.id,
             nome: j.nome,
-            foto: j.foto, 
-            timeId: j.timeId,
+            foto: j.foto,
             gols: j.gols,
             cartoesAmarelos: j.cartoesAmarelos,
             cartoesVermelhos: j.cartoesVermelhos
-          })
-        })
-
-        this.jogadores = jogadores
+          }))
       } catch {
         Swal.fire('Erro', 'Erro ao carregar jogadores', 'error')
       } finally {
         this.carregando = false
       }
     },
-
+    
     async alterarEventoJogador(jogador, acao) {
       const incremento = acao === 'increment' ? 1 : -1
+      if (incremento === 0) return
+
       const payload = {
         jogadorId: jogador.id,
         partidaId: this.partidaId
@@ -196,7 +269,6 @@ export default {
 
       if (this.tipoEvento === 'amarelo') {
         if (jogador.cartoesAmarelos + incremento < 0) return
-
         jogador.cartoesAmarelos += incremento
         this.localTime.cartaoamarelo += incremento
         payload.cartoesAmarelos = incremento
@@ -206,11 +278,7 @@ export default {
           this.localTime.cartaovermelho++
           payload.cartoesVermelhos = 1
 
-          Swal.fire(
-            'Cartão Vermelho!',
-            'Jogador recebeu cartão vermelho após 2 amarelos.',
-            'info'
-          )
+          Swal.fire('Cartão Vermelho!', 'Jogador recebeu cartão vermelho após 2 amarelos.', 'info')
         }
       }
 
@@ -224,6 +292,107 @@ export default {
       this.emitUpdate()
       await api.post('/atuacao', payload)
       await this.salvarPlacar()
+    },
+
+    toggleJogadorSai(jogador) {
+      this.jogadorSai =
+        this.jogadorSai?.id === jogador.id ? null : jogador
+    },
+
+    toggleJogadorEntra(jogador) {
+      this.jogadorEntra =
+        this.jogadorEntra?.id === jogador.id ? null : jogador
+    },
+
+    async abrirModalSubstituicao() {
+      if (this.substituicoesRestantes <= 0) return
+
+      this.substituicaoModal = true
+      this.jogadorSai = null
+      this.jogadorEntra = null
+      this.substituicoesPendentes = []
+      await this.carregarJogadoresSubstituicao()
+    },
+
+    fecharModalSubstituicao() {
+      this.substituicaoModal = false
+      this.jogadorSai = null
+      this.jogadorEntra = null
+      this.substituicoesPendentes = []
+    },
+
+    async carregarJogadoresSubstituicao() {
+      this.carregando = true
+      try {
+        const resEmCampo = await api.get(`/partida/${this.partidaId}`)
+        this.jogadoresEmCampo = resEmCampo.data.filter(
+          j => j.timeId === this.timeData.id
+        )
+
+        const resBanco = await api.get(`/${this.partidaId}/${this.timeData.id}/jogadores-fora-partida`)
+        this.jogadoresBanco = resBanco.data
+      } catch {
+        Swal.fire('Erro', 'Erro ao carregar jogadores da substituição', 'error')
+      } finally {
+        this.carregando = false
+      }
+    },
+
+    adicionarSubstituicao() {
+      if (!this.jogadorSai || !this.jogadorEntra) return
+
+      if (this.substituicoesRestantes <= 0) {
+        return Swal.fire('Limite atingido', 'Máximo de 3 substituições', 'warning')
+      }
+
+      const duplicada = this.substituicoesPendentes.some(
+        s =>
+          s.sai.id === this.jogadorSai.id ||
+          s.entra.id === this.jogadorEntra.id
+      )
+
+      if (duplicada) {
+        return Swal.fire('Inválido', 'Jogador já está em uma substituição pendente', 'warning')
+      }
+
+      this.substituicoesPendentes.push({
+        sai: this.jogadorSai,
+        entra: this.jogadorEntra
+      })
+
+      this.jogadorSai = null
+      this.jogadorEntra = null
+    },
+
+    async confirmarTodasSubstituicoes() {
+      try {
+        for (const sub of this.substituicoesPendentes) {
+          await api.put(`/partidas/${this.partidaId}/substituir`, {
+            jogadorSaiId: sub.sai.id,
+            jogadorEntraId: sub.entra.id
+          })
+
+          this.jogadoresEmCampo = this.jogadoresEmCampo.filter(
+            j => j.id !== sub.sai.id
+          )
+          this.jogadoresEmCampo.push(sub.entra)
+
+          this.jogadoresBanco = this.jogadoresBanco.filter(
+            j => j.id !== sub.entra.id
+          )
+
+          this.localTime.substituicoes++
+        }
+
+        this.emitUpdate()
+        await this.salvarPlacar()
+
+        Swal.fire('Sucesso', `${this.substituicoesPendentes.length} substituição(ões) realizadas`, 'success')
+
+        this.fecharModalSubstituicao()
+      } catch (error) {
+        Swal.fire('Erro', 'Erro ao realizar substituições', 'error')
+      }
     },
 
     incrementSimples(campo) {
@@ -277,7 +446,7 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  border: 2px solid #3b82f6; /* Borda a volta do nome dos times */
+  border: 2px solid #3b82f6;
 }
 
 .box {
@@ -332,7 +501,7 @@ export default {
   border-radius: 12px;
   width: 900px;
   max-width: 95%;
-  max-height: 90vh;
+  height: 85vh;
   display: flex;
   flex-direction: column;
 }
@@ -342,7 +511,21 @@ export default {
   padding: 0 0 12px 0;
   text-align: left;
   color: #3b82f6;
-  font-size: 22px;
+  font-size: 30px;
+  font-weight: bold;
+}
+
+.titulo-substituicao {
+  margin-bottom: 30px;
+  color: #3b82f6;
+  text-align: left;
+  font-weight: bold;
+}
+
+.subtitulo {
+  color: #3b82f6;
+  font-size: 20px;
+  text-align: center;
   font-weight: bold;
 }
 
@@ -394,18 +577,28 @@ export default {
 }
 
 .botoes {
+  display: flex;
+  gap: 10px;
   margin-top: 16px;
 }
 
-.btn-save1 {
-  width: 100%;
+.btn-save1,
+.btn-cancel {
+  flex: 1;
   padding: 12px 0;
   border-radius: 20px;
   border: none;
   cursor: pointer;
   color: white;
   font-size: 16px;
+}
+
+.btn-save1 {
   background-color: #3b82f6;
+}
+
+.btn-cancel {
+  background-color: #7e7e7e;
 }
 
 .loader {
@@ -420,5 +613,42 @@ export default {
   object-fit: contain;
   border-radius: 50%;
   background-color: #f1f5f9;
+}
+
+.selecionado {
+  background: #dbeafe;
+  border: 2px solid #2563eb;
+}
+
+.colunas {
+  display: flex;
+  gap: 20px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.coluna-substituicoes {
+  margin-top: 20px;
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  padding: 10px 15px;
+}
+
+.substituicao-card {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.substituicao-card .nome {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.seta {
+  font-size: 20px;
+  font-weight: bold;
+  color: #3b82f6;
 }
 </style>

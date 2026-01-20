@@ -57,7 +57,14 @@
         <div class="dropdown-custom" ref="dropdownJogadores">
           <div class="dropdown-selected" @click="abrirDropdownJogadores = !abrirDropdownJogadores">
             <img v-if="jogadorSelecionadoExistente?.foto" :src="jogadorSelecionadoExistente.foto" class="avatar" />
-            <span>{{ jogadorSelecionadoExistente?.nome || 'Selecione um jogador existente' }}</span>
+            <span v-if="jogadoresSelecionadosExistentes.length === 0">
+              Selecione jogador(es) existente(s)
+            </span>
+
+            <span v-else>
+              {{ jogadoresSelecionadosExistentes.length }} jogador(es) selecionado(s)
+            </span>
+
           </div>
 
           <ul v-if="abrirDropdownJogadores" class="dropdown-list">
@@ -68,8 +75,8 @@
               Nenhum jogador disponível
             </li>
 
-            <li v-for="j in jogadoresExistentesFiltradosComBusca" :key="j.id"
-              @click.stop="selecionarJogadorExistente(j)">
+            <li v-for="j in jogadoresExistentesFiltradosComBusca" :key="j.id" @click.stop="toggleJogadorExistente(j)"
+              :class="{ selecionado: isJogadorSelecionado(j.id) }">
               <img :src="j.foto" class="avatar" />
               <span>
                 {{ j.nome }}
@@ -93,10 +100,11 @@
       <div class="botoes">
         <button :disabled="!acaoLocal ||
           (acaoLocal === 'adicionar' && !nomeJogador) ||
-          (acaoLocal === 'adicionarExistente' && !jogadorSelecionadoExistente) ||
+          (acaoLocal === 'adicionarExistente' && jogadoresSelecionadosExistentes.length === 0) ||
           (acaoLocal === 'remover' && !jogadorSelecionado)" @click="confirmar" class="btn-save1">
           Confirmar
         </button>
+
         <button class="btn-cancel-placar" @click="fecharModal">Cancelar</button>
       </div>
     </div>
@@ -126,7 +134,7 @@ export default {
       usuarioSelecionado: null,
       abrirDropdownUsuarios: false,
       jogadores: [],
-      jogadorSelecionadoExistente: null,
+      jogadoresSelecionadosExistentes: [],
       abrirDropdownJogadores: false
     };
   },
@@ -176,7 +184,7 @@ export default {
       this.arquivoFoto = null;
       this.jogadorSelecionado = null;
       this.usuarioSelecionado = null;
-      this.jogadorSelecionadoExistente = null;
+      this.jogadoresSelecionadosExistentes = [];
       this.abrirDropdownUsuarios = false;
       this.abrirDropdownJogadores = false;
       this.$emit('fechar');
@@ -197,6 +205,22 @@ export default {
       this.jogadorSelecionadoExistente = j;
       this.buscaJogador = '';
       this.abrirDropdownJogadores = false;
+    },
+
+    toggleJogadorExistente(jogador) {
+      const index = this.jogadoresSelecionadosExistentes.findIndex(
+        j => j.id === jogador.id
+      );
+
+      if (index !== -1) {
+        this.jogadoresSelecionadosExistentes.splice(index, 1);
+      } else {
+        this.jogadoresSelecionadosExistentes.push(jogador);
+      }
+    },
+
+    isJogadorSelecionado(id) {
+      return this.jogadoresSelecionadosExistentes.some(j => j.id === id);
     },
 
     async carregarJogadores() {
@@ -260,14 +284,22 @@ export default {
 
       Swal.fire('Sucesso', 'Jogador adicionado!', 'success');
     },
-    
+
     async adicionarJogadorExistente() {
-      if (!this.jogadorSelecionadoExistente) return;
-      await api.post('/mover', {
-        jogadorId: this.jogadorSelecionadoExistente.id,
-        novoTimeId: this.time.id
-      });
-      Swal.fire('Sucesso', 'Jogador movido para o novo time!', 'success');
+      if (this.jogadoresSelecionadosExistentes.length === 0) return;
+
+      for (const jogador of this.jogadoresSelecionadosExistentes) {
+        await api.post('/mover', {
+          jogadorId: jogador.id,
+          novoTimeId: this.time.id
+        });
+      }
+
+      Swal.fire(
+        'Sucesso',
+        `${this.jogadoresSelecionadosExistentes.length} jogador(es) adicionados ao time!`,
+        'success'
+      );
     },
 
     async removerJogador() {
@@ -434,4 +466,10 @@ export default {
   color: #999;
   font-size: 13px;
 }
+
+.selecionado {
+  background-color: #eef6ff;
+  font-weight: bold;
+}
+
 </style>

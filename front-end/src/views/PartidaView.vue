@@ -113,10 +113,10 @@
           <span v-else>Finalizar Partida</span>
         </button>
       </div>
-
       <SelecionarJogadores v-if="mostrarModalJogadores" :aberto="mostrarModalJogadores" :jogadoresTime1="jogadoresTime1"
         :jogadoresTime2="jogadoresTime2" :time1Nome="nomeTime1" :time2Nome="nomeTime2" @confirmar="confirmarJogadores"
         @fechar="mostrarModalJogadores = false" />
+
     </div>
   </div>
 </template>
@@ -251,9 +251,7 @@ export default {
       if (!this.quadraSelecionada) return
 
       try {
-        const { data } = await api.get(
-          `/quadra/${this.quadraSelecionada}/modalidades`
-        )
+        const { data } = await api.get(`/quadra/${this.quadraSelecionada}/modalidades`)
         this.modalidadesDisponiveis = data
       } catch (error) {
         console.error(error)
@@ -262,9 +260,7 @@ export default {
 
     async buscarCampeonatos() {
       try {
-        const { data } = await api.get(
-          `/listar/${this.modalidadeSelecionada}`
-        )
+        const { data } = await api.get(`/listar/${this.modalidadeSelecionada}`)
         this.campeonatosDisponiveis = data
       } catch (error) {
         console.error(error)
@@ -273,9 +269,7 @@ export default {
 
     async buscarTimes() {
       try {
-        const { data } = await api.get(
-          `/times/modalidade/${this.modalidadeSelecionada}`
-        )
+        const { data } = await api.get(`/times/modalidade/${this.modalidadeSelecionada}`)
         this.times = data
       } catch (error) {
         console.error(error)
@@ -285,16 +279,12 @@ export default {
     async carregarJogadoresPorTime(tipo) {
       try {
         if (tipo === 'time1') {
-          const { data } = await api.get(
-            `/time/${this.timeSelecionado1}`
-          )
+          const { data } = await api.get(`/time/${this.timeSelecionado1}`)
           this.jogadoresTime1 = data
         }
 
         if (tipo === 'time2') {
-          const { data } = await api.get(
-            `/time/${this.timeSelecionado2}`
-          )
+          const { data } = await api.get(`/time/${this.timeSelecionado2}`)
           this.jogadoresTime2 = data
         }
       } catch (error) {
@@ -302,25 +292,21 @@ export default {
       }
     },
 
-    async confirmarJogadores() {
+    async confirmarJogadores({ time1, time2 }) {
       try {
-        if (!this.usuarioLogadoId) {
-          throw new Error('Usuário não autenticado')
-        }
-
         const jogadores = []
 
-        this.jogadoresTime1.forEach(j => {
+        time1.forEach(id => {
           jogadores.push({
-            jogadorId: j.id,
-            time: 'A'
+            jogadorId: id,
+            timeId: Number(this.timeSelecionado1)
           })
         })
 
-        this.jogadoresTime2.forEach(j => {
+        time2.forEach(id => {
           jogadores.push({
-            jogadorId: j.id,
-            time: 'B'
+            jogadorId: id,
+            timeId: Number(this.timeSelecionado2)
           })
         })
 
@@ -336,15 +322,11 @@ export default {
 
         const resposta = await api.post('/partida', payload)
 
-        const dados = resposta.data
-        this.partidaId = dados.id
-
+        this.partidaId = resposta.data.id
         this.mostrarModalJogadores = false
         this.partidaIniciada = true
         this.temporizadorAtivo = true
-        this.mostrarPlacar = true
         this.iniciarTemporizador()
-
       } catch (error) {
         console.error('Erro ao criar partida:', error)
       }
@@ -502,16 +484,15 @@ export default {
         this.partidaIniciada = true
         this.temporizadorAtivo = true
         this.tempoSegundos = data.tempoSegundos
-
         this.quadraSelecionada = data.quadraId
         this.modalidadeSelecionada = data.modalidadeId
         this.campeonatoSelecionado = data.campeonatoId
-
         this.timeSelecionado1 = data.timeAId
         this.timeSelecionado2 = data.timeBId
-
         this.time1.golspro = data.pontosTimeA
         this.time2.golspro = data.pontosTimeB
+        this.time1.substituicoes = data.substituicoesTimeA
+        this.time2.substituicoes = data.substituicoesTimeB
 
         await this.buscarModalidades()
         await this.buscarCampeonatos()
@@ -541,8 +522,24 @@ export default {
       this.campeonatosDisponiveis = []
       this.jogadoresTime1 = []
       this.jogadoresTime2 = []
-    }
+      this.time1 = {
+        golspro: 0,
+        faltas: 0,
+        substituicoes: 0,
+        cartaoamarelo: 0,
+        cartaovermelho: 0,
+        wo: false
+      }
 
+      this.time2 = {
+        golspro: 0,
+        faltas: 0,
+        substituicoes: 0,
+        cartaoamarelo: 0,
+        cartaovermelho: 0,
+        wo: false
+      }
+    }
   }
 }
 </script>

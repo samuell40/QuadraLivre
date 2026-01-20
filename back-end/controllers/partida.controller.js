@@ -207,12 +207,17 @@ async function vincularUsuarioController(req, res) {
 
 async function adicionarJogadorPartidaController(req, res) {
   const { partidaId, jogadorId } = req.params;
-  const stats = req.body;
+  const { timeId, ...stats } = req.body;
 
   try {
+    if (!timeId) {
+      return res.status(400).json({ message: "timeId é obrigatório" });
+    }
+
     const vinculo = await partidas.vincularJogadorPartida(
       Number(partidaId),
       Number(jogadorId),
+      Number(timeId),
       stats
     );
 
@@ -262,6 +267,49 @@ async function atualizarAtuacaoJogadorController(req, res) {
   }
 }
 
+async function substituirJogadorController(req, res) {
+  try {
+    const { partidaId } = req.params;
+    const { jogadorSaiId, jogadorEntraId } = req.body;
+
+    if (!jogadorSaiId || !jogadorEntraId) {
+      return res.status(400).json({ error: "IDs de jogadores são obrigatórios" });
+    }
+
+    const jogadorSubstituido = await partidas.substituirJogadorPartida(
+      Number(partidaId),
+      Number(jogadorSaiId),
+      Number(jogadorEntraId)
+    );
+
+    return res
+      .status(200)
+      .json({ message: "Substituição realizada com sucesso", jogadorSubstituido });
+
+  } catch (error) {
+    console.error('Erro na substituição:', error.message);
+    return res.status(400).json({ error: error.message });
+  }
+}
+
+async function getJogadoresForaDaPartidaController(req, res) {
+    try {
+      const { partidaId, timeId } = req.params
+
+      const jogadores = await partidas.getJogadoresForaDaPartida(
+        Number(partidaId),
+        Number(timeId)
+      )
+
+      return res.json(jogadores)
+    } catch (error) {
+      console.error(error)
+      return res.status(500).json({
+        error: 'Erro ao buscar jogadores fora da partida'
+      })
+    }
+  }
+
 module.exports = {
   criarPartidaController,
   finalizarPartidaController,
@@ -277,5 +325,7 @@ module.exports = {
   vincularUsuarioController,
   adicionarJogadorPartidaController,
   listarJogadoresSelecionadosController,
-  atualizarAtuacaoJogadorController
+  atualizarAtuacaoJogadorController,
+  substituirJogadorController,
+  getJogadoresForaDaPartidaController
 };
