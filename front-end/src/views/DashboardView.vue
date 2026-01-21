@@ -11,7 +11,7 @@
           <p>{{ totalUsuarios }}</p>
         </div>
         <div class="card_contagem">
-          <h3>Agendamentos</h3>
+          <h3>Total Agendamentos</h3>
           <p>{{ totalAgendamentos }}</p>
         </div>
         <div class="card_contagem">
@@ -293,12 +293,10 @@ export default {
     tituloDashboard() {
       const usuario = JSON.parse(localStorage.getItem("usuario"));
 
-      // Desenvolvedor → só "Dashboard"
       if (usuario?.permissaoId === 1) {
         return 'Dashboard';
       }
 
-      // Administrador → "Dashboard - Nome da Quadra"
       if (usuario?.permissaoId === 2 && usuario?.quadra?.nome) {
         return `Dashboard (${usuario.quadra.nome})`;
       }
@@ -311,11 +309,9 @@ export default {
       return this.listaLidos.filter(aviso => {
         const anoAviso = new Date(aviso.data).getFullYear()
 
-        // filtro por ano
         const passaAno =
           this.filtroAno === 'todos' || anoAviso === Number(this.filtroAno)
 
-        // filtro por origem
         const passaOrigem =
           this.filtroOrigem === 'todos' ||
           (this.filtroOrigem === 'geral' && !aviso.quadra) ||
@@ -560,21 +556,28 @@ export default {
       const canvas = document.getElementById('agendamentosModalidadeChart')
       if (this.agendamentosModalidadeChart) this.agendamentosModalidadeChart.destroy()
       const ctx = canvas.getContext('2d')
+
+      const agendamentosConfirmados = this.agendamentos.filter(a => a.status === 'Confirmado')
+
       const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1)
-      const nomesModalidades = this.agendamentos.map(a => {
+
+      const nomesModalidades = agendamentosConfirmados.map(a => {
         let nome = 'Não definido'
         if (a.modalidade?.nome) nome = a.modalidade.nome
         else if (a.quadra?.modalidades?.length > 0) nome = a.quadra.modalidades[0].nome
         return capitalize(nome)
       })
+
       const modalidades = [...new Set(nomesModalidades)]
+
       const quantidade = modalidades.map(m => nomesModalidades.filter(n => n === m).length)
+
       this.agendamentosModalidadeChart = new Chart(ctx, {
         type: 'bar',
         data: {
           labels: modalidades,
           datasets: [{
-            label: 'Agendamentos por Modalidade',
+            label: 'Agendamentos Confirmados por Modalidade',
             data: quantidade,
             backgroundColor: '#3B82F6'
           }]
@@ -590,8 +593,13 @@ export default {
       const canvas = document.getElementById('agendamentosTipoChart')
       if (this.agendamentosTipoChart) this.agendamentosTipoChart.destroy()
       const ctx = canvas.getContext('2d')
-      const tipos = ['PARTIDA', 'TREINO', 'EVENTO', 'OUTRO', 'CAMPEONATO']
-      const quantidade = tipos.map(t => this.agendamentos.filter(a => a.tipo === t).length)
+
+      const agendamentosConfirmados = this.agendamentos.filter(a => a.status === 'Confirmado')
+
+      const tipos = ['AMISTOSO', 'TREINO', 'EVENTO', 'OUTRO']
+
+      const quantidade = tipos.map(t => agendamentosConfirmados.filter(a => a.tipo === t).length)
+
       this.agendamentosTipoChart = new Chart(ctx, {
         type: 'pie',
         data: {
@@ -605,17 +613,22 @@ export default {
       const canvas = document.getElementById('agendamentosMesChart')
       if (this.agendamentosMesChart) this.agendamentosMesChart.destroy()
       const ctx = canvas.getContext('2d')
+
+      const agendamentosConfirmados = this.agendamentos.filter(a => a.status === 'Confirmado')
+
       const mesesNomes = [
         'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
         'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
       ]
-      const mesesAgendamentos = this.agendamentos.map(a => a.mes)
+
+      const mesesAgendamentos = agendamentosConfirmados.map(a => a.mes)
+
       if (mesesAgendamentos.length === 0) {
         this.agendamentosMesChart = new Chart(ctx, {
           type: 'bar',
           data: {
             labels: mesesNomes,
-            datasets: [{ label: 'Agendamentos por Mês', data: new Array(12).fill(0), backgroundColor: '#1E3A8A' }]
+            datasets: [{ label: 'Agendamentos Confirmados por Mês', data: new Array(12).fill(0), backgroundColor: '#1E3A8A' }]
           },
           options: {
             responsive: true,
@@ -625,16 +638,19 @@ export default {
         })
         return
       }
+
       const mesInicial = Math.min(...mesesAgendamentos) - 1
       const mesesFiltrados = mesesNomes.slice(mesInicial)
+
       const quantidade = mesesFiltrados.map((_, idx) =>
-        this.agendamentos.filter(a => a.mes === (mesInicial + idx + 1)).length
+        agendamentosConfirmados.filter(a => a.mes === (mesInicial + idx + 1)).length
       )
+
       this.agendamentosMesChart = new Chart(ctx, {
         type: 'bar',
         data: {
           labels: mesesFiltrados,
-          datasets: [{ label: 'Agendamentos por Mês', data: quantidade, backgroundColor: '#1E3A8A' }]
+          datasets: [{ label: 'Agendamentos Confirmados por Mês', data: quantidade, backgroundColor: '#1E3A8A' }]
         },
         options: {
           responsive: true,
@@ -643,7 +659,7 @@ export default {
         }
       })
     }
-  },
+  }
 }
 </script>
 
