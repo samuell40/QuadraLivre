@@ -2,7 +2,11 @@
   <div class="layout">
     <SideBar />
     <div class="conteudo">
-      <h1 class="title">{{ tituloDashboard }}</h1>
+
+      <div class="header-dashboard">
+        <h1 class="title">{{ tituloDashboard }}</h1>
+      </div>
+
       <NavBarUse />
 
       <section class="section_totalAgendamentos">
@@ -33,7 +37,6 @@
           <div class="header_avisos">
             <h3 class="avisos">Mural de Avisos</h3>
             <div class="header_actions">
-
               <button v-if="listaPendentes.length > 1" type="button" @click="exibirTodosAvisos = !exibirTodosAvisos"
                 class="btn-padrao btn-ver-mais">
                 {{ exibirTodosAvisos ? 'Ver menos' : 'Ver todos (' + listaPendentes.length + ')' }}
@@ -60,7 +63,6 @@
           <div class="lista_avisos" v-else>
             <div v-for="aviso in avisosExibidos" :key="aviso.id" class="card_aviso_item"
               :class="{ 'aviso-fixado': aviso.fixado }">
-
               <div class="aviso_conteudo">
                 <div class="aviso_meta">
                   <span class="aviso_origem" style="font-weight: bold; color: #3B82F6; margin-right: 8px;">
@@ -71,15 +73,12 @@
                 <h4>{{ aviso.titulo }}</h4>
                 <p>{{ aviso.descricao }}</p>
               </div>
-
               <div class="aviso_right_side">
                 <span class="aviso_autor">Autor: {{ aviso.autor?.nome }}</span>
-
                 <div class="aviso_actions_wrapper">
                   <button class="btn-ler" @click="marcarComoLido(aviso)">
                     Marcar como lido
                   </button>
-
                   <div class="aviso_actions" v-if="podePostar">
                     <button class="btn-icon btn-fixar" :class="{ 'btn-ativo': aviso.fixado }"
                       @click="alternarFixado(aviso)" :title="aviso.fixado ? 'Desafixar Aviso' : 'Fixar Aviso'">
@@ -87,7 +86,6 @@
                         alt="Desafixar" />
                       <img v-else :src="require('@/assets/icons/pin.svg')" class="icon-svg" alt="Fixar" />
                     </button>
-
                     <button v-if="usuarioLogado.id === aviso.autorId || usuarioLogado.permissaoId === 1"
                       class="btn-icon btn-excluir" @click="deletarAviso(aviso.id)" title="Excluir Aviso">
                       <svg xmlns="http://www.w3.org/2000/svg" class="icon-svg" fill="none" viewBox="0 0 24 24"
@@ -110,9 +108,7 @@
             <div class="header_avisos" style="border:none;">
               <h3 class="avisos_lidos">Cadastrar Novo Aviso</h3>
             </div>
-
             <div style="flex: 1; overflow-y: auto;">
-
               <div class="form-group" v-if="usuarioLogado.permissaoId === 1">
                 <label class="label-input">Quadra de Destino</label>
                 <select v-model="novoAviso.quadraId" class="input-estilizado">
@@ -123,25 +119,20 @@
                   </option>
                 </select>
               </div>
-
               <div class="form-group">
                 <label class="label-input">Título</label>
                 <input v-model="novoAviso.titulo" placeholder="Digite o título do aviso" class="input-estilizado" />
               </div>
-
               <div class="form-group">
                 <label class="label-input">Descrição</label>
                 <textarea v-model="novoAviso.descricao" placeholder="O que você quer avisar?"
                   class="input-estilizado area-texto"></textarea>
               </div>
-
               <div class="form-group-checkbox">
                 <input type="checkbox" id="fixarNovo" v-model="novoAviso.fixado">
                 <label for="fixarNovo">Fixar este aviso no topo?</label>
               </div>
-
             </div>
-
             <div class="modal-actions">
               <button @click="enviarAviso" class="btn-confirmar" :disabled="enviando">
                 {{ enviando ? 'Postando...' : 'Postar Aviso' }}
@@ -150,7 +141,6 @@
                 Cancelar
               </button>
             </div>
-
           </div>
         </div>
       </Teleport>
@@ -161,7 +151,6 @@
             <div class="header_avisos" style="margin-bottom: 10px; border:none;">
               <h3 class="avisos_lidos">Histórico de Avisos Lidos</h3>
             </div>
-
             <div class="filter-row filtros-full">
               <div class="filtro-item">
                 <label class="filtro-label">Filtrar por ano</label>
@@ -172,7 +161,6 @@
                   </option>
                 </select>
               </div>
-
               <div class="filtro-item">
                 <label class="filtro-label">Origem</label>
                 <select v-model="filtroOrigem" class="input-estilizado">
@@ -182,7 +170,6 @@
                 </select>
               </div>
             </div>
-
             <div class="lista_avisos" style="margin-top: 20px; max-height: 400px; overflow-y: auto;">
               <div v-if="listaLidosFiltrada.length === 0" class="sem-avisos">
                 Nenhum aviso lido encontrado em {{ filtroAno }}.
@@ -210,13 +197,29 @@
       </Teleport>
 
       <section class="section_graficos_top">
+        
         <div class="chart-container">
           <canvas id="agendamentosModalidadeChart"></canvas>
         </div>
-        <div class="chart-container">
-          <canvas id="agendamentosTipoChart"></canvas>
+
+        <div class="chart-with-actions-container">
+          <div class="chart-area-pie">
+            <canvas id="agendamentosTipoChart"></canvas>
+          </div>
+          
+          <div class="actions-area-pie">
+             <button @click="gerarPDFGraficos" class="btn-pdf-side" :disabled="loading" title="Baixar PDF">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+              </svg>
+              <span>PDF</span>
+            </button>
+          </div>
         </div>
+
       </section>
+
       <section class="section_graficos_bottom">
         <div v-if="loading" class="loader-container-centralizado">
           <div class="loader"></div>
@@ -225,6 +228,7 @@
           <canvas id="agendamentosMesChart"></canvas>
         </div>
       </section>
+
     </div>
   </div>
 </template>
@@ -236,8 +240,61 @@ import { Chart, registerables } from 'chart.js'
 import { nextTick } from 'vue'
 import api from '@/axios'
 import Swal from 'sweetalert2'
+import jsPDF from "jspdf";
 
 Chart.register(...registerables)
+
+const pdfExportPlugin = {
+  id: 'pdfExportPlugin',
+  beforeDraw(chart) {
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, chart.width, chart.height);
+    ctx.restore();
+  },
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    ctx.save();
+    
+    chart.data.datasets.forEach((dataset, i) => {
+      const meta = chart.getDatasetMeta(i);
+      
+      ctx.font = 'bold 14px Arial'; 
+      ctx.fillStyle = '#1E3A8A';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      meta.data.forEach((element, index) => {
+        const data = dataset.data[index];
+        if (data > 0) {
+          let x, y;
+
+          if (chart.config.type === 'pie' || chart.config.type === 'doughnut') {
+            const model = element; 
+            const midAngle = model.startAngle + (model.endAngle - model.startAngle) / 2;
+            const radius = (model.outerRadius + model.innerRadius) / 2;
+            
+            x = model.x + Math.cos(midAngle) * radius;
+            y = model.y + Math.sin(midAngle) * radius;
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = "rgba(0,0,0,0.5)";
+            ctx.shadowBlur = 4;
+          } 
+          else {
+            x = element.x;
+            y = element.y - 15;
+            ctx.fillStyle = '#1E3A8A';
+            ctx.shadowColor = "transparent";
+          }
+          ctx.fillText(data, x, y);
+        }
+      });
+    });
+    ctx.restore();
+  }
+};
 
 export default {
   name: 'DashboardView',
@@ -348,6 +405,68 @@ export default {
     this.carregarAgendamentos();
   },
   methods: {
+    gerarPDFGraficos() {
+      const doc = new jsPDF('p', 'mm', 'a4');
+
+      doc.setFontSize(16);
+      doc.setTextColor(30, 58, 138); 
+      doc.text(`Relatório de Agendamentos - ${this.tituloDashboard}`, 105, 20, null, null, "center");
+
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 105, 26, null, null, "center");
+      
+      let cursorY = 40;
+
+      const capturarGraficoComNumeros = (chartId) => {
+        const chartInstance = Chart.getChart(chartId);
+        if (!chartInstance) return null;
+
+        Chart.register(pdfExportPlugin);
+        chartInstance.update('none');
+        const imgData = chartInstance.canvas.toDataURL("image/png", 1.0);
+        Chart.unregister(pdfExportPlugin);
+        chartInstance.update('none');
+
+        return imgData;
+      };
+
+      const adicionarAoPDF = (imgData, titulo, isPie = false) => {
+        if (!imgData) return;
+
+        doc.setFontSize(12);
+        doc.setTextColor(30, 58, 138);
+        doc.text(titulo, 15, cursorY);
+
+        const imgProps = doc.getImageProperties(imgData);
+        let pdfWidth = 180;
+        let pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+        if (isPie) {
+          pdfWidth = 100;
+          pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+          doc.addImage(imgData, 'PNG', 55, cursorY + 5, pdfWidth, pdfHeight); 
+        } else {
+          doc.addImage(imgData, 'PNG', 15, cursorY + 5, pdfWidth, pdfHeight);
+        }
+        
+        cursorY += pdfHeight + 20;
+      };
+
+      const img1 = capturarGraficoComNumeros('agendamentosModalidadeChart');
+      adicionarAoPDF(img1, '1. Agendamentos por Modalidade');
+
+      if (cursorY > 200) { doc.addPage(); cursorY = 20; }
+      const img2 = capturarGraficoComNumeros('agendamentosTipoChart');
+      adicionarAoPDF(img2, '2. Agendamentos por Tipo', true);
+
+      if (cursorY > 200) { doc.addPage(); cursorY = 20; }
+      const img3 = capturarGraficoComNumeros('agendamentosMesChart');
+      adicionarAoPDF(img3, '3. Evolução Mensal');
+
+      doc.save(`relatorio_graficos_${new Date().toISOString().slice(0,10)}.pdf`);
+    },
+
     verificarSeLi(aviso) {
       if (!this.usuarioLogado?.id || !aviso.leituras) return false;
       return aviso.leituras.some(leitura => String(leitura.usuarioId) === String(this.usuarioLogado.id));
@@ -585,7 +704,10 @@ export default {
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+          layout: {
+            padding: { top: 20 }
+          }
         }
       })
     },
@@ -633,7 +755,8 @@ export default {
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+            layout: { padding: { top: 20 } }
           }
         })
         return
@@ -655,7 +778,8 @@ export default {
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+          layout: { padding: { top: 20 } }
         }
       })
     }
@@ -684,11 +808,19 @@ export default {
   overflow-x: hidden;
 }
 
+.header-dashboard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  margin-bottom: 20px;
+}
+
 .title {
   font-size: 30px;
   color: #3b82f6;
   font-weight: bold;
-  margin-top: 12px;
+  margin: 0;
 }
 
 .section_totalAgendamentos {
@@ -729,15 +861,66 @@ export default {
   margin-top: 40px;
 }
 
-.section_graficos_bottom {
-  position: relative;
-  margin-top: 40px;
-}
-
 .chart-container {
   flex: 1;
   min-width: 0;
   height: 350px;
+}
+
+.chart-with-actions-container {
+  flex: 1;
+  min-width: 0;
+  height: 350px;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.chart-area-pie {
+  flex: 1;
+  height: 100%;
+}
+
+.actions-area-pie {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px; 
+}
+
+.btn-pdf-side {
+  background-color: #3B82F6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 10px;
+  width: 70px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.btn-pdf-side:hover {
+  background-color: #2563EB;
+}
+
+.btn-pdf-side svg {
+  width: 24px;
+  height: 24px;
+}
+
+.btn-pdf-side span {
+  font-size: 12px;
+}
+
+.section_graficos_bottom {
+  position: relative;
+  margin-top: 40px;
 }
 
 .chart-container-full {
@@ -998,11 +1181,6 @@ export default {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.6);
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1172,6 +1350,22 @@ export default {
   .conteudo {
     margin-left: 0;
     padding: 20px;
+  }
+
+  .header-dashboard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .chart-with-actions-container {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .btn-pdf-side {
+    width: 100%;
+    flex-direction: row;
   }
 
   .section_totalAgendamentos {
