@@ -301,7 +301,7 @@ body {
   min-height: 100vh;
   width: 100%;
   max-width: none;
-  padding: 100px 80px 24px 80px;
+  padding: 100px 40px 24px 40px;
 }
 
 .aviso-banner {
@@ -412,31 +412,31 @@ body {
   color: #3B82F6;
 }
 
-.endereco {
-  font-size: 14px;
-  margin: 0;
-  line-height: 1.2;
-  color: #fff
-}
-
 .quadras-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 24px;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
 }
 
 .card-quadra {
   position: relative;
-  max-width: 100%;
-  width: 420px;
+  width: 100%;
+  max-width: none;
   height: 240px;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease-in-out;
+}
+
+.card-quadra:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
 .imagem-quadra {
   width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
@@ -444,32 +444,44 @@ body {
   position: absolute;
   bottom: 0;
   width: 100%;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 15%, rgba(0, 0, 0, 0.5) 60%, transparent);
   color: white;
-  padding: 16px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
 .nome-quadra {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: bold;
   margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.endereco {
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.3;
+  color: #e0e0e0;
+  font-weight: 500;
 }
 
 .btn-agendar {
   background-color: #3b82f6;
   color: white;
   border: none;
-  padding: 6px 8px;
+  padding: 8px 20px;
   cursor: pointer;
-  width: 80px;
-  height: 36px;
-  border-radius: 6px;
-  font-size: 12px;
+  min-width: 100px;
+  height: 38px;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: bold;
   transition: background-color 0.2s;
+  align-self: flex-start;
+  margin-top: 6px;
+  letter-spacing: 0.5px;
 }
 
 .btn-agendar:hover {
@@ -490,6 +502,8 @@ body {
   text-align: center;
   font-style: italic;
   color: #777;
+  margin-top: 40px;
+  font-size: 18px;
 }
 
 @keyframes spin {
@@ -499,6 +513,20 @@ body {
 
   100% {
     transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .quadras-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .container {
+    padding: 100px 20px 24px 20px;
+  }
+
+  .card-quadra {
+    height: 220px;
   }
 }
 </style>
