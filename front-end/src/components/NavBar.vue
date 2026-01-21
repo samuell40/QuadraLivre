@@ -27,8 +27,12 @@
         </li>
 
         <li>
-          <router-link to="/meusavisos" exact-active-class="active-link">
-            Meus Avisos
+          <router-link to="/meusavisos" class="link-com-badge" active-class="ativo-customizado">
+            <span class="texto-link">Meus Avisos</span>
+
+            <span v-if="totalNotificacoes > 0" class="badge-avisos">
+              {{ totalNotificacoes }}
+            </span>
           </router-link>
         </li>
 
@@ -43,27 +47,79 @@
 </template>
 
 <script>
-import router from '@/router';
+import router from '@/router'
+import api from '@/axios'
 
 export default {
-  name: 'HomeView',
+  name: 'NavbarUser',
+
   data() {
     return {
       isMenuOpen: false,
-    };
+      usuarioLogado: {},
+      todosAvisos: []
+    }
   },
-  methods: {
-    toggleMenu() {
-      this.isMenuOpen = !this.isMenuOpen;
-    },
-    logout() {
-      localStorage.removeItem('token');
 
-      router.push('/');
-    },
+  computed: {
+    totalNotificacoes() {
+      if (!this.usuarioLogado.id) return 0
+
+      return this.todosAvisos.filter(aviso => {
+        if (!aviso.leituras || aviso.leituras.length === 0) return true
+
+        return !aviso.leituras.some(
+          l => Number(l.usuarioId) === Number(this.usuarioLogado.id)
+        )
+      }).length
+    }
   },
-};
+
+  mounted() {
+    this.carregarUsuario()
+    this.carregarAvisos()
+
+    window.addEventListener('avisos-atualizados', this.carregarAvisos)
+  },
+
+  beforeUnmount() {
+    window.removeEventListener('avisos-atualizados', this.carregarAvisos)
+  },
+
+  methods: {
+    carregarUsuario() {
+      try {
+        this.usuarioLogado = JSON.parse(localStorage.getItem('usuario')) || {}
+      } catch {
+        this.usuarioLogado = {}
+      }
+    },
+
+    async carregarAvisos() {
+      if (!this.usuarioLogado.id) return
+
+      try {
+        const { data } = await api.get('/avisos')
+        this.todosAvisos = Array.isArray(data) ? data : []
+      } catch (err) {
+        console.error('Erro ao buscar avisos:', err)
+        this.todosAvisos = []
+      }
+    },
+
+    toggleMenu() {
+      this.isMenuOpen = !this.isMenuOpen
+    },
+
+    logout() {
+      localStorage.removeItem('token')
+      localStorage.removeItem('usuario')
+      router.push('/')
+    }
+  }
+}
 </script>
+
 
 <style scoped>
 .navbar-custom {
@@ -75,6 +131,7 @@ export default {
   height: 70px;
   font-family: "Montserrat", sans-serif;
   z-index: 1000;
+  box-sizing: border-box;
 }
 
 .navbar-container {
@@ -83,18 +140,16 @@ export default {
   justify-content: space-between;
   padding: 0 30px;
   height: 100%;
+  width: 100%;
   position: relative;
+  box-sizing: border-box;
 }
 
 .esquerda-section {
   display: flex;
   align-items: center;
   gap: 16px;
-}
-
-.logo-container {
-  display: flex;
-  align-items: center;
+  flex-shrink: 0;
 }
 
 .logo-img {
@@ -109,12 +164,15 @@ export default {
   margin: 0;
   padding: 0;
   align-items: center;
+  margin-left: auto;
 }
 
 .nav-links li a {
   color: #ffffff;
   text-decoration: none;
   font-weight: 500;
+  transition: color 0.2s;
+  font-size: 16px;
 }
 
 .nav-links li a:hover {
@@ -127,13 +185,42 @@ export default {
   text-underline-offset: 6px !important;
 }
 
+.link-com-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none !important;
+}
+
+.ativo-customizado .texto-link {
+  text-decoration: underline !important;
+  text-decoration-color: #3B82F6 !important;
+  text-underline-offset: 6px !important;
+  color: #3B82F6;
+}
+
+.badge-avisos {
+  background-color: #3b82f6;
+  color: #152147;
+  font-size: 11px;
+  font-weight: 800;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  text-decoration: none !important;
+}
 
 .sair {
   background-color: #1E3A8A;
-  padding: 6px 16px;
+  padding: 8px 24px;
   border-radius: 30px;
   color: white;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .hamburger {
@@ -150,18 +237,6 @@ export default {
   transition: 0.3s;
 }
 
-.nav-links.active {
-  display: flex;
-  flex-direction: column;
-  position: absolute;
-  top: 70px;
-  right: 0;
-  background-color: #152147;
-  width: 100%;
-  padding: 20px 0;
-  gap: 20px;
-}
-
 .sair-btn-mobile {
   display: none;
 }
@@ -169,14 +244,12 @@ export default {
 @media (max-width: 768px) {
   .nav-links {
     display: none;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    padding: 0;
   }
 
   .nav-links.active {
     display: flex;
+    flex-direction: column;
+    align-items: center;
     position: absolute;
     top: 70px;
     right: 0;
@@ -184,7 +257,7 @@ export default {
     background-color: #152147;
     padding: 20px 0;
     gap: 20px;
-    box-sizing: border-box;
+    margin-left: 0;
   }
 
   .hamburger {
@@ -206,10 +279,6 @@ export default {
     color: white;
     font-weight: 500;
     text-decoration: none;
-  }
-
-  .logo-img {
-    height: 34px;
   }
 }
 </style>

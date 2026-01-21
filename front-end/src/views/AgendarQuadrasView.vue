@@ -175,8 +175,20 @@ export default {
       const authStore = useAuthStore();
       if (this.avisoDestaque && authStore.usuario) {
         try {
-          await api.post(`/avisos/${this.avisoDestaque.id}/ler`, { usuarioId: authStore.usuario.id });
+          await api.post(`/avisos/${this.avisoDestaque.id}/ler`, {
+            usuarioId: authStore.usuario.id
+          });
           this.avisoDestaque = null;
+          window.dispatchEvent(new Event('avisos-atualizados'));
+
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Lido',
+            showConfirmButton: false,
+            timer: 2000
+          });
         } catch (error) {
           console.warn("Não foi possível marcar como lido", error);
         }

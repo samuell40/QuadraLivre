@@ -1,6 +1,7 @@
 const express = require('express');
 const { 
-  criarAvisoController, 
+  criarAvisoController,
+  listarTodosAvisosController,
   listarAvisosController,
   deletarAvisoController,
   fixarAvisoController,
@@ -11,6 +12,8 @@ const validarJWT = require('../middlewares/auth');
 const router = express.Router();
 
 router.post('/avisos', [validarJWT], criarAvisoController);
+
+router.get('/avisos', [validarJWT], listarTodosAvisosController);
 
 router.get('/quadras/:quadraId/avisos', [validarJWT], listarAvisosController);
 

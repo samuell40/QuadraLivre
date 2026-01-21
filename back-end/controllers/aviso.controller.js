@@ -10,6 +10,16 @@ async function criarAvisoController(req, res) {
   }
 }
 
+async function listarTodosAvisosController(req, res) {
+  try {
+    const lista = await avisoService.listarTodosAvisos();
+    return res.status(200).json(lista);
+  } catch (error) {
+    console.error("Erro ao listar todos avisos:", error);
+    return res.status(500).json({ error: 'Erro ao buscar avisos.' });
+  }
+}
+
 async function listarAvisosController(req, res) {
   try {
     let { quadraId } = req.params;
@@ -64,6 +74,7 @@ async function lerAvisoController(req, res) {
 
 module.exports = {
   criarAvisoController,
+  listarTodosAvisosController,
   listarAvisosController,
   deletarAvisoController,
   fixarAvisoController,

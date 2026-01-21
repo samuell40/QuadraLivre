@@ -163,7 +163,12 @@ export default {
     }
   },
   mounted() {
-    this.carregarTodosAvisos();
+    this.carregarTodosAvisos()
+
+    window.addEventListener('avisos-atualizados', this.carregarTodosAvisos)
+  },
+  beforeUnmount() {
+    window.removeEventListener('avisos-atualizados', this.carregarTodosAvisos)
   },
   methods: {
     toggleSecao(secao) {
@@ -228,22 +233,23 @@ export default {
 
     async marcarComoLido(aviso) {
       try {
-        await api.post(`/avisos/${aviso.id}/ler`, { usuarioId: this.usuarioId });
+        await api.post(`/avisos/${aviso.id}/ler`, { usuarioId: this.usuarioId })
 
-        if (!aviso.leituras) aviso.leituras = [];
-        aviso.leituras.push({ usuarioId: this.usuarioId });
+        if (!aviso.leituras) aviso.leituras = []
+        aviso.leituras.push({ usuarioId: this.usuarioId })
 
-        const Toast = Swal.mixin({
+        window.dispatchEvent(new Event('avisos-atualizados'))
+
+        Swal.fire({
           toast: true,
           position: 'top-end',
+          icon: 'success',
+          title: 'Lido',
           showConfirmButton: false,
-          timer: 2000,
-          timerProgressBar: true,
-        });
-        Toast.fire({ icon: 'success', title: 'Marcado como lido' });
-
+          timer: 2000
+        })
       } catch (error) {
-        console.error("Erro ao marcar como lido", error);
+        console.error("Erro ao marcar como lido", error)
       }
     },
 

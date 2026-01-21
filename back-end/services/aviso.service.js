@@ -37,6 +37,20 @@ async function criarAviso(dados) {
   return novoAviso;
 }
 
+async function listarTodosAvisos() {
+  return prisma.aviso.findMany({
+    include: {
+      autor: true,
+      quadra: true,
+      leituras: true
+    },
+    orderBy: [
+      { fixado: 'desc' },
+      { data: 'desc' }
+    ]
+  });
+}
+
 async function listarAvisosPorQuadra(quadraId) {
   let whereClause = {};
 
@@ -102,6 +116,7 @@ async function marcarComoLido(avisoId, usuarioId) {
 
 module.exports = { 
   criarAviso, 
+  listarTodosAvisos,
   listarAvisosPorQuadra, 
   deletarAviso, 
   alternarFixado, 
