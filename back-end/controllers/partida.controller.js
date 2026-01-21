@@ -310,6 +310,26 @@ async function getJogadoresForaDaPartidaController(req, res) {
     }
   }
 
+  async function removerJogadorDeCampoController(req, res) {
+  try {
+    const { partidaId, jogadorId } = req.params;
+
+    const resultado = await partidas.removerJogadorDeCampo(
+      Number(partidaId),
+      Number(jogadorId)
+    );
+
+    return res.status(200).json({
+      message: "Jogador removido de campo com sucesso",
+      jogador: resultado
+    });
+  } catch (error) {
+    return res.status(400).json({
+      error: error.message
+    });
+  }
+}
+
 module.exports = {
   criarPartidaController,
   finalizarPartidaController,
@@ -327,5 +347,6 @@ module.exports = {
   listarJogadoresSelecionadosController,
   atualizarAtuacaoJogadorController,
   substituirJogadorController,
-  getJogadoresForaDaPartidaController
+  getJogadoresForaDaPartidaController,
+  removerJogadorDeCampoController
 };

@@ -35,4 +35,6 @@ router.put('/partidas/:partidaId/substituir', controller.substituirJogadorContro
 
 router.get('/:partidaId/:timeId/jogadores-fora-partida', controller.getJogadoresForaDaPartidaController);
 
+router.put('/:partidaId/:jogadorId/remover', controller.removerJogadorDeCampoController);
+
 module.exports = router;

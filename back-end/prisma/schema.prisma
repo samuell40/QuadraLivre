@@ -216,6 +216,7 @@ model JogadorPartida {
   gols             Int     @default(0)
   cartoesAmarelos  Int     @default(0)
   cartoesVermelhos Int     @default(0)
+  emCampo          Boolean @default(true)
   @@index([partidaId])
   @@index([timeId])
 }

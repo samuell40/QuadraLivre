@@ -44,8 +44,9 @@
     <div class="box">
       <p>Substituições</p>
       <div class="controls">
-        <button @click="decrementSimples('substituicoes')"
-          :disabled="!temporizadorAtivo || localTime.substituicoes <= 0">−</button>
+        <button @click="abrirModalRemoverJogador" :disabled="!temporizadorAtivo || localTime.substituicoes <= 0">
+          −
+        </button>
 
         <span class="valor">{{ localTime.substituicoes }}</span>
 
@@ -160,6 +161,37 @@
         </div>
       </div>
     </div>
+
+    <div v-if="modalRemoverAberto" class="modal-overlay" @click.self="fecharModalRemover">
+      <div class="modal-content modal-remover">
+        <h2 class="modal-titulo">Remover jogadores de campo</h2>
+
+        <div v-if="carregando" class="loader">
+          Carregando jogadores...
+        </div>
+
+        <div v-else class="lista-remover">
+          <div v-for="j in jogadoresEmCampo" :key="j.id" class="jogador-card"
+            :class="{ selecionado: jogadoresSelecionados.includes(j.id) }" @click="toggleSelecionado(j.id)">
+            <div class="jogador-info">
+              <img v-if="j.foto" :src="j.foto" class="foto-jogador" />
+              <span class="nome">{{ j.nome }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="botoes">
+          <button class="btn-save1" :disabled="!jogadoresSelecionados.length" @click="confirmarRemocaoJogadores">
+            Confirmar ({{ jogadoresSelecionados.length }})
+          </button>
+
+          <button class="btn-cancel" @click="fecharModalRemover">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -195,7 +227,9 @@ export default {
       jogadoresBanco: [],
       jogadorSai: null,
       jogadorEntra: null,
-      substituicoesPendentes: []
+      substituicoesPendentes: [],
+      modalRemoverAberto: false,
+      jogadoresSelecionados: [],
     }
   },
 
@@ -250,7 +284,7 @@ export default {
         this.carregando = false
       }
     },
-    
+
     async alterarEventoJogador(jogador, acao) {
       const incremento = acao === 'increment' ? 1 : -1
       if (incremento === 0) return
@@ -392,6 +426,66 @@ export default {
         this.fecharModalSubstituicao()
       } catch (error) {
         Swal.fire('Erro', 'Erro ao realizar substituições', 'error')
+      }
+    },
+    async abrirModalRemoverJogador() {
+      this.modalRemoverAberto = true
+      this.jogadoresSelecionados = []
+      await this.carregarJogadoresEmCampo()
+    },
+
+    fecharModalRemover() {
+      this.modalRemoverAberto = false
+      this.jogadoresSelecionados = []
+    },
+
+    toggleSelecionado(jogadorId) {
+      if (this.jogadoresSelecionados.includes(jogadorId)) {
+        this.jogadoresSelecionados =
+          this.jogadoresSelecionados.filter(id => id !== jogadorId)
+      } else {
+        this.jogadoresSelecionados.push(jogadorId)
+      }
+    },
+
+    async carregarJogadoresEmCampo() {
+      this.carregando = true
+      try {
+        const res = await api.get(`/partida/${this.partidaId}`)
+        console.log('Jogadores da partida:', res.data)
+        this.jogadoresEmCampo = res.data.filter(
+          j => j.timeId === this.timeData.id
+        )
+      } catch {
+        Swal.fire('Erro', 'Erro ao carregar jogadores em campo', 'error')
+      } finally {
+        this.carregando = false
+      }
+    },
+
+    async confirmarRemocaoJogadores() {
+      try {
+        for (const jogadorId of this.jogadoresSelecionados) {
+          await api.put(
+            `/${this.partidaId}/${jogadorId}/remover`
+          )
+
+          this.jogadoresEmCampo = this.jogadoresEmCampo.filter(
+            j => j.id !== jogadorId
+          )
+        }
+
+        this.emitUpdate()
+        await this.salvarPlacar()
+
+        Swal.fire(
+          'Sucesso',
+          'Jogador(es) removido(s) de campo',
+          'success'
+        )
+        this.fecharModalRemover()
+      } catch {
+        Swal.fire('Erro', 'Erro ao remover jogadores', 'error')
       }
     },
 
@@ -650,5 +744,16 @@ export default {
   font-size: 20px;
   font-weight: bold;
   color: #3b82f6;
+}
+
+.modal-remover {
+  width: 900px;
+  max-height: 80vh;
+}
+
+.lista-remover {
+  flex: 1;
+  overflow-y: auto;
+  margin: 20px 0;
 }
 </style>
