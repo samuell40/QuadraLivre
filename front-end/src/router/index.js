@@ -5,7 +5,7 @@ import AgendamentosView from '../views/AgendamentosView.vue';
 import NaoAutorizado from '@/views/NaoAutorizado.vue';
 import CadastroView from '../views/CadastroView.vue';
 import CadastrarQuadraView from '../views/CadastrarQuadraView.vue';
-import ControlePlacarView from '../views/ControlePlacarView';
+import VisualizarPlacarView from '@/views/VisualizarPlacarView.vue';
 import GerenciarPartidaView from '@/views/GerenciarPartidaView.vue';
 import UsuariosView from '../views/UsuariosView';
 import MeusAgendamentosView from '../views/MeusAgendamentosView';
@@ -86,9 +86,9 @@ const routes = [
     meta: { requiresAuth: true, roles: [1, 2, 4]}
   },
     {
-    path: '/controleplacar',
-    name: 'controle_placar',
-    component: ControlePlacarView,
+    path: '/visualizarplacar',
+    name: 'visualizar_placar',
+    component: VisualizarPlacarView,
     meta: { requiresAuth: true, roles: [1, 2, 4] },
   },
   {

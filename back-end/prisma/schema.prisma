@@ -166,15 +166,25 @@ model Partida {
   usuarioCriador     Usuario          @relation("UsuarioCriador", fields: [usuarioCriadorId], references: [id])
   jogadoresPartida   JogadorPartida[]
   participantes      PartidaUsuario[]
+  sets               SetPartida[]
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
+}
+
+model SetPartida {
+  id        Int @id @default(autoincrement())
+  partidaId Int
+  numero    Int
+  pontosA   Int
+  pontosB   Int
+  partida Partida @relation(fields: [partidaId], references: [id], onDelete: Cascade)
+  @@unique([partidaId, numero])
 }
 
 model TreinadorTime {
   id        Int @id @default(autoincrement())
   usuarioId Int
   timeId    Int
-
   usuario Usuario @relation(fields: [usuarioId], references: [id])
   time    Time    @relation(fields: [timeId], references: [id])
 

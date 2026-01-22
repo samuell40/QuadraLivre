@@ -76,51 +76,101 @@ async function criarPartida(data, usuarioId) {
 }
 
 async function finalizarPartida(id, { usuarioId }) {
-  const partidaAtual = await prisma.partida.findUnique({
-    where: { id: Number(id) }
-  })
-
-  if (!partidaAtual) {
-    throw new Error('Partida não encontrada')
-  }
-
-  const dataAtualizacao = {
-    finalizada: true,
-    partidaIniciada: false
-  }
-
-  if (usuarioId) {
-    dataAtualizacao.usuarioCriadorId = Number(usuarioId)
-  }
-
-  return prisma.partida.update({
+  const partida = await prisma.partida.findUnique({
     where: { id: Number(id) },
-    data: dataAtualizacao,
     include: {
-      timeA: {
-        include: {
-          placares: true
-        }
-      },
-      timeB: {
-        include: {
-          placares: true
-        }
-      },
-      modalidade: true,
-      usuarioCriador: true,
-      jogadoresPartida: {
-        include: {
-          jogador: true
-        }
-      },
-      participantes: {
-        include: {
-          usuario: true
-        }
-      }
+      timeA: { include: { placares: true } },
+      timeB: { include: { placares: true } },
+      modalidade: true
     }
-  })
+  });
+
+  if (!partida) throw new Error("Partida não encontrada");
+
+  // Marcar a partida como finalizada
+  await prisma.partida.update({
+    where: { id: Number(id) },
+    data: { finalizada: true, partidaIniciada: false }
+  });
+
+  const isVolei = partida.modalidade.nome.toLowerCase().includes("vôlei");
+
+  let incrementoA = {};
+  let incrementoB = {};
+
+  if (isVolei) {
+    // Calcular pontos conforme resultado do vôlei
+    let pontosA = 0;
+    let pontosB = 0;
+
+    if (partida.pontosTimeA > partida.pontosTimeB) {
+      pontosA = partida.pontosTimeB === 2 ? 2 : 3;
+      pontosB = partida.pontosTimeB === 2 ? 1 : 0;
+    } else if (partida.pontosTimeB > partida.pontosTimeA) {
+      pontosB = partida.pontosTimeA === 2 ? 2 : 3;
+      pontosA = partida.pontosTimeA === 2 ? 1 : 0;
+    }
+
+    incrementoA = {
+      jogos: 1,
+      setsVencidos: partida.pontosTimeA,
+      vitorias: partida.pontosTimeA > partida.pontosTimeB ? 1 : 0,
+      derrotas: partida.pontosTimeA < partida.pontosTimeB ? 1 : 0,
+      pontuacao: pontosA, // <- CORRIGIDO
+      vitoria3x0: partida.pontosTimeA === 3 && partida.pontosTimeB <= 1 ? 1 : 0,
+      vitoria3x2: partida.pontosTimeA === 3 && partida.pontosTimeB === 2 ? 1 : 0,
+      derrota2x3: partida.pontosTimeA === 2 && partida.pontosTimeB === 3 ? 1 : 0,
+      derrota0x3: partida.pontosTimeA === 0 && partida.pontosTimeB === 3 ? 1 : 0
+    };
+
+    incrementoB = {
+      jogos: 1,
+      setsVencidos: partida.pontosTimeB,
+      vitorias: partida.pontosTimeB > partida.pontosTimeA ? 1 : 0,
+      derrotas: partida.pontosTimeB < partida.pontosTimeA ? 1 : 0,
+      pontuacao: pontosB, // <- CORRIGIDO
+      vitoria3x0: partida.pontosTimeB === 3 && partida.pontosTimeA <= 1 ? 1 : 0,
+      vitoria3x2: partida.pontosTimeB === 3 && partida.pontosTimeA === 2 ? 1 : 0,
+      derrota2x3: partida.pontosTimeB === 2 && partida.pontosTimeA === 3 ? 1 : 0,
+      derrota0x3: partida.pontosTimeB === 0 && partida.pontosTimeA === 3 ? 1 : 0
+    };
+  } else {
+    // Futebol: calcular pontos
+    let pontosA = 0;
+    let pontosB = 0;
+
+    if (partida.pontosTimeA > partida.pontosTimeB) pontosA = 3;
+    else if (partida.pontosTimeB > partida.pontosTimeA) pontosB = 3;
+    else { pontosA = 1; pontosB = 1; }
+
+    incrementoA = {
+      jogos: 1,
+      vitorias: partida.pontosTimeA > partida.pontosTimeB ? 1 : 0,
+      empates: partida.pontosTimeA === partida.pontosTimeB ? 1 : 0,
+      derrotas: partida.pontosTimeA < partida.pontosTimeB ? 1 : 0,
+      golsPro: partida.pontosTimeA,
+      golsSofridos: partida.pontosTimeB,
+      saldoDeGols: partida.pontosTimeA - partida.pontosTimeB,
+      pontuacao: pontosA // <- CORRIGIDO
+    };
+
+    incrementoB = {
+      jogos: 1,
+      vitorias: partida.pontosTimeB > partida.pontosTimeA ? 1 : 0,
+      empates: partida.pontosTimeB === partida.pontosTimeA ? 1 : 0,
+      derrotas: partida.pontosTimeB < partida.pontosTimeA ? 1 : 0,
+      golsPro: partida.pontosTimeB,
+      golsSofridos: partida.pontosTimeA,
+      saldoDeGols: partida.pontosTimeB - partida.pontosTimeA,
+      pontuacao: pontosB // <- CORRIGIDO
+    };
+  }
+
+  // Atualizar placares
+  await incrementarPlacar(partida.timeA.placares[0].id, incrementoA);
+  await incrementarPlacar(partida.timeB.placares[0].id, incrementoB);
+
+  return partida;
 }
 
 async function excluirPartida(partidaId) {

@@ -220,7 +220,7 @@ export default {
 
     nomeTime2() {
       return this.times.find(
-        t => t.id === this.timeSelecionado2 )?.nome 
+        t => t.id === this.timeSelecionado2)?.nome
     }
   },
 
@@ -377,7 +377,7 @@ export default {
       }
 
     },
-    
+
     async atualizarParcial() {
       if (!this.partidaId) return;
 
@@ -466,27 +466,31 @@ export default {
     async finalizarPartida() {
       try {
         if (!this.partidaId) {
-          throw new Error('Partida não encontrada')
+          throw new Error('Partida não encontrada');
         }
 
-        this.temporizadorAtivo = false
-
+        this.temporizadorAtivo = false;
         if (this.intervaloTimer) {
-          clearInterval(this.intervaloTimer)
-          this.intervaloTimer = null
+          clearInterval(this.intervaloTimer);
+          this.intervaloTimer = null;
         }
 
+        // Chamar backend para finalizar e calcular placar
         await api.put(`/partida/${this.partidaId}/encerrar`, {
-          tempoTotal: this.tempoSegundos
-        })
-        this.partidaIniciada = false
-        this.mostrarPlacar = false
-        this.tempoSegundos = 0
-        this.partidaId = null
+          usuarioId: this.usuarioLogadoId
+        });
+
+        Swal.fire("Sucesso", "Partida finalizada e placar atualizado!", "success");
+
+        this.partidaIniciada = false;
+        this.mostrarPlacar = false;
+        this.tempoSegundos = 0;
+        this.partidaId = null;
         this.limparDados();
 
       } catch (error) {
-        console.error('Erro ao finalizar partida:', error)
+        console.error('Erro ao finalizar partida:', error);
+        Swal.fire("Erro", "Não foi possível finalizar a partida.", "error");
       }
     },
 
