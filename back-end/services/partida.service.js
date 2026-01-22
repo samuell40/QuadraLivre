@@ -491,40 +491,55 @@ async function listarJogadoresSelecionados(partidaId) {
   }));
 }
 
-async function atualizarAtuacaoJogadorPartida({
-  jogadorId,
-  partidaId,
-  gols = 0,
-  cartoesAmarelos = 0,
-  cartoesVermelhos = 0
-}) {
+async function atualizarAtuacaoJogadorPartida({ jogadorId, partidaId, gols = 0, cartoesAmarelos = 0, cartoesVermelhos = 0}) {
   let atuacao = await prisma.jogadorPartida.findFirst({
     where: {
       jogadorId: Number(jogadorId),
-      partidaId: Number(partidaId),
-    },
+      partidaId: Number(partidaId)
+    }
   });
 
   if (!atuacao) {
-    atuacao = await prisma.jogadorPartida.create({
+    const amarelos = Math.max(0, Number(cartoesAmarelos));
+    const vermelhos = amarelos >= 2 ? 1 : Math.max(0, Number(cartoesVermelhos));
+
+    return prisma.jogadorPartida.create({
       data: {
         jogadorId: Number(jogadorId),
         partidaId: Number(partidaId),
         gols: Math.max(0, Number(gols)),
-        cartoesAmarelos: Math.max(0, Number(cartoesAmarelos)),
-        cartoesVermelhos: Math.max(0, Number(cartoesVermelhos)),
-      },
-    });
-  } else {
-    atuacao = await prisma.jogadorPartida.update({
-      where: { id: atuacao.id },
-      data: {
-        gols: Math.max(0, atuacao.gols + Number(gols)),
-        cartoesAmarelos: Math.max(0, atuacao.cartoesAmarelos + Number(cartoesAmarelos)),
-        cartoesVermelhos: Math.max(0, atuacao.cartoesVermelhos + Number(cartoesVermelhos)),
-      },
+        cartoesAmarelos: amarelos,
+        cartoesVermelhos: vermelhos,
+        emCampo: amarelos >= 2 ? false : true
+      }
     });
   }
+
+  if (!atuacao.emCampo) {
+    throw new Error('Jogador expulso não pode receber novos eventos');
+  }
+
+  const novosAmarelos = Math.max(
+    0,
+    atuacao.cartoesAmarelos + Number(cartoesAmarelos)
+  );
+
+  const gerouVermelhoAutomatico =
+    atuacao.cartoesAmarelos < 2 && novosAmarelos >= 2;
+
+  const novosVermelhos = gerouVermelhoAutomatico
+    ? atuacao.cartoesVermelhos + 1
+    : Math.max(0, atuacao.cartoesVermelhos + Number(cartoesVermelhos));
+
+  atuacao = await prisma.jogadorPartida.update({
+    where: { id: atuacao.id },
+    data: {
+      gols: Math.max(0, atuacao.gols + Number(gols)),
+      cartoesAmarelos: novosAmarelos,
+      cartoesVermelhos: novosVermelhos,
+      emCampo: novosAmarelos >= 2 ? false : atuacao.emCampo
+    }
+  });
 
   return atuacao;
 }

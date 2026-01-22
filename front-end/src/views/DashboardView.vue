@@ -15,7 +15,7 @@
           <p>{{ totalUsuarios }}</p>
         </div>
         <div class="card_contagem">
-          <h3>Total Agendamentos</h3>
+          <h3>Agendamentos</h3>
           <p>{{ totalAgendamentos }}</p>
         </div>
         <div class="card_contagem">

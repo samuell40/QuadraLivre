@@ -15,6 +15,14 @@
     <!-- Vitórias, Empates, Derrotas -->
     <div class="line">
       <div class="box-small">
+        <p>Partidas Jogadas</p>
+        <div class="controls">
+          <button @click="decrement('pj')">−</button>
+          <span>{{ placarLocal.pj.valor }}</span>
+          <button @click="increment('pj')">+</button>
+        </div>
+      </div>
+      <div class="box-small">
         <p>Vitórias</p>
         <div class="controls">
           <button @click="decrement('vitorias', 'vitoria')">−</button>
@@ -30,24 +38,16 @@
           <button @click="increment('empates', 'empate')">+</button>
         </div>
       </div>
+    </div>
+
+    <!--Jogadas -->
+    <div class="line">
       <div class="box-small">
         <p>Derrotas</p>
         <div class="controls">
           <button @click="decrement('derrotas')">−</button>
           <span>{{ placarLocal.derrotas.valor }}</span>
           <button @click="increment('derrotas')">+</button>
-        </div>
-      </div>
-    </div>
-
-    <!--Jogadas -->
-    <div class="line">
-      <div class="box-small">
-        <p>Partidas Jogadas</p>
-        <div class="controls">
-          <button @click="decrement('pj')">−</button>
-          <span>{{ placarLocal.pj.valor }}</span>
-          <button @click="increment('pj')">+</button>
         </div>
       </div>
       <div class="box-small">

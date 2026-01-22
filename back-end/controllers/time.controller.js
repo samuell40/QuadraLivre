@@ -87,4 +87,20 @@ async function getTodosTimes(req, res) {
   }
 }
 
-module.exports = { criarTimeController, removerTimeController, listarTimesPorModalidadeController, getTodosTimes }
+async function listarTimesPorCampeonatoController(req, res) {
+  try {
+    const { campeonatoId } = req.params;
+
+    if (!campeonatoId) {
+      return res.status(400).json({ error: 'campeonatoId é obrigatório' });
+    }
+
+    const times = await time.listarTimesPorCampeonato(campeonatoId);
+    return res.json(times);
+  } catch (error) {
+    console.error('Erro no controller listarTimesPorCampeonato:', error);
+    return res.status(500).json({ error: 'Erro ao listar os times do campeonato.' });
+  }
+}
+
+module.exports = { criarTimeController, removerTimeController, listarTimesPorModalidadeController, getTodosTimes, listarTimesPorCampeonatoController }

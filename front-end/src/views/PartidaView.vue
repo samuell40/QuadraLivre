@@ -51,7 +51,7 @@
         <div class="dropdown-row">
           <div class="team">
             <label>Campeonato:</label>
-            <select v-model="campeonatoSelecionado" class="dropdown"
+            <select v-model="campeonatoSelecionado" class="dropdown" @change="aoSelecionarCampeonato"
               :disabled="!modalidadeSelecionada || partidaIniciada">
               <option disabled value="">Selecione um campeonato</option>
               <option v-for="c in campeonatosDisponiveis" :key="c.id" :value="c.id">
@@ -215,14 +215,12 @@ export default {
 
     nomeTime1() {
       return this.times.find(
-        t => t.id === this.timeSelecionado1
-      )?.nome || ''
+        t => t.id === this.timeSelecionado1)?.nome
     },
 
     nomeTime2() {
       return this.times.find(
-        t => t.id === this.timeSelecionado2
-      )?.nome || ''
+        t => t.id === this.timeSelecionado2 )?.nome 
     }
   },
 
@@ -267,12 +265,24 @@ export default {
       }
     },
 
+    async aoSelecionarCampeonato() {
+      this.timeSelecionado1 = ''
+      this.timeSelecionado2 = ''
+      this.times = []
+
+      await this.buscarTimes()
+    },
+
     async buscarTimes() {
+      if (!this.campeonatoSelecionado) return
+
       try {
-        const { data } = await api.get(`/times/modalidade/${this.modalidadeSelecionada}`)
+        const { data } = await api.get(`/${this.campeonatoSelecionado}/times`)
+
         this.times = data
       } catch (error) {
-        console.error(error)
+        console.error('Erro ao buscar times do campeonato:', error)
+        this.times = []
       }
     },
 
@@ -334,8 +344,7 @@ export default {
 
     componentePlacar() {
       const modalidade = this.modalidadesDisponiveis.find(
-        m => m.id === this.modalidadeSelecionada
-      )
+        m => m.id === this.modalidadeSelecionada)
 
       if (!modalidade) return null
 
@@ -345,6 +354,7 @@ export default {
 
       return 'PlacarTime'
     },
+
     async atualizarSelecao(tipo) {
       if (tipo === 'quadra') {
         this.modalidadeSelecionada = ''
@@ -358,10 +368,16 @@ export default {
       }
 
       if (tipo === 'modalidade') {
-        await this.buscarCampeonatos();
-        await this.buscarTimes();
+        this.campeonatoSelecionado = ''
+        this.timeSelecionado1 = ''
+        this.timeSelecionado2 = ''
+        this.times = []
+
+        await this.buscarCampeonatos()
       }
+
     },
+    
     async atualizarParcial() {
       if (!this.partidaId) return;
 

@@ -15,27 +15,36 @@
       </div>
 
       <div v-else>
-        <div class="dropdown-row">
-          <div class="team">
+        <div class="dropdown-section">
+          <!-- Linha 1: Modalidade -->
+          <div class="linha-modalidade">
             <p>Modalidade:</p>
-            <select id="modalidade" v-model="modalidadeSelecionada" @change="carregarTimes" class="dropdown">
+            <select v-model="modalidadeSelecionada" @change="carregarCampeonatos" class="dropdown">
               <option disabled value="">Selecione uma modalidade</option>
-              <option v-for="(modalidade, i) in modalidadesDisponiveis" :key="i" :value="modalidade.nome">
-                {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
+              <option v-for="m in modalidadesDisponiveis" :key="m.id" :value="m.id">
+                {{ m.nome.charAt(0).toUpperCase() + m.nome.slice(1) }}
               </option>
+
             </select>
           </div>
 
-          <div class="team">
-            <p>Time:</p>
-            <div class="dropdown-container">
-              <select v-model="timeSelecionado" class="dropdown" :disabled="isLoadingTimes || !times.length">
-                <option disabled value="">
-                  {{ times.length ? 'Selecione um time' : 'Nenhum time cadastrado' }}
-                </option>
-                <option v-for="t in times" :key="t.nome" :value="t.nome">{{ t.nome }}</option>
+          <!-- Linha 2: Campeonato e Time -->
+          <div class="linha-campeonato-time dropdown-row">
+            <div class="team">
+              <p>Campeonato:</p>
+              <select v-model="campeonatoSelecionado" @change="carregarTimesDoCampeonato" class="dropdown"
+                :disabled="!campeonatos.length">
+                <option disabled value="">Selecione um campeonato</option>
+                <option v-for="c in campeonatos" :key="c.id" :value="c.id">{{ c.nome }}</option>
               </select>
+            </div>
 
+            <div class="team">
+              <p>Time:</p>
+              <select v-model="timeSelecionado" class="dropdown" :disabled="!times.length">
+                <option disabled value="">Selecione um time</option>
+                <option v-for="t in times" :key="t.id" :value="t.id">{{ t.nome }}</option>
+              </select>
               <span v-if="isLoadingTimes" class="loader-pequena-dropdown"></span>
             </div>
           </div>
@@ -43,16 +52,18 @@
 
         <!-- Controles do Placar -->
         <div class="game">
-          <PlacarFutebol v-if="['futebol', 'futebol de areia', 'futsal'].includes(modalidadeSelecionada)"
+          <!-- obtém o nome da modalidade em minúsculo -->
+          <PlacarFutebol v-if="['futebol', 'futebol de areia', 'futsal'].includes(modalidadeNome)"
             :placar="futebol.timeA" :timeAtivo="true" :timeSelecionado="timeSelecionado" @salvar="salvarPlacar" />
 
-          <PlacarVolei v-else-if="['volei', 'volei de areia', 'futevolei'].includes(modalidadeSelecionada)"
+          <PlacarVolei v-else-if="['volei', 'volei de areia', 'futevolei'].includes(modalidadeNome)"
             :placar="volei.timeA" :timeAtivo="true" :timeSelecionado="timeSelecionado" @salvar="salvarPlacar" />
 
           <div v-else class="mensagem-placar">
             <p> Placar em desenvolvimento. Em breve estará disponível!</p>
           </div>
         </div>
+
 
         <!-- Modais -->
         <VisualizarPlacarModal :modalPlacarAberto="modalPlacarAberto"
@@ -102,15 +113,17 @@ export default {
   name: 'ControlePlacarView',
   components: {
     SideBar, PlacarFutebol,
-    PlacarVolei, VisualizarPlacarModal, ResetarPlacarModal,OcultarPlacar
+    PlacarVolei, VisualizarPlacarModal, ResetarPlacarModal, OcultarPlacar
   },
   data() {
     return {
       isLoading: true,
       modalidadesDisponiveis: [],
       modalidadeSelecionada: '',
-      timeSelecionado: '',
+      campeonatoSelecionado: '',
+      campeonatos: [],
       times: [],
+      timeSelecionado: '',
       timesPlacar: [],
       futebol: { timeA: this.criarTime('futebol') },
       futebol_de_areia: { timeA: this.criarTime('futebol') },
@@ -135,25 +148,33 @@ export default {
     };
   },
   mounted() {
-    this.carregarModalidades().then(() => {
-      this.isLoading = false;
-      if (this.modalidadesDisponiveis.length) {
-        this.modalidadeSelecionada = this.modalidadesDisponiveis[0].nome;
-        this.carregarTimes();
-      }
-    });
+  this.carregarModalidades().then(() => {
+    this.isLoading = false;
+  });
   },
-  watch: {
-    modalidadeSelecionada(newVal) {
-      this.timeSelecionado = '';
-      this.times = [];
-      this.limparDadosJogo();
-      if (newVal) this.carregarTimes();
-    },
-    timeSelecionado(newVal) {
-      newVal ? this.carregarPlacarTime() : this.limparDadosJogo();
+  computed: {
+    modalidadeNome() {
+      const m = this.modalidadesDisponiveis.find(mod => mod.id === this.modalidadeSelecionada);
+      return m ? m.nome.toLowerCase() : '';
     }
   },
+
+  watch: {
+    modalidadeSelecionada(newVal) {
+      this.campeonatoSelecionado = '';
+      this.campeonatos = [];
+      this.times = [];
+      this.timeSelecionado = '';
+      this.limparDadosJogo();
+      if (newVal) this.carregarCampeonatos(); // chama campeonatos
+    },
+    campeonatoSelecionado(newVal) {
+      this.times = [];
+      this.timeSelecionado = '';
+      if (newVal) this.carregarTimesDoCampeonato(); // chama times do campeonato
+    }
+  },
+
   methods: {
     criarTime(tipo) {
       const modelos = {
@@ -177,9 +198,8 @@ export default {
 
     abrirModalPlacar() {
       this.modalPlacarAberto = true;
-      this.modalidadeSelecionada = 'futebol';
-      this.modalidadePlacarSelecionada = 'futebol';
-      this.carregarPlacarModalidade('futebol');
+      this.modalidadeSelecionada = '';
+      this.modalidadePlacarSelecionada = '';
     },
     fecharModalPlacar() {
       this.modalPlacarAberto = false;
@@ -246,26 +266,33 @@ export default {
       }
     },
 
-    async carregarTimes() {
+    async carregarCampeonatos() {
       if (!this.modalidadeSelecionada) return;
-      this.isLoadingTimes = true;
+      this.campeonatos = [];
+      this.campeonatoSelecionado = '';
+      this.times = [];
+      this.timeSelecionado = '';
+
       try {
-        const modalidade = this.modalidadesDisponiveis.find(
-          m => m.nome === this.modalidadeSelecionada
-        );
-        if (!modalidade) return;
-        const res = await api.get(`/times/modalidade/${modalidade.id}`);
+        const res = await api.get(`/listar/${this.modalidadeSelecionada}`);
+        this.campeonatos = Array.isArray(res.data) ? res.data : [];
+      } catch (err) {
+        console.error('Erro ao carregar campeonatos:', err);
+        Swal.fire('Erro', 'Não foi possível carregar os campeonatos.', 'error');
+      }
+    },
+
+    async carregarTimesDoCampeonato() {
+      if (!this.campeonatoSelecionado) return;
+      this.times = [];
+      this.timeSelecionado = '';
+
+      try {
+        const res = await api.get(`/${this.campeonatoSelecionado}/times`);
         this.times = Array.isArray(res.data) ? res.data : [];
-
-        if (!this.times.length) {
-          Swal.fire('Aviso', 'Não há nenhum time cadastrado para esta modalidade.', 'info');
-        }
-
-      } catch (error) {
-        console.error('Erro ao carregar times:', error);
+      } catch (err) {
+        console.error('Erro ao carregar times:', err);
         Swal.fire('Erro', 'Não foi possível carregar os times.', 'error');
-      } finally {
-        this.isLoadingTimes = false;
       }
     },
 

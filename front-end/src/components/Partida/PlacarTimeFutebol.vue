@@ -296,6 +296,7 @@ export default {
 
       if (this.tipoEvento === 'gol') {
         if (jogador.gols + incremento < 0) return
+
         jogador.gols += incremento
         this.localTime.golspro += incremento
         payload.gols = incremento
@@ -303,29 +304,40 @@ export default {
 
       if (this.tipoEvento === 'amarelo') {
         if (jogador.cartoesAmarelos + incremento < 0) return
+
         jogador.cartoesAmarelos += incremento
         this.localTime.cartaoamarelo += incremento
         payload.cartoesAmarelos = incremento
-
-        if (incremento === 1 && jogador.cartoesAmarelos % 2 === 0) {
-          jogador.cartoesVermelhos++
-          this.localTime.cartaovermelho++
-          payload.cartoesVermelhos = 1
-
-          Swal.fire('Cartão Vermelho!', 'Jogador recebeu cartão vermelho após 2 amarelos.', 'info')
-        }
       }
 
       if (this.tipoEvento === 'vermelho') {
         if (jogador.cartoesVermelhos + incremento < 0) return
+
         jogador.cartoesVermelhos += incremento
         this.localTime.cartaovermelho += incremento
         payload.cartoesVermelhos = incremento
       }
-
       this.emitUpdate()
-      await api.post('/atuacao', payload)
-      await this.salvarPlacar()
+
+      try {
+        const res = await api.post('/atuacao', payload)
+
+        if (res.data?.emCampo === false) {
+          Swal.fire(
+            'Expulsão!',
+            'Jogador expulso automaticamente.',
+            'warning'
+          )
+          await this.carregarJogadores()
+          await this.carregarJogadoresEmCampo()
+        }
+
+        await this.salvarPlacar()
+      } catch (error) {
+        Swal.fire('Erro', error.response?.data?.message, error)
+
+        await this.carregarJogadores()
+      }
     },
 
     toggleJogadorSai(jogador) {

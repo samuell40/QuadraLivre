@@ -26,7 +26,6 @@ async function criarTime({ nome, foto, modalidadeId, treinadorId }) {
 async function removerTime(id) {
   const timeId = Number(id);
 
-  // treinador do time (❌ estava faltando)
   await prisma.treinadorTime.deleteMany({
     where: { timeId }
   });
@@ -115,4 +114,27 @@ async function listarTodosTimes() {
   });
 }
 
-module.exports = { criarTime, removerTime, listarTimesPorModalidade, listarTodosTimes };
+async function listarTimesPorCampeonato(campeonatoId) {
+  try {
+    const campeonato = await prisma.campeonato.findUnique({
+      where: { id: Number(campeonatoId) },
+      include: {
+        times: {
+          include: {
+            time: true, // Puxa os dados do time
+          },
+        },
+      },
+    });
+
+    if (!campeonato) return [];
+
+    // Retorna apenas os times
+    return campeonato.times.map(t => t.time);
+  } catch (error) {
+    console.error('Erro no service listarTimesPorCampeonato:', error);
+    throw new Error('Não foi possível listar os times do campeonato.');
+  }
+}
+
+module.exports = { criarTime, removerTime, listarTimesPorModalidade, listarTodosTimes, listarTimesPorCampeonato};

@@ -12,4 +12,6 @@ router.get('/times/modalidade/:modalidadeId', controller.listarTimesPorModalidad
 
 router.get('/times', controller.getTodosTimes);
 
+router.get('/:campeonatoId/times', controller.listarTimesPorCampeonatoController);
+
 module.exports = router;

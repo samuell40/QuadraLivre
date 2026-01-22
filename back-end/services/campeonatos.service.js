@@ -82,7 +82,7 @@ async function criarCampeonato(data) {
   });
 }
 
-async function removerCampeonato(campeonatoId) {
+async function removerCampeonato(campeonatoId) {  //ver essa questão de transação!
   if (!campeonatoId) {
     throw new Error('ID do campeonato é obrigatório.');
   }
