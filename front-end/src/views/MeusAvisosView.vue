@@ -150,7 +150,8 @@ export default {
   computed: {
     usuarioId() {
       const authStore = useAuthStore();
-      return authStore.usuario?.id;
+      const userLocal = JSON.parse(localStorage.getItem('usuario') || '{}');
+      return authStore.usuario?.id || userLocal.id;
     },
     listaImportantes() {
       return this.todosAvisos.filter(a => a.fixado && !this.verificarSeLi(a));
@@ -232,6 +233,11 @@ export default {
     },
 
     async marcarComoLido(aviso) {
+      if (!this.usuarioId) {
+        Swal.fire({ icon: 'error', title: 'Erro de Login', text: 'Usuário não identificado. Tente logar novamente.' });
+        return;
+      }
+
       try {
         await api.post(`/avisos/${aviso.id}/ler`, { usuarioId: this.usuarioId })
 

@@ -120,7 +120,6 @@ export default {
 }
 </script>
 
-
 <style scoped>
 .navbar-custom {
   position: fixed;
