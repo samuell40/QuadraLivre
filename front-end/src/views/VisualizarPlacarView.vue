@@ -152,12 +152,37 @@ export default {
       return this.modalidadeSelecionada
     }
   },
-
   mounted() {
-    this.carregarModalidades()
+    this.inicializarPlacar()
   },
 
   methods: {
+    async inicializarPlacar() {
+      // 1. Carregar modalidades
+      const { data: modalidades } = await axios.get('/listar/modalidade')
+      this.modalidadesDisponiveis = modalidades
+
+      // 2. Selecionar automaticamente a modalidade "futebol" (ou similar)
+      const futebol = this.modalidadesDisponiveis.find(mod =>
+        ['futebol', 'futebol de areia'].includes(mod.nome.toLowerCase())
+      )
+      if (futebol) {
+        this.modalidadeSelecionada = futebol
+
+        // 3. Carregar campeonatos da modalidade selecionada
+        await this.carregarCampeonatos()
+
+        // 4. Selecionar o campeonato mais recente (assumindo que o retorno já vem ordenado)
+        if (this.campeonatosDisponiveis.length > 0) {
+          this.campeonatoSelecionado =
+            this.campeonatosDisponiveis[this.campeonatosDisponiveis.length - 1]
+
+          // 5. Carregar o placar do campeonato selecionado
+          await this.carregarPlacar()
+        }
+      }
+    },
+
     async carregarModalidades() {
       const { data } = await axios.get('/listar/modalidade')
       this.modalidadesDisponiveis = data
@@ -170,10 +195,7 @@ export default {
       this.campeonatoSelecionado = null
       this.timesPlacar = []
 
-      const { data } = await axios.get(
-        `/listar/${this.modalidadeSelecionada.id}`
-      )
-
+      const { data } = await axios.get(`/listar/${this.modalidadeSelecionada.id}`)
       this.campeonatosDisponiveis = data
     },
 
@@ -181,16 +203,13 @@ export default {
       if (!this.campeonatoSelecionado?.id) return
 
       this.timesPlacar = []
-
-      const { data } = await axios.get(
-        `/placar/campeonato/${this.campeonatoSelecionado.id}`
-      )
-
+      const { data } = await axios.get( `/placar/campeonato/${this.campeonatoSelecionado.id}`)
       this.timesPlacar = Array.isArray(data.placares)
         ? data.placares
         : []
     }
   }
+
 }
 </script>
 

@@ -376,4 +376,107 @@ export default {
 .cartao-vermelho {
   background-color: #ef4444;
 }
+
+@media (max-width: 1024px) {
+  .modal-conteudo.modal-placar {
+    min-width: auto;
+    width: 95vw;
+    padding: 24px;
+  }
+
+  .title_placar {
+    font-size: 24px;
+  }
+
+  .select-funcao {
+    width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-overlay {
+    align-items: flex-start;
+    padding: 16px 8px;
+  }
+
+  .modal-conteudo.modal-placar {
+    width: 100%;
+    max-width: 100%;
+    max-height: 95vh;
+    padding: 16px;
+    border-radius: 10px;
+  }
+
+  .header-placar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .title_placar {
+    text-align: center;
+    font-size: 20px;
+  }
+
+  .btn-gerenciar {
+    width: 100%;
+    text-align: center;
+  }
+
+  .select-funcao {
+    width: 100%;
+  }
+
+  .placar-table {
+    max-height: 60vh;
+    overflow-x: auto;
+  }
+
+  .placar {
+    min-width: 700px;
+  }
+
+  .placar thead th {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .placar tbody td {
+    font-size: 13px;
+    padding: 8px;
+  }
+
+  .time-info {
+    gap: 6px;
+  }
+
+  .time-image {
+    width: 32px;
+    height: 32px;
+  }
+
+  .btn-cancel-placar {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .title_placar {
+    font-size: 18px;
+  }
+
+  .placar {
+    min-width: 650px;
+  }
+
+  .loader {
+    width: 60px;
+    height: 60px;
+  }
+
+  .loader-container-centralizado,
+  .sem-dados-centralizado {
+    font-size: 15px;
+  }
+}
 </style>

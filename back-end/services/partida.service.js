@@ -128,7 +128,7 @@ async function finalizarPartida(id, { usuarioId }) {
       setsVencidos: partida.pontosTimeB,
       vitorias: partida.pontosTimeB > partida.pontosTimeA ? 1 : 0,
       derrotas: partida.pontosTimeB < partida.pontosTimeA ? 1 : 0,
-      pontuacao: pontosB, // <- CORRIGIDO
+      pontuacao: pontosB, 
       vitoria3x0: partida.pontosTimeB === 3 && partida.pontosTimeA <= 1 ? 1 : 0,
       vitoria3x2: partida.pontosTimeB === 3 && partida.pontosTimeA === 2 ? 1 : 0,
       derrota2x3: partida.pontosTimeB === 2 && partida.pontosTimeA === 3 ? 1 : 0,

@@ -50,7 +50,11 @@
 
             <div class="botoes">
               <button class="btn-editar" @click="editarUsuario(usuario)">
-                {{ usuarioLogado.permissaoId === 2 ? 'Vincular a um Time' : 'Alterar Permissões' }}
+                {{ usuarioLogado.permissaoId === 2
+                  ? 'Gerenciar Usuário'
+                  : 'Alterar Permissões'
+                }}
+
               </button>
 
               <button class="btn-detalhar" @click="detalhesUsuario(usuario)">Detalhar</button>
@@ -159,22 +163,19 @@
     <!-- Modal de edição -->
     <div v-if="mostrarEditar" class="modal-overlay">
       <div class="modal-content">
-        <h2>Editar Usuário</h2>
+        <h2>Alterar Permissões</h2>
 
         <div v-if="isCarregandoModal" class="loader-wrapper">
           <div class="loader loader-small"></div>
         </div>
 
         <div v-else>
-          <!-- PERMISSÃO -->
-          <div class="campo" v-if="usuarioLogado.permissaoId !== 2">
-            <strong>Permissão:</strong>
-            <select v-model.number="form.permissaoId">
-              <option disabled value="">Selecione</option>
-              <option v-for="p in permissoesFiltradas" :key="p.id" :value="p.id">
-                {{ p.descricao }}
-              </option>
-            </select>
+          <!-- ABAS DE PERMISSÃO -->
+          <div class="abas-container">
+            <div class="aba" v-for="p in permissoesFiltradas" :key="p.id" :class="{ ativa: form.permissaoId === p.id }"
+              @click="form.permissaoId = p.id">
+              {{ p.id === 3 ? 'Vincular a um Time' : p.descricao }}
+            </div>
           </div>
 
           <!-- DESENVOLVEDOR -> ADMIN -->
@@ -210,7 +211,6 @@
                 </span>
               </div>
 
-              <!-- LISTA -->
               <div v-if="abrirDropdown" class="dropdown-list">
                 <input type="text" v-model="buscaJogador" placeholder="Buscar jogador..." class="input-busca-jogador"
                   @click.stop />
@@ -227,6 +227,11 @@
                 </ul>
               </div>
             </div>
+            <!-- MESÁRIO -->
+            <div class="campo" v-if="form.permissaoId === 4">
+              <strong>Mesário:</strong>
+            </div>
+
           </div>
 
           <div class="botoes" style="margin-top: 20px;">
@@ -285,6 +290,7 @@ export default {
       const authStore = useAuthStore()
       return authStore.usuario || {}
     },
+    
     jogadorSelecionadoObj() {
       return this.jogadores.find(j => j.id === this.form.jogadorId)
     },
@@ -301,23 +307,32 @@ export default {
         .filter(u => u.email !== this.usuarioLogadoEmail)
         .filter(u => {
           if (this.usuarioLogado.permissaoId === 2) {
-            return u.permissaoId === 3
+            return [3, 4, 5].includes(u.permissaoId)
           }
           return true
         })
     },
+
     jogadoresDisponiveis() {
       return this.jogadores.filter(j =>
         !j.vinculado || j.id === this.form.jogadorId
       )
     },
+
     permissoesFiltradas() {
-      if (this.usuarioLogado.permissaoId === 2) {
-        return this.permissoes.filter(
-          p => p.id === 3 || p.id === this.form.permissaoId)
+      if (this.usuarioLogado.permissaoId === 1) {
+        return this.permissoes
       }
-      return this.permissoes
+
+      if (this.usuarioLogado.permissaoId === 2) {
+        return this.permissoes.filter(p =>
+          [3, 4, 5].includes(p.id)
+        )
+      }
+
+      return []
     },
+
     jogadoresFiltrados() {
       return this.jogadoresDisponiveis.filter(j =>
         j.nome.toLowerCase().includes(this.buscaJogador.toLowerCase())
@@ -415,13 +430,24 @@ export default {
 
     async carregarJogadoresTime() {
       this.jogadores = []
-      this.form.jogadorId = null
 
       if (!this.form.timeId) return
 
       try {
         const { data } = await api.get(`/time/${this.form.timeId}`)
-        this.jogadores = data
+        let jogadoresTime = data || []
+        if (this.usuarioSelecionado?.jogador) {
+          const existe = jogadoresTime.some(
+            j => j.id === this.usuarioSelecionado.jogador.id
+          )
+          if (!existe) {
+            jogadoresTime.unshift(this.usuarioSelecionado.jogador)
+          }
+          this.form.jogadorId = this.usuarioSelecionado.jogador.id
+        }
+
+        this.jogadores = jogadoresTime
+
       } catch (err) {
         console.error('Erro ao carregar jogadores do time:', err)
         this.jogadores = []
@@ -458,7 +484,6 @@ export default {
           return
         }
 
-        // ATUALIZA USUÁRIO 
         await api.put('/editar/usuario', {
           email: this.form.email,
           permissaoId: this.form.permissaoId,
@@ -872,6 +897,33 @@ select {
   text-align: center;
   color: #999;
   font-size: 13px;
+}
+
+.abas-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.aba {
+  flex: 1;
+  text-align: center;
+  padding: 10px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: #f1f1f1;
+  font-weight: 500;
+  color: #333;
+  transition: all 0.2s;
+}
+
+.aba:hover {
+  background-color: #e0e0e0;
+}
+
+.aba.ativa {
+  background-color: #3b82f6;
+  color: white;
 }
 
 .loader-container-centralizado {

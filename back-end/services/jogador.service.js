@@ -130,20 +130,10 @@ async function listarJogadoresPorTime(timeId) {
 
 async function listarTodosJogadores(modalidadeId) {
   const jogadores = await prisma.jogador.findMany({
-    where: {
-      times: {
-        some: {
-          modalidadeId: Number(modalidadeId),
-        },
-      },
-    },
     include: {
       funcao: true,
       atuacoes: true,
       times: {
-        where: {
-          modalidadeId: Number(modalidadeId),
-        },
         include: {
           time: true,
           modalidade: true,
@@ -158,11 +148,13 @@ async function listarTodosJogadores(modalidadeId) {
     foto: j.foto,
     funcao: j.funcao,
     atuacoes: j.atuacoes,
-    times: j.times.map(jt => ({
-      id: jt.time.id,
-      nome: jt.time.nome,
-      modalidadeId: jt.modalidadeId,
-    })),
+    times: j.times
+      .filter(jt => jt.modalidadeId === Number(modalidadeId))
+      .map(jt => ({
+        id: jt.time.id,
+        nome: jt.time.nome,
+        modalidadeId: jt.modalidadeId,
+      })),
   }));
 }
 
@@ -223,7 +215,6 @@ async function adicionarFuncaoJogador(dados) {
 
   return funcao;
 }
-
 
 async function removerFuncaoJogador(dados) {
   const { id, modalidadeId } = dados;

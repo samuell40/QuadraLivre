@@ -4,9 +4,8 @@
 
     <div class="conteudo">
       <div class="titulo">
-        <h1>Agendar Quadra (Admin)</h1>
+        <h1>Agendar Quadra</h1>
       </div>
-
       <NavBarUse />
 
       <div v-if="isLoadingQuadras" class="loader"></div>

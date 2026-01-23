@@ -3,110 +3,135 @@
     <div class="modal-content">
       <h2>Gerenciar Jogadores - {{ time?.nome }}</h2>
 
-      <div class="form-group">
-        <label for="acaoGerenciarJogadores">Escolha a ação:</label>
-        <select id="acaoGerenciarJogadores" v-model="acaoLocal" class="dropdown">
-          <option disabled value="">Selecione uma opção</option>
-          <option value="adicionar">Adicionar Jogador</option>
-          <option value="adicionarExistente">Adicionar Jogador Existente</option>
-          <option value="remover">Remover Jogador</option>
-        </select>
+      <div class="abas-container">
+        <div class="aba" :class="{ ativa: acaoLocal === 'adicionarExistente' }"
+          @click="acaoLocal = 'adicionarExistente'">
+          Jogador Existente
+        </div>
+        <div class="aba" :class="{ ativa: acaoLocal === 'adicionar' }" @click="acaoLocal = 'adicionar'">
+          Adicionar Novo
+        </div>
+        <div class="aba" :class="{ ativa: acaoLocal === 'remover' }" @click="acaoLocal = 'remover'">
+          Remover
+        </div>
       </div>
 
-      <!-- Adicionar novo jogador -->
-      <div v-if="acaoLocal === 'adicionar'" class="form-group">
-        <label for="nomeJogador">Nome do jogador:</label>
-        <input type="text" id="nomeJogador" v-model="nomeJogador" placeholder="Digite o nome" class="dropdown" />
+      <div v-if="acaoLocal" class="conteudo-aba">
+        <div v-if="acaoLocal === 'adicionar'" class="form-group">
+          <label for="nomeJogador">Nome do jogador:</label>
+          <input type="text" id="nomeJogador" v-model="nomeJogador" placeholder="Digite o nome" class="dropdown" />
 
-        <div class="campo">
-          <label>Vincular usuário</label>
+          <div class="campo">
+            <label>Vincular usuário</label>
 
-          <div class="dropdown-custom" ref="dropdownUsuario">
-            <div class="dropdown-selected" @click="abrirDropdownUsuarios = !abrirDropdownUsuarios">
-              <img v-if="usuarioSelecionado?.foto" :src="usuarioSelecionado.foto" class="avatar" />
-              <span>
-                {{ usuarioSelecionado?.nome || 'Selecione um usuário (opcional)' }}
+            <div class="dropdown-custom" ref="dropdownUsuario">
+              <div class="dropdown-selected" @click="abrirDropdownUsuarios = !abrirDropdownUsuarios">
+                <img v-if="usuarioSelecionado?.foto" :src="usuarioSelecionado.foto" class="avatar" />
+                <span>
+                  {{ usuarioSelecionado?.nome || 'Selecione um usuário (opcional)' }}
+                </span>
+              </div>
+
+              <div v-if="abrirDropdownUsuarios" class="dropdown-list">
+                <input type="text" v-model="buscaUsuario" placeholder="Buscar usuário..." class="input-busca-jogador"
+                  @click.stop />
+
+                <ul>
+                  <li v-for="u in usuariosFiltradosComBusca" :key="u.id" @click.stop="selecionarUsuario(u)">
+                    <img :src="u.foto" class="avatar" />
+                    <span>{{ u.nome }}</span>
+                  </li>
+
+                  <li v-if="usuariosFiltradosComBusca.length === 0" class="sem-jogador">
+                    Nenhum usuário encontrado
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <label for="fotoJogador">Foto (opcional):</label>
+          <input type="file" id="fotoJogador" @change="handleImagemUpload" accept=".jpg,.jpeg,.png" class="dropdown" />
+        </div>
+
+        <div v-if="acaoLocal === 'adicionarExistente'" class="form-group">
+          <label>Adicionar jogador existente:</label>
+          <div class="dropdown-custom" ref="dropdownJogadores">
+            <div class="dropdown-selected" @click="abrirDropdownJogadores = !abrirDropdownJogadores">
+              <img v-if="jogadorSelecionadoExistente?.foto" :src="jogadorSelecionadoExistente.foto" class="avatar" />
+              <span v-if="jogadoresSelecionadosExistentes.length === 0">
+                Selecione jogador(es) existente(s)
+              </span>
+
+              <span v-else>
+                {{ jogadoresSelecionadosExistentes.length }} jogador(es) selecionado(s)
               </span>
             </div>
 
-            <div v-if="abrirDropdownUsuarios" class="dropdown-list">
-              <input type="text" v-model="buscaUsuario" placeholder="Buscar usuário..." class="input-busca-jogador"
+            <ul v-if="abrirDropdownJogadores" class="dropdown-list">
+              <input type="text" v-model="buscaJogador" placeholder="Buscar jogador..." class="input-busca-jogador"
                 @click.stop />
 
+              <li v-if="jogadoresExistentesFiltradosComBusca.length === 0" class="sem-jogador">
+                Nenhum jogador disponível
+              </li>
+
+              <li v-for="j in jogadoresExistentesFiltradosComBusca" :key="j.id" @click.stop="toggleJogadorExistente(j)"
+                :class="{ selecionado: isJogadorSelecionado(j.id) }">
+                <img :src="j.foto" class="avatar" />
+                <span>
+                  {{ j.nome }}
+                  <span v-if="j.times.length">
+                    ({{ j.times[0].nome }})
+                  </span>
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div v-if="acaoLocal === 'remover'" class="form-group">
+          <label>Escolha o(s) jogador(es):</label>
+
+          <div class="dropdown-custom" ref="dropdownRemover">
+            <div class="dropdown-selected" @click="abrirDropdownRemover = !abrirDropdownRemover">
+              <span v-if="jogadoresSelecionadosRemover.length === 0">Selecione jogador(es)</span>
+              <span v-else>
+                {{ jogadoresSelecionadosRemover.length }} jogador(es) selecionado(s)
+              </span>
+            </div>
+
+            <div v-if="abrirDropdownRemover" class="dropdown-list">
+              <input type="text" v-model="buscaJogadorRemover" placeholder="Buscar jogador..."
+                class="input-busca-jogador" @click.stop />
+
               <ul>
-                <li v-for="u in usuariosFiltradosComBusca" :key="u.id" @click.stop="selecionarUsuario(u)">
-                  <img :src="u.foto" class="avatar" />
-                  <span>{{ u.nome }}</span>
+                <li v-for="j in jogadoresFiltradosRemover" :key="j.id" @click.stop="toggleJogadorRemover(j)"
+                  :class="{ selecionado: isJogadorSelecionadoRemover(j.id) }">
+                  <img :src="j.foto" class="avatar" />
+                  <span>{{ j.nome }}</span>
                 </li>
 
-                <li v-if="usuariosFiltradosComBusca.length === 0" class="sem-jogador">
-                  Nenhum usuário encontrado
+                <li v-if="jogadoresFiltradosRemover.length === 0" class="sem-jogador">
+                  Nenhum jogador encontrado
                 </li>
               </ul>
             </div>
           </div>
         </div>
-
-        <label for="fotoJogador">Foto (opcional):</label>
-        <input type="file" id="fotoJogador" @change="handleImagemUpload" accept=".jpg,.jpeg,.png" class="dropdown" />
-      </div>
-
-      <!-- Adicionar jogador existente -->
-      <div v-if="acaoLocal === 'adicionarExistente'" class="form-group">
-        <label>Adicionar jogador existente:</label>
-        <div class="dropdown-custom" ref="dropdownJogadores">
-          <div class="dropdown-selected" @click="abrirDropdownJogadores = !abrirDropdownJogadores">
-            <img v-if="jogadorSelecionadoExistente?.foto" :src="jogadorSelecionadoExistente.foto" class="avatar" />
-            <span v-if="jogadoresSelecionadosExistentes.length === 0">
-              Selecione jogador(es) existente(s)
-            </span>
-
-            <span v-else>
-              {{ jogadoresSelecionadosExistentes.length }} jogador(es) selecionado(s)
-            </span>
-
-          </div>
-
-          <ul v-if="abrirDropdownJogadores" class="dropdown-list">
-            <input type="text" v-model="buscaJogador" placeholder="Buscar jogador..." class="input-busca-jogador"
-              @click.stop />
-
-            <li v-if="jogadoresExistentesFiltradosComBusca.length === 0" class="sem-jogador">
-              Nenhum jogador disponível
-            </li>
-
-            <li v-for="j in jogadoresExistentesFiltradosComBusca" :key="j.id" @click.stop="toggleJogadorExistente(j)"
-              :class="{ selecionado: isJogadorSelecionado(j.id) }">
-              <img :src="j.foto" class="avatar" />
-              <span>
-                {{ j.nome }}
-                <span v-if="j.times.length">
-                  ({{ j.times[0].nome }})
-                </span>
-              </span>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <div v-if="acaoLocal === 'remover'" class="form-group">
-        <label for="selecionarJogador">Escolha o jogador:</label>
-        <select id="selecionarJogador" v-model="jogadorSelecionado" class="dropdown">
-          <option disabled value="">Selecione um jogador</option>
-          <option v-for="j in jogadores" :key="j.id" :value="j.id">{{ j.nome }}</option>
-        </select>
       </div>
 
       <div class="botoes">
-        <button :disabled="!acaoLocal ||
-          (acaoLocal === 'adicionar' && !nomeJogador) ||
+        <button v-if="acaoLocal" :disabled="(acaoLocal === 'adicionar' && !nomeJogador) ||
           (acaoLocal === 'adicionarExistente' && jogadoresSelecionadosExistentes.length === 0) ||
-          (acaoLocal === 'remover' && !jogadorSelecionado)" @click="confirmar" class="btn-save1">
+          (acaoLocal === 'remover' && jogadoresSelecionadosRemover.length === 0)" @click="confirmar" class="btn-save1">
           Confirmar
         </button>
 
-        <button class="btn-cancel-placar" @click="fecharModal">Cancelar</button>
+        <button @click="fecharModal" :class="['btn-cancel-placar', !acaoLocal ? 'btn-cancel-ativo' : '']">
+          Cancelar
+        </button>
       </div>
+
     </div>
   </div>
 </template>
@@ -135,7 +160,10 @@ export default {
       abrirDropdownUsuarios: false,
       jogadores: [],
       jogadoresSelecionadosExistentes: [],
-      abrirDropdownJogadores: false
+      jogadoresSelecionadosRemover: [],
+      abrirDropdownJogadores: false,
+      abrirDropdownRemover: false,
+      buscaJogadorRemover: ''
     };
   },
 
@@ -159,9 +187,17 @@ export default {
         .filter(u =>
           u.nome.toLowerCase().includes(this.buscaUsuario.toLowerCase())
         );
+    },
+    jogadoresFiltradosRemover() {
+      if (!this.jogadores || !this.time) return [];
+      const timeIdAtual = this.time.id;
+      return this.jogadores
+        .filter(j => j.times.some(t => t.id === timeIdAtual))
+        .filter(j =>
+          j.nome.toLowerCase().includes(this.buscaJogadorRemover.toLowerCase())
+        );
     }
   },
-
   watch: {
     aberto(novo) {
       if (novo && this.time?.id) {
@@ -205,6 +241,12 @@ export default {
       this.jogadorSelecionadoExistente = j;
       this.buscaJogador = '';
       this.abrirDropdownJogadores = false;
+    },
+
+    selecionarJogadorRemover(jogador) {
+      this.jogadorSelecionado = jogador;
+      this.buscaJogadorRemover = '';
+      this.abrirDropdownRemover = false;
     },
 
     toggleJogadorExistente(jogador) {
@@ -302,9 +344,27 @@ export default {
       );
     },
 
+    toggleJogadorRemover(jogador) {
+      const index = this.jogadoresSelecionadosRemover.findIndex(j => j.id === jogador.id);
+      if (index !== -1) {
+        this.jogadoresSelecionadosRemover.splice(index, 1); // remove se já estava selecionado
+      } else {
+        this.jogadoresSelecionadosRemover.push(jogador); // adiciona se não estava selecionado
+      }
+    },
+
+    isJogadorSelecionadoRemover(id) {
+      return this.jogadoresSelecionadosRemover.some(j => j.id === id);
+    },
+
     async removerJogador() {
-      await api.delete(`/remover/${this.time.id}/${this.jogadorSelecionado}`);
-      Swal.fire('Sucesso', 'Jogador removido!', 'success');
+      if (this.jogadoresSelecionadosRemover.length === 0) return;
+
+      for (const jogador of this.jogadoresSelecionadosRemover) {
+        await api.delete(`/remover/${this.time.id}/${jogador.id}`);
+      }
+
+      Swal.fire('Sucesso', `${this.jogadoresSelecionadosRemover.length} jogador(es) removido(s)!`, 'success');
     },
 
     handleError(err) {
@@ -390,6 +450,10 @@ export default {
   background-color: #7e7e7e;
 }
 
+.btn-cancel-ativo {
+  background-color: #3b82f6;
+}
+
 .dropdown-custom {
   position: relative;
   cursor: pointer;
@@ -470,6 +534,126 @@ export default {
 .selecionado {
   background-color: #eef6ff;
   font-weight: bold;
+}
+
+.abas-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.aba {
+  flex: 1;
+  text-align: center;
+  padding: 10px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: #f1f1f1;
+  font-weight: 500;
+  color: #333;
+  transition: all 0.2s;
+}
+
+.aba:hover {
+  background-color: #e0e0e0;
+}
+
+.aba.ativa {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.conteudo-aba {
+  margin-top: 10px;
+}
+
+/* =========================
+   RESPONSIVIDADE
+   ========================= */
+
+/* Tablets e telas médias */
+@media (max-width: 1024px) {
+  .modal-content {
+    width: 90%;
+    padding: 25px;
+  }
+}
+
+/* Celulares */
+@media (max-width: 768px) {
+  .modal-overlay {
+    align-items: flex-start;
+    padding: 20px 10px;
+  }
+
+  .modal-content {
+    width: 100%;
+    max-width: 100%;
+    padding: 20px;
+    border-radius: 8px;
+  }
+
+  .modal-content h2 {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .dropdown,
+  .dropdown-selected {
+    font-size: 14px;
+  }
+
+  /* Botões empilhados */
+  .botoes {
+    flex-direction: column;
+  }
+
+  .btn-save1,
+  .btn-cancel-placar {
+    width: 100%;
+    font-size: 15px;
+  }
+
+  /* Abas com scroll horizontal */
+  .abas-container {
+    overflow-x: auto;
+    gap: 8px;
+  }
+
+  .aba {
+    min-width: 120px;
+    font-size: 14px;
+    padding: 8px;
+  }
+}
+
+/* Celulares pequenos */
+@media (max-width: 480px) {
+  .modal-content {
+    padding: 15px;
+  }
+
+  .modal-content h2 {
+    font-size: 16px;
+  }
+
+  .dropdown-selected img.avatar {
+    width: 28px;
+    height: 28px;
+  }
+
+  .dropdown-list img.avatar {
+    width: 24px;
+    height: 24px;
+  }
+
+  .input-busca-jogador {
+    font-size: 13px;
+  }
+
+  .aba {
+    font-size: 13px;
+  }
 }
 
 </style>

@@ -63,38 +63,6 @@
       </template>
     </section>
 
-    <section class="placares-e-partidas">
-      <div class="placar-geral-container">
-        <h3 class="tit_horario">Placar dos Campeonatos</h3>
-
-        <div v-if="isLoadingPlacares" class="loader"></div>
-
-        <p v-else-if="todosPlacaresOcultos" class="sem-placar-unico" style="text-align:center; margin-top:1rem;">
-          Nenhum placar disponível no momento.
-        </p>
-
-        <div v-else v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" class="placar-wrapper">
-          <PlacarGeral v-if="getTimesComPosicao(modalidade.nome).length > 0"
-            :times="getTimesComPosicao(modalidade.nome)" :modalidade="modalidade.nome" />
-        </div>
-      </div>
-
-
-      <div class="lista-partidas-container">
-        <h3 class="tit_horario">Partidas</h3>
-
-        <div v-if="isLoadingPartidas" class="loader"></div>
-
-        <p v-else-if="partidasAtivas.length === 0 && partidasEncerradas.length === 0" class="sem-partidas"
-          style="text-align:center; margin-top:1rem;">
-          Nenhuma partida registrada no momento.
-        </p>
-
-        <ListaPartidas v-else :partidasAtivas="partidasAtivas" :partidasEncerradas="partidasEncerradas" />
-      </div>
-
-    </section>
-
     <VerificarLogin v-if="mostrarModalLogin" @fechar="mostrarModalLogin = false" @irParaLogin="irParaLogin"
       @loginComGoogle="loginComGoogle" />
   </div>
@@ -104,54 +72,25 @@
 import router from '@/router'
 import { Carousel, Slide } from 'vue3-carousel'
 import Swal from 'sweetalert2'
-import PlacarGeral from '@/components/PlacarHome/PlacarGeral.vue'
-import ListaPartidas from '@/components/PlacarHome/ListaPartidas.vue'
 import VerificarLogin from '@/components/modals/Alertas/verificarLogin.vue'
 import api from '@/axios'
 import 'vue3-carousel/dist/carousel.css'
 
 export default {
   name: 'HomeView',
-  components: { Carousel, Slide, PlacarGeral, ListaPartidas, VerificarLogin },
+  components: { Carousel, Slide, VerificarLogin },
 
   data() {
     return {
       isMenuOpen: false,
       quadras: [],
-      isLoadingPlacares: true,
       mostrarModalLogin: false,
-      modalidadesDisponiveis: [],
       isLoadingQuadras: true,
-      isLoadingPartidas: true,
-      partidasAtivas: [],
-      partidasEncerradas: [],
-      placares: {},
-    }
-  },
-
-  computed: {
-    algumPlacarVisivel() {
-      return this.modalidadesDisponiveis.some(mod =>
-        (this.placares[mod.nome] || []).some(t => t.visivel)
-      )
-    },
-    todosPlacaresOcultos() {
-      return this.modalidadesDisponiveis.length > 0 &&
-        this.modalidadesDisponiveis.every(mod =>
-          !(this.placares[mod.nome] || []).some(t => t.visivel)
-        )
     }
   },
 
   async mounted() {
     await this.carregarQuadras()
-
-    await this.carregarModalidades()
-
-    await Promise.all([
-      this.carregarPartidasAtivas(),
-      this.carregarPartidasEncerradas()
-    ])
   },
 
   methods: {
@@ -169,92 +108,6 @@ export default {
       } finally {
         this.isLoadingQuadras = false
       }
-    },
-
-    async carregarPartidasAtivas() {
-      this.isLoadingPartidas = true
-      this.partidasAtivas = []
-
-      try {
-        for (const modalidade of this.modalidadesDisponiveis) {
-          if (!modalidade.campeonatos || modalidade.campeonatos.length === 0) continue
-
-          for (const campeonato of modalidade.campeonatos) {
-            const res = await api.get(
-              `/partidas/ativas/${modalidade.id}/${campeonato.id}`
-            )
-
-            if (Array.isArray(res.data)) {
-              this.partidasAtivas.push(...res.data)
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Erro ao carregar partidas ativas:', err)
-      } finally {
-        this.isLoadingPartidas = false
-      }
-    },
-
-    async carregarPartidasEncerradas() {
-      this.isLoadingPartidas = true
-      this.partidasEncerradas = []
-
-      try {
-        for (const modalidade of this.modalidadesDisponiveis) {
-          if (!modalidade.campeonatos || modalidade.campeonatos.length === 0) continue
-
-          for (const campeonato of modalidade.campeonatos) {
-            const res = await api.get(
-              `/partidas/encerradas/${modalidade.id}/${campeonato.id}`
-            )
-
-            if (Array.isArray(res.data)) {
-              this.partidasEncerradas.push(...res.data)
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Erro ao carregar partidas encerradas:', err)
-      } finally {
-        this.isLoadingPartidas = false
-      }
-    },
-
-    async carregarModalidades() {
-      try {
-        const res = await api.get('/listar/modalidade')
-        this.modalidadesDisponiveis = res.data
-
-        this.isLoadingPlacares = true
-        await Promise.all(this.modalidadesDisponiveis.map(mod => this.carregarPlacarModalidade(mod)))
-        this.isLoadingPlacares = false
-      } catch (error) {
-        this.isLoadingPlacares = false
-        console.error('Erro ao carregar modalidades:', error)
-        Swal.fire('Erro', 'Não foi possível carregar as modalidades.', 'error')
-      }
-    },
-
-    async carregarPlacarModalidade(modalidade) {
-      if (!modalidade) return
-      try {
-        const res = await api.get(`/placar/modalidade/${modalidade.id}`)
-        this.placares[modalidade.nome] = Array.isArray(res.data.placares) ? res.data.placares : []
-      } catch (err) {
-        console.error(`Erro ao carregar placar ${modalidade.nome}:`, err)
-      }
-    },
-
-    addPosicao(times) {
-      return [...times]
-        .filter(t => t.visivel)
-        .sort((a, b) => b.pontuacao - a.pontuacao)
-        .map((t, i) => ({ ...t, posicao: i + 1 }))
-    },
-
-    getTimesComPosicao(modalidade) {
-      return this.addPosicao(this.placares[modalidade] || [])
     },
 
     verificarLogin(quadra) {
@@ -636,45 +489,6 @@ p {
   margin: 0;
   line-height: 1.2;
   color: #fff;
-}
-
-.placares-container {
-  margin-top: 30px;
-  padding: 0 20px;
-}
-
-.placar-wrapper {
-  margin-top: 0px;
-  margin-bottom: 10px;
-  display: flex;
-  justify-content: center;
-  position: relative;
-}
-
-.placar-wrapper:last-child {
-  margin-bottom: 0;
-}
-
-.placar-wrapper .loader {
-  margin: 20px auto;
-}
-
-.placares-e-partidas {
-  display: flex;
-  justify-content: space-between;
-  gap: 0;
-  padding: 0;
-  width: 90%;
-  margin: 0 auto;
-}
-
-.placar-geral-container {
-  flex: 0 0 65%;
-}
-
-.lista-partidas-container {
-  flex: 0 0 35%;
-  overflow: hidden;
 }
 
 @media (max-width: 1024px) {
