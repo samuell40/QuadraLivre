@@ -528,7 +528,8 @@ export default {
 
 <style scoped>
 .placar {
-  width: 580px;
+    width: 100%;
+  max-width: 580px;
   background: #fff;
   border-radius: 12px;
   padding: 30px;
@@ -605,8 +606,8 @@ export default {
   background: white;
   padding: 24px 32px;
   border-radius: 12px;
-  width: 900px;
-  max-width: 95%;
+ width: 100%;
+  max-width: 900px;
   height: 85vh;
   display: flex;
   flex-direction: column;
@@ -768,4 +769,86 @@ export default {
   overflow-y: auto;
   margin: 20px 0;
 }
+
+@media (max-width: 768px) {
+  .placar {
+    padding: 20px;
+  }
+
+  .nome-time {
+    font-size: 20px;
+    padding: 10px;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .foto-time {
+    width: 48px;
+    height: 48px;
+  }
+
+  .controls {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .controls span {
+    font-size: 16px;
+  }
+
+  .modal-content {
+    height: 95vh;
+    padding: 16px;
+  }
+
+  .modal-titulo {
+    font-size: 22px;
+    text-align: center;
+  }
+
+  .titulo-substituicao {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .subtitulo {
+    font-size: 16px;
+  }
+
+  /* Colunas viram linhas */
+  .colunas {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .coluna {
+    max-height: 35vh;
+  }
+
+  .jogador-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .foto-jogador {
+    width: 36px;
+    height: 36px;
+  }
+
+  .botoes {
+    flex-direction: column;
+  }
+
+  .btn-save1,
+  .btn-cancel {
+    width: 100%;
+    font-size: 15px;
+  }
+
+  .coluna-substituicoes {
+    max-height: 120px;
+  }
+}
+
 </style>

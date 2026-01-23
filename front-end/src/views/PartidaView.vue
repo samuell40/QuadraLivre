@@ -4,10 +4,30 @@
 
     <div class="conteudo">
       <div class="header">
-        <h1 class="title">Partidas ao Vivo</h1>
+        <h1 class="title">
+          {{ partidaIniciada ? 'Partida ao Vivo' : 'Criar Partida' }}
+        </h1>
 
         <div v-if="partidaIniciada" class="temporizador-container">
           <div class="temporizador-topo">
+
+            <button class="controle-tempo" :class="{ pausado: !temporizadorAtivo }"
+              @click="iniciarPausarOuRetomarPartida">
+              <svg v-if="temporizadorAtivo" xmlns="http://www.w3.org/2000/svg" width="25" height="25"
+                fill="currentColor" viewBox="0 0 16 16">
+                <path
+                  d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5m5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5" />
+              </svg>
+
+              <!-- ÍCONE RETOMAR -->
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor"
+                viewBox="0 0 16 16">
+                <path d="M6.79 5.093A.5.5 0 0 0 6 5.5v5a.5.5 0 0 0 .79.407l3.5-2.5a.5.5 0 0 0 0-.814z" />
+              </svg>
+              <span>
+                {{ temporizadorAtivo ? 'Pausar' : 'Retomar' }}
+              </span>
+            </button>
             <p class="temporizador">{{ minutos }}:{{ segundos }}</p>
           </div>
         </div>
@@ -19,7 +39,7 @@
         <strong>“Continuar”</strong> para abrir o modal de seleção dos jogadores da partida.
       </p>
 
-      <div class="dropdowns">
+      <div class="dropdowns" v-if="!partidaIniciada">
         <div class="dropdown-row">
           <div class="team">
             <label>Quadra:</label>
@@ -80,15 +100,6 @@
                 {{ t.nome }}
               </option>
             </select>
-          </div>
-
-          <div class="team">
-            <button class="dropdown botao-iniciar" :disabled="!timeSelecionado1 || !timeSelecionado2"
-              @click="iniciarPausarOuRetomarPartida">
-              <span v-if="!partidaIniciada">Continuar</span>
-              <span v-else-if="temporizadorAtivo">Pausar</span>
-              <span v-else>Retomar</span>
-            </button>
           </div>
         </div>
       </div>
@@ -624,23 +635,45 @@ export default {
   position: absolute;
   top: 30px;
   right: 45px;
-  width: 10%;
   height: 50px;
   border: 2px solid #3b82f6;
   border-radius: 8px;
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  padding: 0 14px;
   z-index: 10;
-  padding: 0;
+  background: #fff;
 }
+
 
 .temporizador {
   font-size: 35px;
   font-weight: bold;
   color: #3b82f6;
   margin: 0;
+}
+
+.controle-tempo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 6px;
+
+}
+
+.controle-tempo:hover {
+  color: #2563eb;
+}
+
+.controle-tempo svg {
+  flex-shrink: 0;
 }
 
 .icon-add {
@@ -651,18 +684,12 @@ export default {
   margin-top: -15%;
 }
 
-.botao-pausar {
-  padding: 6px 8px;
-  font-size: 12px;
-  border-radius: 6px;
-  border: none;
-  background-color: #3b82f6;
-  color: #fff;
-  cursor: pointer;
+.controle-tempo.pausado {
+  color: #facc15;
 }
 
-.botao-pausar:hover {
-  background-color: #2563eb;
+.controle-tempo.pausado:hover {
+  color: #eab308;
 }
 
 .placares {
@@ -670,6 +697,9 @@ export default {
   gap: 30px;
   margin-top: 30px;
   justify-content: center;
+  border: 2px solid #3b82f6; /* azul */
+  border-radius: 12px;       /* cantos arredondados */
+  padding: 5px;             /* espaço interno */
 }
 
 .dropdowns {
