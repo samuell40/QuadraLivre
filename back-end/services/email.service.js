@@ -122,6 +122,16 @@ async function enviarEmailVinculoTime(usuario, time, jogador) {
 async function enviarEmailStatusAgendamento(agendamento) {
   const statusFormatado = agendamento.status === 'Confirmado' ? 'confirmado' : 'recusado';
 
+  let blocoMotivo = '';
+  if (agendamento.status === 'Recusado' && agendamento.motivoRecusa) {
+    blocoMotivo = `
+      <div style="background-color: #fee2e2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <p style="color: #991b1b; font-weight: bold; margin: 0 0 5px 0; font-size: 16px;">Motivo da Recusa:</p>
+        <p style="color: #7f1d1d; margin: 0; font-size: 15px;">${agendamento.motivoRecusa}</p>
+      </div>
+    `;
+  }
+
   const html = `
   <div style="font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px;">
     <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 10px; color: #333; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
@@ -131,8 +141,11 @@ async function enviarEmailStatusAgendamento(agendamento) {
         <strong>${agendamento.modalidade.nome}</strong> no dia <strong>${agendamento.dia}/${agendamento.mes}/${agendamento.ano}</strong> 
         às <strong>${agendamento.hora.toString().padStart(2, '0')}:00</strong> foi <strong>${statusFormatado}</strong>.
       </p>
+      
+      ${blocoMotivo}
+
       <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
-        Atenciosamente,<br/>Equipe Quadra Livre
+        Atenciosamente,<br/>Equipe QuadraLivre
       </p>
     </div>
   </div>
@@ -140,7 +153,7 @@ async function enviarEmailStatusAgendamento(agendamento) {
 
   return enviarEmail({
     to: agendamento.usuario.email,
-    subject: `Agendamento ${statusFormatado} - Quadra Livre`,
+    subject: `Agendamento ${statusFormatado} - QuadraLivre`,
     html
   });
 }

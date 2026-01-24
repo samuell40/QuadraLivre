@@ -71,6 +71,8 @@ model Agendamento {
   quadraId     Int?
   modalidadeId Int?
   timeId       Int?
+  codigoVerificacao String? @unique
+  motivoRecusa      String?
   usuario      Usuario?        @relation(fields: [usuarioId], references: [id])
   quadra       Quadra?         @relation(fields: [quadraId], references: [id])
   modalidade   Modalidade?     @relation("AgendamentoModalidade", fields: [modalidadeId], references: [id])

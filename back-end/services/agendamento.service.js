@@ -3,6 +3,15 @@ const prisma = new PrismaClient();
 const { enviarEmailStatusAgendamento } = require('./email.service');
 const { startOfWeek, endOfWeek } = require('date-fns')
 
+const gerarCodigoVerificacao = () => {
+  const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let codigo = '';
+  for (let i = 0; i < 6; i++) {
+    codigo += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+  }
+  return codigo;
+};
+
 const listarAgendamentosService = async (usuarioId) => {
   if (!usuarioId) {
     throw { status: 400, message: 'Usuário não informado.' };
@@ -207,7 +216,9 @@ const criarAgendamentoService = async ({
     const agendamentosSemana = await prisma.agendamento.findMany({
       where: {
         timeId,
-        status: "Confirmado",
+        status: {
+          in: ["Confirmado", "Pendente"]
+        },
         AND: [
           { ano: { gte: inicioSemana.getFullYear(), lte: fimSemana.getFullYear() } },
           {
@@ -250,10 +261,19 @@ const criarAgendamentoService = async ({
     throw { status: 409, message: "Horário já agendado." };
   }
 
+  let novoCodigo = gerarCodigoVerificacao();
+
+  let codigoExiste = await prisma.agendamento.findUnique({ where: { codigoVerificacao: novoCodigo } });
+  while (codigoExiste) {
+    novoCodigo = gerarCodigoVerificacao();
+    codigoExiste = await prisma.agendamento.findUnique({ where: { codigoVerificacao: novoCodigo } });
+  }
+
   const agendamento = await prisma.agendamento.create({
     data: {
       dia, mes, ano, hora, duracao, tipo, status: "Pendente",
       usuarioId, quadraId, modalidadeId, timeId: timeId ?? null,
+      codigoVerificacao: novoCodigo
     },
     include: {
       modalidade: true,
@@ -275,33 +295,35 @@ const cancelarAgendamentoService = async (id) => {
   return true;
 };
 
-const atualizarAgendamentoService = async (id, status) => {
+const atualizarAgendamentoService = async (id, status, motivoRecusa = null) => {
   if (!id || !status) throw { status: 400, message: 'ID e status são obrigatórios.' };
 
   const agendamento = await prisma.agendamento.findUnique({
-    where: { id: Number(id) },
-    include: { usuario: true, quadra: true, modalidade: true }
+    where: { id: Number(id) }
   });
 
   if (!agendamento) throw { status: 404, message: 'Agendamento não encontrado.' };
-  if (agendamento.status !== 'Pendente') throw { status: 400, message: 'Agendamento já foi processado.' };
+
+  const justificativa = (status === "Recusado" && !motivoRecusa) 
+    ? "O administrador da quadra não informou um motivo específico." 
+    : motivoRecusa;
 
   const atualizado = await prisma.agendamento.update({
     where: { id: Number(id) },
-    data: { status },
+    data: { 
+      status,
+      motivoRecusa: status === "Recusado" ? justificativa : null 
+    },
     include: { usuario: true, quadra: true, modalidade: true, time: true }
   });
 
   try {
     await enviarEmailStatusAgendamento(atualizado);
   } catch (err) {
-    console.error('Erro ao enviar email de status do agendamento:', err);
+    console.error('Erro ao enviar email:', err);
   }
 
-  return {
-    ...atualizado,
-    duracao: atualizado.duracao ?? 1
-  };
+  return atualizado;
 };
 
 const listarModalidadesPorQuadraService = async (quadraId) => {

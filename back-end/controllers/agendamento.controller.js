@@ -150,7 +150,8 @@ const aceitarAgendamentoController = async (req, res) => {
 const recusarAgendamentoController = async (req, res) => {
   try {
     const { id } = req.params;
-    const agendamento = await atualizarAgendamentoService(id, 'Recusado');
+    const { motivoRecusa } = req.body;
+    const agendamento = await atualizarAgendamentoService(id, 'Recusado', motivoRecusa);
     return res.status(200).json(agendamento);
   } catch (err) {
     console.error(err);
