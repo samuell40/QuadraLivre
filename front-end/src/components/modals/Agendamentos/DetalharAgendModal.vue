@@ -17,6 +17,7 @@
         <p><strong>Tipo:</strong> {{ agendamento.tipo }}</p>
         
         <p><strong>Time:</strong> {{ agendamento.time || 'Não vinculado' }}</p>
+        <p><strong>Código de Verificação:</strong> {{ agendamento.codigoVerificacao || 'N/A' }}</p>
       </div>
 
       <button class="btn-cancelar" @click="$emit('fechar')">Fechar</button>

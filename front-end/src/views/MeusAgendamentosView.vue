@@ -7,35 +7,30 @@
         <h1 class="title">Meus Agendamentos</h1>
       </div>
 
-      <!-- Loader -->
       <div v-if="isLoading" class="loader"></div>
 
-      <!-- Lista de agendamentos -->
       <div v-else>
-        <!-- Futuros -->
         <div v-if="agendamentosFuturos.length > 0">
           <MeusAgendamentoCard
             v-for="ag in agendamentosFuturos"
             :key="ag.id"
             :agendamento="{ ...ag, data: ag.dataFormatada, hora: ag.hora }"
             :mostrarBotoes="true"
-            @cancelar="cancelarAgendamento(ag.id)"
+            @gerarPdf="gerarPdfAgendamento(ag)"   @cancelar="cancelarAgendamento(ag.id)"
             @novo="irParaAgendarQuadra(ag.quadraId)"
           />
         </div>
 
-        <!-- Passados -->
         <div v-if="agendamentosPassados.length > 0">
-          <h4>Historico de agendamentos</h4>
+          <h4>Histórico de agendamentos</h4>
           <MeusAgendamentoCard
             v-for="ag in agendamentosPassados"
             :key="ag.id"
             :agendamento="{ ...ag, data: ag.dataFormatada, hora: ag.hora }"
             :mostrarBotoes="false"
-          />
+            @gerarPdf="gerarPdfAgendamento(ag)"   />
         </div>
 
-        <!-- Nenhum agendamento -->
         <div v-if="agendamentosFuturos.length === 0 && agendamentosPassados.length === 0" class="mensagem-nenhum-agendamento">
           <p>Nenhum agendamento encontrado.</p>
         </div>
@@ -51,13 +46,14 @@ import NavBar from "@/components/NavBar.vue";
 import MeusAgendamentoCard from "@/components/cards/MeusAgendamentosCard.vue";
 import api from "@/axios";
 import Swal from "sweetalert2";
+import { jsPDF } from "jspdf";
+import logoImg from "@/assets/Cópia de xxxxx (2).png";
 
 const router = useRouter();
 const isLoading = ref(true);
 const agendamentosFuturos = ref([]);
 const agendamentosPassados = ref([]);
 
-// Carrega os agendamentos do usuário
 const carregarAgendamentos = async () => {
   isLoading.value = true;
   try {
@@ -70,16 +66,17 @@ const carregarAgendamentos = async () => {
         id: a.id,
         quadra: a.quadra?.nome || "Não informado",
         quadraId: a.quadra?.id || null,
-        data: dataObj, // usado internamente para lógica
+        data: dataObj,
         dataFormatada: `${a.dia.toString().padStart(2, "0")}/${a.mes.toString().padStart(2, "0")}/${a.ano}`,
         hora: `${a.hora.toString().padStart(2, "0")}:00`,
         duracao: a.duracao,
         tipo: a.tipo,
         status: a.status.toLowerCase(),
+        codigoVerificacao: a.codigoVerificacao,
+        motivoRecusa: a.motivoRecusa
       };
     });
 
-    // Futuros (ordenando confirmados primeiro)
     agendamentosFuturos.value = agendamentosFormatados
       .filter(a => a.data >= agora)
       .sort((x, y) => {
@@ -88,10 +85,9 @@ const carregarAgendamentos = async () => {
         return x.data - y.data;
       });
 
-    // Passados
     agendamentosPassados.value = agendamentosFormatados
       .filter(a => a.data < agora)
-      .sort((x, y) => y.data - x.data); // mais recentes primeiro
+      .sort((x, y) => y.data - x.data);
 
   } catch (err) {
     console.error("Erro ao carregar agendamentos:", err);
@@ -106,7 +102,6 @@ const carregarAgendamentos = async () => {
   }
 };
 
-// Cancelar um agendamento
 const cancelarAgendamento = async (id) => {
   const confirmacao = await Swal.fire({
     title: "Você realmente deseja cancelar o agendamento?",
@@ -127,7 +122,6 @@ const cancelarAgendamento = async (id) => {
     try {
       await api.delete(`/agendamento/${id}`);
 
-      // Remove dos arrays futuros e passados
       agendamentosFuturos.value = agendamentosFuturos.value.filter(a => a.id !== id);
       agendamentosPassados.value = agendamentosPassados.value.filter(a => a.id !== id);
 
@@ -150,7 +144,84 @@ const cancelarAgendamento = async (id) => {
   }
 };
 
-// Redireciona para a tela AgendarQuadra
+const gerarPdfAgendamento = async (agendamento) => {
+  const doc = new jsPDF({
+    orientation: "landscape",
+    unit: "mm",
+    format: [140, 80]
+  });
+
+  const corPrimaria = [30, 58, 138];
+  const codigoFinal = agendamento.codigoVerificacao || `ID-${agendamento.id}`;
+
+  doc.setDrawColor(220, 220, 220);
+  doc.rect(5, 5, 130, 70);
+
+  const img = new Image();
+  img.src = logoImg;
+  
+  await new Promise((resolve) => {
+    img.onload = () => {
+      doc.addImage(img, 'PNG', 10, 10, 12, 12);
+      resolve();
+    };
+  });
+
+  doc.setFontSize(16);
+  doc.setTextColor(...corPrimaria);
+  doc.setFont("helvetica", "bold");
+  doc.text("QuadraLivre", 25, 18);
+
+  doc.setFontSize(9);
+  doc.setTextColor(150, 150, 150);
+  doc.text("COMPROVANTE DE AGENDAMENTO", 130, 18, { align: "right" });
+
+  doc.setDrawColor(...corPrimaria);
+  doc.setLineWidth(0.5);
+  doc.line(10, 25, 130, 25);
+
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(10);
+
+  doc.setFont("helvetica", "bold");
+  doc.text("Local:", 15, 38);
+  doc.text("Data/Hora:", 15, 48);
+  
+  doc.setFont("helvetica", "normal");
+  doc.text(agendamento.quadra, 40, 38);
+  doc.text(`${agendamento.dataFormatada} às ${agendamento.hora}`, 40, 48);
+
+  doc.setFont("helvetica", "bold");
+  doc.text("Tipo:", 85, 38);
+  doc.text("Status:", 85, 48);
+
+  doc.setFont("helvetica", "normal");
+  doc.text(agendamento.tipo.toUpperCase(), 105, 38);
+  doc.text(agendamento.status.toUpperCase(), 105, 48);
+
+  doc.setDrawColor(230, 230, 230);
+  doc.line(15, 58, 125, 58);
+
+  doc.setFontSize(8);
+  doc.setTextColor(120, 120, 120);
+  doc.text("CÓDIGO DE VERIFICAÇÃO", 70, 64, { align: "center" });
+
+  doc.setFontSize(14);
+  doc.setTextColor(...corPrimaria);
+  doc.setFont("helvetica", "bold");
+  doc.text(codigoFinal, 70, 71, { align: "center" });
+
+  doc.save(`Voucher_${agendamento.quadra}_${codigoFinal}.pdf`);
+  
+  Swal.fire({
+    icon: 'success',
+    title: 'Comprovante pronto!',
+    text: 'O arquivo foi salvo no seu dispositivo.',
+    timer: 1500,
+    showConfirmButton: false
+  });
+};
+
 const irParaAgendarQuadra = (quadraId) => {
   router.push({ path: "/agendarquadra", query: { quadraId } });
 };

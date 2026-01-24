@@ -241,6 +241,7 @@ import { nextTick } from 'vue'
 import api from '@/axios'
 import Swal from 'sweetalert2'
 import jsPDF from "jspdf";
+import logoImg from "@/assets/Cópia de xxxxx (2).png";
 
 Chart.register(...registerables)
 
@@ -405,18 +406,36 @@ export default {
     this.carregarAgendamentos();
   },
   methods: {
-    gerarPDFGraficos() {
+    async gerarPDFGraficos() {
       const doc = new jsPDF('p', 'mm', 'a4');
+      const corPrimaria = [30, 58, 138];
+
+      doc.setFillColor(...corPrimaria);
+      doc.rect(0, 0, 210, 25, 'F'); 
+
+      const img = new Image();
+      img.src = logoImg;
+      await new Promise((resolve) => {
+        img.onload = () => {
+          doc.addImage(img, 'PNG', 15, 6, 13, 13);
+          resolve();
+        };
+      });
 
       doc.setFontSize(16);
-      doc.setTextColor(30, 58, 138); 
-      doc.text(`Relatório de Agendamentos - ${this.tituloDashboard}`, 105, 20, null, null, "center");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.text("QuadraLivre", 32, 15);
+      doc.setTextColor(...corPrimaria); 
+      doc.setFontSize(16);
+      doc.text(`Relatório de Agendamentos - ${this.tituloDashboard}`, 105, 45, null, null, "center");
 
       doc.setFontSize(10);
       doc.setTextColor(100);
-      doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 105, 26, null, null, "center");
+      doc.setFont("helvetica", "normal");
+      doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 105, 51, null, null, "center");
       
-      let cursorY = 40;
+      let cursorY = 70;
 
       const capturarGraficoComNumeros = (chartId) => {
         const chartInstance = Chart.getChart(chartId);
@@ -435,7 +454,8 @@ export default {
         if (!imgData) return;
 
         doc.setFontSize(12);
-        doc.setTextColor(30, 58, 138);
+        doc.setTextColor(...corPrimaria);
+        doc.setFont("helvetica", "bold");
         doc.text(titulo, 15, cursorY);
 
         const imgProps = doc.getImageProperties(imgData);

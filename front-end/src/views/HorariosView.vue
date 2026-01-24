@@ -76,6 +76,7 @@ import api from "@/axios";
 import SideBar from "@/components/SideBar.vue";
 import NavBarUse from '@/components/NavBarUser.vue'
 import DetalheAgendModal from "@/components/modals/Agendamentos/DetalharAgendModal.vue";
+import logoImg from "@/assets/Cópia de xxxxx (2).png";
 
 export default {
   name: "HorariosView",
@@ -99,7 +100,8 @@ export default {
 
     const horarios = Array.from({ length: 17 }).map((_, i) => {
       const inicio = 7 + i;
-      const fim = inicio + 1;
+      const fim = (inicio + 1) % 24; 
+      
       return `${String(inicio).padStart(2, "0")}:00 - ${String(fim).padStart(2, "0")}:00`;
     });
 
@@ -152,30 +154,44 @@ export default {
       }
     };
 
-    const gerarPDF = () => {
-      const doc = new jsPDF('l', 'mm', 'a4');
-
+    const gerarPDF = async () => { 
+      const doc = new jsPDF('l', 'mm', 'a4'); 
       const nomeQuadra = quadras.value.find(q => q.id === quadraSelecionada.value)?.nome || 'Quadra';
+      const corPrimaria = [30, 58, 138];
 
-      doc.setFontSize(18);
-      doc.text(`Relatório Semanal - ${nomeQuadra}`, 14, 15);
+      doc.setFillColor(...corPrimaria);
+      doc.rect(0, 0, 297, 25, 'F'); 
+
+      const img = new Image();
+      img.src = logoImg;
+      await new Promise((resolve) => {
+        img.onload = () => {
+          doc.addImage(img, 'PNG', 15, 6, 13, 13); 
+          resolve();
+        };
+      });
+
+      doc.setFontSize(16);
+      doc.setTextColor(255, 255, 255); 
+      doc.setFont("helvetica", "bold");
+      doc.text("QuadraLivre", 32, 15);
+
+      doc.setTextColor(...corPrimaria);
+      doc.setFontSize(14);
+      doc.text(`Relatório Semanal - ${nomeQuadra}`, 14, 33);
+      
       doc.setFontSize(10);
-      doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 22);
+      doc.setTextColor(100);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 38);
 
       const head = [['Hora', ...diasSemana]];
-
       const body = horarios.map(hora => {
         const linha = [hora];
-
         for (let i = 0; i < 7; i++) {
           const chave = `${i}-${hora}`;
           const agendamento = agenda.value[chave];
-
-          if (agendamento) {
-            linha.push(agendamento.time ? `${agendamento.time}` : agendamento.usuario);
-          } else {
-            linha.push('Disponível');
-          }
+          linha.push(agendamento ? (agendamento.time || agendamento.usuario) : 'Disponível');
         }
         return linha;
       });
@@ -183,10 +199,11 @@ export default {
       autoTable(doc, {
         head: head,
         body: body,
-        startY: 25,
+        startY: 43, 
         theme: 'grid',
+        margin: { top: 10, bottom: 10, left: 14, right: 14 },
         styles: { fontSize: 8, cellPadding: 2, halign: 'center', valign: 'middle' },
-        headStyles: { fillColor: [30, 58, 138], textColor: 255, fontStyle: 'bold' },
+        headStyles: { fillColor: corPrimaria, textColor: 255, fontStyle: 'bold' },
         alternateRowStyles: { fillColor: [245, 245, 245] },
         columnStyles: {
           0: { fontStyle: 'bold', cellWidth: 25 }

@@ -9,58 +9,42 @@
           Visualizar Horários
         </button>
       </div>
-      
+
       <div v-if="isLoading" class="loader-agendamento"></div>
 
       <div v-else>
-        <!-- Dropdown / Accordion -->
         <div class="accordion-agendamento" v-for="tipo in ['pendentes', 'confirmados', 'recusados']" :key="tipo">
           <div class="accordion-header-agendamento" @click="tipo !== 'pendentes' && toggleAccordion(tipo)">
             <h3>{{ tipo.charAt(0).toUpperCase() + tipo.slice(1) }}</h3>
             <span v-if="tipo !== 'pendentes'">{{ accordionAberto === tipo ? '▲' : '▼' }}</span>
           </div>
 
-          <div 
-            class="accordion-body-agendamento"
-            v-show="tipo === 'pendentes' || accordionAberto === tipo"
-            :class="{'scrollable': tipo === 'pendentes'}"
-          >
+          <div class="accordion-body-agendamento" v-show="tipo === 'pendentes' || accordionAberto === tipo"
+            :class="{ 'scrollable': tipo === 'pendentes' }">
             <div v-if="agendamentosPorTipo(tipo).length === 0" class="agendamento-card-agendamento nenhum">
-              {{ tipo === 'pendentes' ? 'No momento não há nenhum agendamento pendente.' 
-                : tipo === 'confirmados' ? 'Nenhum agendamento futuro confirmado.' 
-                : 'Nenhum agendamento recusado.' }}
+              {{ tipo === 'pendentes' ? 'No momento não há nenhum agendamento pendente.'
+                : tipo === 'confirmados' ? 'Nenhum agendamento futuro confirmado.'
+                  : 'Nenhum agendamento recusado.' }}
             </div>
 
             <div v-else class="agendamentos-agendamento">
-              <AgendamentoCard 
-                v-for="ag in agendamentosPorTipo(tipo)" 
-                :key="ag.id" 
-                :agendamento="normalizarAgendamento(ag)"
-                :loading="loadingCards.includes(ag.id)"
+              <AgendamentoCard v-for="ag in agendamentosPorTipo(tipo)" :key="ag.id"
+                :agendamento="normalizarAgendamento(ag)" :loading="loadingCards.includes(ag.id)"
                 :class="{ finalizado: ag.status === 'Finalizado' }"
-                @ver-horarios="() => abrirModal(ag.dia, ag.mes, ag.ano)" 
-                @confirmar="aceitarAgendamento(ag.id)"
-                @recusar="recusarAgendamento(ag.id)"
-              />
+                @ver-horarios="() => abrirModal(ag.dia, ag.mes, ag.ano)" @confirmar="aceitarAgendamento(ag.id)"
+                @recusar="abrirModalRecusa(ag.id)" />
             </div>
           </div>
         </div>
 
-        <!-- Modal de horários -->
-        <ListaAgendModal 
-          v-if="modalAberto && datasModal.length" 
-          :quadraId="quadraId" 
-          :datas="datasModal"
-          @fechar="modalAberto = false" 
-          @ver-detalhes="abrirModalDetalhes" 
-        />
+        <ListaAgendModal v-if="modalAberto && datasModal.length" :quadraId="quadraId" :datas="datasModal"
+          @fechar="modalAberto = false" @ver-detalhes="abrirModalDetalhes" />
 
-        <!-- Modal de detalhes -->
-        <DetalheAgendModal 
-          v-if="detalheAberto" 
-          :agendamento="agendamentoSelecionado"
-          @fechar="detalheAberto = false" 
-        />
+        <DetalheAgendModal v-if="detalheAberto" :agendamento="agendamentoSelecionado" @fechar="detalheAberto = false" />
+
+        <RecusarAgendModal v-if="modalRecusaAberto" :agendamentoId="idParaRecusar" :loading="isRecusando"
+          @fechar="modalRecusaAberto = false" @confirmar="processarRecusa" />
+
       </div>
     </div>
   </div>
@@ -72,6 +56,7 @@ import SideBar from "@/components/SideBar.vue";
 import AgendamentoCard from "@/components/cards/AgendamentoCard.vue";
 import ListaAgendModal from "@/components/modals/Agendamentos/ListaAgendModal.vue";
 import DetalheAgendModal from "@/components/modals/Agendamentos/DetalharAgendModal.vue";
+import RecusarAgendModal from "@/components/modals/Agendamentos/RecusarAgendModal.vue";
 import api from "@/axios";
 import Swal from "sweetalert2";
 
@@ -84,17 +69,20 @@ const quadraId = ref(null);
 const detalheAberto = ref(false);
 const agendamentoSelecionado = ref(null);
 
-// Accordion para pendentes, confirmados e recusados
+const modalRecusaAberto = ref(false);
+const idParaRecusar = ref(null);
+const isRecusando = ref(false);
+
 const accordionAberto = ref(null);
 const toggleAccordion = (tipo) => {
   accordionAberto.value = accordionAberto.value === tipo ? null : tipo;
 };
 
 const agendamentosPorTipo = (tipo) => {
-  const hoje = new Date(); hoje.setHours(0,0,0,0);
-  if(tipo === 'pendentes') return agendamentos.value.filter(a => a.status === "Pendente");
-  if(tipo === 'confirmados') return agendamentos.value.filter(a => a.status === "Confirmado" && new Date(a.ano, a.mes-1, a.dia).getTime() >= hoje.getTime());
-  if(tipo === 'recusados') return agendamentos.value.filter(a => a.status === "Recusado");
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  if (tipo === 'pendentes') return agendamentos.value.filter(a => a.status === "Pendente");
+  if (tipo === 'confirmados') return agendamentos.value.filter(a => a.status === "Confirmado" && new Date(a.ano, a.mes - 1, a.dia).getTime() >= hoje.getTime());
+  if (tipo === 'recusados') return agendamentos.value.filter(a => a.status === "Recusado");
   return [];
 };
 
@@ -102,6 +90,8 @@ const normalizarAgendamento = (ag) => ({
   ...ag,
   usuario: ag.usuario?.nome || 'Sem usuário',
   time: ag.time?.nome || 'Não especificado',
+  codigoVerificacao: ag.codigoVerificacao,
+  motivoRecusa: ag.motivoRecusa
 });
 
 const carregarAgendamentos = async () => {
@@ -138,20 +128,28 @@ const aceitarAgendamento = async (id) => {
   }
 };
 
-const recusarAgendamento = async (id) => {
-  if (loadingCards.value.includes(id)) return;
+const abrirModalRecusa = (id) => {
+  idParaRecusar.value = id;
+  modalRecusaAberto.value = true;
+};
+
+const processarRecusa = async ({ id, motivo }) => {
+  isRecusando.value = true;
   loadingCards.value.push(id);
 
   try {
-    await api.patch(`/agendamento/${id}/recusar`);
+    await api.patch(`/agendamento/${id}/recusar`, { motivoRecusa: motivo });
     agendamentos.value = agendamentos.value.map(a =>
-      a.id === id ? { ...a, status: "Recusado" } : a
+      a.id === id ? { ...a, status: "Recusado", motivoRecusa: motivo } : a
     );
-    Swal.fire("Sucesso", "Agendamento recusado!", "success");
+
+    modalRecusaAberto.value = false;
+    Swal.fire("Recusado", "O usuário será notificado do motivo.", "success");
   } catch (err) {
     console.error(err);
-    Swal.fire("Erro", "Não foi possível recusar o agendamento.", "error");
+    Swal.fire("Erro", "Falha ao recusar agendamento.", "error");
   } finally {
+    isRecusando.value = false;
     loadingCards.value = loadingCards.value.filter(item => item !== id);
   }
 };
@@ -190,9 +188,9 @@ onMounted(() => carregarAgendamentos());
 
 .conteudo-agendamento {
   flex: 1;
-  padding: 32px;      
+  padding: 32px;
   margin-left: 250px;
-  overflow-x: hidden; 
+  overflow-x: hidden;
 }
 
 .titulo-container-agendamento {
@@ -201,6 +199,7 @@ onMounted(() => carregarAgendamentos());
   justify-content: space-between;
   margin-bottom: 20px;
 }
+
 .titulo-agendamento {
   font-size: 30px;
   color: #3B82F6;
@@ -240,6 +239,7 @@ onMounted(() => carregarAgendamentos());
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -262,31 +262,38 @@ onMounted(() => carregarAgendamentos());
   font-weight: 400;
   color: #374151;
 }
+
 .accordion-header-agendamento:hover {
   background-color: #f3f4f6;
 }
+
 .accordion-header-agendamento h3 {
   font-size: 17px;
   font-weight: bold;
   margin: 0;
   color: #7E7E7E;
 }
+
 .accordion-body-agendamento {
   padding: 12px 16px;
   background-color: #fff;
 }
+
 .accordion-body-agendamento.scrollable {
   max-height: 500px;
   overflow-y: auto;
   padding-right: 8px;
 }
+
 .accordion-body-agendamento.scrollable::-webkit-scrollbar {
   width: 8px;
 }
+
 .accordion-body-agendamento.scrollable::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 8px;
 }
+
 .accordion-body-agendamento.scrollable::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
@@ -297,17 +304,19 @@ onMounted(() => carregarAgendamentos());
   margin-bottom: 12px;
   background-color: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 0.9rem;
 }
+
 .agendamento-card-agendamento.finalizado {
   background-color: #f3f4f6;
   border-left: 4px solid #6b7280;
   opacity: 0.8;
 }
+
 .agendamento-card-agendamento.nenhum {
   color: #7E7E7E;
   font-size: 1rem;
@@ -317,6 +326,7 @@ onMounted(() => carregarAgendamentos());
   justify-content: center;
   display: flex;
 }
+
 .agendamentos-agendamento {
   padding: 12px 0;
 }

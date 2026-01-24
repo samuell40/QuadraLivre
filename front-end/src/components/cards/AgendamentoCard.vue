@@ -11,8 +11,10 @@
     <p><strong>{{ formatarData(agendamento) }}</strong>, às <strong>{{ agendamento.hora }}:00</strong></p>
     <p>Duração: <strong>{{ agendamento.duracao }} hora(s)</strong></p>
     <p>Tipo: <strong>{{ agendamento.tipo }}</strong></p>
+    <p>
+      Código de Verificação: <strong class="codigo-texto">{{ agendamento.codigoVerificacao || 'N/A' }}</strong>
+    </p>
 
-    <!-- Loader do card -->
     <div v-if="loading" class="overlay-loader">
       <div class="loader"></div>
     </div>
@@ -23,9 +25,13 @@
       </div>
       <p v-else>Status: <strong>{{ agendamento.status }}</strong></p>
     </div>
+
+    <p v-if="(agendamento.status === 'Recusado' || agendamento.status === 'recusado') && agendamento.motivoRecusa"
+      class="motivo-recusa">
+      Motivo da recusa: <strong>{{ agendamento.motivoRecusa }}</strong>
+    </p>
   </div>
 </template>
-
 
 <script>
 export default {
@@ -37,7 +43,7 @@ export default {
   emits: ["confirmar", "recusar"],
   methods: {
     formatarData(ag) {
-      return `${String(ag.dia).padStart(2,'0')}/${String(ag.mes).padStart(2,'0')}/${ag.ano}`;
+      return `${String(ag.dia).padStart(2, '0')}/${String(ag.mes).padStart(2, '0')}/${ag.ano}`;
     },
     confirmar() {
       this.$emit("confirmar");
@@ -57,8 +63,9 @@ export default {
   margin-bottom: 12px;
   background-color: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   position: relative;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .header {
@@ -76,6 +83,17 @@ export default {
 p {
   color: #7E7E7E;
   margin: 4px 0;
+}
+
+.codigo-texto {
+  color: #1e3a8a;
+  letter-spacing: 1.5px;
+  font-weight: 800;
+}
+
+.motivo-recusa {
+  margin: 4px 0;
+  color: #7e7e7e;
 }
 
 .buttons {
@@ -113,7 +131,7 @@ button:last-child {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(255,255,255,0.7);
+  background-color: rgba(255, 255, 255, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -131,8 +149,13 @@ button:last-child {
 }
 
 @keyframes girar {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {
