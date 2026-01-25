@@ -1,27 +1,55 @@
 <template>
   <div class="placar">
-    <h2>{{ timeNome }}</h2>
+    <h2 class="nome-time">
+      <img v-if="timeData?.foto" :src="timeData.foto" alt="Escudo do time" class="foto-time" />
+      <span>{{ timeNome }}</span>
+    </h2>
 
+    <!-- SETS -->
     <div class="box">
       <p>Sets Vencidos</p>
       <div class="controls">
-        <button @click="decrement('setsVencidos')" :disabled="!temporizadorAtivo || localTime.wo === 1">−</button>
+        <button @click="decrementSet" :disabled="!temporizadorAtivo || partidaEncerrada">
+          −
+        </button>
 
-        <span>{{ localTime.setsVencidos }}</span>
+        <span class="valor">{{ localTime.setsVencidos }}</span>
 
-        <button @click="increment('setsVencidos')"
-          :disabled="!temporizadorAtivo || localTime.setsVencidos >= 3 || setsAdversario >= 3 || localTime.wo === 1">+</button>
+        <button @click="incrementSet" :disabled="!temporizadorAtivo || partidaEncerrada">
+          +
+        </button>
       </div>
     </div>
 
+    <!-- PONTOS -->
+    <div class="box">
+      <p>Pontos do Set</p>
+      <div class="controls">
+        <button @click="decrementPonto" :disabled="!temporizadorAtivo || partidaEncerrada">
+          −
+        </button>
+
+        <span class="valor">{{ localTime.pontosSet }}</span>
+
+        <button @click="incrementPonto" :disabled="!temporizadorAtivo || partidaEncerrada">
+          +
+        </button>
+      </div>
+    </div>
+
+    <!-- WO -->
     <div class="box">
       <p>W.O</p>
       <div class="controls">
-        <button @click="decrement('wo')" :disabled="!temporizadorAtivo || localTime.wo <= 0">−</button>
+        <button @click="decrementWO" :disabled="!temporizadorAtivo || localTime.wo <= 0">
+          −
+        </button>
 
-        <span>{{ localTime.wo }}</span>
+        <span class="valor">{{ localTime.wo }}</span>
 
-        <button @click="increment('wo')" :disabled="!temporizadorAtivo || localTime.wo >= 1">+</button>
+        <button @click="incrementWO" :disabled="!temporizadorAtivo || localTime.wo >= 1 || partidaEncerrada">
+          +
+        </button>
       </div>
     </div>
   </div>
@@ -119,9 +147,8 @@ export default {
 
 <style scoped>
 .placar {
-  flex: none;
-  width: 580px;
-  max-width: 100%;
+  width: 100%;
+  max-width: 580px;
   background: #fff;
   border-radius: 12px;
   padding: 30px;
@@ -130,22 +157,34 @@ export default {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   gap: 15px;
   margin: 0 auto;
 }
 
-.placar h2 {
+/* TOPO COM NOME + FOTO DO TIME (IGUAL FUTEBOL) */
+.nome-time {
   background: #f9f9f9;
   border-bottom: 1px solid #ddd;
-  padding: 10px;
-  margin: -30px -30px 20px -30px;
-  border-radius: 8px 8px 0 0;
+  padding: 12px;
   color: #3b82f6;
-  font-size: 20px;
   font-weight: bold;
+  font-size: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 2px solid #3b82f6;
 }
 
+.foto-time {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 50%;
+  background-color: #f1f5f9;
+}
+
+/* BOXES */
 .box {
   background: #fafafa;
   padding: 15px;
@@ -153,6 +192,7 @@ export default {
   border: 1px solid #eee;
 }
 
+/* CONTROLES */
 .controls {
   display: flex;
   align-items: center;
@@ -180,41 +220,35 @@ export default {
   flex-shrink: 0;
 }
 
-.controls button:hover {
-  opacity: 0.85;
-}
-
 .controls button:last-child {
   background-color: #3b82f6;
 }
 
-.btn-remove {
-  background-color: #3b82f6;
-  color: white;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  width: 100%;
-  margin-top: auto;
+.controls button:hover {
+  opacity: 0.85;
 }
 
+/* RESPONSIVO */
 @media (max-width: 768px) {
   .placar {
-    width: 100%;
     padding: 20px;
   }
 
-  .placar h2 {
-    font-size: 18px;
-    padding: 8px;
+  .nome-time {
+    font-size: 20px;
+    padding: 10px;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .foto-time {
+    width: 48px;
+    height: 48px;
   }
 
   .controls {
-    flex-direction: row;
-    justify-content: center;
-    gap: 20px;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .controls span {

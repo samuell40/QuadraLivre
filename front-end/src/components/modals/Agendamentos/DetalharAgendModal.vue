@@ -1,10 +1,10 @@
 <template>
   <div class="modal-overlay" @click.self="$emit('fechar')">
     <div class="modal-content">
-      <h2>Detalhes do Agendamento</h2>
+      <h2 class="titulo_h2">Detalhes do Agendamento</h2>
 
       <div class="detalhes-box">
-        <h3>{{ agendamento.tipo || 'Agendamento' }}</h3>
+        <h3 class="subtitulo_h3">{{ agendamento.tipo || 'Agendamento' }}</h3>
 
         <p><strong>Realizado por:</strong> {{ agendamento.usuario }}</p>
 
@@ -53,7 +53,7 @@ export default {
   padding: 2rem;
   border-radius: 12px;
   width: 100%;
-  max-width: 600px;
+  max-width: 900px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -65,7 +65,6 @@ export default {
   padding: 20px;
   margin-top: 12px;
   margin-bottom: 20px;
-  background-color: #f8fafc;
 }
 
 .detalhes-box p {
@@ -74,14 +73,16 @@ export default {
   color: #374151;
 }
 
-h2 {
+.titulo_h2 {
   color: #3B82F6;
+  font-size: 30px;
   margin-bottom: 1rem;
-  text-align: center;
+  text-align: left;
 }
 
-h3 {
-  color: #1e40af;
+.subtitulo_h3 {
+  color: #3B82F6;
+  font-size: 20px;
   margin-bottom: 15px;
   border-bottom: 1px solid #e2e8f0;
   padding-bottom: 5px;
