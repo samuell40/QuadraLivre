@@ -6,7 +6,7 @@
             <div class="header-gerenciar">
                 <h1 class="title">Gerenciar Quadras</h1>
                 <button class="btn-cadastrar-topo" @click="$router.push('/cadastrarquadra')">
-                    Cadastrar Quadra
+                    Adicionar Quadra
                 </button>
             </div>
 
@@ -264,16 +264,11 @@ export default {
 /* Estilo do novo botão de cadastro */
 .btn-cadastrar-topo {
     background-color: #3B82F6;
-    color: white;
+    padding: 8px 14px;
     border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: bold;
+    border-radius: 20px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    transition: background-color 0.2s;
-    font-family: 'Montserrat', sans-serif;
+    color: white;
 }
 
 .btn-cadastrar-topo:hover {

@@ -3,6 +3,7 @@
     <SideBar />
 
     <div class="conteudo">
+      <NavBarUser v-if="!partidaIniciada" />
       <div class="header">
         <h1 class="title">
           {{ partidaIniciada ? 'Partida ao Vivo' : 'Criar Partida' }}
@@ -102,20 +103,34 @@
             </select>
           </div>
         </div>
+        <div v-if="!partidaIniciada" class="continuar-container">
+          <button class="botao-continuar" :disabled="!podeContinuar" @click="abrirModalJogadores">
+            Continuar
+          </button>
+        </div>
+
       </div>
 
       <div class="placares" v-if="partidaIniciada">
-        <component :is="isVolei ? 'PlacarTimeVolei' : 'PlacarTime'"
+        <!-- TIME A -->
+        <component :is="isVolei ? 'PlacarTimeVolei' : 'PlacarTime'" :timeKey="isVolei ? 'A' : null"
           :timeNome="times.find(t => t.id === timeSelecionado1)?.nome || ''" :timeData="{
             ...times.find(t => t.id === timeSelecionado1),
             ...time1
-          }" :partida-id="partidaId" :temporizadorAtivo="temporizadorAtivo" @update="atualizarTime('time1', $event)" />
+          }" :partida-id="partidaId" :temporizadorAtivo="temporizadorAtivo"
+          :setsAdversario="isVolei ? time2.setsVencidos : 0" :pontosSetAdversario="isVolei ? time2.pontosSet : 0"
+          :woAdversario="isVolei && time2.wo ? 1 : 0" :partidaEncerradaGlobal="isVolei && partidaEncerradaVolei"
+          @update="atualizarTime('time1', $event)" />
 
-        <component :is="isVolei ? 'PlacarTimeVolei' : 'PlacarTime'"
+        <!-- TIME B -->
+        <component :is="isVolei ? 'PlacarTimeVolei' : 'PlacarTime'" :timeKey="isVolei ? 'B' : null"
           :timeNome="times.find(t => t.id === timeSelecionado2)?.nome || ''" :timeData="{
             ...times.find(t => t.id === timeSelecionado2),
             ...time2
-          }" :partida-id="partidaId" :temporizadorAtivo="temporizadorAtivo" @update="atualizarTime('time2', $event)" />
+          }" :partida-id="partidaId" :temporizadorAtivo="temporizadorAtivo"
+          :setsAdversario="isVolei ? time1.setsVencidos : 0" :pontosSetAdversario="isVolei ? time1.pontosSet : 0"
+          :woAdversario="isVolei && time1.wo ? 1 : 0" :partidaEncerradaGlobal="isVolei && partidaEncerradaVolei"
+          @update="atualizarTime('time2', $event)" />
       </div>
 
       <div v-if="partidaIniciada" class="finalizar-container">
@@ -124,9 +139,9 @@
           <span v-else>Finalizar Partida</span>
         </button>
       </div>
-      <SelecionarJogadores v-if="mostrarModalJogadores" :aberto="mostrarModalJogadores" :jogadoresTime1="jogadoresTime1"
-        :jogadoresTime2="jogadoresTime2" :time1Nome="nomeTime1" :time2Nome="nomeTime2" @confirmar="confirmarJogadores"
-        @fechar="mostrarModalJogadores = false" />
+      <SelecionarJogadores v-if="mostrarModalJogadores && regraModalidade.porTime > 0" :aberto="mostrarModalJogadores"
+        :jogadoresTime1="jogadoresTime1" :jogadoresTime2="jogadoresTime2" :time1Nome="nomeTime1" :time2Nome="nomeTime2"
+        :regra="regraModalidade" @confirmar="confirmarJogadores" @fechar="mostrarModalJogadores = false" />
 
     </div>
   </div>
@@ -134,6 +149,7 @@
 
 <script>
 import SideBar from '@/components/SideBar.vue'
+import NavBarUser from '@/components/NavBarUser.vue'
 import { useAuthStore } from '@/store'
 import SelecionarJogadores from '@/components/Partida/SelecionarJogadores.vue'
 import PlacarTime from '@/components/Partida/PlacarTimeFutebol.vue'
@@ -144,6 +160,7 @@ import Swal from 'sweetalert2'
 export default {
   components: {
     SideBar,
+    NavBarUser,
     SelecionarJogadores,
     PlacarTime,
     PlacarTimeVolei
@@ -156,28 +173,42 @@ export default {
       modalidadeSelecionada: '',
       timeSelecionado1: '',
       timeSelecionado2: '',
+
       campeonatosDisponiveis: [],
       quadrasDisponiveis: [],
       modalidadesDisponiveis: [],
       times: [],
+
+      // ⚽ FUTEBOL / FUTSAL / AREIA
       time1: {
         golspro: 0,
         faltas: 0,
         substituicoes: 0,
         cartaoamarelo: 0,
         cartaovermelho: 0,
-        wo: false
+        wo: false,
+        // VÔLEI
+        setsVencidos: 0,
+        pontosSet: 0,
+        setsJogados: []
       },
+
       time2: {
         golspro: 0,
         faltas: 0,
         substituicoes: 0,
         cartaoamarelo: 0,
         cartaovermelho: 0,
-        wo: false
+        wo: false,
+        // VÔLEI
+        setsVencidos: 0,
+        pontosSet: 0,
+        setsJogados: []
       },
+
       jogadoresTime1: [],
       jogadoresTime2: [],
+
       mostrarModalJogadores: false,
       partidaIniciada: false,
       temporizadorAtivo: false,
@@ -232,6 +263,52 @@ export default {
     nomeTime2() {
       return this.times.find(
         t => t.id === this.timeSelecionado2)?.nome
+    },
+    podeContinuar() {
+      return (
+        this.quadraSelecionada &&
+        this.modalidadeSelecionada &&
+        this.campeonatoSelecionado &&
+        this.timeSelecionado1 &&
+        this.timeSelecionado2
+      )
+    },
+    regraModalidade() {
+      const regras = {
+        futebol: { porTime: 11, total: 22 },
+        futsal: { porTime: 5, total: 10 },
+        'futebol de areia': { porTime: 5, total: 10 },
+        volei: { porTime: 6, total: 12 },
+        'vôlei': { porTime: 6, total: 12 },
+        'volei de areia': { porTime: 2, total: 4 },
+        futevolei: { porTime: 2, total: 4 }
+      }
+
+      const modalidade = this.modalidadesDisponiveis.find(
+        m => m.id === this.modalidadeSelecionada
+      )
+
+      if (!modalidade || !modalidade.nome) {
+        return { porTime: 0, total: 0 }
+      }
+
+      const nome = modalidade.nome.toLowerCase()
+
+      const regraEncontrada = Object.entries(regras).find(
+        ([key]) => nome.includes(key)
+      )
+
+      return regraEncontrada
+        ? regraEncontrada[1]
+        : { porTime: 0, total: 0 }
+    },
+    partidaEncerradaVolei() {
+      return (
+        this.time1.setsVencidos >= 3 ||
+        this.time2.setsVencidos >= 3 ||
+        this.time1.wo ||
+        this.time2.wo
+      )
     }
   },
 
@@ -395,22 +472,77 @@ export default {
       try {
         const isVolei = this.isVolei;
 
-        await api.put(`/partida/${this.partidaId}/parcial`, {
-          pontosTimeA: isVolei ? this.time1.setsVencidos : this.time1.golspro,
-          pontosTimeB: isVolei ? this.time2.setsVencidos : this.time2.golspro,
-          faltasTimeA: this.time1.faltas,
-          faltasTimeB: this.time2.faltas,
-          substituicoesTimeA: this.time1.substituicoes,
-          substituicoesTimeB: this.time2.substituicoes,
-          cartoesAmarelosTimeA: this.time1.cartaoamarelo,
-          cartoesAmarelosTimeB: this.time2.cartaoamarelo,
-          cartoesVermelhosTimeA: this.time1.cartaovermelho,
-          cartoesVermelhosTimeB: this.time2.cartaovermelho,
+        let payload = {
           tempoSegundos: this.tempoSegundos,
           woTimeA: !!this.time1.wo,
           woTimeB: !!this.time2.wo,
           emIntervalo: false
-        });
+        };
+
+        if (isVolei) {
+          const setsTimeA = Array.isArray(this.time1.setsJogados)
+            ? this.time1.setsJogados
+            : [];
+
+          const setsTimeB = Array.isArray(this.time2.setsJogados)
+            ? this.time2.setsJogados
+            : [];
+
+          // 🏐 UNIFICA OS SETS DE FORMA SEGURA
+          // 🏐 UNIFICA OS SETS DOS DOIS TIMES (A ∪ B)
+          const mapaSets = new Map();
+
+          // Time A
+          setsTimeA.forEach(set => {
+            mapaSets.set(set.numero, {
+              numero: set.numero,
+              pontosA: set.pontos,
+              pontosB: 0
+            });
+          });
+
+          // Time B
+          setsTimeB.forEach(set => {
+            if (mapaSets.has(set.numero)) {
+              mapaSets.get(set.numero).pontosB = set.pontos;
+            } else {
+              mapaSets.set(set.numero, {
+                numero: set.numero,
+                pontosA: 0,
+                pontosB: set.pontos
+              });
+            }
+          });
+
+          const setsUnificados = Array.from(mapaSets.values()).sort(
+            (a, b) => a.numero - b.numero
+          );
+
+          payload = {
+            ...payload,
+            pontosTimeA: this.time1.setsVencidos,
+            pontosTimeB: this.time2.setsVencidos,
+            sets: setsUnificados
+          };
+
+        } else {
+          // ⚽ FUTEBOL — 그대로
+          payload = {
+            ...payload,
+            pontosTimeA: this.time1.golspro,
+            pontosTimeB: this.time2.golspro,
+            faltasTimeA: this.time1.faltas,
+            faltasTimeB: this.time2.faltas,
+            substituicoesTimeA: this.time1.substituicoes,
+            substituicoesTimeB: this.time2.substituicoes,
+            cartoesAmarelosTimeA: this.time1.cartaoamarelo,
+            cartoesAmarelosTimeB: this.time2.cartaoamarelo,
+            cartoesVermelhosTimeA: this.time1.cartaovermelho,
+            cartoesVermelhosTimeB: this.time2.cartaovermelho
+          };
+        }
+
+        await api.put(`/partida/${this.partidaId}/parcial`, payload);
 
       } catch (err) {
         console.error("Erro ao atualizar parcial:", err);
@@ -418,10 +550,16 @@ export default {
       }
     },
 
-    atualizarTime(time, novoTime) {
-      this[time] = { ...novoTime };
-      this.atualizarParcial();
-    },
+   atualizarTime(time, novoTime) {
+  this[time] = {
+    ...this[time],   // mantém o que já existe
+    ...novoTime      // atualiza só o que mudou
+  };
+
+  if (this.partidaEncerradaVolei) return;
+
+  this.atualizarParcial();
+},
 
     iniciarTemporizador() {
       if (this.intervaloTimer) return
@@ -541,6 +679,9 @@ export default {
         this.$router.push('/gerenciar-partidas')
       }
     },
+    abrirModalJogadores() {
+      this.mostrarModalJogadores = true
+    },
 
     limparDados() {
       this.quadraSelecionada = ''
@@ -553,23 +694,29 @@ export default {
       this.campeonatosDisponiveis = []
       this.jogadoresTime1 = []
       this.jogadoresTime2 = []
-      this.time1 = {
-        golspro: 0,
-        faltas: 0,
-        substituicoes: 0,
-        cartaoamarelo: 0,
-        cartaovermelho: 0,
-        wo: false
-      }
+   this.time1 = {
+  golspro: 0,
+  faltas: 0,
+  substituicoes: 0,
+  cartaoamarelo: 0,
+  cartaovermelho: 0,
+  wo: false,
+  setsVencidos: 0,
+  pontosSet: 0,
+  setsJogados: []
+};
 
-      this.time2 = {
-        golspro: 0,
-        faltas: 0,
-        substituicoes: 0,
-        cartaoamarelo: 0,
-        cartaovermelho: 0,
-        wo: false
-      }
+this.time2 = {
+  golspro: 0,
+  faltas: 0,
+  substituicoes: 0,
+  cartaoamarelo: 0,
+  cartaovermelho: 0,
+  wo: false,
+  setsVencidos: 0,
+  pontosSet: 0,
+  setsJogados: []
+};
     }
   }
 }
@@ -697,9 +844,9 @@ export default {
   gap: 30px;
   margin-top: 30px;
   justify-content: center;
-  border: 2px solid #3b82f6; /* azul */
-  border-radius: 12px;       /* cantos arredondados */
-  padding: 5px;             /* espaço interno */
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  padding: 5px;
 }
 
 .dropdowns {
@@ -747,6 +894,28 @@ export default {
   padding-top: 30px;
   margin: 0;
   width: 100%;
+}
+
+.continuar-container {
+  width: 100%;
+  margin-top: 24px;
+}
+
+.botao-continuar {
+  width: 100%;
+  padding: 16px;
+  font-size: 18px;
+  font-weight: bold;
+  background-color: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.botao-continuar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .botao-finalizar {

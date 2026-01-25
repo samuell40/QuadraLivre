@@ -35,19 +35,18 @@
       <!-- Área do placar -->
       <div class="placar-table">
         <!-- Loader -->
-        <div v-if="modalidadePlacarSelecionada && timesPlacar === null" class="loader-container-centralizado">
+        <div v-if="modalidadeSelecionada && timesPlacar === null" class="loader-container-centralizado">
           <div class="loader"></div>
         </div>
+
         <div v-else-if="Array.isArray(timesPlacar) && timesPlacar.length === 0" class="sem-dados-centralizado">
           Nenhum placar encontrado para essa modalidade.
         </div>
 
-
         <!-- Futebol / Futsal -->
         <table v-else-if="
-          modalidadePlacarSelecionada &&
           ['futebol', 'futebol de areia', 'futsal']
-            .includes(modalidadePlacarSelecionada.nome)
+            .includes(modalidadeNormalizada)
         " class="placar">
           <thead>
             <tr>
@@ -84,9 +83,8 @@
 
         <!-- Vôlei / Futevôlei -->
         <table v-else-if="
-          modalidadePlacarSelecionada &&
           ['volei', 'volei de areia', 'futevolei']
-            .includes(modalidadePlacarSelecionada.nome)
+            .includes(modalidadeNormalizada)
         " class="placar">
           <thead>
             <tr>
@@ -116,11 +114,12 @@
               <td>{{ time.vitorias }}</td>
               <td>{{ time.derrotas }}</td>
               <td>{{ time.setsVencidos }}</td>
-              <td>{{ time.vitoria2x0 }}</td>
-              <td>{{ time.vitoria2x1 }}</td>
-              <td>{{ time.derrota2x1 }}</td>
-              <td>{{ time.derrota2x0 }}</td>
+              <td>{{ time.vitoria3x0 }}</td>
+              <td>{{ time.vitoria3x2 }}</td>
+              <td>{{ time.derrota2x3 }}</td>
+              <td>{{ time.derrota0x3 }}</td>
               <td>{{ time.derrotaWo }}</td>
+
             </tr>
           </tbody>
         </table>
@@ -148,44 +147,49 @@ export default {
   },
 
   computed: {
-    modalidadePlacarSelecionada() {
-      return this.modalidadeSelecionada
+    // 🔥 NORMALIZA NOME DA MODALIDADE (remove acentos)
+    modalidadeNormalizada() {
+      if (!this.modalidadeSelecionada?.nome) return ''
+
+      return this.modalidadeSelecionada.nome
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
     }
   },
+
   mounted() {
     this.inicializarPlacar()
   },
 
   methods: {
     async inicializarPlacar() {
-      // 1. Carregar modalidades
-      const { data: modalidades } = await axios.get('/listar/modalidade')
-      this.modalidadesDisponiveis = modalidades
+      const { data } = await axios.get('/listar/modalidade')
+      this.modalidadesDisponiveis = data
 
-      // 2. Selecionar automaticamente a modalidade "futebol" (ou similar)
       const futebol = this.modalidadesDisponiveis.find(mod =>
-        ['futebol', 'futebol de areia'].includes(mod.nome.toLowerCase())
+        ['futebol', 'futebol de areia']
+          .includes(
+            mod.nome
+              .toLowerCase()
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+          )
       )
+
       if (futebol) {
         this.modalidadeSelecionada = futebol
-
-        // 3. Carregar campeonatos da modalidade selecionada
         await this.carregarCampeonatos()
 
-        // 4. Selecionar o campeonato mais recente (assumindo que o retorno já vem ordenado)
-        if (this.campeonatosDisponiveis.length > 0) {
+        if (this.campeonatosDisponiveis.length) {
           this.campeonatoSelecionado =
-            this.campeonatosDisponiveis[this.campeonatosDisponiveis.length - 1]
+            this.campeonatosDisponiveis[
+            this.campeonatosDisponiveis.length - 1
+            ]
 
-          // 5. Carregar o placar do campeonato selecionado
           await this.carregarPlacar()
         }
       }
-    },
-
-    async carregarModalidades() {
-      const { data } = await axios.get('/listar/modalidade')
-      this.modalidadesDisponiveis = data
     },
 
     async carregarCampeonatos() {
@@ -195,7 +199,10 @@ export default {
       this.campeonatoSelecionado = null
       this.timesPlacar = []
 
-      const { data } = await axios.get(`/listar/${this.modalidadeSelecionada.id}`)
+      const { data } = await axios.get(
+        `/listar/${this.modalidadeSelecionada.id}`
+      )
+
       this.campeonatosDisponiveis = data
     },
 
@@ -203,13 +210,16 @@ export default {
       if (!this.campeonatoSelecionado?.id) return
 
       this.timesPlacar = []
-      const { data } = await axios.get( `/placar/campeonato/${this.campeonatoSelecionado.id}`)
+
+      const { data } = await axios.get(
+        `/placar/campeonato/${this.campeonatoSelecionado.id}`
+      )
+
       this.timesPlacar = Array.isArray(data.placares)
         ? data.placares
         : []
     }
   }
-
 }
 </script>
 

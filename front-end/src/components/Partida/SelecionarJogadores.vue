@@ -4,11 +4,12 @@
       <h2>Selecione os Jogadores</h2>
 
       <div class="colunas">
+        <!-- TIME 1 -->
         <div class="coluna">
           <h3>{{ time1Nome }}</h3>
 
           <div class="contador">
-            Selecionados: {{ selecionadosTime1.length }} / 11
+            Selecionados: {{ selecionadosTime1.length }} / {{ regra.porTime }}
           </div>
 
           <div v-for="(jogadores, funcao) in jogadoresPorFuncaoTime1" :key="funcao">
@@ -16,8 +17,9 @@
 
             <div v-for="j in jogadores" :key="j.id" class="jogador-card">
               <label class="jogador-label">
-                <input type="checkbox" v-model="selecionadosTime1" :value="j.id"
-                  :disabled="selecionadosTime1.length >= 11 && !selecionadosTime1.includes(j.id)" />
+                <input type="checkbox" v-model="selecionadosTime1" :value="j.id" :disabled="selecionadosTime1.length >= regra.porTime &&
+                  !selecionadosTime1.includes(j.id)
+                  " />
 
                 <div class="jogador-info">
                   <img :src="j.foto" alt="Foto" class="foto-jogador" />
@@ -30,11 +32,12 @@
           </div>
         </div>
 
+        <!-- TIME 2 -->
         <div class="coluna">
           <h3>{{ time2Nome }}</h3>
 
           <div class="contador">
-            Selecionados: {{ selecionadosTime2.length }} / 11
+            Selecionados: {{ selecionadosTime2.length }} / {{ regra.porTime }}
           </div>
 
           <div v-for="(jogadores, funcao) in jogadoresPorFuncaoTime2" :key="funcao">
@@ -42,8 +45,9 @@
 
             <div v-for="j in jogadores" :key="j.id" class="jogador-card">
               <label class="jogador-label">
-                <input type="checkbox" v-model="selecionadosTime2" :value="j.id"
-                  :disabled="selecionadosTime2.length >= 11 && !selecionadosTime2.includes(j.id)" />
+                <input type="checkbox" v-model="selecionadosTime2" :value="j.id" :disabled="selecionadosTime2.length >= regra.porTime &&
+                  !selecionadosTime2.includes(j.id)
+                  " />
 
                 <div class="jogador-info">
                   <img :src="j.foto" alt="Foto" class="foto-jogador" />
@@ -72,17 +76,29 @@ import Swal from 'sweetalert2'
 export default {
   props: {
     aberto: Boolean,
-    jogadoresTime1: Array,
-    jogadoresTime2: Array,
+    jogadoresTime1: {
+      type: Array,
+      default: () => []
+    },
+    jogadoresTime2: {
+      type: Array,
+      default: () => []
+    },
     time1Nome: String,
-    time2Nome: String
+    time2Nome: String,
+    regra: {
+      type: Object,
+      required: true // { porTime, total }
+    }
   },
+
   data() {
     return {
       selecionadosTime1: [],
       selecionadosTime2: []
     }
   },
+
   watch: {
     aberto(valor) {
       if (valor) {
@@ -91,6 +107,7 @@ export default {
       }
     }
   },
+
   computed: {
     jogadoresPorFuncaoTime1() {
       return this.agruparPorFuncao(this.jogadoresTime1)
@@ -99,6 +116,7 @@ export default {
       return this.agruparPorFuncao(this.jogadoresTime2)
     }
   },
+
   methods: {
     agruparPorFuncao(jogadores) {
       return jogadores.reduce((acc, jogador) => {
@@ -112,16 +130,30 @@ export default {
         return acc
       }, {})
     },
+
     confirmar() {
+      if (
+        this.selecionadosTime1.length !== this.regra.porTime ||
+        this.selecionadosTime2.length !== this.regra.porTime
+      ) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Número inválido de jogadores',
+          text: `Cada time deve ter exatamente ${this.regra.porTime} jogadores.`,
+          confirmButtonColor: '#3b82f6'
+        })
+        return
+      }
+
       const totalJogadores =
         this.selecionadosTime1.length +
         this.selecionadosTime2.length
 
-      if (totalJogadores !== 22) {
+      if (totalJogadores !== this.regra.total) {
         Swal.fire({
           icon: 'warning',
-          title: 'Numero de Jogadores Insuficientes',
-          text: 'Cada time deve ter exatamente 11 jogadores para iniciar a partida.',
+          title: 'Quantidade total incorreta',
+          text: `A partida deve ter exatamente ${this.regra.total} jogadores.`,
           confirmButtonColor: '#3b82f6'
         })
         return
