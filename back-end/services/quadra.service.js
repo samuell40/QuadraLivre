@@ -57,4 +57,29 @@ async function listarTodasQuadras(modalidadeId) {
   })
 }
 
-module.exports = { criarQuadra, listarTodasQuadras, listarQuadrasPorModalidade };
+async function atualizarQuadra(id, dados) {
+  const { nome, endereco, foto, interditada, modalidades } = dados;
+
+  const quadraId = Number(id);
+  if (isNaN(quadraId)) throw new Error("ID da quadra inválido.");
+
+  return prisma.quadra.update({
+    where: { id: quadraId },
+    data: {
+      nome,
+      endereco,
+      foto,
+      interditada,
+      ...(modalidades && {
+        modalidades: {
+          set: modalidades.map(m => ({ id: Number(m.id || m) }))
+        }
+      })
+    },
+    include: {
+      modalidades: true
+    }
+  });
+}
+
+module.exports = { criarQuadra, listarTodasQuadras, listarQuadrasPorModalidade, atualizarQuadra };

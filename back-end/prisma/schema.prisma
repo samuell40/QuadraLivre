@@ -42,6 +42,7 @@ model Quadra {
   nome         String
   foto         String?       @db.VarChar(2048)
   endereco     String?
+  interditada  Boolean       @default(false)
   usuarios     Usuario[]
   modalidades  Modalidade[]  @relation("QuadraModalidade")
   agendamentos Agendamento[]

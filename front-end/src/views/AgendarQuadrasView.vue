@@ -14,14 +14,14 @@
 
         <div class="aviso-content-col">
           <div class="aviso-quadra-tag">
-            {{ avisoDestaque.quadra?.nome || ' EQUIPE QUADRA LIVRE ' }}
+            {{ avisoDestaque.quadra?.nome || ' INFORMAÇÃO GERAL ' }}
           </div>
           <h4 class="aviso-titulo">{{ avisoDestaque.titulo }}</h4>
           <p class="aviso-descricao">
             {{ avisoDestaque.descricao }}
           </p>
           <div class="btn-ler-container">
-            <span class="btn-ler" @click="marcarLido" role="button">Marcar como lido</span>
+            <span class="btn-ler" @click="marcarLido" role="button">Confirmar leitura</span>
           </div>
         </div>
       </div>
@@ -35,17 +35,25 @@
 
     <div v-else>
       <div v-if="quadras.length === 0" class="mensagem-nenhuma-quadra">
-        <p>Nenhuma quadra encontrada.</p>
+        <p>Nenhuma unidade disponível para agendamento.</p>
       </div>
 
       <div v-else class="quadras-grid">
-        <div class="card-quadra" v-for="quadra in quadras" :key="quadra.id">
+        <div class="card-quadra" v-for="quadra in quadras" :key="quadra.id"
+          :class="{ 'is-interditada': quadra.interditada }">
+          <div v-if="quadra.interditada" class="badge-interditada-overlay">
+            INTERDITADA
+          </div>
+
           <img :src="quadra.foto || require('@/assets/futibinha.png')" :alt="quadra.nome" class="imagem-quadra" />
+
           <div class="overlay">
             <h3 class="nome-quadra">{{ quadra.nome }}</h3>
             <h3 class="endereco">{{ quadra.endereco }}</h3>
-            <button class="btn-agendar" @click="abrirAgendamentoDireto(quadra)">
-              Agendar
+
+            <button class="btn-agendar" :disabled="quadra.interditada"
+              @click="!quadra.interditada && abrirAgendamentoDireto(quadra)">
+              {{ quadra.interditada ? 'Indisponível' : 'Agendar' }}
             </button>
           </div>
         </div>
@@ -297,7 +305,7 @@ body {
 
 .container {
   font-family: "Montserrat", sans-serif;
-  background-color: #f9f9f9;
+  background-color: #F7F9FC;
   min-height: 100vh;
   width: 100%;
   max-width: none;
@@ -316,15 +324,8 @@ body {
 }
 
 @keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .aviso-body {
@@ -374,7 +375,7 @@ body {
 }
 
 .aviso-descricao {
-  color: #1e3a8a;
+  color: #1E3A8A;
   font-size: 14px;
   margin: 0 0 8px 0;
   line-height: 1.5;
@@ -421,7 +422,6 @@ body {
 .card-quadra {
   position: relative;
   width: 100%;
-  max-width: none;
   height: 240px;
   border-radius: 12px;
   overflow: hidden;
@@ -429,7 +429,7 @@ body {
   transition: transform 0.2s ease-in-out;
 }
 
-.card-quadra:hover {
+.card-quadra:hover:not(.is-interditada) {
   transform: translateY(-5px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
@@ -438,6 +438,26 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: filter 0.3s ease;
+}
+
+.card-quadra.is-interditada .imagem-quadra {
+  filter: grayscale(100%) brightness(1.1) opacity(0.6);
+}
+
+.badge-interditada-overlay {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  color: #FFFFFF;
+  font-weight: 900;
+  font-size: 32px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  pointer-events: none;
+  text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 .overlay {
@@ -463,12 +483,12 @@ body {
   font-size: 14px;
   margin: 0;
   line-height: 1.3;
-  color: #e0e0e0;
+  color: #E0E0E0;
   font-weight: 500;
 }
 
 .btn-agendar {
-  background-color: #3b82f6;
+  background-color: #3B82F6;
   color: white;
   border: none;
   padding: 8px 20px;
@@ -484,13 +504,20 @@ body {
   letter-spacing: 0.5px;
 }
 
-.btn-agendar:hover {
-  background-color: #2563eb;
+.btn-agendar:hover:not(:disabled) {
+  background-color: #1E3A8A;
+}
+
+.btn-agendar:disabled {
+  background-color: #D9D9D9;
+  color: #7E7E7E;
+  cursor: not-allowed;
+  opacity: 0.8;
 }
 
 .loader {
-  border: 6px solid #f3f3f3;
-  border-top: 6px solid #3b82f6;
+  border: 6px solid #F3F3F3;
+  border-top: 6px solid #3B82F6;
   border-radius: 50%;
   width: 100px;
   height: 100px;
@@ -507,13 +534,8 @@ body {
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 @media (max-width: 900px) {
@@ -527,6 +549,10 @@ body {
 
   .card-quadra {
     height: 220px;
+  }
+
+  .badge-interditada-overlay {
+    font-size: 24px;
   }
 }
 </style>

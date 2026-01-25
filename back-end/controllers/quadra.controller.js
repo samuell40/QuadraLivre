@@ -42,5 +42,21 @@ async function listarQuadrasPorModalidadeController(req, res) {
   }
 }
 
+async function atualizarQuadraController(req, res) {
+  const { id } = req.params;
+  const dados = req.body;
 
-module.exports = { adicionarQuadra, listarTodasQuadrasController, listarQuadrasPorModalidadeController };
+  try {
+    const quadraAtualizada = await quadraService.atualizarQuadra(id, dados);
+    return res.status(200).json(quadraAtualizada);
+  } catch (error) {
+    console.error('ERRO:', error); 
+    
+    return res.status(500).json({ 
+      error: 'Erro interno ao atualizar quadra',
+      detalhe: error.message
+    });
+  }
+}
+
+module.exports = { adicionarQuadra, listarTodasQuadrasController, listarQuadrasPorModalidadeController, atualizarQuadraController };

@@ -5,6 +5,7 @@ import AgendamentosView from '../views/AgendamentosView.vue';
 import NaoAutorizado from '@/views/NaoAutorizado.vue';
 import CadastroView from '../views/CadastroView.vue';
 import CadastrarQuadraView from '../views/CadastrarQuadraView.vue';
+import GerenciarQuadrasView from '@/views/GerenciarQuadrasView.vue';
 import VisualizarPlacarView from '@/views/VisualizarPlacarView.vue';
 import GerenciarPartidaView from '@/views/GerenciarPartidaView.vue';
 import UsuariosView from '../views/UsuariosView';
@@ -65,6 +66,12 @@ const routes = [
     path: '/cadastrarquadra',
     name: 'cadastrar_quadra',
     component: CadastrarQuadraView,
+    meta: { requiresAuth: true, roles: [1, 2] },
+  },
+  {
+    path: '/gerenciarquadras',
+    name: 'gerenciar_quadras',
+    component: GerenciarQuadrasView,
     meta: { requiresAuth: true, roles: [1, 2] },
   },
   {
