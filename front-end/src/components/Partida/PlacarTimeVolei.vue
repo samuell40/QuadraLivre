@@ -9,13 +9,13 @@
     <div class="box">
       <p>Sets Vencidos</p>
       <div class="controls">
-        <button @click="decrementSet" :disabled="!temporizadorAtivo || partidaEncerrada">
+        <button @click="decrement('setsVencidos')" :disabled="!temporizadorAtivo || !podeDiminuirSets">
           −
         </button>
 
         <span class="valor">{{ localTime.setsVencidos }}</span>
 
-        <button @click="incrementSet" :disabled="!temporizadorAtivo || partidaEncerrada">
+        <button @click="increment('setsVencidos')" :disabled="!temporizadorAtivo || partidaEncerradaGlobal">
           +
         </button>
       </div>
@@ -25,13 +25,13 @@
     <div class="box">
       <p>Pontos do Set</p>
       <div class="controls">
-        <button @click="decrementPonto" :disabled="!temporizadorAtivo || partidaEncerrada">
+        <button @click="decrement('pontosSet')" :disabled="!temporizadorAtivo || partidaEncerradaGlobal">
           −
         </button>
 
         <span class="valor">{{ localTime.pontosSet }}</span>
 
-        <button @click="incrementPonto" :disabled="!temporizadorAtivo || partidaEncerrada">
+        <button @click="increment('pontosSet')" :disabled="!temporizadorAtivo || partidaEncerradaGlobal">
           +
         </button>
       </div>
@@ -41,13 +41,13 @@
     <div class="box">
       <p>W.O</p>
       <div class="controls">
-        <button @click="decrementWO" :disabled="!temporizadorAtivo || localTime.wo <= 0">
+        <button @click="decrement('wo')" :disabled="!temporizadorAtivo || localTime.wo <= 0">
           −
         </button>
 
         <span class="valor">{{ localTime.wo }}</span>
 
-        <button @click="incrementWO" :disabled="!temporizadorAtivo || localTime.wo >= 1 || partidaEncerrada">
+        <button @click="increment('wo')" :disabled="!temporizadorAtivo || localTime.wo >= 1 || partidaEncerradaGlobal">
           +
         </button>
       </div>
@@ -60,52 +60,130 @@ import api from '@/axios'
 
 export default {
   name: 'PlacarTimeVolei',
+
   props: {
+    timeKey: { type: String, required: true },
     timeNome: { type: String, default: 'Time' },
     timeData: { type: Object, required: true },
     partidaId: { type: [String, Number], required: true },
     setsAdversario: { type: Number, default: 0 },
     temporizadorAtivo: { type: Boolean, default: false },
-    woAdversario: { type: Number, default: 0 }
+    woAdversario: { type: Number, default: 0 },
+    partidaEncerradaGlobal: { type: Boolean, default: false }
   },
-  data() {
-    const wo = this.timeData.wo !== undefined
-      ? this.timeData.wo
-      : 0
 
+  data() {
     return {
       localTime: {
         setsVencidos: this.timeData.setsVencidos || 0,
-        wo,
-        ...this.timeData
+        pontosSet: this.timeData.pontosSet || 0,
+        wo: this.timeData.wo ? 1 : 0,
+        setsJogados: Array.isArray(this.timeData.setsJogados)
+          ? [...this.timeData.setsJogados]
+          : []
       }
     }
   },
+
+  computed: {
+    podeDiminuirSets() {
+      if (this.localTime.setsVencidos < 3 && this.setsAdversario < 3) {
+        return true
+      }
+      return this.localTime.setsVencidos === 3
+    },
+
+    limitePontosSet() {
+      const totalSets = this.localTime.setsVencidos + this.setsAdversario
+      return totalSets === 4 ? 15 : 25
+    },
+
+    podeDiminuirPontos() {
+      return this.localTime.pontosSet > 0
+    }
+  },
+
   watch: {
     timeData: {
       handler(newVal) {
-        const wo = newVal.wo !== undefined ? newVal.wo : 0
-        this.localTime = {
-          setsVencidos: newVal.setsVencidos || 0,
-          wo,
-          ...newVal
-        }
+        this.localTime.setsVencidos = newVal.setsVencidos || 0
+        this.localTime.pontosSet = newVal.pontosSet || 0
+        this.localTime.wo = newVal.wo ? 1 : 0
+        this.localTime.setsJogados = Array.isArray(newVal.setsJogados)
+          ? [...newVal.setsJogados]
+          : []
       },
       deep: true,
       immediate: true
     }
   },
+
   methods: {
+    verificarFechamentoSet() {
+      if (
+        this.localTime.pontosSet >= this.limitePontosSet &&
+        this.localTime.setsVencidos < 3 &&
+        this.localTime.wo === 0
+      ) {
+        const numeroSet = this.localTime.setsVencidos + 1
+
+        this.localTime.setsJogados.push({
+          numero: numeroSet,
+          pontos: this.localTime.pontosSet,
+          time: this.timeKey
+        })
+
+        this.localTime.setsVencidos++
+        this.localTime.pontosSet = 0
+      }
+    },
+
     increment(campo) {
+      // 🏐 SE O ADVERSÁRIO DEU WO, ESTE TIME GANHA 3 SETS AUTOMATICAMENTE
+      if (this.woAdversario === 1 && this.localTime.wo === 0) {
+        this.localTime.setsVencidos = 3
+        this.localTime.pontosSet = 0
+        this.localTime.setsJogados = []
+
+        this.emitUpdate()
+        return
+      }
+
       if (campo === 'setsVencidos') {
-        if (this.localTime.wo === 0 && this.woAdversario === 0 && this.localTime.setsVencidos < 3 && this.setsAdversario < 3) {
+        if (
+          this.localTime.wo === 0 &&
+          this.woAdversario === 0 &&
+          this.localTime.setsVencidos < 3 &&
+          this.setsAdversario < 3
+        ) {
           this.localTime.setsVencidos++
         }
+
+      } else if (campo === 'pontosSet') {
+        if (
+          this.localTime.setsVencidos < 3 &&
+          this.setsAdversario < 3 &&
+          this.localTime.wo === 0 &&
+          this.woAdversario === 0
+        ) {
+          this.localTime.pontosSet++
+          this.verificarFechamentoSet()
+        }
+
       } else if (campo === 'wo') {
         if (this.localTime.wo < 1) {
           this.localTime.wo = 1
+
+          // ❌ Time perdeu por WO → zera tudo
           this.localTime.setsVencidos = 0
+          this.localTime.pontosSet = 0
+          this.localTime.setsJogados = []
+
+          this.emitUpdate()
+          this.$emit('wo')
+          return
         }
+
       } else {
         this.localTime[campo]++
       }
@@ -114,16 +192,36 @@ export default {
     },
 
     decrement(campo) {
+      // ⛔ não deixa mexer se o adversário venceu por WO
+      if (this.woAdversario === 1) return
+
+      if (campo === 'setsVencidos' && !this.podeDiminuirSets) return
+      if (campo === 'pontosSet' && !this.podeDiminuirPontos) return
+
       if (this.localTime[campo] > 0) {
         this.localTime[campo]--
-        if (campo === 'wo' && this.localTime.wo === 0) this.localTime.setsVencidos = 0
+
+        if (campo === 'wo' && this.localTime.wo === 0) {
+          this.localTime.setsVencidos = 0
+          this.localTime.pontosSet = 0
+          this.localTime.setsJogados = []
+
+          this.emitUpdate()
+          this.$emit('wo-removido')
+          return
+        }
       }
 
       this.emitUpdate()
     },
-
+    
     emitUpdate() {
-      this.$emit('update', { ...this.localTime })
+      this.$emit('update', {
+        setsVencidos: this.localTime.setsVencidos,
+        pontosSet: this.localTime.pontosSet,
+        wo: this.localTime.wo,
+        setsJogados: this.localTime.setsJogados
+      })
     },
 
     async salvarPlacar() {
@@ -138,7 +236,7 @@ export default {
           woTimeB: this.$parent.time2?.wo === 1
         })
       } catch (e) {
-        console.error("Erro ao atualizar no backend:", e)
+        console.error('Erro ao atualizar no backend:', e)
       }
     }
   }
@@ -161,7 +259,6 @@ export default {
   margin: 0 auto;
 }
 
-/* TOPO COM NOME + FOTO DO TIME (IGUAL FUTEBOL) */
 .nome-time {
   background: #f9f9f9;
   border-bottom: 1px solid #ddd;
@@ -184,7 +281,6 @@ export default {
   background-color: #f1f5f9;
 }
 
-/* BOXES */
 .box {
   background: #fafafa;
   padding: 15px;
@@ -192,7 +288,6 @@ export default {
   border: 1px solid #eee;
 }
 
-/* CONTROLES */
 .controls {
   display: flex;
   align-items: center;
@@ -228,7 +323,6 @@ export default {
   opacity: 0.85;
 }
 
-/* RESPONSIVO */
 @media (max-width: 768px) {
   .placar {
     padding: 20px;

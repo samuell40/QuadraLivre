@@ -178,8 +178,6 @@ export default {
       quadrasDisponiveis: [],
       modalidadesDisponiveis: [],
       times: [],
-
-      // ⚽ FUTEBOL / FUTSAL / AREIA
       time1: {
         golspro: 0,
         faltas: 0,
@@ -187,12 +185,10 @@ export default {
         cartaoamarelo: 0,
         cartaovermelho: 0,
         wo: false,
-        // VÔLEI
         setsVencidos: 0,
         pontosSet: 0,
         setsJogados: []
       },
-
       time2: {
         golspro: 0,
         faltas: 0,
@@ -200,15 +196,12 @@ export default {
         cartaoamarelo: 0,
         cartaovermelho: 0,
         wo: false,
-        // VÔLEI
         setsVencidos: 0,
         pontosSet: 0,
         setsJogados: []
       },
-
       jogadoresTime1: [],
       jogadoresTime2: [],
-
       mostrarModalJogadores: false,
       partidaIniciada: false,
       temporizadorAtivo: false,
@@ -465,101 +458,32 @@ export default {
       }
 
     },
+    atualizarTime(time, novoTime) {
+      for (const chave in novoTime) {
+        this[time][chave] = novoTime[chave];
+      }
 
-    async atualizarParcial() {
-      if (!this.partidaId) return;
-
-      try {
-        const isVolei = this.isVolei;
-
-        let payload = {
-          tempoSegundos: this.tempoSegundos,
-          woTimeA: !!this.time1.wo,
-          woTimeB: !!this.time2.wo,
-          emIntervalo: false
-        };
-
-        if (isVolei) {
-          const setsTimeA = Array.isArray(this.time1.setsJogados)
-            ? this.time1.setsJogados
-            : [];
-
-          const setsTimeB = Array.isArray(this.time2.setsJogados)
-            ? this.time2.setsJogados
-            : [];
-
-          // 🏐 UNIFICA OS SETS DE FORMA SEGURA
-          // 🏐 UNIFICA OS SETS DOS DOIS TIMES (A ∪ B)
-          const mapaSets = new Map();
-
-          // Time A
-          setsTimeA.forEach(set => {
-            mapaSets.set(set.numero, {
-              numero: set.numero,
-              pontosA: set.pontos,
-              pontosB: 0
-            });
-          });
-
-          // Time B
-          setsTimeB.forEach(set => {
-            if (mapaSets.has(set.numero)) {
-              mapaSets.get(set.numero).pontosB = set.pontos;
-            } else {
-              mapaSets.set(set.numero, {
-                numero: set.numero,
-                pontosA: 0,
-                pontosB: set.pontos
-              });
-            }
-          });
-
-          const setsUnificados = Array.from(mapaSets.values()).sort(
-            (a, b) => a.numero - b.numero
-          );
-
-          payload = {
-            ...payload,
-            pontosTimeA: this.time1.setsVencidos,
-            pontosTimeB: this.time2.setsVencidos,
-            sets: setsUnificados
-          };
-
-        } else {
-          // ⚽ FUTEBOL — 그대로
-          payload = {
-            ...payload,
-            pontosTimeA: this.time1.golspro,
-            pontosTimeB: this.time2.golspro,
-            faltasTimeA: this.time1.faltas,
-            faltasTimeB: this.time2.faltas,
-            substituicoesTimeA: this.time1.substituicoes,
-            substituicoesTimeB: this.time2.substituicoes,
-            cartoesAmarelosTimeA: this.time1.cartaoamarelo,
-            cartoesAmarelosTimeB: this.time2.cartaoamarelo,
-            cartoesVermelhosTimeA: this.time1.cartaovermelho,
-            cartoesVermelhosTimeB: this.time2.cartaovermelho
-          };
+      // 🔥 REGRA DE W.O NO VÔLEI
+      if (this.isVolei) {
+        // Time 1 deu W.O
+        if (this.time1.wo && !this.time2.wo) {
+          this.time1.setsVencidos = 0
+          this.time2.setsVencidos = 3
+          this.time1.setsJogados = []
+          this.time2.setsJogados = []
         }
 
-        await api.put(`/partida/${this.partidaId}/parcial`, payload);
-
-      } catch (err) {
-        console.error("Erro ao atualizar parcial:", err);
-        Swal.fire("Erro", "Não foi possível atualizar o placar parcial.", "error");
+        // Time 2 deu W.O
+        if (this.time2.wo && !this.time1.wo) {
+          this.time2.setsVencidos = 0
+          this.time1.setsVencidos = 3
+          this.time1.setsJogados = []
+          this.time2.setsJogados = []
+        }
       }
+
+      this.atualizarParcial();
     },
-
-   atualizarTime(time, novoTime) {
-  this[time] = {
-    ...this[time],   // mantém o que já existe
-    ...novoTime      // atualiza só o que mudou
-  };
-
-  if (this.partidaEncerradaVolei) return;
-
-  this.atualizarParcial();
-},
 
     iniciarTemporizador() {
       if (this.intervaloTimer) return
@@ -624,7 +548,6 @@ export default {
           this.intervaloTimer = null;
         }
 
-        // Chamar backend para finalizar e calcular placar
         await api.put(`/partida/${this.partidaId}/encerrar`, {
           usuarioId: this.usuarioLogadoId
         });
@@ -645,40 +568,165 @@ export default {
 
     async carregarPartidaEmAndamento(partidaId) {
       try {
-        const { data } = await api.get(`/partidas/${partidaId}/retornar`)
+        const { data } = await api.get(`/partidas/${partidaId}/retornar`);
 
-        await this.buscarQuadras()
+        await this.buscarQuadras();
 
-        this.partidaId = data.id
-        this.partidaIniciada = true
-        this.temporizadorAtivo = true
-        this.tempoSegundos = data.tempoSegundos
-        this.quadraSelecionada = data.quadraId
-        this.modalidadeSelecionada = data.modalidadeId
-        this.campeonatoSelecionado = data.campeonatoId
-        this.timeSelecionado1 = data.timeAId
-        this.timeSelecionado2 = data.timeBId
-        this.time1.golspro = data.pontosTimeA
-        this.time2.golspro = data.pontosTimeB
-        this.time1.substituicoes = data.substituicoesTimeA
-        this.time2.substituicoes = data.substituicoesTimeB
+        this.partidaId = data.id;
+        this.partidaIniciada = true;
+        this.temporizadorAtivo = true;
+        this.tempoSegundos = data.tempoSegundos;
+        this.quadraSelecionada = data.quadraId;
+        this.modalidadeSelecionada = data.modalidadeId;
+        this.campeonatoSelecionado = data.campeonatoId;
+        this.timeSelecionado1 = data.timeAId;
+        this.timeSelecionado2 = data.timeBId;
+        const isVolei = data.modalidade?.nome?.toLowerCase().includes('vôlei');
 
-        await this.buscarModalidades()
-        await this.buscarCampeonatos()
-        await this.buscarTimes()
+        if (isVolei) {
+          this.time1.setsVencidos = data.pontosTimeA;
+          this.time2.setsVencidos = data.pontosTimeB;
 
-        this.iniciarTemporizador()
+          this.time1.setsJogados = [];
+          this.time2.setsJogados = [];
+
+          if (Array.isArray(data.sets)) {
+            for (let i = 0; i < data.sets.length; i++) {
+              const set = data.sets[i];
+
+              if (set.pontosA > 0) {
+                this.time1.setsJogados.push({
+                  numero: set.numero,
+                  pontos: set.pontosA
+                });
+              }
+
+              if (set.pontosB > 0) {
+                this.time2.setsJogados.push({
+                  numero: set.numero,
+                  pontos: set.pontosB
+                });
+              }
+            }
+          }
+
+          this.time1.pontosSet = 0;
+          this.time2.pontosSet = 0;
+
+          this.time1.wo = !!data.woTimeA;
+          this.time2.wo = !!data.woTimeB;
+
+        } else {
+          this.time1.golspro = data.pontosTimeA;
+          this.time2.golspro = data.pontosTimeB;
+          this.time1.substituicoes = data.substituicoesTimeA;
+          this.time2.substituicoes = data.substituicoesTimeB;
+          this.time1.faltas = data.faltasTimeA;
+          this.time2.faltas = data.faltasTimeB;
+          this.time1.cartaoamarelo = data.cartoesAmarelosTimeA;
+          this.time1.cartaovermelho = data.cartoesVermelhosTimeA;
+          this.time2.cartaoamarelo = data.cartoesAmarelosTimeB;
+          this.time2.cartaovermelho = data.cartoesVermelhosTimeB;
+        }
+
+        await this.buscarModalidades();
+        await this.buscarCampeonatos();
+        await this.buscarTimes();
+
+        this.iniciarTemporizador();
 
       } catch (error) {
         Swal.fire(
           'Erro',
           'Partida não está mais disponível.',
           'error'
-        )
+        );
 
-        this.$router.push('/gerenciar-partidas')
+        this.$router.push('/gerenciar-partidas');
       }
     },
+
+    async atualizarParcial() {
+      if (!this.partidaId) return;
+
+      try {
+        const isVolei = this.isVolei;
+
+        const payload = {
+          tempoSegundos: this.tempoSegundos,
+          woTimeA: !!this.time1.wo,
+          woTimeB: !!this.time2.wo,
+          emIntervalo: false
+        };
+
+        if (isVolei) {
+          const setsTimeA = this.time1.setsJogados || [];
+          const setsTimeB = this.time2.setsJogados || [];
+
+          const setsUnificados = [];
+
+          // Time A
+          for (let i = 0; i < setsTimeA.length; i++) {
+            const setA = setsTimeA[i];
+
+            setsUnificados.push({
+              numero: setA.numero,
+              pontosA: setA.pontos,
+              pontosB: 0
+            });
+          }
+
+          // Time B
+          for (let i = 0; i < setsTimeB.length; i++) {
+            const setB = setsTimeB[i];
+            let encontrado = false;
+
+            for (let j = 0; j < setsUnificados.length; j++) {
+              if (setsUnificados[j].numero === setB.numero) {
+                setsUnificados[j].pontosB = setB.pontos;
+                encontrado = true;
+                break;
+              }
+            }
+
+            if (!encontrado) {
+              setsUnificados.push({
+                numero: setB.numero,
+                pontosA: 0,
+                pontosB: setB.pontos
+              });
+            }
+          }
+
+          // Ordena por número
+          setsUnificados.sort((a, b) => a.numero - b.numero);
+
+          payload.pontosTimeA = this.time1.setsVencidos;
+          payload.pontosTimeB = this.time2.setsVencidos;
+          payload.sets = setsUnificados;
+
+        } else {
+          // --- FUTEBOL ---
+          payload.pontosTimeA = this.time1.golspro;
+          payload.pontosTimeB = this.time2.golspro;
+          payload.faltasTimeA = this.time1.faltas;
+          payload.faltasTimeB = this.time2.faltas;
+          payload.substituicoesTimeA = this.time1.substituicoes;
+          payload.substituicoesTimeB = this.time2.substituicoes;
+        }
+
+        await api.put(`/partida/${this.partidaId}/parcial`, payload);
+
+      } catch (err) {
+        console.error("Erro ao atualizar parcial:", err);
+        Swal.fire(
+          "Erro",
+          "Não foi possível atualizar o placar parcial.",
+          "error"
+        );
+      }
+    },
+
     abrirModalJogadores() {
       this.mostrarModalJogadores = true
     },
@@ -694,29 +742,29 @@ export default {
       this.campeonatosDisponiveis = []
       this.jogadoresTime1 = []
       this.jogadoresTime2 = []
-   this.time1 = {
-  golspro: 0,
-  faltas: 0,
-  substituicoes: 0,
-  cartaoamarelo: 0,
-  cartaovermelho: 0,
-  wo: false,
-  setsVencidos: 0,
-  pontosSet: 0,
-  setsJogados: []
-};
+      this.time1 = {
+        golspro: 0,
+        faltas: 0,
+        substituicoes: 0,
+        cartaoamarelo: 0,
+        cartaovermelho: 0,
+        wo: false,
+        setsVencidos: 0,
+        pontosSet: 0,
+        setsJogados: []
+      };
 
-this.time2 = {
-  golspro: 0,
-  faltas: 0,
-  substituicoes: 0,
-  cartaoamarelo: 0,
-  cartaovermelho: 0,
-  wo: false,
-  setsVencidos: 0,
-  pontosSet: 0,
-  setsJogados: []
-};
+      this.time2 = {
+        golspro: 0,
+        faltas: 0,
+        substituicoes: 0,
+        cartaoamarelo: 0,
+        cartaovermelho: 0,
+        wo: false,
+        setsVencidos: 0,
+        pontosSet: 0,
+        setsJogados: []
+      };
     }
   }
 }

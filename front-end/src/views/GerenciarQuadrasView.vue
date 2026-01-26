@@ -61,7 +61,7 @@
 
             <div v-if="quadraEditando" class="modal-overlay">
                 <div class="modal-content">
-                    <h2 class="title" style="margin-bottom: 20px; font-size: 24px;">Editar Unidade: {{
+                    <h2 class="title" style="margin-bottom: 20px; font-size: 30px;">Editar Unidade: {{
                         quadraEditando.nome }}</h2>
 
                     <form @submit.prevent="salvarEdicao">
@@ -408,7 +408,7 @@ export default {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(21, 33, 71, 0.7);
+    background-color: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -436,7 +436,6 @@ export default {
 .form-group label {
     font-weight: bold;
     margin-bottom: 8px;
-    color: #1E3A8A;
 }
 
 .form-group input {
@@ -454,7 +453,6 @@ export default {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 10px;
-    background: #F7F9FC;
     padding: 15px;
     border-radius: 8px;
     border: 1px solid #D9D9D9;

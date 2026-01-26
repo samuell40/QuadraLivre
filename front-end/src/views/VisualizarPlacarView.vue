@@ -95,10 +95,10 @@
               <th>VIT</th>
               <th>DER</th>
               <th>STV</th>
-              <th>2x0</th>
-              <th>2x1</th>
-              <th>1x2</th>
-              <th>0x2</th>
+              <th>3x0</th>
+              <th>3x1</th>
+              <th>1x3</th>
+              <th>0x3</th>
               <th>W.O.</th>
             </tr>
           </thead>

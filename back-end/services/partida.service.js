@@ -124,7 +124,7 @@ async function finalizarPartida(id, { usuarioId }) {
         pontuacao: pontosA,
         vitoria3x0: woB ? 1 : 0,
         derrota0x3: woA ? 1 : 0,
-        derrotaWo: woA ? 1 : 0 
+        derrotaWo: woA ? 1 : 0
       };
 
       incrementoB = {
@@ -135,7 +135,7 @@ async function finalizarPartida(id, { usuarioId }) {
         pontuacao: pontosB,
         vitoria3x0: woA ? 1 : 0,
         derrota0x3: woB ? 1 : 0,
-        derrotaWo: woB ? 1 : 0 
+        derrotaWo: woB ? 1 : 0
       };
     }
 
@@ -208,11 +208,38 @@ async function finalizarPartida(id, { usuarioId }) {
       pontuacao: pontosB
     };
   }
+  if (partida.campeonatoId) {
+    const placarA = await obterOuCriarPlacar(
+      partida.campeonatoId,
+      partida.timeAId
+    );
 
-  await incrementarPlacar(partida.timeA.placares[0].id, incrementoA);
-  await incrementarPlacar(partida.timeB.placares[0].id, incrementoB);
+    const placarB = await obterOuCriarPlacar(
+      partida.campeonatoId,
+      partida.timeBId
+    );
+
+    await incrementarPlacar(placarA.id, incrementoA);
+    await incrementarPlacar(placarB.id, incrementoB);
+  }
 
   return partida;
+}
+
+async function obterOuCriarPlacar(campeonatoId, timeId) {
+  return prisma.placar.upsert({
+    where: {
+      campeonatoId_timeId: {
+        campeonatoId: Number(campeonatoId),
+        timeId: Number(timeId),
+      },
+    },
+    update: {},
+    create: {
+      campeonatoId: Number(campeonatoId),
+      timeId: Number(timeId),
+    },
+  });
 }
 
 async function excluirPartida(partidaId) {
@@ -483,17 +510,14 @@ async function retornarPartidaEmAndamento(partidaId) {
       tempoSegundos: true,
       partidaIniciada: true,
 
-      // ⚽⚽ PLACAR DA PARTIDA (FUTEBOL)
+      // (FUTEBOL)
       pontosTimeA: true,
       pontosTimeB: true,
-
       faltasTimeA: true,
       faltasTimeB: true,
 
       substituicoesTimeA: true,
       substituicoesTimeB: true,
-
-      // 🟨🟥 CARTÕES (AJUSTE AQUI)
       cartoesAmarelosTimeA: true,
       cartoesVermelhosTimeA: true,
       cartoesAmarelosTimeB: true,
@@ -897,6 +921,7 @@ async function removerJogadorDeCampo(partidaId, jogadorId) {
 module.exports = {
   criarPartida,
   finalizarPartida,
+  obterOuCriarPlacar,
   excluirPartida,
   atualizarParcial,
   incrementarPlacar,
