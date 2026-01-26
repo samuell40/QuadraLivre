@@ -87,7 +87,6 @@ async function finalizarPartida(id, { usuarioId }) {
 
   if (!partida) throw new Error("Partida não encontrada");
 
-  // Marcar a partida como finalizada
   await prisma.partida.update({
     where: { id: Number(id) },
     data: { finalizada: true, partidaIniciada: false }
@@ -98,50 +97,94 @@ async function finalizarPartida(id, { usuarioId }) {
   let incrementoA = {};
   let incrementoB = {};
 
+  /* VÔLEI */
   if (isVolei) {
-    // Calcular pontos conforme resultado do vôlei
     let pontosA = 0;
     let pontosB = 0;
 
-    if (partida.pontosTimeA > partida.pontosTimeB) {
-      pontosA = partida.pontosTimeB === 2 ? 2 : 3;
-      pontosB = partida.pontosTimeB === 2 ? 1 : 0;
-    } else if (partida.pontosTimeB > partida.pontosTimeA) {
-      pontosB = partida.pontosTimeA === 2 ? 2 : 3;
-      pontosA = partida.pontosTimeA === 2 ? 1 : 0;
+    const woA = partida.woTimeA === true;
+    const woB = partida.woTimeB === true;
+    if (woA || woB) {
+
+      if (woA) {
+        pontosA = 0;
+        pontosB = 3;
+      }
+
+      if (woB) {
+        pontosA = 3;
+        pontosB = 0;
+      }
+
+      incrementoA = {
+        jogos: 1,
+        setsVencidos: woB ? 3 : 0,
+        vitorias: woB ? 1 : 0,
+        derrotas: woA ? 1 : 0,
+        pontuacao: pontosA,
+        vitoria3x0: woB ? 1 : 0,
+        derrota0x3: woA ? 1 : 0,
+        derrotaWo: woA ? 1 : 0 
+      };
+
+      incrementoB = {
+        jogos: 1,
+        setsVencidos: woA ? 3 : 0,
+        vitorias: woA ? 1 : 0,
+        derrotas: woB ? 1 : 0,
+        pontuacao: pontosB,
+        vitoria3x0: woA ? 1 : 0,
+        derrota0x3: woB ? 1 : 0,
+        derrotaWo: woB ? 1 : 0 
+      };
     }
 
-    incrementoA = {
-      jogos: 1,
-      setsVencidos: partida.pontosTimeA,
-      vitorias: partida.pontosTimeA > partida.pontosTimeB ? 1 : 0,
-      derrotas: partida.pontosTimeA < partida.pontosTimeB ? 1 : 0,
-      pontuacao: pontosA, // <- CORRIGIDO
-      vitoria3x0: partida.pontosTimeA === 3 && partida.pontosTimeB <= 1 ? 1 : 0,
-      vitoria3x2: partida.pontosTimeA === 3 && partida.pontosTimeB === 2 ? 1 : 0,
-      derrota2x3: partida.pontosTimeA === 2 && partida.pontosTimeB === 3 ? 1 : 0,
-      derrota0x3: partida.pontosTimeA === 0 && partida.pontosTimeB === 3 ? 1 : 0
-    };
+    else {
+      if (partida.pontosTimeA > partida.pontosTimeB) {
+        pontosA = partida.pontosTimeB === 2 ? 2 : 3;
+        pontosB = partida.pontosTimeB === 2 ? 1 : 0;
+      } else if (partida.pontosTimeB > partida.pontosTimeA) {
+        pontosB = partida.pontosTimeA === 2 ? 2 : 3;
+        pontosA = partida.pontosTimeA === 2 ? 1 : 0;
+      }
 
-    incrementoB = {
-      jogos: 1,
-      setsVencidos: partida.pontosTimeB,
-      vitorias: partida.pontosTimeB > partida.pontosTimeA ? 1 : 0,
-      derrotas: partida.pontosTimeB < partida.pontosTimeA ? 1 : 0,
-      pontuacao: pontosB, 
-      vitoria3x0: partida.pontosTimeB === 3 && partida.pontosTimeA <= 1 ? 1 : 0,
-      vitoria3x2: partida.pontosTimeB === 3 && partida.pontosTimeA === 2 ? 1 : 0,
-      derrota2x3: partida.pontosTimeB === 2 && partida.pontosTimeA === 3 ? 1 : 0,
-      derrota0x3: partida.pontosTimeB === 0 && partida.pontosTimeA === 3 ? 1 : 0
-    };
-  } else {
-    // Futebol: calcular pontos
+      incrementoA = {
+        jogos: 1,
+        setsVencidos: partida.pontosTimeA,
+        vitorias: partida.pontosTimeA > partida.pontosTimeB ? 1 : 0,
+        derrotas: partida.pontosTimeA < partida.pontosTimeB ? 1 : 0,
+        pontuacao: pontosA,
+        vitoria3x0: partida.pontosTimeA === 3 && partida.pontosTimeB <= 1 ? 1 : 0,
+        vitoria3x2: partida.pontosTimeA === 3 && partida.pontosTimeB === 2 ? 1 : 0,
+        derrota2x3: partida.pontosTimeA === 2 && partida.pontosTimeB === 3 ? 1 : 0,
+        derrota0x3: partida.pontosTimeA === 0 && partida.pontosTimeB === 3 ? 1 : 0
+      };
+
+      incrementoB = {
+        jogos: 1,
+        setsVencidos: partida.pontosTimeB,
+        vitorias: partida.pontosTimeB > partida.pontosTimeA ? 1 : 0,
+        derrotas: partida.pontosTimeB < partida.pontosTimeA ? 1 : 0,
+        pontuacao: pontosB,
+        vitoria3x0: partida.pontosTimeB === 3 && partida.pontosTimeA <= 1 ? 1 : 0,
+        vitoria3x2: partida.pontosTimeB === 3 && partida.pontosTimeA === 2 ? 1 : 0,
+        derrota2x3: partida.pontosTimeB === 2 && partida.pontosTimeA === 3 ? 1 : 0,
+        derrota0x3: partida.pontosTimeB === 0 && partida.pontosTimeA === 3 ? 1 : 0
+      };
+    }
+  }
+
+  /*FUTEBOL*/
+  else {
     let pontosA = 0;
     let pontosB = 0;
 
     if (partida.pontosTimeA > partida.pontosTimeB) pontosA = 3;
     else if (partida.pontosTimeB > partida.pontosTimeA) pontosB = 3;
-    else { pontosA = 1; pontosB = 1; }
+    else {
+      pontosA = 1;
+      pontosB = 1;
+    }
 
     incrementoA = {
       jogos: 1,
@@ -151,7 +194,7 @@ async function finalizarPartida(id, { usuarioId }) {
       golsPro: partida.pontosTimeA,
       golsSofridos: partida.pontosTimeB,
       saldoDeGols: partida.pontosTimeA - partida.pontosTimeB,
-      pontuacao: pontosA // <- CORRIGIDO
+      pontuacao: pontosA
     };
 
     incrementoB = {
@@ -162,11 +205,10 @@ async function finalizarPartida(id, { usuarioId }) {
       golsPro: partida.pontosTimeB,
       golsSofridos: partida.pontosTimeA,
       saldoDeGols: partida.pontosTimeB - partida.pontosTimeA,
-      pontuacao: pontosB // <- CORRIGIDO
+      pontuacao: pontosB
     };
   }
 
-  // Atualizar placares
   await incrementarPlacar(partida.timeA.placares[0].id, incrementoA);
   await incrementarPlacar(partida.timeB.placares[0].id, incrementoB);
 
@@ -190,23 +232,24 @@ async function excluirPartida(partidaId) {
   });
 }
 
-
-async function atualizarParcial(
-  id,
-  {
-    pontosTimeA,
-    pontosTimeB,
-    tempoSegundos,
-    woTimeA,
-    woTimeB,
-    emIntervalo,
-    faltasTimeA,
-    faltasTimeB,
-    substituicoesTimeA,
-    substituicoesTimeB
-  }
-) {
-  return prisma.partida.update({
+async function atualizarParcial(id, {
+  pontosTimeA,
+  pontosTimeB,
+  tempoSegundos,
+  woTimeA,
+  woTimeB,
+  emIntervalo,
+  sets,
+  faltasTimeA,
+  faltasTimeB,
+  substituicoesTimeA,
+  substituicoesTimeB,
+  cartoesAmarelosTimeA,
+  cartoesVermelhosTimeA,
+  cartoesAmarelosTimeB,
+  cartoesVermelhosTimeB
+}) {
+  const partidaAtualizada = await prisma.partida.update({
     where: { id: Number(id) },
     data: {
       pontosTimeA,
@@ -218,7 +261,11 @@ async function atualizarParcial(
       faltasTimeA,
       faltasTimeB,
       substituicoesTimeA,
-      substituicoesTimeB
+      substituicoesTimeB,
+      cartoesAmarelosTimeA,
+      cartoesVermelhosTimeA,
+      cartoesAmarelosTimeB,
+      cartoesVermelhosTimeB
     },
     include: {
       timeA: { include: { placares: true } },
@@ -228,6 +275,31 @@ async function atualizarParcial(
       participantes: { include: { usuario: true } }
     }
   });
+
+  if (Array.isArray(sets) && sets.length > 0) {
+    for (const set of sets) {
+      await prisma.setPartida.upsert({
+        where: {
+          partidaId_numero: {
+            partidaId: Number(id),
+            numero: set.numero
+          }
+        },
+        update: {
+          pontosA: set.pontosA,
+          pontosB: set.pontosB
+        },
+        create: {
+          partidaId: Number(id),
+          numero: set.numero,
+          pontosA: set.pontosA,
+          pontosB: set.pontosB
+        }
+      });
+    }
+  }
+
+  return partidaAtualizada;
 }
 
 async function incrementarPlacar(placarId, incremento) {
@@ -406,18 +478,46 @@ async function retornarPartidaEmAndamento(partidaId) {
       partidaIniciada: true,
       emIntervalo: false
     },
-    include: {
+    select: {
+      id: true,
+      tempoSegundos: true,
+      partidaIniciada: true,
+
+      // ⚽⚽ PLACAR DA PARTIDA (FUTEBOL)
+      pontosTimeA: true,
+      pontosTimeB: true,
+
+      faltasTimeA: true,
+      faltasTimeB: true,
+
+      substituicoesTimeA: true,
+      substituicoesTimeB: true,
+
+      // 🟨🟥 CARTÕES (AJUSTE AQUI)
+      cartoesAmarelosTimeA: true,
+      cartoesVermelhosTimeA: true,
+      cartoesAmarelosTimeB: true,
+      cartoesVermelhosTimeB: true,
+
+      // 🏐 VÔLEI
+      woTimeA: true,
+      woTimeB: true,
+
+      modalidadeId: true,
+      quadraId: true,
+      campeonatoId: true,
+      timeAId: true,
+      timeBId: true,
+
       modalidade: true,
       quadra: true,
 
-      timeA: {
-        include: {
-          placares: true
-        }
-      },
-      timeB: {
-        include: {
-          placares: true
+      timeA: true,
+      timeB: true,
+
+      sets: {
+        orderBy: {
+          numero: 'asc'
         }
       },
 
@@ -435,6 +535,7 @@ async function retornarPartidaEmAndamento(partidaId) {
           }
         }
       },
+
       participantes: {
         include: {
           usuario: true,
@@ -452,6 +553,7 @@ async function retornarPartidaEmAndamento(partidaId) {
 
   return partida;
 }
+
 
 async function vincularUsuarioAPartida(partidaId, usuarioId, permissaoId) {
   const partida = await prisma.partida.findUnique({ where: { id: Number(partidaId) } });
@@ -541,7 +643,21 @@ async function listarJogadoresSelecionados(partidaId) {
   }));
 }
 
-async function atualizarAtuacaoJogadorPartida({ jogadorId, partidaId, gols = 0, cartoesAmarelos = 0, cartoesVermelhos = 0}) {
+async function atualizarAtuacaoJogadorPartida({
+  jogadorId,
+  partidaId,
+  gols = 0,
+  cartoesAmarelos = 0,
+  cartoesVermelhos = 0
+}) {
+  const partida = await prisma.partida.findUnique({
+    where: { id: Number(partidaId) }
+  });
+
+  const jogador = await prisma.jogador.findUnique({
+    where: { id: Number(jogadorId) }
+  });
+
   let atuacao = await prisma.jogadorPartida.findFirst({
     where: {
       jogadorId: Number(jogadorId),
@@ -549,47 +665,79 @@ async function atualizarAtuacaoJogadorPartida({ jogadorId, partidaId, gols = 0, 
     }
   });
 
-  if (!atuacao) {
-    const amarelos = Math.max(0, Number(cartoesAmarelos));
-    const vermelhos = amarelos >= 2 ? 1 : Math.max(0, Number(cartoesVermelhos));
+  const amarelos = Math.max(0, Number(cartoesAmarelos));
+  const vermelhos = Math.max(0, Number(cartoesVermelhos));
 
-    return prisma.jogadorPartida.create({
+
+  if (!atuacao) {
+    const vermelhoAutomatico = amarelos >= 2 ? 1 : 0;
+    const totalVermelhos = vermelhos + vermelhoAutomatico;
+
+    atuacao = await prisma.jogadorPartida.create({
       data: {
         jogadorId: Number(jogadorId),
         partidaId: Number(partidaId),
+        timeId: jogador.timeId,
         gols: Math.max(0, Number(gols)),
         cartoesAmarelos: amarelos,
-        cartoesVermelhos: vermelhos,
-        emCampo: amarelos >= 2 ? false : true
+        cartoesVermelhos: totalVermelhos,
+        emCampo: totalVermelhos === 0
       }
     });
+
+    const isTimeA = jogador.timeId === partida.timeAId;
+    const updatePartida = {};
+
+    if (amarelos > 0)
+      updatePartida[isTimeA ? 'cartoesAmarelosTimeA' : 'cartoesAmarelosTimeB'] = { increment: amarelos };
+
+    if (totalVermelhos > 0)
+      updatePartida[isTimeA ? 'cartoesVermelhosTimeA' : 'cartoesVermelhosTimeB'] = { increment: totalVermelhos };
+
+    if (Object.keys(updatePartida).length) {
+      await prisma.partida.update({
+        where: { id: Number(partidaId) },
+        data: updatePartida
+      });
+    }
+
+    return atuacao;
   }
 
-  if (!atuacao.emCampo) {
-    throw new Error('Jogador expulso não pode receber novos eventos');
+  let novosAmarelos = atuacao.cartoesAmarelos + amarelos;
+  let novosVermelhos = atuacao.cartoesVermelhos + vermelhos;
+
+  if (atuacao.cartoesAmarelos < 2 && novosAmarelos >= 2) {
+    novosVermelhos += 1;
   }
 
-  const novosAmarelos = Math.max(
-    0,
-    atuacao.cartoesAmarelos + Number(cartoesAmarelos)
-  );
-
-  const gerouVermelhoAutomatico =
-    atuacao.cartoesAmarelos < 2 && novosAmarelos >= 2;
-
-  const novosVermelhos = gerouVermelhoAutomatico
-    ? atuacao.cartoesVermelhos + 1
-    : Math.max(0, atuacao.cartoesVermelhos + Number(cartoesVermelhos));
+  const incrementoVermelhos = novosVermelhos - atuacao.cartoesVermelhos;
 
   atuacao = await prisma.jogadorPartida.update({
     where: { id: atuacao.id },
     data: {
-      gols: Math.max(0, atuacao.gols + Number(gols)),
+      gols: atuacao.gols + Math.max(0, Number(gols)),
       cartoesAmarelos: novosAmarelos,
       cartoesVermelhos: novosVermelhos,
-      emCampo: novosAmarelos >= 2 ? false : atuacao.emCampo
+      emCampo: novosVermelhos === 0
     }
   });
+
+  const isTimeA = atuacao.timeId === partida.timeAId;
+  const updatePartida = {};
+
+  if (amarelos > 0)
+    updatePartida[isTimeA ? 'cartoesAmarelosTimeA' : 'cartoesAmarelosTimeB'] = { increment: amarelos };
+
+  if (incrementoVermelhos > 0)
+    updatePartida[isTimeA ? 'cartoesVermelhosTimeA' : 'cartoesVermelhosTimeB'] = { increment: incrementoVermelhos };
+
+  if (Object.keys(updatePartida).length) {
+    await prisma.partida.update({
+      where: { id: Number(partidaId) },
+      data: updatePartida
+    });
+  }
 
   return atuacao;
 }

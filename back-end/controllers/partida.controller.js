@@ -173,7 +173,9 @@ async function retornarPartidaEmAndamentoController(req, res) {
     const { id } = req.params;
 
     if (!id) {
-      return res.status(400).json({ message: 'ID da partida é obrigatório' });
+      return res.status(400).json({
+        message: 'ID da partida é obrigatório'
+      });
     }
 
     const partida = await partidas.retornarPartidaEmAndamento(id);
