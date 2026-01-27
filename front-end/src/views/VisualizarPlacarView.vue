@@ -11,9 +11,17 @@
         <!-- Modalidade -->
         <div class="dropdown-container">
           <label class="dropdown-label">Modalidade</label>
-          <select v-model="modalidadeSelecionada" @change="carregarCampeonatos" class="dropdown">
+          <select
+            v-model="modalidadeSelecionada"
+            @change="carregarCampeonatos"
+            class="dropdown"
+          >
             <option disabled value="null">Selecione</option>
-            <option v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" :value="modalidade">
+            <option
+              v-for="modalidade in modalidadesDisponiveis"
+              :key="modalidade.id"
+              :value="modalidade"
+            >
               {{ modalidade.nome }}
             </option>
           </select>
@@ -22,10 +30,18 @@
         <!-- Campeonato -->
         <div class="dropdown-container">
           <label class="dropdown-label">Campeonato</label>
-          <select v-model="campeonatoSelecionado" @change="carregarPlacar" class="dropdown"
-            :disabled="!campeonatosDisponiveis.length">
+          <select
+            v-model="campeonatoSelecionado"
+            @change="carregarPlacar"
+            class="dropdown"
+            :disabled="!campeonatosDisponiveis.length"
+          >
             <option disabled value="null">Selecione</option>
-            <option v-for="camp in campeonatosDisponiveis" :key="camp.id" :value="camp">
+            <option
+              v-for="camp in campeonatosDisponiveis"
+              :key="camp.id"
+              :value="camp"
+            >
               {{ camp.nome }}
             </option>
           </select>
@@ -35,22 +51,27 @@
       <!-- Área do placar -->
       <div class="placar-table">
         <!-- Loader -->
-        <div v-if="modalidadeSelecionada && timesPlacar === null" class="loader-container-centralizado">
+        <div
+          v-if="modalidadeSelecionada && timesPlacar === null"
+          class="loader-container-centralizado"
+        >
           <div class="loader"></div>
         </div>
 
-        <div v-else-if="Array.isArray(timesPlacar) && timesPlacar.length === 0" class="sem-dados-centralizado">
+        <div
+          v-else-if="Array.isArray(timesPlacar) && timesPlacar.length === 0"
+          class="sem-dados-centralizado"
+        >
           Nenhum placar encontrado para essa modalidade.
         </div>
 
         <!-- Futebol / Futsal -->
-        <table v-else-if="
-          ['futebol', 'futebol de areia', 'futsal']
-            .includes(modalidadeNormalizada)
-        " class="placar">
+        <table
+          v-else-if="['futebol', 'futebol de areia', 'futsal'].includes(modalidadeNormalizada)"
+          class="placar"
+        >
           <thead>
             <tr>
-              <th>Posição</th>
               <th>Time</th>
               <th>PTS</th>
               <th>J</th>
@@ -62,13 +83,23 @@
               <th>DER</th>
             </tr>
           </thead>
+
           <tbody>
             <tr v-for="(time, index) in timesPlacar" :key="time.id">
-              <td>{{ index + 1 }}</td>
               <td class="time-info">
-                <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
-                {{ time.time?.nome }}
+                <span class="posicao">{{ index + 1 }}</span>
+
+                <img
+                  v-if="time.time?.foto"
+                  :src="time.time.foto"
+                  class="time-image"
+                />
+
+                <span class="nome-time">
+                  {{ time.time?.nome }}
+                </span>
               </td>
+
               <td>{{ time.pontuacao }}</td>
               <td>{{ time.jogos }}</td>
               <td>{{ time.golsPro }}</td>
@@ -82,13 +113,12 @@
         </table>
 
         <!-- Vôlei / Futevôlei -->
-        <table v-else-if="
-          ['volei', 'volei de areia', 'futevolei']
-            .includes(modalidadeNormalizada)
-        " class="placar">
+        <table
+          v-else-if="['volei', 'volei de areia', 'futevolei'].includes(modalidadeNormalizada)"
+          class="placar"
+        >
           <thead>
             <tr>
-              <th>Posição</th>
               <th>Time</th>
               <th>PTS</th>
               <th>J</th>
@@ -102,13 +132,23 @@
               <th>W.O.</th>
             </tr>
           </thead>
+
           <tbody>
             <tr v-for="(time, index) in timesPlacar" :key="time.id">
-              <td>{{ index + 1 }}º</td>
               <td class="time-info">
-                <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
-                {{ time.time?.nome }}
+                <span class="posicao">{{ index + 1 }}º</span>
+
+                <img
+                  v-if="time.time?.foto"
+                  :src="time.time.foto"
+                  class="time-image"
+                />
+
+                <span class="nome-time">
+                  {{ time.time?.nome }}
+                </span>
               </td>
+
               <td>{{ time.pontuacao }}</td>
               <td>{{ time.jogos }}</td>
               <td>{{ time.vitorias }}</td>
@@ -119,7 +159,6 @@
               <td>{{ time.derrota2x3 }}</td>
               <td>{{ time.derrota0x3 }}</td>
               <td>{{ time.derrotaWo }}</td>
-
             </tr>
           </tbody>
         </table>
@@ -250,18 +289,6 @@ export default {
   font-weight: bold;
 }
 
-
-.placar-page {
-  border-radius: 12px;
-  width: 100%;
-  min-height: 600px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  padding: 30px 40px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
 .dropdown-container {
   display: flex;
   flex-direction: column;
@@ -332,6 +359,14 @@ export default {
   gap: 8px;
 }
 
+.posicao {
+  font-weight: bold;
+  font-size: 16px;
+  min-width: 20px;
+  text-align: right;
+  color: #374151;
+}
+
 .time-image {
   width: 40px;
   height: 40px;
@@ -340,13 +375,8 @@ export default {
   border: 1px solid #ccc;
 }
 
-.btn-ocultar {
-  background-color: #7E7E7E;
-  color: white;
-  padding: 8px 14px;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
+.nome-time {
+  white-space: nowrap;
 }
 
 .loader-container-centralizado,
@@ -369,11 +399,7 @@ export default {
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
+  to {
     transform: rotate(360deg);
   }
 }
@@ -387,10 +413,6 @@ export default {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
-  }
-
-  .dropdown {
-    width: 100%;
   }
 }
 </style>

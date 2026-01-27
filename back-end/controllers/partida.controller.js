@@ -332,6 +332,20 @@ async function getJogadoresForaDaPartidaController(req, res) {
   }
 }
 
+async function detalharPartidaController(req, res) {
+  try {
+    const { id } = req.params
+
+    const partida = await partidas.detalharPartida(id)
+
+    return res.status(200).json(partida)
+  } catch (error) {
+    return res.status(404).json({
+      erro: error.message || 'Erro ao detalhar partida'
+    })
+  }
+}
+
 module.exports = {
   criarPartidaController,
   finalizarPartidaController,
@@ -350,5 +364,6 @@ module.exports = {
   atualizarAtuacaoJogadorController,
   substituirJogadorController,
   getJogadoresForaDaPartidaController,
-  removerJogadorDeCampoController
+  removerJogadorDeCampoController,
+  detalharPartidaController
 };

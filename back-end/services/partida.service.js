@@ -93,6 +93,7 @@ async function finalizarPartida(id, { usuarioId }) {
   });
 
   const isVolei = partida.modalidade.nome.toLowerCase().includes("vôlei");
+  const isFutsal = partida.modalidade.nome.toLowerCase().includes("futsal");
 
   let incrementoA = {};
   let incrementoB = {};
@@ -259,32 +260,54 @@ async function excluirPartida(partidaId) {
   });
 }
 
-async function atualizarParcial(id, {
-  pontosTimeA,
-  pontosTimeB,
-  tempoSegundos,
-  woTimeA,
-  woTimeB,
-  emIntervalo,
-  sets,
-  faltasTimeA,
-  faltasTimeB,
-  substituicoesTimeA,
-  substituicoesTimeB,
-  cartoesAmarelosTimeA,
-  cartoesVermelhosTimeA,
-  cartoesAmarelosTimeB,
-  cartoesVermelhosTimeB
-}) {
-  const partidaAtualizada = await prisma.partida.update({
+async function atualizarParcial(
+  id,
+  {
+    pontosTimeA,
+    pontosTimeB,
+    tempoSegundos,
+    woTimeA,
+    woTimeB,
+    emIntervalo,
+    sets,
+
+    // comuns futebol / futsal
+    faltasTimeA,
+    faltasTimeB,
+    substituicoesTimeA,
+    substituicoesTimeB,
+    cartoesAmarelosTimeA,
+    cartoesVermelhosTimeA,
+    cartoesAmarelosTimeB,
+    cartoesVermelhosTimeB
+  }
+) {
+  // 🔎 busca a modalidade antes
+  const partidaBase = await prisma.partida.findUnique({
     where: { id: Number(id) },
-    data: {
-      pontosTimeA,
-      pontosTimeB,
-      tempoSegundos,
-      woTimeA,
-      woTimeB,
-      emIntervalo,
+    include: { modalidade: true }
+  });
+
+  if (!partidaBase) throw new Error("Partida não encontrada");
+
+  const modalidade = partidaBase.modalidade.nome.toLowerCase();
+  const isVolei = modalidade.includes("vôlei");
+  const isFutebol = modalidade.includes("futebol");
+  const isFutsal = modalidade.includes("futsal");
+
+  // 🧠 dados comuns a todas
+  const dataUpdate = {
+    pontosTimeA,
+    pontosTimeB,
+    tempoSegundos,
+    woTimeA,
+    woTimeB,
+    emIntervalo
+  };
+
+  // ⚽ FUTEBOL / FUTSAL
+  if (isFutebol || isFutsal) {
+    Object.assign(dataUpdate, {
       faltasTimeA,
       faltasTimeB,
       substituicoesTimeA,
@@ -293,7 +316,13 @@ async function atualizarParcial(id, {
       cartoesVermelhosTimeA,
       cartoesAmarelosTimeB,
       cartoesVermelhosTimeB
-    },
+    });
+  }
+
+  // 🏐 VÔLEI → sets tratados separadamente
+  const partidaAtualizada = await prisma.partida.update({
+    where: { id: Number(id) },
+    data: dataUpdate,
     include: {
       timeA: { include: { placares: true } },
       timeB: { include: { placares: true } },
@@ -303,7 +332,8 @@ async function atualizarParcial(id, {
     }
   });
 
-  if (Array.isArray(sets) && sets.length > 0) {
+  // 🏐 Persistência dos sets (somente vôlei)
+  if (isVolei && Array.isArray(sets) && sets.length > 0) {
     for (const set of sets) {
       await prisma.setPartida.upsert({
         where: {
@@ -766,15 +796,26 @@ async function atualizarAtuacaoJogadorPartida({
   return atuacao;
 }
 
-async function substituirJogadorPartida(partidaId, jogadorSaiId, jogadorEntraId) {
+async function substituirJogadorPartida(
+  partidaId,
+  jogadorSaiId,
+  jogadorEntraId
+) {
+  // 🔎 Busca partida com modalidade
   const partida = await prisma.partida.findUnique({
-    where: { id: Number(partidaId) }
+    where: { id: Number(partidaId) },
+    include: { modalidade: true }
   });
 
   if (!partida) throw new Error("Partida não encontrada");
   if (partida.finalizada)
     throw new Error("Não é possível substituir jogadores em partida finalizada");
 
+  const modalidade = partida.modalidade.nome.toLowerCase();
+  const isFutebol = modalidade.includes("futebol");
+  const isFutsal = modalidade.includes("futsal");
+
+  // 🔎 Jogador que sai (precisa estar em campo)
   const jogadorSai = await prisma.jogadorPartida.findFirst({
     where: {
       partidaId: Number(partidaId),
@@ -786,6 +827,7 @@ async function substituirJogadorPartida(partidaId, jogadorSaiId, jogadorEntraId)
   if (!jogadorSai)
     throw new Error("Jogador que sai não está em campo nesta partida");
 
+  // 🔎 Jogador que entra (pode já existir no banco)
   const jogadorEntraExistente = await prisma.jogadorPartida.findFirst({
     where: {
       partidaId: Number(partidaId),
@@ -796,23 +838,31 @@ async function substituirJogadorPartida(partidaId, jogadorSaiId, jogadorEntraId)
   if (jogadorEntraExistente?.emCampo)
     throw new Error("Jogador que entra já está em campo");
 
+  // 🏳️ Descobre se é Time A ou B
   let tipoTime;
-  if (partida.timeAId === jogadorSai.timeId) tipoTime = 'A';
-  else if (partida.timeBId === jogadorSai.timeId) tipoTime = 'B';
+  if (partida.timeAId === jogadorSai.timeId) tipoTime = "A";
+  else if (partida.timeBId === jogadorSai.timeId) tipoTime = "B";
   else throw new Error("Time do jogador não pertence à partida");
 
-  if (
-    (tipoTime === 'A' && partida.substituicoesTimeA >= 3) ||
-    (tipoTime === 'B' && partida.substituicoesTimeB >= 3)
-  ) {
-    throw new Error("Limite de 3 substituições por time atingido");
+  // ⚽ REGRA DE SUBSTITUIÇÃO
+  // Futebol → limite 3
+  // Futsal → ilimitado
+  if (isFutebol) {
+    if (
+      (tipoTime === "A" && partida.substituicoesTimeA >= 3) ||
+      (tipoTime === "B" && partida.substituicoesTimeB >= 3)
+    ) {
+      throw new Error("Limite de 3 substituições por time atingido");
+    }
   }
 
+  // 🔄 Tira jogador que sai
   await prisma.jogadorPartida.update({
     where: { id: jogadorSai.id },
     data: { emCampo: false }
   });
 
+  // 🔄 Coloca jogador que entra
   let novoJogador;
 
   if (jogadorEntraExistente) {
@@ -834,15 +884,18 @@ async function substituirJogadorPartida(partidaId, jogadorSaiId, jogadorEntraId)
     });
   }
 
-  const updateData =
-    tipoTime === 'A'
-      ? { substituicoesTimeA: { increment: 1 } }
-      : { substituicoesTimeB: { increment: 1 } };
+  // ➕ Incrementa substituições APENAS se for futebol
+  if (isFutebol) {
+    const updateData =
+      tipoTime === "A"
+        ? { substituicoesTimeA: { increment: 1 } }
+        : { substituicoesTimeB: { increment: 1 } };
 
-  await prisma.partida.update({
-    where: { id: Number(partidaId) },
-    data: updateData
-  });
+    await prisma.partida.update({
+      where: { id: Number(partidaId) },
+      data: updateData
+    });
+  }
 
   return novoJogador;
 }
@@ -918,6 +971,69 @@ async function removerJogadorDeCampo(partidaId, jogadorId) {
   return jogadorAtualizado;
 }
 
+async function detalharPartida(partidaId) {
+  const partida = await prisma.partida.findUnique({
+    where: { id: Number(partidaId) },
+    include: {
+      campeonato: {
+        select: {
+          id: true,
+          nome: true
+        }
+      },
+      modalidade: {
+        select: {
+          id: true,
+          nome: true
+        }
+      },
+      quadra: {
+        select: {
+          id: true,
+          nome: true,
+          endereco: true
+        }
+      },
+      timeA: {
+        select: {
+          id: true,
+          nome: true,
+          foto: true
+        }
+      },
+      timeB: {
+        select: {
+          id: true,
+          nome: true,
+          foto: true
+        }
+      },
+      jogadoresPartida: {
+        include: {
+          jogador: {
+            select: {
+              id: true,
+              nome: true,
+              foto: true
+            }
+          }
+        }
+      },
+      sets: {
+        orderBy: {
+          numero: 'asc'
+        }
+      }
+    }
+  })
+
+  if (!partida) {
+    throw new Error('Partida não encontrada')
+  }
+
+  return partida
+}
+
 module.exports = {
   criarPartida,
   finalizarPartida,
@@ -937,5 +1053,6 @@ module.exports = {
   atualizarAtuacaoJogadorPartida,
   substituirJogadorPartida,
   getJogadoresForaDaPartida,
-  removerJogadorDeCampo
+  removerJogadorDeCampo,
+  detalharPartida
 };

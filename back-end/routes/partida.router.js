@@ -37,4 +37,6 @@ router.get('/:partidaId/:timeId/jogadores-fora-partida', controller.getJogadores
 
 router.put('/:partidaId/:jogadorId/remover', controller.removerJogadorDeCampoController);
 
+router.get('/detalhar/partida/:id', controller.detalharPartidaController)
+
 module.exports = router;

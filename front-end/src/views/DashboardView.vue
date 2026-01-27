@@ -197,7 +197,7 @@
       </Teleport>
 
       <section class="section_graficos_top">
-        
+
         <div class="chart-container">
           <canvas id="agendamentosModalidadeChart"></canvas>
         </div>
@@ -206,10 +206,11 @@
           <div class="chart-area-pie">
             <canvas id="agendamentosTipoChart"></canvas>
           </div>
-          
+
           <div class="actions-area-pie">
-             <button @click="gerarPDFGraficos" class="btn-pdf-side" :disabled="loading" title="Baixar PDF">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <button @click="gerarPDFGraficos" class="btn-pdf-side" :disabled="loading" title="Baixar PDF">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round"
                   d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
               </svg>
@@ -257,11 +258,11 @@ const pdfExportPlugin = {
   afterDatasetsDraw(chart) {
     const { ctx } = chart;
     ctx.save();
-    
+
     chart.data.datasets.forEach((dataset, i) => {
       const meta = chart.getDatasetMeta(i);
-      
-      ctx.font = 'bold 14px Arial'; 
+
+      ctx.font = 'bold 14px Arial';
       ctx.fillStyle = '#1E3A8A';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -272,17 +273,17 @@ const pdfExportPlugin = {
           let x, y;
 
           if (chart.config.type === 'pie' || chart.config.type === 'doughnut') {
-            const model = element; 
+            const model = element;
             const midAngle = model.startAngle + (model.endAngle - model.startAngle) / 2;
             const radius = (model.outerRadius + model.innerRadius) / 2;
-            
+
             x = model.x + Math.cos(midAngle) * radius;
             y = model.y + Math.sin(midAngle) * radius;
-            
+
             ctx.fillStyle = '#ffffff';
             ctx.shadowColor = "rgba(0,0,0,0.5)";
             ctx.shadowBlur = 4;
-          } 
+          }
           else {
             x = element.x;
             y = element.y - 15;
@@ -411,7 +412,7 @@ export default {
       const corPrimaria = [30, 58, 138];
 
       doc.setFillColor(...corPrimaria);
-      doc.rect(0, 0, 210, 25, 'F'); 
+      doc.rect(0, 0, 210, 25, 'F');
 
       const img = new Image();
       img.src = logoImg;
@@ -426,7 +427,7 @@ export default {
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
       doc.text("QuadraLivre", 32, 15);
-      doc.setTextColor(...corPrimaria); 
+      doc.setTextColor(...corPrimaria);
       doc.setFontSize(16);
       doc.text(`Relatório de Agendamentos - ${this.tituloDashboard}`, 105, 45, null, null, "center");
 
@@ -434,7 +435,7 @@ export default {
       doc.setTextColor(100);
       doc.setFont("helvetica", "normal");
       doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 105, 51, null, null, "center");
-      
+
       let cursorY = 70;
 
       const capturarGraficoComNumeros = (chartId) => {
@@ -465,11 +466,11 @@ export default {
         if (isPie) {
           pdfWidth = 100;
           pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-          doc.addImage(imgData, 'PNG', 55, cursorY + 5, pdfWidth, pdfHeight); 
+          doc.addImage(imgData, 'PNG', 55, cursorY + 5, pdfWidth, pdfHeight);
         } else {
           doc.addImage(imgData, 'PNG', 15, cursorY + 5, pdfWidth, pdfHeight);
         }
-        
+
         cursorY += pdfHeight + 20;
       };
 
@@ -484,7 +485,7 @@ export default {
       const img3 = capturarGraficoComNumeros('agendamentosMesChart');
       adicionarAoPDF(img3, '3. Evolução Mensal');
 
-      doc.save(`relatorio_graficos_${new Date().toISOString().slice(0,10)}.pdf`);
+      doc.save(`relatorio_graficos_${new Date().toISOString().slice(0, 10)}.pdf`);
     },
 
     verificarSeLi(aviso) {
@@ -515,9 +516,35 @@ export default {
       }
     },
 
-    async carregarUsuarios() { try { const res = await api.get('/usuarios'); this.totalUsuarios = Array.isArray(res.data) ? res.data.length : 0; } catch (error) { console.error(error); } },
-    async carregarTimes() { try { const res = await api.get('/times'); this.totalTimes = Array.isArray(res.data) ? res.data.length : 0; } catch (error) { console.error(error); } },
-    async carregarModalidades() { try { const res = await api.get('/listar/modalidade'); this.totalModalidades = Array.isArray(res.data) ? res.data.length : 0; } catch (error) { console.error(error); } },
+    async carregarUsuarios() {
+      try {
+        const res = await api.get('/usuarios');
+        this.totalUsuarios = Array.isArray(res.data) ? res.data.length : 0;
+      }
+      catch (error) {
+        console.error(error);
+      }
+    },
+
+    async carregarTimes() {
+      try {
+        const res = await api.get('/times');
+        this.totalTimes = Array.isArray(res.data) ? res.data.length : 0;
+      }
+      catch (error) {
+        console.error(error);
+      }
+    },
+
+    async carregarModalidades() {
+      try {
+        const res = await api.get('/listar/modalidade');
+        this.totalModalidades = Array.isArray(res.data) ? res.data.length : 0;
+      }
+      catch (error) {
+        console.error(error);
+      }
+    },
 
     async carregarAgendamentos() {
       try {
@@ -904,7 +931,7 @@ export default {
 .actions-area-pie {
   display: flex;
   justify-content: center;
-  margin-top: 10px; 
+  margin-top: 10px;
 }
 
 .btn-pdf-side {
@@ -922,7 +949,7 @@ export default {
   gap: 6px;
   padding: 12px 10px;
   width: 70px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .btn-pdf-side:hover {

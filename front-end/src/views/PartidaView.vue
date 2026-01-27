@@ -7,6 +7,9 @@
       <div class="header">
         <h1 class="title">
           {{ partidaIniciada ? 'Partida ao Vivo' : 'Criar Partida' }}
+          <span v-if="nomeModalidade">
+            {{ nomeModalidade }}
+          </span>
         </h1>
 
         <div v-if="partidaIniciada" class="temporizador-container">
@@ -117,7 +120,7 @@
           :timeNome="times.find(t => t.id === timeSelecionado1)?.nome || ''" :timeData="{
             ...times.find(t => t.id === timeSelecionado1),
             ...time1
-          }" :partida-id="partidaId" :temporizadorAtivo="temporizadorAtivo"
+          }" :partida-id="partidaId" :temporizadorAtivo="temporizadorAtivo" :isFutsal="isFutsal"
           :setsAdversario="isVolei ? time2.setsVencidos : 0" :pontosSetAdversario="isVolei ? time2.pontosSet : 0"
           :woAdversario="isVolei && time2.wo ? 1 : 0" :partidaEncerradaGlobal="isVolei && partidaEncerradaVolei"
           @update="atualizarTime('time1', $event)" />
@@ -127,7 +130,7 @@
           :timeNome="times.find(t => t.id === timeSelecionado2)?.nome || ''" :timeData="{
             ...times.find(t => t.id === timeSelecionado2),
             ...time2
-          }" :partida-id="partidaId" :temporizadorAtivo="temporizadorAtivo"
+          }" :partida-id="partidaId" :temporizadorAtivo="temporizadorAtivo" :isFutsal="isFutsal"
           :setsAdversario="isVolei ? time1.setsVencidos : 0" :pontosSetAdversario="isVolei ? time1.pontosSet : 0"
           :woAdversario="isVolei && time1.wo ? 1 : 0" :partidaEncerradaGlobal="isVolei && partidaEncerradaVolei"
           @update="atualizarTime('time2', $event)" />
@@ -154,6 +157,7 @@ import { useAuthStore } from '@/store'
 import SelecionarJogadores from '@/components/Partida/SelecionarJogadores.vue'
 import PlacarTime from '@/components/Partida/PlacarTimeFutebol.vue'
 import PlacarTimeVolei from '@/components/Partida/PlacarTimeVolei.vue'
+import PlacarTimeFutsal from '@/components/Partida/PlacarTimeFutsal.vue'
 import api from '@/axios'
 import Swal from 'sweetalert2'
 
@@ -163,6 +167,7 @@ export default {
     NavBarUser,
     SelecionarJogadores,
     PlacarTime,
+    PlacarTimeFutsal,
     PlacarTimeVolei
   },
 
@@ -247,6 +252,13 @@ export default {
       )
       return modalidade?.nome?.toLowerCase().includes('vôlei')
     },
+    isFutsal() {
+      const modalidade = this.modalidadesDisponiveis.find(
+        m => m.id === this.modalidadeSelecionada
+      )
+
+      return modalidade?.nome?.toLowerCase().includes('futsal')
+    },
 
     nomeTime1() {
       return this.times.find(
@@ -302,6 +314,15 @@ export default {
         this.time1.wo ||
         this.time2.wo
       )
+    },
+    nomeModalidade() {
+      const modalidade = this.modalidadesDisponiveis.find(
+        m => m.id === this.modalidadeSelecionada
+      )
+
+      if (!modalidade?.nome) return ''
+
+      return modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1)
     }
   },
 
@@ -581,9 +602,13 @@ export default {
         this.campeonatoSelecionado = data.campeonatoId;
         this.timeSelecionado1 = data.timeAId;
         this.timeSelecionado2 = data.timeBId;
-        const isVolei = data.modalidade?.nome?.toLowerCase().includes('vôlei');
+
+        const nomeModalidade = data.modalidade?.nome?.toLowerCase() || '';
+        const isVolei = nomeModalidade.includes('vôlei');
+        const isFutsal = nomeModalidade.includes('futsal');
 
         if (isVolei) {
+          // 🏐 VÔLEI
           this.time1.setsVencidos = data.pontosTimeA;
           this.time2.setsVencidos = data.pontosTimeB;
 
@@ -591,9 +616,7 @@ export default {
           this.time2.setsJogados = [];
 
           if (Array.isArray(data.sets)) {
-            for (let i = 0; i < data.sets.length; i++) {
-              const set = data.sets[i];
-
+            for (const set of data.sets) {
               if (set.pontosA > 0) {
                 this.time1.setsJogados.push({
                   numero: set.numero,
@@ -617,16 +640,27 @@ export default {
           this.time2.wo = !!data.woTimeB;
 
         } else {
+          // ⚽ FUTEBOL / FUTSAL (base comum)
           this.time1.golspro = data.pontosTimeA;
           this.time2.golspro = data.pontosTimeB;
-          this.time1.substituicoes = data.substituicoesTimeA;
-          this.time2.substituicoes = data.substituicoesTimeB;
+
           this.time1.faltas = data.faltasTimeA;
           this.time2.faltas = data.faltasTimeB;
+
           this.time1.cartaoamarelo = data.cartoesAmarelosTimeA;
           this.time1.cartaovermelho = data.cartoesVermelhosTimeA;
           this.time2.cartaoamarelo = data.cartoesAmarelosTimeB;
           this.time2.cartaovermelho = data.cartoesVermelhosTimeB;
+
+          // 🚫 Substituição só no FUTEBOL
+          if (!isFutsal) {
+            this.time1.substituicoes = data.substituicoesTimeA;
+            this.time2.substituicoes = data.substituicoesTimeB;
+          } else {
+            // opcional: garante estado limpo no futsal
+            this.time1.substituicoes = 0;
+            this.time2.substituicoes = 0;
+          }
         }
 
         await this.buscarModalidades();
@@ -651,6 +685,7 @@ export default {
 
       try {
         const isVolei = this.isVolei;
+        const isFutsal = this.isFutsal;
 
         const payload = {
           tempoSegundos: this.tempoSegundos,
@@ -660,15 +695,13 @@ export default {
         };
 
         if (isVolei) {
+          // 🏐 VÔLEI
           const setsTimeA = this.time1.setsJogados || [];
           const setsTimeB = this.time2.setsJogados || [];
-
           const setsUnificados = [];
 
           // Time A
-          for (let i = 0; i < setsTimeA.length; i++) {
-            const setA = setsTimeA[i];
-
+          for (const setA of setsTimeA) {
             setsUnificados.push({
               numero: setA.numero,
               pontosA: setA.pontos,
@@ -677,19 +710,12 @@ export default {
           }
 
           // Time B
-          for (let i = 0; i < setsTimeB.length; i++) {
-            const setB = setsTimeB[i];
-            let encontrado = false;
+          for (const setB of setsTimeB) {
+            const existente = setsUnificados.find(s => s.numero === setB.numero);
 
-            for (let j = 0; j < setsUnificados.length; j++) {
-              if (setsUnificados[j].numero === setB.numero) {
-                setsUnificados[j].pontosB = setB.pontos;
-                encontrado = true;
-                break;
-              }
-            }
-
-            if (!encontrado) {
+            if (existente) {
+              existente.pontosB = setB.pontos;
+            } else {
               setsUnificados.push({
                 numero: setB.numero,
                 pontosA: 0,
@@ -698,7 +724,6 @@ export default {
             }
           }
 
-          // Ordena por número
           setsUnificados.sort((a, b) => a.numero - b.numero);
 
           payload.pontosTimeA = this.time1.setsVencidos;
@@ -706,23 +731,27 @@ export default {
           payload.sets = setsUnificados;
 
         } else {
-          // --- FUTEBOL ---
+          // ⚽ FUTEBOL / FUTSAL (base comum)
           payload.pontosTimeA = this.time1.golspro;
           payload.pontosTimeB = this.time2.golspro;
           payload.faltasTimeA = this.time1.faltas;
           payload.faltasTimeB = this.time2.faltas;
-          payload.substituicoesTimeA = this.time1.substituicoes;
-          payload.substituicoesTimeB = this.time2.substituicoes;
+
+          // 🚫 Substituição só no FUTEBOL
+          if (!isFutsal) {
+            payload.substituicoesTimeA = this.time1.substituicoes;
+            payload.substituicoesTimeB = this.time2.substituicoes;
+          }
         }
 
         await api.put(`/partida/${this.partidaId}/parcial`, payload);
 
       } catch (err) {
-        console.error("Erro ao atualizar parcial:", err);
+        console.error('Erro ao atualizar parcial:', err);
         Swal.fire(
-          "Erro",
-          "Não foi possível atualizar o placar parcial.",
-          "error"
+          'Erro',
+          'Não foi possível atualizar o placar parcial.',
+          'error'
         );
       }
     },

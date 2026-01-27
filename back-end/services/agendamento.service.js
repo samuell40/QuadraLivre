@@ -138,38 +138,56 @@ const listarAgendamentosConfirmadosSemanaService = async (quadraId) => {
 
   const agendamentos = await prisma.agendamento.findMany({
     where: {
-      quadraId,
+      quadraId: Number(quadraId),
       status: "Confirmado",
       AND: [
         {
-          ano: {
-            gte: inicioSemana.getFullYear(),
-            lte: fimSemana.getFullYear(),
-          },
+          OR: [
+            { ano: { gt: inicioSemana.getFullYear() } },
+            {
+              ano: inicioSemana.getFullYear(),
+              OR: [
+                { mes: { gt: inicioSemana.getMonth() + 1 } },
+                {
+                  mes: inicioSemana.getMonth() + 1,
+                  dia: { gte: inicioSemana.getDate() },
+                },
+              ],
+            },
+          ],
         },
         {
-          mes: {
-            gte: inicioSemana.getMonth() + 1,
-            lte: fimSemana.getMonth() + 1,
-          },
-        },
-        {
-          dia: {
-            gte: inicioSemana.getDate(),
-            lte: fimSemana.getDate(),
-          },
+          OR: [
+            { ano: { lt: fimSemana.getFullYear() } },
+            {
+              ano: fimSemana.getFullYear(),
+              OR: [
+                { mes: { lt: fimSemana.getMonth() + 1 } },
+                {
+                  mes: fimSemana.getMonth() + 1,
+                  dia: { lte: fimSemana.getDate() },
+                },
+              ],
+            },
+          ],
         },
       ],
     },
     include: {
       modalidade: true,
       time: true,
-      usuario: { include: { times: { include: { time: true } } } },
+      usuario: {
+        include: {
+          times: { include: { time: true } },
+        },
+      },
     },
-    orderBy: [{ hora: "asc" }],
   });
 
-  return agendamentos.map((a) => ({ ...a, duracao: a.duracao ?? 1 }));
+  return agendamentos.map((a) => ({
+    ...a,
+    duracao: a.duracao ?? 1,
+  }));
 };
 
 const criarAgendamentoService = async ({
