@@ -76,9 +76,9 @@
 
 <script>
 import SideBar from '@/components/SideBar.vue';
-import AdicionarTimeModal from '@/components/modals/times/AdicionarTimesModal.vue';
-import DetalharTimes from '@/components/modals/times/DetalharTimes.vue';
-import GerenciarJogadores from '@/components/modals/times/GerenciarJogadores.vue';
+import AdicionarTimeModal from '@/components/times/AdicionarTimesModal.vue';
+import DetalharTimes from '@/components/times/DetalharTimes.vue';
+import GerenciarJogadores from '@/components/times/GerenciarJogadores.vue';
 import Swal from 'sweetalert2';
 import api from '@/axios';
 

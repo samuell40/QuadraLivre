@@ -6,17 +6,13 @@ import NaoAutorizado from '@/views/NaoAutorizado.vue';
 import CadastroView from '../views/CadastroView.vue';
 import CadastrarQuadraView from '../views/CadastrarQuadraView.vue';
 import GerenciarQuadrasView from '@/views/GerenciarQuadrasView.vue';
-import VisualizarPlacarView from '@/views/VisualizarPlacarView.vue';
-import GerenciarPartidaView from '@/views/GerenciarPartidaView.vue';
 import UsuariosView from '../views/UsuariosView';
 import MeusAgendamentosView from '../views/MeusAgendamentosView';
 import AgendarQuadrasView from '@/views/AgendarQuadrasView.vue';
 import AgendarQuadrasAdmView from '@/views/AgendarQuadrasAdmView.vue';
 import HorariosView from '@/views/HorariosView.vue';
 import GoogleCallback from '@/views/GoogleCallback.vue';
-import GerenciartimesView from '@/views/GerenciartimesView.vue';
 import GerenciarModalidadesView from '@/views/GerenciarModalidadesView.vue';
-import GerenicarCampeonatosView from '@/views/GerenciarCampeonatosView.vue';
 import MeusAvisosView from '../views/MeusAvisosView.vue';
 
 const routes = [
@@ -75,30 +71,6 @@ const routes = [
     meta: { requiresAuth: true, roles: [1, 2] },
   },
   {
-    path: '/gerenciartimes',
-    name: 'gerenciar_times',
-    component: GerenciartimesView,
-    meta: { requiresAuth: true, roles: [1, 2] },
-  },
-  {
-    path: '/gerenciarpartida',
-    name: 'gerenciar_partida',
-    component: GerenciarPartidaView,
-    meta: { requiresAuth: true, roles: [1, 2, 4] },
-  },
-  {
-    path: '/partida',
-    name: 'Partida',
-    component: () => import('@/views/PartidaView.vue'),
-    meta: { requiresAuth: true, roles: [1, 2, 4]}
-  },
-    {
-    path: '/visualizarplacar',
-    name: 'visualizar_placar',
-    component: VisualizarPlacarView,
-    meta: { requiresAuth: true, roles: [1, 2, 4] },
-  },
-  {
     path: '/usuarios',
     name: 'usuarios',
     component: UsuariosView,
@@ -133,12 +105,6 @@ const routes = [
     path: '/modalidades',
     name: 'Modalidades',
     component: GerenciarModalidadesView,
-    meta: { public: true },
-  },
-  {
-    path: '/campeonatos',
-    name: 'Campeonatos',
-    component: GerenicarCampeonatosView,
     meta: { public: true },
   },
 ];

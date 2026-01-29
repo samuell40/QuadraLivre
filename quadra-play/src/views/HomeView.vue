@@ -230,9 +230,6 @@
         </button>
       </div>
     </div>
-
-    <VerificarLogin v-if="mostrarModalLogin" @fechar="mostrarModalLogin = false" @irParaLogin="irParaLogin"
-      @loginComGoogle="loginComGoogle" />
   </div>
 </template>
 
@@ -240,13 +237,12 @@
 import router from '@/router'
 import { Carousel, Slide } from 'vue3-carousel'
 import Swal from 'sweetalert2'
-import VerificarLogin from '@/components/modals/Alertas/verificarLogin.vue'
 import api from '@/axios'
 import 'vue3-carousel/dist/carousel.css'
 
 export default {
   name: 'HomeView',
-  components: { Carousel, Slide, VerificarLogin },
+  components: { Carousel, Slide },
 
   data() {
     return {
