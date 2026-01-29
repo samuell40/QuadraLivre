@@ -77,7 +77,7 @@
 
 <script>
 import SideBar from '@/components/SideBar.vue'
-import AdicionarCampeonatoModal from '@/components/Campeonatos/AdicionarCampeonatoModal.vue';
+import AdicionarCampeonatoModal from '@/components/modals/Campeonatos/AdicionarCampeonatoModal.vue';
 import api from '@/axios'
 import Swal from 'sweetalert2'
 
