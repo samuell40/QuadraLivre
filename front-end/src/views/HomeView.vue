@@ -181,15 +181,6 @@
           <div class="infos">
             <p>
               <strong>Status:</strong>
-              <span :class="classeStatusTexto(partidaDetalhada)">
-                {{
-                  partidaDetalhada.finalizada
-                    ? 'Encerrada'
-                    : partidaDetalhada.partidaIniciada
-                      ? 'Em andamento'
-                      : 'Não iniciada'
-                }}
-              </span>
             </p>
             <p><strong>Faltas:</strong>
               {{ partidaDetalhada.faltasTimeA }} x {{ partidaDetalhada.faltasTimeB }}
@@ -215,36 +206,38 @@
           <!-- JOGADORES DA PARTIDA -->
           <div class="jogadores-container">
             <!-- TIME A -->
-            <div class="time-mobile-title">{{ partidaDetalhada.timeA.nome }}</div>
-            <div class="jogadores-time">
-              <div v-for="jp in partidaDetalhada.jogadoresPartida.filter(j => j.timeId === partidaDetalhada.timeA.id)"
-                :key="jp.id" class="jogador-item">
-                <img v-if="jp.jogador?.foto" :src="jp.jogador.foto" class="foto-jogador" />
+            <div class="time-mobile-title">{{ partidaDetalhada.timeA.nome }}
+              <div class="jogadores-time">
+                <div v-for="jp in partidaDetalhada.jogadoresPartida.filter(j => j.timeId === partidaDetalhada.timeA.id)"
+                  :key="jp.id" class="jogador-item">
+                  <img v-if="jp.jogador?.foto" :src="jp.jogador.foto" class="foto-jogador" />
 
-                <div class="dados-jogador">
-                  <span class="nome">{{ jp.jogador?.nome }}</span>
-                  <div class="estatisticas">
-                    <span class="gols">⚽ {{ jp.gols }}</span>
-                    <span class="cartao amarelo">🟨 {{ jp.cartoesAmarelos }}</span>
-                    <span class="cartao vermelho">🟥 {{ jp.cartoesVermelhos }}</span>
+                  <div class="dados-jogador">
+                    <span class="nome">{{ jp.jogador?.nome }}</span>
+                    <div class="estatisticas">
+                      <span class="gols">⚽ {{ jp.gols }}</span>
+                      <span class="cartao amarelo">🟨 {{ jp.cartoesAmarelos }}</span>
+                      <span class="cartao vermelho">🟥 {{ jp.cartoesVermelhos }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- TIME B -->
-            <div class="time-mobile-title">{{ partidaDetalhada.timeB.nome }}</div>
-            <div class="jogadores-time">
-              <div v-for="jp in partidaDetalhada.jogadoresPartida.filter(j => j.timeId === partidaDetalhada.timeB.id)"
-                :key="jp.id" class="jogador-item">
-                <img v-if="jp.jogador?.foto" :src="jp.jogador.foto" class="foto-jogador" />
+            <div class="time-mobile-title">{{ partidaDetalhada.timeB.nome }}
+              <div class="jogadores-time">
+                <div v-for="jp in partidaDetalhada.jogadoresPartida.filter(j => j.timeId === partidaDetalhada.timeB.id)"
+                  :key="jp.id" class="jogador-item">
+                  <img v-if="jp.jogador?.foto" :src="jp.jogador.foto" class="foto-jogador" />
 
-                <div class="dados-jogador">
-                  <span class="nome">{{ jp.jogador?.nome }}</span>
-                  <div class="estatisticas">
-                    <span class="gols">⚽ {{ jp.gols }}</span>
-                    <span class="cartao amarelo">🟨 {{ jp.cartoesAmarelos }}</span>
-                    <span class="cartao vermelho">🟥 {{ jp.cartoesVermelhos }}</span>
+                  <div class="dados-jogador">
+                    <span class="nome">{{ jp.jogador?.nome }}</span>
+                    <div class="estatisticas">
+                      <span class="gols">⚽ {{ jp.gols }}</span>
+                      <span class="cartao amarelo">🟨 {{ jp.cartoesAmarelos }}</span>
+                      <span class="cartao vermelho">🟥 {{ jp.cartoesVermelhos }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -256,7 +249,6 @@
         </button>
       </div>
     </div>
-
     <VerificarLogin v-if="mostrarModalLogin" @fechar="mostrarModalLogin = false" @irParaLogin="irParaLogin"
       @loginComGoogle="loginComGoogle" />
   </div>
@@ -1240,14 +1232,10 @@ p {
   background-color: #2563eb;
 }
 
-/* padrão: escondido */
-.time-nome-mobile {
-  display: none;
-  font-size: 12px;
+.time-mobile-title {
+  font-size: 20px;
   font-weight: bold;
   color: #3b82f6;
-  margin-bottom: 2px;
-  text-align: center;
 }
 
 @media (max-width: 1024px) {
