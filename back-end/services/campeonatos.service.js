@@ -139,4 +139,39 @@ async function listarCampeonatosPorModalidade(modalidadeId, ano) {
   }
 }
 
-module.exports = { criarCampeonato, removerCampeonato, listarCampeonatosPorModalidade };
+async function listarCampeonatosAnoAtual() {
+  const anoAtual = new Date().getFullYear()
+
+  const dataInicio = new Date(`${anoAtual}-01-01`)
+  const dataFim = new Date(`${anoAtual}-12-31T23:59:59.999`)
+
+return prisma.campeonato.findMany({
+  where: {
+    dataInicio: {
+      gte: dataInicio,
+      lte: dataFim
+    }
+  },
+  include: {
+    modalidade: true,
+    quadra: true,
+    placares: {
+      where: {
+        visivel: true
+      },
+      include: {
+        time: true
+      },
+      orderBy: {
+        posicao: 'asc'
+      }
+    }
+  },
+  orderBy: {
+    dataInicio: 'desc'
+  }
+})
+
+}
+
+module.exports = { criarCampeonato, removerCampeonato, listarCampeonatosPorModalidade, listarCampeonatosAnoAtual};

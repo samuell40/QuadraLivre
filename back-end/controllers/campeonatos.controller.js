@@ -39,4 +39,18 @@ async function listarCampeonatosPorModalidadeController(req, res) {
   }
 }
 
-module.exports = { criarCampeonatoController, removerCampeonatoController, listarCampeonatosPorModalidadeController };
+async function listarCampeonatosAnoAtualController(req, res) {
+  try {
+    const campeonatos =  await campeonatoService.listarCampeonatosAnoAtual()
+
+    return res.status(200).json(campeonatos)
+  } catch (error) {
+    console.error('Erro ao listar campeonatos do ano atual:', error)
+
+    return res.status(500).json({
+      message: 'Erro ao listar campeonatos do ano atual'
+    })
+  }
+}
+
+module.exports = { criarCampeonatoController, removerCampeonatoController, listarCampeonatosPorModalidadeController, listarCampeonatosAnoAtualController   };

@@ -7,6 +7,7 @@ import CadastroView from '../views/CadastroView.vue';
 import CadastrarQuadraView from '../views/CadastrarQuadraView.vue';
 import GerenciarQuadrasView from '@/views/GerenciarQuadrasView.vue';
 import VisualizarPlacarView from '@/views/quadra_play/VisualizarPlacarView.vue';
+import VisualizarPlacarHomeView from '@/views/VisualizarPlacarHomeView.vue';
 import GerenciarPartidaView from '@/views/quadra_play/GerenciarPartidaView.vue';
 import UsuariosView from '../views/UsuariosView';
 import MeusAgendamentosView from '../views/usuario/MeusAgendamentosView.vue';
@@ -18,6 +19,7 @@ import GerenciartimesView from '@/views/GerenciartimesView.vue';
 import GerenciarModalidadesView from '@/views/GerenciarModalidadesView.vue';
 import GerenicarCampeonatosView from '@/views/quadra_play/GerenciarCampeonatosView.vue';
 import MeusAvisosView from '../views/usuario/MeusAvisosView.vue';
+import telaInicialView from '@/views/quadra_play/telaInicialView.vue';
 
 const routes = [
   {
@@ -90,13 +92,19 @@ const routes = [
     path: '/partida',
     name: 'Partida',
     component: () => import('@/views/quadra_play/PartidaView.vue'),
-    meta: { requiresAuth: true, roles: [1, 2, 4]}
+    meta: { requiresAuth: true, roles: [1, 2, 4] }
   },
-    {
+  {
     path: '/visualizarplacar',
     name: 'visualizar_placar',
     component: VisualizarPlacarView,
     meta: { requiresAuth: true, roles: [1, 2, 4] },
+  },
+  {
+    path: '/visualizarplacarhome',
+    name: 'visualizar_placarhome',
+    component: VisualizarPlacarHomeView,
+    meta: { public: true},
   },
   {
     path: '/usuarios',
@@ -133,6 +141,12 @@ const routes = [
     path: '/modalidades',
     name: 'Modalidades',
     component: GerenciarModalidadesView,
+    meta: { public: true },
+  },
+  {
+    path: '/telainicial',
+    name: 'TelaInicial',
+    component: telaInicialView,
     meta: { public: true },
   },
   {

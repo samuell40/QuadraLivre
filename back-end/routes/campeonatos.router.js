@@ -8,4 +8,6 @@ router.delete('/removerCampeonato/:id', controller.removerCampeonatoController);
 
 router.get('/listar/:modalidadeId', controller.listarCampeonatosPorModalidadeController);
 
+router.get('/todos/campeonatos', controller.listarCampeonatosAnoAtualController)
+
 module.exports = router;

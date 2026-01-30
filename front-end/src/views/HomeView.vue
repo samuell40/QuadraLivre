@@ -1,7 +1,5 @@
 <template>
   <div class="layout">
-    <NavBar />
-
     <nav class="navbar-custom">
       <div class="navbar-container">
         <div class="esquerda-section">
@@ -14,7 +12,7 @@
           <div class="logo">Quadra Livre</div>
 
           <!-- Botão QuadraPlay para desktop -->
-          <a href="/campeonatos" class="quadra-play desktop-only">
+          <a href="/telainicial" class="quadra-play desktop-only">
             QuadraPlay
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
               class="bi bi-arrow-left-right" viewBox="0 0 16 16">
@@ -25,15 +23,14 @@
         </div>
 
         <ul class="nav-links" :class="{ active: isMenuOpen }">
-          <li><a href="#quadras-disponiveis">Quadras</a></li>
-          <li><a href="#placar-virtual">Placar</a></li>
+          <li><a href="/visualizarplacarhome">Tabelas de Classificação</a></li>
           <li class="login-item">
             <a href="#" class="login" @click.prevent="loginComGoogle">Login</a>
           </li>
 
           <!-- Botão QuadraPlay para mobile -->
           <li class="quadra-play-mobile">
-            <a href="/campeonatos" class="quadra-play">
+            <a href="/telainicial" class="quadra-play">
               QuadraPlay
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                 class="bi bi-arrow-left-right" viewBox="0 0 16 16">
@@ -92,7 +89,7 @@
 
         <div class="placar-wrapper">
           <h3 class="titulo-secao">
-            <span v-if="nomeCampeonato">Classificação {{ nomeCampeonato }}</span>
+            <span v-if="nomeCampeonato">Classificação do {{ nomeCampeonato }}</span>
           </h3>
 
           <div v-if="isLoadingPlacar" class="loader"></div>
@@ -125,14 +122,13 @@
                 <td>{{ time.golsSofridos }}</td>
                 <td>{{ time.saldoDeGols }}</td>
               </tr>
-
             </tbody>
           </table>
         </div>
 
         <!-- PARTIDAS -->
         <div class="partidas-wrapper">
-          <h3 class="titulo-secao">Partida</h3>
+          <h3 class="titulo-secao">Placar</h3>
 
           <ul class="lista-partidas">
             <li v-for="partida in partidas" :key="partida.id" class="card-partida" :class="classeStatusPartida(partida)"
@@ -181,6 +177,15 @@
           <div class="infos">
             <p>
               <strong>Status:</strong>
+              <span :class="classeStatusTexto(partidaDetalhada)">
+                {{
+                  partidaDetalhada.finalizada
+                    ? 'Encerrada'
+                    : partidaDetalhada.partidaIniciada
+                      ? 'Em andamento'
+                      : 'Não iniciada'
+                }}
+              </span>
             </p>
             <p><strong>Faltas:</strong>
               {{ partidaDetalhada.faltasTimeA }} x {{ partidaDetalhada.faltasTimeB }}
