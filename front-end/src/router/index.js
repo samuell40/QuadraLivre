@@ -6,18 +6,18 @@ import NaoAutorizado from '@/views/NaoAutorizado.vue';
 import CadastroView from '../views/CadastroView.vue';
 import CadastrarQuadraView from '../views/CadastrarQuadraView.vue';
 import GerenciarQuadrasView from '@/views/GerenciarQuadrasView.vue';
-import VisualizarPlacarView from '@/views/VisualizarPlacarView.vue';
-import GerenciarPartidaView from '@/views/GerenciarPartidaView.vue';
+import VisualizarPlacarView from '@/views/quadra_play/VisualizarPlacarView.vue';
+import GerenciarPartidaView from '@/views/quadra_play/GerenciarPartidaView.vue';
 import UsuariosView from '../views/UsuariosView';
-import MeusAgendamentosView from '../views/MeusAgendamentosView';
-import AgendarQuadrasView from '@/views/AgendarQuadrasView.vue';
+import MeusAgendamentosView from '../views/usuario/MeusAgendamentosView.vue';
+import AgendarQuadrasView from '@/views/usuario/AgendarQuadrasView.vue';
 import AgendarQuadrasAdmView from '@/views/AgendarQuadrasAdmView.vue';
 import HorariosView from '@/views/HorariosView.vue';
 import GoogleCallback from '@/views/GoogleCallback.vue';
 import GerenciartimesView from '@/views/GerenciartimesView.vue';
 import GerenciarModalidadesView from '@/views/GerenciarModalidadesView.vue';
-import GerenicarCampeonatosView from '@/views/GerenciarCampeonatosView.vue';
-import MeusAvisosView from '../views/MeusAvisosView.vue';
+import GerenicarCampeonatosView from '@/views/quadra_play/GerenciarCampeonatosView.vue';
+import MeusAvisosView from '../views/usuario/MeusAvisosView.vue';
 
 const routes = [
   {
@@ -89,7 +89,7 @@ const routes = [
   {
     path: '/partida',
     name: 'Partida',
-    component: () => import('@/views/PartidaView.vue'),
+    component: () => import('@/views/quadra_play/PartidaView.vue'),
     meta: { requiresAuth: true, roles: [1, 2, 4]}
   },
     {

@@ -215,6 +215,7 @@
           <!-- JOGADORES DA PARTIDA -->
           <div class="jogadores-container">
             <!-- TIME A -->
+            <div class="time-mobile-title">{{ partidaDetalhada.timeA.nome }}</div>
             <div class="jogadores-time">
               <div v-for="jp in partidaDetalhada.jogadoresPartida.filter(j => j.timeId === partidaDetalhada.timeA.id)"
                 :key="jp.id" class="jogador-item">
@@ -232,6 +233,7 @@
             </div>
 
             <!-- TIME B -->
+            <div class="time-mobile-title">{{ partidaDetalhada.timeB.nome }}</div>
             <div class="jogadores-time">
               <div v-for="jp in partidaDetalhada.jogadoresPartida.filter(j => j.timeId === partidaDetalhada.timeB.id)"
                 :key="jp.id" class="jogador-item">
@@ -357,7 +359,7 @@ export default {
         todas.sort((a, b) => {
           return new Date(b.createdAt) - new Date(a.createdAt)
         })
-        this.partidas = todas.slice(0, 7)
+        this.partidas = todas.slice(0, 5)
 
       } catch (err) {
         console.error('Erro ao carregar partidas:', err)
@@ -1238,6 +1240,16 @@ p {
   background-color: #2563eb;
 }
 
+/* padrão: escondido */
+.time-nome-mobile {
+  display: none;
+  font-size: 12px;
+  font-weight: bold;
+  color: #3b82f6;
+  margin-bottom: 2px;
+  text-align: center;
+}
+
 @media (max-width: 1024px) {
   .placares-e-partidas {
     flex-direction: column;
@@ -1373,6 +1385,90 @@ p {
   .placar td {
     padding: 6px;
     font-size: 12px;
+  }
+
+  .modal-partida {
+    padding: 16px;
+    min-width: 90vw;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .placar-modal {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 0;
+    flex-wrap: nowrap;
+  }
+
+  .placar-modal .time {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 14px;
+  }
+
+  .placar-modal .time img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .resultado {
+    font-size: 36px;
+    font-weight: bold;
+    color: #3b82f6;
+  }
+
+  .jogadores-container {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    max-height: 300px;
+  }
+
+  .jogadores-time {
+    padding: 8px;
+  }
+
+  .foto-jogador {
+    width: 32px;
+    height: 32px;
+  }
+
+  .estatisticas {
+    gap: 4px;
+  }
+
+  .gols {
+    font-size: 14px;
+  }
+
+  .cartao {
+    font-size: 11px;
+  }
+
+  .btn-cancel-placar {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+
+  .modal-partida h2 {
+    font-size: 22px;
+    text-align: center;
+  }
+
+  .infos p {
+    font-size: 14px;
+  }
+
+  .time-mobile-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #3b82f6;
   }
 }
 </style>
