@@ -10,7 +10,18 @@
             <span :class="{ open: isMenuOpen }"></span>
             <span :class="{ open: isMenuOpen }"></span>
           </div>
+
           <div class="logo">Quadra Livre</div>
+
+          <!-- Botão QuadraPlay para desktop -->
+          <a href="/campeonatos" class="quadra-play desktop-only">
+            QuadraPlay
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+              class="bi bi-arrow-left-right" viewBox="0 0 16 16">
+              <path fill-rule="evenodd"
+                d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5" />
+            </svg>
+          </a>
         </div>
 
         <ul class="nav-links" :class="{ active: isMenuOpen }">
@@ -18,6 +29,18 @@
           <li><a href="#placar-virtual">Placar</a></li>
           <li class="login-item">
             <a href="#" class="login" @click.prevent="loginComGoogle">Login</a>
+          </li>
+
+          <!-- Botão QuadraPlay para mobile -->
+          <li class="quadra-play-mobile">
+            <a href="/campeonatos" class="quadra-play">
+              QuadraPlay
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                class="bi bi-arrow-left-right" viewBox="0 0 16 16">
+                <path fill-rule="evenodd"
+                  d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5" />
+              </svg>
+            </a>
           </li>
         </ul>
 
@@ -29,10 +52,11 @@
       <div class="conteudo-centralizado">
         <h1 class="texto">
           <div>
-            <span class="primeira-linha">Com a Quadra Livre, <span class="destaque_sublinhado">agendar</span></span>
+            <span class="primeira-linha">Com o Quadra Livre, <span class="destaque_sublinhado">agendar e
+                gerenciar</span></span>
           </div>
           <div>
-            <span class="segunda-linha destaque">ficou ainda mais fácil.</span>
+            <span class="segunda-linha destaque">sua quadra ficou ainda mais fácil.</span>
           </div>
         </h1>
         <p>Com poucos cliques, encontre e reserve a quadra ideal para o seu jogo.</p>
@@ -68,7 +92,7 @@
 
         <div class="placar-wrapper">
           <h3 class="titulo-secao">
-            <span v-if="nomeCampeonato">Placar {{ nomeCampeonato }}</span>
+            <span v-if="nomeCampeonato">Classificação {{ nomeCampeonato }}</span>
           </h3>
 
           <div v-if="isLoadingPlacar" class="loader"></div>
@@ -80,7 +104,6 @@
           <table v-else class="placar">
             <thead>
               <tr>
-                <th>#</th>
                 <th>Time</th>
                 <th>PTS</th>
                 <th>J</th>
@@ -91,8 +114,8 @@
             </thead>
             <tbody>
               <tr v-for="(time, index) in placar" :key="time.id">
-                <td>{{ index + 1 }}</td>
                 <td class="time-info">
+                  <span class="posicao">{{ index + 1 }}º</span>
                   <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
                   {{ time.time?.nome }}
                 </td>
@@ -102,6 +125,7 @@
                 <td>{{ time.golsSofridos }}</td>
                 <td>{{ time.saldoDeGols }}</td>
               </tr>
+
             </tbody>
           </table>
         </div>
@@ -525,7 +549,8 @@ export default {
 .esquerda-section {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
+  margin-left: -12%;
 }
 
 .logo {
@@ -562,12 +587,47 @@ export default {
   text-decoration-color: #3B82F6;
 }
 
+.quadra-play {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 6px 25px;
+  border: 2px solid #3B82F6;
+  border-radius: 15px;
+  transition: background-color 0.3s, color 0.3s;
+  overflow: visible;
+}
+
+.quadra-play svg {
+  position: absolute;
+  top: 90%;
+  right: -12px;
+  /* sai um pouco do botão */
+  transform: translateY(-50%);
+  width: 25px;
+  height: 25px;
+  background-color: #152147;
+  /* simula “sem borda” atrás do ícone */
+  border-radius: 50%;
+  /* opcional, arredonda fundo do ícone */
+  padding: 2px;
+}
+
+.quadra-play-mobile {
+  display: none;
+}
+
 .login {
   background-color: #1E3A8A;
-  padding: 6px 16px;
+  padding: 6px 50px;
   border-radius: 30px;
   color: white;
   font-weight: 500;
+  text-align: center;
 }
 
 .hamburger {
@@ -828,6 +888,15 @@ p {
   gap: 8px;
 }
 
+.posicao {
+  color: #3b82f6;
+  font-weight: bold;
+  /* opcional, deixa mais visível */
+  min-width: 24px;
+  /* garante espaço para o número */
+  text-align: center;
+}
+
 .time-image {
   width: 32px;
   height: 32px;
@@ -869,10 +938,12 @@ p {
 }
 
 .conteudo-partida {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  /* centraliza horizontalmente */
+  gap: 20px;
+  /* distância entre time A, placar e time B */
 }
 
 .time.lado {
@@ -1119,17 +1190,17 @@ p {
 }
 
 .status-andamento {
-  color: #16a34a;         
+  color: #16a34a;
   font-weight: bold;
 }
 
 .status-pausada {
-  color: #facc15;          
+  color: #facc15;
   font-weight: bold;
 }
 
 .status-finalizada {
-  color: #dc2626;        
+  color: #dc2626;
   font-weight: bold;
 }
 
@@ -1180,6 +1251,32 @@ p {
 }
 
 @media (max-width: 768px) {
+  .esquerda-section {
+    margin-left: 10px;
+    gap: 10px;
+    justify-content: flex-start;
+  }
+
+  .desktop-only {
+    display: none;
+  }
+
+  .quadra-play-mobile {
+    display: block;
+    text-align: center;
+  }
+
+  .quadra-play-mobile .quadra-play {
+    padding: 6px 20px;
+    font-size: 14px;
+    margin: 0 auto;
+  }
+
+  .hamburger {
+    display: flex;
+    z-index: 1100;
+  }
+
   .logo {
     margin-left: 0;
   }
@@ -1203,10 +1300,6 @@ p {
     padding: 20px 0;
     gap: 20px;
     box-sizing: border-box;
-  }
-
-  .hamburger {
-    display: flex;
   }
 
   .login-item {
@@ -1252,6 +1345,23 @@ p {
 
   .btn-next {
     margin-left: -11px;
+  }
+
+  .placar-home {
+    width: 90%;
+    margin: 20px auto 40px;
+  }
+
+  .placar-wrapper {
+    flex: 2;
+    min-width: 400px;
+    overflow-x: auto;
+  }
+
+  .placar {
+    width: 100%;
+    min-width: 700px;
+    border-collapse: collapse;
   }
 
   .placar table {
