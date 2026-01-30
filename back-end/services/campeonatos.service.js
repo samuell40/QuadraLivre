@@ -18,7 +18,7 @@ async function criarCampeonato(data) {
   const listaDatasReais = datasJogos ? datasJogos.map(d => new Date(d)) : [];
 
   return await prisma.$transaction(async (tx) => {
-    
+
     if (listaDatasReais.length > 0) {
       const conflitos = await tx.agendamento.findMany({
         where: {
@@ -44,7 +44,7 @@ async function criarCampeonato(data) {
       usuarioId: Number(usuarioId),
       modalidadeId: Number(modalidadeId),
       status: "Confirmado",
-      tipo: "EVENTO", 
+      tipo: "EVENTO",
       duracao: 1
     }));
 
@@ -57,7 +57,7 @@ async function criarCampeonato(data) {
         status,
         modalidadeId: Number(modalidadeId),
         quadraId: Number(quadraId),
-        
+
         times: {
           create: times.map(timeId => ({ timeId: Number(timeId) }))
         },
@@ -145,33 +145,83 @@ async function listarCampeonatosAnoAtual() {
   const dataInicio = new Date(`${anoAtual}-01-01`)
   const dataFim = new Date(`${anoAtual}-12-31T23:59:59.999`)
 
-return prisma.campeonato.findMany({
-  where: {
-    dataInicio: {
-      gte: dataInicio,
-      lte: dataFim
-    }
-  },
-  include: {
-    modalidade: true,
-    quadra: true,
-    placares: {
-      where: {
-        visivel: true
-      },
-      include: {
-        time: true
-      },
-      orderBy: {
-        posicao: 'asc'
+  return prisma.campeonato.findMany({
+    where: {
+      dataInicio: {
+        gte: dataInicio,
+        lte: dataFim
       }
+    },
+    include: {
+      modalidade: true,
+      quadra: true,
+      placares: {
+        where: {
+          visivel: true
+        },
+        include: {
+          time: true
+        },
+        orderBy: {
+          posicao: 'asc'
+        }
+      }
+    },
+    orderBy: {
+      dataInicio: 'desc'
     }
-  },
-  orderBy: {
-    dataInicio: 'desc'
-  }
-})
-
+  })
 }
 
-module.exports = { criarCampeonato, removerCampeonato, listarCampeonatosPorModalidade, listarCampeonatosAnoAtual};
+async function listarArtilhariaCampeonato(campeonatoId, limite = 5) {
+  const artilharia = await prisma.jogadorPartida.groupBy({
+    by: ['jogadorId'],
+    where: {
+      partida: {
+        campeonatoId: Number(campeonatoId),
+        finalizada: true
+      }
+    },
+    _sum: {
+      gols: true
+    },
+    orderBy: {
+      _sum: {
+        gols: 'desc'
+      }
+    },
+    take: limite
+  });
+
+  // buscar dados do jogador (nome, foto, time)
+  const jogadoresIds = artilharia.map(a => a.jogadorId);
+
+  const jogadores = await prisma.jogador.findMany({
+    where: {
+      id: { in: jogadoresIds }
+    },
+    include: {
+      times: {
+        include: {
+          time: true
+        }
+      }
+    }
+  });
+
+  // junta gols + dados do jogador
+  return artilharia.map(item => {
+    const jogador = jogadores.find(j => j.id === item.jogadorId);
+
+    return {
+      jogadorId: item.jogadorId,
+      nome: jogador?.nome,
+      foto: jogador?.foto,
+      gols: item._sum.gols,
+      times: jogador?.times.map(t => t.time.nome)
+    };
+  });
+}
+
+
+module.exports = { criarCampeonato, removerCampeonato, listarCampeonatosPorModalidade, listarCampeonatosAnoAtual, listarArtilhariaCampeonato };

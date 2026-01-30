@@ -10,4 +10,6 @@ router.get('/listar/:modalidadeId', controller.listarCampeonatosPorModalidadeCon
 
 router.get('/todos/campeonatos', controller.listarCampeonatosAnoAtualController)
 
+router.get('/:campeonatoId/artilharia', controller.artilhariaCampeonatoController );
+
 module.exports = router;

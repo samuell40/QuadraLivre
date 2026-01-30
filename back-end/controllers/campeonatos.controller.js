@@ -53,4 +53,19 @@ async function listarCampeonatosAnoAtualController(req, res) {
   }
 }
 
-module.exports = { criarCampeonatoController, removerCampeonatoController, listarCampeonatosPorModalidadeController, listarCampeonatosAnoAtualController   };
+async function artilhariaCampeonatoController(req, res) {
+  try {
+    const { campeonatoId } = req.params;
+
+    const artilharia = await campeonatoService.listarArtilhariaCampeonato(campeonatoId);
+
+    return res.json(artilharia);
+  } catch (error) {
+    console.error('Erro ao buscar artilharia:', error);
+    return res.status(500).json({
+      erro: 'Erro ao buscar artilharia do campeonato'
+    });
+  }
+}
+
+module.exports = { criarCampeonatoController, removerCampeonatoController, listarCampeonatosPorModalidadeController, listarCampeonatosAnoAtualController, artilhariaCampeonatoController };

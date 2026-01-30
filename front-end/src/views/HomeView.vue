@@ -86,7 +86,6 @@
 
     <section class="placar-home">
       <div class="placar-container">
-
         <div class="placar-wrapper">
           <h3 class="titulo-secao">
             <span v-if="nomeCampeonato">Classificação do {{ nomeCampeonato }}</span>
@@ -122,6 +121,7 @@
                 <td>{{ time.golsSofridos }}</td>
                 <td>{{ time.saldoDeGols }}</td>
               </tr>
+
             </tbody>
           </table>
         </div>
@@ -605,14 +605,11 @@ export default {
   position: absolute;
   top: 90%;
   right: -12px;
-  /* sai um pouco do botão */
   transform: translateY(-50%);
   width: 25px;
   height: 25px;
   background-color: #152147;
-  /* simula “sem borda” atrás do ícone */
   border-radius: 50%;
-  /* opcional, arredonda fundo do ícone */
   padding: 2px;
 }
 
