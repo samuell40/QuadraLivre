@@ -461,7 +461,6 @@ export default {
         this.partidaDetalhada = data
       } catch (err) {
         console.error('Erro ao detalhar partida:', err)
-        Swal.fire('Erro', 'Não foi possível carregar os detalhes da partida', 'error')
         this.mostrarModalPartida = false
       } finally {
         this.loadingDetalhePartida = false
