@@ -8,31 +8,64 @@
           <span :class="{ open: isMenuOpen }"></span>
         </div>
 
-        <div class="logo-container">
-          <img src="@/assets/Cópia de xxxxx (2).png" alt="Quadra Livre" class="logo-img" />
-        </div>
+        <div class="logo">Quadra Livre</div>
+        <a href="#" class="login-btn-mobile" @click.prevent="loginComGoogle">
+          Login
+        </a>
+
+        <a href="/telainicial" class="quadra-play desktop-only">
+          QuadraPlay
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+            class="bi bi-arrow-left-right" viewBox="0 0 16 16">
+            <path fill-rule="evenodd"
+              d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5" />
+          </svg>
+        </a>
       </div>
 
       <ul class="nav-links" :class="{ active: isMenuOpen }">
-        <li>
-          <router-link to="/agendarquadra" exact-active-class="active-link">
-            Agendar Quadra
-          </router-link>
+        <li v-if="$route.path !== '/times'">
+          <a href="/times">
+            Times
+          </a>
         </li>
 
-        <li class="sair-item">
-          <a href="#" @click.prevent="logout" class="sair">Sair</a>
+        <li v-if="$route.path !== '/visualizarplacarhome'">
+          <a href="/visualizarplacarhome">
+            Tabelas de Classificação
+          </a>
+        </li>
+
+        <li v-if="$route.path !== '/'">
+          <a href="/">
+            Tela Inicial
+          </a>
+        </li>
+
+        <li class="login-item">
+          <a href="#" class="login" @click.prevent="loginComGoogle">
+            Login
+          </a>
+        </li>
+
+        <li class="quadra-play-mobile">
+          <a href="/telainicial" class="quadra-play">
+            QuadraPlay
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+              class="bi bi-arrow-left-right" viewBox="0 0 16 16">
+              <path fill-rule="evenodd"
+                d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5" />
+            </svg>
+          </a>
         </li>
       </ul>
-
-      <a href="#" @click.prevent="logout" class="sair-btn-mobile">Sair</a>
     </div>
   </nav>
 </template>
 
 <script>
 import router from '@/router'
-import api from '@/axios'
+import Swal from 'sweetalert2'
 
 export default {
   name: 'NavbarQuadra',
@@ -40,71 +73,96 @@ export default {
   data() {
     return {
       isMenuOpen: false,
-      usuarioLogado: {},
-      todosAvisos: []
+      mostrarModalLogin: false
     }
-  },
-
-  computed: {
-    totalNotificacoes() {
-      if (!this.usuarioLogado.id) return 0
-
-      return this.todosAvisos.filter(aviso => {
-        if (!aviso.leituras || aviso.leituras.length === 0) return true
-
-        return !aviso.leituras.some(
-          l => Number(l.usuarioId) === Number(this.usuarioLogado.id)
-        )
-      }).length
-    }
-  },
-
-  mounted() {
-    this.carregarUsuario()
-    this.carregarAvisos()
-
-    window.addEventListener('avisos-atualizados', this.carregarAvisos)
-  },
-
-  beforeUnmount() {
-    window.removeEventListener('avisos-atualizados', this.carregarAvisos)
   },
 
   methods: {
-    carregarUsuario() {
-      try {
-        this.usuarioLogado = JSON.parse(localStorage.getItem('usuario')) || {}
-      } catch {
-        this.usuarioLogado = {}
-      }
-    },
-
-    async carregarAvisos() {
-      if (!this.usuarioLogado.id) return
-
-      try {
-        const { data } = await api.get('/avisos')
-        this.todosAvisos = Array.isArray(data) ? data : []
-      } catch (err) {
-        console.error('Erro ao buscar avisos:', err)
-        this.todosAvisos = []
-      }
-    },
-
     toggleMenu() {
       this.isMenuOpen = !this.isMenuOpen
     },
 
-    logout() {
-      localStorage.removeItem('token')
-      localStorage.removeItem('usuario')
-      router.push('/')
+    irParaLogin() {
+      this.mostrarModalLogin = true
+    },
+
+    loginComGoogle() {
+      const width = 500
+      const height = 600
+      const left = window.screenX + (window.outerWidth - width) / 2
+      const top = window.screenY + (window.outerHeight - height) / 2.5
+
+      const popup = window.open(
+        'http://localhost:3000/auth/google',
+        'Login com Google',
+        `width=${width},height=${height},left=${left},top=${top}`
+      )
+
+      const listener = event => {
+        if (event.origin !== 'https://quadra-livre.vercel.app') return
+
+        const { token, erro, email, usuario } = event.data
+
+        if (erro === 'usuario_nao_cadastrado') {
+          Swal.fire({
+            icon: 'error',
+            title: 'Conta não encontrada!',
+            text: 'Redirecionando para cadastro...',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            didOpen: () => Swal.showLoading()
+          }).then(() => {
+            window.location.href = `/cadastro?email=${encodeURIComponent(email)}`
+          })
+          return
+        }
+
+        if (token && usuario) {
+          localStorage.setItem('token', token)
+          localStorage.setItem('usuario', JSON.stringify(usuario))
+
+          const quadraSelecionada = JSON.parse(
+            localStorage.getItem('quadraSelecionada')
+          )
+
+          if ([1, 2].includes(usuario.permissaoId)) {
+            router.push({ name: 'Dashboard' })
+          } else if (usuario.permissaoId === 4) {
+            router.push({ name: 'gerenciar_partida' })
+          } else if (usuario.permissaoId === 3) {
+            if (quadraSelecionada) {
+              router.push({
+                name: 'agendar_quadra',
+                query: { quadraId: quadraSelecionada.id }
+              })
+              localStorage.removeItem('quadraSelecionada')
+            } else {
+              router.push({ name: 'agendar_quadra' })
+            }
+          } else {
+            router.push({ name: 'Home' })
+          }
+        }
+
+        window.removeEventListener('message', listener)
+        if (popup) popup.close()
+      }
+
+      window.addEventListener('message', listener, false)
     }
   }
 }
 </script>
 
 <style scoped>
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
 .navbar-custom {
   position: fixed;
   top: 0;
@@ -114,7 +172,6 @@ export default {
   height: 70px;
   font-family: "Montserrat", sans-serif;
   z-index: 1000;
-  box-sizing: border-box;
 }
 
 .navbar-container {
@@ -123,21 +180,21 @@ export default {
   justify-content: space-between;
   padding: 0 30px;
   height: 100%;
-  width: 100%;
   position: relative;
-  box-sizing: border-box;
 }
 
 .esquerda-section {
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex-shrink: 0;
+  gap: 12px;
+  margin-left: -12%;
 }
 
-.logo-img {
-  height: 60px;
-  width: auto;
+.logo {
+  color: #ffffff;
+  font-size: 20px;
+  white-space: nowrap;
+  margin-left: 80px;
 }
 
 .nav-links {
@@ -147,63 +204,64 @@ export default {
   margin: 0;
   padding: 0;
   align-items: center;
-  margin-left: auto;
+  margin-right: 80px;
 }
 
 .nav-links li a {
   color: #ffffff;
   text-decoration: none;
   font-weight: 500;
-  transition: color 0.2s;
-  font-size: 16px;
 }
 
 .nav-links li a:hover {
   color: #3B82F6;
+  text-decoration-color: #3B82F6;
 }
 
-:deep(.active-link) {
-  text-decoration: underline !important;
-  text-decoration-color: #3B82F6 !important;
-  text-underline-offset: 6px !important;
+.nav-links li a:focus,
+.nav-links li a:active {
+  color: #ffffff;
+  text-decoration-color: #3B82F6;
 }
 
-.link-com-badge {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none !important;
-}
-
-.ativo-customizado .texto-link {
-  text-decoration: underline !important;
-  text-decoration-color: #3B82F6 !important;
-  text-underline-offset: 6px !important;
-  color: #3B82F6;
-}
-
-.badge-avisos {
-  background-color: #3b82f6;
-  color: #152147;
-  font-size: 11px;
-  font-weight: 800;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 4px;
-  border-radius: 50%;
-  display: flex;
+.quadra-play {
+  position: relative;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  text-decoration: none !important;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 6px 25px;
+  border: 2px solid #3B82F6;
+  border-radius: 15px;
+  transition: background-color 0.3s, color 0.3s;
+  overflow: visible;
 }
 
-.sair {
+.quadra-play svg {
+  position: absolute;
+  top: 90%;
+  right: -12px;
+  transform: translateY(-50%);
+  width: 25px;
+  height: 25px;
+  background-color: #152147;
+  border-radius: 50%;
+  padding: 2px;
+}
+
+.quadra-play-mobile {
+  display: none;
+}
+
+.login {
   background-color: #1E3A8A;
-  padding: 8px 24px;
+  padding: 6px 50px;
   border-radius: 30px;
   color: white;
-  font-weight: 600;
+  font-weight: 500;
+  text-align: center;
 }
 
 .hamburger {
@@ -220,48 +278,75 @@ export default {
   transition: 0.3s;
 }
 
-.sair-btn-mobile {
+.nav-links.active {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 70px;
+  left: -1px;
+  background-color: #152147;
+  width: 80%;
+  max-width: 250px;
+  padding: 20px;
+  gap: 20px;
+}
+
+
+.login-btn-mobile {
   display: none;
 }
 
 @media (max-width: 768px) {
-  .nav-links {
-    display: none;
+  .navbar-container {
+    padding: 0 16px;
   }
 
-  .nav-links.active {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: absolute;
-    top: 70px;
-    right: 0;
-    width: 100vw;
-    background-color: #152147;
-    padding: 20px 0;
-    gap: 20px;
+  .logo {
     margin-left: 0;
+    font-size: 16px;
+  }
+
+  .esquerda-section {
+    margin-left: 0;
+  }
+
+  .desktop-only {
+    display: none;
   }
 
   .hamburger {
     display: flex;
   }
 
-  .sair-item {
+  .nav-links {
     display: none;
   }
 
-  .sair-btn-mobile {
+  .nav-links.active {
+    display: flex;
+  }
+
+  .login-item {
+    display: none;
+  }
+
+  .quadra-play-mobile {
     display: block;
+  }
+
+  .login-btn-mobile {
+    display: inline-block;
     position: absolute;
-    right: 30px;
-    top: 18px;
-    background-color: #1E3A8A;
-    padding: 6px 16px;
-    border-radius: 30px;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #1E3A8A;
     color: white;
-    font-weight: 500;
+    padding: 6px 20px;
+    border-radius: 20px;
+    font-size: 14px;
     text-decoration: none;
+    z-index: 2000;
   }
 }
 </style>

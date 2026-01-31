@@ -1,49 +1,6 @@
 <template>
   <div class="layout">
-    <nav class="navbar-custom">
-      <div class="navbar-container">
-        <div class="esquerda-section">
-          <div class="hamburger" @click="toggleMenu">
-            <span :class="{ open: isMenuOpen }"></span>
-            <span :class="{ open: isMenuOpen }"></span>
-            <span :class="{ open: isMenuOpen }"></span>
-          </div>
-
-          <div class="logo">Quadra Livre</div>
-
-          <!-- Botão QuadraPlay para desktop -->
-          <a href="/telainicial" class="quadra-play desktop-only">
-            QuadraPlay
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-              class="bi bi-arrow-left-right" viewBox="0 0 16 16">
-              <path fill-rule="evenodd"
-                d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5" />
-            </svg>
-          </a>
-        </div>
-
-        <ul class="nav-links" :class="{ active: isMenuOpen }">
-          <li><a href="/visualizarplacarhome">Tabelas de Classificação</a></li>
-          <li class="login-item">
-            <a href="#" class="login" @click.prevent="loginComGoogle">Login</a>
-          </li>
-
-          <!-- Botão QuadraPlay para mobile -->
-          <li class="quadra-play-mobile">
-            <a href="/telainicial" class="quadra-play">
-              QuadraPlay
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                class="bi bi-arrow-left-right" viewBox="0 0 16 16">
-                <path fill-rule="evenodd"
-                  d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5" />
-              </svg>
-            </a>
-          </li>
-        </ul>
-
-        <a href="#" class="login-btn-mobile" @click.prevent="loginComGoogle">Login</a>
-      </div>
-    </nav>
+    <NavBarQuadra />
 
     <section class="texto-centro">
       <div class="conteudo-centralizado">
@@ -121,9 +78,21 @@
                 <td>{{ time.golsSofridos }}</td>
                 <td>{{ time.saldoDeGols }}</td>
               </tr>
-
             </tbody>
           </table>
+          <div class="glossario-placar">
+            <strong>Glossário</strong>
+            <ul>
+              <li><b>PTS</b>: Pontos</li>
+              <li><b>J</b>: Jogos</li>
+              <li><b>GM</b>: Gols Marcados</li>
+              <li><b>GS</b>: Gols Sofridos</li>
+              <li><b>SG</b>: Saldo de Gols</li>
+              <li><b>E</b>: Empates</li>
+              <li><b>VIT</b>: Vitórias</li>
+              <li><b>DER</b>: Derrotas</li>
+            </ul>
+          </div>
         </div>
 
         <!-- PARTIDAS -->
@@ -260,6 +229,7 @@
 </template>
 
 <script>
+import NavBarQuadra from '@/components/quadraplay/NavBarQuadra.vue';
 import router from '@/router'
 import { Carousel, Slide } from 'vue3-carousel'
 import Swal from 'sweetalert2'
@@ -269,11 +239,10 @@ import 'vue3-carousel/dist/carousel.css'
 
 export default {
   name: 'HomeView',
-  components: { Carousel, Slide, VerificarLogin },
+  components: { NavBarQuadra, Carousel, Slide, VerificarLogin },
 
   data() {
     return {
-      isMenuOpen: false,
       quadras: [],
       mostrarModalLogin: false,
       isLoadingQuadras: true,
@@ -307,7 +276,6 @@ export default {
   },
 
   methods: {
-    toggleMenu() { this.isMenuOpen = !this.isMenuOpen },
     next() { if (this.$refs.carousel) this.$refs.carousel.next() },
     prev() { if (this.$refs.carousel) this.$refs.carousel.prev() },
     classeStatusPartida(partida) {
@@ -505,26 +473,6 @@ export default {
   padding-bottom: 40px;
 }
 
-.navbar-custom {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background-color: #152147;
-  height: 70px;
-  font-family: "Montserrat", sans-serif;
-  z-index: 1000;
-}
-
-.navbar-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 30px;
-  height: 100%;
-  position: relative;
-}
-
 .loader {
   border: 6px solid #f3f3f3;
   border-top: 6px solid #3b82f6;
@@ -543,117 +491,6 @@ export default {
   100% {
     transform: rotate(360deg);
   }
-}
-
-.esquerda-section {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-left: -12%;
-}
-
-.logo {
-  color: #ffffff;
-  font-size: 20px;
-  white-space: nowrap;
-  margin-left: 80px;
-}
-
-.nav-links {
-  list-style: none;
-  display: flex;
-  gap: 40px;
-  margin: 0;
-  padding: 0;
-  align-items: center;
-  margin-right: 80px;
-}
-
-.nav-links li a {
-  color: #ffffff;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.nav-links li a:hover {
-  color: #3B82F6;
-  text-decoration-color: #3B82F6;
-}
-
-.nav-links li a:focus,
-.nav-links li a:active {
-  color: #ffffff;
-  text-decoration-color: #3B82F6;
-}
-
-.quadra-play {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  text-decoration: none;
-  font-weight: 500;
-  padding: 6px 25px;
-  border: 2px solid #3B82F6;
-  border-radius: 15px;
-  transition: background-color 0.3s, color 0.3s;
-  overflow: visible;
-}
-
-.quadra-play svg {
-  position: absolute;
-  top: 90%;
-  right: -12px;
-  transform: translateY(-50%);
-  width: 25px;
-  height: 25px;
-  background-color: #152147;
-  border-radius: 50%;
-  padding: 2px;
-}
-
-.quadra-play-mobile {
-  display: none;
-}
-
-.login {
-  background-color: #1E3A8A;
-  padding: 6px 50px;
-  border-radius: 30px;
-  color: white;
-  font-weight: 500;
-  text-align: center;
-}
-
-.hamburger {
-  display: none;
-  flex-direction: column;
-  cursor: pointer;
-  gap: 5px;
-}
-
-.hamburger span {
-  width: 25px;
-  height: 3px;
-  background-color: #fff;
-  transition: 0.3s;
-}
-
-.nav-links.active {
-  display: flex;
-  flex-direction: column;
-  position: absolute;
-  top: 70px;
-  right: 0;
-  background-color: #152147;
-  width: 100%;
-  padding: 20px 0;
-  gap: 20px;
-}
-
-.login-btn-mobile {
-  display: none;
 }
 
 .texto-centro {
@@ -887,9 +724,7 @@ p {
 .posicao {
   color: #3b82f6;
   font-weight: bold;
-  /* opcional, deixa mais visível */
   min-width: 24px;
-  /* garante espaço para o número */
   text-align: center;
 }
 
@@ -937,9 +772,7 @@ p {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* centraliza horizontalmente */
   gap: 20px;
-  /* distância entre time A, placar e time B */
 }
 
 .time.lado {
@@ -1041,6 +874,34 @@ p {
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid #e5e7eb;
+}
+
+.glossario-placar {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #f5f6fa;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #333;
+}
+
+.glossario-placar strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.glossario-placar ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 4px 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.glossario-placar li b {
+  color: #152147;
 }
 
 .resultado {
@@ -1240,87 +1101,7 @@ p {
   color: #3b82f6;
 }
 
-@media (max-width: 1024px) {
-  .placares-e-partidas {
-    flex-direction: column;
-  }
-
-  .placar-geral-container,
-  .lista-partidas-container {
-    flex: 1 1 100%;
-    max-height: none;
-  }
-}
-
 @media (max-width: 768px) {
-  .esquerda-section {
-    margin-left: 10px;
-    gap: 10px;
-    justify-content: flex-start;
-  }
-
-  .desktop-only {
-    display: none;
-  }
-
-  .quadra-play-mobile {
-    display: block;
-    text-align: center;
-  }
-
-  .quadra-play-mobile .quadra-play {
-    padding: 6px 20px;
-    font-size: 14px;
-    margin: 0 auto;
-  }
-
-  .hamburger {
-    display: flex;
-    z-index: 1100;
-  }
-
-  .logo {
-    margin-left: 0;
-  }
-
-  .nav-links {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    margin-right: 0;
-    padding: 0;
-  }
-
-  .nav-links.active {
-    display: flex;
-    position: absolute;
-    top: 70px;
-    right: 0;
-    width: 100vw;
-    background-color: #152147;
-    padding: 20px 0;
-    gap: 20px;
-    box-sizing: border-box;
-  }
-
-  .login-item {
-    display: none;
-  }
-
-  .login-btn-mobile {
-    display: block;
-    position: absolute;
-    right: 30px;
-    top: 18px;
-    background-color: #1E3A8A;
-    padding: 6px 16px;
-    border-radius: 30px;
-    color: white;
-    font-weight: 500;
-    text-decoration: none;
-  }
-
   .tit_horario {
     font-size: 26px;
     margin-top: 20px;

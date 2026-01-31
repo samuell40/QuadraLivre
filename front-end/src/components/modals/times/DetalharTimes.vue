@@ -377,22 +377,6 @@ export default {
   background-color: #ef4444;
 }
 
-@media (max-width: 1024px) {
-  .modal-conteudo.modal-placar {
-    min-width: auto;
-    width: 95vw;
-    padding: 24px;
-  }
-
-  .title_placar {
-    font-size: 24px;
-  }
-
-  .select-funcao {
-    width: 200px;
-  }
-}
-
 @media (max-width: 768px) {
   .modal-overlay {
     align-items: flex-start;

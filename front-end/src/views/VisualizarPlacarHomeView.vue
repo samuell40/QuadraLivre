@@ -1,53 +1,11 @@
 <template>
   <div class="layout">
-    <nav class="navbar-custom">
-      <div class="navbar-container">
-        <div class="esquerda-section">
-          <div class="hamburger" @click="toggleMenu">
-            <span :class="{ open: isMenuOpen }"></span>
-            <span :class="{ open: isMenuOpen }"></span>
-            <span :class="{ open: isMenuOpen }"></span>
-          </div>
-
-          <div class="logo">Quadra Livre</div>
-          <a href="/" class="btn-voltar-mobile">
-            Voltar a tela inicial
-          </a>
-
-          <a href="/telainicial" class="quadra-play desktop-only">
-            QuadraPlay
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-              class="bi bi-arrow-left-right" viewBox="0 0 16 16">
-              <path fill-rule="evenodd"
-                d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5" />
-            </svg>
-          </a>
-        </div>
-
-        <ul class="nav-links" :class="{ active: isMenuOpen }">
-          <li class="login-item">
-            <a href="/" class="login">Voltar a tela inicial</a>
-          </li>
-
-          <li class="quadra-play-mobile">
-            <a href="/telainicial" class="quadra-play">
-              QuadraPlay
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                class="bi bi-arrow-left-right" viewBox="0 0 16 16">
-                <path fill-rule="evenodd"
-                  d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5" />
-              </svg>
-            </a>
-          </li>
-        </ul>
-      </div>
-    </nav>
+    <NavBarQuadra />
 
     <div class="conteudo">
       <h1 class="title">Campeonatos</h1>
       <div v-if="isLoading" class="loader"></div>
       <div v-else>
-        <!-- ABAS DE CAMPEONATOS -->
         <div class="abas-container">
           <div class="aba" v-for="c in campeonatos" :key="c.id" :class="{ ativa: campeonatoAtivo === c.id }"
             @click="selecionarCampeonato(c.id)">
@@ -152,6 +110,40 @@
                 </tbody>
               </table>
             </div>
+            <!-- ===== GLOSSÁRIO FUTEBOL ===== -->
+            <div v-if="['futebol', 'futebol de areia', 'futsal'].includes(modalidadeNormalizada)"
+              class="glossario-placar">
+              <strong>Glossário</strong>
+              <ul>
+                <li><b>PTS</b>: Pontos</li>
+                <li><b>J</b>: Jogos</li>
+                <li><b>GM</b>: Gols Marcados</li>
+                <li><b>GS</b>: Gols Sofridos</li>
+                <li><b>SG</b>: Saldo de Gols</li>
+                <li><b>E</b>: Empates</li>
+                <li><b>VIT</b>: Vitórias</li>
+                <li><b>DER</b>: Derrotas</li>
+              </ul>
+            </div>
+
+            <!-- ===== GLOSSÁRIO VÔLEI ===== -->
+            <div v-else-if="['volei', 'volei de areia', 'futevolei'].includes(modalidadeNormalizada)"
+              class="glossario-placar">
+              <strong>Glossário</strong>
+              <ul>
+                <li><b>PTS</b>: Pontos</li>
+                <li><b>J</b>: Jogos</li>
+                <li><b>VIT</b>: Vitórias</li>
+                <li><b>DER</b>: Derrotas</li>
+                <li><b>STV</b>: Sets Vencidos</li>
+                <li><b>3x0</b>: Vitória por 3 sets a 0</li>
+                <li><b>3x2</b>: Vitória por 3 sets a 2</li>
+                <li><b>2x3</b>: Derrota por 2 sets a 3</li>
+                <li><b>0x3</b>: Derrota por 0 sets a 3</li>
+                <li><b>W.O.</b>: Vitória por W.O.</li>
+              </ul>
+            </div>
+
           </div>
           <div class="partidas-wrapper">
             <h3 class="titulo-secao">Placar</h3>
@@ -286,7 +278,8 @@
             </div>
           </div>
         </div>
-        <!-- 🔥 ARTILHARIA -->
+
+        <!--ARTILHARIA -->
         <div class="artilharia-wrapper" v-if="campeonatoAtivo">
           <h3 class="titulo-secao">Artilharia</h3>
 
@@ -314,7 +307,7 @@
 
                   <span class="nome-jogador">{{ jogador.nome }}</span>
                 </td>
-                <td class="gols-destaque">⚽ {{ jogador.gols }}</td>
+                <td class="gols-destaque">{{ jogador.gols }}</td>
               </tr>
             </tbody>
           </table>
@@ -327,9 +320,11 @@
 
 <script>
 import api from '@/axios'
+import NavBarQuadra from '@/components/quadraplay/NavBarQuadra.vue';
 
 export default {
   name: 'VisualizarPlacarHome',
+  components: { NavBarQuadra },
 
   data() {
     return {
@@ -337,7 +332,6 @@ export default {
       campeonatoAtivo: null,
       partidas: [],
       isLoading: false,
-      isMenuOpen: false,
       mostrarModalPartida: false,
       loadingDetalhePartida: false,
       partidaDetalhada: null,
@@ -389,11 +383,6 @@ export default {
         return 'status-andamento'
       }
       return 'status-pausada'
-    },
-
-
-    toggleMenu() {
-      this.isMenuOpen = !this.isMenuOpen
     },
 
     selecionarCampeonato(id) {
@@ -493,7 +482,6 @@ export default {
   }
 }
 </script>
-
 
 <style scoped>
 .layout {
@@ -801,7 +789,7 @@ export default {
 
 .nome-time {
   font-weight: 500;
-  color: #111827;
+  color: #7E7E7E;
 }
 
 .loader-container-centralizado {
@@ -978,6 +966,34 @@ export default {
   min-width: 250px;
 }
 
+.glossario-placar {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #f5f6fa;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #333;
+}
+
+.glossario-placar strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.glossario-placar ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 4px 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.glossario-placar li b {
+  color: #152147;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -1091,6 +1107,11 @@ export default {
   border-bottom: 1px solid #3b82f6;
   padding-bottom: 6px;
   margin-bottom: 10px;
+}
+
+.nome-jogador{
+ font-weight: 500;
+  color: #7E7E7E;
 }
 
 .jogador-card {
@@ -1280,7 +1301,7 @@ export default {
 .gols-destaque {
   font-weight: bold;
   font-size: 18px;
-  color: #1e3a8a;
+  color: #7E7E7E;
 }
 
 @media (max-width: 768px) {
