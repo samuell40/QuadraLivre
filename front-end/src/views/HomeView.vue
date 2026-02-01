@@ -1,6 +1,6 @@
 <template>
   <div class="layout">
-    <NavBarQuadra />
+    <NavBarQuadra v-if="mostrarNavbar" />
 
     <section class="texto-centro">
       <div class="conteudo-centralizado">
@@ -225,11 +225,15 @@
     </div>
     <VerificarLogin v-if="mostrarModalLogin" @fechar="mostrarModalLogin = false" @irParaLogin="irParaLogin"
       @loginComGoogle="loginComGoogle" />
+
+    <Footer ref="footerRef" />
+
   </div>
 </template>
 
 <script>
 import NavBarQuadra from '@/components/quadraplay/NavBarQuadra.vue';
+import Footer from '@/components/Footer.vue';
 import router from '@/router'
 import { Carousel, Slide } from 'vue3-carousel'
 import Swal from 'sweetalert2'
@@ -239,10 +243,12 @@ import 'vue3-carousel/dist/carousel.css'
 
 export default {
   name: 'HomeView',
-  components: { NavBarQuadra, Carousel, Slide, VerificarLogin },
+  components: { NavBarQuadra, Footer, Carousel, Slide, VerificarLogin },
 
   data() {
     return {
+      mostrarNavbar: true,
+      observer: null,
       quadras: [],
       mostrarModalLogin: false,
       isLoadingQuadras: true,
@@ -273,6 +279,16 @@ export default {
   async mounted() {
     await this.carregarQuadras()
     await this.carregarPlacarFutebol()
+
+    this.$nextTick(() => {
+      const footerEl = this.$refs.footerRef?.$el
+      if (!footerEl) return
+
+      this.observer = new IntersectionObserver(
+        ([entry]) => { this.mostrarNavbar = !entry.isIntersecting },
+        { root: null, threshold: 0.1 })
+      this.observer.observe(footerEl)
+    })
   },
 
   methods: {
@@ -470,7 +486,6 @@ export default {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding-bottom: 40px;
 }
 
 .loader {
