@@ -6,8 +6,7 @@
       <div class="conteudo-centralizado">
         <h1 class="texto">
           <div>
-            <span class="primeira-linha">Com o Quadra Livre, <span class="destaque_sublinhado">agendar e
-                gerenciar</span></span>
+            <span class="primeira-linha">Com o Quadra Livre, <span class="destaque_sublinhado">agendar</span></span>
           </div>
           <div>
             <span class="segunda-linha destaque">sua quadra ficou ainda mais fácil.</span>
