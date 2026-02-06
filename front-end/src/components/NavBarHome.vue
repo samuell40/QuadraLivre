@@ -13,7 +13,7 @@
           Login
         </a>
 
-        <a href="/telainicial" class="quadra-play desktop-only">
+        <a href="#" class="quadra-play desktop-only" @click.prevent="loginQuadraPlayComGoogle">
           QuadraPlay
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
             class="bi bi-arrow-left-right" viewBox="0 0 16 16">
@@ -49,7 +49,7 @@
         </li>
 
         <li class="quadra-play-mobile">
-          <a href="/telainicial" class="quadra-play">
+          <a href="#" class="quadra-play" @click.prevent="loginQuadraPlayComGoogle">
             QuadraPlay
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
               class="bi bi-arrow-left-right" viewBox="0 0 16 16">
@@ -142,6 +142,63 @@ export default {
             }
           } else {
             router.push({ name: 'Home' })
+          }
+        }
+
+        window.removeEventListener('message', listener)
+        if (popup) popup.close()
+      }
+
+      window.addEventListener('message', listener, false)
+    },
+    loginQuadraPlayComGoogle() {
+      const width = 500
+      const height = 600
+      const left = window.screenX + (window.outerWidth - width) / 2
+      const top = window.screenY + (window.outerHeight - height) / 2.5
+
+      const popup = window.open(
+        'http://localhost:3000/auth/google',
+        'Login QuadraPlay',
+        `width=${width},height=${height},left=${left},top=${top}`
+      )
+
+      const listener = event => {
+        if (event.origin !== 'https://quadra-livre.vercel.app') return
+
+        const { token, erro, email, usuario } = event.data
+
+        if (erro === 'usuario_nao_cadastrado') {
+          Swal.fire({
+            icon: 'error',
+            title: 'Conta não encontrada!',
+            text: 'Redirecionando para cadastro...',
+            timer: 3000,
+            showConfirmButton: false
+          }).then(() => {
+            window.location.href = `/cadastro?email=${encodeURIComponent(email)}`
+          })
+          return
+        }
+
+        if (token && usuario) {
+          localStorage.setItem('token', token)
+          localStorage.setItem('usuario', JSON.stringify(usuario))
+
+          if ([1, 2].includes(usuario.permissaoId)) {
+            router.push({ name: 'TelaInicial' })
+          } else if (usuario.permissaoId === 3) {
+            Swal.fire({
+              icon: 'warning',
+              title: 'Acesso negado',
+              text: 'Você não tem permissão para acessar o QuadraPlay.'
+            })
+          } else {
+            Swal.fire({
+              icon: 'info',
+              title: 'Acesso não permitido',
+              text: 'Seu perfil não possui acesso ao QuadraPlay.'
+            })
           }
         }
 

@@ -42,7 +42,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import NavBar from "@/components/NavBar.vue";
+import NavBar from "@/components/Usuario/NavBar.vue";
 import MeusAgendamentoCard from "@/components/cards/MeusAgendamentosCard.vue";
 import api from "@/axios";
 import Swal from "sweetalert2";

@@ -67,7 +67,7 @@
 
 <script>
 import Swal from "sweetalert2";
-import NavBar from "@/components/NavBar.vue";
+import NavBar from "@/components/Usuario/NavBar.vue";
 import AgendamentoModal from "@/components/modals/Agendamentos/AgendModal.vue";
 import api from "@/axios";
 import { useAuthStore } from "@/store";

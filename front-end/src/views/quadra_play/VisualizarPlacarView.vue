@@ -1,6 +1,6 @@
 <template>
   <div class="layout">
-    <SideBar />
+    <SidebarQuadra />
 
     <div class="conteudo">
       <div class="header">
@@ -168,12 +168,12 @@
 </template>
 
 <script>
-import SideBar from '@/components/SideBar.vue'
+import SidebarQuadra from '@/components/quadraplay/SidebarQuadra.vue';
 import axios from '@/axios'
 
 export default {
   name: 'VisualizarPlacarView',
-  components: { SideBar },
+  components: { SidebarQuadra },
 
   data() {
     return {

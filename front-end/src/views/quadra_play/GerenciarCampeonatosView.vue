@@ -1,6 +1,6 @@
 <template>
   <div class="layout">
-    <SideBar />
+    <SidebarQuadra />
 
     <div class="conteudo">
       <div class="header">
@@ -76,7 +76,7 @@
 </template>
 
 <script>
-import SideBar from '@/components/SideBar.vue'
+import SidebarQuadra from '@/components/quadraplay/SidebarQuadra.vue';
 import AdicionarCampeonatoModal from '@/components/modals/Campeonatos/AdicionarCampeonatoModal.vue';
 import api from '@/axios'
 import Swal from 'sweetalert2'
@@ -84,7 +84,7 @@ import Swal from 'sweetalert2'
 export default {
   name: 'GerenciarCampeonatosView',
 
-  components: { SideBar, AdicionarCampeonatoModal },
+  components: { SidebarQuadra, AdicionarCampeonatoModal },
 
   data() {
     return {

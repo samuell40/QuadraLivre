@@ -1,6 +1,6 @@
 <template>
   <div class="layout">
-    <SideBar />
+    <SidebarQuadra />
     <div class="conteudo">
       <div class="header">
         <h1 class="title">Gerenciar Times</h1>
@@ -75,7 +75,7 @@
 </template>
 
 <script>
-import SideBar from '@/components/SideBar.vue';
+import SidebarQuadra from '@/components/quadraplay/SidebarQuadra.vue';
 import AdicionarTimeModal from '@/components/modals/times/AdicionarTimesModal.vue';
 import DetalharTimes from '@/components/modals/times/DetalharTimes.vue';
 import GerenciarJogadores from '@/components/modals/times/GerenciarJogadores.vue';
@@ -85,7 +85,7 @@ import api from '@/axios';
 export default {
   name: 'GerenciartimesView',
   components: {
-    SideBar,
+    SidebarQuadra,
     AdicionarTimeModal,
     DetalharTimes,
     GerenciarJogadores

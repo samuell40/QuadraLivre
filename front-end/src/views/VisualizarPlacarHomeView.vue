@@ -1,6 +1,6 @@
 <template>
   <div class="layout">
-    <NavBarQuadra />
+    <NavBarHome />
 
     <div class="conteudo">
       <h1 class="title">Campeonatos</h1>
@@ -320,11 +320,11 @@
 
 <script>
 import api from '@/axios'
-import NavBarQuadra from '@/components/quadraplay/NavBarQuadra.vue';
+import NavBarHome from '@/components/NavBarHome.vue';
 
 export default {
   name: 'VisualizarPlacarHome',
-  components: { NavBarQuadra },
+  components: { NavBarHome },
 
   data() {
     return {

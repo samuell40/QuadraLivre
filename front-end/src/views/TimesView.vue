@@ -1,6 +1,6 @@
 <template>
     <div class="layout">
-        <NavBarQuadra />
+        <NavBarHome />
 
         <div class="conteudo">
             <div v-if="isLoading" class="loader"></div>
@@ -89,12 +89,12 @@
 </template>
 
 <script>
-import NavBarQuadra from '@/components/quadraplay/NavBarQuadra.vue'
+import NavBarHome from '@/components/NavBarHome.vue'
 import api from '@/axios'
 
 export default {
     name: 'TimesHomeView',
-    components: { NavBarQuadra },
+    components: { NavBarHome },
 
     data() {
         return {

@@ -1,6 +1,5 @@
 <template>
   <div class="layout">
-    <NavBarQuadra />
 
     <div class="conteudo">
       <!-- HEADER: título + sidebar -->
@@ -37,14 +36,12 @@
 </template>
 
 <script>
-import NavBarQuadra from '@/components/quadraplay/NavBarQuadra.vue'
 import api from '@/axios'
 
 export default {
   name: 'CampeonatosView',
 
   components: {
-    NavBarQuadra
   },
 
   data() {

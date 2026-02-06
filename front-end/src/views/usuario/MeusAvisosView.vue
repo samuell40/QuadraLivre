@@ -128,7 +128,7 @@
 </template>
 
 <script>
-import NavBar from "@/components/NavBar.vue";
+import NavBar from "@/components/Usuario/NavBar.vue";
 import api from "@/axios";
 import { useAuthStore } from "@/store";
 import Swal from 'sweetalert2';

@@ -1,6 +1,6 @@
 <template>
   <div class="layout">
-    <SideBar />
+    <SidebarQuadra />
 
     <div class="conteudo">
       <NavBarUser v-if="!partidaIniciada" />
@@ -151,7 +151,7 @@
 </template>
 
 <script>
-import SideBar from '@/components/SideBar.vue'
+import SidebarQuadra from '@/components/quadraplay/SidebarQuadra.vue'
 import NavBarUser from '@/components/NavBarUser.vue'
 import { useAuthStore } from '@/store'
 import SelecionarJogadores from '@/components/Partida/SelecionarJogadores.vue'
@@ -163,7 +163,7 @@ import Swal from 'sweetalert2'
 
 export default {
   components: {
-    SideBar,
+    SidebarQuadra,
     NavBarUser,
     SelecionarJogadores,
     PlacarTime,
