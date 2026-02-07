@@ -100,6 +100,36 @@ async function removerJogadorTime(jogadorId, timeId) {
   return { message: 'Jogador removido do time com sucesso' };
 }
 
+async function atualizarFotoJogador(jogadorId, foto) {
+  jogadorId = Number(jogadorId);
+
+  const jogador = await prisma.jogador.findUnique({
+    where: { id: jogadorId },
+  });
+
+  if (!jogador) {
+    throw new Error("Jogador não encontrado");
+  }
+
+  const jogadorAtualizado = await prisma.jogador.update({
+    where: { id: jogadorId },
+    data: {
+      foto,
+    },
+    include: {
+      funcao: true,
+      times: {
+        include: {
+          time: true,
+          modalidade: true,
+        },
+      },
+    },
+  });
+
+  return jogadorAtualizado;
+}
+
 async function listarJogadoresPorTime(timeId) {
   const time = await prisma.time.findUnique({
     where: { id: Number(timeId) },
@@ -304,6 +334,7 @@ async function moverJogadorDeTime(jogadorId, novoTimeId) {
 module.exports = {
   adicionarJogador,
   removerJogadorTime,
+  atualizarFotoJogador,
   listarJogadoresPorTime,
   listarTodosJogadores,
   adicionarFuncaoJogador,

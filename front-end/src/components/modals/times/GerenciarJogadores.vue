@@ -137,7 +137,7 @@
       <div class="botoes">
         <button v-if="acaoLocal" :disabled="(acaoLocal === 'adicionar' && !nomeJogador) ||
           (acaoLocal === 'adicionarExistente' && jogadoresSelecionadosExistentes.length === 0) ||
-           (acaoLocal === 'remover' && jogadoresSelecionadosRemover.length === 0)||
+          (acaoLocal === 'remover' && jogadoresSelecionadosRemover.length === 0) ||
           (acaoLocal === 'adicionarMassa' && !nomesJogadoresMassa)" @click="confirmar" class="btn-save1">
           Confirmar
         </button>
@@ -331,11 +331,13 @@ export default {
         return;
       }
 
+      const FOTO_PADRAO = 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/Imagem%20padrao.png';
+
       const urlImagem = await this.uploadImagem();
 
       await api.post('/adicionar', {
         nome: this.nomeJogador.trim(),
-        foto: urlImagem,
+        foto: urlImagem || FOTO_PADRAO,
         timeId: this.time.id,
         usuarioId: this.usuarioSelecionado?.id
       });
@@ -359,6 +361,7 @@ export default {
         'success'
       );
     },
+    
     async adicionarJogadoresEmMassa() {
       const nomesDigitados = this.nomesJogadoresMassa
         .split(/[\n,]+/)
@@ -370,7 +373,6 @@ export default {
         return;
       }
 
-      // Jogadores já existentes (mapa nomeLower -> jogador)
       const jogadoresPorNome = new Map(
         this.jogadores.map(j => [j.nome.toLowerCase(), j])
       );
@@ -397,15 +399,16 @@ export default {
         return;
       }
 
-      // Adiciona apenas os que não existem
+      const FOTO_PADRAO ='https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/Imagem%20padrao.png';
+
       for (const nome of nomesParaAdicionar) {
         await api.post('/adicionar', {
           nome,
+          foto: FOTO_PADRAO,
           timeId: this.time.id
         });
       }
 
-      // Mensagem final
       let mensagem = `${nomesParaAdicionar.length} jogador(es) adicionados com sucesso!`;
 
       if (nomesExistentes.length > 0) {
@@ -418,9 +421,9 @@ export default {
     toggleJogadorRemover(jogador) {
       const index = this.jogadoresSelecionadosRemover.findIndex(j => j.id === jogador.id);
       if (index !== -1) {
-        this.jogadoresSelecionadosRemover.splice(index, 1); // remove se já estava selecionado
+        this.jogadoresSelecionadosRemover.splice(index, 1); 
       } else {
-        this.jogadoresSelecionadosRemover.push(jogador); // adiciona se não estava selecionado
+        this.jogadoresSelecionadosRemover.push(jogador); 
       }
     },
 

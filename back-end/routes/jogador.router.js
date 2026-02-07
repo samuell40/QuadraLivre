@@ -6,6 +6,8 @@ router.post('/adicionar', controller.adicionarJogadorController);
 
 router.delete('/remover/:timeId/:jogadorId', controller.removerJogadorTimeController);
 
+router.put('/alterar/foto', controller.atualizarFotoJogadorController);
+
 router.get('/time/:timeId', controller.listarJogadoresController);
 
 router.get('/jogadores/:modalidadeId', controller.listarTodosJogadoresController)

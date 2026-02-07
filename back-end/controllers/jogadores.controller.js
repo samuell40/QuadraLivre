@@ -53,6 +53,28 @@ async function removerJogadorTimeController(req, res) {
   }
 }
 
+async function atualizarFotoJogadorController(req, res) {
+  try {
+    const { jogadorId, foto } = req.body;
+
+    if (!jogadorId) {
+      return res.status(400).json({ message: "jogadorId é obrigatório" });
+    }
+
+    if (!foto) {
+      return res.status(400).json({ message: "foto é obrigatória" });
+    }
+
+    const jogadorAtualizado =
+      await jogadorService.atualizarFotoJogador(jogadorId, foto);
+
+    return res.status(200).json(jogadorAtualizado);
+  } catch (error) {
+    console.error("Erro ao atualizar foto do jogador:", error);
+    return res.status(500).json({ message: error.message });
+  }
+}
+
 async function listarJogadoresController(req, res) {
   try {
     const { timeId } = req.params;
@@ -191,6 +213,7 @@ async function moverJogadorTimeController(req, res) {
 module.exports = {
   adicionarJogadorController,
   removerJogadorTimeController,
+  atualizarFotoJogadorController,
   listarJogadoresController,
   listarTodosJogadoresController,
   adicionarFuncaoJogadorController,

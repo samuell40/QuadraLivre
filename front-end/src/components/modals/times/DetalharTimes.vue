@@ -179,21 +179,39 @@ export default {
       });
     },
 
-    handleTrocarImagem(event) {
+    async handleTrocarImagem(event) {
       const file = event.target.files[0];
       if (!file || !this.jogadorImagemAtual) return;
 
-      // aqui você decide se:
-      // 1️⃣ faz upload direto
-      // 2️⃣ só guarda o arquivo pra enviar depois
+      try {
+        // 1️⃣ upload da imagem
+        const formData = new FormData();
+        formData.append('file', file);
 
-      console.log('Imagem escolhida:', file);
-      console.log('Jogador:', this.jogadorImagemAtual);
+        const uploadRes = await api.post('/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
 
-      // exemplo:
-      // this.uploadImagemJogador(this.jogadorImagemAtual.id, file);
+        const fotoUrl = uploadRes.data.fileUrl || uploadRes.data.url;
 
-      event.target.value = ''; // limpa o input
+        // 2️⃣ chama a rota de alterar foto
+        await api.put('/alterar/foto', {
+          jogadorId: this.jogadorImagemAtual.id,
+          foto: fotoUrl
+        });
+
+        // 3️⃣ atualiza no front
+        this.jogadorImagemAtual.foto = fotoUrl;
+
+        Swal.fire('Sucesso', 'Imagem alterada com sucesso!', 'success');
+
+      } catch (err) {
+        console.error(err);
+        Swal.fire('Erro', 'Erro ao alterar imagem do jogador', 'error');
+      } finally {
+        event.target.value = '';
+        this.jogadorImagemAtual = null;
+      }
     }
   }
 };
