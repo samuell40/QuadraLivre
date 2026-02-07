@@ -1,6 +1,6 @@
 <template>
   <div>
-    <button class="button-sidebar d-block d-md-none" :class="{ hidden: !sidebarVisible }" @click="toggleSidebar">
+    <button class="button-sidebar d-block d-md-none">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-list"
         viewBox="0 0 16 16">
         <path fill-rule="evenodd"
@@ -8,55 +8,57 @@
       </svg>
     </button>
 
-    <div v-if="sidebarVisible" class="sidebar">
-      <img src="../../assets/Cópia de xxxxx (2).png" class="logo" alt="Logo" />
+    <div class="sidebar_quadra">
+      <div class="menu-itens">
+        <a href="/telainicial">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trophy-fill"
+            viewBox="0 0 16 16">
+            <path
+              d="M2.5.5A.5.5 0 0 1 3 0h10a.5.5 0 0 1 .5.5q0 .807-.034 1.536a3 3 0 1 1-1.133 5.89c-.79 1.865-1.878 2.777-2.833 3.011v2.173l1.425.356c.194.048.377.135.537.255L13.3 15.1a.5.5 0 0 1-.3.9H3a.5.5 0 0 1-.3-.9l1.838-1.379c.16-.12.343-.207.537-.255L6.5 13.11v-2.173c-.955-.234-2.043-1.146-2.833-3.012a3 3 0 1 1-1.132-5.89A33 33 0 0 1 2.5.5m.099 2.54a2 2 0 0 0 .72 3.935c-.333-1.05-.588-2.346-.72-3.935m10.083 3.935a2 2 0 0 0 .72-3.935c-.133 1.59-.388 2.885-.72 3.935" />
+          </svg>
+          <span>Meus Campeonatos</span>
+        </a>
 
-      <!-- ADMINISTRAÇÃO -->
-      <div v-if="!isPermissao4" class="sidebar-category">
-        <div v-show="openCategory === 'admin'">
-          <a href="/modalidades" :class="{ active: isActive('/modalidades') }">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-              <path fill="currentColor"
-                d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h3V2h2v2h6V2h2v2h3q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm7.25-2h1.5v-1.5h-1.5zm4.25-3H18q.425 0 .713-.288T19 14v-4q0-.425-.288-.712T18 9h-2.5q-.425 0-.712.288T14.5 10v4q0 .425.288.713T15.5 15M5 15h4.5v-1.5h-3v-1h2q.425 0 .713-.288T9.5 11.5V10q0-.425-.288-.712T8.5 9H5v1.5h3v1H6q-.425 0-.712.288T5 12.5zm6.25-.5h1.5V13h-1.5zm4.75-1v-3h1.5v3zM11.25 11h1.5V9.5h-1.5zm0-3.5h1.5V6h-1.5z" />
-            </svg>
-            <span>Gerenciar Modalidades</span>
-          </a>
-          <a href="/gerenciarpartida" :class="{ active: isActive('gerenciarpartida') }">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-              <path fill="currentColor"
-                d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h3V2h2v2h6V2h2v2h3q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm7.25-2h1.5v-1.5h-1.5zm4.25-3H18q.425 0 .713-.288T19 14v-4q0-.425-.288-.712T18 9h-2.5q-.425 0-.712.288T14.5 10v4q0 .425.288.713T15.5 15M5 15h4.5v-1.5h-3v-1h2q.425 0 .713-.288T9.5 11.5V10q0-.425-.288-.712T8.5 9H5v1.5h3v1H6q-.425 0-.712.288T5 12.5zm6.25-.5h1.5V13h-1.5zm4.75-1v-3h1.5v3zM11.25 11h1.5V9.5h-1.5zm0-3.5h1.5V6h-1.5z" />
-            </svg>
-            <span>Gerenciar Partidas</span>
-          </a>
-          <a href="/visualizarplacar" :class="{ active: isActive('/visualizarplacar') }">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-              <path fill="currentColor"
-                d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h3V2h2v2h6V2h2v2h3q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm7.25-2h1.5v-1.5h-1.5zm4.25-3H18q.425 0 .713-.288T19 14v-4q0-.425-.288-.712T18 9h-2.5q-.425 0-.712.288T14.5 10v4q0 .425.288.713T15.5 15M5 15h4.5v-1.5h-3v-1h2q.425 0 .713-.288T9.5 11.5V10q0-.425-.288-.712T8.5 9H5v1.5h3v1H6q-.425 0-.712.288T5 12.5zm6.25-.5h1.5V13h-1.5zm4.75-1v-3h1.5v3zM11.25 11h1.5V9.5h-1.5zm0-3.5h1.5V6h-1.5z" />
-            </svg>
-            <span>Placar</span>
-          </a>
-          <a href="/gerenciartimes" :class="{ active: isActive('/gerenciartimes') }">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-              <path fill="currentColor"
-                d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h3V2h2v2h6V2h2v2h3q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm7.25-2h1.5v-1.5h-1.5zm4.25-3H18q.425 0 .713-.288T19 14v-4q0-.425-.288-.712T18 9h-2.5q-.425 0-.712.288T14.5 10v4q0 .425.288.713T15.5 15M5 15h4.5v-1.5h-3v-1h2q.425 0 .713-.288T9.5 11.5V10q0-.425-.288-.712T8.5 9H5v1.5h3v1H6q-.425 0-.712.288T5 12.5zm6.25-.5h1.5V13h-1.5zm4.75-1v-3h1.5v3zM11.25 11h1.5V9.5h-1.5zm0-3.5h1.5V6h-1.5z" />
-            </svg>
-            <span>Gerenciar Times</span>
-          </a>
+        <a href="/gerenciartimes">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people-fill"
+            viewBox="0 0 16 16">
+            <path
+              d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" />
+          </svg>
+          <span>Gerenciar Times</span>
+        </a>
+        <a href="/gerenciartimes">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+            class="bi bi-card-checklist" viewBox="0 0 16 16">
+            <path
+              d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2z" />
+            <path
+              d="M7 5.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0M7 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0" />
+          </svg>
+          <span>Gerenciar Funções</span>
+        </a>
+        <a href="/gerenciartimes">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar3"
+            viewBox="0 0 16 16">
+            <path
+              d="M14 0H2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2M1 3.857C1 3.384 1.448 3 2 3h12c.552 0 1 .384 1 .857v10.286c0 .473-.448.857-1 .857H2c-.552 0-1-.384-1-.857z" />
+            <path
+              d="M6.5 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2" />
+          </svg>
+          <span>Agendador</span>
+        </a>
+      </div>
+      <div class="sidebar-user user-info">
 
+        <div class="user-text">
+          <div class="user-name fw-bold">
+            {{ usuario?.nome }}
+          </div>
+          <div class="user-role">
+            {{ usuario?.permissao?.descricao }}
+          </div>
         </div>
       </div>
-
-      <!-- LOGOUT -->
-      <button class="logout-button" @click="logout">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-coin"
-          viewBox="0 0 16 16">
-          <path fill-rule="evenodd"
-            d="M6 12.5a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v2a.5.5 0 0 1-1 0v-2A1.5 1.5 0 0 1 6.5 2h8A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 5 12.5v-2a.5.5 0 0 1 1 0z" />
-          <path fill-rule="evenodd"
-            d="M.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L1.707 7.5H10.5a.5.5 0 0 1 0 1H1.707l2.147 2.146a.5.5 0 0 1-.708.708z" />
-        </svg>
-        Sair
-      </button>
     </div>
   </div>
 </template>
@@ -68,10 +70,8 @@ export default {
   name: "SideBar",
   data() {
     return {
-      sidebarVisible: true,
-      isMobile: false,
       usuario: null,
-      openCategory: localStorage.getItem("openCategory") ?? "agendamentos",
+      isMobile: false
     };
   },
   mounted() {
@@ -95,17 +95,6 @@ export default {
         this.sidebarVisible = true;
       }
     },
-    toggleCategory(category) {
-      if (category === "agendamentos") {
-        this.openCategory = this.openCategory === category ? null : category;
-      } else {
-        this.openCategory = this.openCategory === category ? null : category;
-      }
-      localStorage.setItem("openCategory", this.openCategory);
-    },
-    isActive(path) {
-      return this.$route.path === path;
-    },
     logout() {
       localStorage.removeItem("token");
       localStorage.removeItem("usuario");
@@ -126,17 +115,47 @@ body {
   background-color: white;
 }
 
-.sidebar {
-  height: 100%;
-  width: 250px;
+.menu-itens {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.logout-container {
+  position: absolute;
+  bottom: 10px;
+  width: 100%;
+}
+
+.sidebar_quadra {
   position: fixed;
-  top: 0;
+  top: 70px;
   left: 0;
+  width: 250px;
+  height: calc(100% - 70px);
   background-color: #152147;
-  padding-top: 20px;
-  text-align: center;
+  padding-top: 10px;
   box-shadow: 0 4px 10px -1px rgba(0, 0, 0, 0.10);
   z-index: 10;
+  text-align: left;
+}
+
+.sidebar_quadra a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  color: white;
+  text-decoration: none;
+  font-size: 15px;
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.sidebar_quadra a span {
+  display: inline-block;
+  white-space: nowrap;
 }
 
 .sidebar img {
@@ -144,40 +163,6 @@ body {
   margin-top: 20px;
   margin-bottom: 10px;
   border: 1px solid;
-}
-
-.sidebar a {
-  padding: 12px 15px;
-  text-decoration: none;
-  font-size: 14px;
-  text-align: left;
-  color: white;
-  display: block;
-  margin-left: 20px;
-}
-
-.sidebar a span {
-  white-space: nowrap;
-}
-
-.sidebar a svg {
-  margin-right: 5px;
-  vertical-align: middle;
-}
-
-.sidebar a:hover {
-  color: white;
-}
-
-.sidebar a.active {
-  color: #3B82F6;
-  text-decoration: none;
-}
-
-.sidebar a:hover {
-  color: #3B82F6;
-  border-radius: 6px;
-  transition: background-color 0.2s ease;
 }
 
 .logout-button svg {
@@ -206,15 +191,6 @@ body {
   color: rgb(240, 231, 231);
 }
 
-.button-sidebar.hidden {
-  color: #152147;
-}
-
-.sidebar-links {
-  display: flex;
-  flex-direction: column;
-}
-
 .logout-button {
   font-size: 14px;
   display: flex;
@@ -229,29 +205,60 @@ body {
   margin: 0 auto 35px;
 }
 
-.sidebar-category-header {
-  color: #fff;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 10px 20px;
-  display: flex;
-  justify-content: space-between;
-}
-
-.sidebar-category-header.no-toggle {
-  justify-content: flex-start;
-}
-
-.sidebar-category-header.no-toggle a {
-  margin-left: 0;
-  padding: 0;
-  font-size: 16px;
-  display: block;
-  width: 100%;
-}
-
 .logo {
   width: 170px;
   height: 170px;
+}
+
+.sidebar-user {
+  margin-top: 115%;
+  padding: 12px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-photo {
+  width: 55px;
+  height: 55px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.user-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-info .user-name {
+  font-size: 15px;
+  color: #3b82f6;
+  font-weight: bold;
+}
+
+.user-info .user-role {
+  font-size: 13px;
+  color: #cbd5e1;
+  margin-top: -2px;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .user-photo {
+    width: 45px;
+    height: 45px;
+  }
+
+  .user-info .user-name {
+    font-size: 14px;
+  }
+
+  .user-info .user-role {
+    font-size: 11px;
+  }
 }
 </style>

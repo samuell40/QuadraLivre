@@ -1,72 +1,83 @@
 <template>
   <div class="layout">
-    <SidebarQuadra />
-    <div class="conteudo">
-      <div class="header">
-        <h1 class="title">Gerenciar Times</h1>
-        <div class="botoes">
-          <button class="btn-add" @click="abrirModalAdicionarTime"> Adicionar Time</button>
-        </div>
-      </div>
+    <NavBarQuadras />
 
-      <div v-if="isLoading" class="loader-container-centralizado">
-        <div class="loader"></div>
-      </div>
+    <div class="main">
+      <SidebarQuadra />
 
-      <div v-else>
-        <div class="dropdown-row">
-          <div class="team dropdown-container">
-            <p>Modalidade:</p>
-            <select id="modalidade" v-model="modalidadeSelecionada" class="dropdown">
-              <option disabled value="">Selecione uma modalidade</option>
-              <option v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" :value="modalidade.id">
-                {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
-              </option>
-            </select>
+      <div class="conteudo">
+        <div class="header">
+          <h1 class="title">Gerenciar Times</h1>
+
+          <div class="botoes">
+            <button class="btn-add" @click="abrirModalAdicionarTime">
+              Adicionar Time
+            </button>
           </div>
         </div>
 
-        <AdicionarTimeModal :aberto="modalAdicionarTimeAberto" :modalidadesDisponiveis="modalidadesDisponiveis"
-          @fechar="fecharModalAdicionarTime" @atualizar="carregarTimes" />
-
-        <DetalharTimes :aberto="modalDetalharTimeAberto" :time="timeSelecionadoDetalhe"
-          :modalidadeSelecionada="modalidadeSelecionada" ref="detalharJogadores" @fechar="fecharModalDetalharTime"
-          @gerenciar-jogadores="modalGerenciarJogadoresAberto = true" />
-
-        <GerenciarJogadores :aberto="modalGerenciarJogadoresAberto" :time="timeSelecionadoDetalhe"
-          @fechar="modalGerenciarJogadoresAberto = false" @atualizar-lista="atualizarJogadores" />
-
-        <div v-if="isLoadingTimes" class="loader-container-centralizado">
+        <div v-if="isLoading" class="loader-container-centralizado">
           <div class="loader"></div>
         </div>
 
-
         <div v-else>
-          <div v-if="times && times.length" class="lista-times">
-            <div v-for="time in times" :key="time.id" class="card">
-              <div class="card-conteudo">
-                <div class="foto">
-                  <img :src="time.foto" :alt="time.nome" />
-                </div>
-
-                <div class="info">
-                  <h2>{{ time.nome }}</h2>
-                  <p>{{ obterQtdJogadores(time) }} jogador{{ obterQtdJogadores(time) === 1 ? '' : 'es' }}</p>
-                  <p>Treinador: {{ time.treinador }}</p>
-                  <p>Agendamentos: {{ time.agendamentos || 0 }}</p>
-                </div>
-              </div>
-
-              <div class="botoes">
-                <button class="btn-editar" @click="abrirModalDetalharTime(time)">Detalhes</button>
-                <button class="btn-detalhar" @click="removerTime(time.id)">Remover</button>
-
-              </div>
+          <div class="abas-container">
+            <div class="aba" v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id"
+              :class="{ ativa: modalidadeSelecionada === modalidade.id }" @click="selecionarModalidade(modalidade.id)">
+              {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
             </div>
           </div>
+          <!-- MODAIS -->
+          <AdicionarTimeModal :aberto="modalAdicionarTimeAberto" :modalidadesDisponiveis="modalidadesDisponiveis"
+            @fechar="fecharModalAdicionarTime" @atualizar="carregarTimes" />
 
-          <div v-else class="mensagem-placar">
-            Nenhum time encontrado para esta modalidade.
+          <DetalharTimes :aberto="modalDetalharTimeAberto" :time="timeSelecionadoDetalhe"
+            :modalidadeSelecionada="modalidadeSelecionada" ref="detalharJogadores" @fechar="fecharModalDetalharTime"
+            @gerenciar-jogadores="modalGerenciarJogadoresAberto = true" />
+
+          <GerenciarJogadores :aberto="modalGerenciarJogadoresAberto" :time="timeSelecionadoDetalhe"
+            @fechar="modalGerenciarJogadoresAberto = false" @atualizar-lista="atualizarJogadores" />
+
+          <!-- LOADING DOS TIMES -->
+          <div v-if="isLoadingTimes" class="loader-container-centralizado">
+            <div class="loader"></div>
+          </div>
+
+          <!-- LISTA -->
+          <div v-else>
+            <div v-if="times && times.length" class="lista-times">
+              <div v-for="time in times" :key="time.id" class="card">
+                <div class="card-conteudo">
+                  <div class="foto">
+                    <img :src="time.foto" :alt="time.nome" />
+                  </div>
+
+                  <div class="info">
+                    <h2>{{ time.nome }}</h2>
+                    <p>
+                      {{ obterQtdJogadores(time) }}
+                      jogador{{ obterQtdJogadores(time) === 1 ? '' : 'es' }}
+                    </p>
+                    <p>Treinador: {{ time.treinador }}</p>
+                    <p>Agendamentos: {{ time.agendamentos || 0 }}</p>
+                  </div>
+                </div>
+
+                <div class="botoes">
+                  <button class="btn-editar" @click="abrirModalDetalharTime(time)">
+                    Detalhes
+                  </button>
+
+                  <button class="btn-detalhar" @click="removerTime(time.id)">
+                    Remover
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div v-else class="mensagem-placar">
+              Nenhum time encontrado para esta modalidade.
+            </div>
           </div>
         </div>
       </div>
@@ -75,6 +86,7 @@
 </template>
 
 <script>
+import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue';
 import SidebarQuadra from '@/components/quadraplay/SidebarQuadra.vue';
 import AdicionarTimeModal from '@/components/modals/times/AdicionarTimesModal.vue';
 import DetalharTimes from '@/components/modals/times/DetalharTimes.vue';
@@ -85,6 +97,7 @@ import api from '@/axios';
 export default {
   name: 'GerenciartimesView',
   components: {
+    NavBarQuadras,
     SidebarQuadra,
     AdicionarTimeModal,
     DetalharTimes,
@@ -146,6 +159,10 @@ export default {
 
     editarTime(time) {
       Swal.fire('Editar', `Abrir modal de editar para: ${time.nome}`, 'info');
+    },
+    selecionarModalidade(id) {
+      if (this.modalidadeSelecionada === id) return;
+      this.modalidadeSelecionada = id;
     },
 
     async carregarModalidades() {
@@ -224,13 +241,22 @@ export default {
 <style scoped>
 .layout {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
+}
+
+.main {
+  display: flex;
+  flex: 1;
 }
 
 .conteudo {
   flex: 1;
   padding: 32px;
   margin-left: 250px;
+  /* sidebar */
+  margin-top: 70px;
+  /* navbar */
   transition: margin-left 0.3s ease;
 }
 
@@ -287,6 +313,33 @@ export default {
 
 .dropdown-row .team {
   flex: 1;
+}
+
+.abas-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.aba {
+  text-align: center;
+  padding: 10px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: #f1f1f1;
+  font-weight: 500;
+  color: #333;
+  transition: all 0.2s;
+}
+
+.aba:hover {
+  background-color: #e0e0e0;
+}
+
+.aba.ativa {
+  background-color: #3b82f6;
+  color: white;
 }
 
 .lista-times {

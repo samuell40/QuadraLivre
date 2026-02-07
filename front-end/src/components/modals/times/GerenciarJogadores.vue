@@ -11,6 +11,9 @@
         <div class="aba" :class="{ ativa: acaoLocal === 'adicionar' }" @click="acaoLocal = 'adicionar'">
           Adicionar Novo
         </div>
+        <div class="aba" :class="{ ativa: acaoLocal === 'adicionarMassa' }" @click="acaoLocal = 'adicionarMassa'">
+          Adicionar em massa
+        </div>
         <div class="aba" :class="{ ativa: acaoLocal === 'remover' }" @click="acaoLocal = 'remover'">
           Remover
         </div>
@@ -120,10 +123,22 @@
         </div>
       </div>
 
+      <div v-if="acaoLocal === 'adicionarMassa'" class="form-group">
+        <label>Adicionar jogadores em massa:</label>
+
+        <textarea v-model="nomesJogadoresMassa" class="dropdown" rows="4"
+          placeholder="Ex: João, Tiago, Pedro"></textarea>
+
+        <small style="color:#666">
+          Separe os nomes por vírgula ou um por linha
+        </small>
+      </div>
+
       <div class="botoes">
         <button v-if="acaoLocal" :disabled="(acaoLocal === 'adicionar' && !nomeJogador) ||
           (acaoLocal === 'adicionarExistente' && jogadoresSelecionadosExistentes.length === 0) ||
-          (acaoLocal === 'remover' && jogadoresSelecionadosRemover.length === 0)" @click="confirmar" class="btn-save1">
+           (acaoLocal === 'remover' && jogadoresSelecionadosRemover.length === 0)||
+          (acaoLocal === 'adicionarMassa' && !nomesJogadoresMassa)" @click="confirmar" class="btn-save1">
           Confirmar
         </button>
 
@@ -135,7 +150,6 @@
     </div>
   </div>
 </template>
-
 
 <script>
 import api from '@/axios';
@@ -164,7 +178,8 @@ export default {
       jogadoresSelecionadosRemover: [],
       abrirDropdownJogadores: false,
       abrirDropdownRemover: false,
-      buscaJogadorRemover: ''
+      buscaJogadorRemover: '',
+      nomesJogadoresMassa: '',
     };
   },
 
@@ -344,6 +359,61 @@ export default {
         'success'
       );
     },
+    async adicionarJogadoresEmMassa() {
+      const nomesDigitados = this.nomesJogadoresMassa
+        .split(/[\n,]+/)
+        .map(n => n.trim())
+        .filter(n => n.length > 0);
+
+      if (nomesDigitados.length === 0) {
+        Swal.fire('Atenção', 'Informe ao menos um nome', 'warning');
+        return;
+      }
+
+      // Jogadores já existentes (mapa nomeLower -> jogador)
+      const jogadoresPorNome = new Map(
+        this.jogadores.map(j => [j.nome.toLowerCase(), j])
+      );
+
+      const nomesExistentes = [];
+      const nomesParaAdicionar = [];
+
+      for (const nome of nomesDigitados) {
+        const nomeLower = nome.toLowerCase();
+
+        if (jogadoresPorNome.has(nomeLower)) {
+          nomesExistentes.push(jogadoresPorNome.get(nomeLower).nome);
+        } else {
+          nomesParaAdicionar.push(nome);
+        }
+      }
+
+      if (nomesParaAdicionar.length === 0) {
+        Swal.fire(
+          'Atenção',
+          `Todos os jogadores já existem:\n\n${nomesExistentes.join(', ')}`,
+          'warning'
+        );
+        return;
+      }
+
+      // Adiciona apenas os que não existem
+      for (const nome of nomesParaAdicionar) {
+        await api.post('/adicionar', {
+          nome,
+          timeId: this.time.id
+        });
+      }
+
+      // Mensagem final
+      let mensagem = `${nomesParaAdicionar.length} jogador(es) adicionados com sucesso!`;
+
+      if (nomesExistentes.length > 0) {
+        mensagem += `\n\nJá existentes:\n${nomesExistentes.join(', ')}`;
+      }
+
+      Swal.fire('Concluído', mensagem, 'success');
+    },
 
     toggleJogadorRemover(jogador) {
       const index = this.jogadoresSelecionadosRemover.findIndex(j => j.id === jogador.id);
@@ -379,6 +449,7 @@ export default {
         if (this.acaoLocal === 'adicionar') await this.adicionarJogador();
         else if (this.acaoLocal === 'adicionarExistente') await this.adicionarJogadorExistente();
         else if (this.acaoLocal === 'remover') await this.removerJogador();
+        else if (this.acaoLocal === 'adicionarMassa') await this.adicionarJogadoresEmMassa();
 
         this.$emit('atualizar-lista');
         this.fecharModal();
@@ -656,5 +727,4 @@ export default {
     font-size: 13px;
   }
 }
-
 </style>

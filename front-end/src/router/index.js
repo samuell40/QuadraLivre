@@ -15,7 +15,7 @@ import AgendarQuadrasView from '@/views/usuario/AgendarQuadrasView.vue';
 import AgendarQuadrasAdmView from '@/views/AgendarQuadrasAdmView.vue';
 import HorariosView from '@/views/HorariosView.vue';
 import GoogleCallback from '@/views/GoogleCallback.vue';
-import GerenciartimesView from '@/views/GerenciartimesView.vue';
+import GerenciartimesView from '@/views/quadra_play/GerenciartimesView.vue';
 import TimesHomeView from '@/views/TimesView.vue';
 import GerenciarModalidadesView from '@/views/GerenciarModalidadesView.vue';
 import GerenicarCampeonatosView from '@/views/quadra_play/GerenciarCampeonatosView.vue';

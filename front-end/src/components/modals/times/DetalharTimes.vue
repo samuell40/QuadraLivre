@@ -19,14 +19,12 @@
               <tr>
                 <th>Nome</th>
                 <th>Função</th>
-                <th>Gols</th>
-                <th>Cartões</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="j in jogadores" :key="j.id">
                 <td class="time-info">
-                  <img :src="j.foto" alt="Foto" class="time-image" />
+                  <img :src="j.foto" alt="Foto" class="time-image time-image-click" @click.stop="gerenciarImagem(j)" />
                   {{ j.nome }}
                 </td>
                 <td>
@@ -35,18 +33,6 @@
                       {{ f.nome }}
                     </option>
                   </select>
-                </td>
-                <td>{{ j.gols || 0 }}</td>
-                <td>
-                  <div v-if="j.cartoesVermelhos && j.cartoesVermelhos > 0" class="cartao-container">
-                    <span v-if="j.cartoesVermelhos > 1" class="cartao-quantidade">
-                      {{ j.cartoesVermelhos }}
-                    </span>
-                    <span class="cartao-vermelho"></span>
-                  </div>
-                  <div v-else>
-                    <span v-for="n in j.cartoesAmarelos" :key="n" class="cartao-amarelo"></span>
-                  </div>
                 </td>
               </tr>
             </tbody>
@@ -61,10 +47,13 @@
       <button class="btn-cancel-placar" @click="$emit('fechar')">Fechar</button>
     </div>
   </div>
+  <input ref="inputTrocarImagem" type="file" accept=".jpg,.jpeg,.png" style="display: none"
+    @change="handleTrocarImagem" />
 </template>
 
 <script>
 import api from '@/axios';
+import Swal from 'sweetalert2';
 
 export default {
   props: {
@@ -77,7 +66,8 @@ export default {
     return {
       jogadores: [],
       funcoes: [],
-      isLoading: false
+      isLoading: false,
+      jogadorImagemAtual: null
     };
   },
   watch: {
@@ -129,18 +119,6 @@ export default {
         const lista = [];
 
         res.data.forEach(j => {
-          let cartoesAmarelos = 0;
-          let cartoesVermelhos = 0;
-          let gols = 0;
-
-          if (j.atuacoes) {
-            j.atuacoes.forEach(a => {
-              cartoesAmarelos += a.cartoesAmarelos;
-              cartoesVermelhos += a.cartoesVermelhos;
-              gols += a.gols;
-            });
-          }
-
           let funcaoId = '';
           if (j.funcao) {
             funcaoId = j.funcao.id;
@@ -151,10 +129,7 @@ export default {
             nome: j.nome,
             foto: j.foto,
             funcao: j.funcao,
-            funcaoId: funcaoId,
-            cartoesAmarelos: cartoesAmarelos,
-            cartoesVermelhos: cartoesVermelhos,
-            gols: gols
+            funcaoId: funcaoId
           });
         });
 
@@ -174,6 +149,51 @@ export default {
       } catch (err) {
         console.error('Erro ao atualizar função:', err);
       }
+    },
+    gerenciarImagem(jogador) {
+      Swal.fire({
+        title: 'Imagem do jogador',
+        text: 'O que você deseja fazer?',
+        icon: 'question',
+        showDenyButton: true,
+        confirmButtonText: 'Trocar imagem',
+        denyButtonText: 'Ver imagem',
+        cancelButtonText: 'Cancelar',
+        showCancelButton: true
+      }).then(result => {
+        // Trocar imagem
+        if (result.isConfirmed) {
+          this.jogadorImagemAtual = jogador;
+          this.$refs.inputTrocarImagem.click();
+        }
+
+        // Ver imagem
+        if (result.isDenied) {
+          Swal.fire({
+            imageUrl: jogador.foto,
+            imageAlt: jogador.nome,
+            showConfirmButton: false,
+            width: 400
+          });
+        }
+      });
+    },
+
+    handleTrocarImagem(event) {
+      const file = event.target.files[0];
+      if (!file || !this.jogadorImagemAtual) return;
+
+      // aqui você decide se:
+      // 1️⃣ faz upload direto
+      // 2️⃣ só guarda o arquivo pra enviar depois
+
+      console.log('Imagem escolhida:', file);
+      console.log('Jogador:', this.jogadorImagemAtual);
+
+      // exemplo:
+      // this.uploadImagemJogador(this.jogadorImagemAtual.id, file);
+
+      event.target.value = ''; // limpa o input
     }
   }
 };
@@ -308,13 +328,6 @@ export default {
   animation: spin 1s linear infinite;
 }
 
-.cartao-vermelho {
-  width: 14px;
-  height: 18px;
-  background-color: red;
-  border-radius: 2px;
-}
-
 @keyframes spin {
   0% {
     transform: rotate(0deg);
@@ -358,23 +371,6 @@ export default {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-.cartao-amarelo,
-.cartao-vermelho {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  margin-right: 4px;
-  border-radius: 2px;
-}
-
-.cartao-amarelo {
-  background-color: #facc15;
-}
-
-.cartao-vermelho {
-  background-color: #ef4444;
 }
 
 @media (max-width: 768px) {

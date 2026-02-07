@@ -1,34 +1,41 @@
 <template>
   <div class="layout">
+    <NavBarQuadras />
 
-    <div class="conteudo">
-      <!-- HEADER: título + sidebar -->
-      <div class="header-campeonatos">
-        <h2 class="title">Campeonatos</h2>
-      </div>
+    <div class="main">
+      <SidebarQuadra />
 
-      <!-- Loading -->
-      <div v-if="isLoading" class="loader">
-        Carregando campeonatos...
-      </div>
+      <div class="conteudo">
+        <div class="header-campeonatos">
+          <h2 class="title">Campeonatos</h2>
 
-      <!-- Sem dados -->
-      <p v-else-if="campeonatos.length === 0">
-        Nenhum campeonato encontrado.
-      </p>
+          <div class="abas-container">
+            <div class="aba" :class="{ ativa: modalidadeSelecionada === null }" @click="selecionarModalidade(null)">
+              Todas
+            </div>
 
-      <!-- Lista -->
-      <div v-else class="lista-campeonatos">
-        <div
-          v-for="campeonato in campeonatos"
-          :key="campeonato.id"
-          class="card-campeonato"
-        >
-          <h3>{{ campeonato.nome }}</h3>
-          <p>Ano: {{ campeonato.ano }}</p>
-          <p v-if="campeonato.modalidade">
-            Modalidade: {{ campeonato.modalidade.nome }}
-          </p>
+            <div class="aba" v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id"
+              :class="{ ativa: modalidadeSelecionada === modalidade.id }" @click="selecionarModalidade(modalidade.id)">
+              {{ modalidade.nome }}
+            </div>
+          </div>
+        </div>
+
+        <div v-if="isLoading" class="loader">
+          Carregando campeonatos...
+        </div>
+
+        <p v-else-if="campeonatos.length === 0">
+          Nenhum campeonato encontrado.
+        </p>
+
+        <div v-else class="quadras-grid">
+          <div v-for="campeonato in campeonatos" :key="campeonato.id" class="card-quadra">
+            <div class="card-content">
+              <h3>{{ campeonato.nome }}</h3>
+              <p>{{ campeonato.modalidade?.nome }}</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -36,55 +43,30 @@
 </template>
 
 <script>
+import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
+import SidebarQuadra from '@/components/quadraplay/SidebarQuadra.vue'
 import api from '@/axios'
 
 export default {
   name: 'CampeonatosView',
 
   components: {
+    NavBarQuadras,
+    SidebarQuadra
   },
 
   data() {
     return {
       campeonatos: [],
       isLoading: false,
+      modalidadesDisponiveis: [],
       modalidadeSelecionada: null,
       anoSelecionado: new Date().getFullYear()
     }
   },
 
-  methods: {
-    async carregarCampeonatos() {
-      if (!this.modalidadeSelecionada) {
-        this.campeonatos = []
-        return
-      }
-
-      this.isLoading = true
-
-      try {
-        const { data } = await api.get(
-          `/listar/${this.modalidadeSelecionada}`,
-          {
-            params: {
-              ano: this.anoSelecionado
-            }
-          }
-        )
-
-        this.campeonatos = data
-      } catch (err) {
-        console.error('Erro ao carregar campeonatos:', err)
-      } finally {
-        this.isLoading = false
-      }
-    }
-  },
-
   mounted() {
-    // EXEMPLO TEMPORÁRIO
-    this.modalidadeSelecionada = 1
-    this.carregarCampeonatos()
+    this.carregarModalidades()
   },
 
   watch: {
@@ -94,6 +76,50 @@ export default {
     anoSelecionado() {
       this.carregarCampeonatos()
     }
+  },
+
+  methods: {
+    selecionarModalidade(id) {
+      this.modalidadeSelecionada = id
+    },
+    async carregarModalidades() {
+      try {
+        const res = await api.get('/listar/modalidade')
+        this.modalidadesDisponiveis = res.data || []
+
+        // começa em TODAS (null)
+        this.modalidadeSelecionada = null
+        this.carregarCampeonatos()
+      } catch (err) {
+        console.error('Erro ao carregar modalidades:', err)
+      }
+    },
+
+    async carregarCampeonatos() {
+      this.isLoading = true
+
+      try {
+        let res
+
+        if (!this.modalidadeSelecionada) {
+          res = await api.get('/todos/campeonatos', {
+            params: { ano: this.anoSelecionado }
+          })
+        }
+        else {
+          res = await api.get(`/listar/${this.modalidadeSelecionada}`, {
+            params: { ano: this.anoSelecionado }
+          })
+        }
+
+        this.campeonatos = res.data || []
+      } catch (err) {
+        console.error('Erro ao carregar campeonatos:', err)
+        this.campeonatos = []
+      } finally {
+        this.isLoading = false
+      }
+    },
   }
 }
 </script>
@@ -108,22 +134,48 @@ export default {
 .conteudo {
   flex: 1;
   padding: 32px 75px;
-  background-color: #f2f2f2;
-  margin-top: 60px;
+  margin-top: 70px;
+  margin-left: 250px;
 }
 
-.lista-campeonatos {
+.quadras-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
 }
 
-.card-campeonato {
-  background: #fff;
-  border-radius: 8px;
+.card-quadra {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #fff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+
+  display: flex;
+  align-items: flex-end;
+}
+
+.card-content {
+  width: 100%;
   padding: 16px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(to top,
+      rgba(0, 0, 0, 0.65),
+      rgba(0, 0, 0, 0.1));
+  color: #fff;
+}
+
+.card-content h3 {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.card-content p {
+  font-size: 14px;
+  margin: 2px 0;
 }
 
 .loader {
@@ -141,5 +193,32 @@ export default {
   z-index: 1;
 }
 
+.abas-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+  margin-bottom: 25px;
+}
 
+.aba {
+  text-align: center;
+  padding: 10px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: #f1f1f1;
+  font-weight: 500;
+  color: #333;
+  transition: all 0.2s;
+  border: none;
+}
+
+.aba:hover {
+  background-color: #e0e0e0;
+}
+
+.aba.ativa {
+  background-color: #3b82f6;
+  color: white;
+}
 </style>
