@@ -6,10 +6,10 @@
       <SidebarQuadra />
 
       <div class="conteudo">
-        <div class="header">
-          <h1 class="title">Gerenciar Times</h1>
+        <div class="header-times">
+          <div class="header-top">
+            <h2 class="title">Gerenciar Times</h2>
 
-          <div class="botoes">
             <button class="btn-add" @click="abrirModalAdicionarTime">
               Adicionar Time
             </button>
@@ -254,17 +254,27 @@ export default {
   flex: 1;
   padding: 32px;
   margin-left: 250px;
-  /* sidebar */
   margin-top: 70px;
-  /* navbar */
   transition: margin-left 0.3s ease;
 }
 
+.header-times {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 16px;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .title {
-  font-size: 30px;
   color: #3b82f6;
+  font-size: 28px;
   font-weight: bold;
-  margin-top: 12px;
+  margin: 0;
 }
 
 .header {

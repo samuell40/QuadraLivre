@@ -30,7 +30,8 @@
         </p>
 
         <div v-else class="quadras-grid">
-          <div v-for="campeonato in campeonatos" :key="campeonato.id" class="card-quadra">
+          <div v-for="campeonato in campeonatos" :key="campeonato.id" class="card-quadra"
+            @click="abrirCampeonato(campeonato.id)">
             <div class="card-content">
               <h3>{{ campeonato.nome }}</h3>
               <p>{{ campeonato.modalidade?.nome }}</p>
@@ -85,9 +86,7 @@ export default {
     async carregarModalidades() {
       try {
         const res = await api.get('/listar/modalidade')
-        this.modalidadesDisponiveis = res.data || []
-
-        // começa em TODAS (null)
+        this.modalidadesDisponiveis = res.data 
         this.modalidadeSelecionada = null
         this.carregarCampeonatos()
       } catch (err) {
@@ -133,7 +132,7 @@ export default {
 
 .conteudo {
   flex: 1;
-  padding: 32px 75px;
+  padding: 32px;
   margin-top: 70px;
   margin-left: 250px;
 }

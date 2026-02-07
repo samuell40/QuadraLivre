@@ -4,13 +4,14 @@
       <h2>Adicionar Time</h2>
       <form @submit.prevent="adicionarTime">
         <div class="form-group">
-          <label for="modalidade-add-time">Modalidade:</label>
-          <select id="modalidade-add-time" v-model="modalidadeSelecionada" required class="dropdown">
-            <option disabled value="">Selecione uma modalidade</option>
-            <option v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id" :value="modalidade.id">
+          <label>Modalidade:</label>
+
+          <div class="abas-container">
+            <div class="aba" v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id"
+              :class="{ ativa: modalidadeSelecionada === modalidade.id }" @click="selecionarModalidade(modalidade.id)">
               {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
-            </option>
-          </select>
+            </div>
+          </div>
         </div>
 
         <div class="form-group">
@@ -74,7 +75,7 @@ export default {
   },
   data() {
     return {
-      modalidadeSelecionada: '',
+      modalidadeSelecionada: null,
       timeParaAdicionar: '',
       arquivoFoto: null,
       treinadores: [],
@@ -101,7 +102,7 @@ export default {
   },
   methods: {
     fecharModalAdicionarTime() {
-      this.modalidadeSelecionada = '';
+      this.modalidadeSelecionada = null;
       this.timeParaAdicionar = '';
       this.arquivoFoto = null;
       this.$emit('fechar');
@@ -116,6 +117,10 @@ export default {
       this.treinadorSelecionado = u;
       this.buscaTreinador = '';
       this.abrirDropdownTreinador = false;
+    },
+
+    selecionarModalidade(id) {
+      this.modalidadeSelecionada = id;
     },
 
     async carregarTreinadores() {
@@ -248,6 +253,35 @@ input[type='file'] {
   gap: 6px;
 }
 
+.abas-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+  margin-bottom: 25px;
+}
+
+.aba {
+  text-align: center;
+  padding: 10px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: #f1f1f1;
+  font-weight: 500;
+  color: #333;
+  transition: all 0.2s;
+  border: none;
+}
+
+.aba:hover {
+  background-color: #e0e0e0;
+}
+
+.aba.ativa {
+  background-color: #3b82f6;
+  color: white;
+}
+
 .dropdown-custom {
   position: relative;
   width: 100%;
@@ -330,5 +364,11 @@ input[type='file'] {
   text-align: center;
   font-size: 13px;
   color: #9ca3af;
+}
+
+@media (max-width: 768px) {
+  .abas-container {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 </style>
