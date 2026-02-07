@@ -1355,12 +1355,19 @@ export default {
     padding: 10px;
   }
 
-  .placar-table {
-    border-radius: 8px;
+ .placar {
+    min-width: 0; /* remove scroll horizontal */
+    width: 100%;
   }
 
-  .placar {
-    min-width: 800px;
+  .placar thead th {
+    font-size: 13px;
+    padding: 8px 6px;
+  }
+
+  .placar tbody td {
+    font-size: 12px;
+    padding: 6px 8px;
   }
 
   .time-info {
@@ -1374,6 +1381,15 @@ export default {
 
   .nome-time {
     font-size: 13px;
+  }
+
+  .posicao {
+    font-size: 12px;
+    min-width: 20px;
+  }
+
+  .placar-table {
+    max-height: 50vh;
   }
 
   /* ===== MODAL ===== */

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <button class="button-sidebar d-block d-md-none">
+    <button class="button-sidebar d-block d-md-none" @click="toggleSidebar">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-list"
         viewBox="0 0 16 16">
         <path fill-rule="evenodd"
@@ -8,7 +8,20 @@
       </svg>
     </button>
 
-    <div class="sidebar_quadra">
+    <div v-if="sidebarVisible" class="sidebar_quadra" :class="{ collapsed: !isMobile && collapsed }">
+      <button v-if="!isMobile" class="collapse-btn" @click="toggleCollapse">
+        <svg v-if="!collapsed" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+          class="bi bi-caret-left" viewBox="0 0 16 16">
+          <path
+            d="M10 12.796V3.204L4.519 8zm-.659.753-5.48-4.796a1 1 0 0 1 0-1.506l5.48-4.796A1 1 0 0 1 11 3.204v9.592a1 1 0 0 1-1.659.753" />
+        </svg>
+
+        <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+          class="bi bi-caret-right" viewBox="0 0 16 16">
+          <path
+            d="M6 12.796V3.204L11.481 8zm.659.753 5.48-4.796a1 1 0 0 0 0-1.506L6.66 2.451C6.011 1.885 5 2.345 5 3.204v9.592a1 1 0 0 0 1.659.753" />
+        </svg>
+      </button>
       <div class="menu-itens">
         <a href="/telainicial">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trophy-fill"
@@ -50,6 +63,8 @@
       </div>
       <div class="sidebar-user user-info">
 
+        <img class="user-photo" :src="usuario?.foto" alt="Foto do usuário" />
+
         <div class="user-text">
           <div class="user-name fw-bold">
             {{ usuario?.nome }}
@@ -71,16 +86,19 @@ export default {
   data() {
     return {
       usuario: null,
-      isMobile: false
+      isMobile: false,
+      collapsed: false,
+      sidebarVisible: true
     };
   },
   mounted() {
-    window.addEventListener("resize", this.handleResize);
-    this.handleResize();
-    this.usuario = JSON.parse(localStorage.getItem("usuario"));
+    window.addEventListener("resize", this.handleResize)
+    this.handleResize()
+    this.usuario = JSON.parse(localStorage.getItem("usuario"))
   },
+
   beforeUnmount() {
-    window.removeEventListener("resize", this.handleResize);
+    window.removeEventListener("resize", this.handleResize)
   },
   computed: {
     isPermissao4() {
@@ -88,22 +106,35 @@ export default {
     }
   },
   methods: {
-    toggleSidebar() {
-      if (this.isMobile) {
-        this.sidebarVisible = !this.sidebarVisible;
-      } else {
-        this.sidebarVisible = true;
-      }
-    },
     logout() {
       localStorage.removeItem("token");
       localStorage.removeItem("usuario");
       router.push("/");
     },
     handleResize() {
-      this.isMobile = window.innerWidth <= 768;
-      this.sidebarVisible = !this.isMobile;
+      this.isMobile = window.innerWidth <= 768
+
+      if (this.isMobile) {
+        this.sidebarVisible = false     // começa fechado
+        this.collapsed = false          // MOBILE NÃO COLAPSA
+        this.$emit('sidebar-toggle', false)
+      } else {
+        this.sidebarVisible = true
+      }
     },
+
+    toggleCollapse() {
+      if (this.isMobile) return
+
+      this.collapsed = !this.collapsed
+      this.$emit('sidebar-toggle', this.collapsed)
+    },
+
+    toggleSidebar() {
+      if (!this.isMobile) return
+
+      this.sidebarVisible = !this.sidebarVisible
+    }
   },
 };
 </script>
@@ -139,6 +170,46 @@ body {
   box-shadow: 0 4px 10px -1px rgba(0, 0, 0, 0.10);
   z-index: 10;
   text-align: left;
+  transition: width 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar_quadra.collapsed {
+  width: 70px;
+}
+
+.sidebar_quadra.collapsed a span,
+.sidebar_quadra.collapsed .user-text {
+  display: none;
+}
+
+.sidebar_quadra.collapsed a {
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.collapse-btn {
+  position: absolute;
+  top: 50%;
+  right: -30px;
+  transform: translateY(-50%);
+  background-color: #152147;
+  border: none;
+  color: white;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: background-color 0.2s;
+}
+
+.collapse-btn:hover {
+  background-color: #1e3a8a;
 }
 
 .sidebar_quadra a {
@@ -163,6 +234,33 @@ body {
   margin-top: 20px;
   margin-bottom: 10px;
   border: 1px solid;
+}
+
+.sidebar-user {
+  margin-top: 115%;
+  padding: 12px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.sidebar_quadra.collapsed .sidebar-user {
+  margin-top: auto;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.sidebar_quadra.collapsed .user-photo {
+  display: block;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.sidebar_quadra.collapsed .user-info {
+  justify-content: center;
 }
 
 .logout-button svg {
@@ -210,12 +308,6 @@ body {
   height: 170px;
 }
 
-.sidebar-user {
-  margin-top: 115%;
-  padding: 12px 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
-}
-
 .user-info {
   display: flex;
   align-items: center;
@@ -223,10 +315,7 @@ body {
 }
 
 .user-photo {
-  width: 55px;
-  height: 55px;
-  object-fit: cover;
-  border-radius: 50%;
+  display: none;
 }
 
 .user-text {
@@ -246,8 +335,20 @@ body {
   margin-top: -2px;
 }
 
-/* Mobile */
 @media (max-width: 768px) {
+  .button-sidebar {
+    width: 50px;       
+    height: 50px;
+    padding: 12px;     
+    font-size: 20px;   
+    top: 5px;
+  }
+
+  .button-sidebar svg {
+    width: 32px;       
+    height: 32px;
+  }
+
   .user-photo {
     width: 45px;
     height: 45px;

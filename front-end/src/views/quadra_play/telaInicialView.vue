@@ -3,43 +3,43 @@
     <NavBarQuadras />
 
     <div class="main">
-      <SidebarQuadra />
+      <SidebarQuadra @sidebar-toggle="sidebarCollapsed = $event" />
 
-      <div class="conteudo">
-        <div class="header-campeonatos">
-          <h2 class="title">Campeonatos</h2>
+      <div class="conteudo" :class="{ collapsed: sidebarCollapsed }">
+      <div class="header-campeonatos">
+        <h2 class="title">Campeonatos</h2>
 
-          <div class="abas-container">
-            <div class="aba" :class="{ ativa: modalidadeSelecionada === null }" @click="selecionarModalidade(null)">
-              Todas
-            </div>
+        <div class="abas-container">
+          <div class="aba" :class="{ ativa: modalidadeSelecionada === null }" @click="selecionarModalidade(null)">
+            Todas
+          </div>
 
-            <div class="aba" v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id"
-              :class="{ ativa: modalidadeSelecionada === modalidade.id }" @click="selecionarModalidade(modalidade.id)">
-              {{ modalidade.nome }}
-            </div>
+          <div class="aba" v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id"
+            :class="{ ativa: modalidadeSelecionada === modalidade.id }" @click="selecionarModalidade(modalidade.id)">
+            {{ modalidade.nome }}
           </div>
         </div>
+      </div>
 
-        <div v-if="isLoading" class="loader">
-          Carregando campeonatos...
-        </div>
+      <div v-if="isLoading" class="loader">
+        Carregando campeonatos...
+      </div>
 
-        <p v-else-if="campeonatos.length === 0">
-          Nenhum campeonato encontrado.
-        </p>
+      <p v-else-if="campeonatos.length === 0">
+        Nenhum campeonato encontrado.
+      </p>
 
-        <div v-else class="quadras-grid">
-          <div v-for="campeonato in campeonatos" :key="campeonato.id" class="card-quadra"
-            @click="abrirCampeonato(campeonato.id)">
-            <div class="card-content">
-              <h3>{{ campeonato.nome }}</h3>
-              <p>{{ campeonato.modalidade?.nome }}</p>
-            </div>
+      <div v-else class="quadras-grid">
+        <div v-for="campeonato in campeonatos" :key="campeonato.id" class="card-quadra"
+          @click="abrirCampeonato(campeonato.id)">
+          <div class="card-content">
+            <h3>{{ campeonato.nome }}</h3>
+            <p>{{ campeonato.modalidade?.nome }}</p>
           </div>
         </div>
       </div>
     </div>
+  </div>
   </div>
 </template>
 
@@ -58,6 +58,7 @@ export default {
 
   data() {
     return {
+      sidebarCollapsed: false,
       campeonatos: [],
       isLoading: false,
       modalidadesDisponiveis: [],
@@ -86,7 +87,7 @@ export default {
     async carregarModalidades() {
       try {
         const res = await api.get('/listar/modalidade')
-        this.modalidadesDisponiveis = res.data 
+        this.modalidadesDisponiveis = res.data
         this.modalidadeSelecionada = null
         this.carregarCampeonatos()
       } catch (err) {
@@ -135,13 +136,22 @@ export default {
   padding: 32px;
   margin-top: 70px;
   margin-left: 250px;
+  transition: margin-left 0.3s ease;
+}
+
+.conteudo.collapsed {
+  margin-left: 70px;
 }
 
 .quadras-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 24px;
   margin-top: 24px;
+}
+
+.conteudo.collapsed .quadras-grid {
+  grid-template-columns: repeat(2, 1fr);
 }
 
 .card-quadra {
@@ -219,5 +229,12 @@ export default {
 .aba.ativa {
   background-color: #3b82f6;
   color: white;
+}
+
+@media (max-width: 768px) {
+  .conteudo {
+    margin-left: 0 !important;  /* 🔥 */
+    margin-top: 70px;
+  }
 }
 </style>

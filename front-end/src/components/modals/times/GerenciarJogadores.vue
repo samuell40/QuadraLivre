@@ -489,6 +489,7 @@ export default {
 .modal-content h2 {
   margin-bottom: 20px;
   color: #3b82f6;
+  text-align: center;
 }
 
 .dropdown {
@@ -613,12 +614,13 @@ export default {
 
 .abas-container {
   display: flex;
+  flex-wrap: wrap; 
   gap: 10px;
   margin-bottom: 20px;
+  justify-content: center;
 }
 
 .aba {
-  flex: 1;
   text-align: center;
   padding: 10px 0;
   border-radius: 6px;
@@ -642,19 +644,6 @@ export default {
   margin-top: 10px;
 }
 
-/* =========================
-   RESPONSIVIDADE
-   ========================= */
-
-/* Tablets e telas médias */
-@media (max-width: 1024px) {
-  .modal-content {
-    width: 90%;
-    padding: 25px;
-  }
-}
-
-/* Celulares */
 @media (max-width: 768px) {
   .modal-overlay {
     align-items: flex-start;
@@ -670,7 +659,6 @@ export default {
 
   .modal-content h2 {
     font-size: 18px;
-    text-align: center;
   }
 
   .dropdown,
@@ -678,56 +666,26 @@ export default {
     font-size: 14px;
   }
 
-  /* Botões empilhados */
   .botoes {
-    flex-direction: column;
+    flex-direction: row; 
+    gap: 10px; 
+    flex-wrap: wrap; 
   }
 
   .btn-save1,
   .btn-cancel-placar {
-    width: 100%;
+    flex: 1; 
     font-size: 15px;
   }
 
-  /* Abas com scroll horizontal */
   .abas-container {
-    overflow-x: auto;
     gap: 8px;
   }
 
   .aba {
-    min-width: 120px;
+    flex: 1 1 100px; 
     font-size: 14px;
     padding: 8px;
-  }
-}
-
-/* Celulares pequenos */
-@media (max-width: 480px) {
-  .modal-content {
-    padding: 15px;
-  }
-
-  .modal-content h2 {
-    font-size: 16px;
-  }
-
-  .dropdown-selected img.avatar {
-    width: 28px;
-    height: 28px;
-  }
-
-  .dropdown-list img.avatar {
-    width: 24px;
-    height: 24px;
-  }
-
-  .input-busca-jogador {
-    font-size: 13px;
-  }
-
-  .aba {
-    font-size: 13px;
   }
 }
 </style>

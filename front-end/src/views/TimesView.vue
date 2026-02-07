@@ -137,7 +137,7 @@ export default {
 
             try {
                 const { data } = await api.get(`/time/${time.id}`)
-                this.jogadores = data // <-- já é array
+                this.jogadores = data 
             } catch (err) {
                 console.error('Erro ao carregar jogadores', err)
             } finally {
@@ -448,5 +448,37 @@ export default {
     .lista-times {
         grid-template-columns: 1fr;
     }
+
+    .modal-conteudo.modal-placar {
+        padding: 20px;
+        min-width: 90vw;
+        max-width: 95vw;
+        max-height: 75vh;
+        overflow-y: auto;
+    }
+
+    .title_placar {
+        font-size: 20px;
+    }
+
+    .modal-jogadores {
+        max-height: 50vh;
+        gap: 20px;
+    }
+
+    .grid-jogadores {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 15px;
+    }
+
+    .card-jogador img {
+        height: 140px;
+    }
+
+    .nome-jogador {
+        font-size: 12px;
+        padding: 4px 2px;
+    }
+
 }
 </style>

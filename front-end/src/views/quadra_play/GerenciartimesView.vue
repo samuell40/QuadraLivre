@@ -3,9 +3,9 @@
     <NavBarQuadras />
 
     <div class="main">
-      <SidebarQuadra />
+      <SidebarQuadra @sidebar-toggle="sidebarCollapsed = $event" />
 
-      <div class="conteudo">
+      <div class="conteudo" :class="{ collapsed: sidebarCollapsed }">
         <div class="header-times">
           <div class="header-top">
             <h2 class="title">Gerenciar Times</h2>
@@ -105,6 +105,7 @@ export default {
   },
   data() {
     return {
+      sidebarCollapsed: false,
       isLoading: true,
       modalidadesDisponiveis: [],
       modalidadeSelecionada: null,
@@ -253,9 +254,13 @@ export default {
 .conteudo {
   flex: 1;
   padding: 32px;
-  margin-left: 250px;
   margin-top: 70px;
+  margin-left: 250px;
   transition: margin-left 0.3s ease;
+}
+
+.conteudo.collapsed {
+  margin-left: 70px;
 }
 
 .header-times {
