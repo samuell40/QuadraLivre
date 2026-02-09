@@ -6,9 +6,12 @@
       <SidebarQuadra @sidebar-toggle="sidebarCollapsed = $event" />
 
       <div class="conteudo" :class="{ collapsed: sidebarCollapsed }">
-      <div class="header-campeonatos">
-        <h2 class="title">Campeonatos</h2>
-
+        <div class="header-campeonatos">
+          <h2 class="title">Campeonatos</h2>
+          <button class="btn-add" @click="abrirModalAdicionarCampeonato">
+            Adicionar Campeonato
+          </button>
+        </div>
         <div class="abas-container">
           <div class="aba" :class="{ ativa: modalidadeSelecionada === null }" @click="selecionarModalidade(null)">
             Todas
@@ -19,33 +22,45 @@
             {{ modalidade.nome }}
           </div>
         </div>
-      </div>
 
-      <div v-if="isLoading" class="loader">
-        Carregando campeonatos...
-      </div>
+        <div v-if="isLoading" class="loader">
+          Carregando campeonatos...
+        </div>
 
-      <p v-else-if="campeonatos.length === 0">
-        Nenhum campeonato encontrado.
-      </p>
+        <p v-else-if="campeonatos.length === 0">
+          Nenhum campeonato encontrado.
+        </p>
 
-      <div v-else class="quadras-grid">
-        <div v-for="campeonato in campeonatos" :key="campeonato.id" class="card-quadra"
-          @click="abrirCampeonato(campeonato.id)">
-          <div class="card-content">
-            <h3>{{ campeonato.nome }}</h3>
-            <p>{{ campeonato.modalidade?.nome }}</p>
+        <div v-else class="quadras-grid">
+          <div class="card-quadra" v-for="campeonato in campeonatos" :key="campeonato.id"
+            @click="abrirCampeonato(campeonato.id)">
+
+            <div class="status-badge" :class="campeonato.status === 'EM_ANDAMENTO' ? 'em-andamento' : 'finalizado'">
+              {{ campeonato.status === 'EM_ANDAMENTO' ? 'Em Andamento' : 'Finalizado' }}
+            </div>
+
+            <img :src="campeonato.foto" alt="Foto do campeonato" class="imagem-quadra">
+
+            <div class="overlay">
+              <h3 class="campeonato">{{ campeonato.nome }}</h3>
+              <p class="modalidade">{{ campeonato.modalidade?.nome }}</p>
+              <button class="btn-acessar" @click.stop="abrirCampeonato(campeonato)">Acessar</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
+    <AdicionarCampeonatoModal :aberto="mostrarModal" @fechar="fecharModalAdicionarCampeonato"
+      @atualizar="carregarCampeonatos" />
   </div>
 </template>
 
 <script>
+import { useCampeonatoStore } from '@/storecampeonato';
 import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
 import SidebarQuadra from '@/components/quadraplay/SidebarQuadra.vue'
+import AdicionarCampeonatoModal from '@/components/modals/Campeonatos/AdicionarCampeonatoModal.vue';
+import router from '@/router';
 import api from '@/axios'
 
 export default {
@@ -53,7 +68,8 @@ export default {
 
   components: {
     NavBarQuadras,
-    SidebarQuadra
+    SidebarQuadra,
+    AdicionarCampeonatoModal
   },
 
   data() {
@@ -63,7 +79,8 @@ export default {
       isLoading: false,
       modalidadesDisponiveis: [],
       modalidadeSelecionada: null,
-      anoSelecionado: new Date().getFullYear()
+      anoSelecionado: new Date().getFullYear(),
+      mostrarModal: false
     }
   },
 
@@ -81,6 +98,21 @@ export default {
   },
 
   methods: {
+    abrirCampeonato(campeonato) {
+      const store = useCampeonatoStore();
+      store.setCampeonato(campeonato);   
+      router.push({ name: 'Detalhar_Campeonatos', query: { id: campeonato.id } });
+    },
+
+    abrirModalAdicionarCampeonato() {
+      this.mostrarModal = true;
+    },
+
+    fecharModalAdicionarCampeonato() {
+      this.mostrarModal = false;
+      this.carregarCampeonatos();
+    },
+
     selecionarModalidade(id) {
       this.modalidadeSelecionada = id
     },
@@ -143,48 +175,111 @@ export default {
   margin-left: 70px;
 }
 
-.quadras-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-  margin-top: 24px;
-}
-
 .conteudo.collapsed .quadras-grid {
   grid-template-columns: repeat(2, 1fr);
+}
+
+.quadras-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
 }
 
 .card-quadra {
   position: relative;
   width: 100%;
-  height: 240px;
-  border-radius: 12px;
+  height: 260px;
+  border-radius: 16px;
   overflow: hidden;
-  background-color: #fff;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-
-  display: flex;
-  align-items: flex-end;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.card-content {
+.card-quadra:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+}
+
+.card-quadra:hover .imagem-quadra {
+  transform: scale(1.05);
+}
+
+.imagem-quadra {
   width: 100%;
-  padding: 16px;
-  background: linear-gradient(to top,
-      rgba(0, 0, 0, 0.65),
-      rgba(0, 0, 0, 0.1));
-  color: #fff;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
 }
 
-.card-content h3 {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 6px;
+.overlay {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.95), rgba(17, 1, 1, 0.336));
+  color: white;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
 }
 
-.card-content p {
+.campeonato {
+  font-size: 30px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.modalidade {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.btn-acessar {
+  background-color: #3B82F6;
+  color: white;
+  border: none;
+  padding: 12px;
+  cursor: pointer;
+  border-radius: 8px;
   font-size: 14px;
-  margin: 2px 0;
+  font-weight: 700;
+  width: 100%;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+}
+
+.btn-acessar:hover {
+  background-color: #2563EB;
+  box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+}
+
+.status-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: bold;
+  color: white;
+  text-transform: uppercase;
+  backdrop-filter: blur(4px);
+  z-index: 5;
+}
+
+.status-badge.em-andamento {
+  background: #3B82F6;
+}
+
+.status-badge.finalizado {
+  background: #f73434;
 }
 
 .loader {
@@ -200,6 +295,20 @@ export default {
 .header-campeonatos {
   position: relative;
   z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.btn-add {
+  padding: 10px 16px;
+  background-color: #3b82f6;
+  border: none;
+  border-radius: 20px;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
 .abas-container {
@@ -233,8 +342,23 @@ export default {
 
 @media (max-width: 768px) {
   .conteudo {
-    margin-left: 0 !important;  /* 🔥 */
+    margin-left: 0 !important;
     margin-top: 70px;
+  }
+
+  .header-campeonatos {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .btn-add {
+    padding: 8px 8px;
+    font-size: 14px;
+  }
+
+  .abas-container {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
   }
 }
 </style>

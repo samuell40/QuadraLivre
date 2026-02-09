@@ -12,13 +12,17 @@ async function criarCampeonato(data) {
     quadraId,
     times,
     datasJogos,
-    usuarioId
+    usuarioId,
+    foto // novo campo
   } = data;
 
-  const listaDatasReais = datasJogos ? datasJogos.map(d => new Date(d)) : [];
+  // Garante que arrays existam
+  const listaDatasReais = Array.isArray(datasJogos) ? datasJogos.map(d => new Date(d)) : [];
+  const timesArray = Array.isArray(times) ? times : [];
 
   return await prisma.$transaction(async (tx) => {
 
+    // Remove conflitos de agendamento, se houver
     if (listaDatasReais.length > 0) {
       const conflitos = await tx.agendamento.findMany({
         where: {
@@ -34,6 +38,7 @@ async function criarCampeonato(data) {
       }
     }
 
+    // Cria agendamentos
     const agendamentosParaCriar = listaDatasReais.map(dataObj => ({
       datahora: dataObj,
       dia: dataObj.getUTCDate(),
@@ -48,10 +53,12 @@ async function criarCampeonato(data) {
       duracao: 1
     }));
 
+    // Cria campeonato
     const campeonato = await tx.campeonato.create({
       data: {
         nome,
         descricao,
+        foto, // adiciona aqui
         dataInicio: new Date(dataInicio),
         dataFim: new Date(dataFim),
         status,
@@ -59,7 +66,7 @@ async function criarCampeonato(data) {
         quadraId: Number(quadraId),
 
         times: {
-          create: times.map(timeId => ({ timeId: Number(timeId) }))
+          create: timesArray.map(timeId => ({ timeId: Number(timeId) }))
         },
 
         agendamentos: {
@@ -67,7 +74,7 @@ async function criarCampeonato(data) {
         },
 
         placares: {
-          create: times.map(timeId => ({ timeId: Number(timeId) }))
+          create: timesArray.map(timeId => ({ timeId: Number(timeId) }))
         }
       },
       include: {
@@ -223,5 +230,22 @@ async function listarArtilhariaCampeonato(campeonatoId, limite = 5) {
   });
 }
 
+async function getCampeonatoById(id) {
+  try {
+    const campeonato = await prisma.campeonato.findUnique({
+      where: { id: Number(id) },
+      include: {
+        modalidade: true,
+        quadra: true,
+        times: true,
+        partidas: true,
+        placares: true
+      }
+    });
 
-module.exports = { criarCampeonato, removerCampeonato, listarCampeonatosPorModalidade, listarCampeonatosAnoAtual, listarArtilhariaCampeonato };
+    return campeonato;
+  } catch (err) {
+    throw err;
+  }
+}
+module.exports = { criarCampeonato, removerCampeonato, listarCampeonatosPorModalidade, listarCampeonatosAnoAtual, listarArtilhariaCampeonato, getCampeonatoById };

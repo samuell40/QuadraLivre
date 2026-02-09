@@ -1,5 +1,5 @@
 <template>
-  <div v-if="aberto" class="modal-overlay" @click.self="$emit('fechar')">
+  <div v-if="aberto" class="modal-overlay" @click.self="cancelarCadastro">
     <div class="modal-content">
       <h2>Adicionar Campeonato</h2>
 
@@ -48,73 +48,18 @@
           </div>
         </div>
 
+        <!-- Novo campo de upload de foto -->
         <div class="form-group">
-          <label><strong>Selecione os Dias:</strong></label>
-
-          <div class="dias">
-            <label v-for="dia in diasSemana" :key="dia.id" class="dia-label">
-              <input type="checkbox" :value="dia.id" v-model="diasSelecionados"
-                @change="verificarTodosDiasSelecionados" />
-              {{ dia.nome }}
-            </label>
-          </div>
+          <label for="fotoCampeonato">Foto (opcional)</label>
+          <input type="file" id="fotoCampeonato" @change="handleImagemUpload" accept=".jpg,.jpeg,.png" />
         </div>
 
-        <div class="form-group">
-          <label><strong>Selecione os Horários em que vão Decorrer as Partidas:</strong></label>
-
-          <div class="horarios">
-            <button v-for="h in horariosDisponiveis" :key="h" :class="{ selecionado: horariosSelecionados.includes(h) }"
-              @click.prevent="toggleHorario(h)">
-              {{ h }}
-            </button>
-          </div>
-
-          <div class="select-all">
-            <label>
-              <input type="checkbox" v-model="todosHorariosSelecionados" @change="toggleTodosHorarios" />
-              Selecionar todos os horários
-            </label>
-          </div>
-        </div>
+        <!-- Botões Salvar e Cancelar -->
         <div class="botoes">
-          <button type="button" class="btn-save" @click="abrirModalTimes">
-            Continuar
-          </button>
-          <button type="button" class="btn-cancel" @click="$emit('fechar')">Cancelar</button>
+          <button type="submit" class="btn-save">Salvar Campeonato</button>
+          <button type="button" class="btn-cancel" @click="cancelarCadastro">Cancelar</button>
         </div>
-
       </form>
-    </div>
-    
-    <div v-if="mostrarModalTimes" class="modal-overlay" @click.self="mostrarModalTimes = false">
-      <div class="modal-content modal-times">
-        <h2>Selecione os Times</h2>
-
-        <div class="contador">
-          {{ timesSelecionados.length }} selecionado(s)
-        </div>
-
-        <div class="lista-times">
-          <div v-for="time in times" :key="time.id" class="time-card"
-            :class="{ selecionado: timesSelecionados.includes(time.id) }" @click="toggleTime(time.id)">
-            <div class="time-info">
-              <h3>{{ time.nome }}</h3>
-              <span>{{ time._count.jogadores }} jogadores</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="botoes">
-          <button class="btn-cancel" @click="mostrarModalTimes = false">
-            Voltar
-          </button>
-
-          <button class="btn-save" @click="finalizarCadastro">
-            Salvar Campeonato
-          </button>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -137,24 +82,8 @@ export default {
       nomeCampeonato: '',
       dataInicio: '',
       dataFim: '',
-      horariosDisponiveis: [],
-      horariosSelecionados: [],
-      todosHorariosSelecionados: false,
-      diasSemana: [
-        { id: 'segunda', nome: 'Segunda', valor: 1 },
-        { id: 'terca', nome: 'Terça', valor: 2 },
-        { id: 'quarta', nome: 'Quarta', valor: 3 },
-        { id: 'quinta', nome: 'Quinta', valor: 4 },
-        { id: 'sexta', nome: 'Sexta', valor: 5 },
-        { id: 'sabado', nome: 'Sábado', valor: 6 },
-        { id: 'domingo', nome: 'Domingo', valor: 0 }
-      ],
-      diasSelecionados: [],
-      todosDiasSelecionados: false,
-      carregandoQuadras: false,
-      mostrarModalTimes: false,
-      times: [],
-      timesSelecionados: []
+      arquivoFoto: null,
+      carregandoQuadras: false
     }
   },
   watch: {
@@ -162,13 +91,10 @@ export default {
       if (valor) {
         this.limparCampos()
         this.carregarModalidades()
-        this.gerarHorarios()
       }
     },
     modalidadeSelecionada(valor) {
       this.quadraSelecionada = ''
-      this.times = []
-      this.timesSelecionados = []
       if (valor) this.carregarQuadras(valor)
       else this.quadras = []
     }
@@ -180,141 +106,73 @@ export default {
       this.nomeCampeonato = ''
       this.dataInicio = ''
       this.dataFim = ''
-      this.horariosSelecionados = []
-      this.todosHorariosSelecionados = false
-      this.diasSelecionados = []
-      this.todosDiasSelecionados = false
+      this.arquivoFoto = null
       this.quadras = []
-      this.times = []
-      this.timesSelecionados = []
-      this.mostrarModalTimes = false
-    },
-    gerarHorarios() {
-      this.horariosDisponiveis = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}:00`)
-    },
-    toggleHorario(horario) {
-      if (this.horariosSelecionados.includes(horario)) {
-        this.horariosSelecionados = this.horariosSelecionados.filter(h => h !== horario)
-      } else {
-        this.horariosSelecionados.push(horario)
-      }
-    },
-    toggleTodosHorarios() {
-      this.horariosSelecionados = this.todosHorariosSelecionados ? [...this.horariosDisponiveis] : []
-    },
-    verificarTodosDiasSelecionados() {
-      this.todosDiasSelecionados = this.diasSelecionados.length === this.diasSemana.length
     },
     async carregarModalidades() {
       try {
         const { data } = await api.get('/listar/modalidade')
         this.modalidades = data
-      } catch { Swal.fire('Erro', 'Erro ao carregar modalidades.', 'error') }
+      } catch {
+        Swal.fire('Erro', 'Erro ao carregar modalidades.', 'error')
+      }
     },
     async carregarQuadras(modalidadeId) {
       try {
         this.carregandoQuadras = true
-        const response = await api.get(`/listar/quadras/${modalidadeId}`)
-        this.quadras = response.data
-      } catch { Swal.fire('Erro', 'Erro ao carregar quadras.', 'error') }
-      finally { this.carregandoQuadras = false }
-    },
-    validarDadosBasicos() {
-      if (!this.modalidadeSelecionada) return 'Selecione uma modalidade.'
-      if (!this.quadraSelecionada) return 'Selecione uma quadra.'
-      if (!this.nomeCampeonato.trim()) return 'Informe o nome.'
-      if (!this.dataInicio || !this.dataFim) return 'Informe as datas.'
-      if (this.horariosSelecionados.length === 0) return 'Selecione horários.'
-      if (this.diasSelecionados.length === 0) return 'Selecione os dias.'
-      return null
-    },
-
-    async nomeCampeonatoJaExiste() {
-      if (!this.modalidadeSelecionada) return false
-      try {
-        const res = await api.get(`/listar/${this.modalidadeSelecionada}`)
-        const nomeNovo = this.nomeCampeonato.trim().toLowerCase()
-        return res.data.some(c => c.nome.trim().toLowerCase() === nomeNovo)
-      } catch (error) {
-        console.error("Erro ao verificar nome:", error)
-        return false
+        const res = await api.get(`/listar/quadras/${modalidadeId}`)
+        this.quadras = res.data
+      } catch {
+        Swal.fire('Erro', 'Erro ao carregar quadras.', 'error')
+      } finally {
+        this.carregandoQuadras = false
       }
     },
-
-    async abrirModalTimes() {
-      const erro = this.validarDadosBasicos()
-      if (erro) { Swal.fire('Atenção', erro, 'warning'); return }
-      try {
-        const response = await api.get(`/times/modalidade/${this.modalidadeSelecionada}`)
-        this.times = response.data
-        this.mostrarModalTimes = true
-      } catch { Swal.fire('Erro', 'Erro ao carregar times.', 'error') }
+    handleImagemUpload(event) {
+      const file = event.target.files[0]
+      if (file) this.arquivoFoto = file
     },
-
-    toggleTime(timeId) {
-      if (this.timesSelecionados.includes(timeId)) {
-        this.timesSelecionados = this.timesSelecionados.filter(id => id !== timeId)
-      } else {
-        this.timesSelecionados.push(timeId)
+    async cadastrarCampeonato() {
+      if (!this.modalidadeSelecionada || !this.quadraSelecionada || !this.nomeCampeonato.trim() || !this.dataInicio || !this.dataFim) {
+        Swal.fire('Atenção', 'Preencha todos os campos obrigatórios.', 'warning')
+        return
       }
-    },
 
-    gerarDatasCalculadas() {
-      const datas = [];
-      const mapa = { 'domingo': 0, 'segunda': 1, 'terca': 2, 'quarta': 3, 'quinta': 4, 'sexta': 5, 'sabado': 6 };
-      const diasPermitidos = this.diasSelecionados.map(d => mapa[d]);
-      
-      let cursor = new Date(this.dataInicio + 'T00:00:00');
-      const fim = new Date(this.dataFim + 'T23:59:59');
+      try {
+        let urlImagem = null
 
-      while (cursor <= fim) {
-        if (diasPermitidos.includes(cursor.getDay())) {
-          this.horariosSelecionados.forEach(hStr => {
-            const [hora] = hStr.split(':');
-            const d = new Date(cursor);
-            d.setHours(parseInt(hora), 0, 0, 0);
-            datas.push(d.toISOString());
-          });
+        if (this.arquivoFoto) {
+          const formData = new FormData()
+          formData.append('file', this.arquivoFoto)
+
+          const uploadResponse = await api.post('/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          })
+
+          urlImagem = uploadResponse.data.fileUrl || uploadResponse.data.url || null
         }
-        cursor.setDate(cursor.getDate() + 1);
-      }
-      return datas;
-    },
 
-    async finalizarCadastro() {
-      if (this.timesSelecionados.length < 2) {
-        Swal.fire('Atenção', 'Selecione pelo menos 2 times.', 'warning'); return
-      }
-
-      const jaExiste = await this.nomeCampeonatoJaExiste()
-      if (jaExiste) {
-        Swal.fire('Atenção', 'Nome de campeonato já em uso.', 'warning'); return
-      }
-
-      const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-      const datasParaAgendar = this.gerarDatasCalculadas();
-
-      try {
         await api.post('/criar/campeonato', {
           nome: this.nomeCampeonato.trim(),
           modalidadeId: this.modalidadeSelecionada,
           quadraId: this.quadraSelecionada,
           dataInicio: this.dataInicio,
           dataFim: this.dataFim,
-          times: this.timesSelecionados,
-          usuarioId: usuario.id, 
-          datasJogos: datasParaAgendar,
-          status: "EM_ANDAMENTO"
+          status: "EM_ANDAMENTO",
+          foto: urlImagem
         })
 
-        Swal.fire('Sucesso', 'Campeonato e agendamentos criados!', 'success')
+        Swal.fire('Sucesso', 'Campeonato criado com sucesso!', 'success')
         this.$emit('atualizar')
-        this.$emit('fechar')
-        this.limparCampos()
-      } catch (error) {
-        const msg = error.response?.data?.detalhes || "Erro ao salvar";
+        this.cancelarCadastro()
+      } catch (err) {
+        const msg = err.response?.data?.detalhes || "Erro ao salvar campeonato"
         Swal.fire('Erro', msg, 'error')
       }
+    },
+    cancelarCadastro() {
+      this.limparCampos()
+      this.$emit('fechar')
     }
   }
 }

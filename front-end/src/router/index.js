@@ -18,7 +18,8 @@ import GoogleCallback from '@/views/GoogleCallback.vue';
 import GerenciartimesView from '@/views/quadra_play/GerenciartimesView.vue';
 import TimesHomeView from '@/views/TimesView.vue';
 import GerenciarModalidadesView from '@/views/GerenciarModalidadesView.vue';
-import GerenicarCampeonatosView from '@/views/quadra_play/GerenciarCampeonatosView.vue';
+import DetalharCampeonatosView from '@/views/quadra_play/DetalharCampeonatosView.vue';
+import ClassificacaoView from '@/views/quadra_play/ClassificacaoView.vue';
 import MeusAvisosView from '../views/usuario/MeusAvisosView.vue';
 import telaInicialView from '@/views/quadra_play/telaInicialView.vue';
 
@@ -157,9 +158,15 @@ const routes = [
     meta: { public: true },
   },
   {
-    path: '/campeonatos',
-    name: 'Campeonatos',
-    component: GerenicarCampeonatosView,
+    path: '/detalharcampeonatos',
+    name: 'Detalhar_Campeonatos',
+    component: DetalharCampeonatosView,
+    meta: { public: true },
+  },
+   {
+    path: '/classificacao',
+    name: 'Classificacao',
+    component: ClassificacaoView,
     meta: { public: true },
   },
 ];

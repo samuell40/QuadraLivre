@@ -12,4 +12,6 @@ router.get('/todos/campeonatos', controller.listarCampeonatosAnoAtualController)
 
 router.get('/:campeonatoId/artilharia', controller.artilhariaCampeonatoController );
 
+router.get('/campeonato/:id', controller.listarCampeonatoPorIdController);
+
 module.exports = router;

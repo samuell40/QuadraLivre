@@ -2,13 +2,21 @@ const campeonatoService = require('../services/campeonatos.service');
 
 async function criarCampeonatoController(req, res) {
   try {
-    const novocampeonato = await campeonatoService.criarCampeonato(req.body);
+    const { nome, modalidadeId, ano, foto } = req.body;
+
+    const novocampeonato = await campeonatoService.criarCampeonato({
+      nome,
+      modalidadeId,
+      ano,
+      foto
+    });
+
     return res.status(201).json(novocampeonato);
   } catch (error) {
     console.error("Erro no controller:", error);
     return res.status(400).json({
       erro: "Erro ao criar campeonato",
-      detalhes: error.message 
+      detalhes: error.message
     });
   }
 }
@@ -26,12 +34,12 @@ async function removerCampeonatoController(req, res, next) {
 async function listarCampeonatosPorModalidadeController(req, res) {
   try {
     const { modalidadeId } = req.params;
-    const { ano } = req.query; 
+    const { ano } = req.query;
     if (!modalidadeId) {
       return res.status(400).json({ error: 'ID da modalidade é obrigatório.' });
     }
     const campeonatos = await campeonatoService.listarCampeonatosPorModalidade(Number(modalidadeId), ano);
-    
+
     return res.status(200).json(campeonatos);
   } catch (error) {
     console.error(error);
@@ -41,7 +49,7 @@ async function listarCampeonatosPorModalidadeController(req, res) {
 
 async function listarCampeonatosAnoAtualController(req, res) {
   try {
-    const campeonatos =  await campeonatoService.listarCampeonatosAnoAtual()
+    const campeonatos = await campeonatoService.listarCampeonatosAnoAtual()
 
     return res.status(200).json(campeonatos)
   } catch (error) {
@@ -68,4 +76,22 @@ async function artilhariaCampeonatoController(req, res) {
   }
 }
 
-module.exports = { criarCampeonatoController, removerCampeonatoController, listarCampeonatosPorModalidadeController, listarCampeonatosAnoAtualController, artilhariaCampeonatoController };
+async function listarCampeonatoPorIdController(req, res) {
+  const { id } = req.params;
+
+  try {
+    const campeonato = await campeonatoService.getCampeonatoById(id);
+
+    if (!campeonato) {
+      return res.status(404).json({ message: 'Campeonato não encontrado' });
+    }
+
+    res.json(campeonato);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erro ao buscar campeonato' });
+  }
+}
+
+
+module.exports = { criarCampeonatoController, removerCampeonatoController, listarCampeonatosPorModalidadeController, listarCampeonatosAnoAtualController, artilhariaCampeonatoController, listarCampeonatoPorIdController };

@@ -59,7 +59,6 @@
                       jogador{{ obterQtdJogadores(time) === 1 ? '' : 'es' }}
                     </p>
                     <p>Treinador: {{ time.treinador }}</p>
-                    <p>Agendamentos: {{ time.agendamentos || 0 }}</p>
                   </div>
                 </div>
 
@@ -512,6 +511,11 @@ export default {
   .btn-detalhar {
     width: 100%;
     padding: 8px 0;
+  }
+
+  .abas-container {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
   }
 }
 </style>

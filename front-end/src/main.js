@@ -2,7 +2,7 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
-import { createPinia, setActivePinia } from 'pinia';
+import { createPinia } from 'pinia';
 import { useAuthStore } from './store';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -11,9 +11,8 @@ import './assets/main.css';
 
 const app = createApp(App);
 
-// 🔹 Configura e ativa o Pinia
+// 🔹 Cria e usa Pinia
 const pinia = createPinia();
-setActivePinia(pinia);
 app.use(pinia);
 
 // 🔹 Usa o Vue Router
@@ -22,5 +21,6 @@ app.use(router);
 // 🔹 Monta o app
 app.mount('#app');
 
+// 🔹 Carrega dados da store de autenticação
 const authStore = useAuthStore();
 authStore.carregarDados();
