@@ -23,7 +23,7 @@
                 </svg>
             </button>
             <div class="menu-itens">
-                <a href="/telainicial">
+                <a href="/telainicial" :class="{ active: isActive('/telainicial') }">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                         class="bi bi-trophy-fill" viewBox="0 0 16 16">
                         <path
@@ -31,7 +31,8 @@
                     </svg>
                     <span>Todos Campeonatos</span>
                 </a>
-                <router-link :to="{ name: 'Detalhar_Campeonatos', query: { id: campeonatoId } }" class="menu-link">
+                <router-link :to="{ name: 'Detalhar_Campeonatos', query: { id: campeonatoId } }" class="menu-link "
+                    :class="{ active: isActive('/detalharcampeonatos') }">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                         class="bi bi-grid-1x2-fill" viewBox="0 0 16 16">
                         <path
@@ -39,7 +40,8 @@
                     </svg>
                     <span>Visão Geral</span>
                 </router-link>
-                <router-link :to="{ name: 'Classificacao', query: { id: campeonatoId } }" class="menu-link">
+                <router-link :to="{ name: 'Classificacao', query: { id: campeonatoId } }" class="menu-link"
+                    :class="{ active: isActive('/classificacao') }">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                         class="bi bi-bar-chart-fill" viewBox="0 0 16 16">
                         <path
@@ -47,7 +49,8 @@
                     </svg>
                     <span>Classificação</span>
                 </router-link>
-                <router-link :to="{ name: 'Classificacao', query: { id: campeonatoId } }" class="menu-link">
+                <router-link :to="{ name: 'Classificacao', query: { id: campeonatoId } }" class="menu-link"
+                    :class="{ active: isActive('/classificacao') }">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                         class="bi bi-people-fill" viewBox="0 0 16 16">
                         <path
@@ -55,7 +58,8 @@
                     </svg>
                     <span>Gerenciar Equipes</span>
                 </router-link>
-                <router-link :to="{ name: 'Classificacao', query: { id: campeonatoId } }" class="menu-link">
+                <router-link :to="{ name: 'Classificacao', query: { id: campeonatoId } }" class="menu-link"
+                    :class="{ active: isActive('/classificacao') }">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                         class="bi bi-gear-fill" viewBox="0 0 16 16">
                         <path
@@ -114,6 +118,13 @@ export default {
         }
     },
     methods: {
+        isActive(path) {
+            return this.$route.path === path
+        },
+
+        isActiveRoute(name) {
+            return this.$route.name === name
+        },
         logout() {
             localStorage.removeItem("token");
             localStorage.removeItem("usuario");

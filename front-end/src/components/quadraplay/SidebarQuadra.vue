@@ -23,7 +23,7 @@
         </svg>
       </button>
       <div class="menu-itens">
-        <a href="/telainicial">
+        <a href="/telainicial" :class="{ active: isActive('/telainicial') }">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trophy-fill"
             viewBox="0 0 16 16">
             <path
@@ -32,7 +32,7 @@
           <span>Campeonatos</span>
         </a>
 
-        <a href="/gerenciartimes">
+        <a href="/gerenciartimes" :class="{ active: isActive('/gerenciartimes') }">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people-fill"
             viewBox="0 0 16 16">
             <path
@@ -40,7 +40,7 @@
           </svg>
           <span>Gerenciar Times</span>
         </a>
-        <a href="/gerenciartimes">
+        <a href="/gerenciartimes" :class="{ active: isActive('/gerenciartimes') }">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
             class="bi bi-card-checklist" viewBox="0 0 16 16">
             <path
@@ -50,7 +50,7 @@
           </svg>
           <span>Gerenciar Funções</span>
         </a>
-        <a href="/gerenciartimes">
+        <a href="/gerenciartimes" :class="{ active: isActive('/gerenciartimes') }">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar3"
             viewBox="0 0 16 16">
             <path
@@ -106,6 +106,10 @@ export default {
     }
   },
   methods: {
+    isActive(path) {
+      return this.$route.path === path
+    },
+
     logout() {
       localStorage.removeItem("token");
       localStorage.removeItem("usuario");
@@ -263,6 +267,15 @@ body {
   justify-content: center;
 }
 
+.sidebar_quadra a.active {
+  color: #3B82F6;
+}
+
+.sidebar_quadra a.active svg {
+  color: #3B82F6;
+}
+
+
 .logout-button svg {
   margin-right: 8px;
 }
@@ -337,15 +350,15 @@ body {
 
 @media (max-width: 768px) {
   .button-sidebar {
-    width: 50px;       
+    width: 50px;
     height: 50px;
-    padding: 12px;     
-    font-size: 20px;   
+    padding: 12px;
+    font-size: 20px;
     top: 5px;
   }
 
   .button-sidebar svg {
-    width: 32px;       
+    width: 32px;
     height: 32px;
   }
 

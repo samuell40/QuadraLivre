@@ -33,7 +33,7 @@
 
         <div v-else class="quadras-grid">
           <div class="card-quadra" v-for="campeonato in campeonatos" :key="campeonato.id"
-            @click="abrirCampeonato(campeonato.id)">
+            @click="abrirCampeonato(campeonato)">
 
             <div class="status-badge" :class="campeonato.status === 'EM_ANDAMENTO' ? 'em-andamento' : 'finalizado'">
               {{ campeonato.status === 'EM_ANDAMENTO' ? 'Em Andamento' : 'Finalizado' }}
@@ -100,7 +100,7 @@ export default {
   methods: {
     abrirCampeonato(campeonato) {
       const store = useCampeonatoStore();
-      store.setCampeonato(campeonato);   
+      store.setCampeonato(campeonato);
       router.push({ name: 'Detalhar_Campeonatos', query: { id: campeonato.id } });
     },
 

@@ -1,9 +1,8 @@
-// storecampeonato.js
 import { defineStore } from 'pinia'
 
 export const useCampeonatoStore = defineStore('campeonato', {
   state: () => ({
-    selecionado: JSON.parse(localStorage.getItem('campeonatoAtivo')) || null
+    selecionado: null
   }),
 
   getters: {
@@ -13,12 +12,15 @@ export const useCampeonatoStore = defineStore('campeonato', {
   actions: {
     setCampeonato(campeonato) {
       this.selecionado = campeonato
-      localStorage.setItem('campeonatoAtivo', JSON.stringify(campeonato))
     },
 
     limparCampeonato() {
       this.selecionado = null
-      localStorage.removeItem('campeonatoAtivo')
     }
+  },
+
+  persist: {
+    key: 'campeonato',
+    storage: localStorage
   }
 })
