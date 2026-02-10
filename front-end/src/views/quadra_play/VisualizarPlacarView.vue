@@ -186,7 +186,6 @@ export default {
   },
 
   computed: {
-    // 🔥 NORMALIZA NOME DA MODALIDADE (remove acentos)
     modalidadeNormalizada() {
       if (!this.modalidadeSelecionada?.nome) return ''
 

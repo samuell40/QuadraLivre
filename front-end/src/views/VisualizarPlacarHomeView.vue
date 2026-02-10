@@ -12,6 +12,10 @@
             {{ c.nome }}
           </div>
         </div>
+        <!-- FOTO DO CAMPEONATO -->
+        <div v-if="campeonatoSelecionado?.foto" class="foto-campeonato-container">
+          <img :src="campeonatoSelecionado.foto" alt="Foto do campeonato" class="foto-campeonato" />
+        </div>
 
         <div class="placar-e-partidas">
           <!-- PLACAR -->
@@ -681,6 +685,21 @@ export default {
   color: white;
 }
 
+.foto-campeonato-container {
+  width: 100%;
+  height: 480px;
+  margin: 10px 0 30px;
+  overflow: hidden;
+}
+
+.foto-campeonato {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;            
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
+}
+
 .campeonatos-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -1109,8 +1128,8 @@ export default {
   margin-bottom: 10px;
 }
 
-.nome-jogador{
- font-weight: 500;
+.nome-jogador {
+  font-weight: 500;
   color: #7E7E7E;
 }
 
@@ -1355,8 +1374,9 @@ export default {
     padding: 10px;
   }
 
- .placar {
-    min-width: 0; /* remove scroll horizontal */
+  .placar {
+    min-width: 0;
+    /* remove scroll horizontal */
     width: 100%;
   }
 

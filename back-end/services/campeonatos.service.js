@@ -13,16 +13,19 @@ async function criarCampeonato(data) {
     times,
     datasJogos,
     usuarioId,
-    foto // novo campo
+    foto
   } = data;
 
-  // Garante que arrays existam
-  const listaDatasReais = Array.isArray(datasJogos) ? datasJogos.map(d => new Date(d)) : [];
+  // Garantias de segurança
+  const listaDatasReais = Array.isArray(datasJogos)
+    ? datasJogos.map(d => new Date(d))
+    : [];
+
   const timesArray = Array.isArray(times) ? times : [];
 
   return await prisma.$transaction(async (tx) => {
 
-    // Remove conflitos de agendamento, se houver
+    // Remove conflitos de agendamento
     if (listaDatasReais.length > 0) {
       const conflitos = await tx.agendamento.findMany({
         where: {
@@ -33,7 +36,9 @@ async function criarCampeonato(data) {
 
       if (conflitos.length > 0) {
         await tx.agendamento.deleteMany({
-          where: { id: { in: conflitos.map(c => c.id) } }
+          where: {
+            id: { in: conflitos.map(c => c.id) }
+          }
         });
       }
     }
@@ -53,35 +58,43 @@ async function criarCampeonato(data) {
       duracao: 1
     }));
 
-    // Cria campeonato
+    // Criação do campeonato
     const campeonato = await tx.campeonato.create({
       data: {
         nome,
         descricao,
-        foto, // adiciona aqui
+        foto,
         dataInicio: new Date(dataInicio),
         dataFim: new Date(dataFim),
         status,
         modalidadeId: Number(modalidadeId),
         quadraId: Number(quadraId),
 
+        // Times vinculados ao campeonato
         times: {
-          create: timesArray.map(timeId => ({ timeId: Number(timeId) }))
+          create: timesArray.map(timeId => ({
+            timeId: Number(timeId)
+          }))
         },
 
+        // Jogos (agendamentos)
         agendamentos: {
           create: agendamentosParaCriar
         },
 
+        // Placares iniciais
         placares: {
-          create: timesArray.map(timeId => ({ timeId: Number(timeId) }))
+          create: timesArray.map(timeId => ({
+            timeId: Number(timeId)
+          }))
         }
       },
       include: {
         modalidade: true,
         quadra: true,
         times: { include: { time: true } },
-        agendamentos: true
+        agendamentos: true,
+        placares: true
       }
     });
 

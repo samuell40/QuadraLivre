@@ -3,7 +3,7 @@
     <div class="modal-content">
       <h2>Adicionar Campeonato</h2>
 
-      <form @submit.prevent="cadastrarCampeonato">
+      <form @submit.prevent="abrirModalTimes">
         <div class="form-row">
           <div class="form-group">
             <label for="modalidade">Modalidade</label>
@@ -48,18 +48,55 @@
           </div>
         </div>
 
-        <!-- Novo campo de upload de foto -->
         <div class="form-group">
           <label for="fotoCampeonato">Foto (opcional)</label>
-          <input type="file" id="fotoCampeonato" @change="handleImagemUpload" accept=".jpg,.jpeg,.png" />
+          <input type="file" id="fotoCampeonato" accept=".jpg,.jpeg,.png" @change="handleImagemUpload" />
+
+          <small class="texto-ajuda">
+            Recomendado: imagem horizontal (1920 × 600 px). <br />
+            Tamanho mínimo: 1280 × 400 px.
+          </small>
         </div>
 
-        <!-- Botões Salvar e Cancelar -->
         <div class="botoes">
-          <button type="submit" class="btn-save">Salvar Campeonato</button>
-          <button type="button" class="btn-cancel" @click="cancelarCadastro">Cancelar</button>
+          <button type="submit" class="btn-save">
+            Continuar
+          </button>
+          <button type="button" class="btn-cancel" @click="cancelarCadastro">
+            Cancelar
+          </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div v-if="mostrarModalTimes" class="modal-overlay" @click.self="mostrarModalTimes = false">
+    <div class="modal-content modal-times">
+      <h2>Selecione os Times</h2>
+
+      <div class="contador">
+        {{ timesSelecionados.length }} selecionado(s)
+      </div>
+
+      <div class="lista-times">
+        <div v-for="time in times" :key="time.id" class="time-card"
+          :class="{ selecionado: timesSelecionados.includes(time.id) }" @click="toggleTime(time.id)">
+          <div class="time-info">
+            <h3>{{ time.nome }}</h3>
+            <span>{{ time._count?.jogadores || 0 }} jogadores</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="botoes">
+        <button class="btn-save" @click="finalizarCadastro">
+          Criar Campeonato
+        </button>
+
+        <button class="btn-cancel" @click="mostrarModalTimes = false">
+          Voltar
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -73,6 +110,7 @@ export default {
   props: {
     aberto: { type: Boolean, default: false }
   },
+
   data() {
     return {
       modalidades: [],
@@ -83,9 +121,13 @@ export default {
       dataInicio: '',
       dataFim: '',
       arquivoFoto: null,
-      carregandoQuadras: false
+      mostrarModalTimes: false,
+      times: [],
+      timesSelecionados: [],
+      campeonatoTemp: null
     }
   },
+
   watch: {
     aberto(valor) {
       if (valor) {
@@ -99,6 +141,7 @@ export default {
       else this.quadras = []
     }
   },
+
   methods: {
     limparCampos() {
       this.modalidadeSelecionada = ''
@@ -108,7 +151,9 @@ export default {
       this.dataFim = ''
       this.arquivoFoto = null
       this.quadras = []
+      this.campeonatoTemp = null
     },
+
     async carregarModalidades() {
       try {
         const { data } = await api.get('/listar/modalidade')
@@ -117,23 +162,29 @@ export default {
         Swal.fire('Erro', 'Erro ao carregar modalidades.', 'error')
       }
     },
+
     async carregarQuadras(modalidadeId) {
       try {
-        this.carregandoQuadras = true
         const res = await api.get(`/listar/quadras/${modalidadeId}`)
         this.quadras = res.data
       } catch {
         Swal.fire('Erro', 'Erro ao carregar quadras.', 'error')
-      } finally {
-        this.carregandoQuadras = false
       }
     },
+
     handleImagemUpload(event) {
       const file = event.target.files[0]
       if (file) this.arquivoFoto = file
     },
-    async cadastrarCampeonato() {
-      if (!this.modalidadeSelecionada || !this.quadraSelecionada || !this.nomeCampeonato.trim() || !this.dataInicio || !this.dataFim) {
+
+    async abrirModalTimes() {
+      if (
+        !this.modalidadeSelecionada ||
+        !this.quadraSelecionada ||
+        !this.nomeCampeonato.trim() ||
+        !this.dataInicio ||
+        !this.dataFim
+      ) {
         Swal.fire('Atenção', 'Preencha todos os campos obrigatórios.', 'warning')
         return
       }
@@ -145,31 +196,110 @@ export default {
           const formData = new FormData()
           formData.append('file', this.arquivoFoto)
 
-          const uploadResponse = await api.post('/upload', formData, {
+          const upload = await api.post('/upload', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
           })
 
-          urlImagem = uploadResponse.data.fileUrl || uploadResponse.data.url || null
+          urlImagem = upload.data.fileUrl || upload.data.url || null
         }
 
-        await api.post('/criar/campeonato', {
+        this.campeonatoTemp = {
           nome: this.nomeCampeonato.trim(),
           modalidadeId: this.modalidadeSelecionada,
           quadraId: this.quadraSelecionada,
           dataInicio: this.dataInicio,
           dataFim: this.dataFim,
-          status: "EM_ANDAMENTO",
+          status: 'EM_ANDAMENTO',
           foto: urlImagem
-        })
+        }
 
-        Swal.fire('Sucesso', 'Campeonato criado com sucesso!', 'success')
-        this.$emit('atualizar')
-        this.cancelarCadastro()
-      } catch (err) {
-        const msg = err.response?.data?.detalhes || "Erro ao salvar campeonato"
-        Swal.fire('Erro', msg, 'error')
+        const res = await api.get(
+          `/times/modalidade/${this.modalidadeSelecionada}`
+        )
+
+        this.times = res.data
+        this.timesSelecionados = []
+
+        this.$emit('fechar')
+        this.mostrarModalTimes = true
+      } catch {
+        Swal.fire('Erro', 'Erro ao carregar os times.', 'error')
       }
     },
+
+    toggleTime(id) {
+      const index = this.timesSelecionados.indexOf(id)
+      if (index >= 0) this.timesSelecionados.splice(index, 1)
+      else this.timesSelecionados.push(id)
+    },
+
+    async nomeCampeonatoJaExiste() {
+      try {
+        const res = await api.get('/listar/campeonatos')
+
+        const nomeDigitado = this.nomeCampeonato.trim().toLowerCase()
+
+        return res.data.some(
+          campeonato =>
+            campeonato.nome.trim().toLowerCase() === nomeDigitado
+        )
+      } catch (error) {
+        console.error('Erro ao verificar nome do campeonato', error)
+        return false
+      }
+    },
+
+    async finalizarCadastro() {
+      if (this.timesSelecionados.length < 2) {
+        Swal.fire('Atenção', 'Selecione pelo menos 2 times.', 'warning')
+        return
+      }
+
+      if (this.dataFim < this.dataInicio) {
+        Swal.fire(
+          'Atenção',
+          'Data de fim não pode ser menor que a de início.',
+          'warning'
+        )
+        return
+      }
+
+      const jaExiste = await this.nomeCampeonatoJaExiste()
+      if (jaExiste) {
+        Swal.fire(
+          'Atenção',
+          'Já existe um campeonato cadastrado com esse nome.',
+          'warning'
+        )
+        return
+      }
+
+      try {
+        await api.post('/criar/campeonato', {
+          nome: this.nomeCampeonato.trim(),
+          modalidadeId: Number(this.modalidadeSelecionada),
+          quadraId: Number(this.quadraSelecionada),
+          dataInicio: new Date(this.dataInicio).toISOString(),
+          dataFim: new Date(this.dataFim).toISOString(),
+          times: this.timesSelecionados,
+          datasJogos: [],
+          foto: this.campeonatoTemp?.foto,
+          status: 'EM_ANDAMENTO'
+        })
+
+        Swal.fire('Sucesso', 'Campeonato cadastrado com sucesso!', 'success')
+        this.$emit('atualizar')
+        this.$emit('fechar')
+        this.limparCampos()
+      } catch (error) {
+        Swal.fire(
+          'Erro',
+          error.response?.data?.erro,
+          'error'
+        )
+      }
+    },
+
     cancelarCadastro() {
       this.limparCampos()
       this.$emit('fechar')
@@ -304,7 +434,14 @@ select {
   gap: 5px;
 }
 
-/* ===== MODAL TIMES ===== */
+.texto-ajuda {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #6b7280; 
+}
+
+/* ===== MODAL DE TIMES ===== */
 
 .modal-overlay {
   position: fixed;

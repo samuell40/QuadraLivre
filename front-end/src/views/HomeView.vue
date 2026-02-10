@@ -23,8 +23,8 @@
       </template>
       <template v-else>
         <button class="btn-prev" @click="prev">&lt;</button>
-        <Carousel ref="carousel" :itemsToShow="1" :wrapAround="true" :mouseDrag="true"
-          :breakpoints="{ 768: { itemsToShow: 3 } }" class="carousel">
+        <Carousel ref="carousel" :itemsToShow="1" :wrapAround="true" :mouseDrag="true" :autoplay="3000"
+          :pauseAutoplayOnHover="true" :transition="600" :breakpoints="{ 768: { itemsToShow: 3 } }" class="carousel">
           <Slide v-for="(quadra, index) in quadras" :key="index">
             <div class="card" :class="{ 'is-interditada': quadra.interditada }">
 
@@ -54,7 +54,7 @@
       <div class="placar-container">
         <div class="placar-wrapper">
           <h3 class="titulo-secao">
-            <span v-if="nomeCampeonato">Classificação do {{ nomeCampeonato }}</span>
+            <span>Classificação do {{ nomeCampeonato }}</span>
           </h3>
 
           <div v-if="isLoadingPlacar" class="loader"></div>
@@ -719,6 +719,7 @@ p {
 .partidas-wrapper {
   flex: 1;
   min-width: 250px;
+  overflow-x: hidden;
 }
 
 .lista-partidas {
@@ -795,6 +796,14 @@ p {
   padding: 12px;
   margin-bottom: 14px;
   background: #fff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.card-partida:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  z-index: 10;
 }
 
 .status-topo {
@@ -849,7 +858,16 @@ p {
   z-index: 2000;
 }
 
-/* Conteúdo do modal */
+.placar tbody tr {
+  background-color: #ffffff;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.placar tbody tr:hover {
+  background-color: #f3f4f6; 
+  cursor: pointer;
+}
+
 .modal-partida {
   background-color: #fff;
   border-radius: 12px;
