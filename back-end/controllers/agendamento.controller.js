@@ -17,7 +17,7 @@ const criarAgendamentoController = async (req, res) => {
 
     const { 
       dia, mes, ano, hora, duracao, tipo, 
-      quadraId, modalidadeId, timeId, ignorarRegra 
+      quadraId, modalidadeId, timeId, ignorarRegra, status
     } = req.body;
 
     if (!dia || !mes || !ano || !hora || !quadraId || !modalidadeId) {
@@ -35,7 +35,8 @@ const criarAgendamentoController = async (req, res) => {
       quadraId: Number(quadraId),
       modalidadeId: Number(modalidadeId),
       timeId: timeId ? Number(timeId) : null,
-      ignorarRegra
+      ignorarRegra,
+      status: status ?? 'Pendente'
     });
 
     return res.status(201).json(agendamento);

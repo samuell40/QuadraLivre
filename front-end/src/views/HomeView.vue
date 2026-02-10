@@ -26,12 +26,22 @@
         <Carousel ref="carousel" :itemsToShow="1" :wrapAround="true" :mouseDrag="true"
           :breakpoints="{ 768: { itemsToShow: 3 } }" class="carousel">
           <Slide v-for="(quadra, index) in quadras" :key="index">
-            <div class="card">
+            <div class="card" :class="{ 'is-interditada': quadra.interditada }">
+
+              <div v-if="quadra.interditada" class="badge-interditada-overlay">
+                INDISPONÍVEL
+              </div>
+
               <img :src="quadra.foto" :alt="quadra.nome" class="imagem" />
+
               <div class="info">
                 <h3>{{ quadra.nome }}</h3>
                 <p class="endereco">{{ quadra.endereco }}</p>
-                <button class="btn-agendar" @click="verificarLogin(quadra)">Agendar</button>
+
+                <button class="btn-agendar" :disabled="quadra.interditada"
+                  @click="!quadra.interditada && verificarLogin(quadra)">
+                  {{ quadra.interditada ? 'Indisponível' : 'Agendar' }}
+                </button>
               </div>
             </div>
           </Slide>
@@ -611,6 +621,35 @@ p {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+}
+
+.card.is-interditada .imagem {
+  filter: grayscale(100%) brightness(1.1) opacity(0.6);
+  transition: filter 0.3s ease;
+}
+
+.badge-interditada-overlay {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  color: #FFFFFF;
+  font-weight: 900;
+  font-size: 28px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  pointer-events: none;
+  text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.8);
+  width: 100%;
+  text-align: center;
+}
+
+.btn-agendar:disabled {
+  background-color: #D9D9D9;
+  color: #7E7E7E;
+  cursor: not-allowed;
+  opacity: 0.9;
 }
 
 .imagem {

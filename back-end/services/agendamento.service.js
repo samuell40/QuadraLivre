@@ -13,6 +13,8 @@ const gerarCodigoVerificacao = () => {
 };
 
 const listarAgendamentosService = async (usuarioId) => {
+  await recusarAgendamentosVencidos();
+
   if (!usuarioId) {
     throw { status: 400, message: "Usuário não informado." };
   }
@@ -41,6 +43,8 @@ const listarAgendamentosService = async (usuarioId) => {
 };
 
 const listarTodosAgendamentosService = async () => {
+  await recusarAgendamentosVencidos();
+
   const agendamentos = await prisma.agendamento.findMany({
     include: {
       quadra: true,
@@ -64,6 +68,8 @@ const listarTodosAgendamentosService = async () => {
 };
 
 const listarAgendamentosPorQuadraService = async (quadraId) => {
+  await recusarAgendamentosVencidos();
+
   if (!quadraId) {
     throw { status: 400, message: "Quadra não informada." };
   }
@@ -97,6 +103,8 @@ const listarAgendamentosConfirmadosService = async (
   mes,
   dia,
 ) => {
+  await recusarAgendamentosVencidos();
+  
   if (!quadraId) {
     throw { status: 400, message: "Quadra não informada." };
   }
@@ -130,6 +138,8 @@ const listarAgendamentosConfirmadosService = async (
 };
 
 const listarAgendamentosConfirmadosSemanaService = async (quadraId) => {
+  await recusarAgendamentosVencidos();
+
   if (!quadraId) throw { status: 400, message: "Quadra não informada." };
 
   const hoje = new Date();
@@ -202,6 +212,7 @@ const criarAgendamentoService = async ({
   modalidadeId,
   timeId,
   ignorarRegra = false,
+  status = "Pendente",
 }) => {
   if (
     !dia ||
@@ -350,12 +361,12 @@ const criarAgendamentoService = async ({
       hora,
       duracao,
       tipo,
-      status: "Pendente",
       usuarioId,
       quadraId,
       modalidadeId,
       timeId: timeId ?? null,
       codigoVerificacao: novoCodigo,
+      status,
     },
     include: {
       modalidade: true,
@@ -415,6 +426,8 @@ const atualizarAgendamentoService = async (id, status, motivoRecusa = null) => {
 };
 
 const listarModalidadesPorQuadraService = async (quadraId) => {
+  await recusarAgendamentosVencidos();
+
   if (!quadraId) throw { status: 400, message: "Quadra não informada." };
 
   try {
@@ -433,6 +446,8 @@ const listarModalidadesPorQuadraService = async (quadraId) => {
 };
 
 const listarAgendamentosPorTimeService = async (timeId, inicio, fim) => {
+  await recusarAgendamentosVencidos();
+
   if (!timeId || !inicio || !fim) {
     throw { status: 400, message: "Parâmetros obrigatórios não informados." };
   }
@@ -491,6 +506,30 @@ const listarAgendamentosPorTimeService = async (timeId, inicio, fim) => {
   return agendamentos.map((a) => ({ ...a, duracao: a.duracao ?? 1 }));
 };
 
+const recusarAgendamentosVencidos = async () => {
+  const agora = new Date();
+  
+  const pendentes = await prisma.agendamento.findMany({
+    where: { status: 'Pendente' }
+  });
+
+  const vencidos = pendentes.filter(ag => {
+    const dataDoJogo = new Date(ag.ano, ag.mes - 1, ag.dia, ag.hora);
+    
+    return dataDoJogo < agora;
+  });
+
+  for (const ag of vencidos) {
+    await prisma.agendamento.update({
+      where: { id: ag.id },
+      data: { 
+        status: 'Recusado',
+        motivoRecusa: 'Prazo de confirmação expirado (Data passada)'
+      }
+    });
+  }
+};
+
 module.exports = {
   criarAgendamentoService,
   listarAgendamentosService,
@@ -502,4 +541,5 @@ module.exports = {
   atualizarAgendamentoService,
   listarModalidadesPorQuadraService,
   listarAgendamentosPorTimeService,
+  recusarAgendamentosVencidos
 };

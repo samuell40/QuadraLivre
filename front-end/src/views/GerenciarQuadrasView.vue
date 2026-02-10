@@ -18,7 +18,7 @@
                 <div class="quadras-grid">
                     <div class="card-quadra" v-for="quadra in quadras" :key="quadra.id">
                         <div class="status-badge" :class="quadra.interditada ? 'interditada' : 'ativa'">
-                            {{ quadra.interditada ? 'INTERDITADA' : 'ATIVA' }}
+                            {{ quadra.interditada ? 'INDISPONÍVEL' : 'ATIVA' }}
                         </div>
 
                         <img :src="quadra.foto || require('@/assets/futibinha.png')" :alt="quadra.nome"
@@ -51,7 +51,7 @@
                                         <path
                                             d="M15 8a6.97 6.97 0 0 0-1.71-4.584l-9.874 9.875A7 7 0 0 0 15 8M2.71 12.584l9.874-9.875a7 7 0 0 0-9.874 9.874ZM16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0" />
                                     </svg>
-                                    {{ quadra.interditada ? 'Liberar' : 'Interditar' }}
+                                    {{ quadra.interditada ? 'Liberar' : 'Fechar' }}
                                 </button>
                             </div>
                         </div>

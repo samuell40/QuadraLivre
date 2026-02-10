@@ -42,7 +42,7 @@
         <div class="card-quadra" v-for="quadra in quadras" :key="quadra.id"
           :class="{ 'is-interditada': quadra.interditada }">
           <div v-if="quadra.interditada" class="badge-interditada-overlay">
-            INTERDITADA
+            INDISPONÍVEL
           </div>
 
           <img :src="quadra.foto || require('@/assets/futibinha.png')" :alt="quadra.nome" class="imagem-quadra" />

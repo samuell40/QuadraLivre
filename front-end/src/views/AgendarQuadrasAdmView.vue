@@ -19,7 +19,7 @@
           <div class="card-quadra" v-for="quadra in quadras" :key="quadra.id"
             :class="{ 'is-interditada': quadra.interditada }">
             <div v-if="quadra.interditada" class="badge-interditada-overlay">
-              INTERDITADA
+              INDISPONÍVEL
             </div>
 
             <img :src="quadra.foto || require('@/assets/futibinha.png')" :alt="quadra.nome" class="imagem-quadra" />
@@ -131,93 +131,99 @@ export default {
     },
 
     async confirmarAgendamento(agendamentoDoModal, forcarAgendamento = false) {
-      const authStore = useAuthStore()
+  const authStore = useAuthStore()
 
-      if (!authStore.usuario) {
-        Swal.fire({
-          title: 'Você precisa estar logado',
-          text: 'Deseja ir para a tela de login?',
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonText: 'Ir para login',
-          cancelButtonText: 'Cancelar',
-          confirmButtonColor: '#1E3A8A',
-        }).then(result => {
-          if (result.isConfirmed) this.$router.push('/login')
-        })
-        return
-      }
+  if (!authStore.usuario) {
+    Swal.fire({
+      title: 'Você precisa estar logado',
+      text: 'Deseja ir para a tela de login?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Ir para login',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#1E3A8A',
+    }).then(result => {
+      if (result.isConfirmed) this.$router.push('/login')
+    })
+    return
+  }
 
-      const agendamento = {
-        ...agendamentoDoModal,
-        usuarioId: authStore.usuario.id,
-        quadraId: this.quadraSelecionada.id,
-        ignorarRegra: forcarAgendamento
-      }
+  const isAdministrador = authStore.usuario.permissaoId === 2;
+  const statusAutomatico = isAdministrador ? 'Confirmado' : 'Pendente';
 
-      try {
-        await api.post('/agendamento', agendamento)
+  const agendamento = {
+    ...agendamentoDoModal,
+    usuarioId: authStore.usuario.id,
+    quadraId: this.quadraSelecionada.id,
+    ignorarRegra: forcarAgendamento,
+    status: statusAutomatico
+  }
 
-        Swal.fire({
-          icon: 'success',
-          title: 'Agendamento realizado!',
-          text: `Quadra: ${this.quadraSelecionada.nome}`,
-          confirmButtonColor: '#1E3A8A',
-          timer: 5000,
-          showConfirmButton: false,
-          timerProgressBar: true
-        })
+  try {
+    await api.post('/agendamento', agendamento)
 
-        this.mostrarModalAgendamento = false
+    Swal.fire({
+      icon: 'success',
+      title: isAdministrador ? 'Agendamento Confirmado!' : 'Solicitação Enviada!',
+      text: isAdministrador 
+        ? `Quadra: ${this.quadraSelecionada.nome} reservada com sucesso.` 
+        : `Quadra: ${this.quadraSelecionada.nome}. Aguarde a aprovação.`,
+      confirmButtonColor: '#1E3A8A',
+      timer: 5000,
+      showConfirmButton: false,
+      timerProgressBar: true
+    })
 
-      } catch (err) {
-        const msgErro = err.response?.data?.message || err.response?.data?.error;
-        const status = err.response?.status;
+    this.mostrarModalAgendamento = false
 
-        if (status === 400 && msgErro?.includes('já possui 2 agendamentos')) {
-          Swal.fire({
-            title: 'Limite Atingido',
-            text: `${msgErro} Como administrador, deseja ignorar a regra e agendar mesmo assim?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Sim, forçar',
-            cancelButtonText: 'Cancelar',
-            confirmButtonColor: '#1E3A8A',
-          }).then((result) => {
-            if (result.isConfirmed) {
-              this.confirmarAgendamento(agendamentoDoModal, true);
-            }
-          });
-          return;
+  } catch (err) {
+    const msgErro = err.response?.data?.message || err.response?.data?.error;
+    const status = err.response?.status;
+
+    if (status === 400 && msgErro?.includes('já possui 2 agendamentos')) {
+      Swal.fire({
+        title: 'Limite Atingido',
+        text: `${msgErro} Como administrador, deseja ignorar a regra e agendar mesmo assim?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sim, forçar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#1E3A8A',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.confirmarAgendamento(agendamentoDoModal, true);
         }
-
-        if (status === 409) {
-          Swal.fire({
-            icon: 'warning',
-            title: 'Horário já agendado',
-            text: 'Escolha outro horário para esta quadra.',
-            confirmButtonColor: '#1E3A8A'
-          })
-        }
-        else if (status === 400) {
-          Swal.fire({
-            icon: 'warning',
-            title: 'Atenção',
-            text: msgErro || 'Dados inválidos para o agendamento.',
-            confirmButtonColor: '#1E3A8A'
-          })
-        }
-        else {
-          Swal.fire({
-            icon: 'error',
-            title: 'Erro inesperado',
-            text: 'Ocorreu um problema ao tentar agendar. Tente novamente.',
-            confirmButtonColor: '#1E3A8A'
-          })
-        }
-        console.error('Erro ao agendar:', err)
-      }
+      });
+      return;
     }
+
+    if (status === 409) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Horário já agendado',
+        text: 'Escolha outro horário para esta quadra.',
+        confirmButtonColor: '#1E3A8A'
+      })
+    }
+    else if (status === 400) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Atenção',
+        text: msgErro || 'Dados inválidos para o agendamento.',
+        confirmButtonColor: '#1E3A8A'
+      })
+    }
+    else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Erro inesperado',
+        text: 'Ocorreu um problema ao tentar agendar. Tente novamente.',
+        confirmButtonColor: '#1E3A8A'
+      })
+    }
+    console.error('Erro ao agendar:', err)
+  }
+}
   }
 }
 </script>
@@ -381,18 +387,15 @@ export default {
   }
 }
 
-/* ESTILOS GLOBAIS PARA MODAIS (SweetAlert2) */
 
-/* Container dos botões */
 .swal2-custom-actions {
   display: flex !important;
   gap: 15px !important;
   margin-top: 25px !important;
 }
 
-/* Botão Confirmar (Azul Marinho da Paleta) */
 .btn-confirmar-swal {
-  background-color: #152147 !important; /* Cor do botão do fundo do seu print */
+  background-color: #152147 !important;
   color: white !important;
   border: none !important;
   padding: 12px 30px !important;
@@ -407,7 +410,6 @@ export default {
   background-color: #1E3A8A !important;
 }
 
-/* Botão Cancelar (Cinza da Paleta) */
 .btn-cancelar-swal {
   background-color: #D9D9D9 !important;
   color: #152147 !important;
@@ -423,7 +425,6 @@ export default {
   background-color: #c0c0c0 !important;
 }
 
-/* Ajuste do Título do Modal */
 .swal2-custom-title {
   color: #152147 !important;
   font-family: 'Montserrat', sans-serif !important;
