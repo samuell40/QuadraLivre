@@ -170,8 +170,8 @@
                         : partida.status === 'AGENDADA'
                           ? 'AGUARDANDO'
                           : partida.status === 'CANCELADA'
-                  ? 'CANCELADA'
-                  : ''
+                            ? 'CANCELADA'
+                            : ''
                   }}
                 </div>
 
@@ -208,11 +208,15 @@
                     <strong>Status:</strong>
                     <span :class="classeStatusTexto(partidaDetalhada)">
                       {{
-                        partidaDetalhada.finalizada
+                        partidaDetalhada.status === 'FINALIZADA'
                           ? 'Encerrada'
-                          : partidaDetalhada.partidaIniciada
+                          : partidaDetalhada.status === 'EM_ANDAMENTO'
                             ? 'Em andamento'
-                            : 'Não iniciada'
+                            : partidaDetalhada.status === 'AGENDADA'
+                              ? 'Não iniciada'
+                              : partidaDetalhada.status === 'CANCELADA'
+                                ? 'Cancelada'
+                                : ''
                       }}
                     </span>
                   </p>
@@ -736,7 +740,8 @@ export default {
 }
 
 .status-finalizada {
-  color: #dc2626; /* vermelho */
+  color: #dc2626;
+  /* vermelho */
   font-weight: bold;
   background: rgba(220, 38, 38, 0.12);
   padding: 2px 8px;
@@ -744,7 +749,8 @@ export default {
 }
 
 .status-cancelada {
-  color: #dc2626; /* vermelho também */
+  color: #dc2626;
+  /* vermelho também */
   font-weight: bold;
   background: rgba(220, 38, 38, 0.08);
   padding: 2px 8px;
@@ -1276,10 +1282,6 @@ export default {
 
 .status-andamento {
   background: rgba(22, 163, 74, 0.1);
-}
-
-.status-pausada {
-  background: rgba(250, 204, 21, 0.15);
 }
 
 .status-finalizada {

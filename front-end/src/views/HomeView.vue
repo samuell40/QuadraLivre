@@ -111,14 +111,17 @@
           <ul class="lista-partidas">
             <li v-for="partida in partidas" :key="partida.id" class="card-partida" :class="classeStatusPartida(partida)"
               @click="abrirModalPartida(partida.id)">
-
-              <div class="status-topo" :class="{ encerrada: partida.finalizada }">
+              <div class="status-topo" :class="classeStatusTexto(partida)">
                 {{
-                  partida.finalizada
+                  partida.status === 'FINALIZADA'
                     ? 'ENCERRADA'
-                    : partida.partidaIniciada
-                      ? '0 MIN'
-                      : 'AGUARDANDO'
+                    : partida.status === 'EM_ANDAMENTO'
+                      ? 'EM ANDAMENTO'
+                      : partida.status === 'AGENDADA'
+                        ? 'AGUARDANDO'
+                        : partida.status === 'CANCELADA'
+                          ? 'CANCELADA'
+                          : ''
                 }}
               </div>
 
@@ -157,11 +160,15 @@
               <strong>Status:</strong>
               <span :class="classeStatusTexto(partidaDetalhada)">
                 {{
-                  partidaDetalhada.finalizada
+                  partidaDetalhada.status === 'FINALIZADA'
                     ? 'Encerrada'
-                    : partidaDetalhada.partidaIniciada
+                    : partidaDetalhada.status === 'EM_ANDAMENTO'
                       ? 'Em andamento'
-                      : 'Não iniciada'
+                      : partidaDetalhada.status === 'AGENDADA'
+                        ? 'Não iniciada'
+                        : partidaDetalhada.status === 'CANCELADA'
+                          ? 'Cancelada'
+                : ''
                 }}
               </span>
             </p>
@@ -292,22 +299,32 @@ export default {
     next() { if (this.$refs.carousel) this.$refs.carousel.next() },
     prev() { if (this.$refs.carousel) this.$refs.carousel.prev() },
     classeStatusPartida(partida) {
-      if (partida.finalizada) {
-        return 'partida-finalizada'
+      switch (partida.status) {
+        case 'FINALIZADA':
+          return 'partida-finalizada'
+        case 'EM_ANDAMENTO':
+          return 'partida-andamento'
+        case 'AGENDADA':
+          return 'partida-agendada'
+        case 'CANCELADA':
+          return 'partida-cancelada'
+        default:
+          return ''
       }
-
-      if (partida.partidaIniciada) {
-        return 'partida-andamento'
-      }
-
     },
-    classeStatusTexto(partida) {
-      if (partida.finalizada) {
-        return 'status-finalizada'
-      }
 
-      if (partida.partidaIniciada) {
-        return 'status-andamento'
+    classeStatusTexto(partida) {
+      switch (partida.status) {
+        case 'FINALIZADA':
+          return 'status-finalizada'
+        case 'EM_ANDAMENTO':
+          return 'status-andamento'
+        case 'AGENDADA':
+          return 'status-agendada'
+        case 'CANCELADA':
+          return 'status-cancelada'
+        default:
+          return ''
       }
     },
 
@@ -860,7 +877,7 @@ p {
 }
 
 .placar tbody tr:hover {
-  background-color: #f3f4f6; 
+  background-color: #f3f4f6;
   cursor: pointer;
 }
 
@@ -1132,6 +1149,25 @@ p {
 
 .status-finalizada {
   background: rgba(220, 38, 38, 0.12);
+}
+
+
+.status-finalizada {
+  color: #dc2626;
+  /* vermelho */
+  font-weight: bold;
+  background: rgba(220, 38, 38, 0.12);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.status-cancelada {
+  color: #dc2626;
+  /* vermelho também */
+  font-weight: bold;
+  background: rgba(220, 38, 38, 0.08);
+  padding: 2px 8px;
+  border-radius: 12px;
 }
 
 .btn-cancel-placar {
