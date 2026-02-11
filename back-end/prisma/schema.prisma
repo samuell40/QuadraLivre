@@ -108,7 +108,7 @@ enum TipoCampeonato {
 model Campeonato {
   id           Int              @id @default(autoincrement())
   nome         String
-  tipo TipoCampeonato
+  tipo         TipoCampeonato
   anexos       String?          @db.Text
   foto         String?          @db.VarChar(2048)
   dataInicio   DateTime
@@ -120,6 +120,7 @@ model Campeonato {
   deletedAt    DateTime?
   modalidade   Modalidade       @relation(fields: [modalidadeId], references: [id])
   quadra       Quadra?          @relation(fields: [quadraId], references: [id])
+  fases        Fase[]
   times        CampeonatoTime[]
   partidas     Partida[]
   placares     Placar[]
@@ -137,6 +138,20 @@ model CampeonatoTime {
   time         Time       @relation(fields: [timeId], references: [id])
 
   @@id([campeonatoId, timeId])
+}
+
+model Fase {
+  id           Int        @id @default(autoincrement())
+  nome         String
+  campeonatoId Int
+  rodada       Int
+  dataInicio   DateTime?
+  dataFim      DateTime?
+  ativo        Boolean    @default(true)
+  deletedAt    DateTime?
+  campeonato   Campeonato @relation(fields: [campeonatoId], references: [id])
+  partidas     Partida[]
+  placares     Placar[]
 }
 
 model Time {
@@ -166,16 +181,18 @@ enum StatusPartida {
   DELETADA
 }
 
- model Partida {
-  id               Int            @id @default(autoincrement())
-  data             DateTime       @default(now())
-  status           StatusPartida  @default(AGENDADA)
-  campeonatoId     Int?
-  modalidadeId     Int
-  quadraId         Int?
-  timeAId          Int
-  timeBId          Int
+model Partida {
+  id                    Int              @id @default(autoincrement())
+  data                  DateTime         @default(now())
+  status                StatusPartida    @default(AGENDADA)
+  campeonatoId          Int?
+  faseId                Int?
+  modalidadeId          Int
+  quadraId              Int?
+  timeAId               Int
+  timeBId               Int
   campeonato            Campeonato?      @relation(fields: [campeonatoId], references: [id])
+  fase                  Fase?            @relation(fields: [faseId], references: [id])
   modalidade            Modalidade       @relation(fields: [modalidadeId], references: [id])
   quadra                Quadra?          @relation(fields: [quadraId], references: [id])
   timeA                 Time             @relation("TimeAPartidas", fields: [timeAId], references: [id])
@@ -240,11 +257,11 @@ model Jogador {
 }
 
 model JogadorTime {
-  id           Int     @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   jogadorId    Int
   timeId       Int
   modalidadeId Int
-  ativo        Boolean @default(true)
+  ativo        Boolean   @default(true)
   deletedAt    DateTime?
 
   jogador    Jogador    @relation(fields: [jogadorId], references: [id])
@@ -291,30 +308,33 @@ model PartidaUsuario {
 }
 
 model Placar {
-  id           Int        @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   campeonatoId Int
   timeId       Int
-  campeonato   Campeonato @relation(fields: [campeonatoId], references: [id])
-  time         Time       @relation(fields: [timeId], references: [id])
-  jogos        Int        @default(0)
-  posicao      Int        @default(0)
-  pontuacao    Int        @default(0)
-  vitorias     Int        @default(0)
-  empates      Int        @default(0)
-  derrotas     Int        @default(0)
-  golsPro      Int        @default(0)
-  golsSofridos Int        @default(0)
-  saldoDeGols  Int        @default(0)
-  setsVencidos Int        @default(0)
-  vitoria3x0   Int        @default(0)
-  vitoria3x2   Int        @default(0)
-  derrota2x3   Int        @default(0)
-  derrota0x3   Int        @default(0)
-  derrotaWo    Int        @default(0)
-  visivel      Boolean    @default(true)
-  deletedAt DateTime?
+  faseId       Int?
+  jogos        Int       @default(0)
+  posicao      Int       @default(0)
+  pontuacao    Int       @default(0)
+  vitorias     Int       @default(0)
+  empates      Int       @default(0)
+  derrotas     Int       @default(0)
+  golsPro      Int       @default(0)
+  golsSofridos Int       @default(0)
+  saldoDeGols  Int       @default(0)
+  setsVencidos Int       @default(0)
+  vitoria3x0   Int       @default(0)
+  vitoria3x2   Int       @default(0)
+  derrota2x3   Int       @default(0)
+  derrota0x3   Int       @default(0)
+  derrotaWo    Int       @default(0)
+  visivel      Boolean   @default(true)
+  deletedAt    DateTime?
 
-  @@unique([campeonatoId, timeId])
+  fase       Fase?      @relation(fields: [faseId], references: [id])
+  campeonato Campeonato @relation(fields: [campeonatoId], references: [id])
+  time       Time       @relation(fields: [timeId], references: [id])
+
+  @@unique([campeonatoId, faseId, timeId])
 }
 
 model UsuarioTime {

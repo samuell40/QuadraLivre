@@ -1,7 +1,7 @@
 <template>
   <div class="layout">
     <NavBarQuadras />
-    <SidebarQuadra />
+    <SidebarCampeonato />
 
     <div class="conteudo">
       <NavBarUser v-if="!partidaIniciada" />
@@ -12,79 +12,15 @@
             {{ nomeModalidade }}
           </span>
         </h1>
-
-        <div v-if="partidaIniciada" class="temporizador-container">
-          <div class="temporizador-topo">
-
-            <button class="controle-tempo" :class="{ pausado: !temporizadorAtivo }"
-              @click="iniciarPausarOuRetomarPartida">
-              <svg v-if="temporizadorAtivo" xmlns="http://www.w3.org/2000/svg" width="25" height="25"
-                fill="currentColor" viewBox="0 0 16 16">
-                <path
-                  d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5m5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5" />
-              </svg>
-
-              <!-- ÍCONE RETOMAR -->
-              <svg v-else xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor"
-                viewBox="0 0 16 16">
-                <path d="M6.79 5.093A.5.5 0 0 0 6 5.5v5a.5.5 0 0 0 .79.407l3.5-2.5a.5.5 0 0 0 0-.814z" />
-              </svg>
-              <span>
-                {{ temporizadorAtivo ? 'Pausar' : 'Retomar' }}
-              </span>
-            </button>
-            <p class="temporizador">{{ minutos }}:{{ segundos }}</p>
-          </div>
-        </div>
       </div>
 
       <p v-if="!partidaIniciada" class="texto-instrucao">
-        Para iniciar uma partida, selecione a quadra desejada, em seguida escolha a modalidade,
-        selecione o campeonato, defina os times participantes e, por fim, clique no botão
+        Para iniciar uma partida, selecione o time A e o time B, clinque em
         <strong>“Continuar”</strong> para abrir o modal de seleção dos jogadores da partida.
       </p>
 
       <div class="dropdowns" v-if="!partidaIniciada">
         <div class="dropdown-row">
-          <div class="team">
-            <label>Quadra:</label>
-            <select class="dropdown" v-model="quadraSelecionada" @change="atualizarSelecao('quadra')"
-              :disabled="partidaIniciada">
-              <option disabled value="">Selecione uma quadra</option>
-              <option v-for="q in quadrasDisponiveis" :key="q.id" :value="q.id">
-                {{ q.nome }}
-              </option>
-            </select>
-          </div>
-        </div>
-
-        <!-- MODALIDADE -->
-        <div class="dropdown-row">
-          <div class="team">
-            <label>Modalidade:</label>
-            <select class="dropdown" v-model="modalidadeSelecionada" @change="atualizarSelecao('modalidade')"
-              :disabled="!quadraSelecionada || partidaIniciada">
-              <option disabled value="">Selecione uma modalidade</option>
-              <option v-for="m in modalidadesDisponiveis" :key="m.id" :value="m.id">
-                {{ m.nome }}
-              </option>
-            </select>
-          </div>
-        </div>
-
-        <!-- CAMPEONATO / TIMES -->
-        <div class="dropdown-row">
-          <div class="team">
-            <label>Campeonato:</label>
-            <select v-model="campeonatoSelecionado" class="dropdown" @change="aoSelecionarCampeonato"
-              :disabled="!modalidadeSelecionada || partidaIniciada">
-              <option disabled value="">Selecione um campeonato</option>
-              <option v-for="c in campeonatosDisponiveis" :key="c.id" :value="c.id">
-                {{ c.nome }}
-              </option>
-            </select>
-          </div>
-
           <div class="team">
             <label>Time 1:</label>
             <select v-model="timeSelecionado1" class="dropdown" @change="carregarJogadoresPorTime('time1')"
@@ -153,7 +89,7 @@
 
 <script>
 import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
-import SidebarQuadra from '@/components/quadraplay/SidebarQuadra.vue'
+import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
 import NavBarUser from '@/components/NavBarUser.vue'
 import { useAuthStore } from '@/store'
 import SelecionarJogadores from '@/components/Partida/SelecionarJogadores.vue'
@@ -166,7 +102,7 @@ import Swal from 'sweetalert2'
 export default {
   components: {
     NavBarQuadras,
-    SidebarQuadra,
+    SidebarCampeonato,
     NavBarUser,
     SelecionarJogadores,
     PlacarTime,
@@ -808,6 +744,13 @@ export default {
   min-height: 100vh;
 }
 
+.conteudo {
+  flex: 1;
+  padding: 32px;
+  margin-left: 250px;
+  padding-top: 102px;
+}
+
 .sidebar {
   width: 250px;
   position: fixed;
@@ -826,13 +769,6 @@ export default {
 
 .sidebar.open {
   transform: translateX(0);
-}
-
-.conteudo {
-  flex: 1;
-  padding: 32px;
-  margin-left: 250px;
-  transition: margin-left 0.3s ease;
 }
 
 .title {
