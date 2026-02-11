@@ -2,7 +2,7 @@ const { enviarEmailAlteracaoPermissao, enviarEmailVinculoTime } = require('./ema
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-async function postUsuario(user) {
+async function cadastrarUsuario(user) {
   return prisma.usuario.create({
     data: {
       nome: user.nome,
@@ -18,58 +18,65 @@ async function postUsuario(user) {
   });
 }
 
-async function updateUsuario(user) {
-  const usuarioDb = await prisma.usuario.findUnique({
-    where: { email: user.email },
-    include: {
-      quadra: true,
-      permissao: true,
-    },
-  });
-
-  if (!usuarioDb) {
-    throw new Error('Usuário não encontrado');
-  }
-
-  const dadosAtualizados = {
-    permissaoId: user.permissaoId,
-    quadraId: null,
-  };
-
-  // Se for ADMIN (2), pode ter quadra
-  if (user.permissaoId === 2 && user.quadraId) {
-    const quadra = await prisma.quadra.findUnique({
-      where: { id: user.quadraId },
+async function atualizarUsuario(user) {
+  return prisma.$transaction(async tx => {
+    const usuarioDb = await tx.usuario.findUnique({
+      where: { email: user.email },
+      include: {
+        quadra: true,
+        permissao: true,
+      },
     });
 
-    dadosAtualizados.quadraId = quadra ? quadra.id : null;
-  }
+    if (!usuarioDb || usuarioDb.deletedAt) {
+      throw new Error('Usuário não encontrado');
+    }
 
-  // 🔴 Se NÃO for Jogador (3)
-  if (user.permissaoId !== 3) {
-    // Remove vínculo Usuario ↔ Time
-    await prisma.usuarioTime.deleteMany({
-      where: { usuarioId: usuarioDb.id },
+    const dadosAtualizados = {
+      permissaoId: user.permissaoId,
+      quadraId: null,
+    };
+
+    if (user.permissaoId === 2 && user.quadraId) {
+      const quadra = await tx.quadra.findUnique({
+        where: { id: user.quadraId },
+      });
+
+      dadosAtualizados.quadraId = quadra ? quadra.id : null;
+    }
+
+    // Se NÃO for Jogador
+    if (user.permissaoId !== 3) {
+      await tx.usuarioTime.updateMany({
+        where: {
+          usuarioId: usuarioDb.id,
+          ativo: true,
+        },
+        data: { ativo: false },
+      });
+    }
+
+    const usuarioAtualizado = await tx.usuario.update({
+      where: { id: usuarioDb.id },
+      data: dadosAtualizados,
+      include: {
+        quadra: true,
+        permissao: true,
+      },
     });
-  }
 
-  // Atualiza usuário
-  const usuarioAtualizado = await prisma.usuario.update({
-    where: { email: user.email },
-    data: dadosAtualizados,
-    include: {
-      quadra: true,
-      permissao: true,
-    },
+    await enviarEmailAlteracaoPermissao(usuarioAtualizado);
+
+    return usuarioAtualizado;
   });
-
-  await enviarEmailAlteracaoPermissao(usuarioAtualizado);
-
-  return usuarioAtualizado;
 }
 
 async function getUsuarios() {
   const usuarios = await prisma.usuario.findMany({
+    where: {
+      ativo: true,
+      deletedAt: null,
+    },
     include: {
       agendamentos: true,
       quadra: true,
@@ -111,11 +118,13 @@ async function getUsuarios() {
         foto: user.jogador.foto,
       };
 
-      timesJogador = user.jogador.times.map(jt => ({
-        id: jt.time.id,
-        nome: jt.time.nome,
-        modalidade: jt.modalidade.nome,
-      }));
+      timesJogador = user.jogador.times
+        .filter(jt => jt.ativo)
+        .map(jt => ({
+          id: jt.time.id,
+          nome: jt.time.nome,
+          modalidade: jt.modalidade.nome,
+        }));
     }
 
     return {
@@ -127,19 +136,20 @@ async function getUsuarios() {
       permissaoId: user.permissaoId,
       permissao: user.permissao,
       quadra: user.quadra,
-
       jogador,
       timesJogador,
-
-      times: user.times.map(ut => ({
-        id: ut.time.id,
-        nome: ut.time.nome,
-      })),
-
-      timesComoTreinador: user.treinadorTimes.map(tt => ({
-        id: tt.time.id,
-        nome: tt.time.nome,
-      })),
+      times: user.times
+        .filter(ut => ut.ativo)
+        .map(ut => ({
+          id: ut.time.id,
+          nome: ut.time.nome,
+        })),
+      timesComoTreinador: user.treinadorTimes
+        .filter(tt => tt.time?.ativo)
+        .map(tt => ({
+          id: tt.time.id,
+          nome: tt.time.nome,
+        })),
 
       totalAgendamentos: user.agendamentos.length,
     };
@@ -153,115 +163,82 @@ async function listarPermissoes() {
 }
 
 async function vincularUsuarioTime(usuarioId, timeId, jogadorId) {
-  // 1️⃣ Busca usuário
-  const usuario = await prisma.usuario.findUnique({
-    where: { id: usuarioId },
-    include: { permissao: true },
-  });
-  if (!usuario) throw new Error('Usuário não encontrado');
-
-  // 2️⃣ Busca time
-  const time = await prisma.time.findUnique({
-    where: { id: timeId },
-    include: { modalidade: true },
-  });
-  if (!time) throw new Error('Time não encontrado');
-
-  // 3️⃣ Busca jogador
-  const jogador = await prisma.jogador.findUnique({
-    where: { id: jogadorId },
-    include: {
-      times: {
-        include: {
-          time: true,
-          modalidade: true,
-        },
-      },
-    },
-  });
-  if (!jogador) throw new Error('Jogador não encontrado');
-
-  const modalidadeId = time.modalidadeId;
-
-  // 4️⃣ VINCULA USUÁRIO ↔ JOGADOR (ERA O QUE FALTAVA)
-  if (!usuario.jogadorId || usuario.jogadorId !== jogadorId) {
-    await prisma.usuario.update({
+  return prisma.$transaction(async tx => {
+    const usuario = await tx.usuario.findUnique({
       where: { id: usuarioId },
-      data: {
-        jogadorId,
+      include: { permissao: true },
+    });
+    if (!usuario || usuario.deletedAt) throw new Error('Usuário não encontrado');
+
+    const time = await tx.time.findUnique({
+      where: { id: timeId },
+      include: { modalidade: true },
+    });
+    if (!time || time.deletedAt) throw new Error('Time não encontrado');
+
+    const jogador = await tx.jogador.findUnique({
+      where: { id: jogadorId },
+      include: {
+        times: {
+          where: { ativo: true },
+          include: {
+            time: true,
+            modalidade: true,
+          },
+        },
       },
     });
-  }
+    if (!jogador || jogador.deletedAt) throw new Error('Jogador não encontrado');
 
-  // 5️⃣ VINCULA USUÁRIO ↔ TIME
-  await prisma.usuarioTime.upsert({
-    where: {
-      usuarioId_timeId: {
-        usuarioId,
-        timeId,
-      },
-    },
-    update: {},
-    create: {
-      usuarioId,
-      timeId,
-    },
-  });
+    if (usuario.jogadorId !== jogadorId) {
+      await tx.usuario.update({
+        where: { id: usuarioId },
+        data: { jogadorId },
+      });
+    }
 
-  // 6️⃣ VINCULA / ATUALIZA JOGADOR ↔ TIME ↔ MODALIDADE
-  const jogadorTimeExistente = await prisma.jogadorTime.findUnique({
-    where: {
-      jogadorId_modalidadeId: {
-        jogadorId,
-        modalidadeId,
-      },
-    },
-  });
-
-  if (jogadorTimeExistente) {
-    await prisma.jogadorTime.update({
+    await tx.usuarioTime.upsert({
       where: {
-        jogadorId_modalidadeId: {
-          jogadorId,
-          modalidadeId,
-        },
+        usuarioId_timeId: { usuarioId, timeId },
       },
-      data: { timeId },
+      update: { ativo: true },
+      create: { usuarioId, timeId },
     });
-  } else {
-    await prisma.jogadorTime.create({
-      data: {
+
+    const modalidadeId = time.modalidadeId;
+
+    await tx.jogadorTime.upsert({
+      where: {
+        jogadorId_modalidadeId: { jogadorId, modalidadeId },
+      },
+      update: {
+        timeId,
+        ativo: true,
+      },
+      create: {
         jogadorId,
         timeId,
         modalidadeId,
       },
     });
-  }
 
-  // 7️⃣ Busca jogador atualizado
-  const jogadorAtualizado = await prisma.jogador.findUnique({
-    where: { id: jogadorId },
-    include: {
-      times: {
-        include: {
-          time: true,
-          modalidade: true,
+    const jogadorAtualizado = await tx.jogador.findUnique({
+      where: { id: jogadorId },
+      include: {
+        times: {
+          where: { ativo: true },
+          include: {
+            time: true,
+            modalidade: true,
+          },
         },
       },
-    },
+    });
+
+    await enviarEmailVinculoTime(usuario, time, jogadorAtualizado);
+
+    return { jogador: jogadorAtualizado };
   });
-
-  // 8️⃣ Envia e-mail
-  await enviarEmailVinculoTime(usuario, time, jogadorAtualizado);
-
-  // 9️⃣ Retorno
-  return {
-    vinculo: {
-      usuarioId,
-      timeId,
-    },
-    jogador: jogadorAtualizado,
-  };
 }
 
 async function getUsuarioTimesService(usuarioId) {
@@ -282,8 +259,8 @@ async function getUsuarioTimesService(usuarioId) {
 }
 
 module.exports = {
-  postUsuario,
-  updateUsuario,
+  cadastrarUsuario,
+  atualizarUsuario,
   getUsuarios,
   getUsuarioTimesService,
   listarPermissoes,

@@ -1,5 +1,6 @@
 <template>
   <div class="layout">
+    <NavBarQuadras />
     <SidebarQuadra />
 
     <div class="conteudo">
@@ -151,6 +152,7 @@
 </template>
 
 <script>
+import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
 import SidebarQuadra from '@/components/quadraplay/SidebarQuadra.vue'
 import NavBarUser from '@/components/NavBarUser.vue'
 import { useAuthStore } from '@/store'
@@ -163,6 +165,7 @@ import Swal from 'sweetalert2'
 
 export default {
   components: {
+    NavBarQuadras,
     SidebarQuadra,
     NavBarUser,
     SelecionarJogadores,

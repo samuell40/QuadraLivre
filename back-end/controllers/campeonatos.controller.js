@@ -25,7 +25,7 @@ async function criarCampeonatoController(req, res) {
       status: status,
       modalidadeId,
       quadraId,
-      times,          // 👈 AGORA CHEGA NO SERVICE
+      times,          
       datasJogos,
       usuarioId,
       foto

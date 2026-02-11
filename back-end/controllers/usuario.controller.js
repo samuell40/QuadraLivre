@@ -1,6 +1,6 @@
 const Usuario = require('../services/usuario.service');
 
-async function postUsuarioController(req, res) {
+async function cadastrarUsuarioController(req, res) {
   try {
     const { nome, email, telefone, foto } = req.body;
 
@@ -10,7 +10,7 @@ async function postUsuarioController(req, res) {
       });
     }
 
-    const cadastro = await Usuario.postUsuario({
+    const cadastro = await Usuario.cadastrarUsuario({
       nome,
       email,
       telefone,
@@ -26,7 +26,7 @@ async function postUsuarioController(req, res) {
   }
 }
 
-async function updateUsuarioController(req, res) {
+async function atualizarUsuarioController(req, res) {
   try {
     const { email, permissaoId, quadraId } = req.body;
 
@@ -36,7 +36,7 @@ async function updateUsuarioController(req, res) {
       });
     }
 
-    const usuarioAtualizado = await Usuario.updateUsuario({
+    const usuarioAtualizado = await Usuario.atualizarUsuario({
       email,
       permissaoId,
       quadraId,
@@ -52,7 +52,7 @@ async function updateUsuarioController(req, res) {
   }
 }
 
-async function getUsuariosController(req, res) {
+async function listarUsuariosController(req, res) {
   try {
     const usuarios = await Usuario.getUsuarios();
     return res.status(200).json(usuarios);
@@ -64,7 +64,7 @@ async function getUsuariosController(req, res) {
   }
 }
 
-async function getPermissoesController(req, res) {
+async function listarPermissoesController(req, res) {
   try {
     const permissoes = await Usuario.listarPermissoes();
     return res.status(200).json(permissoes);
@@ -105,7 +105,7 @@ async function vincularUsuarioTimeController(req, res) {
   }
 }
 
-async function getUsuarioTimesController(req, res) {
+async function listarUsuarioTimesController(req, res) {
   try {
     const { id } = req.params;
 
@@ -128,10 +128,10 @@ async function getUsuarioTimesController(req, res) {
 }
 
 module.exports = {
-  postUsuarioController,
-  updateUsuarioController,
-  getUsuariosController,
-  getPermissoesController,
-  getUsuarioTimesController,
+  cadastrarUsuarioController,
+  atualizarUsuarioController,
+  listarUsuariosController,
+  listarPermissoesController,
   vincularUsuarioTimeController,
+  listarUsuarioTimesController
 };

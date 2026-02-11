@@ -300,7 +300,6 @@ export default {
         return 'partida-andamento'
       }
 
-      return 'partida-pausada'
     },
     classeStatusTexto(partida) {
       if (partida.finalizada) {
@@ -310,8 +309,6 @@ export default {
       if (partida.partidaIniciada) {
         return 'status-andamento'
       }
-
-      return 'status-pausada'
     },
 
     async carregarQuadras() {
@@ -330,10 +327,9 @@ export default {
       this.isLoadingPartidas = true
       try {
         const { data: ativas } = await api.get(`/partidas/ativas/1/${campeonatoId}`)
-        const { data: pausadas } = await api.get(`/partidas/pausadas/1/${campeonatoId}`)
         const { data: encerradas } = await api.get(`/partidas/encerradas/1/${campeonatoId}`)
 
-        const todas = [...ativas, ...pausadas, ...encerradas]
+        const todas = [...ativas, ...encerradas]
         todas.sort((a, b) => {
           return new Date(b.createdAt) - new Date(a.createdAt)
         })

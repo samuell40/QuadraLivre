@@ -5,7 +5,9 @@ const router = express.Router();
 
 router.post('/partida', controller.criarPartidaController)
 
-router.put('/partida/:id/encerrar', [validarJWT], controller.finalizarPartidaController);
+router.put('/partidas/:partidaId/iniciar', controller.iniciarPartidaController);
+
+router.put('/partida/:id/encerrar' , controller.finalizarPartidaController);
 
 router.delete('/partidas/:partidaId', controller.excluirPartidaController);
 
@@ -15,13 +17,7 @@ router.put('/placar/:id/incrementar', [validarJWT], controller.incrementarPlacar
 
 router.get('/partidas/ativas/:modalidadeId/:campeonatoId', controller.listarPartidaAndamentoController);
 
-router.get( '/partidas/pausadas/:modalidadeId/:campeonatoId', controller.listarPartidasPausadasController);
-
 router.get('/partidas/encerradas/:modalidadeId/:campeonatoId', controller.listarPartidasEncerradasController);
-
-router.put("/partidas/:id/pausar", controller.pausarPartidaController);
-
-router.put("/partidas/:id/retomar", controller.retomarPartidaController);
 
 router.get('/partidas/:id/retornar', controller.retornarPartidaEmAndamentoController);
 

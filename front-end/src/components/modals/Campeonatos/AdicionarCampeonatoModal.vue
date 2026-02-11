@@ -290,6 +290,7 @@ export default {
         Swal.fire('Sucesso', 'Campeonato cadastrado com sucesso!', 'success')
         this.$emit('atualizar')
         this.$emit('fechar')
+        this.mostrarModalTimes = false
         this.limparCampos()
       } catch (error) {
         Swal.fire(
@@ -438,7 +439,7 @@ select {
   display: block;
   margin-top: 6px;
   font-size: 13px;
-  color: #6b7280; 
+  color: #6b7280;
 }
 
 /* ===== MODAL DE TIMES ===== */

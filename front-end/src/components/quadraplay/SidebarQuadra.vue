@@ -345,7 +345,7 @@ body {
 .user-info .user-role {
   font-size: 13px;
   color: #cbd5e1;
-  margin-top: -2px;
+  margin-top: -1px;
 }
 
 @media (max-width: 768px) {

@@ -132,10 +132,9 @@ export default {
         },
         handleResize() {
             this.isMobile = window.innerWidth <= 768
-
             if (this.isMobile) {
-                this.sidebarVisible = false     // começa fechado
-                this.collapsed = false          // MOBILE NÃO COLAPSA
+                this.sidebarVisible = false
+                this.collapsed = false
                 this.$emit('sidebar-toggle', false)
             } else {
                 this.sidebarVisible = true
@@ -331,6 +330,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+    margin-top: 99%;
 }
 
 .user-photo {
@@ -351,7 +351,7 @@ body {
 .user-info .user-role {
     font-size: 13px;
     color: #cbd5e1;
-    margin-top: -2px;
+    margin-top: -1px;
 }
 
 @media (max-width: 768px) {

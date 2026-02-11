@@ -16,7 +16,6 @@ async function criarCampeonato(data) {
     foto
   } = data;
 
-  // Garantias de segurança
   const listaDatasReais = Array.isArray(datasJogos)
     ? datasJogos.map(d => new Date(d))
     : [];
@@ -25,7 +24,6 @@ async function criarCampeonato(data) {
 
   return await prisma.$transaction(async (tx) => {
 
-    // Remove conflitos de agendamento
     if (listaDatasReais.length > 0) {
       const conflitos = await tx.agendamento.findMany({
         where: {
@@ -69,15 +67,11 @@ async function criarCampeonato(data) {
         status,
         modalidadeId: Number(modalidadeId),
         quadraId: Number(quadraId),
-
-        // Times vinculados ao campeonato
         times: {
           create: timesArray.map(timeId => ({
             timeId: Number(timeId)
           }))
         },
-
-        // Jogos (agendamentos)
         agendamentos: {
           create: agendamentosParaCriar
         },
@@ -102,7 +96,7 @@ async function criarCampeonato(data) {
   });
 }
 
-async function removerCampeonato(campeonatoId) {  //ver essa questão de transação!
+async function removerCampeonato(campeonatoId) {
   if (!campeonatoId) {
     throw new Error('ID do campeonato é obrigatório.');
   }
@@ -112,16 +106,36 @@ async function removerCampeonato(campeonatoId) {  //ver essa questão de transa�
   const existe = await prisma.campeonato.findUnique({ where: { id: idNum } });
   if (!existe) throw new Error('Campeonato não encontrado.');
 
-  await prisma.$transaction([
-    prisma.partida.deleteMany({ where: { campeonatoId: idNum } }),
-    prisma.placar.deleteMany({ where: { campeonatoId: idNum } }),
-    prisma.campeonatoTime.deleteMany({ where: { campeonatoId: idNum } }),
-    prisma.agendamento.deleteMany({ where: { campeonatoId: idNum } }),
+  const agora = new Date();
 
-    prisma.campeonato.delete({ where: { id: idNum } })
+  await prisma.$transaction([
+    prisma.partida.updateMany({
+      where: { campeonatoId: idNum },
+      data: { ativo: false, cancelada: true, deletedAt: agora }
+    }),
+
+    prisma.placar.updateMany({
+      where: { campeonatoId: idNum },
+      data: { visivel: false, deletedAt: agora }
+    }),
+
+    prisma.campeonatoTime.updateMany({
+      where: { campeonatoId: idNum },
+      data: { ativo: false, deletedAt: agora }
+    }),
+
+    prisma.agendamento.updateMany({
+      where: { campeonatoId: idNum },
+      data: { status: 'Cancelado', deletedAt: agora }
+    }),
+
+    prisma.campeonato.update({
+      where: { id: idNum },
+      data: { ativo: false, deletedAt: agora }
+    })
   ]);
 
-  return { mensagem: 'Campeonato e seus agendamentos removidos com sucesso.' };
+  return { mensagem: 'Campeonato e seus registros foram desativados com sucesso.' };
 }
 
 async function listarCampeonatosPorModalidade(modalidadeId, ano) {
@@ -131,6 +145,8 @@ async function listarCampeonatosPorModalidade(modalidadeId, ano) {
     const campeonatos = await prisma.campeonato.findMany({
       where: {
         modalidadeId: modalidadeId,
+        ativo: true,
+        deletedAt: null,
         dataInicio: {
           gte: new Date(`${anoFiltro}-01-01`),
           lte: new Date(`${anoFiltro}-12-31`)
@@ -140,16 +156,17 @@ async function listarCampeonatosPorModalidade(modalidadeId, ano) {
         modalidade: true,
         quadra: true,
         times: {
-          include: {
-            time: true
-          }
+          where: { ativo: true, deletedAt: null },
+          include: { time: true }
         },
-        placares: true,
-        agendamentos: true
+        placares: {
+          where: { visivel: true, deletedAt: null },
+        },
+        agendamentos: {
+          where: { deletedAt: null }
+        }
       },
-      orderBy: {
-        dataInicio: 'desc'
-      }
+      orderBy: { dataInicio: 'desc' }
     });
 
     return campeonatos;
@@ -160,37 +177,27 @@ async function listarCampeonatosPorModalidade(modalidadeId, ano) {
 }
 
 async function listarCampeonatosAnoAtual() {
-  const anoAtual = new Date().getFullYear()
-
-  const dataInicio = new Date(`${anoAtual}-01-01`)
-  const dataFim = new Date(`${anoAtual}-12-31T23:59:59.999`)
+  const anoAtual = new Date().getFullYear();
+  const dataInicio = new Date(`${anoAtual}-01-01`);
+  const dataFim = new Date(`${anoAtual}-12-31T23:59:59.999`);
 
   return prisma.campeonato.findMany({
     where: {
-      dataInicio: {
-        gte: dataInicio,
-        lte: dataFim
-      }
+      ativo: true,
+      deletedAt: null,
+      dataInicio: { gte: dataInicio, lte: dataFim }
     },
     include: {
       modalidade: true,
       quadra: true,
       placares: {
-        where: {
-          visivel: true
-        },
-        include: {
-          time: true
-        },
-        orderBy: {
-          posicao: 'asc'
-        }
+        where: { visivel: true, deletedAt: null },
+        include: { time: true },
+        orderBy: { posicao: 'asc' }
       }
     },
-    orderBy: {
-      dataInicio: 'desc'
-    }
-  })
+    orderBy: { dataInicio: 'desc' }
+  });
 }
 
 async function listarArtilhariaCampeonato(campeonatoId, limite = 5) {
@@ -199,7 +206,7 @@ async function listarArtilhariaCampeonato(campeonatoId, limite = 5) {
     where: {
       partida: {
         campeonatoId: Number(campeonatoId),
-        finalizada: true
+        status: 'FINALIZADA'
       }
     },
     _sum: {
@@ -213,7 +220,6 @@ async function listarArtilhariaCampeonato(campeonatoId, limite = 5) {
     take: limite
   });
 
-  // buscar dados do jogador (nome, foto, time)
   const jogadoresIds = artilharia.map(a => a.jogadorId);
 
   const jogadores = await prisma.jogador.findMany({
@@ -229,7 +235,7 @@ async function listarArtilhariaCampeonato(campeonatoId, limite = 5) {
     }
   });
 
-  // junta gols + dados do jogador
+  // Retorna dados já com nome, foto, gols e times
   return artilharia.map(item => {
     const jogador = jogadores.find(j => j.id === item.jogadorId);
 
@@ -238,7 +244,7 @@ async function listarArtilhariaCampeonato(campeonatoId, limite = 5) {
       nome: jogador?.nome,
       foto: jogador?.foto,
       gols: item._sum.gols,
-      times: jogador?.times.map(t => t.time.nome)
+      times: jogador?.times.map(t => t.time.nome) || []
     };
   });
 }

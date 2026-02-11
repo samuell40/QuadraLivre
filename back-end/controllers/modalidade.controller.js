@@ -8,17 +8,14 @@ async function cadastrarModalidadeController(req, res) {
       return res.status(400).json({ erro: 'O nome da modalidade é obrigatório.' });
     }
 
-    const nomeFormatado = nome.trim();
-
-    const modalidadeCriada = await modalidadeService.cadastrarModalidade(nomeFormatado);
+    const modalidadeCriada = await modalidadeService.cadastrarModalidade(nome.trim());
 
     return res.status(201).json({
       mensagem: 'Modalidade cadastrada com sucesso!',
       modalidade: modalidadeCriada
     });
-  } catch (error) {
-    console.error('Erro ao cadastrar modalidade:', error.message);
 
+  } catch (error) {
     if (error.message.includes('já existe')) {
       return res.status(400).json({ erro: error.message });
     }
@@ -42,7 +39,7 @@ async function removerModalidadeController(req, res) {
     }
 
     return res.status(200).json({
-      mensagem: 'Modalidade removida com sucesso!',
+      mensagem: 'Modalidade desativada com sucesso!',
       modalidade: modalidadeRemovida
     });
 

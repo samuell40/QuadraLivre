@@ -6,7 +6,6 @@ import NaoAutorizado from '@/views/NaoAutorizado.vue';
 import CadastroView from '../views/CadastroView.vue';
 import CadastrarQuadraView from '../views/CadastrarQuadraView.vue';
 import GerenciarQuadrasView from '@/views/GerenciarQuadrasView.vue';
-import VisualizarPlacarView from '@/views/quadra_play/VisualizarPlacarView.vue';
 import VisualizarPlacarHomeView from '@/views/VisualizarPlacarHomeView.vue';
 import GerenciarPartidaView from '@/views/quadra_play/GerenciarPartidaView.vue';
 import UsuariosView from '../views/UsuariosView';
@@ -101,12 +100,6 @@ const routes = [
     name: 'Partida',
     component: () => import('@/views/quadra_play/PartidaView.vue'),
     meta: { requiresAuth: true, roles: [1, 2, 4] }
-  },
-  {
-    path: '/visualizarplacar',
-    name: 'visualizar_placar',
-    component: VisualizarPlacarView,
-    meta: { requiresAuth: true, roles: [1, 2, 4] },
   },
   {
     path: '/visualizarplacarhome',

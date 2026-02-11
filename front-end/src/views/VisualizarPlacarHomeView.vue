@@ -161,13 +161,17 @@
               <li v-for="partida in partidas" :key="partida.id" class="card-partida"
                 :class="classeStatusPartida(partida)" @click="abrirModalPartida(partida.id)">
 
-                <div class="status-topo" :class="{ encerrada: partida.finalizada }">
+                <div class="status-topo" :class="classeStatusTexto(partida)">
                   {{
-                    partida.finalizada
+                    partida.status === 'FINALIZADA'
                       ? 'ENCERRADA'
-                      : partida.partidaIniciada
-                        ? '0 MIN'
-                        : 'AGUARDANDO'
+                      : partida.status === 'EM_ANDAMENTO'
+                        ? 'EM ANDAMENTO'
+                        : partida.status === 'AGENDADA'
+                          ? 'AGUARDANDO'
+                          : partida.status === 'CANCELADA'
+                  ? 'CANCELADA'
+                  : ''
                   }}
                 </div>
 
@@ -371,22 +375,33 @@ export default {
 
   methods: {
     classeStatusPartida(partida) {
-      if (partida.finalizada) {
-        return 'partida-finalizada'
+      switch (partida.status) {
+        case 'FINALIZADA':
+          return 'partida-finalizada'
+        case 'EM_ANDAMENTO':
+          return 'partida-andamento'
+        case 'AGENDADA':
+          return 'partida-agendada'
+        case 'CANCELADA':
+          return 'partida-cancelada'
+        default:
+          return ''
       }
-      if (partida.partidaIniciada) {
-        return 'partida-andamento'
-      }
-      return 'partida-pausada'
     },
+
     classeStatusTexto(partida) {
-      if (partida.finalizada) {
-        return 'status-finalizada'
+      switch (partida.status) {
+        case 'FINALIZADA':
+          return 'status-finalizada'
+        case 'EM_ANDAMENTO':
+          return 'status-andamento'
+        case 'AGENDADA':
+          return 'status-agendada'
+        case 'CANCELADA':
+          return 'status-cancelada'
+        default:
+          return ''
       }
-      if (partida.partidaIniciada) {
-        return 'status-andamento'
-      }
-      return 'status-pausada'
     },
 
     selecionarCampeonato(id) {
@@ -418,17 +433,12 @@ export default {
 
       try {
         const ativas = await api.get(`/partidas/ativas/${modalidadeId}/${campeonatoId}`)
-        const pausadas = await api.get(`/partidas/pausadas/${modalidadeId}/${campeonatoId}`)
         const encerradas = await api.get(`/partidas/encerradas/${modalidadeId}/${campeonatoId}`)
 
         this.partidas = []
 
         for (let i = 0; i < ativas.data.length; i++) {
           this.partidas.push(ativas.data[i])
-        }
-
-        for (let i = 0; i < pausadas.data.length; i++) {
-          this.partidas.push(pausadas.data[i])
         }
 
         for (let i = 0; i < encerradas.data.length; i++) {
@@ -695,7 +705,7 @@ export default {
 .foto-campeonato {
   width: 100%;
   height: 100%;
-  object-fit: cover;            
+  object-fit: cover;
   border-radius: 14px;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
 }
@@ -725,14 +735,20 @@ export default {
   font-weight: bold;
 }
 
-.status.em_andamento {
-  background-color: #dcfce7;
-  color: #166534;
+.status-finalizada {
+  color: #dc2626; /* vermelho */
+  font-weight: bold;
+  background: rgba(220, 38, 38, 0.12);
+  padding: 2px 8px;
+  border-radius: 12px;
 }
 
-.status.encerrado {
-  background-color: #fee2e2;
-  color: #991b1b;
+.status-cancelada {
+  color: #dc2626; /* vermelho também */
+  font-weight: bold;
+  background: rgba(220, 38, 38, 0.08);
+  padding: 2px 8px;
+  border-radius: 12px;
 }
 
 .sem-dados {

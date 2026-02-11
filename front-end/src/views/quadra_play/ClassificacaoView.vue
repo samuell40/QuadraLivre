@@ -157,7 +157,7 @@ export default {
     return {
       sidebarCollapsed: false,
       campeonato: null,
-      timesPlacar: null, // null = loading | [] = vazio
+      timesPlacar: null, 
       isLoading: true
     }
   },
@@ -288,7 +288,6 @@ export default {
   margin-bottom: 16px;
 }
 
-/* ===== TABELA ===== */
 .placar-table {
   margin-top: 20px;
   width: 100%;
@@ -298,14 +297,12 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-/* tabela em si */
 .placar {
   width: 100%;
   min-width: 1000px;
   border-collapse: collapse;
 }
 
-/* cabeçalho */
 .placar thead th {
   background-color: #3b82f6;
   color: white;
@@ -316,7 +313,6 @@ export default {
   white-space: nowrap;
 }
 
-/* linhas */
 .placar tbody tr {
   background-color: white;
   transition: background-color 0.2s ease;
@@ -326,7 +322,6 @@ export default {
   background-color: #f3f4f6;
 }
 
-/* células */
 .placar tbody td {
   color: #374151;
   padding: 12px;
@@ -335,7 +330,6 @@ export default {
   white-space: nowrap;
 }
 
-/* ===== TIME ===== */
 .time-info {
   display: flex;
   align-items: center;
@@ -390,18 +384,76 @@ export default {
 .glossario-placar li b {
   color: #152147;
 }
-/* ===== RESPONSIVO ===== */
+
 @media (max-width: 768px) {
   .conteudo {
+    margin-left: 0;
     padding: 16px;
   }
 
-  .placar {
-    min-width: 800px;
+  .conteudo.collapsed {
+    margin-left: 0;
   }
 
-  .titulo-secao {
-    font-size: 18px;
+  .title {
+    font-size: 22px;
+    margin-bottom: 14px;
+  }
+
+  .placar-wrapper {
+    margin-top: 20px;
+  }
+
+  .placar-table {
+    width: 100%;
+    overflow-x: auto;
+    max-height: 55vh;           
+    border-radius: 10px;
+  }
+
+  .placar {
+    width: 100%;
+    min-width: 0;               
+  }
+
+  .placar thead th {
+    font-size: 13px;
+    padding: 8px 6px;
+    white-space: nowrap;
+  }
+
+  .placar tbody td {
+    font-size: 12px;
+    padding: 6px 8px;
+    white-space: nowrap;
+  }
+
+  .time-info {
+    gap: 6px;
+  }
+
+  .posicao {
+    font-size: 12px;
+    min-width: 20px;
+    text-align: center;
+  }
+
+  .time-image {
+    width: 28px;
+    height: 28px;
+  }
+
+  .nome-time {
+    font-size: 13px;
+  }
+
+  .glossario-placar {
+    font-size: 11px;
+    padding: 10px;
+  }
+
+  .glossario-placar ul {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
   }
 }
 </style>

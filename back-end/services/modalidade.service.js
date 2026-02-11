@@ -3,18 +3,39 @@ const prisma = new PrismaClient();
 const { enviarEmailNovaModalidade } = require('./email.service')
 
 async function cadastrarModalidade(nome) {
-  const existente = await prisma.modalidade.findUnique({ where: { nome } });
-  if (existente) throw new Error(`A modalidade "${nome}" já existe.`);
+  const existente = await prisma.modalidade.findFirst({
+    where: { nome }
+  });
 
-  const modalidade = await prisma.modalidade.create({ data: { nome } });
+  if (existente && existente.ativo) {
+    throw new Error(`A modalidade "${nome}" já existe.`);
+  }
+
+  // existe mas está desativada → reativa
+  if (existente && !existente.ativo) {
+    return await prisma.modalidade.update({
+      where: { id: existente.id },
+      data: {
+        ativo: true,
+        deletedAt: null
+      }
+    });
+  }
+
+  const modalidade = await prisma.modalidade.create({
+    data: {
+      nome,
+      ativo: true
+    }
+  });
 
   const placar = await prisma.placar.findFirst({
-    where: { time: { modalidadeId: modalidade.id } },
-    include: { time: true }
+    where: { time: { modalidadeId: modalidade.id } }
   });
 
   if (!placar) {
     const ID_DESENVOLVEDOR_SISTEMA = 1;
+
     const desenvolvedores = await prisma.usuario.findMany({
       where: { permissaoId: ID_DESENVOLVEDOR_SISTEMA },
       select: { nome: true, email: true }
@@ -30,83 +51,86 @@ async function cadastrarModalidade(nome) {
 
 async function removerModalidade(id) {
   const modalidadeId = Number(id);
-  const times = await prisma.time.findMany({
-    where: { modalidadeId },
-    select: { id: true }
-  });
+  const agora = new Date();
 
-  const timeIds = times.map(t => t.id);
+  return await prisma.$transaction(async (tx) => {
 
-  if (timeIds.length > 0) {
-    const jogadores = await prisma.jogador.findMany({
-      where: { timeId: { in: timeIds } },
-      select: { id: true }
+    const modalidade = await tx.modalidade.findUnique({
+      where: { id: modalidadeId }
     });
 
-    const jogadorIds = jogadores.map(j => j.id);
+    if (!modalidade) return null;
 
-    if (jogadorIds.length > 0) {
-      await prisma.jogadorPartida.deleteMany({
-        where: { jogadorId: { in: jogadorIds } }
-      });
-
-      await prisma.jogador.deleteMany({
-        where: { id: { in: jogadorIds } }
-      });
-    }
-
-    await prisma.time.deleteMany({
-      where: { modalidadeId }
-    });
-  }
-
-  await prisma.modalidade.update({
-    where: { id: modalidadeId },
-    data: {
-      quadras: {
-        set: []
+    await tx.modalidade.update({
+      where: { id: modalidadeId },
+      data: {
+        ativo: false,
+        deletedAt: agora
       }
-    }
-  });
+    });
 
-  await prisma.agendamento.deleteMany({
-    where: { modalidadeId }
-  });
+    await tx.time.updateMany({
+      where: { modalidadeId },
+      data: {
+        ativo: false,
+        deletedAt: agora
+      }
+    });
 
-  await prisma.funcaoJogador.deleteMany({
-    where: { modalidadeId }
-  });
+    await tx.partida.updateMany({
+      where: {
+        modalidadeId,
+        finalizada: false
+      },
+      data: {
+        cancelada: true,
+        ativo: false,
+        deletedAt: agora
+      }
+    });
 
-  await prisma.partida.deleteMany({
-    where: { modalidadeId }
-  });
+    await tx.agendamento.updateMany({
+      where: {
+        modalidadeId,
+        status: "Pendente"
+      },
+      data: {
+        status: "Cancelado"
+      }
+    });
 
-  const removida = await prisma.modalidade.delete({
-    where: { id: modalidadeId }
+    return { id: modalidadeId, ativo: false };
   });
-
-  return removida;
 }
 
-  async function listarModalidades() {
-    const modalidades = await prisma.modalidade.findMany({
-      include: {
-        _count: {
-          select: {
-            times: true,
-            quadras: true
-          }
+async function listarModalidades() {
+  const modalidades = await prisma.modalidade.findMany({
+    where: {
+      ativo: true,
+      deletedAt: null
+    },
+    include: {
+      _count: {
+        select: {
+          times: {
+            where: {
+              ativo: true,
+              deletedAt: null
+            }
+          },
+          quadras: true
         }
       }
-    });
+    }
+  });
 
-    return modalidades.map(m => ({
-      id: m.id,
-      nome: m.nome,
-      foto: m.foto,
-      totalTimes: m._count.times,
-      totalQuadras: m._count.quadras
-    }));
-  }
+  return modalidades.map(m => ({
+    id: m.id,
+    nome: m.nome,
+    foto: m.foto,
+    totalTimes: m._count.times,
+    totalQuadras: m._count.quadras
+  }));
+}
 
-  module.exports = { cadastrarModalidade, removerModalidade, listarModalidades };
+module.exports = { cadastrarModalidade, removerModalidade, listarModalidades };
