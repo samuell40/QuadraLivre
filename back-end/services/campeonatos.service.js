@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 async function criarCampeonato(data) {
   const {
     nome,
-    descricao,
+    tipo, 
     dataInicio,
     dataFim,
     status,
@@ -41,7 +41,6 @@ async function criarCampeonato(data) {
       }
     }
 
-    // Cria agendamentos
     const agendamentosParaCriar = listaDatasReais.map(dataObj => ({
       datahora: dataObj,
       dia: dataObj.getUTCDate(),
@@ -56,11 +55,10 @@ async function criarCampeonato(data) {
       duracao: 1
     }));
 
-    // Criação do campeonato
     const campeonato = await tx.campeonato.create({
       data: {
         nome,
-        descricao,
+        tipo, 
         foto,
         dataInicio: new Date(dataInicio),
         dataFim: new Date(dataFim),
@@ -75,8 +73,7 @@ async function criarCampeonato(data) {
         agendamentos: {
           create: agendamentosParaCriar
         },
-
-        // Placares iniciais
+        
         placares: {
           create: timesArray.map(timeId => ({
             timeId: Number(timeId)

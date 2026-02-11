@@ -2,33 +2,12 @@ const campeonatoService = require('../services/campeonatos.service');
 
 async function criarCampeonatoController(req, res) {
   try {
-    const {
-      nome,
-      descricao,
-      dataInicio,
-      dataFim,
-      status,
-      modalidadeId,
-      quadraId,
-      times,
-      datasJogos,
-      foto
-    } = req.body;
+    const { nome, tipo, dataInicio, dataFim, status, modalidadeId, quadraId, times,  datasJogos, foto  } = req.body;
 
     const usuarioId = req.body.usuarioId;
-    
+
     const novoCampeonato = await campeonatoService.criarCampeonato({
-      nome,
-      descricao,
-      dataInicio,
-      dataFim,
-      status: status,
-      modalidadeId,
-      quadraId,
-      times,          
-      datasJogos,
-      usuarioId,
-      foto
+      nome, tipo, dataInicio, dataFim, status, modalidadeId, quadraId, times, datasJogos, usuarioId, foto
     });
 
     return res.status(201).json(novoCampeonato);

@@ -99,9 +99,16 @@ model Modalidade {
   jogadorTimes JogadorTime[]
 }
 
+enum TipoCampeonato {
+  PONTOS_CORRIDOS
+  PONTOS_CORRIDOS_ELIMINATORIAS
+  ELIMINATORIAS
+}
+
 model Campeonato {
   id           Int              @id @default(autoincrement())
   nome         String
+  tipo TipoCampeonato
   anexos       String?          @db.Text
   foto         String?          @db.VarChar(2048)
   dataInicio   DateTime
