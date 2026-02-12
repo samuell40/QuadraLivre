@@ -8,26 +8,28 @@ datasource db {
 }
 
 model Usuario {
-  id          Int     @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   nome        String
-  email       String  @unique
+  email       String    @unique
   telefone    String?
   permissaoId Int
-  foto        String? @db.VarChar(2048)
+  foto        String?   @db.VarChar(2048)
   quadraId    Int?
+  ativo       Boolean   @default(true)
+  deletedAt   DateTime?
 
   quadra               Quadra?          @relation(fields: [quadraId], references: [id])
   permissao            Permissao        @relation(fields: [permissaoId], references: [id])
-  jogadorId  Int?      @unique
-  jogador    Jogador?  @relation(fields: [jogadorId], references: [id])
+  jogadorId            Int?             @unique
+  jogador              Jogador?         @relation(fields: [jogadorId], references: [id])
   agendamentos         Agendamento[]
   times                UsuarioTime[]
   partidasCriadas      Partida[]        @relation("UsuarioCriador")
   partidasParticipando PartidaUsuario[]
 
-  avisosCriados Aviso[]
-  avisosLidos   AvisoLeitura[]
-  treinadorTimes       TreinadorTime[]
+  avisosCriados  Aviso[]
+  avisosLidos    AvisoLeitura[]
+  treinadorTimes TreinadorTime[]
 }
 
 model Permissao {
@@ -59,33 +61,36 @@ enum TipoAgendamento {
 }
 
 model Agendamento {
-  id           Int             @id @default(autoincrement())
-  dia          Int
-  mes          Int
-  ano          Int
-  hora         Int
-  datahora     DateTime?
-  duracao      Int             @default(1)
-  status       String          @default("Pendente")
-  tipo         TipoAgendamento @default(TREINO)
-  usuarioId    Int?
-  quadraId     Int?
-  modalidadeId Int?
-  timeId       Int?
-  codigoVerificacao String? @unique
+  id                Int             @id @default(autoincrement())
+  dia               Int
+  mes               Int
+  ano               Int
+  hora              Int
+  datahora          DateTime?
+  duracao           Int             @default(1)
+  status            String          @default("Pendente")
+  tipo              TipoAgendamento @default(TREINO)
+  usuarioId         Int?
+  quadraId          Int?
+  modalidadeId      Int?
+  timeId            Int?
+  codigoVerificacao String?         @unique
   motivoRecusa      String?
+  deletedAt         DateTime?
   fixo                 Boolean          @default(false)
-  usuario      Usuario?        @relation(fields: [usuarioId], references: [id])
-  quadra       Quadra?         @relation(fields: [quadraId], references: [id])
-  modalidade   Modalidade?     @relation("AgendamentoModalidade", fields: [modalidadeId], references: [id])
-  time         Time?           @relation("TimeAgendamentos", fields: [timeId], references: [id])
-  campeonatoId Int?
-  campeonato   Campeonato? @relation(fields: [campeonatoId], references: [id])
+  usuario           Usuario?        @relation(fields: [usuarioId], references: [id])
+  quadra            Quadra?         @relation(fields: [quadraId], references: [id])
+  modalidade        Modalidade?     @relation("AgendamentoModalidade", fields: [modalidadeId], references: [id])
+  time              Time?           @relation("TimeAgendamentos", fields: [timeId], references: [id])
+  campeonatoId      Int?
+  campeonato        Campeonato?     @relation(fields: [campeonatoId], references: [id])
 }
 
 model Modalidade {
   id           Int             @id @default(autoincrement())
   nome         String          @unique
+  ativo        Boolean         @default(true)
+  deletedAt    DateTime?
   times        Time[]
   quadras      Quadra[]        @relation("QuadraModalidade")
   agendamentos Agendamento[]   @relation("AgendamentoModalidade")
@@ -95,18 +100,28 @@ model Modalidade {
   jogadorTimes JogadorTime[]
 }
 
+enum TipoCampeonato {
+  PONTOS_CORRIDOS
+  PONTOS_CORRIDOS_ELIMINATORIAS
+  ELIMINATORIAS
+}
+
 model Campeonato {
   id           Int              @id @default(autoincrement())
   nome         String
-  descricao    String?
-  foto         String?       @db.VarChar(2048)
+  tipo         TipoCampeonato
+  anexos       String?          @db.Text
+  foto         String?          @db.VarChar(2048)
   dataInicio   DateTime
   dataFim      DateTime?
   status       String           @default("EM_ANDAMENTO")
   modalidadeId Int
   quadraId     Int?
+  ativo        Boolean          @default(true)
+  deletedAt    DateTime?
   modalidade   Modalidade       @relation(fields: [modalidadeId], references: [id])
   quadra       Quadra?          @relation(fields: [quadraId], references: [id])
+  fases        Fase[]
   times        CampeonatoTime[]
   partidas     Partida[]
   placares     Placar[]
@@ -118,86 +133,115 @@ model Campeonato {
 model CampeonatoTime {
   campeonatoId Int
   timeId       Int
+  ativo        Boolean    @default(true)
+  deletedAt    DateTime?
   campeonato   Campeonato @relation(fields: [campeonatoId], references: [id])
   time         Time       @relation(fields: [timeId], references: [id])
 
   @@id([campeonatoId, timeId])
 }
 
-model Time {
-  id           Int              @id @default(autoincrement())
+model Fase {
+  id           Int        @id @default(autoincrement())
   nome         String
-  foto         String?          @db.VarChar(2048)
-  modalidadeId Int
-  modalidade   Modalidade       @relation(fields: [modalidadeId], references: [id])
-  usuarios     UsuarioTime[]
-  campeonatos  CampeonatoTime[]
+  campeonatoId Int
+  rodada       Int
+  dataInicio   DateTime?
+  dataFim      DateTime?
+  ativo        Boolean    @default(true)
+  deletedAt    DateTime?
+  campeonato   Campeonato @relation(fields: [campeonatoId], references: [id])
+  partidas     Partida[]
   placares     Placar[]
-  partidasA    Partida[]        @relation("TimeAPartidas")
-  partidasB    Partida[]        @relation("TimeBPartidas")
-  agendamentos Agendamento[]    @relation("TimeAgendamentos")
-  jogadores    JogadorTime[] 
-  treinador    TreinadorTime? 
+}
+
+model Time {
+  id               Int              @id @default(autoincrement())
+  nome             String
+  foto             String?          @db.VarChar(2048)
+  modalidadeId     Int
+  deletedAt        DateTime?
+  ativo            Boolean          @default(true)
+  modalidade       Modalidade       @relation(fields: [modalidadeId], references: [id])
+  usuarios         UsuarioTime[]
+  campeonatos      CampeonatoTime[]
+  placares         Placar[]
+  partidasA        Partida[]        @relation("TimeAPartidas")
+  partidasB        Partida[]        @relation("TimeBPartidas")
+  agendamentos     Agendamento[]    @relation("TimeAgendamentos")
+  jogadores        JogadorTime[]
+  treinador        TreinadorTime?
   jogadoresPartida JogadorPartida[]
 }
 
+enum StatusPartida {
+  AGENDADA
+  EM_ANDAMENTO
+  FINALIZADA
+  CANCELADA
+  DELETADA
+}
+
 model Partida {
-  id                 Int              @id @default(autoincrement())
-  data               DateTime         @default(now())
-  campeonatoId       Int?
-  modalidadeId       Int
-  quadraId           Int?
-  timeAId            Int
-  timeBId            Int
-  campeonato         Campeonato?      @relation(fields: [campeonatoId], references: [id])
-  modalidade         Modalidade       @relation(fields: [modalidadeId], references: [id])
-  quadra             Quadra?          @relation(fields: [quadraId], references: [id])
-  timeA              Time             @relation("TimeAPartidas", fields: [timeAId], references: [id])
-  timeB              Time             @relation("TimeBPartidas", fields: [timeBId], references: [id])
-  pontosTimeA        Int              @default(0)
-  pontosTimeB        Int              @default(0)
-  woTimeA            Boolean          @default(false)
-  woTimeB            Boolean          @default(false)
-  tempoSegundos      Int              @default(0)
-  inicioPartida      DateTime?
-  partidaIniciada    Boolean          @default(false)
-  finalizada         Boolean          @default(false)
-  emIntervalo        Boolean          @default(false)
-  cartoesAmarelosTimeA  Int   @default(0)
-  cartoesVermelhosTimeA Int   @default(0)
-  cartoesAmarelosTimeB  Int   @default(0)
-  cartoesVermelhosTimeB Int   @default(0)
-  faltasTimeA        Int              @default(0)
-  faltasTimeB        Int              @default(0)
-  substituicoesTimeA Int              @default(0)
-  substituicoesTimeB Int              @default(0)
-  usuarioCriadorId   Int
-  usuarioCriador     Usuario          @relation("UsuarioCriador", fields: [usuarioCriadorId], references: [id])
-  jogadoresPartida   JogadorPartida[]
-  participantes      PartidaUsuario[]
-  sets               SetPartida[]
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
+  id                    Int              @id @default(autoincrement())
+  data                  DateTime         @default(now())
+  status                StatusPartida    @default(AGENDADA)
+  campeonatoId          Int?
+  faseId                Int?
+  modalidadeId          Int
+  quadraId              Int?
+  timeAId               Int
+  timeBId               Int
+  campeonato            Campeonato?      @relation(fields: [campeonatoId], references: [id])
+  fase                  Fase?            @relation(fields: [faseId], references: [id])
+  modalidade            Modalidade       @relation(fields: [modalidadeId], references: [id])
+  quadra                Quadra?          @relation(fields: [quadraId], references: [id])
+  timeA                 Time             @relation("TimeAPartidas", fields: [timeAId], references: [id])
+  timeB                 Time             @relation("TimeBPartidas", fields: [timeBId], references: [id])
+  pontosTimeA           Int              @default(0)
+  pontosTimeB           Int              @default(0)
+  woTimeA               Boolean          @default(false)
+  woTimeB               Boolean          @default(false)
+  tempoSegundos         Int              @default(0)
+  inicioPartida         DateTime?
+  cartoesAmarelosTimeA  Int              @default(0)
+  cartoesVermelhosTimeA Int              @default(0)
+  cartoesAmarelosTimeB  Int              @default(0)
+  cartoesVermelhosTimeB Int              @default(0)
+  faltasTimeA           Int              @default(0)
+  faltasTimeB           Int              @default(0)
+  substituicoesTimeA    Int              @default(0)
+  substituicoesTimeB    Int              @default(0)
+  usuarioCriadorId      Int
+  usuarioCriador        Usuario          @relation("UsuarioCriador", fields: [usuarioCriadorId], references: [id])
+  jogadoresPartida      JogadorPartida[]
+  participantes         PartidaUsuario[]
+  sets                  SetPartida[]
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
 }
 
 model SetPartida {
-  id        Int @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   partidaId Int
   numero    Int
   pontosA   Int
   pontosB   Int
-  partida Partida @relation(fields: [partidaId], references: [id], onDelete: Cascade)
+  partida   Partida @relation(fields: [partidaId], references: [id], onDelete: Cascade)
+
   @@unique([partidaId, numero])
 }
 
 model TreinadorTime {
-  id        Int @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   usuarioId Int
   timeId    Int
-  usuario Usuario @relation(fields: [usuarioId], references: [id])
-  time    Time    @relation(fields: [timeId], references: [id])
+  ativo     Boolean   @default(true)
+  deletedAt DateTime?
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id])
+  time      Time      @relation(fields: [timeId], references: [id])
 
-  @@unique([timeId])       // garante 1 treinador por time
+  @@unique([timeId]) //1 treinador por time
 }
 
 model Jogador {
@@ -206,16 +250,20 @@ model Jogador {
   foto      String?          @db.VarChar(2048)
   funcaoId  Int?
   usuario   Usuario?
+  ativo     Boolean          @default(true)
+  deletedAt DateTime?
   funcao    FuncaoJogador?   @relation(fields: [funcaoId], references: [id])
   atuacoes  JogadorPartida[]
   times     JogadorTime[] // relação de times por modalidade
 }
 
 model JogadorTime {
-  id           Int @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   jogadorId    Int
   timeId       Int
   modalidadeId Int
+  ativo        Boolean   @default(true)
+  deletedAt    DateTime?
 
   jogador    Jogador    @relation(fields: [jogadorId], references: [id])
   time       Time       @relation(fields: [timeId], references: [id])
@@ -236,6 +284,7 @@ model JogadorPartida {
   cartoesAmarelos  Int     @default(0)
   cartoesVermelhos Int     @default(0)
   emCampo          Boolean @default(true)
+
   @@index([partidaId])
   @@index([timeId])
 }
@@ -260,36 +309,42 @@ model PartidaUsuario {
 }
 
 model Placar {
-  id           Int        @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   campeonatoId Int
   timeId       Int
-  campeonato   Campeonato @relation(fields: [campeonatoId], references: [id])
-  time         Time       @relation(fields: [timeId], references: [id])
-  jogos        Int        @default(0)
-  posicao      Int        @default(0)
-  pontuacao    Int        @default(0)
-  vitorias     Int        @default(0)
-  empates      Int        @default(0)
-  derrotas     Int        @default(0)
-  golsPro      Int        @default(0)
-  golsSofridos Int        @default(0)
-  saldoDeGols  Int        @default(0)
-  setsVencidos Int        @default(0)
-  vitoria3x0   Int        @default(0)
-  vitoria3x2   Int        @default(0)
-  derrota2x3   Int        @default(0)
-  derrota0x3   Int        @default(0)
-  derrotaWo    Int        @default(0)
-  visivel      Boolean    @default(true)
+  faseId       Int?
+  jogos        Int       @default(0)
+  posicao      Int       @default(0)
+  pontuacao    Int       @default(0)
+  vitorias     Int       @default(0)
+  empates      Int       @default(0)
+  derrotas     Int       @default(0)
+  golsPro      Int       @default(0)
+  golsSofridos Int       @default(0)
+  saldoDeGols  Int       @default(0)
+  setsVencidos Int       @default(0)
+  vitoria3x0   Int       @default(0)
+  vitoria3x2   Int       @default(0)
+  derrota2x3   Int       @default(0)
+  derrota0x3   Int       @default(0)
+  derrotaWo    Int       @default(0)
+  visivel      Boolean   @default(true)
+  deletedAt    DateTime?
 
-  @@unique([campeonatoId, timeId])
+  fase       Fase?      @relation(fields: [faseId], references: [id])
+  campeonato Campeonato @relation(fields: [campeonatoId], references: [id])
+  time       Time       @relation(fields: [timeId], references: [id])
+
+  @@unique([campeonatoId, faseId, timeId])
 }
 
 model UsuarioTime {
   usuarioId Int
   timeId    Int
-  usuario   Usuario @relation(fields: [usuarioId], references: [id])
-  time      Time    @relation(fields: [timeId], references: [id])
+  ativo     Boolean   @default(true)
+  deletedAt DateTime?
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id])
+  time      Time      @relation(fields: [timeId], references: [id])
 
   @@id([usuarioId, timeId])
 }

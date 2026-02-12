@@ -2,27 +2,47 @@ const partidas = require('../services/partida.service');
 
 async function criarPartidaController(req, res) {
   try {
-    const { usuarioId, modalidadeId, timeAId, timeBId, quadraId, campeonatoId, jogadores } = req.body;
+    const { usuarioId,  modalidadeId, timeAId, timeBId, quadraId, campeonatoId} = req.body;
 
-    const partida = await partidas.criarPartida({ modalidadeId, timeAId, timeBId, quadraId, campeonatoId, jogadores }, usuarioId);
+    const partida = await partidas.criarPartida(
+      { modalidadeId, timeAId, timeBId, quadraId, campeonatoId },
+      usuarioId
+    );
 
     res.status(201).json(partida);
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ erro: error.message });
   }
 }
 
+async function iniciarPartidaController(req, res) {
+  try {
+    const { partidaId } = req.params;
+    const { jogadores } = req.body;
+
+    const partida = await partidas.iniciarPartida(partidaId, jogadores);
+
+    res.status(200).json(partida);
+
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ erro: error.message });
+  }
+}
+
 async function finalizarPartidaController(req, res) {
   try {
     const { id } = req.params;
-    const usuarioId = req.user?.id;
+    const { usuarioId } = req.body; 
 
     if (!usuarioId) {
       return res.status(400).json({ erro: "Usuário não informado." });
     }
 
     const partida = await partidas.finalizarPartida(id, { usuarioId });
+
     res.json(partida);
   } catch (error) {
     console.error(error);
@@ -34,16 +54,22 @@ async function excluirPartidaController(req, res) {
   try {
     const { partidaId } = req.params;
 
-    const partida = await partidas.excluirPartida(partidaId);
-    return res.json(partida);
-  } catch (err) {
-    console.error(err);
-
-    if (err.code === 'P2025') {
-      return res.status(404).json({ error: "Partida não encontrada" });
+    if (!partidaId) {
+      return res.status(400).json({ error: "ID da partida é obrigatório" });
     }
 
-    return res.status(500).json({ error: err.message });
+    const partida = await partidas.excluirPartida(partidaId);
+
+    return res.status(200).json(partida);
+
+  } catch (error) {
+    console.error(error);
+
+    if (error.message === "Partida não encontrada") {
+      return res.status(404).json({ error: error.message });
+    }
+
+    return res.status(500).json({ error: error.message });
   }
 }
 
@@ -104,22 +130,6 @@ async function listarPartidaAndamentoController(req, res) {
   }
 }
 
-async function listarPartidasPausadasController(req, res) {
-  try {
-    const { modalidadeId, campeonatoId } = req.params;
-
-    const partidasPausadas = await partidas.listarPartidasPausadas(
-      modalidadeId,
-      campeonatoId
-    );
-
-    res.json(partidasPausadas);
-  } catch (error) {
-    console.error('Erro no controller listarPartidasPausadasController:', error);
-    res.status(500).json({ erro: 'Erro ao listar partidas pausadas' });
-  }
-}
-
 async function listarPartidasEncerradasController(req, res) {
   try {
     const { modalidadeId, campeonatoId } = req.params
@@ -141,30 +151,6 @@ async function listarPartidasEncerradasController(req, res) {
     res.status(500).json({
       error: 'Erro ao listar partidas encerradas'
     })
-  }
-}
-
-async function pausarPartidaController(req, res) {
-  try {
-    const { id } = req.params;
-
-    const partida = await partidas.pausarPartida(id);
-    res.json({ message: "Partida pausada com sucesso!", partida });
-  } catch (error) {
-    console.error("Erro ao pausar partida:", error);
-    res.status(500).json({ error: "Erro ao pausar partida" });
-  }
-}
-
-async function retomarPartidaController(req, res) {
-  try {
-    const { id } = req.params;
-
-    const partida = await partidas.retomarPartida(id);
-    res.json({ message: "Partida retomada com sucesso!", partida });
-  } catch (error) {
-    console.error("Erro ao retomar partida:", error);
-    res.status(500).json({ error: "Erro ao retomar partida" });
   }
 }
 
@@ -348,15 +334,13 @@ async function detalharPartidaController(req, res) {
 
 module.exports = {
   criarPartidaController,
+  iniciarPartidaController,
   finalizarPartidaController,
   excluirPartidaController,
   atualizarParcialController,
   incrementarPlacarController,
   listarPartidaAndamentoController,
-  listarPartidasPausadasController,
   listarPartidasEncerradasController,
-  pausarPartidaController,
-  retomarPartidaController,
   retornarPartidaEmAndamentoController,
   vincularUsuarioController,
   adicionarJogadorPartidaController,

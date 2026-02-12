@@ -2,16 +2,16 @@ const campeonatoService = require('../services/campeonatos.service');
 
 async function criarCampeonatoController(req, res) {
   try {
-    const { nome, modalidadeId, ano, foto } = req.body;
+    const { nome, tipo, dataInicio, dataFim, status, modalidadeId, quadraId, times,  datasJogos, foto  } = req.body;
 
-    const novocampeonato = await campeonatoService.criarCampeonato({
-      nome,
-      modalidadeId,
-      ano,
-      foto
+    const usuarioId = req.body.usuarioId;
+
+    const novoCampeonato = await campeonatoService.criarCampeonato({
+      nome, tipo, dataInicio, dataFim, status, modalidadeId, quadraId, times, datasJogos, usuarioId, foto
     });
 
-    return res.status(201).json(novocampeonato);
+    return res.status(201).json(novoCampeonato);
+
   } catch (error) {
     console.error("Erro no controller:", error);
     return res.status(400).json({

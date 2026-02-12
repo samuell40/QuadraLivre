@@ -25,80 +25,91 @@ async function criarTime({ nome, foto, modalidadeId, treinadorId }) {
 
 async function removerTime(id) {
   const timeId = Number(id);
+  const agora = new Date();
 
-  await prisma.treinadorTime.deleteMany({
-    where: { timeId }
-  });
+  return await prisma.$transaction(async (prisma) => {
 
-  await prisma.usuarioTime.deleteMany({
-    where: { timeId }
-  });
-
-  await prisma.agendamento.deleteMany({
-    where: { timeId }
-  });
-
-  const partidas = await prisma.partida.findMany({
-    where: {
-      OR: [{ timeAId: timeId }, { timeBId: timeId }]
-    },
-    select: { id: true }
-  });
-
-  const partidaIds = partidas.map(p => p.id);
-
-  if (partidaIds.length) {
-    await prisma.partidaUsuario.deleteMany({
-      where: { partidaId: { in: partidaIds } }
+    await prisma.treinadorTime.updateMany({
+      where: { timeId },
+      data: { deletedAt: agora }
     });
 
-    await prisma.jogadorPartida.deleteMany({
-      where: { partidaId: { in: partidaIds } }
+    await prisma.usuarioTime.updateMany({
+      where: { timeId },
+      data: { deletedAt: agora }
     });
-  }
 
-  await prisma.partida.deleteMany({
-    where: {
-      OR: [{ timeAId: timeId }, { timeBId: timeId }]
+    await prisma.agendamento.updateMany({
+      where: { timeId },
+      data: { deletedAt: agora }
+    });
+
+    const partidas = await prisma.partida.findMany({
+      where: {
+        OR: [{ timeAId: timeId }, { timeBId: timeId }]
+      },
+      select: { id: true }
+    });
+
+    const partidaIds = partidas.map(p => p.id);
+
+    if (partidaIds.length) {
+      await prisma.partidaUsuario.updateMany({
+        where: { partidaId: { in: partidaIds } },
+        data: { deletedAt: agora }
+      });
+
+      await prisma.jogadorPartida.updateMany({
+        where: { partidaId: { in: partidaIds } },
+        data: { deletedAt: agora }
+      });
     }
-  });
 
-  await prisma.jogadorTime.deleteMany({
-    where: { timeId }
-  });
+    await prisma.partida.updateMany({
+      where: { OR: [{ timeAId: timeId }, { timeBId: timeId }] },
+      data: { deletedAt: agora }
+    });
 
-  await prisma.placar.deleteMany({
-    where: { timeId }
-  });
+    await prisma.jogadorTime.updateMany({
+      where: { timeId },
+      data: { deletedAt: agora }
+    });
 
-  await prisma.campeonatoTime.deleteMany({
-    where: { timeId }
-  });
+    await prisma.placar.updateMany({
+      where: { timeId },
+      data: { visivel: false }
+    });
 
-  return prisma.time.delete({
-    where: { id: timeId }
+    await prisma.campeonatoTime.updateMany({
+      where: { timeId },
+      data: { ativo: false }
+    });
+
+    return prisma.time.update({
+      where: { id: timeId },
+      data: { deletedAt: agora, ativo: false }
+    });
+
   });
 }
 
 async function listarTimesPorModalidade(modalidadeId) {
   return prisma.time.findMany({
-    where: { modalidadeId: Number(modalidadeId) },
+    where: { 
+      modalidadeId: Number(modalidadeId),
+      deletedAt: null 
+    },
     include: {
       modalidade: true,
-      placares: true,
+      placares: { where: { visivel: true } },
       treinador: {
         include: {
           usuario: {
-            select: {
-              id: true,
-              nome: true
-            }
+            select: { id: true, nome: true }
           }
         }
       },
-      _count: {
-        select: { jogadores: true }
-      }
+      _count: { select: { jogadores: true } }
     },
     orderBy: { nome: 'asc' }
   });
@@ -106,35 +117,28 @@ async function listarTimesPorModalidade(modalidadeId) {
 
 async function listarTodosTimes() {
   return prisma.time.findMany({
+    where: { deletedAt: null },
     include: {
       modalidade: true,
-      placares: true
+      placares: { where: { visivel: true } }
     },
     orderBy: { nome: 'asc' }
   });
 }
 
 async function listarTimesPorCampeonato(campeonatoId) {
-  try {
-    const campeonato = await prisma.campeonato.findUnique({
-      where: { id: Number(campeonatoId) },
-      include: {
-        times: {
-          include: {
-            time: true, // Puxa os dados do time
-          },
-        },
+  const campeonato = await prisma.campeonato.findUnique({
+    where: { id: Number(campeonatoId) },
+    include: {
+      times: {
+        where: { time: { deletedAt: null }, ativo: true },
+        include: { time: true },
       },
-    });
+    },
+  });
 
-    if (!campeonato) return [];
-
-    // Retorna apenas os times
-    return campeonato.times.map(t => t.time);
-  } catch (error) {
-    console.error('Erro no service listarTimesPorCampeonato:', error);
-    throw new Error('Não foi possível listar os times do campeonato.');
-  }
+  if (!campeonato) return [];
+  return campeonato.times.map(t => t.time);
 }
 
 module.exports = { criarTime, removerTime, listarTimesPorModalidade, listarTodosTimes, listarTimesPorCampeonato};
