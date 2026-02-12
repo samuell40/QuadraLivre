@@ -271,7 +271,8 @@ export default {
         ...agendamentoDoModal,
         usuarioId: authStore.usuario.id,
         quadraId: this.quadraSelecionada.id,
-        datahora: dataAgendamento
+        datahora: dataAgendamento,
+        fixo: agendamentoDoModal.fixo ?? false 
       };
 
       try {
@@ -283,12 +284,21 @@ export default {
         this.mostrarModalAgendamento = false;
       } catch (err) {
         const msg = err.response?.data?.error || err.response?.data?.message;
-        if (err.response?.status === 409) {
+        const status = err.response?.status;
+
+        if (status === 409) {
           Swal.fire({ icon: "warning", title: "Horário já agendado", text: "Escolha outro horário.", confirmButtonColor: "#1E3A8A" });
-        } else if (err.response?.status === 400 && msg?.includes("já possui 2 agendamentos")) {
-          Swal.fire({ icon: "warning", title: "Limite atingido", text: msg, confirmButtonColor: "#1E3A8A" });
-        } else {
-          Swal.fire({ icon: "error", title: "Erro inesperado", text: "Tente novamente.", confirmButtonColor: "#1E3A8A" });
+        } 
+        else if (status === 400 && (msg?.includes("limite") || msg?.includes("FIXOS"))) {
+          Swal.fire({ 
+            icon: "warning", 
+            title: "Limite de Fixos Atingido", 
+            text: msg,
+            confirmButtonColor: "#1E3A8A" 
+          });
+        } 
+        else {
+          Swal.fire({ icon: "error", title: "Erro inesperado", text: msg || "Tente novamente.", confirmButtonColor: "#1E3A8A" });
         }
       }
     }

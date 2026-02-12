@@ -183,7 +183,9 @@ body {
   width: 170px;
   margin-top: 20px;
   margin-bottom: 10px;
-  border: 1px solid;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .sidebar a {
@@ -292,6 +294,8 @@ body {
 
 .logo {
   width: 170px;
-  height: 170px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
 }
 </style>

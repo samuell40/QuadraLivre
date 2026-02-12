@@ -213,6 +213,7 @@ const criarAgendamentoService = async ({
   timeId,
   ignorarRegra = false,
   status = "Pendente",
+  fixo = false
 }) => {
   if (
     !dia ||
@@ -262,6 +263,7 @@ const criarAgendamentoService = async ({
       message: "Não é possível realizar agendamentos no passado.",
     };
   }
+
   const [quadra, modalidade] = await Promise.all([
     prisma.quadra.findUnique({ where: { id: Number(quadraId) } }),
     prisma.modalidade.findUnique({ where: { id: Number(modalidadeId) } }),
@@ -283,47 +285,50 @@ const criarAgendamentoService = async ({
     });
     if (!time) throw { status: 400, message: "Time não existe." };
 
-    const inicioSemana = startOfWeek(dataAgendamento, { weekStartsOn: 1 });
-    const fimSemana = endOfWeek(dataAgendamento, { weekStartsOn: 1 });
+    if (fixo && !ignorarRegra) {
+      const inicioSemana = startOfWeek(dataAgendamento, { weekStartsOn: 1 });
+      const fimSemana = endOfWeek(dataAgendamento, { weekStartsOn: 1 });
 
-    const agendamentosSemana = await prisma.agendamento.findMany({
-      where: {
-        timeId,
-        status: { in: ["Confirmado", "Pendente"] },
-        AND: [
-          {
-            ano: {
-              gte: inicioSemana.getFullYear(),
-              lte: fimSemana.getFullYear(),
+      const qtdFixosNaSemana = await prisma.agendamento.count({
+        where: {
+          timeId: Number(timeId),
+          fixo: true,
+          status: { in: ["Confirmado", "Pendente"] },
+          AND: [
+            {
+              ano: {
+                gte: inicioSemana.getFullYear(),
+                lte: fimSemana.getFullYear(),
+              },
             },
-          },
-          {
-            OR: [
-              { mes: { gt: inicioSemana.getMonth() + 1 } },
-              {
-                mes: inicioSemana.getMonth() + 1,
-                dia: { gte: inicioSemana.getDate() },
-              },
-            ],
-          },
-          {
-            OR: [
-              { mes: { lt: fimSemana.getMonth() + 1 } },
-              {
-                mes: fimSemana.getMonth() + 1,
-                dia: { lte: fimSemana.getDate() },
-              },
-            ],
-          },
-        ],
-      },
-    });
+            {
+              OR: [
+                { mes: { gt: inicioSemana.getMonth() + 1 } },
+                {
+                  mes: inicioSemana.getMonth() + 1,
+                  dia: { gte: inicioSemana.getDate() },
+                },
+              ],
+            },
+            {
+              OR: [
+                { mes: { lt: fimSemana.getMonth() + 1 } },
+                {
+                  mes: fimSemana.getMonth() + 1,
+                  dia: { lte: fimSemana.getDate() },
+                },
+              ],
+            },
+          ],
+        },
+      });
 
-    if (agendamentosSemana.length >= 2 && !ignorarRegra) {
-      throw {
-        status: 400,
-        message: "Este time já possui 2 agendamentos nesta semana.",
-      };
+      if (qtdFixosNaSemana >= 2) {
+        throw {
+          status: 400,
+          message: "Este time já atingiu o limite de 2 horários FIXOS nesta semana. Tente agendar como horário avulso.",
+        };
+      }
     }
   }
 
@@ -367,6 +372,7 @@ const criarAgendamentoService = async ({
       timeId: timeId ?? null,
       codigoVerificacao: novoCodigo,
       status,
+      fixo,
     },
     include: {
       modalidade: true,

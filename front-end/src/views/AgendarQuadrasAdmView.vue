@@ -131,99 +131,134 @@ export default {
     },
 
     async confirmarAgendamento(agendamentoDoModal, forcarAgendamento = false) {
-  const authStore = useAuthStore()
+      const authStore = useAuthStore()
 
-  if (!authStore.usuario) {
-    Swal.fire({
-      title: 'Você precisa estar logado',
-      text: 'Deseja ir para a tela de login?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Ir para login',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#1E3A8A',
-    }).then(result => {
-      if (result.isConfirmed) this.$router.push('/login')
-    })
-    return
-  }
+      if (!authStore.usuario) {
+        Swal.fire({
+          title: 'Você precisa estar logado',
+          text: 'Deseja ir para a tela de login?',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Ir para login',
+          cancelButtonText: 'Cancelar',
+          confirmButtonColor: '#1E3A8A',
+        }).then(result => {
+          if (result.isConfirmed) this.$router.push('/login')
+        })
+        return
+      }
 
-  const isAdministrador = authStore.usuario.permissaoId === 2;
-  const statusAutomatico = isAdministrador ? 'Confirmado' : 'Pendente';
+      const isAdministrador = authStore.usuario.permissaoId === 2;
+      const statusAutomatico = isAdministrador ? 'Confirmado' : 'Pendente';
 
-  const agendamento = {
-    ...agendamentoDoModal,
-    usuarioId: authStore.usuario.id,
-    quadraId: this.quadraSelecionada.id,
-    ignorarRegra: forcarAgendamento,
-    status: statusAutomatico
-  }
+      if (agendamentoDoModal.lote && Array.isArray(agendamentoDoModal.lote)) {
 
-  try {
-    await api.post('/agendamento', agendamento)
+        Swal.fire({
+          title: 'Processando...',
+          html: 'Gerando agendamentos fixos...<br>Isso pode levar alguns segundos.',
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading()
+        });
 
-    Swal.fire({
-      icon: 'success',
-      title: isAdministrador ? 'Agendamento Confirmado!' : 'Solicitação Enviada!',
-      text: isAdministrador 
-        ? `Quadra: ${this.quadraSelecionada.nome} reservada com sucesso.` 
-        : `Quadra: ${this.quadraSelecionada.nome}. Aguarde a aprovação.`,
-      confirmButtonColor: '#1E3A8A',
-      timer: 5000,
-      showConfirmButton: false,
-      timerProgressBar: true
-    })
+        let sucessos = 0;
+        let erros = 0;
 
-    this.mostrarModalAgendamento = false
+        for (const item of agendamentoDoModal.lote) {
+          const payload = {
+            ...item,
+            usuarioId: authStore.usuario.id,
+            quadraId: this.quadraSelecionada.id,
+            ignorarRegra: forcarAgendamento,
+            status: statusAutomatico
+          };
 
-  } catch (err) {
-    const msgErro = err.response?.data?.message || err.response?.data?.error;
-    const status = err.response?.status;
-
-    if (status === 400 && msgErro?.includes('já possui 2 agendamentos')) {
-      Swal.fire({
-        title: 'Limite Atingido',
-        text: `${msgErro} Como administrador, deseja ignorar a regra e agendar mesmo assim?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Sim, forçar',
-        cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#1E3A8A',
-      }).then((result) => {
-        if (result.isConfirmed) {
-          this.confirmarAgendamento(agendamentoDoModal, true);
+          try {
+            await api.post('/agendamento', payload);
+            sucessos++;
+          } catch (err) {
+            console.error('Erro no item do lote:', err);
+            erros++;
+          }
         }
-      });
-      return;
-    }
 
-    if (status === 409) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Horário já agendado',
-        text: 'Escolha outro horário para esta quadra.',
-        confirmButtonColor: '#1E3A8A'
-      })
+        Swal.close();
+
+        if (erros === 0) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Sucesso Total!',
+            text: `${sucessos} agendamentos fixos criados.`,
+            confirmButtonColor: '#1E3A8A',
+            timer: 3000
+          });
+          this.mostrarModalAgendamento = false;
+        } else {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Finalizado com pendências',
+            text: `Criados: ${sucessos} | Falhas: ${erros} (Provavelmente horários ocupados)`,
+            confirmButtonColor: '#1E3A8A'
+          });
+          if (sucessos > 0) this.mostrarModalAgendamento = false;
+        }
+        return;
+      }
+
+      const agendamento = {
+        ...agendamentoDoModal,
+        usuarioId: authStore.usuario.id,
+        quadraId: this.quadraSelecionada.id,
+        ignorarRegra: forcarAgendamento,
+        status: statusAutomatico,
+        fixo: agendamentoDoModal.fixo ?? false
+      }
+
+      try {
+        await api.post('/agendamento', agendamento)
+
+        Swal.fire({
+          icon: 'success',
+          title: isAdministrador ? 'Agendamento Confirmado!' : 'Solicitação Enviada!',
+          text: isAdministrador
+            ? `Quadra: ${this.quadraSelecionada.nome} reservada com sucesso.`
+            : `Quadra: ${this.quadraSelecionada.nome}. Aguarde a aprovação.`,
+          confirmButtonColor: '#1E3A8A',
+          timer: 5000,
+          showConfirmButton: false,
+          timerProgressBar: true
+        })
+
+        this.mostrarModalAgendamento = false
+
+      } catch (err) {
+        const msgErro = err.response?.data?.message || err.response?.data?.error;
+        const status = err.response?.status;
+
+        if (status === 400 && (msgErro?.includes('já possui 2 agendamentos') || msgErro?.includes('FIXOS'))) {
+          Swal.fire({
+            title: 'Limite Atingido',
+            text: `${msgErro} Deseja forçar o agendamento?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sim, forçar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#1E3A8A',
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.confirmarAgendamento(agendamentoDoModal, true);
+            }
+          });
+          return;
+        }
+
+        Swal.fire({
+          icon: 'warning',
+          title: 'Atenção',
+          text: msgErro || 'Erro ao agendar.',
+          confirmButtonColor: '#1E3A8A'
+        });
+      }
     }
-    else if (status === 400) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Atenção',
-        text: msgErro || 'Dados inválidos para o agendamento.',
-        confirmButtonColor: '#1E3A8A'
-      })
-    }
-    else {
-      Swal.fire({
-        icon: 'error',
-        title: 'Erro inesperado',
-        text: 'Ocorreu um problema ao tentar agendar. Tente novamente.',
-        confirmButtonColor: '#1E3A8A'
-      })
-    }
-    console.error('Erro ao agendar:', err)
-  }
-}
   }
 }
 </script>
