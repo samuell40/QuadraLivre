@@ -235,13 +235,13 @@ body {
 
 .sidebar img {
   width: 170px;
-  margin-top: 20px;
+  margin-top: 10px;
   margin-bottom: 10px;
   border: 1px solid;
 }
 
 .sidebar-user {
-  margin-top: 115%;
+  margin-bottom: 20%;
   padding: 12px 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
 }

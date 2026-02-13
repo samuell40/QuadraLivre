@@ -30,7 +30,7 @@
             </select>
           </div>
         </div>
-        <!-- Botão meia-lua com + -->
+
         <div class="add-half-circle" @click="abrirModalTipo">
           <span class="plus">+</span>
         </div>
@@ -56,18 +56,33 @@
           <ul class="lista-partidas">
             <li v-for="partida in todasPartidas" :key="partida.id" class="card-partida"
               :class="classeStatusPartida(partida)">
-              <div class="status-topo" :class="classeStatusTexto(partida)">
-                {{
-                  partida.status === 'FINALIZADA'
-                    ? 'ENCERRADA'
-                    : partida.status === 'EM_ANDAMENTO'
-                      ? 'EM ANDAMENTO'
-                      : partida.status === 'AGENDADA'
-                        ? 'AGUARDANDO'
-                        : partida.status === 'CANCELADA'
-                          ? 'CANCELADA'
-                          : ''
-                }}
+              <div class="status-topo status-editavel" :class="classeStatusTexto(partida)">
+                <span class="texto-status">
+                  {{
+                    partida.status === 'FINALIZADA'
+                      ? 'ENCERRADA'
+                      : partida.status === 'EM_ANDAMENTO'
+                        ? 'EM ANDAMENTO'
+                        : partida.status === 'AGENDADA'
+                          ? 'AGUARDANDO'
+                          : partida.status === 'CANCELADA'
+                            ? 'CANCELADA'
+                            : ''
+                  }}
+                </span>
+
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                  class="bi bi-pencil-square icone-status" viewBox="0 0 16 16">
+                  <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293z" />
+                  <path
+                    d="M13.752 4.396l-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.815z" />
+                  <path fill-rule="evenodd"
+                    d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
+                </svg>
+              </div>
+
+              <div class="nome-quadra">
+                {{ partida.quadra?.nome }}
               </div>
 
               <div class="conteudo-partida">
@@ -89,11 +104,13 @@
 
               </div>
 
-              <div class="nome-quadra">
-                Quadra: {{ partida.quadra?.nome }}
+              <div class="usuario-criador">
+                Criado por:
+                <strong>{{ partida.usuarioCriador?.nome }}</strong>
               </div>
+
               <button class="btn-acessar" @click="acessarPartida(partida.id)">
-                Acessar
+                {{ partida.status === 'FINALIZADA' ? 'Editar' : 'Acessar' }}
               </button>
             </li>
           </ul>
@@ -157,19 +174,18 @@ export default {
   methods: {
     abrirModalTipo() {
       this.mostrarModalTipo = true;
-      this.abrirMenuAdd = false; // fecha o menu suspenso
+      this.abrirMenuAdd = false;
     },
     cancelarModalTipo() {
-      this.mostrarModalTipo = false; // fecha o modal
+      this.mostrarModalTipo = false;
     },
-    // ação quando escolher "Partida" ou "Rodada"
     selecionarTipo(tipo) {
       this.mostrarModalTipo = false;
 
       if (tipo === 'partida') {
-        this.criarFase(); // ou redireciona para a página de criar partida
+        this.criarFase();
       } else if (tipo === 'rodada') {
-        this.adicionarRodada(); // ou abre o formulário de rodada
+        this.adicionarRodada();
       }
     },
     adicionarRodada() {
@@ -333,6 +349,32 @@ export default {
         console.error(error);
         Swal.fire('Erro', 'Não foi possível retomar essa partida.', 'error');
       }
+    },
+
+    async acessarPartida(partidaId) {
+      try {
+        if (!this.campeonato) {
+          throw new Error('Campeonato não encontrado')
+        }
+
+        localStorage.setItem(
+          'campeonatoSelecionado',
+          JSON.stringify(this.campeonato)
+        )
+
+        this.$router.push({
+          path: '/partida',
+          query: { partidaId }
+        })
+
+      } catch (error) {
+        console.error(error)
+        Swal.fire(
+          'Erro',
+          'Não foi possível acessar a partida.',
+          'error'
+        )
+      }
     }
   }
 }
@@ -382,8 +424,9 @@ export default {
 }
 
 .filtros-wrapper {
+  position: relative;
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible;
   margin-bottom: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border: 2px solid #3b82f6;
@@ -506,6 +549,24 @@ export default {
   font-weight: bold;
 }
 
+.status-editavel {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.status-editavel:hover {
+  opacity: 0.8;
+}
+
+.icone-status {
+  font-size: 12px;
+}
+
 .conteudo-partida {
   display: flex;
   justify-content: space-between;
@@ -528,45 +589,47 @@ export default {
   border: 2px solid #3b82f6;
 }
 
+.usuario-criador {
+  font-size: 13px;
+  color: #6b7280;
+}
+
 .placar-centro {
-  font-size: 20px;
+  font-size: 30px;
   font-weight: bold;
   min-width: 60px;
   text-align: center;
 }
 
+.placar-centro span {
+  font-size: 18px;
+  margin: 0 6px;
+  font-weight: 600;
+}
+
 .time-nome {
-  font-weight: 500;
+  font-weight: 700;
+  font-size: 19px;
 }
 
 .nome-quadra {
-  text-align: left;
-  /* Alinha o texto à esquerda */
-  font-weight: 600;
-  font-size: 14px;
-  margin-bottom: 8px;
-  margin-left: 12px;
-  /* Ajusta a distância da borda esquerda */
+  text-align: center;
+  font-weight: 700;
+  font-size: 16px;
+  color: #3b82f6;
+  margin: 8px 0 12px 0;
 }
 
 .add-half-circle {
   position: absolute;
-  top: 44%;
-  /* centraliza verticalmente */
-  right: 40%;
-  /* ajusta a distância da borda */
-  transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
+  left: 50%;
+  top: calc(100% - 92%);
+  transform: translateX(-50%);
+  width: 42px;
+  height: 42px;
   background-color: #3b82f6;
-  border-top-left-radius: 0;
-  /* reta para cima */
-  border-top-right-radius: 0;
-  /* reta para cima */
   border-bottom-left-radius: 50%;
-  /* curva para baixo */
   border-bottom-right-radius: 50%;
-  /* curva para baixo */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -585,7 +648,6 @@ export default {
   font-weight: bold;
 }
 
-/* ===== MODAL ===== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -683,16 +745,22 @@ export default {
   text-align: center;
 }
 
-/* Responsivo */
 @media (max-width: 768px) {
   .conteudo {
     margin-left: 0;
     padding: 16px;
-    padding-top: 80px;
+  }
+
+  .lista-partidas {
+    grid-template-columns: 1fr;
+  }
+
+  .conteudo-partida {
+    gap: 16px;
   }
 
   .card-partida {
-    padding: 10px;
+    padding: 16px;
   }
 
   .time-foto {
@@ -701,11 +769,17 @@ export default {
   }
 
   .placar-centro {
-    font-size: 16px;
+    font-size: 20px;
+  }
+
+  .placar-centro span {
+    font-size: 18px;
+    margin: 0 6px;
+    font-weight: 600;
   }
 
   .time-nome {
-    font-size: 12px;
+    font-size: 20px;
   }
 
   .titulo-secao {
@@ -715,6 +789,24 @@ export default {
   .mensagem-orientacao {
     font-size: 14px;
     padding: 16px;
+  }
+
+  .add-half-circle {
+    position: absolute;
+    left: 50%;
+    top: calc(100% - 94.7%);
+    transform: translateX(-50%);
+    width: 42px;
+    height: 42px;
+    background-color: #3b82f6;
+    border-bottom-left-radius: 50%;
+    border-bottom-right-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: background 0.2s;
   }
 }
 </style>

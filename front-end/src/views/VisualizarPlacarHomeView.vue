@@ -175,6 +175,10 @@
                   }}
                 </div>
 
+                <div class="nome-quadra-visualizar">
+                  {{ partida.quadra?.nome }}
+                </div>
+
                 <div class="conteudo-partida">
                   <div class="time lado">
                     <img v-if="partida.timeA?.foto" :src="partida.timeA.foto" />
@@ -876,6 +880,13 @@ export default {
   background: #e5e7eb;
 }
 
+.nome-quadra-visualizar {
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+  color: #3b82f6;
+  margin: 8px 0 12px 0;
+}
 
 .placar-home {
   width: 90%;
@@ -966,7 +977,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
+  font-size: 17px;
 }
 
 .time.lado img {
@@ -980,7 +991,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: bold;
   color: #374151;
 }

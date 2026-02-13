@@ -7,9 +7,9 @@
       <NavBarUser v-if="!partidaIniciada" />
       <div class="header">
         <h1 class="title">
-          {{ partidaIniciada ? 'Partida ao Vivo' : 'Criar Partida' }}
+          {{ partidaIniciada ? 'Registro Partida' : 'Criar Partida' }}
           <span v-if="nomeModalidade">
-            {{ nomeModalidade }}
+            ({{ nomeModalidade }})
           </span>
         </h1>
       </div>
@@ -96,6 +96,7 @@ import SelecionarJogadores from '@/components/Partida/SelecionarJogadores.vue'
 import PlacarTime from '@/components/Partida/PlacarTimeFutebol.vue'
 import PlacarTimeVolei from '@/components/Partida/PlacarTimeVolei.vue'
 import PlacarTimeFutsal from '@/components/Partida/PlacarTimeFutsal.vue'
+import { carregarCampeonato } from '@/utils/persistirCampeonato'
 import api from '@/axios'
 import Swal from 'sweetalert2'
 
@@ -265,14 +266,20 @@ export default {
     }
   },
 
-  mounted() {
+  async mounted() {
+    const campeonato = await carregarCampeonato(this.$route)
+
+    if (campeonato) {
+      this.campeonatoSelecionado = campeonato.id
+      this.modalidadeSelecionada = campeonato.modalidade?.id || ''
+    }
+
     const partidaId = this.$route.query.partidaId
 
     if (partidaId) {
       this.carregarPartidaEmAndamento(partidaId)
     } else {
       this.buscarQuadras()
-      this.limparDados()
     }
   },
 
@@ -532,6 +539,10 @@ export default {
 
         await this.buscarQuadras();
 
+        await carregarCampeonato({
+          query: { id: data.campeonatoId }
+        });
+
         this.partidaId = data.id;
         this.partidaIniciada = true;
         this.temporizadorAtivo = true;
@@ -541,13 +552,12 @@ export default {
         this.campeonatoSelecionado = data.campeonatoId;
         this.timeSelecionado1 = data.timeAId;
         this.timeSelecionado2 = data.timeBId;
-
-        const nomeModalidade = data.modalidade?.nome?.toLowerCase() || '';
+        const nomeModalidade = data.modalidade?.nome?.toLowerCase();
         const isVolei = nomeModalidade.includes('vôlei');
         const isFutsal = nomeModalidade.includes('futsal');
 
         if (isVolei) {
-          // 🏐 VÔLEI
+          // VÔLEI
           this.time1.setsVencidos = data.pontosTimeA;
           this.time2.setsVencidos = data.pontosTimeB;
 
@@ -579,7 +589,7 @@ export default {
           this.time2.wo = !!data.woTimeB;
 
         } else {
-          // ⚽ FUTEBOL / FUTSAL (base comum)
+          // FUTEBOL / FUTSAL
           this.time1.golspro = data.pontosTimeA;
           this.time2.golspro = data.pontosTimeB;
 
@@ -588,23 +598,24 @@ export default {
 
           this.time1.cartaoamarelo = data.cartoesAmarelosTimeA;
           this.time1.cartaovermelho = data.cartoesVermelhosTimeA;
+
           this.time2.cartaoamarelo = data.cartoesAmarelosTimeB;
           this.time2.cartaovermelho = data.cartoesVermelhosTimeB;
 
-          // 🚫 Substituição só no FUTEBOL
           if (!isFutsal) {
             this.time1.substituicoes = data.substituicoesTimeA;
             this.time2.substituicoes = data.substituicoesTimeB;
           } else {
-            // opcional: garante estado limpo no futsal
             this.time1.substituicoes = 0;
             this.time2.substituicoes = 0;
           }
         }
 
-        await this.buscarModalidades();
-        await this.buscarCampeonatos();
-        await this.buscarTimes();
+        await Promise.all([
+          this.buscarModalidades(),
+          this.buscarCampeonatos(),
+          this.buscarTimes()
+        ]);
 
         this.iniciarTemporizador();
 
@@ -615,7 +626,7 @@ export default {
           'error'
         );
 
-        this.$router.push('/gerenciar-partidas');
+        this.$router.push('/gerenciar_partida');
       }
     },
 
@@ -634,7 +645,7 @@ export default {
         };
 
         if (isVolei) {
-          // 🏐 VÔLEI
+          // VÔLEI
           const setsTimeA = this.time1.setsJogados || [];
           const setsTimeB = this.time2.setsJogados || [];
           const setsUnificados = [];
@@ -698,18 +709,18 @@ export default {
     abrirModalJogadores() {
       this.mostrarModalJogadores = true
     },
-
     limparDados() {
       this.quadraSelecionada = ''
-      this.campeonatoSelecionado = ''
-      this.modalidadeSelecionada = ''
       this.timeSelecionado1 = ''
       this.timeSelecionado2 = ''
+
       this.times = []
       this.modalidadesDisponiveis = []
       this.campeonatosDisponiveis = []
+
       this.jogadoresTime1 = []
       this.jogadoresTime2 = []
+
       this.time1 = {
         golspro: 0,
         faltas: 0,
@@ -720,7 +731,7 @@ export default {
         setsVencidos: 0,
         pontosSet: 0,
         setsJogados: []
-      };
+      }
 
       this.time2 = {
         golspro: 0,
@@ -732,7 +743,7 @@ export default {
         setsVencidos: 0,
         pontosSet: 0,
         setsJogados: []
-      };
+      }
     }
   }
 }
@@ -1053,6 +1064,7 @@ h2 {
   .conteudo {
     margin-left: 0;
     padding: 16px;
+    padding-top: 80px;
   }
 
   .sidebar {

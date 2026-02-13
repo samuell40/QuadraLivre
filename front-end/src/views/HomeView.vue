@@ -125,6 +125,10 @@
                 }}
               </div>
 
+              <div class="nome-quadra-home">
+                {{ partida.quadra?.nome }}
+              </div>
+
               <div class="conteudo-partida">
                 <div class="time lado">
                   <img v-if="partida.timeA?.foto" :src="partida.timeA.foto" />
@@ -168,7 +172,7 @@
                         ? 'Não iniciada'
                         : partidaDetalhada.status === 'CANCELADA'
                           ? 'Cancelada'
-                : ''
+                          : ''
                 }}
               </span>
             </p>
@@ -838,11 +842,19 @@ p {
   gap: 20px;
 }
 
+.nome-quadra-home {
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+  color: #3b82f6;
+  margin: 8px 0 12px 0;
+}
+
 .time.lado {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
+  font-size: 17px;
 }
 
 .time.lado img {
@@ -856,7 +868,7 @@ p {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: bold;
   color: #374151;
 }
@@ -936,7 +948,7 @@ p {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  font-size: 15px;
+  font-size: 22px;
   color: #374151;
 }
 

@@ -156,40 +156,11 @@ async function listarPartidasEncerradasController(req, res) {
 
 async function retornarPartidaEmAndamentoController(req, res) {
   try {
-    const { id } = req.params;
-
-    if (!id) {
-      return res.status(400).json({
-        message: 'ID da partida é obrigatório'
-      });
-    }
-
+    const { id } = req.params; 
     const partida = await partidas.retornarPartidaEmAndamento(id);
-
-    return res.status(200).json(partida);
+    return res.json(partida); 
   } catch (error) {
-    return res.status(404).json({
-      message: error.message || 'Erro ao retornar partida'
-    });
-  }
-}
-
-async function vincularUsuarioController(req, res) {
-  try {
-    const { partidaId, usuarioId, permissaoId } = req.body;
-
-    if (!partidaId || !usuarioId || !permissaoId) {
-      return res.status(400).json({ message: "partidaId, usuarioId e permissaoId são obrigatórios" });
-    }
-    const vinculo = await partidas.vincularUsuarioAPartida(
-      Number(partidaId),
-      Number(usuarioId),
-      Number(permissaoId)
-    );
-    return res.status(201).json(vinculo);
-  } catch (error) {
-    console.error("Erro ao vincular usuário:", error);
-    return res.status(400).json({ message: error.message });
+    return res.status(404).json({ error: error.message });
   }
 }
 
@@ -342,7 +313,6 @@ module.exports = {
   listarPartidaAndamentoController,
   listarPartidasEncerradasController,
   retornarPartidaEmAndamentoController,
-  vincularUsuarioController,
   adicionarJogadorPartidaController,
   listarJogadoresSelecionadosController,
   atualizarAtuacaoJogadorController,

@@ -214,7 +214,7 @@ export default {
 
       this.emitUpdate()
     },
-    
+
     emitUpdate() {
       this.$emit('update', {
         setsVencidos: this.localTime.setsVencidos,
@@ -343,6 +343,13 @@ export default {
   .controls {
     flex-direction: column;
     gap: 8px;
+  }
+
+  .box .controls {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
   }
 
   .controls span {

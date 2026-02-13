@@ -528,7 +528,7 @@ export default {
 
 <style scoped>
 .placar {
-    width: 100%;
+  width: 100%;
   max-width: 580px;
   background: #fff;
   border-radius: 12px;
@@ -606,7 +606,7 @@ export default {
   background: white;
   padding: 24px 32px;
   border-radius: 12px;
- width: 100%;
+  width: 100%;
   max-width: 900px;
   height: 85vh;
   display: flex;
@@ -787,9 +787,17 @@ export default {
     height: 48px;
   }
 
-  .controls {
-    flex-direction: column;
-    gap: 8px;
+  .box .controls {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .box .controls button {
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
   }
 
   .controls span {
@@ -815,7 +823,6 @@ export default {
     font-size: 16px;
   }
 
-  /* Colunas viram linhas */
   .colunas {
     flex-direction: column;
     gap: 12px;
@@ -850,5 +857,4 @@ export default {
     max-height: 120px;
   }
 }
-
 </style>
