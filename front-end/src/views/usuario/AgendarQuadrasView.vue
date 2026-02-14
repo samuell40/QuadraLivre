@@ -123,8 +123,10 @@ export default {
     async abrirAgendamentoDireto(quadra) {
       this.quadraSelecionada = quadra;
 
-      if (this.times.length === 0 && this.usuario?.id) {
-        await this.carregarTimes(this.usuario.id);
+      if (this.usuario?.id) {
+        if (this.times.length === 0) {
+           await this.carregarTimes(this.usuario.id);
+        }
       }
 
       this.mostrarModalAgendamento = true;
@@ -208,6 +210,16 @@ export default {
       try {
         const { data } = await api.get("/quadra");
         this.quadras = data;
+
+        const quadraIdUrl = this.$route.query.quadraId;
+        if (quadraIdUrl) {
+          const quadraAlvo = this.quadras.find(q => q.id === Number(quadraIdUrl));
+
+          if (quadraAlvo && !quadraAlvo.interditada) {
+            this.$router.replace({ query: null });
+            this.abrirAgendamentoDireto(quadraAlvo);
+          }
+        }
         this.carregarAvisoDestaque();
       } catch (err) {
         console.error("Erro ao carregar quadras:", err);
@@ -272,7 +284,7 @@ export default {
         usuarioId: authStore.usuario.id,
         quadraId: this.quadraSelecionada.id,
         datahora: dataAgendamento,
-        fixo: agendamentoDoModal.fixo ?? false 
+        fixo: agendamentoDoModal.fixo ?? false
       };
 
       try {
@@ -288,15 +300,15 @@ export default {
 
         if (status === 409) {
           Swal.fire({ icon: "warning", title: "Horário já agendado", text: "Escolha outro horário.", confirmButtonColor: "#1E3A8A" });
-        } 
+        }
         else if (status === 400 && (msg?.includes("limite") || msg?.includes("FIXOS"))) {
-          Swal.fire({ 
-            icon: "warning", 
-            title: "Limite de Fixos Atingido", 
+          Swal.fire({
+            icon: "warning",
+            title: "Limite de Fixos Atingido",
             text: msg,
-            confirmButtonColor: "#1E3A8A" 
+            confirmButtonColor: "#1E3A8A"
           });
-        } 
+        }
         else {
           Swal.fire({ icon: "error", title: "Erro inesperado", text: msg || "Tente novamente.", confirmButtonColor: "#1E3A8A" });
         }
@@ -334,8 +346,15 @@ body {
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .aviso-body {
@@ -544,8 +563,13 @@ body {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 900px) {

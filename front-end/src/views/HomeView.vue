@@ -34,6 +34,8 @@
 
               <img :src="quadra.foto" :alt="quadra.nome" class="imagem" />
 
+              <div class="sombra-inferior"></div>
+
               <div class="info">
                 <h3>{{ quadra.nome }}</h3>
                 <p class="endereco">{{ quadra.endereco }}</p>
@@ -413,15 +415,19 @@ export default {
 
     verificarLogin(quadra) {
       const usuario = JSON.parse(localStorage.getItem('usuario'))
+
       if (usuario?.token) {
         router.push({ name: 'agendar_quadra', query: { quadraId: quadra.id } })
       } else {
         localStorage.setItem("quadraSelecionada", JSON.stringify(quadra))
-        this.mostrarModalLogin = true
+        this.loginComGoogle()
       }
     },
 
-    irParaLogin() { this.mostrarModalLogin = true },
+    irParaLogin() {
+      this.mostrarModalLogin = true
+    },
+
     loginComGoogle() {
       const width = 500, height = 600
       const left = window.screenX + (window.outerWidth - width) / 2
@@ -434,7 +440,8 @@ export default {
       )
 
       const listener = event => {
-        if (event.origin !== 'https://quadra-livre.vercel.app') return
+        const origensPermitidas = ['https://quadra-livre.vercel.app', 'http://localhost:8080']
+        if (!origensPermitidas.includes(event.origin) && event.origin !== window.location.origin) return
 
         const { token, erro, email, usuario } = event.data
 
@@ -457,11 +464,9 @@ export default {
           localStorage.setItem('token', token)
           localStorage.setItem('usuario', JSON.stringify(usuario))
 
-          const quadraSelecionada = JSON.parse(
-            localStorage.getItem('quadraSelecionada')
-          )
+          const quadraStorage = localStorage.getItem('quadraSelecionada')
+          const quadraSelecionada = quadraStorage ? JSON.parse(quadraStorage) : null
 
-          // Desenvolvedor e Administrador
           if ([1, 2].includes(usuario.permissaoId)) {
             router.push({ name: 'Dashboard' })
 
@@ -471,7 +476,8 @@ export default {
 
             // Usuário comum
           } else if (usuario.permissaoId === 3) {
-            if (quadraSelecionada) {
+
+            if (quadraSelecionada && quadraSelecionada.id) {
               router.push({
                 name: 'agendar_quadra',
                 query: { quadraId: quadraSelecionada.id }
@@ -632,12 +638,10 @@ p {
 
 .card {
   position: relative;
-  border-radius: 12px;
   overflow: hidden;
-  height: 300px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
+  border-radius: 12px;
+  height: 350px;
+  background-color: #f3f4f6;
 }
 
 .card.is-interditada .imagem {
@@ -645,28 +649,30 @@ p {
   transition: filter 0.3s ease;
 }
 
-.badge-interditada-overlay {
+.sombra-inferior {
   position: absolute;
-  top: 40%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 10;
-  color: #FFFFFF;
-  font-weight: 900;
-  font-size: 28px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  pointer-events: none;
-  text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.8);
+  bottom: 0;
+  left: 0;
   width: 100%;
-  text-align: center;
+  height: 75%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 50%, transparent 100%);
+  z-index: 1;
+  pointer-events: none;
 }
 
-.btn-agendar:disabled {
-  background-color: #D9D9D9;
-  color: #7E7E7E;
-  cursor: not-allowed;
-  opacity: 0.9;
+.badge-interditada-overlay {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background-color: #dc2626;
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 4px;
+  z-index: 3;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
 }
 
 .imagem {
@@ -680,38 +686,65 @@ p {
   position: absolute;
   bottom: 0;
   left: 0;
-  right: 0;
-  padding: 15px;
-  color: white;
+  width: 100%;
+  padding: 20px;
+  z-index: 2;
+  text-align: left;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  align-items: flex-start;
-  gap: 6px;
+  gap: 10px;
 }
 
 .info h3 {
-  font-size: 18px;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 22px;
   margin: 0;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
+}
+
+.info .endereco {
+  color: #d1d5db;
+  font-size: 14px;
+  margin: 0;
+  font-weight: 500;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .btn-agendar {
-  background-color: #3b82f6;
-  color: white;
+  width: fit-content;
+  align-self: flex-start;
+
+  padding: 8px 16px;
+  border-radius: 6px;
   border: none;
-  padding: 6px 12px;
-  border-radius: 5px;
+  font-weight: 700;
+  font-size: 14px;
   cursor: pointer;
-  margin-top: 6px;
+  background-color: #3B82F6;
+  color: white;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .btn-agendar:hover {
   background-color: #60a5fa;
+
+}
+
+.btn-agendar:hover:not(:disabled) {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.btn-agendar:disabled {
+  background-color: #4b5563;
+  color: #d1d5db;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .descricao,
