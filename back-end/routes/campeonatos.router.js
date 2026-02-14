@@ -20,4 +20,6 @@ router.get('/fases/:campeonatoId/', controller.listarFasesERodadasController);
 
 router.post('/campeonatos/:campeonatoId/fases', controller.adicionarFaseController);
 
+router.post("/rodada/:campeonatoId/:faseId", controller.adicionarRodadaController);
+
 module.exports = router;

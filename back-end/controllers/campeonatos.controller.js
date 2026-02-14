@@ -154,4 +154,25 @@ async function adicionarFaseController(req, res) {
   }
 }
 
-module.exports = { criarCampeonatoController, removerCampeonatoController, listarCampeonatosPorModalidadeController, listarCampeonatosAnoAtualController, artilhariaCampeonatoController, listarCampeonatoPorIdController, listarPlacarPorFaseController, listarFasesERodadasController, adicionarFaseController };
+async function adicionarRodadaController(req, res) {
+  try {
+    const { faseId } = req.params;
+    const { nome } = req.body;
+
+    if (!nome) {
+      return res.status(400).json({ message: "Nome da rodada é obrigatório" });
+    }
+
+    const rodada = await campeonatoService.criarRodada(parseInt(faseId), nome);
+
+    return res.status(201).json({
+      message: "Rodada criada com sucesso",
+      rodada,
+    });
+  } catch (err) {
+    console.error("Erro ao criar rodada:", err.message);
+    return res.status(400).json({ message: err.message });
+  }
+}
+
+module.exports = { criarCampeonatoController, removerCampeonatoController, listarCampeonatosPorModalidadeController, listarCampeonatosAnoAtualController, artilhariaCampeonatoController, listarCampeonatoPorIdController, listarPlacarPorFaseController, listarFasesERodadasController, adicionarFaseController, adicionarRodadaController };

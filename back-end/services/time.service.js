@@ -132,12 +132,15 @@ async function listarTimesPorCampeonato(campeonatoId) {
     include: {
       times: {
         where: { time: { deletedAt: null }, ativo: true },
-        include: { time: true },
+        include: { 
+          time: { 
+            include: { _count: { select: { jogadores: true } } } 
+          } 
+        },
       },
     },
   });
 
-  if (!campeonato) return [];
   return campeonato.times.map(t => t.time);
 }
 
