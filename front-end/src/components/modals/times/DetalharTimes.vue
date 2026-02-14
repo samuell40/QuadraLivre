@@ -299,7 +299,6 @@ export default {
   100% { transform: rotate(360deg); }
 }
 
-/* Tabela */
 .placar-table {
   max-height: 55vh;
   overflow-x: auto;
@@ -313,7 +312,7 @@ export default {
   width: 100%;
   border-collapse: collapse;
   border: 1px solid #e5e7eb;
-  min-width: 700px; /* garante scroll horizontal em mobile */
+  min-width: 700px;
 }
 
 .placar thead th {
@@ -362,7 +361,6 @@ export default {
   border: 1px solid #ccc;
 }
 
-/* Botão Cancelar */
 .btn-cancel-placar {
   background-color: #3b82f6;
   color: white;
@@ -374,7 +372,6 @@ export default {
   width: 100%;
 }
 
-/* Modal Overlay */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -389,7 +386,6 @@ export default {
   padding: 16px;
 }
 
-/* Modal Conteúdo */
 .modal-conteudo.modal-placar {
   background-color: #fff;
   border-radius: 12px;
@@ -404,7 +400,6 @@ export default {
   box-sizing: border-box;
 }
 
-/* Header */
 .header-placar {
   display: flex;
   justify-content: space-between;
@@ -412,13 +407,11 @@ export default {
   gap: 16px;
 }
 
-/* Título */
 .title_placar {
   color: #3b82f6;
   font-size: 28px;
 }
 
-/* Botão Gerenciar */
 .btn-gerenciar {
   background-color: #3b82f6;
   color: white;
@@ -430,7 +423,6 @@ export default {
   transition: background-color 0.2s;
 }
 
-/* Loader */
 .loader-container-centralizado,
 .sem-dados-centralizado {
   display: flex;
@@ -455,7 +447,6 @@ export default {
   100% { transform: rotate(360deg); }
 }
 
-/* Tabela para desktop */
 .placar-table {
   max-height: 55vh;
   overflow-y: auto;
@@ -516,7 +507,6 @@ export default {
   border: 1px solid #ccc;
 }
 
-/* Botão Cancelar */
 .btn-cancel-placar {
   background-color: #3b82f6;
   color: white;
@@ -528,7 +518,6 @@ export default {
   width: 100%;
 }
 
-/* RESPONSIVO - mobile: mantém a tabela original, mas menor */
 @media (max-width: 768px) {
   .modal-conteudo.modal-placar {
     width: 100%;

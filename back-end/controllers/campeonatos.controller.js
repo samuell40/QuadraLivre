@@ -2,7 +2,7 @@ const campeonatoService = require('../services/campeonatos.service');
 
 async function criarCampeonatoController(req, res) {
   try {
-    const { nome, tipo, dataInicio, dataFim, status, modalidadeId, quadraId, times,  datasJogos, foto  } = req.body;
+    const { nome, tipo, dataInicio, dataFim, status, modalidadeId, quadraId, times, datasJogos, foto } = req.body;
 
     const usuarioId = req.body.usuarioId;
 
@@ -93,5 +93,65 @@ async function listarCampeonatoPorIdController(req, res) {
   }
 }
 
+async function listarPlacarPorFaseController(req, res) {
+  const { campeonatoId } = req.params;
 
-module.exports = { criarCampeonatoController, removerCampeonatoController, listarCampeonatosPorModalidadeController, listarCampeonatosAnoAtualController, artilhariaCampeonatoController, listarCampeonatoPorIdController };
+  try {
+    const placaresPorFase = await campeonatoService.listarPlacarPorFase(campeonatoId);
+    res.status(200).json(placaresPorFase);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensagem: error.message || "Erro ao listar placares por fase" });
+  }
+}
+
+
+async function listarFasesERodadasController(req, res) {
+  try {
+    const { campeonatoId } = req.params;
+
+    const fases = await campeonatoService.listarFasesERodadas(campeonatoId);
+
+    return res.status(200).json(fases);
+  } catch (error) {
+    console.error("Erro ao listar fases e rodadas:", error);
+    return res.status(400).json({
+      erro: "Erro ao listar fases e rodadas",
+      detalhes: error.message
+    });
+  }
+}
+
+async function adicionarFaseController(req, res) {
+  try {
+    const { campeonatoId } = req.params;
+    const { nome, times } = req.body;
+
+    if (!nome) {
+      return res.status(400).json({
+        error: 'O nome da fase é obrigatório',
+      });
+    }
+
+    if (!Array.isArray(times) || times.length === 0) {
+      return res.status(400).json({
+        error: 'Informe os times que participarão da fase',
+      });
+    }
+
+    const fase = await campeonatoService.criarFase(
+      Number(campeonatoId),
+      nome,
+      times
+    );
+
+    return res.status(201).json(fase);
+  } catch (error) {
+    console.error('Erro ao criar fase:', error);
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+}
+
+module.exports = { criarCampeonatoController, removerCampeonatoController, listarCampeonatosPorModalidadeController, listarCampeonatosAnoAtualController, artilhariaCampeonatoController, listarCampeonatoPorIdController, listarPlacarPorFaseController, listarFasesERodadasController, adicionarFaseController };

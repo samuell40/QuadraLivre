@@ -15,11 +15,7 @@ router.put('/partida/:id/parcial', [validarJWT], controller.atualizarParcialCont
 
 router.put('/placar/:id/incrementar', [validarJWT], controller.incrementarPlacarController);
 
-router.get('/partidas/ativas/:modalidadeId/:campeonatoId', controller.listarPartidaAndamentoController);
-
-router.get('/partidas/encerradas/:modalidadeId/:campeonatoId', controller.listarPartidasEncerradasController);
-
-router.get('/partidas/:id/retornar', controller.retornarPartidaEmAndamentoController);
+router.get('/partidas/:id/retornar', controller.retornarPartidaController);
 
 router.post("/:partidaId/jogador/:jogadorId", controller.adicionarJogadorPartidaController);
 
@@ -34,5 +30,11 @@ router.get('/:partidaId/:timeId/jogadores-fora-partida', controller.getJogadores
 router.put('/:partidaId/:jogadorId/remover', controller.removerJogadorDeCampoController);
 
 router.get('/detalhar/partida/:id', controller.detalharPartidaController)
+
+router.get('/partidas/:campeonatoId/fases', controller.listarPartidasPorFaseRodadaController);
+
+router.get('/partidas/status', controller.listarStatusPartidaController);
+
+router.put('/partidas/:id/status', controller.alterarStatusPartidaController);
 
 module.exports = router;

@@ -12,7 +12,7 @@
         <div class="filtros-topo">
           <div class="filtro-item">
             <label for="fase-select" class="filtro-titulo">Fase</label>
-            <select id="fase-select" v-model="faseSelecionada">
+            <select id="fase-select" v-model="faseSelecionada" @change="onFaseChange">
               <option disabled value="">Selecione a Fase</option>
               <option v-for="fase in fases" :key="fase.id" :value="fase.id">
                 {{ fase.nome }}
@@ -22,17 +22,13 @@
 
           <div class="filtro-item">
             <label for="rodada-select" class="filtro-titulo">Rodada</label>
-            <select id="rodada-select" v-model="rodadaSelecionada">
+            <select id="rodada-select" v-model="rodadaSelecionada" @change="filtrarPartidasPorRodada">
               <option disabled value="">Selecione a Rodada</option>
               <option v-for="rodada in rodadas" :key="rodada.id" :value="rodada.id">
                 {{ rodada.nome }}
               </option>
             </select>
           </div>
-        </div>
-
-        <div class="add-half-circle" @click="abrirModalTipo">
-          <span class="plus">+</span>
         </div>
 
         <div v-if="mostrarModalTipo" class="modal-overlay" @click.self="cancelarModalTipo">
@@ -56,29 +52,32 @@
           <ul class="lista-partidas">
             <li v-for="partida in todasPartidas" :key="partida.id" class="card-partida"
               :class="classeStatusPartida(partida)">
-              <div class="status-topo status-editavel" :class="classeStatusTexto(partida)">
-                <span class="texto-status">
-                  {{
-                    partida.status === 'FINALIZADA'
-                      ? 'ENCERRADA'
-                      : partida.status === 'EM_ANDAMENTO'
-                        ? 'EM ANDAMENTO'
-                        : partida.status === 'AGENDADA'
-                          ? 'AGUARDANDO'
-                          : partida.status === 'CANCELADA'
-                            ? 'CANCELADA'
-                            : ''
-                  }}
-                </span>
+              <div class="status-topo status-editavel" :class="classeStatusTexto(partida)"
+                @click="editarStatus(partida)">
+                <!-- TEXTO -->
+                <template v-if="partidaEditandoStatus !== partida.id">
+                  <span class="texto-status">
+                    {{
+                      partida.status === 'FINALIZADA'
+                        ? 'ENCERRADA'
+                        : partida.status === 'EM_ANDAMENTO'
+                          ? 'EM ANDAMENTO'
+                          : partida.status === 'AGENDADA'
+                            ? 'AGUARDANDO'
+                            : partida.status === 'CANCELADA'
+                              ? 'CANCELADA'
+                              : ''
+                    }}
+                  </span>
 
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
-                  class="bi bi-pencil-square icone-status" viewBox="0 0 16 16">
-                  <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293z" />
-                  <path
-                    d="M13.752 4.396l-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.815z" />
-                  <path fill-rule="evenodd"
-                    d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
-                </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                    class="bi bi-pencil-square icone-status" viewBox="0 0 16 16">
+                    <path
+                      d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293z" />
+                    <path
+                      d="M13.752 4.396l-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.815z" />
+                  </svg>
+                </template>
               </div>
 
               <div class="nome-quadra">
@@ -120,6 +119,33 @@
           </div>
         </div>
       </div>
+      <div class="add-half-circle" @click="abrirModalTipo">
+        <span class="plus">+</span>
+      </div>
+
+      <div v-if="mostrarModalStatus" class="modal-overlay" @click.self="fecharModalStatus">
+        <div class="modal-content modal-status">
+          <h2 class="titulo-modal-status">Alterar status da partida</h2>
+
+          <!-- LABEL -->
+          <label class="label-status">Selecione o status</label>
+
+          <select v-model="novoStatus" class="select-status-modal">
+            <option v-for="status in statusDisponiveis" :key="status" :value="status">
+              {{ status.replace('_', ' ') }}
+            </option>
+          </select>
+
+          <div class="botoes">
+            <button class="btn-save" @click="confirmarAlteracaoStatus">
+              Salvar
+            </button>
+            <button class="btn-cancel" @click="fecharModalStatus">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -137,6 +163,10 @@ export default {
 
   data() {
     return {
+      fases: [],
+      rodadas: [],
+      faseSelecionada: '',
+      rodadaSelecionada: '',
       sidebarCollapsed: false,
       modalidades: [],
       campeonatos: [],
@@ -146,24 +176,18 @@ export default {
       campeonatoSelecionado: '',
       campeonato: null,
       isLoading: true,
-      fases: [],
-      rodadas: [],
-      faseSelecionada: '',
-      rodadaSelecionada: '',
       mostrarModalTipo: false,
+      mostrarModalStatus: false,
+      statusDisponiveis: [],
+      partidaSelecionada: null,
+      novoStatus: ''
     }
   },
 
   mounted() {
     this.carregarCampeonatoSelecionado();
     this.buscarModalidades();
-    this.fases = [
-      { id: 1, nome: 'Fase 1' },
-    ];
-    this.rodadas = [
-      { id: 1, nome: 'Rodada 1' },
-      { id: 2, nome: 'Rodada 2' },
-    ];
+    this.buscarStatusPartida();
   },
 
   computed: {
@@ -224,12 +248,13 @@ export default {
     async carregarCampeonatoSelecionado() {
       try {
         this.campeonato = await carregarCampeonato(this.$route);
+
         if (this.campeonato?.id) {
           this.modalidadeSelecionada = this.campeonato.modalidade?.id;
           this.campeonatoSelecionado = this.campeonato.id;
 
-          await this.buscarPartidasAtivas();
-          await this.buscarPartidasEncerradas();
+          await this.carregarFases();
+          this.filtrarPartidasPorRodada();
         }
       } catch (err) {
         console.error('Erro ao carregar campeonato:', err);
@@ -269,39 +294,15 @@ export default {
     async onCampeonatoChange() {
       this.partidas = [];
       this.partidasEncerradas = [];
+      this.fases = [];
+      this.rodadas = [];
+      this.faseSelecionada = '';
+      this.rodadaSelecionada = '';
 
       if (!this.campeonatoSelecionado) return;
 
-      await this.buscarPartidasAtivas();
-      await this.buscarPartidasEncerradas();
+      await this.carregarFases();
     },
-
-    async buscarPartidasAtivas() {
-      if (!this.modalidadeSelecionada || !this.campeonatoSelecionado) return;
-
-      try {
-        const response = await api.get(
-          `/partidas/ativas/${this.modalidadeSelecionada}/${this.campeonatoSelecionado}`
-        );
-        this.partidas = response.data;
-      } catch (error) {
-        console.error('Erro ao buscar partidas ativas:', error);
-      }
-    },
-
-    async buscarPartidasEncerradas() {
-      if (!this.modalidadeSelecionada || !this.campeonatoSelecionado) return;
-
-      try {
-        const response = await api.get(
-          `/partidas/encerradas/${this.modalidadeSelecionada}/${this.campeonatoSelecionado}`
-        );
-        this.partidasEncerradas = response.data;
-      } catch (error) {
-        console.error('Erro ao buscar partidas encerradas:', error);
-      }
-    },
-
     async excluirPartida(partidaId) {
       const resultado = await Swal.fire({
         title: 'Tem certeza?',
@@ -375,6 +376,84 @@ export default {
           'error'
         )
       }
+    },
+
+    async carregarFases() {
+      if (!this.campeonatoSelecionado) return;
+
+      try {
+        const response = await api.get(`/partidas/${this.campeonatoSelecionado}/fases`);
+        this.fases = response.data;
+
+        if (this.fases.length > 0) {
+          this.faseSelecionada = this.fases[0].id;
+          const faseSelecionadaObj = this.fases.find(f => f.id === this.faseSelecionada);
+          this.rodadas = faseSelecionadaObj.rodadas || [];
+          this.rodadaSelecionada = this.rodadas.length ? this.rodadas[0].id : '';
+
+          this.filtrarPartidasPorRodada();
+        }
+      } catch (error) {
+        console.error('Erro ao buscar fases:', error);
+      }
+    },
+    onFaseChange() {
+      const fase = this.fases.find(f => f.id === this.faseSelecionada);
+      if (!fase) return;
+      this.rodadas = fase.rodadas || [];
+      this.rodadaSelecionada = this.rodadas.length ? this.rodadas[0].id : '';
+
+      this.filtrarPartidasPorRodada();
+    },
+
+    filtrarPartidasPorRodada() {
+      const fase = this.fases.find(f => f.id === this.faseSelecionada);
+      if (!fase) {
+        this.partidas = [];
+        return;
+      }
+      const rodada = fase.rodadas.find(r => r.id === this.rodadaSelecionada);
+      this.partidas = rodada ? rodada.partidas : [];
+    },
+
+    async buscarStatusPartida() {
+      try {
+        const response = await api.get('/partidas/status');
+        this.statusDisponiveis = response.data;
+      } catch (error) {
+        console.error('Erro ao buscar status:', error);
+      }
+    },
+
+    editarStatus(partida) {
+      this.partidaSelecionada = partida;
+      this.novoStatus = partida.status;
+      this.mostrarModalStatus = true;
+    },
+    fecharModalStatus() {
+      this.mostrarModalStatus = false;
+      this.partidaSelecionada = null;
+    },
+
+    async confirmarAlteracaoStatus() {
+      try {
+        await api.put(`/partidas/${this.partidaSelecionada.id}/status`, {
+          status: this.novoStatus
+        });
+
+        this.partidaSelecionada.status = this.novoStatus;
+        this.fecharModalStatus();
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Status atualizado',
+          timer: 1200,
+          showConfirmButton: false
+        });
+      } catch (error) {
+        console.error(error);
+        Swal.fire('Erro', 'Não foi possível alterar o status.', 'error');
+      }
     }
   }
 }
@@ -397,7 +476,6 @@ export default {
 .conteudo.collapsed {
   margin-left: 70px;
 }
-
 
 .header {
   display: flex;
@@ -622,9 +700,9 @@ export default {
 
 .add-half-circle {
   position: absolute;
-  left: 50%;
-  top: calc(100% - 92%);
-  transform: translateX(-50%);
+  top: 44%;
+  left: 58%;
+  transform: translate(-50%, -50%);
   width: 42px;
   height: 42px;
   background-color: #3b82f6;
@@ -745,6 +823,38 @@ export default {
   text-align: center;
 }
 
+.modal-status {
+  max-width: 900px;
+}
+
+.titulo-modal-status {
+  color: #3b82f6;
+  font-size: 28px;
+}
+
+.select-status-modal {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  color: #111827;
+  background-color: #fff;
+  cursor: pointer;
+  transition: 0.2s;
+  margin-bottom: 20px;
+}
+
+.select-status-modal:hover {
+  border-color: #3b82f6;
+}
+
+.select-status-modal:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
 @media (max-width: 768px) {
   .conteudo {
     margin-left: 0;
@@ -793,9 +903,9 @@ export default {
 
   .add-half-circle {
     position: absolute;
+    top: 42%;
     left: 50%;
-    top: calc(100% - 94.7%);
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     width: 42px;
     height: 42px;
     background-color: #3b82f6;
@@ -808,5 +918,6 @@ export default {
     z-index: 10;
     transition: background 0.2s;
   }
+
 }
 </style>

@@ -2,7 +2,7 @@ const partidas = require('../services/partida.service');
 
 async function criarPartidaController(req, res) {
   try {
-    const { usuarioId,  modalidadeId, timeAId, timeBId, quadraId, campeonatoId} = req.body;
+    const { usuarioId, modalidadeId, timeAId, timeBId, quadraId, campeonatoId } = req.body;
 
     const partida = await partidas.criarPartida(
       { modalidadeId, timeAId, timeBId, quadraId, campeonatoId },
@@ -35,7 +35,7 @@ async function iniciarPartidaController(req, res) {
 async function finalizarPartidaController(req, res) {
   try {
     const { id } = req.params;
-    const { usuarioId } = req.body; 
+    const { usuarioId } = req.body;
 
     if (!usuarioId) {
       return res.status(400).json({ erro: "Usuário não informado." });
@@ -110,55 +110,11 @@ async function incrementarPlacarController(req, res) {
   }
 }
 
-async function listarPartidaAndamentoController(req, res) {
+async function retornarPartidaController(req, res) {
   try {
-    const { modalidadeId, campeonatoId } = req.params;
-
-    if (!modalidadeId) {
-      return res.status(400).json({ error: 'modalidadeId é obrigatório' });
-    }
-
-    const partidas_ativas = await partidas.listarPartidasemAndamento(
-      modalidadeId,
-      campeonatoId
-    );
-
-    res.json(partidas_ativas);
-  } catch (error) {
-    console.error('Erro ao listar partidas ativas:', error);
-    res.status(500).json({ error: 'Erro ao listar partidas ativas' });
-  }
-}
-
-async function listarPartidasEncerradasController(req, res) {
-  try {
-    const { modalidadeId, campeonatoId } = req.params
-
-    if (!modalidadeId || !campeonatoId) {
-      return res.status(400).json({
-        error: 'modalidadeId e campeonatoId são obrigatórios'
-      })
-    }
-
-    const partidas_encerradas = await partidas.listarPartidasEncerradas(
-      modalidadeId,
-      campeonatoId
-    )
-
-    res.json(partidas_encerradas)
-  } catch (error) {
-    console.error('Erro ao listar partidas encerradas:', error)
-    res.status(500).json({
-      error: 'Erro ao listar partidas encerradas'
-    })
-  }
-}
-
-async function retornarPartidaEmAndamentoController(req, res) {
-  try {
-    const { id } = req.params; 
-    const partida = await partidas.retornarPartidaEmAndamento(id);
-    return res.json(partida); 
+    const { id } = req.params;
+    const partida = await partidas.retornarPartida(id);
+    return res.json(partida);
   } catch (error) {
     return res.status(404).json({ error: error.message });
   }
@@ -252,24 +208,24 @@ async function substituirJogadorController(req, res) {
 }
 
 async function getJogadoresForaDaPartidaController(req, res) {
-    try {
-      const { partidaId, timeId } = req.params
+  try {
+    const { partidaId, timeId } = req.params
 
-      const jogadores = await partidas.getJogadoresForaDaPartida(
-        Number(partidaId),
-        Number(timeId)
-      )
+    const jogadores = await partidas.getJogadoresForaDaPartida(
+      Number(partidaId),
+      Number(timeId)
+    )
 
-      return res.json(jogadores)
-    } catch (error) {
-      console.error(error)
-      return res.status(500).json({
-        error: 'Erro ao buscar jogadores fora da partida'
-      })
-    }
+    return res.json(jogadores)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({
+      error: 'Erro ao buscar jogadores fora da partida'
+    })
   }
+}
 
-  async function removerJogadorDeCampoController(req, res) {
+async function removerJogadorDeCampoController(req, res) {
   try {
     const { partidaId, jogadorId } = req.params;
 
@@ -303,6 +259,58 @@ async function detalharPartidaController(req, res) {
   }
 }
 
+async function listarPartidasPorFaseRodadaController(req, res) {
+  const { campeonatoId } = req.params;
+
+  if (!campeonatoId) {
+    return res.status(400).json({ message: "O ID do campeonato é obrigatório." });
+  }
+
+  try {
+    const fases = await partidas.listarPartidasPorFaseRodada(Number(campeonatoId));
+    return res.json(fases);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Erro ao listar partidas." });
+  }
+}
+
+function listarStatusPartidaController(req, res) {
+  try {
+    const { statusAtual } = req.query;
+
+    const status = partidas.listarStatusPartida(statusAtual);
+
+    return res.json(status);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+async function alterarStatusPartidaController(req, res) {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({
+        error: 'O novo status é obrigatório'
+      });
+    }
+
+    const partida = await partidas.alterarStatusPartida(id, status);
+
+    return res.json({
+      message: 'Status da partida atualizado com sucesso',
+      partida
+    });
+  } catch (error) {
+    return res.status(400).json({
+      error: error.message
+    });
+  }
+}
+
 module.exports = {
   criarPartidaController,
   iniciarPartidaController,
@@ -310,14 +318,15 @@ module.exports = {
   excluirPartidaController,
   atualizarParcialController,
   incrementarPlacarController,
-  listarPartidaAndamentoController,
-  listarPartidasEncerradasController,
-  retornarPartidaEmAndamentoController,
+  retornarPartidaController,
   adicionarJogadorPartidaController,
   listarJogadoresSelecionadosController,
   atualizarAtuacaoJogadorController,
   substituirJogadorController,
   getJogadoresForaDaPartidaController,
   removerJogadorDeCampoController,
-  detalharPartidaController
+  detalharPartidaController,
+  listarPartidasPorFaseRodadaController,
+  listarStatusPartidaController,
+  alterarStatusPartidaController
 };

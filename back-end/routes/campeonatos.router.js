@@ -14,4 +14,10 @@ router.get('/:campeonatoId/artilharia', controller.artilhariaCampeonatoControlle
 
 router.get('/campeonato/:id', controller.listarCampeonatoPorIdController);
 
+router.get('/placar/fase/:campeonatoId/', controller.listarPlacarPorFaseController);
+
+router.get('/fases/:campeonatoId/', controller.listarFasesERodadasController);
+
+router.post('/campeonatos/:campeonatoId/fases', controller.adicionarFaseController);
+
 module.exports = router;
