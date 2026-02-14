@@ -322,24 +322,31 @@ async function listarFasesERodadas(campeonatoId) {
   return fases;
 }
 
- async function criarFase(campeonatoId, nome, dataInicio = null, dataFim = null) {
+async function criarFase(campeonatoId, nome, times) {
   try {
-    const campeonato = await prisma.campeonato.findUnique({
-      where: { id: campeonatoId },
-    });
-
-    if (!campeonato) {
-      throw new Error('Campeonato não encontrado');
+    if (!Array.isArray(times) || times.length === 0) {
+      throw new Error('É necessário informar os times da fase');
     }
 
+    // cria a fase
     const fase = await prisma.fase.create({
       data: {
         nome,
         campeonatoId,
-        dataInicio,
-        dataFim,
         ativo: true,
       },
+    });
+
+    // cria placar APENAS para os times da fase
+    const placaresData = times.map(timeId => ({
+      campeonatoId,
+      faseId: fase.id,
+      timeId,
+    }));
+
+    await prisma.placar.createMany({
+      data: placaresData,
+      skipDuplicates: true, // segurança extra
     });
 
     return fase;
@@ -348,4 +355,4 @@ async function listarFasesERodadas(campeonatoId) {
   }
 }
 
-module.exports = { criarCampeonato, removerCampeonato, listarCampeonatosPorModalidade, listarCampeonatosAnoAtual, listarArtilhariaCampeonato, getCampeonatoById, listarPlacarPorFase, listarFasesERodadas, criarFase};
+module.exports = { criarCampeonato, removerCampeonato, listarCampeonatosPorModalidade, listarCampeonatosAnoAtual, listarArtilhariaCampeonato, getCampeonatoById, listarPlacarPorFase, listarFasesERodadas, criarFase };

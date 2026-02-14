@@ -17,6 +17,28 @@
           <img :src="campeonatoSelecionado.foto" alt="Foto do campeonato" class="foto-campeonato" />
         </div>
 
+        <div class="filtros-topo">
+          <div class="filtro-item">
+            <label for="fase-select" class="filtro-titulo">Fase</label>
+            <select id="fase-select" v-model="faseSelecionada" @change="onFaseChange">
+              <option disabled value="">Selecione a Fase</option>
+              <option v-for="fase in fases" :key="fase.id" :value="fase.id">
+                {{ fase.nome }}
+              </option>
+            </select>
+          </div>
+
+          <div class="filtro-item">
+            <label for="rodada-select" class="filtro-titulo">Rodada</label>
+            <select id="rodada-select" v-model="rodadaSelecionada" @change="filtrarPartidasPorRodada">
+              <option disabled value="">Selecione a Rodada</option>
+              <option v-for="rodada in rodadas" :key="rodada.id" :value="rodada.id">
+                {{ rodada.nome }}
+              </option>
+            </select>
+          </div>
+        </div>
+
         <div class="placar-e-partidas">
           <!-- PLACAR -->
           <div class="placar-wrapper">
@@ -346,27 +368,24 @@ export default {
     return {
       campeonatos: [],
       campeonatoAtivo: null,
+      fases: [],
+      rodadaSelecionada: '',
+      faseSelecionada: '',
+      rodadas: [],
       partidas: [],
+      timesPlacar: null,
       isLoading: false,
       mostrarModalPartida: false,
       loadingDetalhePartida: false,
       partidaDetalhada: null,
       artilharia: [],
-      loadingArtilharia: false
+      loadingArtilharia: false,
     }
   },
 
   computed: {
     campeonatoSelecionado() {
-      return this.campeonatos.find(
-        c => c.id === this.campeonatoAtivo
-      ) || null
-    },
-
-    timesPlacar() {
-      if (!this.campeonatoSelecionado) return null
-      if (!this.campeonatoSelecionado.placares) return []
-      return this.campeonatoSelecionado.placares
+      return this.campeonatos.find(c => c.id === this.campeonatoAtivo) || null
     },
 
     modalidadeNormalizada() {
@@ -376,45 +395,44 @@ export default {
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
     },
+
     temScrollPartidas() {
       return this.partidas && this.partidas.length >= 10
     }
   },
 
   methods: {
+    // ===== STATUS PARTIDA =====
     classeStatusPartida(partida) {
       switch (partida.status) {
-        case 'FINALIZADA':
-          return 'partida-finalizada'
-        case 'EM_ANDAMENTO':
-          return 'partida-andamento'
-        case 'AGENDADA':
-          return 'partida-agendada'
-        case 'CANCELADA':
-          return 'partida-cancelada'
-        default:
-          return ''
+        case 'FINALIZADA': return 'partida-finalizada'
+        case 'EM_ANDAMENTO': return 'partida-andamento'
+        case 'AGENDADA': return 'partida-agendada'
+        case 'CANCELADA': return 'partida-cancelada'
+        default: return ''
       }
     },
 
     classeStatusTexto(partida) {
       switch (partida.status) {
-        case 'FINALIZADA':
-          return 'status-finalizada'
-        case 'EM_ANDAMENTO':
-          return 'status-andamento'
-        case 'AGENDADA':
-          return 'status-agendada'
-        case 'CANCELADA':
-          return 'status-cancelada'
-        default:
-          return ''
+        case 'FINALIZADA': return 'status-finalizada'
+        case 'EM_ANDAMENTO': return 'status-andamento'
+        case 'AGENDADA': return 'status-agendada'
+        case 'CANCELADA': return 'status-cancelada'
+        default: return ''
       }
     },
 
     selecionarCampeonato(id) {
       this.campeonatoAtivo = id
-      this.carregarPartidas(id)
+      this.faseSelecionada = ''
+      this.rodadaSelecionada = ''
+      this.fases = []
+      this.rodadas = []
+      this.partidas = []
+      this.timesPlacar = null
+
+      this.carregarFases(id)
       this.carregarArtilharia(id)
     },
 
@@ -423,10 +441,7 @@ export default {
       try {
         const { data } = await api.get('/todos/campeonatos')
         this.campeonatos = data
-        if (data.length) {
-          this.campeonatoAtivo = data[0].id
-          this.carregarPartidas(this.campeonatoAtivo)
-        }
+        if (data.length) this.selecionarCampeonato(data[0].id)
       } catch (err) {
         console.error('Erro ao carregar campeonatos:', err)
       } finally {
@@ -434,33 +449,63 @@ export default {
       }
     },
 
-    async carregarPartidas(campeonatoId) {
-      if (!this.campeonatoSelecionado) return
-
-      const modalidadeId = this.campeonatoSelecionado.modalidade.id
-
+    async carregarFases(campeonatoId) {
       try {
-        const ativas = await api.get(`/partidas/ativas/${modalidadeId}/${campeonatoId}`)
-        const encerradas = await api.get(`/partidas/encerradas/${modalidadeId}/${campeonatoId}`)
+        const { data } = await api.get(`/partidas/${campeonatoId}/fases`)
+        this.fases = data
 
-        this.partidas = []
+        if (this.fases.length > 0) {
+          this.faseSelecionada = this.fases[0].id
+          const faseSelecionadaObj = this.fases.find(f => f.id === this.faseSelecionada)
+          this.rodadas = faseSelecionadaObj?.rodadas || []
+          this.rodadaSelecionada = this.rodadas.length ? this.rodadas[0].id : ''
 
-        for (let i = 0; i < ativas.data.length; i++) {
-          this.partidas.push(ativas.data[i])
+          this.filtrarPartidasPorRodada()
+          this.carregarPlacar(campeonatoId)
         }
-
-        for (let i = 0; i < encerradas.data.length; i++) {
-          this.partidas.push(encerradas.data[i])
-        }
-
       } catch (err) {
-        console.error('Erro ao carregar partidas:', err)
-        this.partidas = []
+        console.error('Erro ao carregar fases:', err)
       }
     },
 
-    formatarData(data) {
-      return new Date(data).toLocaleDateString('pt-BR')
+    onFaseChange() {
+      const fase = this.fases.find(f => f.id === this.faseSelecionada)
+      this.rodadas = fase?.rodadas || []
+      this.rodadaSelecionada = this.rodadas.length ? this.rodadas[0].id : ''
+
+      this.filtrarPartidasPorRodada()
+      this.carregarPlacar(this.campeonatoAtivo)
+    },
+
+    filtrarPartidasPorRodada() {
+      const fase = this.fases.find(f => f.id === this.faseSelecionada)
+      if (!fase) {
+        this.partidas = []
+        return
+      }
+      const rodada = fase.rodadas.find(r => r.id === this.rodadaSelecionada)
+      this.partidas = rodada?.partidas || []
+    },
+
+    async carregarPlacar(campeonatoId) {
+      if (!this.faseSelecionada) return
+
+      this.timesPlacar = null
+
+      try {
+        const { data } = await api.get(`/placar/fase/${campeonatoId}`,
+          {
+            params: {
+              faseId: this.faseSelecionada
+            }
+          }
+        )
+        const fase = data.find(f => f.faseId == this.faseSelecionada)
+        this.timesPlacar = fase?.placares || []
+      } catch (err) {
+        console.error('Erro ao carregar placar da fase:', err)
+        this.timesPlacar = []
+      }
     },
     async abrirModalPartida(partidaId) {
       this.mostrarModalPartida = true
@@ -478,6 +523,11 @@ export default {
       }
     },
 
+    fecharModalPartida() {
+      this.mostrarModalPartida = false
+      this.partidaDetalhada = null
+    },
+
     async carregarArtilharia(campeonatoId) {
       this.loadingArtilharia = true
       this.artilharia = []
@@ -491,12 +541,7 @@ export default {
       } finally {
         this.loadingArtilharia = false
       }
-    },
-
-    fecharModalPartida() {
-      this.mostrarModalPartida = false
-      this.partidaDetalhada = null
-    },
+    }
   },
 
   mounted() {
@@ -745,7 +790,6 @@ export default {
 
 .status-finalizada {
   color: #dc2626;
-  /* vermelho */
   font-weight: bold;
   background: rgba(220, 38, 38, 0.12);
   padding: 2px 8px;
@@ -754,7 +798,6 @@ export default {
 
 .status-cancelada {
   color: #dc2626;
-  /* vermelho também */
   font-weight: bold;
   background: rgba(220, 38, 38, 0.08);
   padding: 2px 8px;
@@ -1350,6 +1393,37 @@ export default {
   font-weight: bold;
   font-size: 18px;
   color: #7E7E7E;
+}
+
+.filtros-topo {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.filtro-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.filtro-item select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  background-color: white;
+  color: #333;
+  appearance: none;
+}
+
+.filtro-titulo {
+  font-size: 20px;
+  font-weight: 600;
+  color: #3b82f6;
+  margin-bottom: 4px;
 }
 
 @media (max-width: 768px) {

@@ -145,8 +145,6 @@ model Fase {
   id           Int        @id @default(autoincrement())
   nome         String
   campeonatoId Int
-  dataInicio   DateTime?
-  dataFim      DateTime?
   ativo        Boolean    @default(true)
   deletedAt    DateTime?
   campeonato   Campeonato @relation(fields: [campeonatoId], references: [id])

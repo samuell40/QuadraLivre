@@ -2,7 +2,7 @@ const campeonatoService = require('../services/campeonatos.service');
 
 async function criarCampeonatoController(req, res) {
   try {
-    const { nome, tipo, dataInicio, dataFim, status, modalidadeId, quadraId, times,  datasJogos, foto  } = req.body;
+    const { nome, tipo, dataInicio, dataFim, status, modalidadeId, quadraId, times, datasJogos, foto } = req.body;
 
     const usuarioId = req.body.usuarioId;
 
@@ -125,24 +125,33 @@ async function listarFasesERodadasController(req, res) {
 async function adicionarFaseController(req, res) {
   try {
     const { campeonatoId } = req.params;
-    const { nome, dataInicio, dataFim } = req.body;
+    const { nome, times } = req.body;
 
     if (!nome) {
-      return res.status(400).json({ error: 'O nome da fase é obrigatório' });
+      return res.status(400).json({
+        error: 'O nome da fase é obrigatório',
+      });
+    }
+
+    if (!Array.isArray(times) || times.length === 0) {
+      return res.status(400).json({
+        error: 'Informe os times que participarão da fase',
+      });
     }
 
     const fase = await campeonatoService.criarFase(
-      parseInt(campeonatoId),
+      Number(campeonatoId),
       nome,
-      dataInicio ? new Date(dataInicio) : null,
-      dataFim ? new Date(dataFim) : null
+      times
     );
 
     return res.status(201).json(fase);
   } catch (error) {
     console.error('Erro ao criar fase:', error);
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({
+      error: error.message,
+    });
   }
 }
 
-module.exports = { criarCampeonatoController, removerCampeonatoController, listarCampeonatosPorModalidadeController, listarCampeonatosAnoAtualController, artilhariaCampeonatoController, listarCampeonatoPorIdController,listarPlacarPorFaseController,  listarFasesERodadasController, adicionarFaseController };
+module.exports = { criarCampeonatoController, removerCampeonatoController, listarCampeonatosPorModalidadeController, listarCampeonatosAnoAtualController, artilhariaCampeonatoController, listarCampeonatoPorIdController, listarPlacarPorFaseController, listarFasesERodadasController, adicionarFaseController };

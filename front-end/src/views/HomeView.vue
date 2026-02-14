@@ -51,6 +51,27 @@
     </section>
 
     <section class="placar-home">
+      <div class="filtros-topo">
+        <div class="filtro-item">
+          <label class="filtro-titulo">Fase</label>
+          <select v-model="faseSelecionada" @change="onFaseChange">
+            <option disabled value="">Selecione a Fase</option>
+            <option v-for="fase in fases" :key="fase.id" :value="fase.id">
+              {{ fase.nome }}
+            </option>
+          </select>
+        </div>
+
+        <div class="filtro-item">
+          <label class="filtro-titulo">Rodada</label>
+          <select v-model="rodadaSelecionada" :disabled="!rodadas.length" @change="carregarPartidasPorRodada">
+            <option disabled value="">Selecione a Rodada</option>
+            <option v-for="rodada in rodadas" :key="rodada.id" :value="rodada.id">
+              {{ rodada.nome }}
+            </option>
+          </select>
+        </div>
+      </div>
       <div class="placar-container">
         <div class="placar-wrapper">
           <h3 class="titulo-secao">
@@ -108,7 +129,14 @@
         <div class="partidas-wrapper">
           <h3 class="titulo-secao">Placar</h3>
 
-          <ul class="lista-partidas">
+          <div v-if="isLoadingPartidas" class="loader"></div>
+
+          <div v-else-if="partidas.length === 0" class="sem-dados">
+            Nenhuma partida disponível no momento.
+          </div>
+
+          <!-- LISTA DE PARTIDAS -->
+          <ul v-else class="lista-partidas">
             <li v-for="partida in partidas" :key="partida.id" class="card-partida" :class="classeStatusPartida(partida)"
               @click="abrirModalPartida(partida.id)">
               <div class="status-topo" :class="classeStatusTexto(partida)">
@@ -245,9 +273,7 @@
     </div>
     <VerificarLogin v-if="mostrarModalLogin" @fechar="mostrarModalLogin = false" @irParaLogin="irParaLogin"
       @loginComGoogle="loginComGoogle" />
-
     <Footer />
-
   </div>
 </template>
 
@@ -268,19 +294,33 @@ export default {
   data() {
     return {
       quadras: [],
-      mostrarModalLogin: false,
       isLoadingQuadras: true,
+
+      campeonatoAtual: null,
+      campeonatoId: null,
+
+      fases: [],
+      rodadas: [],
+      faseSelecionada: '',
+      rodadaSelecionada: '',
+
       placar: [],
       isLoadingPlacar: true,
-      nomeCampeonato: '',
+
       partidas: [],
       isLoadingPartidas: true,
+
+      mostrarModalLogin: false,
       mostrarModalPartida: false,
       partidaDetalhada: null,
       loadingDetalhePartida: false
     }
   },
   computed: {
+    nomeCampeonato() {
+      return this.campeonatoAtual?.nome
+    },
+
     jogadoresTimeA() {
       if (!this.partidaDetalhada) return []
       return this.partidaDetalhada.jogadoresPartida
@@ -296,7 +336,7 @@ export default {
 
   async mounted() {
     await this.carregarQuadras()
-    await this.carregarPlacarFutebol()
+    await this.carregarCampeonatoMaisRecente()
   },
 
   methods: {
@@ -332,6 +372,18 @@ export default {
       }
     },
 
+    async carregarCampeonatoMaisRecente() {
+      try {
+        const { data } = await api.get('/listar/1')
+        this.campeonatoAtual = data[0]
+        this.campeonatoId = data[0].id
+
+        await this.carregarFases(this.campeonatoId)
+      } catch (err) {
+        console.error('Erro ao carregar campeonato mais recente:', err)
+      }
+    },
+
     async carregarQuadras() {
       this.isLoadingQuadras = true
       try {
@@ -344,51 +396,109 @@ export default {
       }
     },
 
-    async carregarPartidasFutebol(campeonatoId) {
-      this.isLoadingPartidas = true
+    async carregarFases(campeonatoId) {
       try {
-        const { data: ativas } = await api.get(`/partidas/ativas/1/${campeonatoId}`)
-        const { data: encerradas } = await api.get(`/partidas/encerradas/1/${campeonatoId}`)
+        const { data } = await api.get(`/partidas/${campeonatoId}/fases`)
 
-        const todas = [...ativas, ...encerradas]
-        todas.sort((a, b) => {
-          return new Date(b.createdAt) - new Date(a.createdAt)
-        })
-        this.partidas = todas.slice(0, 5)
-
-      } catch (err) {
-        console.error('Erro ao carregar partidas:', err)
-        this.partidas = []
-      } finally {
-        this.isLoadingPartidas = false
-      }
-    },
-
-    async carregarPlacarFutebol() {
-      this.isLoadingPlacar = true
-      try {
-        const { data: campeonatos } = await api.get('/listar/1')
-        if (!campeonatos?.length) {
-          this.placar = []
-          this.nomeCampeonato = ''
+        if (!Array.isArray(data)) {
+          this.fases = []
+          return
+        }
+        this.fases = data
+        if (this.fases.length === 0) {
+          this.faseSelecionada = ''
+          this.rodadas = []
+          this.rodadaSelecionada = ''
           return
         }
 
-        const campeonatoRecente = campeonatos[campeonatos.length - 1]
-        this.nomeCampeonato = campeonatoRecente.nome
+        this.faseSelecionada = this.fases[0].id
 
-        const { data } = await api.get(`/placar/campeonato/${campeonatoRecente.id}`)
-        this.placar = Array.isArray(data.placares) ? data.placares : []
+        const faseSelecionadaObj = this.fases.find(f => f.id === this.faseSelecionada)
 
-        await this.carregarPartidasFutebol(campeonatoRecente.id)
+        if (!faseSelecionadaObj) {
+          this.rodadas = []
+          this.rodadaSelecionada = ''
+          return
+        }
+
+        if (!faseSelecionadaObj.rodadas || faseSelecionadaObj.rodadas.length === 0) {
+          this.rodadas = []
+          this.rodadaSelecionada = ''
+        } else {
+          this.rodadas = faseSelecionadaObj.rodadas
+          this.rodadaSelecionada = faseSelecionadaObj.rodadas[0].id
+        }
+
+        await this.carregarPlacarPorFase(campeonatoId)
+        await this.carregarPartidasPorRodada()
+
+      } catch (err) {
+        console.error('Erro ao carregar fases:', err)
+      }
+    },
+
+    onFaseChange() {
+      const fase = this.fases.find(
+        f => f.id === this.faseSelecionada
+      )
+      if (!fase) {
+        this.rodadas = []
+        this.rodadaSelecionada = ''
+        return
+      }
+      if (!fase.rodadas || fase.rodadas.length === 0) {
+        this.rodadas = []
+        this.rodadaSelecionada = ''
+      } else {
+        this.rodadas = fase.rodadas
+        this.rodadaSelecionada = fase.rodadas[0].id
+      }
+      this.carregarPlacarPorFase(this.campeonatoId)
+      this.carregarPartidasPorRodada()
+    },
+
+    async carregarPlacarPorFase(campeonatoId) {
+      if (!this.faseSelecionada) return
+      this.isLoadingPlacar = true
+      try {
+        const res = await api.get(`/placar/fase/${campeonatoId}`,
+          { params: { faseId: this.faseSelecionada } }
+        )
+        if (!Array.isArray(res.data)) {
+          this.placar = []
+          return
+        }
+
+        const fase = res.data.find(
+          f => f.faseId == this.faseSelecionada
+        )
+
+        if (!fase) {
+          this.placar = []
+          return
+        }
+
+        this.placar = fase.placares ? fase.placares : []
       } catch (err) {
         console.error('Erro ao carregar placar:', err)
         this.placar = []
-        this.nomeCampeonato = ''
       } finally {
         this.isLoadingPlacar = false
       }
     },
+
+    async carregarPartidasPorRodada() {
+      this.isLoadingPartidas = true
+
+      const fase = this.fases.find(f => f.id === this.faseSelecionada)
+      const rodada = fase?.rodadas.find(r => r.id === this.rodadaSelecionada)
+
+      this.partidas = rodada?.partidas || []
+
+      this.isLoadingPartidas = false
+    },
+
     async abrirModalPartida(partidaId) {
       this.mostrarModalPartida = true
       this.loadingDetalhePartida = true
@@ -722,6 +832,44 @@ p {
   color: #fff;
 }
 
+.filtros-topo {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.filtro-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+}
+
+.filtro-titulo {
+  font-size: 20px;
+  font-weight: 600;
+  color: #3b82f6;
+  margin-bottom: 6px;
+}
+
+.filtro-item select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  background-color: white;
+  color: #333;
+  appearance: none;
+  cursor: pointer;
+}
+
+.filtro-item select:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+}
+
 .placar-container {
   display: flex;
   gap: 40px;
@@ -795,7 +943,6 @@ p {
 }
 
 .sem-dados {
-  text-align: center;
   color: #777;
   font-size: 18px;
 }

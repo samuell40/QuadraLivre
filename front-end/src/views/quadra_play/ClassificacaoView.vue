@@ -8,16 +8,26 @@
       <div class="header">
         <h1 class="title">Classificação {{ campeonato?.nome }}</h1>
       </div>
-      <!-- PLACAR -->
-      <div class="placar-wrapper">
 
-        <div class="placar-table" v-if="campeonato">
+      <div v-if="fases.length" class="filtros-topo">
+        <div class="filtro-item">
+          <label class="filtro-titulo" for="fase-select">Selecione a Fase:</label>
+          <select id="fase-select" v-model="faseSelecionada" @change="carregarPlacarPorFase">
+            <option disabled value="">-- Escolha a Fase --</option>
+            <option v-for="fase in fases" :key="fase.id" :value="fase.id">{{ fase.nome }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- PLACAR -->
+      <div class="placar-wrapper" v-if="campeonato">
+        <div class="placar-table">
           <div v-if="timesPlacar === null" class="loader-container-centralizado">
             <div class="loader"></div>
           </div>
 
           <div v-else-if="Array.isArray(timesPlacar) && timesPlacar.length === 0" class="sem-dados-centralizado">
-            Nenhum placar encontrado para este campeonato.
+            Nenhum placar encontrado para esta fase.
           </div>
 
           <!-- ===== FUTEBOL / FUTSAL ===== -->
@@ -35,19 +45,13 @@
                 <th>DER</th>
               </tr>
             </thead>
-
             <tbody>
               <tr v-for="(time, index) in timesPlacar" :key="time.id">
                 <td class="time-info">
                   <span class="posicao">{{ index + 1 }}º</span>
-
                   <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
-
-                  <span class="nome-time">
-                    {{ time.time?.nome }}
-                  </span>
+                  <span class="nome-time">{{ time.time?.nome }}</span>
                 </td>
-
                 <td>{{ time.pontuacao }}</td>
                 <td>{{ time.jogos }}</td>
                 <td>{{ time.golsPro }}</td>
@@ -77,19 +81,13 @@
                 <th>W.O.</th>
               </tr>
             </thead>
-
             <tbody>
               <tr v-for="(time, index) in timesPlacar" :key="time.id">
                 <td class="time-info">
                   <span class="posicao">{{ index + 1 }}º</span>
-
                   <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
-
-                  <span class="nome-time">
-                    {{ time.time?.nome }}
-                  </span>
+                  <span class="nome-time">{{ time.time?.nome }}</span>
                 </td>
-
                 <td>{{ time.pontuacao }}</td>
                 <td>{{ time.jogos }}</td>
                 <td>{{ time.vitorias }}</td>
@@ -104,39 +102,6 @@
             </tbody>
           </table>
         </div>
-
-        <!-- FUTEBOL -->
-        <div v-if="['futebol', 'futebol de areia', 'futsal'].includes(modalidadeNormalizada)" class="glossario-placar">
-          <strong>Glossário</strong>
-          <ul>
-            <li><b>PTS</b>: Pontos</li>
-            <li><b>J</b>: Jogos</li>
-            <li><b>GM</b>: Gols Marcados</li>
-            <li><b>GS</b>: Gols Sofridos</li>
-            <li><b>SG</b>: Saldo de Gols</li>
-            <li><b>E</b>: Empates</li>
-            <li><b>VIT</b>: Vitórias</li>
-            <li><b>DER</b>: Derrotas</li>
-          </ul>
-        </div>
-
-        <!-- VÔLEI -->
-        <div v-else-if="['volei', 'volei de areia', 'futevolei'].includes(modalidadeNormalizada)"
-          class="glossario-placar">
-          <strong>Glossário</strong>
-          <ul>
-            <li><b>PTS</b>: Pontos</li>
-            <li><b>J</b>: Jogos</li>
-            <li><b>VIT</b>: Vitórias</li>
-            <li><b>DER</b>: Derrotas</li>
-            <li><b>STV</b>: Sets Vencidos</li>
-            <li><b>3x0</b>: Vitória por 3x0</li>
-            <li><b>3x2</b>: Vitória por 3x2</li>
-            <li><b>2x3</b>: Derrota por 2x3</li>
-            <li><b>0x3</b>: Derrota por 0x3</li>
-            <li><b>W.O.</b>: Vitória por W.O.</li>
-          </ul>
-        </div>
       </div>
     </div>
   </div>
@@ -150,23 +115,75 @@ import api from '@/axios'
 
 export default {
   name: 'ClassificacaoView',
-
   components: { SidebarCampeonato, NavBarQuadras },
 
   data() {
     return {
       sidebarCollapsed: false,
       campeonato: null,
-      timesPlacar: null, 
+      fases: [],
+      faseSelecionada: '',
+      timesPlacar: null,
       isLoading: true
     }
   },
 
   computed: {
     modalidadeNormalizada() {
-      return this.campeonato?.modalidade?.nome
-        ?.toLowerCase()
-        ?.trim()
+      return this.campeonato?.modalidade?.nome?.toLowerCase()?.trim()
+    }
+  },
+
+  methods: {
+    async carregarFases() {
+      if (!this.campeonato?.id) return
+
+      try {
+        const res = await api.get(`/placar/fase/${this.campeonato.id}`)
+        this.fases = res.data.map(f => ({
+          id: f.faseId,
+          nome: f.nomeFase
+        }))
+
+        if (this.fases.length) {
+          this.faseSelecionada = this.fases[0].id
+          this.carregarPlacarPorFase()
+        }
+      } catch (err) {
+        console.error('Erro ao carregar fases:', err)
+      }
+    },
+
+    async carregarPlacarPorFase() {
+      if (!this.faseSelecionada) return
+
+      this.timesPlacar = []
+
+      try {
+        const { data } = await api.get(`/placar/fase/${this.campeonato.id}`,
+          {
+            params: {
+              faseId: this.faseSelecionada
+            }
+          }
+        )
+
+        if (data?.placares) {
+          this.timesPlacar = data.placares
+          return
+        }
+
+        if (Array.isArray(data)) {
+          const fase = data.find(f => f.faseId == this.faseSelecionada)
+          this.timesPlacar = fase?.placares || []
+          return
+        }
+
+        this.timesPlacar = []
+      } catch (err) {
+        console.error('Erro ao carregar placar da fase:', err)
+        this.timesPlacar = []
+      }
     }
   },
 
@@ -174,14 +191,10 @@ export default {
     try {
       this.campeonato = await carregarCampeonato(this.$route)
       if (this.campeonato?.id) {
-        const res = await api.get(
-          `/placar/campeonato/${this.campeonato.id}`
-        )
-        this.timesPlacar = res.data?.placares || []
+        await this.carregarFases()
       } else {
         this.timesPlacar = []
       }
-
     } catch (err) {
       console.error('Erro ao carregar classificação:', err)
       this.timesPlacar = []
@@ -277,8 +290,55 @@ export default {
   }
 }
 
+.filtros-topo {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.filtros-topo select {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  color: #111827;
+  background-color: #fff;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.filtros-topo select:hover {
+  border-color: #3b82f6;
+}
+
+.filtros-topo select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.filtro-item {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.filtro-titulo {
+  font-size: 20px;
+  font-weight: 600;
+  color: #3b82f6;
+  margin-bottom: 4px;
+}
+
 .placar-wrapper {
   margin-top: 20px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 16px;
 }
 
 .titulo-secao {
@@ -292,15 +352,14 @@ export default {
   margin-top: 20px;
   width: 100%;
   overflow-x: auto;
-  background: white;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .placar {
   width: 100%;
   min-width: 1000px;
   border-collapse: collapse;
+  font-size: 14px;
 }
 
 .placar thead th {
@@ -308,7 +367,6 @@ export default {
   color: white;
   font-weight: 600;
   padding: 14px 12px;
-  font-size: 15px;
   text-align: left;
   white-space: nowrap;
 }
@@ -385,6 +443,7 @@ export default {
   color: #152147;
 }
 
+/* Responsividade */
 @media (max-width: 768px) {
   .conteudo {
     margin-left: 0;
@@ -402,30 +461,28 @@ export default {
 
   .placar-wrapper {
     margin-top: 20px;
+    padding: 12px;
   }
 
   .placar-table {
     width: 100%;
     overflow-x: auto;
-    max-height: 55vh;           
-    border-radius: 10px;
+    max-height: 55vh;
   }
 
   .placar {
     width: 100%;
-    min-width: 0;               
+    min-width: 0;
   }
 
   .placar thead th {
     font-size: 13px;
     padding: 8px 6px;
-    white-space: nowrap;
   }
 
   .placar tbody td {
     font-size: 12px;
     padding: 6px 8px;
-    white-space: nowrap;
   }
 
   .time-info {

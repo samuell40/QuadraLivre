@@ -398,11 +398,13 @@ async function incrementarPlacar(placarId, incremento) {
   });
 }
 
-async function retornarPartidaEmAndamento(partidaId) {
+async function retornarPartida(partidaId) {
   const partida = await prisma.partida.findFirst({
     where: {
       id: Number(partidaId),
-      status: 'EM_ANDAMENTO',
+      status: {
+        in: ['EM_ANDAMENTO', 'FINALIZADA']
+      }
     },
     select: {
       id: true,
@@ -425,11 +427,15 @@ async function retornarPartidaEmAndamento(partidaId) {
       timeAId: true,
       timeBId: true,
       inicioPartida: true,
+      status: true,
       modalidade: true,
       quadra: true,
       timeA: true,
       timeB: true,
-      sets: { orderBy: { numero: 'asc' } },
+      sets: {
+        orderBy: { numero: 'asc' }
+      },
+
       jogadoresPartida: {
         include: {
           jogador: {
@@ -440,12 +446,47 @@ async function retornarPartidaEmAndamento(partidaId) {
           }
         }
       },
-      participantes: { include: { usuario: true, permissao: true } },
-      usuarioCriador: true,
+      participantes: {
+        include: { usuario: true, permissao: true }
+      },
+
+      usuarioCriador: true
     }
   });
-  partida.partidaIniciada = Boolean(partida.inicioPartida);
-  return partida;
+
+  return {
+    id: partida.id,
+    tempoSegundos: partida.tempoSegundos,
+    pontosTimeA: partida.pontosTimeA,
+    pontosTimeB: partida.pontosTimeB,
+    faltasTimeA: partida.faltasTimeA,
+    faltasTimeB: partida.faltasTimeB,
+    substituicoesTimeA: partida.substituicoesTimeA,
+    substituicoesTimeB: partida.substituicoesTimeB,
+    cartoesAmarelosTimeA: partida.cartoesAmarelosTimeA,
+    cartoesVermelhosTimeA: partida.cartoesVermelhosTimeA,
+    cartoesAmarelosTimeB: partida.cartoesAmarelosTimeB,
+    cartoesVermelhosTimeB: partida.cartoesVermelhosTimeB,
+    woTimeA: partida.woTimeA,
+    woTimeB: partida.woTimeB,
+    modalidadeId: partida.modalidadeId,
+    quadraId: partida.quadraId,
+    campeonatoId: partida.campeonatoId,
+    timeAId: partida.timeAId,
+    timeBId: partida.timeBId,
+    inicioPartida: partida.inicioPartida,
+    status: partida.status,
+    modalidade: partida.modalidade,
+    quadra: partida.quadra,
+    timeA: partida.timeA,
+    timeB: partida.timeB,
+    sets: partida.sets,
+    jogadoresPartida: partida.jogadoresPartida,
+    participantes: partida.participantes,
+    usuarioCriador: partida.usuarioCriador,
+    partidaIniciada: Boolean(partida.inicioPartida),
+    partidaFinalizada: partida.status === 'FINALIZADA'
+  };
 }
 
 async function vincularJogadorPartida(partidaId, jogadorId, timeId, stats = {}) {
@@ -704,7 +745,7 @@ async function substituirJogadorPartida(
     });
   }
 
-  // ➕ Incrementa substituições APENAS se for futebol
+  // Incrementa substituições APENAS se for futebol
   if (isFutebol) {
     const updateData =
       tipoTime === "A"
@@ -888,6 +929,32 @@ async function listarPartidasPorFaseRodada(campeonatoId) {
   }
 }
 
+function listarStatusPartida() {
+  return [
+    'EM_ANDAMENTO',
+    'FINALIZADA',
+    'CANCELADA'
+  ];
+}
+
+async function alterarStatusPartida(partidaId, novoStatus) {
+  const partida = await prisma.partida.findUnique({
+    where: { id: Number(partidaId) },
+    select: { id: true, status: true }
+  });
+
+  const dadosAtualizacao = {
+    status: novoStatus
+  };
+
+  const partidaAtualizada = await prisma.partida.update({
+    where: { id: partida.id },
+    data: dadosAtualizacao
+  });
+
+  return partidaAtualizada;
+}
+
 module.exports = {
   criarPartida,
   iniciarPartida,
@@ -896,7 +963,7 @@ module.exports = {
   excluirPartida,
   atualizarParcial,
   incrementarPlacar,
-  retornarPartidaEmAndamento,
+  retornarPartida,
   vincularJogadorPartida,
   listarJogadoresSelecionados,
   atualizarAtuacaoJogadorPartida,
@@ -904,5 +971,7 @@ module.exports = {
   getJogadoresForaDaPartida,
   removerJogadorDeCampo,
   detalharPartida,
-  listarPartidasPorFaseRodada
+  listarPartidasPorFaseRodada,
+  listarStatusPartida,
+  alterarStatusPartida
 };
