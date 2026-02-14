@@ -31,20 +31,8 @@
           </div>
         </div>
 
-        <div v-if="mostrarModalTipo" class="modal-overlay" @click.self="cancelarModalTipo">
-          <div class="modal-content">
-            <h2>Escolha a ação</h2>
-
-            <div class="tipo-campeonato-lista">
-              <button class="btn-tipo" @click="selecionarTipo('partida')">Adicionar Partida</button>
-              <button class="btn-tipo" @click="selecionarTipo('rodada')">Adicionar Rodada</button>
-            </div>
-
-            <div class="botoes">
-              <button type="button" class="btn-save" @click="cancelarModalTipo">Cancelar</button>
-            </div>
-          </div>
-        </div>
+        <ModalEscolhaTipo v-model="mostrarModalTipo" :campeonato-id="campeonatoSelecionado" @faseCriada="adicionarFase"
+          @rodadaCriada="adicionarRodada" />
 
         <!-- PARTIDAS -->
         <div class="partidas-wrapper">
@@ -127,7 +115,6 @@
         <div class="modal-content modal-status">
           <h2 class="titulo-modal-status">Alterar status da partida</h2>
 
-          <!-- LABEL -->
           <label class="label-status">Selecione o status</label>
 
           <select v-model="novoStatus" class="select-status-modal">
@@ -153,13 +140,14 @@
 <script>
 import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue';
 import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue';
+import ModalEscolhaTipo from '@/components/quadraplay/ModalEscolhaTipo.vue';
 import { carregarCampeonato } from '@/utils/persistirCampeonato';
 import api from '@/axios';
 import Swal from 'sweetalert2';
 
 export default {
   name: 'GerenciarPartidaView',
-  components: { SidebarCampeonato, NavBarQuadras },
+  components: { SidebarCampeonato, NavBarQuadras, ModalEscolhaTipo },
 
   data() {
     return {
@@ -198,7 +186,6 @@ export default {
   methods: {
     abrirModalTipo() {
       this.mostrarModalTipo = true;
-      this.abrirMenuAdd = false;
     },
     cancelarModalTipo() {
       this.mostrarModalTipo = false;
@@ -211,10 +198,6 @@ export default {
       } else if (tipo === 'rodada') {
         this.adicionarRodada();
       }
-    },
-    adicionarRodada() {
-      this.abrirMenuAdd = false;
-      Swal.fire('Adicionar Rodada', 'Aqui você pode adicionar uma nova rodada.', 'info');
     },
     classeStatusPartida(partida) {
       switch (partida.status) {
@@ -454,10 +437,27 @@ export default {
         console.error(error);
         Swal.fire('Erro', 'Não foi possível alterar o status.', 'error');
       }
+    },
+    adicionarFase(novaFase) {
+      this.fases.push(novaFase);
+      this.faseSelecionada = novaFase.id;
+      this.rodadas = novaFase.rodadas || [];
+      this.rodadaSelecionada = this.rodadas.length ? this.rodadas[0].id : '';
+      this.filtrarPartidasPorRodada();
+    },
+
+    adicionarRodada(novaRodada) {
+      const fase = this.fases.find(f => f.id === novaRodada.faseId);
+      if (!fase) return;
+      fase.rodadas.push(novaRodada);
+      this.rodadas = fase.rodadas;
+      this.rodadaSelecionada = novaRodada.id;
+
+      this.filtrarPartidasPorRodada();
     }
   }
 }
-</script>
+</script> 
 
 <style scoped>
 .layout {

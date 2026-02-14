@@ -23,7 +23,8 @@
       <form @submit.prevent="abrirModalTimes">
         <div class="form-group">
           <label for="nomeCampeonato">Nome do Campeonato</label>
-          <input type="text" id="nomeCampeonato" v-model="nomeCampeonato" required />
+          <input type="text" id="nomeCampeonato" v-model="nomeCampeonato" placeholder="Ex: Campeonato de Futebol"
+            required />
         </div>
 
         <div class="form-row">
@@ -92,10 +93,15 @@
       <div class="lista-times">
         <div v-for="time in times" :key="time.id" class="time-card"
           :class="{ selecionado: timesSelecionados.includes(time.id) }" @click="toggleTime(time.id)">
-          <div class="time-info">
-            <h3>{{ time.nome }}</h3>
-            <span>{{ time._count?.jogadores || 0 }} jogadores</span>
+
+          <div class="time-card-top">
+            <div class="time-foto" v-if="time.foto">
+              <img :src="time.foto" :alt="time.nome" />
+            </div>
+            <h3 class="time-nome">{{ time.nome }}</h3>
           </div>
+
+          <span>{{ time._count?.jogadores }} jogadores</span>
         </div>
       </div>
 
@@ -289,7 +295,7 @@ export default {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -302,19 +308,20 @@ export default {
   border-radius: 10px;
   width: 900px;
   max-width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .modal-content h2 {
   margin-bottom: 20px;
   color: #3b82f6;
+  font-weight: bold;
 }
 
 .tipo-campeonato-lista {
   display: flex;
   flex-direction: column;
-  /* Coloca os botões um abaixo do outro */
   gap: 12px;
-  /* Espaçamento entre os botões */
   margin-bottom: 20px;
 }
 
@@ -331,28 +338,6 @@ export default {
 .btn-tipo:hover {
   background-color: #3b82f6;
   color: #fff;
-}
-
-.form-group {
-  margin-bottom: 16px;
-}
-
-input,
-select {
-  width: 100%;
-  padding: 10px;
-  font-size: 16px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-.form-row {
-  display: flex;
-  gap: 16px;
-}
-
-.form-row .form-group {
-  flex: 1;
 }
 
 .botoes {
@@ -380,59 +365,26 @@ select {
   background-color: #7e7e7e;
 }
 
-.select-all {
-  margin-bottom: 10px;
-  font-size: 14px;
+.form-group {
+  margin-bottom: 16px;
 }
 
-.select-all label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.select-all input[type="checkbox"] {
-  margin: 0;
-}
-
-.horarios {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-  gap: 8px;
-}
-
-.horarios button {
-  height: 40px;
-  font-size: 14px;
-  border: 1px solid #1E3A8A;
+input,
+select {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
   border-radius: 6px;
-  background-color: #fff;
-  cursor: pointer;
+  border: 1px solid #ccc;
 }
 
-.horarios button:hover {
-  background-color: #3b82f6;
-  color: #fff;
-}
-
-.horarios button.selecionado {
-  background-color: #1E3A8A;
-  color: #fff;
-}
-
-.dias {
+.form-row {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 5px;
+  gap: 16px;
 }
 
-.dia-label {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+.form-row .form-group {
+  flex: 1;
 }
 
 .texto-ajuda {
@@ -442,36 +394,24 @@ select {
   color: #6b7280;
 }
 
-/* ===== MODAL DE TIMES ===== */
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
 .modal-times {
-  background: white;
+  display: flex;
+  flex-direction: column;
   padding: 24px 32px;
   border-radius: 12px;
   width: 900px;
   max-width: 95%;
   max-height: 90vh;
-
-  display: flex;
-  flex-direction: column;
+  background-color: #fff;
+  overflow-y: hidden;
 }
 
 .modal-times h2 {
   margin-bottom: 12px;
   color: #3b82f6;
+  font-weight: bold;
 }
 
-/* contador fixo */
 .contador {
   font-size: 16px;
   font-weight: 600;
@@ -485,12 +425,10 @@ select {
   border-bottom: 1px solid #e5e7eb;
 }
 
-/* lista com scroll */
 .lista-times {
   flex: 1;
   overflow-y: auto;
   margin: 16px 0;
-
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 14px;
@@ -505,14 +443,16 @@ select {
   border-radius: 10px;
 }
 
-/* card do time */
 .time-card {
   border: 1px solid #3b82f6;
   border-radius: 8px;
-  padding: 14px 16px;
+  padding: 12px 16px;
   cursor: pointer;
   transition: 0.2s;
   background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .time-card:hover {
@@ -525,9 +465,28 @@ select {
   border-color: #1e40af;
 }
 
-.time-info h3 {
+.time-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.time-foto {
+  width: 50px;
+  height: 50px;
+}
+
+.time-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid #3b82f6;
+}
+
+.time-nome {
   font-size: 16px;
-  margin-bottom: 4px;
+  font-weight: bold;
 }
 
 .time-info span {
@@ -535,7 +494,6 @@ select {
   opacity: 0.9;
 }
 
-/* responsivo */
 @media (max-width: 768px) {
   .lista-times {
     grid-template-columns: 1fr;
