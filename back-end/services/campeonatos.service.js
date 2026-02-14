@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 async function criarCampeonato(data) {
   const {
     nome,
-    tipo, 
+    tipo,
     dataInicio,
     dataFim,
     status,
@@ -24,6 +24,7 @@ async function criarCampeonato(data) {
 
   return await prisma.$transaction(async (tx) => {
 
+    // Lógica para remover agendamentos conflitantes
     if (listaDatasReais.length > 0) {
       const conflitos = await tx.agendamento.findMany({
         where: {
@@ -34,9 +35,7 @@ async function criarCampeonato(data) {
 
       if (conflitos.length > 0) {
         await tx.agendamento.deleteMany({
-          where: {
-            id: { in: conflitos.map(c => c.id) }
-          }
+          where: { id: { in: conflitos.map(c => c.id) } }
         });
       }
     }
@@ -55,10 +54,11 @@ async function criarCampeonato(data) {
       duracao: 1
     }));
 
+    // Cria o campeonato
     const campeonato = await tx.campeonato.create({
       data: {
         nome,
-        tipo, 
+        tipo,
         foto,
         dataInicio: new Date(dataInicio),
         dataFim: new Date(dataFim),
@@ -66,19 +66,10 @@ async function criarCampeonato(data) {
         modalidadeId: Number(modalidadeId),
         quadraId: Number(quadraId),
         times: {
-          create: timesArray.map(timeId => ({
-            timeId: Number(timeId)
-          }))
+          create: timesArray.map(timeId => ({ timeId: Number(timeId) }))
         },
-        agendamentos: {
-          create: agendamentosParaCriar
-        },
-        
-        placares: {
-          create: timesArray.map(timeId => ({
-            timeId: Number(timeId)
-          }))
-        }
+        agendamentos: { create: agendamentosParaCriar },
+        placares: { create: timesArray.map(timeId => ({ timeId: Number(timeId) })) }
       },
       include: {
         modalidade: true,
@@ -88,6 +79,30 @@ async function criarCampeonato(data) {
         placares: true
       }
     });
+
+    // Se for campeonato de pontos corridos, criar fase e rodada
+    if (tipo === "PONTOS_CORRIDOS") {
+      const fase = await tx.fase.create({
+        data: {
+          nome: "Fase Única",
+          campeonatoId: campeonato.id
+        }
+      });
+
+      // Cria a primeira rodada associada à fase
+      await tx.rodada.create({
+        data: {
+          nome: "Rodada 1",
+          faseId: fase.id
+        }
+      });
+
+      // Atualiza os placares para vincular à fase criada
+      await tx.placar.updateMany({
+        where: { campeonatoId: campeonato.id },
+        data: { faseId: fase.id }
+      });
+    }
 
     return campeonato;
   });
@@ -264,4 +279,73 @@ async function getCampeonatoById(id) {
     throw err;
   }
 }
-module.exports = { criarCampeonato, removerCampeonato, listarCampeonatosPorModalidade, listarCampeonatosAnoAtual, listarArtilhariaCampeonato, getCampeonatoById };
+
+async function listarPlacarPorFase(campeonatoId) {
+  if (!campeonatoId) throw new Error("campeonatoId é obrigatório");
+
+  // Busca todas as fases do campeonato
+  const fases = await prisma.fase.findMany({
+    where: { campeonatoId: Number(campeonatoId), ativo: true },
+    orderBy: { id: 'asc' },
+    include: {
+      placares: {
+        where: { visivel: true, deletedAt: null },
+        include: { time: true },
+        orderBy: { posicao: 'asc' }
+      }
+    }
+  });
+
+  // Retorna cada fase com seus placares
+  return fases.map(fase => ({
+    faseId: fase.id,
+    nomeFase: fase.nome,
+    placares: fase.placares
+  }));
+}
+
+async function listarFasesERodadas(campeonatoId) {
+  if (!campeonatoId) {
+    throw new Error("campeonatoId é obrigatório");
+  }
+
+  const fases = await prisma.fase.findMany({
+    where: { campeonatoId: Number(campeonatoId), ativo: true },
+    orderBy: { id: "asc" },
+    include: {
+      rodadas: {
+        orderBy: { id: "asc" }
+      }
+    }
+  });
+
+  return fases;
+}
+
+ async function criarFase(campeonatoId, nome, dataInicio = null, dataFim = null) {
+  try {
+    const campeonato = await prisma.campeonato.findUnique({
+      where: { id: campeonatoId },
+    });
+
+    if (!campeonato) {
+      throw new Error('Campeonato não encontrado');
+    }
+
+    const fase = await prisma.fase.create({
+      data: {
+        nome,
+        campeonatoId,
+        dataInicio,
+        dataFim,
+        ativo: true,
+      },
+    });
+
+    return fase;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+}
+
+module.exports = { criarCampeonato, removerCampeonato, listarCampeonatosPorModalidade, listarCampeonatosAnoAtual, listarArtilhariaCampeonato, getCampeonatoById, listarPlacarPorFase, listarFasesERodadas, criarFase};

@@ -77,7 +77,7 @@ model Agendamento {
   codigoVerificacao String?         @unique
   motivoRecusa      String?
   deletedAt         DateTime?
-  fixo                 Boolean          @default(false)
+  fixo              Boolean         @default(false)
   usuario           Usuario?        @relation(fields: [usuarioId], references: [id])
   quadra            Quadra?         @relation(fields: [quadraId], references: [id])
   modalidade        Modalidade?     @relation("AgendamentoModalidade", fields: [modalidadeId], references: [id])
@@ -145,14 +145,25 @@ model Fase {
   id           Int        @id @default(autoincrement())
   nome         String
   campeonatoId Int
-  rodada       Int
   dataInicio   DateTime?
   dataFim      DateTime?
   ativo        Boolean    @default(true)
   deletedAt    DateTime?
   campeonato   Campeonato @relation(fields: [campeonatoId], references: [id])
-  partidas     Partida[]
+  rodadas      Rodada[]
   placares     Placar[]
+  partidas     Partida[]
+}
+
+model Rodada {
+  id       Int       @id @default(autoincrement())
+  nome     String
+  faseId   Int
+  ativo    Boolean   @default(true)
+  fase     Fase      @relation(fields: [faseId], references: [id])
+  partidas Partida[]
+
+  @@unique([faseId, nome])
 }
 
 model Time {
@@ -188,12 +199,14 @@ model Partida {
   status                StatusPartida    @default(AGENDADA)
   campeonatoId          Int?
   faseId                Int?
+  rodadaId              Int?
   modalidadeId          Int
   quadraId              Int?
   timeAId               Int
   timeBId               Int
   campeonato            Campeonato?      @relation(fields: [campeonatoId], references: [id])
   fase                  Fase?            @relation(fields: [faseId], references: [id])
+  rodada                Rodada?          @relation(fields: [rodadaId], references: [id])
   modalidade            Modalidade       @relation(fields: [modalidadeId], references: [id])
   quadra                Quadra?          @relation(fields: [quadraId], references: [id])
   timeA                 Time             @relation("TimeAPartidas", fields: [timeAId], references: [id])

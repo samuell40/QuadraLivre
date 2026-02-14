@@ -110,50 +110,6 @@ async function incrementarPlacarController(req, res) {
   }
 }
 
-async function listarPartidaAndamentoController(req, res) {
-  try {
-    const { modalidadeId, campeonatoId } = req.params;
-
-    if (!modalidadeId) {
-      return res.status(400).json({ error: 'modalidadeId é obrigatório' });
-    }
-
-    const partidas_ativas = await partidas.listarPartidasemAndamento(
-      modalidadeId,
-      campeonatoId
-    );
-
-    res.json(partidas_ativas);
-  } catch (error) {
-    console.error('Erro ao listar partidas ativas:', error);
-    res.status(500).json({ error: 'Erro ao listar partidas ativas' });
-  }
-}
-
-async function listarPartidasEncerradasController(req, res) {
-  try {
-    const { modalidadeId, campeonatoId } = req.params
-
-    if (!modalidadeId || !campeonatoId) {
-      return res.status(400).json({
-        error: 'modalidadeId e campeonatoId são obrigatórios'
-      })
-    }
-
-    const partidas_encerradas = await partidas.listarPartidasEncerradas(
-      modalidadeId,
-      campeonatoId
-    )
-
-    res.json(partidas_encerradas)
-  } catch (error) {
-    console.error('Erro ao listar partidas encerradas:', error)
-    res.status(500).json({
-      error: 'Erro ao listar partidas encerradas'
-    })
-  }
-}
-
 async function retornarPartidaEmAndamentoController(req, res) {
   try {
     const { id } = req.params; 
@@ -303,6 +259,23 @@ async function detalharPartidaController(req, res) {
   }
 }
 
+async function listarPartidasPorFaseRodadaController(req, res) {
+  const { campeonatoId } = req.params;
+
+  if (!campeonatoId) {
+    return res.status(400).json({ message: "O ID do campeonato é obrigatório." });
+  }
+
+  try {
+    const fases = await partidas.listarPartidasPorFaseRodada(Number(campeonatoId));
+    return res.json(fases);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Erro ao listar partidas." });
+  }
+}
+
+
 module.exports = {
   criarPartidaController,
   iniciarPartidaController,
@@ -310,8 +283,6 @@ module.exports = {
   excluirPartidaController,
   atualizarParcialController,
   incrementarPlacarController,
-  listarPartidaAndamentoController,
-  listarPartidasEncerradasController,
   retornarPartidaEmAndamentoController,
   adicionarJogadorPartidaController,
   listarJogadoresSelecionadosController,
@@ -319,5 +290,6 @@ module.exports = {
   substituirJogadorController,
   getJogadoresForaDaPartidaController,
   removerJogadorDeCampoController,
-  detalharPartidaController
+  detalharPartidaController,
+  listarPartidasPorFaseRodadaController
 };

@@ -398,103 +398,6 @@ async function incrementarPlacar(placarId, incremento) {
   });
 }
 
-async function listarPartidasemAndamento(modalidadeId, campeonatoId) {
-  const where = {
-    status: 'EM_ANDAMENTO',
-    modalidadeId: Number(modalidadeId),
-  };
-
-  if (campeonatoId) {
-    where.campeonatoId = Number(campeonatoId);
-  }
-
-  return prisma.partida.findMany({
-    where,
-    orderBy: {
-      data: 'desc',
-    },
-    include: {
-      modalidade: { select: { id: true, nome: true } },
-      campeonato: { select: { id: true, nome: true } },
-      quadra: { select: { id: true, nome: true, foto: true } },
-
-      usuarioCriador: {
-        select: {
-          id: true,
-          nome: true,
-          foto: true
-        }
-      },
-
-      timeA: { select: { id: true, nome: true, foto: true } },
-      timeB: { select: { id: true, nome: true, foto: true } },
-
-      jogadoresPartida: {
-        include: {
-          jogador: { select: { id: true, nome: true, foto: true } },
-        },
-      },
-      participantes: {
-        include: {
-          usuario: { select: { id: true, nome: true, foto: true } },
-        },
-      },
-    },
-  });
-}
-
-async function listarPartidasEncerradas(modalidadeId, campeonatoId) {
-  return prisma.partida.findMany({
-    where: {
-      status: "FINALIZADA",
-      modalidadeId: Number(modalidadeId),
-      campeonatoId: Number(campeonatoId),
-    },
-    orderBy: {
-      data: 'desc',
-    },
-    include: {
-      modalidade: {
-        select: { id: true, nome: true },
-      },
-      campeonato: {
-        select: { id: true, nome: true },
-      },
-      quadra: {
-        select: { id: true, nome: true },
-      },
-      usuarioCriador: {
-        select: {
-          id: true,
-          nome: true,
-          foto: true
-        }
-      },
-
-      timeA: {
-        select: { id: true, nome: true, foto: true },
-      },
-      timeB: {
-        select: { id: true, nome: true, foto: true },
-      },
-      jogadoresPartida: {
-        include: {
-          jogador: {
-            select: { id: true, nome: true, foto: true },
-          },
-        },
-      },
-      participantes: {
-        include: {
-          usuario: {
-            select: { id: true, nome: true, foto: true },
-          },
-        },
-      },
-    },
-  })
-}
-
 async function retornarPartidaEmAndamento(partidaId) {
   const partida = await prisma.partida.findFirst({
     where: {
@@ -951,6 +854,40 @@ async function detalharPartida(partidaId) {
   return partida
 }
 
+async function listarPartidasPorFaseRodada(campeonatoId) {
+  try {
+    const fases = await prisma.fase.findMany({
+      where: {
+        campeonatoId,
+        ativo: true
+      },
+      include: {
+        rodadas: {
+          where: { ativo: true },
+          include: {
+            partidas: {
+              include: {
+                timeA: true,
+                timeB: true,
+                quadra: true,
+                usuarioCriador: true
+              },
+              orderBy: { data: 'asc' }
+            }
+          },
+          orderBy: { id: 'asc' }
+        }
+      },
+      orderBy: { id: 'asc' }
+    });
+
+    return fases;
+  } catch (error) {
+    console.error("Erro ao listar partidas por fase e rodada:", error);
+    throw new Error("Não foi possível listar as partidas");
+  }
+}
+
 module.exports = {
   criarPartida,
   iniciarPartida,
@@ -959,8 +896,6 @@ module.exports = {
   excluirPartida,
   atualizarParcial,
   incrementarPlacar,
-  listarPartidasemAndamento,
-  listarPartidasEncerradas,
   retornarPartidaEmAndamento,
   vincularJogadorPartida,
   listarJogadoresSelecionados,
@@ -968,5 +903,6 @@ module.exports = {
   substituirJogadorPartida,
   getJogadoresForaDaPartida,
   removerJogadorDeCampo,
-  detalharPartida
+  detalharPartida,
+  listarPartidasPorFaseRodada
 };
