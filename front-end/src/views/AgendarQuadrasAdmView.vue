@@ -153,27 +153,68 @@ export default {
 
       if (agendamentoDoModal.lote && Array.isArray(agendamentoDoModal.lote)) {
 
+        const loteFormatado = agendamentoDoModal.lote.map(item => ({
+          ...item,
+          usuarioId: authStore.usuario.id,
+          quadraId: this.quadraSelecionada.id,
+          ignorarRegra: forcarAgendamento,
+          status: statusAutomatico
+        }));
+
         Swal.fire({
           title: 'Processando...',
-          html: 'Gerando agendamentos fixos...<br>Isso pode levar alguns segundos.',
+          html: 'Gerando agendamentos...<br>Isso pode levar alguns segundos.',
           allowOutsideClick: false,
           didOpen: () => Swal.showLoading()
         });
 
+        if (agendamentoDoModal.fixo) {
+          try {
+            await api.post('/agendamentos/fixos', {
+              lote: loteFormatado,
+              usuarioId: authStore.usuario.id
+            });
+
+            Swal.close();
+            Swal.fire({
+              icon: 'success',
+              title: 'Agenda Atualizada!',
+              text: 'Os horários fixos foram atualizados com sucesso.',
+              confirmButtonColor: '#1E3A8A',
+              timer: 3000
+            });
+
+            this.mostrarModalAgendamento = false;
+
+          } catch (err) {
+            Swal.close();
+            const msgErro = err.response?.data?.message || err.response?.data?.error || 'Erro ao processar agendamentos fixos.';
+
+            if (err.response?.status === 409) {
+              Swal.fire({
+                icon: 'error',
+                title: 'Conflito de Horário',
+                text: 'Existe um agendamento avulso ou bloqueio impedindo um desses horários.',
+                confirmButtonColor: '#1E3A8A'
+              });
+            } else {
+              Swal.fire({
+                icon: 'error',
+                title: 'Erro',
+                text: msgErro,
+                confirmButtonColor: '#1E3A8A'
+              });
+            }
+          }
+          return;
+        }
+
         let sucessos = 0;
         let erros = 0;
 
-        for (const item of agendamentoDoModal.lote) {
-          const payload = {
-            ...item,
-            usuarioId: authStore.usuario.id,
-            quadraId: this.quadraSelecionada.id,
-            ignorarRegra: forcarAgendamento,
-            status: statusAutomatico
-          };
-
+        for (const item of loteFormatado) {
           try {
-            await api.post('/agendamento', payload);
+            await api.post('/agendamento', item);
             sucessos++;
           } catch (err) {
             console.error('Erro no item do lote:', err);
@@ -187,7 +228,7 @@ export default {
           Swal.fire({
             icon: 'success',
             title: 'Sucesso Total!',
-            text: `${sucessos} agendamentos fixos criados.`,
+            text: `${sucessos} agendamentos criados.`,
             confirmButtonColor: '#1E3A8A',
             timer: 3000
           });

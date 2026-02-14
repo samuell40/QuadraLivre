@@ -68,11 +68,12 @@
 
 <script>
 import { ref, onMounted } from "vue";
-import { startOfWeek, addDays, format } from "date-fns";
+import { startOfWeek, addDays, format, differenceInCalendarDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import api from "@/axios";
+import { useAuthStore } from "@/store";
 import SideBar from "@/components/SideBar.vue";
 import NavBarUse from '@/components/NavBarUser.vue'
 import DetalheAgendModal from "@/components/modals/Agendamentos/DetalharAgendModal.vue";
@@ -82,6 +83,7 @@ export default {
   name: "HorariosView",
   components: { SideBar, NavBarUse, DetalheAgendModal },
   setup() {
+    const authStore = useAuthStore();
     const quadras = ref([]);
     const quadraSelecionada = ref(null);
     const agenda = ref({});
@@ -100,8 +102,7 @@ export default {
 
     const horarios = Array.from({ length: 17 }).map((_, i) => {
       const inicio = 7 + i;
-      const fim = (inicio + 1) % 24; 
-      
+      const fim = (inicio + 1) % 24;
       return `${String(inicio).padStart(2, "0")}:00 - ${String(fim).padStart(2, "0")}:00`;
     });
 
@@ -109,8 +110,18 @@ export default {
       try {
         const { data } = await api.get("/quadra");
         quadras.value = data;
+
         if (data.length > 0) {
-          quadraSelecionada.value = data[0].id;
+          const usuarioQuadraId = authStore.usuario?.quadraId;
+
+          const quadraDoUsuario = data.find(q => q.id === usuarioQuadraId);
+
+          if (quadraDoUsuario) {
+            quadraSelecionada.value = quadraDoUsuario.id;
+          } else {
+            quadraSelecionada.value = data[0].id;
+          }
+
           buscarHorarios();
         }
       } catch (error) {
@@ -121,23 +132,31 @@ export default {
     const buscarHorarios = async () => {
       if (!quadraSelecionada.value) return;
       isLoading.value = true;
+
       try {
         const { data } = await api.get(
           `/agendamentos/quadra/${quadraSelecionada.value}/confirmados/semana`
         );
-        console.log("DADOS RECEBIDOS:", data);
+
         const novaAgenda = {};
+
         data
           .filter(a => a.status === 'Confirmado' || a.status === 'confirmado')
           .forEach(a => {
             const dataAgendamento = new Date(a.ano, a.mes - 1, a.dia);
-            const diffDias = Math.floor(
-              (dataAgendamento - inicioSemana) / (1000 * 60 * 60 * 24)
-            );
+            const diffDias = differenceInCalendarDays(dataAgendamento, inicioSemana);
+
             if (diffDias >= 0 && diffDias < 7) {
               for (let i = 0; i < (a.duracao ?? 1); i++) {
                 const horaInicio = a.hora + i;
-                const chave = `${diffDias}-${String(horaInicio).padStart(2, '0')}:00 - ${String(horaInicio + 1).padStart(2, '0')}:00`;
+                const horaFim = (horaInicio + 1) % 24;
+
+                const strInicio = String(horaInicio).padStart(2, '0');
+                const strFim = String(horaFim).padStart(2, '0');
+                const faixaHoraria = `${strInicio}:00 - ${strFim}:00`;
+
+                const chave = `${diffDias}-${faixaHoraria}`;
+
                 novaAgenda[chave] = {
                   ...a,
                   time: a.time?.nome || null,
@@ -146,7 +165,9 @@ export default {
               }
             }
           });
+
         agenda.value = novaAgenda;
+
       } catch (err) {
         console.error("Erro ao carregar horários", err);
       } finally {
@@ -154,32 +175,37 @@ export default {
       }
     };
 
-    const gerarPDF = async () => { 
-      const doc = new jsPDF('l', 'mm', 'a4'); 
+    const gerarPDF = async () => {
+      const doc = new jsPDF('l', 'mm', 'a4');
       const nomeQuadra = quadras.value.find(q => q.id === quadraSelecionada.value)?.nome || 'Quadra';
       const corPrimaria = [30, 58, 138];
 
       doc.setFillColor(...corPrimaria);
-      doc.rect(0, 0, 297, 25, 'F'); 
+      doc.rect(0, 0, 297, 25, 'F');
 
       const img = new Image();
       img.src = logoImg;
-      await new Promise((resolve) => {
-        img.onload = () => {
-          doc.addImage(img, 'PNG', 15, 6, 13, 13); 
-          resolve();
-        };
-      });
+      try {
+        await new Promise((resolve) => {
+          img.onload = () => {
+            doc.addImage(img, 'PNG', 15, 6, 13, 13);
+            resolve();
+          };
+          img.onerror = resolve;
+        });
+      } catch (e) {
+        console.warn("Logo não carregada para o PDF");
+      }
 
       doc.setFontSize(16);
-      doc.setTextColor(255, 255, 255); 
+      doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
       doc.text("QuadraLivre", 32, 15);
 
       doc.setTextColor(...corPrimaria);
       doc.setFontSize(14);
       doc.text(`Relatório Semanal - ${nomeQuadra}`, 14, 33);
-      
+
       doc.setFontSize(10);
       doc.setTextColor(100);
       doc.setFont("helvetica", "normal");
@@ -199,7 +225,7 @@ export default {
       autoTable(doc, {
         head: head,
         body: body,
-        startY: 43, 
+        startY: 43,
         theme: 'grid',
         margin: { top: 10, bottom: 10, left: 14, right: 14 },
         styles: { fontSize: 8, cellPadding: 2, halign: 'center', valign: 'middle' },
@@ -261,12 +287,10 @@ export default {
   margin-bottom: 20px;
 }
 
-/* Novo Container para alinhar Select e Botão */
 .controles-topo {
   display: flex;
   gap: 10px;
   align-items: center;
-  /* Centraliza verticalmente */
 }
 
 .title {
@@ -283,13 +307,11 @@ export default {
   padding: 0 10px;
   font-size: 14px;
   height: 45px;
-  /* Altura fixa */
   background-color: white;
 }
 
 .btn-pdf {
   background-color: #3B82F6;
-  /* Azul */
   color: white;
   border: none;
   border-radius: 6px;
@@ -297,16 +319,13 @@ export default {
   cursor: pointer;
   transition: background 0.2s;
 
-  /* Flexbox para ícone e texto */
   display: flex;
   align-items: center;
   gap: 8px;
 
-  /* Dimensões fixas para alinhar com o select */
   height: 45px;
   padding: 0 20px;
   white-space: nowrap;
-  /* Não quebra linha */
 }
 
 .btn-pdf:hover {

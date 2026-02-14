@@ -536,6 +536,62 @@ const recusarAgendamentosVencidos = async () => {
   }
 };
 
+const atualizarAgendamentosFixosService = async (agendamentos, usuarioId) => {
+  if (!agendamentos || agendamentos.length === 0) {
+    throw { status: 400, message: "Lista de agendamentos vazia." };
+  }
+
+  const primeiro = agendamentos[0];
+  const timeId = primeiro.timeId;
+  const anoRef = primeiro.ano;
+  const mesRef = primeiro.mes;
+  const diaRef = primeiro.dia;
+
+  if (!timeId) {
+    throw { status: 400, message: "Time não identificado para agendamento fixo." };
+  }
+
+  await prisma.agendamento.deleteMany({
+    where: {
+      timeId: Number(timeId),
+      fixo: true,
+      status: { in: ['Pendente', 'Confirmado'] },
+      OR: [
+        { ano: { gt: anoRef } },
+        { ano: anoRef, mes: { gt: mesRef } },
+        { ano: anoRef, mes: mesRef, dia: { gte: diaRef } }
+      ]
+    }
+  });
+
+  const resultados = [];
+  
+  for (const ag of agendamentos) {
+    try {
+      const criado = await criarAgendamentoService({
+        usuarioId: usuarioId,
+        dia: ag.dia,
+        mes: ag.mes,
+        ano: ag.ano,
+        hora: ag.hora,
+        duracao: ag.duracao,
+        tipo: ag.tipo,
+        quadraId: ag.quadraId,
+        modalidadeId: ag.modalidadeId,
+        timeId: ag.timeId,
+        fixo: true,
+        ignorarRegra: true,
+        status: "Confirmado"
+      });
+      resultados.push(criado);
+    } catch (error) {
+      throw error; 
+    }
+  }
+
+  return resultados;
+};
+
 module.exports = {
   criarAgendamentoService,
   listarAgendamentosService,
@@ -545,6 +601,7 @@ module.exports = {
   listarAgendamentosConfirmadosService,
   listarAgendamentosConfirmadosSemanaService,
   atualizarAgendamentoService,
+  atualizarAgendamentosFixosService,
   listarModalidadesPorQuadraService,
   listarAgendamentosPorTimeService,
   recusarAgendamentosVencidos

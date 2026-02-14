@@ -7,6 +7,7 @@ const {
   listarAgendamentosConfirmadosSemanaService,
   cancelarAgendamentoService,
   atualizarAgendamentoService,
+  atualizarAgendamentosFixosService,
   listarModalidadesPorQuadraService,
   listarAgendamentosPorTimeService,
 } = require("../services/agendamento.service");
@@ -60,6 +61,31 @@ const criarAgendamentoController = async (req, res) => {
     return res
       .status(err.status || 500)
       .json({ error: err.message || "Erro ao criar agendamento." });
+  }
+};
+
+const atualizarAgendamentosFixosController = async (req, res) => {
+  try {
+    const usuarioId = req.user?.id || req.body.usuarioId;
+    const { lote } = req.body;
+
+    const listaAgendamentos = Array.isArray(req.body) ? req.body : lote;
+
+    if (!usuarioId) {
+      return res.status(400).json({ error: "Usuário não informado." });
+    }
+
+    const resultados = await atualizarAgendamentosFixosService(
+      listaAgendamentos,
+      usuarioId,
+    );
+
+    return res.status(201).json(resultados);
+  } catch (err) {
+    console.error("Erro ao criar agendamentos em lote:", err);
+    return res
+      .status(err.status || 500)
+      .json({ error: err.message || "Erro ao processar agendamentos fixos." });
   }
 };
 
@@ -138,11 +164,9 @@ const listarAgendamentosConfirmadosController = async (req, res) => {
 
     res.json(agendamentos);
   } catch (err) {
-    res
-      .status(err.status || 500)
-      .json({
-        message: err.message || "Erro ao listar agendamentos confirmados",
-      });
+    res.status(err.status || 500).json({
+      message: err.message || "Erro ao listar agendamentos confirmados",
+    });
   }
 };
 
@@ -244,6 +268,7 @@ const listarAgendamentosPorTimeController = async (req, res) => {
 
 module.exports = {
   criarAgendamentoController,
+  atualizarAgendamentosFixosController,
   listarAgendamentosController,
   listarTodosAgendamentosController,
   listarAgendamentosAdminController,
