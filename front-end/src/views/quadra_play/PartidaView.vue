@@ -6,49 +6,7 @@
     <div class="conteudo">
       <NavBarUser v-if="!partidaIniciada" />
       <div class="header">
-        <h1 class="title">
-          {{ partidaIniciada ? 'Registro Partida' : 'Criar Partida' }}
-          <span v-if="nomeModalidade">
-            ({{ nomeModalidade }})
-          </span>
-        </h1>
-      </div>
-
-      <p v-if="!partidaIniciada" class="texto-instrucao">
-        Para iniciar uma partida, selecione o time A e o time B, clinque em
-        <strong>“Continuar”</strong> para abrir o modal de seleção dos jogadores da partida.
-      </p>
-
-      <div class="dropdowns" v-if="!partidaIniciada">
-        <div class="dropdown-row">
-          <div class="team">
-            <label>Time 1:</label>
-            <select v-model="timeSelecionado1" class="dropdown" @change="carregarJogadoresPorTime('time1')"
-              :disabled="!campeonatoSelecionado || partidaIniciada">
-              <option disabled value="">Selecione um time</option>
-              <option v-for="t in timesDisponiveisTime1" :key="t.id" :value="t.id">
-                {{ t.nome }}
-              </option>
-            </select>
-          </div>
-
-          <div class="team">
-            <label>Time 2:</label>
-            <select v-model="timeSelecionado2" class="dropdown" @change="carregarJogadoresPorTime('time2')"
-              :disabled="!campeonatoSelecionado || partidaIniciada">
-              <option disabled value="">Selecione um time</option>
-              <option v-for="t in timesDisponiveisTime2" :key="t.id" :value="t.id">
-                {{ t.nome }}
-              </option>
-            </select>
-          </div>
-        </div>
-        <div v-if="!partidaIniciada" class="continuar-container">
-          <button class="botao-continuar" :disabled="!podeContinuar" @click="abrirModalJogadores">
-            Continuar
-          </button>
-        </div>
-
+        <h1 class="title"> Registro Partida <span v-if="nomeModalidade">({{ nomeModalidade }})</span></h1>
       </div>
 
       <div class="placares" v-if="partidaIniciada">
@@ -152,7 +110,6 @@ export default {
       temporizadorAtivo: false,
       tempoSegundos: 0,
       intervaloTimer: null,
-      mostrarPlacar: false,
       partidaId: null
     }
   },
@@ -165,27 +122,7 @@ export default {
     usuarioLogadoId() {
       return this.authStore.usuario?.id || null
     },
-    minutos() {
-      const min = Math.floor(this.tempoSegundos / 60)
-      return String(min).padStart(2, '0')
-    },
-
-    segundos() {
-      const seg = this.tempoSegundos % 60
-      return String(seg).padStart(2, '0')
-    },
-
-    timesDisponiveisTime1() {
-      return this.times.filter(
-        t => t.id !== Number(this.timeSelecionado2)
-      )
-    },
-
-    timesDisponiveisTime2() {
-      return this.times.filter(
-        t => t.id !== Number(this.timeSelecionado1)
-      )
-    },
+ 
     isVolei() {
       const modalidade = this.modalidadesDisponiveis.find(
         m => m.id === this.modalidadeSelecionada
@@ -209,15 +146,7 @@ export default {
       return this.times.find(
         t => t.id === this.timeSelecionado2)?.nome
     },
-    podeContinuar() {
-      return (
-        this.quadraSelecionada &&
-        this.modalidadeSelecionada &&
-        this.campeonatoSelecionado &&
-        this.timeSelecionado1 &&
-        this.timeSelecionado2
-      )
-    },
+
     regraModalidade() {
       const regras = {
         futebol: { porTime: 11, total: 22 },
@@ -390,19 +319,6 @@ export default {
       }
     },
 
-    componentePlacar() {
-      const modalidade = this.modalidadesDisponiveis.find(
-        m => m.id === this.modalidadeSelecionada)
-
-      if (!modalidade) return null
-
-      if (modalidade.nome.toLowerCase().includes('vôlei')) {
-        return 'PlacarTimeVolei'
-      }
-
-      return 'PlacarTime'
-    },
-
     async atualizarSelecao(tipo) {
       if (tipo === 'quadra') {
         this.modalidadeSelecionada = ''
@@ -450,57 +366,6 @@ export default {
       }
 
       this.atualizarParcial();
-    },
-
-    iniciarTemporizador() {
-      if (this.intervaloTimer) return
-
-      const inicio = Date.now() - this.tempoSegundos * 1000
-
-      this.intervaloTimer = setInterval(() => {
-        if (this.temporizadorAtivo) {
-          this.tempoSegundos = Math.floor((Date.now() - inicio) / 1000)
-        }
-      }, 500)
-    },
-
-    iniciarPausarOuRetomarPartida() {
-      if (!this.partidaIniciada) {
-        this.mostrarModalJogadores = true;
-        return;
-      }
-
-      if (this.temporizadorAtivo) {
-        this.pausarTemporizador();
-      } else {
-        this.retomarTemporizador();
-      }
-    },
-
-    async pausarTemporizador() {
-      if (!this.partidaId) return;
-
-      try {
-        await api.put(`/partidas/${this.partidaId}/pausar`);
-        this.temporizadorAtivo = false;
-        Swal.fire("Sucesso", "Partida pausada com sucesso!", "success");
-      } catch (err) {
-        console.error("Erro ao pausar partida:", err);
-        Swal.fire("Erro", "Não foi possível pausar a partida.", "error");
-      }
-    },
-
-    async retomarTemporizador() {
-      if (!this.partidaId) return;
-
-      try {
-        await api.put(`/partidas/${this.partidaId}/retomar`);
-        this.temporizadorAtivo = true;
-        Swal.fire("Sucesso", "Partida retomada com sucesso!", "success");
-      } catch (err) {
-        console.error("Erro ao retomar partida:", err);
-        Swal.fire("Erro", "Não foi possível retomar a partida.", "error");
-      }
     },
 
     async finalizarPartida() {
@@ -617,8 +482,6 @@ export default {
           this.buscarTimes()
         ]);
 
-        this.iniciarTemporizador();
-
       } catch (error) {
         Swal.fire(
           'Erro',
@@ -706,9 +569,6 @@ export default {
       }
     },
 
-    abrirModalJogadores() {
-      this.mostrarModalJogadores = true
-    },
     limparDados() {
       this.quadraSelecionada = ''
       this.timeSelecionado1 = ''
@@ -796,76 +656,6 @@ export default {
   margin-bottom: 20px;
 }
 
-.limparpartidas {
-  background-color: #3b82f6;
-  color: white;
-  padding: 8px 14px;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-}
-
-.temporizador-topo {
-  position: absolute;
-  top: 30px;
-  right: 45px;
-  height: 50px;
-  border: 2px solid #3b82f6;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 14px;
-  z-index: 10;
-  background: #fff;
-}
-
-
-.temporizador {
-  font-size: 35px;
-  font-weight: bold;
-  color: #3b82f6;
-  margin: 0;
-}
-
-.controle-tempo {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: none;
-  border: none;
-  color: #3b82f6;
-  font-size: 25px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 4px 6px;
-
-}
-
-.controle-tempo:hover {
-  color: #2563eb;
-}
-
-.controle-tempo svg {
-  flex-shrink: 0;
-}
-
-.icon-add {
-  width: 40px;
-  height: 40px;
-  cursor: pointer;
-  margin-left: -460%;
-  margin-top: -15%;
-}
-
-.controle-tempo.pausado {
-  color: #facc15;
-}
-
-.controle-tempo.pausado:hover {
-  color: #eab308;
-}
-
 .placares {
   display: flex;
   gap: 30px;
@@ -913,36 +703,11 @@ export default {
   font-size: 16px;
 }
 
-.botao-iniciar {
-  margin-top: 21px;
-}
 
 .finalizar-container {
   padding-top: 30px;
   margin: 0;
   width: 100%;
-}
-
-.continuar-container {
-  width: 100%;
-  margin-top: 24px;
-}
-
-.botao-continuar {
-  width: 100%;
-  padding: 16px;
-  font-size: 18px;
-  font-weight: bold;
-  background-color: #3b82f6;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.botao-continuar:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .botao-finalizar {
@@ -954,26 +719,6 @@ export default {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-}
-
-.loader-container-centralizado {
-  position: fixed;
-  top: 50%;
-  left: 55%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-.loader {
-  border: 6px solid #f3f3f3;
-  border-top: 6px solid #3b82f6;
-  border-radius: 50%;
-  width: 100px;
-  height: 100px;
-  animation: spin 1s linear infinite;
 }
 
 h2 {
@@ -1004,62 +749,6 @@ h2 {
   margin-right: 5px;
 }
 
-.dropdown-container {
-  position: relative;
-  display: inline-block;
-  width: 100%;
-}
-
-.loader-pequeno-dropdown {
-  position: absolute;
-  right: 10px;
-  top: 35%;
-  transform: translateY(-50%);
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #3b82f6;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  animation: spin 1s linear infinite;
-}
-
-.menu-toggle {
-  display: none;
-  position: fixed;
-  top: 15px;
-  left: 15px;
-  background: #3b82f6;
-  color: #fff;
-  border: none;
-  padding: 10px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  z-index: 300;
-}
-
-.lista-jogadores {
-  margin-top: 10px;
-  padding-left: 15px;
-  font-size: 14px;
-  color: #333;
-}
-
-.lista-jogadores li {
-  list-style: disc;
-  margin-bottom: 4px;
-}
-
-.texto-instrucao {
-  margin-top: 24px;
-  margin-bottom: 32px;
-  padding: 20px;
-  background-color: #f1f5f9;
-  border-radius: 6px;
-  border: 2px solid #3b82f6;
-  font-size: 15px;
-
-}
-
 @media (max-width: 768px) {
   .conteudo {
     margin-left: 0;
@@ -1073,10 +762,6 @@ h2 {
 
   .sidebar.open {
     transform: translateX(0);
-  }
-
-  .menu-toggle {
-    display: block;
   }
 
   .title {
@@ -1107,31 +792,9 @@ h2 {
     width: 100% !important;
   }
 
-  .botao-iniciar {
-    margin-top: 15px;
-    width: 100%;
-  }
-
   .finalizar-container {
     margin: 20px 0;
     width: 100%;
-  }
-
-  .mensagem-inicial {
-    margin: 20px auto;
-    height: auto;
-  }
-
-  .temporizador-topo {
-    position: static;
-    width: auto;
-    height: 40px;
-    margin-left: auto;
-    padding: 4px 8px;
-  }
-
-  .temporizador {
-    font-size: 22px;
   }
 }
 </style>

@@ -2,15 +2,15 @@ const partidas = require('../services/partida.service');
 
 async function criarPartidaController(req, res) {
   try {
-    const { usuarioId, modalidadeId, timeAId, timeBId, quadraId, campeonatoId } = req.body;
-
+    const { modalidadeId, timeAId, timeBId, quadraId, campeonatoId, faseId, rodadaId } = req.body;
+    const usuarioId = req.user.id; 
+    
     const partida = await partidas.criarPartida(
-      { modalidadeId, timeAId, timeBId, quadraId, campeonatoId },
+      { modalidadeId, timeAId, timeBId, quadraId, campeonatoId, faseId, rodadaId },
       usuarioId
     );
 
     res.status(201).json(partida);
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ erro: error.message });

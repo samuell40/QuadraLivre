@@ -3,7 +3,7 @@ const controller = require('../controllers/partida.controller')
 const validarJWT = require('../middlewares/auth');
 const router = express.Router();
 
-router.post('/partida', controller.criarPartidaController)
+router.post('/partida', [validarJWT],  controller.criarPartidaController)
 
 router.put('/partidas/:partidaId/iniciar', controller.iniciarPartidaController);
 

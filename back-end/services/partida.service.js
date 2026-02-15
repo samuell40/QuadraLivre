@@ -5,33 +5,67 @@ async function criarPartida(data, usuarioId) {
   const modalidadeId = Number(data.modalidadeId);
   const timeAId = Number(data.timeAId);
   const timeBId = Number(data.timeBId);
-  const quadraId = data.quadraId;
-  const campeonatoId = data.campeonatoId;
+  const campeonatoId = Number(data.campeonatoId);
+  const faseId = Number(data.faseId);
+  const rodadaId = Number(data.rodadaId);
+  const usuarioCriadorId = Number(usuarioId);
+  const quadraId = Number(data.quadraId);
 
-  const dadosPartida = {
-    modalidadeId: modalidadeId,
-    timeAId: timeAId,
-    timeBId: timeBId,
-    usuarioCriadorId: Number(usuarioId)
+  const campeonato = await prisma.campeonato.findUnique({
+    where: { id: campeonatoId },
+    select: { quadraId: true }
+  });
+
+  const dataCreate = {
+    status: 'EM_ANDAMENTO',
+
+    modalidade: {
+      connect: { id: modalidadeId }
+    },
+
+    campeonato: {
+      connect: { id: campeonatoId }
+    },
+
+    fase: {
+      connect: { id: faseId }
+    },
+
+    rodada: {
+      connect: { id: rodadaId }
+    },
+
+    timeA: {
+      connect: { id: timeAId }
+    },
+
+    timeB: {
+      connect: { id: timeBId }
+    },
+
+    usuarioCriador: {
+      connect: { id: usuarioCriadorId }
+    }
   };
 
   if (quadraId) {
-    dadosPartida.quadraId = Number(quadraId);
-  }
-
-  if (campeonatoId) {
-    dadosPartida.campeonatoId = Number(campeonatoId);
+    dataCreate.quadra = {
+      connect: { id: quadraId }
+    };
   }
 
   const partida = await prisma.partida.create({
-    data: dadosPartida,
+    data: dataCreate,
     include: {
       campeonato: true,
       modalidade: true,
+      fase: true,
+      rodada: true,
       timeA: true,
       timeB: true,
-      usuarioCriador: true,
-    },
+      quadra: true,
+      usuarioCriador: true
+    }
   });
 
   return partida;

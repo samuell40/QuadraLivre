@@ -4,7 +4,7 @@
       <h2>Escolha a ação</h2>
 
       <div class="tipo-campeonato-lista">
-        <button class="btn-tipo" @click="selecionar('partida')">
+        <button class="btn-tipo" @click="abrirModalPartida">
           Adicionar Partida
         </button>
         <button class="btn-tipo" @click="abrirModalFase">
@@ -19,6 +19,62 @@
         <button type="button" class="btn-cancel" @click="fechar">
           Cancelar
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE CRIAR PARTIDA -->
+  <div v-if="mostrarModalPartida" class="modal-overlay" @click.self="mostrarModalPartida = false">
+    <div class="modal-content modal-times">
+      <h2>Criar Partida</h2>
+
+      <!-- FASE -->
+      <div class="filtros-topo">
+        <label>Selecione a fase:</label>
+        <select v-model="partida.faseId" @change="listarRodadas">
+          <option disabled value="">Escolha uma fase</option>
+          <option v-for="fase in fases" :key="fase.id" :value="fase.id">
+            {{ fase.nome }}
+          </option>
+        </select>
+      </div>
+
+      <!-- RODADA -->
+      <div class="filtros-topo">
+        <label>Selecione a rodada:</label>
+        <select v-model="partida.rodadaId" :disabled="!rodadas.length">
+          <option disabled value="">Escolha uma rodada</option>
+          <option v-for="rodada in rodadas" :key="rodada.id" :value="rodada.id">
+            {{ rodada.nome }}
+          </option>
+        </select>
+      </div>
+
+      <!-- TIME A -->
+      <div class="filtros-topo">
+        <label>Time 1:</label>
+        <select v-model="partida.timeAId">
+          <option disabled value="">Selecione o time</option>
+          <option v-for="time in times" :key="time.id" :value="time.id">
+            {{ time.nome }}
+          </option>
+        </select>
+      </div>
+
+      <!-- TIME B -->
+      <div class="filtros-topo">
+        <label>Time 2:</label>
+        <select v-model="partida.timeBId">
+          <option disabled value="">Selecione o time</option>
+          <option v-for="time in times" :key="time.id" :value="time.id" :disabled="time.id === partida.timeAId">
+            {{ time.nome }}
+          </option>
+        </select>
+      </div>
+
+      <div class="botoes">
+        <button class="btn-save" @click="criarPartida">Criar Partida</button>
+        <button class="btn-cancel" @click="mostrarModalPartida = false">Voltar</button>
       </div>
     </div>
   </div>
@@ -93,17 +149,35 @@ export default {
   },
   data() {
     return {
+      usuario: null,
       mostrarModalFase: false,
+      mostrarModalPartida: false,
       nomeFase: '',
       times: [],
       timesSelecionados: [],
       mostrarModalRodada: false,
       nomeRodada: '',
       fases: [],
-      faseIdSelecionada: null
+      faseIdSelecionada: null,
+      modalidadeId: null,
+      quadraId: null,
+      rodadas: [],
+      partida: {
+        faseId: '',
+        rodadaId: '',
+        timeAId: '',
+        timeBId: ''
+      }
+
     };
   },
   emits: ['update:modelValue', 'selecionar', 'rodadaCriada'],
+
+  mounted() {
+    this.usuario = JSON.parse(localStorage.getItem('usuario'));
+    console.log('USUÁRIO LOGADO (Modal):', this.usuario);
+  },
+
   methods: {
     fechar() {
       this.$emit('update:modelValue', false);
@@ -111,6 +185,22 @@ export default {
     selecionar(tipo) {
       this.$emit('selecionar', tipo);
       this.fechar();
+    },
+
+    async abrirModalPartida() {
+      await this.carregarModalidadeCampeonato();
+      await this.listarFases();
+      await this.listarTimes();
+      this.rodadas = [];
+
+      this.partida = {
+        faseId: '',
+        rodadaId: '',
+        timeAId: '',
+        timeBId: ''
+      };
+
+      this.mostrarModalPartida = true;
     },
 
     abrirModalFase() {
@@ -169,9 +259,9 @@ export default {
           nome: this.nomeFase,
           times: this.timesSelecionados
         });
-     console.log('API resposta fase:', data);
+        console.log('API resposta fase:', data);
         Swal.fire('Sucesso', 'Fase criada com sucesso!', 'success');
-        this.$emit('faseCriada', data.fase); 
+        this.$emit('faseCriada', data.fase);
 
         this.mostrarModalFase = false;
         this.nomeFase = '';
@@ -206,13 +296,76 @@ export default {
         console.error('Erro ao criar rodada:', err);
         Swal.fire('Erro', 'Não foi possível criar a rodada.', 'error');
       }
+    },
+
+    listarRodadas() {
+      const faseSelecionada = this.fases.find(
+        f => f.id === Number(this.partida.faseId)
+      );
+
+      this.rodadas = faseSelecionada?.rodadas || [];
+      this.partida.rodadaId = '';
+    },
+
+    async criarPartida() {
+      const { faseId, rodadaId, timeAId, timeBId } = this.partida;
+
+      if (!faseId || !rodadaId || !timeAId || !timeBId) {
+        Swal.fire('Erro', 'Preencha todos os campos.', 'error');
+        return;
+      }
+
+      if (!this.modalidadeId) {
+        Swal.fire('Erro', 'Modalidade não encontrada para este campeonato.', 'error');
+        return;
+      }
+
+      if (timeAId === timeBId) {
+        Swal.fire('Erro', 'Os times não podem ser iguais.', 'error');
+        return;
+      }
+
+      try {
+        const payload = {
+          campeonatoId: Number(this.campeonatoId),
+          modalidadeId: Number(this.modalidadeId),
+          faseId: Number(faseId),
+          rodadaId: Number(rodadaId),
+          timeAId: Number(timeAId),
+          timeBId: Number(timeBId),
+          quadraId: Number(this.quadraId)
+        };
+
+        const { data } = await api.post('/partida', payload);
+
+        Swal.fire('Sucesso', 'Partida criada com sucesso!', 'success');
+        this.mostrarModalPartida = false;
+
+        this.$emit('partidaCriada', data);
+      } catch (err) {
+        console.error('Erro ao criar partida:', err);
+        Swal.fire(
+          'Erro',
+          err.response?.data?.message || 'Erro ao criar partida.',
+          'error'
+        );
+      }
+    },
+
+    async carregarModalidadeCampeonato() {
+      try {
+        const { data } = await api.get(`/campeonato/${this.campeonatoId}`);
+        this.modalidadeId = data.modalidadeId;
+        this.quadraId = data.quadraId; // 👈 IMPORTANTE
+      } catch (err) {
+        console.error('Erro ao carregar campeonato:', err);
+      }
     }
   }
 };
 </script>
 
 <style scoped>
-/* SOBREPOSIÇÃO DO MODAL */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -223,7 +376,6 @@ export default {
   z-index: 1000;
 }
 
-/* CONTEÚDO PRINCIPAL DO MODAL */
 .modal-content {
   background: white;
   padding: 30px 40px;
@@ -239,7 +391,6 @@ export default {
   font-weight: bold;
 }
 
-/* LISTA DE TIPOS DE AÇÃO */
 .tipo-campeonato-lista {
   display: flex;
   flex-direction: column;
@@ -262,7 +413,6 @@ export default {
   color: #fff;
 }
 
-/* BOTÕES DE AÇÃO */
 .botoes {
   display: flex;
   gap: 10px;
@@ -288,7 +438,6 @@ export default {
   background-color: #7e7e7e;
 }
 
-/* LISTA DE TIMES NO MODAL */
 .modal-times .lista-times {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -354,7 +503,6 @@ export default {
   color: #555;
 }
 
-/* INPUTS E FILTROS */
 .filtros-topo select {
   width: 100%;
   padding: 10px 12px;

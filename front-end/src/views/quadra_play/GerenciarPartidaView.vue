@@ -701,7 +701,7 @@ export default {
 .add-half-circle {
   position: absolute;
   top: 44%;
-  left: 58%;
+  left: 58%; /* padrão para tela normal */
   transform: translate(-50%, -50%);
   width: 42px;
   height: 42px;
@@ -713,7 +713,7 @@ export default {
   justify-content: center;
   cursor: pointer;
   z-index: 10;
-  transition: background 0.2s;
+  transition: background 0.2s, left 0.3s;
 }
 
 .add-half-circle:hover {
@@ -724,6 +724,11 @@ export default {
   color: white;
   font-size: 24px;
   font-weight: bold;
+}
+
+.conteudo.collapsed .add-half-circle {
+  left: 52.5%; 
+  top: 44%;  
 }
 
 .modal-overlay {
