@@ -51,6 +51,7 @@ model Quadra {
   partidas     Partida[]
   campeonatos  Campeonato[]
   avisos       Aviso[]
+  horarios     HorarioQuadra[]
 }
 
 enum TipoAgendamento {
@@ -386,4 +387,15 @@ model AvisoLeitura {
   aviso     Aviso    @relation(fields: [avisoId], references: [id], onDelete: Cascade)
 
   @@unique([usuarioId, avisoId])
+}
+
+model HorarioQuadra {
+  id        Int    @id @default(autoincrement())
+  quadraId  Int
+  diaSemana Int
+  horario   String
+  
+  quadra    Quadra @relation(fields: [quadraId], references: [id])
+
+  @@unique([quadraId, diaSemana, horario])
 }

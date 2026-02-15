@@ -11,13 +11,17 @@
             <div v-for="h in horariosPorDia[`${d.ano}-${d.mes}-${d.dia}`]" :key="h.hora" class="horario"
               :class="h.agendamento ? 'agendado' : 'disponivel'"
               @click="h.agendamento && selecionarAgendamento(h.agendamento)">
-              <span>{{ h.hora.toString().padStart(2, '0') }}:00</span>
+
+              <span>{{ obterHorarioLabel(h.hora, h.agendamento) }}</span>
+
+              <span v-if="h.agendamento" class="nome-agendamento-sm">
+                {{ h.agendamento.usuarioNome }}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Modal de detalhe do agendamento -->
       <DetalheAgendModal v-if="agendamentoSelecionado" :agendamento="agendamentoSelecionado"
         @fechar="agendamentoSelecionado = null" />
 
@@ -72,11 +76,13 @@ export default {
 
         const horarios = [];
         for (let h = 7; h <= 23; h++) {
-          const agendamento = agendamentos.find(a => h >= a.hora && h < a.hora + a.duracao);
+          const agendamento = agendamentos.find(a => h >= a.hora && h < a.hora + (a.duracao || 1));
+
           if (agendamento) {
-            agendamento.usuario = agendamento.usuario.nome;
-            agendamento.time = agendamento.time?.nome || 'Não vinculado';
+            agendamento.usuarioNome = agendamento.usuario?.nome || agendamento.usuario || 'Usuário';
+            agendamento.timeNome = agendamento.time?.nome || 'Não vinculado';
           }
+
           horarios.push({ hora: h, agendamento: agendamento || null, data });
         }
 
@@ -92,6 +98,16 @@ export default {
         });
       }
     },
+
+    obterHorarioLabel(horaGrid, agendamento) {
+      if (agendamento && agendamento.datahora) {
+        const d = new Date(agendamento.datahora);
+        return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      }
+
+      return `${String(horaGrid).padStart(2, '0')}:00`;
+    },
+
     selecionarAgendamento(agendamento) {
       this.agendamentoSelecionado = agendamento;
     },
@@ -185,6 +201,16 @@ export default {
   border-radius: 8px;
   background-color: #eff6ff;
   margin: 10px 0;
+}
+
+.nome-agendamento-sm {
+  display: block;
+  font-size: 10px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.9;
 }
 
 .btn-cancelar {

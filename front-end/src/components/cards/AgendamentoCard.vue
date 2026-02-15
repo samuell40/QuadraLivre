@@ -8,7 +8,11 @@
 
     <p>Realizado por: <strong>{{ agendamento.usuario }}</strong></p>
     <p>Time: <strong>{{ agendamento.time }}</strong></p>
-    <p><strong>{{ formatarData(agendamento) }}</strong>, às <strong>{{ agendamento.hora }}:00</strong></p>
+
+    <p>
+      <strong>{{ formatarData(agendamento) }}</strong>, às <strong>{{ formatarHora(agendamento) }}</strong>
+    </p>
+
     <p>Duração: <strong>{{ agendamento.duracao }} hora(s)</strong></p>
     <p>Tipo: <strong>{{ agendamento.tipo }}</strong></p>
     <p>
@@ -43,8 +47,23 @@ export default {
   emits: ["confirmar", "recusar"],
   methods: {
     formatarData(ag) {
+      if (ag.datahora) {
+        return new Date(ag.datahora).toLocaleDateString('pt-BR');
+      }
       return `${String(ag.dia).padStart(2, '0')}/${String(ag.mes).padStart(2, '0')}/${ag.ano}`;
     },
+
+    formatarHora(ag) {
+      if (ag.datahora) {
+        return new Date(ag.datahora).toLocaleTimeString('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+
+      return `${String(ag.hora).padStart(2, '0')}:00`;
+    },
+
     confirmar() {
       this.$emit("confirmar");
     },

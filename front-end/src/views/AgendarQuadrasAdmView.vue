@@ -131,7 +131,7 @@ export default {
     },
 
     async confirmarAgendamento(agendamentoDoModal, forcarAgendamento = false) {
-      const authStore = useAuthStore()
+      const authStore = useAuthStore();
 
       if (!authStore.usuario) {
         Swal.fire({
@@ -143,9 +143,9 @@ export default {
           cancelButtonText: 'Cancelar',
           confirmButtonColor: '#1E3A8A',
         }).then(result => {
-          if (result.isConfirmed) this.$router.push('/login')
-        })
-        return
+          if (result.isConfirmed) this.$router.push('/login');
+        });
+        return;
       }
 
       const isAdministrador = authStore.usuario.permissaoId === 2;
@@ -162,8 +162,8 @@ export default {
         }));
 
         Swal.fire({
-          title: 'Processando...',
-          html: 'Gerando agendamentos...<br>Isso pode levar alguns segundos.',
+          title: 'Processando Agenda...',
+          html: 'Isso pode levar alguns segundos dependendo da quantidade de semanas.',
           allowOutsideClick: false,
           didOpen: () => Swal.showLoading()
         });
@@ -178,71 +178,25 @@ export default {
             Swal.close();
             Swal.fire({
               icon: 'success',
-              title: 'Agenda Atualizada!',
-              text: 'Os horários fixos foram atualizados com sucesso.',
-              confirmButtonColor: '#1E3A8A',
-              timer: 3000
+              title: 'Agenda Fixa Atualizada!',
+              text: 'Os horários foram processados e sincronizados com a grade.',
+              confirmButtonColor: '#1E3A8A'
             });
 
             this.mostrarModalAgendamento = false;
-
           } catch (err) {
             Swal.close();
-            const msgErro = err.response?.data?.message || err.response?.data?.error || 'Erro ao processar agendamentos fixos.';
+            const msgErro = err.response?.data?.error || err.response?.data?.message || 'Erro ao processar lote.';
 
-            if (err.response?.status === 409) {
-              Swal.fire({
-                icon: 'error',
-                title: 'Conflito de Horário',
-                text: 'Existe um agendamento avulso ou bloqueio impedindo um desses horários.',
-                confirmButtonColor: '#1E3A8A'
-              });
-            } else {
-              Swal.fire({
-                icon: 'error',
-                title: 'Erro',
-                text: msgErro,
-                confirmButtonColor: '#1E3A8A'
-              });
-            }
+            Swal.fire({
+              icon: 'error',
+              title: 'Erro no Lote',
+              text: msgErro,
+              confirmButtonColor: '#1E3A8A'
+            });
           }
           return;
         }
-
-        let sucessos = 0;
-        let erros = 0;
-
-        for (const item of loteFormatado) {
-          try {
-            await api.post('/agendamento', item);
-            sucessos++;
-          } catch (err) {
-            console.error('Erro no item do lote:', err);
-            erros++;
-          }
-        }
-
-        Swal.close();
-
-        if (erros === 0) {
-          Swal.fire({
-            icon: 'success',
-            title: 'Sucesso Total!',
-            text: `${sucessos} agendamentos criados.`,
-            confirmButtonColor: '#1E3A8A',
-            timer: 3000
-          });
-          this.mostrarModalAgendamento = false;
-        } else {
-          Swal.fire({
-            icon: 'warning',
-            title: 'Finalizado com pendências',
-            text: `Criados: ${sucessos} | Falhas: ${erros} (Provavelmente horários ocupados)`,
-            confirmButtonColor: '#1E3A8A'
-          });
-          if (sucessos > 0) this.mostrarModalAgendamento = false;
-        }
-        return;
       }
 
       const agendamento = {
@@ -250,35 +204,33 @@ export default {
         usuarioId: authStore.usuario.id,
         quadraId: this.quadraSelecionada.id,
         ignorarRegra: forcarAgendamento,
-        status: statusAutomatico,
-        fixo: agendamentoDoModal.fixo ?? false
-      }
+        status: statusAutomatico
+      };
 
       try {
-        await api.post('/agendamento', agendamento)
+        await api.post('/agendamento', agendamento);
 
         Swal.fire({
           icon: 'success',
-          title: isAdministrador ? 'Agendamento Confirmado!' : 'Solicitação Enviada!',
+          title: isAdministrador ? 'Horário Reservado!' : 'Solicitação Enviada!',
           text: isAdministrador
-            ? `Quadra: ${this.quadraSelecionada.nome} reservada com sucesso.`
-            : `Quadra: ${this.quadraSelecionada.nome}. Aguarde a aprovação.`,
+            ? `Quadra ${this.quadraSelecionada.nome} reservada com sucesso.`
+            : `Aguardando aprovação para a quadra ${this.quadraSelecionada.nome}.`,
           confirmButtonColor: '#1E3A8A',
-          timer: 5000,
-          showConfirmButton: false,
-          timerProgressBar: true
-        })
+          timer: 4000,
+          showConfirmButton: false
+        });
 
-        this.mostrarModalAgendamento = false
+        this.mostrarModalAgendamento = false;
 
       } catch (err) {
-        const msgErro = err.response?.data?.message || err.response?.data?.error;
+        const msgErro = err.response?.data?.error || err.response?.data?.message;
         const status = err.response?.status;
 
-        if (status === 400 && (msgErro?.includes('já possui 2 agendamentos') || msgErro?.includes('FIXOS'))) {
+        if (status === 400 && (msgErro?.includes('limite') || msgErro?.includes('FIXOS'))) {
           Swal.fire({
-            title: 'Limite Atingido',
-            text: `${msgErro} Deseja forçar o agendamento?`,
+            title: 'Restrição de Limite',
+            text: `${msgErro}. Como administrador, deseja forçar este agendamento?`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sim, forçar',
@@ -294,8 +246,8 @@ export default {
 
         Swal.fire({
           icon: 'warning',
-          title: 'Atenção',
-          text: msgErro || 'Erro ao agendar.',
+          title: 'Não foi possível agendar',
+          text: msgErro || 'Verifique se o horário está disponível.',
           confirmButtonColor: '#1E3A8A'
         });
       }

@@ -10,6 +10,6 @@ router.get('/quadra', controller.listarTodasQuadrasController)
 
 router.get('/listar/quadras/:modalidadeId', controller.listarQuadrasPorModalidadeController)
 
-router.patch('/quadra/:id', [validarJWT], verificarPermissao.dev, controller.atualizarQuadraController);
+router.patch('/quadra/:id', [validarJWT], verificarPermissao.devAdmin, controller.atualizarQuadraController);
 
 module.exports = router;

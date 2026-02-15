@@ -50,9 +50,10 @@
             <div class="campo">
               <label><strong>Data:</strong></label>
               <Datepicker v-model="data" teleport="body" locale="pt-BR" cancelText="Cancelar" selectText="Selecionar"
-                :day-names="diaNomesCurto" :min-date="minDateObj" :max-date="maxDateObj" :day-class="getDayClass"
-                :enable-time-picker="false" @update:model-value="gerarHorariosDisponiveis" :format="formatDate"
-                placeholder="Escolha um dia" :alt-position="calcularPosicao"
+                :week-start="0" :day-names="['D', 'S', 'T', 'Q', 'Q', 'S', 'S']" :min-date="minDateObj"
+                :max-date="maxDateObj" :allowed-dates="verificarDataPermitida" :day-class="getDayClass"
+                :enable-time-picker="false" auto-apply @update:model-value="gerarHorariosDisponiveis"
+                :format="formatDate" placeholder="Escolha um dia" :alt-position="calcularPosicao"
                 input-class-name="form-select dp-custom-input" />
             </div>
 
@@ -77,17 +78,31 @@
             </select>
           </div>
 
-          <label><strong>Horários Disponíveis:</strong></label>
-          <div class="horarios-grid">
-            <button v-for="h in horariosDisponiveis" :key="h" :class="{ selecionado: h === hora }"
-              :disabled="horariosIndisponiveis.includes(h)" @click="hora = h" class="btn-horario">
-              {{ h }}
-            </button>
+          <div v-if="diaFechado" class="alerta-fechado">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            <span>A quadra não está disponível nesta data ({{ nomeDiaSemanaSelecionado }}).</span>
+          </div>
+
+          <div v-else>
+            <label v-if="horariosDisponiveis.length > 0"><strong>Horários Disponíveis:</strong></label>
+            <div class="horarios-grid">
+              <button v-for="h in horariosDisponiveis" :key="h" :class="{ selecionado: h === hora }"
+                :disabled="horariosIndisponiveis.includes(h)" @click="hora = h" class="btn-horario">
+                {{ h }}
+              </button>
+            </div>
+            <p v-if="data && horariosDisponiveis.length === 0 && !diaFechado" class="msg-sem-horario">
+              Não há horários livres para este dia.
+            </p>
           </div>
         </div>
 
         <div v-else class="modo-fixo-container">
-
           <div class="info-box">
             <p><strong>Treino Fixo:</strong> Selecione até <strong>2 dias</strong> da semana. O sistema agendará
               automaticamente para as próximas 5 semanas.</p>
@@ -104,42 +119,37 @@
 
           <label><strong>Dias da Semana (Máx. 2):</strong></label>
           <div class="dias-semana-grid">
-            <button v-for="(dia, index) in diasSemanaCompleto" :key="index" class="btn-dia-semana"
-              :class="{ active: diasFixosSelecionados.includes(index) }"
-              :disabled="!diasFixosSelecionados.includes(index) && diasFixosSelecionados.length >= 2"
-              @click="toggleDiaFixo(index)">
-              {{ dia }}
-            </button>
+            <template v-for="(dia, index) in diasSemanaCompleto" :key="index">
+              <button v-if="diasComFuncionamento.includes(index)" class="btn-dia-semana"
+                :class="{ active: diasFixosSelecionados.includes(index) }"
+                :disabled="!diasFixosSelecionados.includes(index) && diasFixosSelecionados.length >= 2"
+                @click="toggleDiaFixo(index)">
+                {{ dia }}
+              </button>
+            </template>
           </div>
 
           <div v-if="diasFixosSelecionados.length > 0" class="config-horarios-fixos">
-            <label><strong>Defina o horário (07:00 às 23:00):</strong></label>
 
-            <div v-for="diaIndex in diasFixosSelecionados.sort()" :key="diaIndex" class="linha-horario-fixo">
-              <span class="dia-label">{{ diasSemanaCompleto[diaIndex] }}:</span>
+            <div v-for="diaIndex in diasFixosSelecionados.sort()" :key="diaIndex" class="bloco-dia-fixo">
+              <div class="titulo-dia-fixo">
+                <strong>{{ diasSemanaCompleto[diaIndex] }}:</strong>
+                <span class="subtexto-horario" v-if="!horariosFixos[diaIndex]">(Selecione um horário)</span>
+                <span class="subtexto-horario selecionado" v-else>Selecionado: {{ horariosFixos[diaIndex] }}</span>
+              </div>
 
-              <div class="input-time-wrapper" :ref="'timeWrapper_' + diaIndex">
+              <div class="horarios-grid fixo-grid">
+                <button v-for="h in getHorariosPermitidosParaDiaFixo(diaIndex)" :key="h" class="btn-horario"
+                  :class="{ selecionado: horariosFixos[diaIndex] === h }" @click="horariosFixos[diaIndex] = h">
+                  {{ h }}
+                </button>
 
-                <input type="text" v-model="horariosFixos[diaIndex]" class="form-select input-time-fixo"
-                  placeholder="--:--" maxlength="5" @input="aplicarMascaraHora($event, diaIndex)"
-                  @focus="abrirDropdown(diaIndex)" @click="abrirDropdown(diaIndex)" />
-
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  class="clock-icon">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-
-                <div v-if="dropdownAberto === diaIndex" class="custom-time-dropdown">
-                  <div v-for="h in listaHorariosFixos" :key="h" class="time-option"
-                    @click="selecionarHorarioLista(h, diaIndex)">
-                    {{ h }}
-                  </div>
-                </div>
-
+                <p v-if="getHorariosPermitidosParaDiaFixo(diaIndex).length === 0" class="msg-sem-horario-sm">
+                  Fechado neste dia.
+                </p>
               </div>
             </div>
+
           </div>
         </div>
 
@@ -180,11 +190,6 @@ export default {
     const umMes = new Date()
     umMes.setMonth(agora.getMonth() + 1)
 
-    const listaHorariosFixos = Array.from({ length: 17 }, (_, i) => {
-      const h = i + 7;
-      return `${String(h).padStart(2, '0')}:00`;
-    });
-
     return {
       modoAgendamento: 'avulso',
       timeSelecionado: null,
@@ -193,26 +198,28 @@ export default {
       isLoadingModalidades: true,
       tipo: "",
       duracao: "",
-      data: "",
+      data: null,
       hora: "",
       minDateObj: agora,
       maxDateObj: umMes,
+
+      gradeConfig: [],
+      diaFechado: false,
+      nomeDiaSemanaSelecionado: '',
+
       horariosDisponiveis: [],
       horariosIndisponiveis: [],
-      datasDisponiveis: [],
-      diaNomesCurto: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'],
+
       diasSemanaCompleto: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'],
       diasFixosSelecionados: [],
       horariosFixos: {},
-      listaHorariosFixos,
-      dropdownAberto: null,
     }
   },
 
   computed: {
     podeAgendarFixo() {
       const p = this.authStore.usuario?.permissaoId;
-      return p === 2 || p === 3;
+      return p === 1 || p === 2;
     },
     modalidadePadronizada() {
       if (!this.modalidadeSelecionada) return ""
@@ -224,20 +231,42 @@ export default {
     exibirDuracao() {
       const modalidadesDuracao = ['volei', 'volei de areia', 'futevolei']
       return modalidadesDuracao.includes(this.modalidadePadronizada)
+    },
+    diasComFuncionamento() {
+      if (!this.gradeConfig || this.gradeConfig.length === 0) {
+        return [0, 1, 2, 3, 4, 5, 6];
+      }
+      const diasSet = new Set();
+      this.gradeConfig.forEach(g => {
+        if (g.diaSemana !== undefined) diasSet.add(Number(g.diaSemana));
+        if (g.dia_semana !== undefined) diasSet.add(Number(g.dia_semana));
+      });
+      return Array.from(diasSet);
     }
   },
 
   async mounted() {
     document.body.style.overflow = 'hidden';
-    window.addEventListener('click', this.handleClickOutside);
-
     try {
       if (this.quadra?.id) {
-        const { data } = await api.get(`/quadra/${this.quadra.id}/modalidades`)
-        this.modalidades = data
+        const modRes = await api.get(`/quadra/${this.quadra.id}/modalidades`)
+        this.modalidades = modRes.data
+
+        try {
+          const gradeRes = await api.get(`/grade-horarios/${this.quadra.id}`)
+          let dados = gradeRes.data;
+          if (Array.isArray(dados)) {
+            this.gradeConfig = dados;
+          } else {
+            this.gradeConfig = [];
+          }
+        } catch (e) {
+          console.warn("Sem grade configurada, usando padrão.", e);
+          this.gradeConfig = [];
+        }
       }
     } catch (err) {
-      console.error("Erro ao buscar modalidades:", err)
+      console.error("Erro inicial:", err)
     } finally {
       this.isLoadingModalidades = false
     }
@@ -245,72 +274,127 @@ export default {
 
   unmounted() {
     document.body.style.overflow = '';
-    window.removeEventListener('click', this.handleClickOutside);
   },
 
   methods: {
+    verificarDataPermitida(date) {
+      const dia = date.getDay();
+      return this.diasComFuncionamento.includes(dia);
+    },
+
+    getDayClass(date) {
+      const dia = date.getDay();
+      if (!this.diasComFuncionamento.includes(dia)) {
+        return 'dia-fechado-visual';
+      }
+      return '';
+    },
+
+    getDiaSemanaSeguro(dateObj) {
+      if (!dateObj) return null;
+      const safeDate = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), 12, 0, 0);
+      return safeDate.getDay();
+    },
+
     formatDateAPI(date) {
+      if (!date) return '';
       const d = new Date(date)
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     },
 
-    abrirDropdown(diaIndex) {
-      this.dropdownAberto = diaIndex;
+    getGradePadrao() {
+      const lista = [];
+      for (let h = 7; h <= 23; h++) {
+        lista.push(`${String(h).padStart(2, '0')}:00`);
+      }
+      return lista;
     },
 
-    selecionarHorarioLista(horario, diaIndex) {
-      this.horariosFixos[diaIndex] = horario;
-      this.dropdownAberto = null;
-    },
+    async gerarHorariosDisponiveis() {
+      if (!this.data) return
 
-    handleClickOutside(event) {
-      if (this.dropdownAberto === null) return;
+      this.hora = ""
+      this.horariosDisponiveis = []
+      this.horariosIndisponiveis = []
+      this.diaFechado = false;
 
-      const diaIndex = this.dropdownAberto;
-      const refName = 'timeWrapper_' + diaIndex;
-      const el = this.$refs[refName];
+      const diaSemana = this.getDiaSemanaSeguro(this.data);
+      this.nomeDiaSemanaSelecionado = this.diasSemanaCompleto[diaSemana];
 
-      if (el && el[0] && !el[0].contains(event.target)) {
-        this.dropdownAberto = null;
+      let horariosDaQuadra = [];
+
+      if (!this.gradeConfig || this.gradeConfig.length === 0) {
+        horariosDaQuadra = this.getGradePadrao();
+      } else {
+        const slotsDoDia = this.gradeConfig
+          .filter(g => (g.diaSemana != undefined && g.diaSemana == diaSemana) || (g.dia_semana != undefined && g.dia_semana == diaSemana))
+          .map(g => g.horario);
+
+        if (slotsDoDia.length > 0) {
+          slotsDoDia.sort();
+          horariosDaQuadra = slotsDoDia;
+        } else {
+          this.diaFechado = true;
+          return;
+        }
+      }
+
+      this.horariosDisponiveis = [...horariosDaQuadra];
+
+      try {
+        const dataStr = this.formatDateAPI(this.data)
+        const [ano, mes, dia] = dataStr.split('-').map(Number);
+
+        const { data: agendamentos } = await api.get(
+          `/agendamentos/quadra/${this.quadra.id}/confirmados`,
+          { params: { ano, mes, dia } }
+        )
+
+        agendamentos.forEach(a => {
+          for (let i = 0; i < (a.duracao ?? 1); i++) {
+            const h = a.hora + i
+            const hString = String(h).padStart(2, '0') + ':00'
+            this.horariosIndisponiveis.push(hString)
+          }
+        })
+
+        this.horariosDisponiveis = this.horariosDisponiveis.filter(h => !this.horariosIndisponiveis.includes(h));
+        this.horariosDisponiveis.sort();
+
+      } catch (err) {
+        console.error("Erro ao buscar agendamentos:", err)
       }
     },
 
-    aplicarMascaraHora(event, diaIndex) {
-      let valor = event.target.value;
-      valor = valor.replace(/\D/g, "");
-
-      if (valor.length > 4) valor = valor.slice(0, 4);
-
-      if (valor.length > 2) {
-        valor = valor.slice(0, 2) + ":" + valor.slice(2);
+    getHorariosPermitidosParaDiaFixo(diaIndex) {
+      if (!this.gradeConfig || this.gradeConfig.length === 0) {
+        return this.getGradePadrao();
       }
 
-      this.horariosFixos[diaIndex] = valor;
-      event.target.value = valor;
+      const slots = this.gradeConfig
+        .filter(g => (g.diaSemana != undefined && g.diaSemana == diaIndex) || (g.dia_semana != undefined && g.dia_semana == diaIndex))
+        .map(g => g.horario);
+
+      return slots.sort();
     },
 
     validarFormulario() {
       if (!this.modalidadeSelecionada) return false;
-
       if (this.modoAgendamento === 'avulso') {
-        if (!this.data || !this.hora || !this.tipo) return false;
+        if (!this.data || this.diaFechado || !this.hora || !this.tipo) return false;
         if (this.exibirDuracao && !this.duracao) return false;
         return true;
       }
-
       else if (this.modoAgendamento === 'fixo') {
         if (this.diasFixosSelecionados.length === 0) return false;
-
-        const todosHorariosPreenchidos = this.diasFixosSelecionados.every(dia => {
+        const todos = this.diasFixosSelecionados.every(dia => {
           const val = this.horariosFixos[dia];
-          return val && val.length === 5;
+          return val && val.length >= 4;
         });
-
-        if (!todosHorariosPreenchidos) return false;
+        if (!todos) return false;
         if (this.exibirDuracao && !this.duracao) return false;
         return true;
       }
-
       return false;
     },
 
@@ -319,59 +403,26 @@ export default {
         Swal.fire({ icon: 'error', title: 'Erro', text: 'Usuário não logado.', confirmButtonColor: '#1E3A8A' });
         return;
       }
-      if (this.modoAgendamento === 'avulso') {
-        this.confirmarAvulso();
-      } else {
-        this.confirmarFixo();
-      }
+      this.modoAgendamento === 'avulso' ? this.confirmarAvulso() : this.confirmarFixo();
     },
 
     formatDate(date) {
+      if (!date) return '';
       const d = new Date(date)
       return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`
     },
-    getDayClass(date) {
-      const dStr = this.formatDateAPI(date)
-      return this.datasDisponiveis.includes(dStr) ? 'dia-disponivel' : ''
-    },
-    calcularPosicao() {
-      return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
-    },
-    async gerarHorariosDisponiveis() {
-      if (!this.data) return
-      this.hora = ""
-      this.horariosDisponiveis = []
-      this.horariosIndisponiveis = []
-      for (let h = 7; h <= 23; h++) {
-        this.horariosDisponiveis.push(`${h.toString().padStart(2, '0')}:00`)
-      }
-      try {
-        const dataStr = this.formatDateAPI(this.data)
-        const [ano, mes, dia] = dataStr.split('-')
-        const { data: agendamentos } = await api.get(
-          `/agendamentos/quadra/${this.quadra.id}/confirmados`,
-          { params: { ano, mes, dia } }
-        )
-        agendamentos.forEach(a => {
-          for (let i = 0; i < (a.duracao ?? 1); i++) {
-            const h = a.hora + i
-            if (h > 23) continue
-            const hString = String(h).padStart(2, '0') + ':00'
-            this.horariosIndisponiveis.push(hString)
-          }
-        })
-        this.horariosIndisponiveis = [...new Set(this.horariosIndisponiveis)]
-        this.horariosDisponiveis = this.horariosDisponiveis.filter(h => !this.horariosIndisponiveis.includes(h))
-      } catch (err) {
-        console.error(err)
-      }
-    },
+
+    calcularPosicao() { return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }; },
+
     confirmarAvulso() {
       const horaSelecionada = parseInt(this.hora.split(':')[0])
+      const minutoSelecionado = parseInt(this.hora.split(':')[1] || '0')
+
       const dataStr = this.formatDateAPI(this.data)
-      const [ano, mes, dia] = dataStr.split('-').map(n => parseInt(n))
-      const duracaoFinal = this.exibirDuracao ? parseInt(this.duracao) : 1
-      const datahora = new Date(ano, mes - 1, dia, horaSelecionada, 0, 0);
+      const [ano, mes, dia] = dataStr.split('-').map(Number);
+      const duracaoFinal = this.exibirDuracao ? parseFloat(this.duracao) : 1;
+
+      const datahora = new Date(ano, mes - 1, dia, horaSelecionada, minutoSelecionado, 0);
 
       this.$emit('confirmar', {
         usuarioId: this.authStore.usuario.id,
@@ -380,7 +431,7 @@ export default {
         timeId: this.timeSelecionado ? Number(this.timeSelecionado) : null,
         dia, mes, ano,
         hora: horaSelecionada,
-        datahora,
+        datahora: datahora.toISOString(),
         duracao: duracaoFinal,
         tipo: this.tipo,
         fixo: false
@@ -392,17 +443,15 @@ export default {
         this.diasFixosSelecionados = this.diasFixosSelecionados.filter(i => i !== index);
         delete this.horariosFixos[index];
       } else {
+        const permitidos = this.getHorariosPermitidosParaDiaFixo(index);
+        if (this.gradeConfig.length > 0 && permitidos.length === 0) {
+          Swal.fire({ toast: true, icon: 'warning', title: 'A quadra não abre neste dia.', timer: 2000, showConfirmButton: false, position: 'top-end' });
+          return;
+        }
         if (this.diasFixosSelecionados.length < 2) {
           this.diasFixosSelecionados.push(index);
         } else {
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'info',
-            title: 'Limite de 2 dias fixos por semana.',
-            showConfirmButton: false,
-            timer: 3000
-          });
+          Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Limite de 2 dias fixos.', showConfirmButton: false, timer: 3000 });
         }
       }
     },
@@ -412,15 +461,15 @@ export default {
       const agendamentosParaCriar = [];
       const duracaoFinal = this.exibirDuracao ? parseInt(this.duracao) : 1;
 
-      const diasInvalidos = this.diasFixosSelecionados.filter(dia => {
+      const invalido = this.diasFixosSelecionados.some(dia => {
         const h = this.horariosFixos[dia];
-        if (!h || h.length !== 5) return true;
-        const horaInt = parseInt(h.split(':')[0]);
-        return horaInt < 7 || horaInt > 23;
+        if (!h) return true;
+        if (this.gradeConfig.length === 0) return false;
+        return !this.getHorariosPermitidosParaDiaFixo(dia).includes(h);
       });
 
-      if (diasInvalidos.length > 0) {
-        Swal.fire('Horário Inválido', 'Os horários devem estar entre 07:00 e 23:00.', 'warning');
+      if (invalido) {
+        Swal.fire('Horário Inválido', 'Selecione um horário para cada dia marcado.', 'warning');
         return;
       }
 
@@ -431,17 +480,14 @@ export default {
 
         if (this.diasFixosSelecionados.includes(diaSemana)) {
           const horaString = this.horariosFixos[diaSemana];
-          if (!horaString) continue;
-
-          const [horaStr] = horaString.split(':');
+          const [horaStr, minStr] = horaString.split(':');
           const horaInt = parseInt(horaStr);
+          const minInt = parseInt(minStr || '0');
 
-          if (horaInt < 7 || horaInt > 23) continue;
+          const diffMs = dataFutura.setHours(horaInt, minInt, 0, 0) - new Date().getTime();
+          if ((diffMs / (1000 * 60 * 60)) < 24) continue;
 
-          const diffMs = dataFutura.setHours(horaInt, 0, 0, 0) - new Date().getTime();
-          const diffHoras = diffMs / (1000 * 60 * 60);
-
-          if (diffHoras < 24) continue;
+          const dataIso = new Date(dataFutura.getFullYear(), dataFutura.getMonth(), dataFutura.getDate(), horaInt, minInt, 0);
 
           agendamentosParaCriar.push({
             usuarioId: this.authStore.usuario.id,
@@ -452,6 +498,7 @@ export default {
             mes: dataFutura.getMonth() + 1,
             ano: dataFutura.getFullYear(),
             hora: horaInt,
+            datahora: dataIso.toISOString(),
             duracao: duracaoFinal,
             tipo: 'TREINO',
             fixo: true
@@ -460,14 +507,10 @@ export default {
       }
 
       if (agendamentosParaCriar.length === 0) {
-        Swal.fire('Ops!', 'Não foi possível encontrar datas válidas com antecedência mínima de 24h.', 'warning');
+        Swal.fire('Ops!', 'Sem datas válidas (min 24h de antecedência).', 'warning');
         return;
       }
-
-      this.$emit('confirmar', {
-        lote: agendamentosParaCriar,
-        fixo: true
-      });
+      this.$emit('confirmar', { lote: agendamentosParaCriar, fixo: true });
     }
   }
 }
@@ -553,8 +596,7 @@ export default {
   border-bottom-color: #3F85F6;
 }
 
-.form-select,
-.input-time-fixo {
+.form-select {
   color: #374151;
   height: 42px !important;
   padding: 8px 12px;
@@ -567,67 +609,10 @@ export default {
   font-family: inherit;
 }
 
-.form-select:focus,
-.input-time-fixo:focus {
+.form-select:focus {
   border-color: #1E3A8A;
   outline: none;
   box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.1);
-}
-
-.input-time-wrapper {
-  position: relative;
-  width: 100%;
-}
-
-.clock-icon {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #6b7280;
-  pointer-events: none;
-  background: white;
-}
-
-.custom-time-dropdown {
-  position: absolute;
-  top: 105%;
-  left: 0;
-  width: 100%;
-  max-height: 200px;
-  overflow-y: auto;
-  background-color: white;
-  border: 1px solid #3F85F6;
-  border-radius: 6px;
-  z-index: 999;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.time-option {
-  padding: 10px 15px;
-  font-size: 14px;
-  color: #374151;
-  cursor: pointer;
-  border-bottom: 1px solid #f3f4f6;
-  transition: background-color 0.2s;
-}
-
-.time-option:last-child {
-  border-bottom: none;
-}
-
-.time-option:hover {
-  background-color: #eff6ff;
-  color: #1E3A8A;
-}
-
-.custom-time-dropdown::-webkit-scrollbar {
-  width: 6px;
-}
-
-.custom-time-dropdown::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 10px;
 }
 
 :deep(.dp-custom-input) {
@@ -657,17 +642,6 @@ label {
 
 .mb-3 {
   margin-bottom: 16px;
-}
-
-.info-box {
-  background-color: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1e40af;
-  padding: 12px;
-  border-radius: 6px;
-  font-size: 13px;
-  margin-bottom: 20px;
-  text-align: center;
 }
 
 .dias-semana-grid {
@@ -713,23 +687,43 @@ label {
   padding: 16px;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
-}
-
-.linha-horario-fixo {
   display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bloco-dia-fixo {
+  border-bottom: 1px dashed #d1d5db;
+  padding-bottom: 16px;
+}
+
+.bloco-dia-fixo:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.titulo-dia-fixo {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-}
-
-.linha-horario-fixo:last-child {
-  margin-bottom: 0;
-}
-
-.dia-label {
-  width: 90px;
-  font-weight: 600;
+  margin-bottom: 10px;
   font-size: 14px;
   color: #374151;
+}
+
+.subtexto-horario {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.subtexto-horario.selecionado {
+  color: #1E3A8A;
+  font-weight: 700;
+}
+
+.fixo-grid {
+  margin-top: 0;
 }
 
 .horarios-grid {
@@ -766,6 +760,49 @@ label {
   color: #9ca3af;
   cursor: not-allowed;
   border-color: #e5e7eb;
+}
+
+.info-box {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.alerta-fechado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #fee2e2;
+  color: #b91c1c;
+  padding: 30px;
+  border-radius: 8px;
+  border: 1px dashed #ef4444;
+  margin-top: 10px;
+  text-align: center;
+  gap: 10px;
+}
+
+.alerta-fechado svg {
+  color: #ef4444;
+}
+
+.msg-sem-horario,
+.msg-sem-horario-sm {
+  text-align: center;
+  color: #9ca3af;
+  margin-top: 15px;
+  font-style: italic;
+}
+
+.msg-sem-horario-sm {
+  font-size: 12px;
+  margin-top: 5px;
 }
 
 .modal-actions {
@@ -831,5 +868,12 @@ label {
   100% {
     transform: translate(-50%, -50%) rotate(360deg);
   }
+}
+
+:deep(.dia-fechado-visual) {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 </style>

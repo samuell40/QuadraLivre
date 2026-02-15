@@ -26,7 +26,7 @@
           <span>{{ openCategory === 'admin' ? '▲' : '▼' }}</span>
         </div>
         <div v-show="openCategory === 'admin'">
-          <a v-if="usuario?.permissaoId !== 2" href="/gerenciarquadras"
+          <a v-if="[1, 2].includes(usuario?.permissaoId)" href="/gerenciarquadras"
             :class="{ active: isActive('/gerenciarquadras') }">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 56 56">
               <path fill="currentColor"

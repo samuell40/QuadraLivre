@@ -10,22 +10,23 @@
       Gerar Comprovante
     </button>
 
-    <h3>{{ agendamento.quadra }}</h3>
+    <h3>{{ agendamento.quadra?.nome || agendamento.quadra || 'Quadra' }}</h3>
 
     <p> Data:
-      <strong>{{ agendamento.data }}</strong>, às <strong>{{ agendamento.hora }}</strong>
+      <strong>{{ formatarData(agendamento) }}</strong>, às <strong>{{ formatarHora(agendamento) }}</strong>
     </p>
+
     <p>Duração: <strong>{{ agendamento.duracao }} hora(s)</strong></p>
     <p>Tipo: <strong>{{ agendamento.tipo }}</strong></p>
 
     <p>
       Status:
-      <span class="status" :class="agendamento.status">
+      <span class="status" :class="agendamento.status ? agendamento.status.toLowerCase() : ''">
         {{ agendamento.status }}
       </span>
     </p>
 
-    <p v-if="agendamento.status === 'confirmado'">
+    <p v-if="agendamento.status === 'Confirmado' || agendamento.status === 'confirmado'">
       Código de Verificação: <strong class="codigo-texto">{{ agendamento.codigoVerificacao || 'N/A' }}</strong>
     </p>
 
@@ -35,7 +36,8 @@
     </p>
 
     <div class="buttons" v-if="mostrarBotoes">
-      <button v-if="agendamento.status !== 'confirmado'" @click="$emit('cancelar', agendamento.id)" class="cancelar">
+      <button v-if="agendamento.status !== 'Confirmado' && agendamento.status !== 'confirmado'"
+        @click="$emit('cancelar', agendamento.id)" class="cancelar">
         Cancelar
       </button>
       <button class="novo" @click="$emit('novo')">Novo Agendamento</button>
@@ -51,6 +53,34 @@ export default {
     mostrarBotoes: {
       type: Boolean,
       default: true
+    }
+  },
+  methods: {
+    formatarData(ag) {
+      if (ag.datahora) {
+        return new Date(ag.datahora).toLocaleDateString('pt-BR');
+      }
+      if (ag.data) return ag.data;
+
+      if (ag.dia && ag.mes && ag.ano) {
+        return `${String(ag.dia).padStart(2, '0')}/${String(ag.mes).padStart(2, '0')}/${ag.ano}`;
+      }
+      return '--/--/----';
+    },
+
+    formatarHora(ag) {
+      if (ag.datahora) {
+        return new Date(ag.datahora).toLocaleTimeString('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+
+      if (ag.hora !== undefined) {
+        return `${String(ag.hora).padStart(2, '0')}:00`;
+      }
+
+      return '--:--';
     }
   }
 }
@@ -129,6 +159,7 @@ p {
   background-color: #ff6961;
   border: 2px solid #d94d47;
 }
+
 .motivo-recusa {
   margin: 4px 0;
   color: #7e7e7e;

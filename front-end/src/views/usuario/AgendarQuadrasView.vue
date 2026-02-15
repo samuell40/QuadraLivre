@@ -125,7 +125,7 @@ export default {
 
       if (this.usuario?.id) {
         if (this.times.length === 0) {
-           await this.carregarTimes(this.usuario.id);
+          await this.carregarTimes(this.usuario.id);
         }
       }
 
@@ -230,6 +230,7 @@ export default {
 
     async confirmarAgendamento(agendamentoDoModal) {
       const authStore = useAuthStore();
+
       if (!authStore.usuario) {
         Swal.fire({
           title: "Você precisa estar logado",
@@ -244,37 +245,13 @@ export default {
         });
         return;
       }
+
       if (!this.quadraSelecionada) {
-        Swal.fire({ icon: "error", title: "Erro", text: "Nenhuma quadra selecionada.", confirmButtonColor: "#1E3A8A" });
-        return;
-      }
-
-      const regrasAntecedencia = { TREINO: 24, AMISTOSO: 7 * 24, CAMPEONATO: 30 * 24, EVENTO: 180 * 24, OUTRO: 24 };
-      const tipo = agendamentoDoModal.tipo?.toUpperCase();
-      const antecedenciaHoras = regrasAntecedencia[tipo] || regrasAntecedencia.OUTRO;
-
-      let hora = 0; let minuto = 0;
-      if (typeof agendamentoDoModal.hora === 'string' && agendamentoDoModal.hora.includes(':')) {
-        [hora, minuto] = agendamentoDoModal.hora.split(':').map(Number);
-      } else {
-        hora = Number(agendamentoDoModal.hora ?? 0);
-      }
-
-      const dataAgendamento = new Date(Date.UTC(
-        Number(agendamentoDoModal.ano), Number(agendamentoDoModal.mes) - 1, Number(agendamentoDoModal.dia),
-        hora, minuto, 0
-      ));
-
-      const agora = new Date();
-      const diferencaMs = dataAgendamento.getTime() - agora.getTime();
-      const diferencaHoras = diferencaMs / (1000 * 60 * 60);
-
-      if (diferencaHoras < antecedenciaHoras) {
         Swal.fire({
-          icon: "warning",
-          title: "Antecedência mínima não respeitada",
-          text: `Para ${tipo}, o agendamento deve ser feito com pelo menos ${antecedenciaHoras >= 24 ? antecedenciaHoras / 24 + " dias" : antecedenciaHoras + " horas"} de antecedência.`,
-          confirmButtonColor: "#1E3A8A",
+          icon: "error",
+          title: "Erro",
+          text: "Nenhuma quadra selecionada.",
+          confirmButtonColor: "#1E3A8A"
         });
         return;
       }
@@ -283,34 +260,47 @@ export default {
         ...agendamentoDoModal,
         usuarioId: authStore.usuario.id,
         quadraId: this.quadraSelecionada.id,
-        datahora: dataAgendamento,
-        fixo: agendamentoDoModal.fixo ?? false
+        fixo: false
       };
 
       try {
-        await api.post("/agendamento", agendamento);
         Swal.fire({
-          icon: "success", title: "Agendamento realizado!", text: `Quadra: ${this.quadraSelecionada.nome}`,
-          confirmButtonColor: "#1E3A8A", timer: 5000, showConfirmButton: false, timerProgressBar: true,
+          title: 'Processando seu agendamento...',
+          allowOutsideClick: false,
+          didOpen: () => { Swal.showLoading(); }
         });
+
+        await api.post("/agendamento", agendamento);
+
+        Swal.fire({
+          icon: "success",
+          title: "Agendamento realizado!",
+          text: `Sua reserva na quadra ${this.quadraSelecionada.nome} foi enviada para análise.`,
+          confirmButtonColor: "#1E3A8A",
+          timer: 5000,
+          showConfirmButton: true,
+          timerProgressBar: true,
+        });
+
         this.mostrarModalAgendamento = false;
       } catch (err) {
-        const msg = err.response?.data?.error || err.response?.data?.message;
+        const msg = err.response?.data?.error || err.response?.data?.message || "Ocorreu um erro inesperado.";
         const status = err.response?.status;
 
         if (status === 409) {
-          Swal.fire({ icon: "warning", title: "Horário já agendado", text: "Escolha outro horário.", confirmButtonColor: "#1E3A8A" });
-        }
-        else if (status === 400 && (msg?.includes("limite") || msg?.includes("FIXOS"))) {
           Swal.fire({
             icon: "warning",
-            title: "Limite de Fixos Atingido",
+            title: "Horário Indisponível",
+            text: "Vixe! Alguém acabou de pegar esse horário. Escolha outro, macho!",
+            confirmButtonColor: "#1E3A8A"
+          });
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Não foi possível agendar",
             text: msg,
             confirmButtonColor: "#1E3A8A"
           });
-        }
-        else {
-          Swal.fire({ icon: "error", title: "Erro inesperado", text: msg || "Tente novamente.", confirmButtonColor: "#1E3A8A" });
         }
       }
     }

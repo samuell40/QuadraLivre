@@ -132,19 +132,21 @@ const carregarAgendamentos = async () => {
     const { data } = await api.get("/agendamentos");
 
     allAgendamentos.value = data.map(a => {
-      const dataObj = new Date(a.ano, a.mes - 1, a.dia, a.hora);
+      const dataObj = a.datahora ? new Date(a.datahora) : new Date(a.ano, a.mes - 1, a.dia, a.hora);
+
       return {
         id: a.id,
         quadra: a.quadra?.nome || "Não informado",
         quadraId: a.quadra?.id || null,
         dataObj: dataObj,
-        dataFormatada: `${a.dia.toString().padStart(2, "0")}/${a.mes.toString().padStart(2, "0")}/${a.ano}`,
-        hora: `${a.hora.toString().padStart(2, "0")}:00`,
+        dataFormatada: dataObj.toLocaleDateString('pt-BR'),
+        hora: dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         duracao: a.duracao,
         tipo: a.tipo,
         status: a.status.toLowerCase(),
         codigoVerificacao: a.codigoVerificacao,
-        motivoRecusa: a.motivoRecusa
+        motivoRecusa: a.motivoRecusa,
+        datahora: a.datahora
       };
     }).sort((a, b) => {
       if (a.status === 'pendente' && b.status !== 'pendente') return -1;

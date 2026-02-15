@@ -6,18 +6,21 @@
       <div class="detalhes-box">
         <h3 class="subtitulo_h3">{{ agendamento.tipo || 'Agendamento' }}</h3>
 
-        <p><strong>Realizado por:</strong> {{ agendamento.usuario }}</p>
+        <p><strong>Realizado por:</strong> {{ agendamento.usuario?.nome || 'Usuário desconhecido' }}</p>
 
         <p>
-          <strong>Data:</strong> {{ agendamento.dia }}/{{ agendamento.mes }}/{{ agendamento.ano }}
-          às {{ String(agendamento.hora).padStart(2, '0') }}:00
+          <strong>Data:</strong> {{ formatarDataHora(agendamento) }}
         </p>
 
         <p><strong>Duração:</strong> {{ agendamento.duracao }} hora(s)</p>
         <p><strong>Tipo:</strong> {{ agendamento.tipo }}</p>
-        
-        <p><strong>Time:</strong> {{ agendamento.time || 'Não vinculado' }}</p>
+
+        <p><strong>Time:</strong> {{ agendamento.time?.nome || 'Não vinculado' }}</p>
         <p><strong>Código de Verificação:</strong> {{ agendamento.codigoVerificacao || 'N/A' }}</p>
+
+        <div v-if="agendamento.motivoRecusa" class="alerta-recusa">
+          <strong>Motivo da Recusa:</strong> {{ agendamento.motivoRecusa }}
+        </div>
       </div>
 
       <button class="btn-cancelar" @click="$emit('fechar')">Fechar</button>
@@ -30,6 +33,29 @@ export default {
   name: "DetalheAgendModal",
   props: {
     agendamento: { type: Object, required: true }
+  },
+  methods: {
+    formatarDataHora(ag) {
+      if (ag.datahora) {
+        const dataObj = new Date(ag.datahora);
+
+        return dataObj.toLocaleDateString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        }) + ' às ' + dataObj.toLocaleTimeString('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+
+      const dia = String(ag.dia).padStart(2, '0');
+      const mes = String(ag.mes).padStart(2, '0');
+      const ano = ag.ano;
+      const hora = String(ag.hora).padStart(2, '0');
+
+      return `${dia}/${mes}/${ano} às ${hora}:00`;
+    }
   }
 };
 </script>
@@ -104,5 +130,14 @@ export default {
 
 .btn-cancelar:hover {
   background-color: #2563EB;
+}
+
+.alerta-recusa {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-radius: 6px;
+  font-size: 14px;
 }
 </style>

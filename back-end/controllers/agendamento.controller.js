@@ -19,10 +19,7 @@ const criarAgendamentoController = async (req, res) => {
       return res.status(400).json({ error: "Usuário não informado." });
 
     const {
-      dia,
-      mes,
-      ano,
-      hora,
+      datahora,
       duracao,
       tipo,
       quadraId,
@@ -33,18 +30,18 @@ const criarAgendamentoController = async (req, res) => {
       fixo,
     } = req.body;
 
-    if (!dia || !mes || !ano || !hora || !quadraId || !modalidadeId) {
+    if (!datahora || !quadraId || !modalidadeId) {
       return res
         .status(400)
-        .json({ error: "Campos obrigatórios não preenchidos." });
+        .json({
+          error:
+            "Campos obrigatórios (datahora, quadra, modalidade) não preenchidos.",
+        });
     }
 
     const agendamento = await criarAgendamentoService({
       usuarioId,
-      dia: Number(dia),
-      mes: Number(mes),
-      ano: Number(ano),
-      hora: Number(hora),
+      datahora,
       duracao: Number(duracao ?? 1),
       tipo: tipo ?? "TREINO",
       quadraId: Number(quadraId),

@@ -24,7 +24,7 @@
               </span>
             </div>
             <span class="seta-accordion" :class="{ 'rotacionada': secoes[tipo] }">▼</span>
-          </div>+
+          </div>
 
           <div class="accordion-body-aviso" v-show="secoes[tipo]">
 
