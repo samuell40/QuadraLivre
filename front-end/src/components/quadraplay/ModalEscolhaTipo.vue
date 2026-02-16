@@ -28,53 +28,91 @@
     <div class="modal-content modal-times">
       <h2>Criar Partida</h2>
 
-      <!-- FASE -->
-      <div class="filtros-topo">
-        <label>Selecione a fase:</label>
-        <select v-model="partida.faseId" @change="listarRodadas">
-          <option disabled value="">Escolha uma fase</option>
-          <option v-for="fase in fases" :key="fase.id" :value="fase.id">
-            {{ fase.nome }}
-          </option>
-        </select>
-      </div>
+      <!-- FASE E RODADA NA MESMA LINHA -->
+      <div class="filtros-linha">
+        <!-- FASE -->
+        <div class="filtros-topo">
+          <label>Selecione a fase:</label>
+          <select v-model="partida.faseId" @change="listarRodadas">
+            <option disabled value="">Escolha uma fase</option>
+            <option v-for="fase in fases" :key="fase.id" :value="fase.id">
+              {{ fase.nome }}
+            </option>
+          </select>
+        </div>
 
-      <!-- RODADA -->
-      <div class="filtros-topo">
-        <label>Selecione a rodada:</label>
-        <select v-model="partida.rodadaId" :disabled="!rodadas.length">
-          <option disabled value="">Escolha uma rodada</option>
-          <option v-for="rodada in rodadas" :key="rodada.id" :value="rodada.id">
-            {{ rodada.nome }}
-          </option>
-        </select>
+        <!-- RODADA -->
+        <div class="filtros-topo">
+          <label>Selecione a rodada:</label>
+          <select v-model="partida.rodadaId" :disabled="!rodadas.length">
+            <option disabled value="">Escolha uma rodada</option>
+            <option v-for="rodada in rodadas" :key="rodada.id" :value="rodada.id">
+              {{ rodada.nome }}
+            </option>
+          </select>
+        </div>
       </div>
-
       <!-- TIME A -->
       <div class="filtros-topo">
         <label>Time 1:</label>
-        <select v-model="partida.timeAId">
-          <option disabled value="">Selecione o time</option>
-          <option v-for="time in times" :key="time.id" :value="time.id">
-            {{ time.nome }}
-          </option>
-        </select>
+
+        <div class="dropdown-custom">
+          <div class="dropdown-selected" @click="abrirDropdownTimeA = !abrirDropdownTimeA">
+            <img v-if="timeASelecionadoObj?.foto" :src="timeASelecionadoObj.foto" class="avatar" />
+            <span>
+              {{ timeASelecionadoObj?.nome || 'Selecione o time' }}
+            </span>
+          </div>
+
+          <div v-if="abrirDropdownTimeA" class="dropdown-list">
+            <input type="text" v-model="buscaTimeA" placeholder="Buscar time..." class="input-busca-jogador"
+              @click.stop />
+
+            <ul>
+              <li v-for="time in timesFiltradosA" :key="time.id" @click.stop="selecionarTimeA(time)">
+                <img v-if="time.foto" :src="time.foto" class="avatar" />
+                <span>{{ time.nome }}</span>
+              </li>
+
+              <li v-if="timesFiltradosA.length === 0" class="sem-jogador">
+                Nenhum time encontrado
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
 
       <!-- TIME B -->
       <div class="filtros-topo">
         <label>Time 2:</label>
-        <select v-model="partida.timeBId">
-          <option disabled value="">Selecione o time</option>
-          <option v-for="time in times" :key="time.id" :value="time.id" :disabled="time.id === partida.timeAId">
-            {{ time.nome }}
-          </option>
-        </select>
-      </div>
 
+        <div class="dropdown-custom">
+          <div class="dropdown-selected" @click="abrirDropdownTimeB = !abrirDropdownTimeB">
+            <img v-if="timeBSelecionadoObj?.foto" :src="timeBSelecionadoObj.foto" class="avatar" />
+            <span>
+              {{ timeBSelecionadoObj?.nome || 'Selecione o time' }}
+            </span>
+          </div>
+
+          <div v-if="abrirDropdownTimeB" class="dropdown-list">
+            <input type="text" v-model="buscaTimeB" placeholder="Buscar time..." class="input-busca-jogador"
+              @click.stop />
+
+            <ul>
+              <li v-for="time in timesFiltradosB" :key="time.id" @click.stop="selecionarTimeB(time)">
+                <img v-if="time.foto" :src="time.foto" class="avatar" />
+                <span>{{ time.nome }}</span>
+              </li>
+
+              <li v-if="timesFiltradosB.length === 0" class="sem-jogador">
+                Nenhum time encontrado
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
       <div class="botoes">
         <button class="btn-save" @click="criarPartida">Criar Partida</button>
-        <button class="btn-cancel" @click="mostrarModalPartida = false">Voltar</button>
       </div>
     </div>
   </div>
@@ -167,8 +205,11 @@ export default {
         rodadaId: '',
         timeAId: '',
         timeBId: ''
-      }
-
+      },
+      abrirDropdownTimeA: false,
+      abrirDropdownTimeB: false,
+      buscaTimeA: '',
+      buscaTimeB: '',
     };
   },
   emits: ['update:modelValue', 'selecionar', 'rodadaCriada'],
@@ -178,6 +219,32 @@ export default {
     console.log('USUÁRIO LOGADO (Modal):', this.usuario);
   },
 
+  computed: {
+    timeASelecionadoObj() {
+      return this.times.find(t => t.id === this.partida.timeAId);
+    },
+
+    timeBSelecionadoObj() {
+      return this.times.find(t => t.id === this.partida.timeBId);
+    },
+
+    timesFiltradosA() {
+      return this.times
+        .filter(t => t.id !== this.partida.timeBId)
+        .filter(t =>
+          t.nome.toLowerCase().includes(this.buscaTimeA.toLowerCase())
+        );
+    },
+
+    timesFiltradosB() {
+      return this.times
+        .filter(t => t.id !== this.partida.timeAId)
+        .filter(t =>
+          t.nome.toLowerCase().includes(this.buscaTimeB.toLowerCase())
+        );
+    }
+  },
+
   methods: {
     fechar() {
       this.$emit('update:modelValue', false);
@@ -185,6 +252,18 @@ export default {
     selecionar(tipo) {
       this.$emit('selecionar', tipo);
       this.fechar();
+    },
+
+    selecionarTimeA(time) {
+      this.partida.timeAId = time.id;
+      this.abrirDropdownTimeA = false;
+      this.buscaTimeA = '';
+    },
+
+    selecionarTimeB(time) {
+      this.partida.timeBId = time.id;
+      this.abrirDropdownTimeB = false;
+      this.buscaTimeB = '';
     },
 
     async abrirModalPartida() {
@@ -356,7 +435,7 @@ export default {
       try {
         const { data } = await api.get(`/campeonato/${this.campeonatoId}`);
         this.modalidadeId = data.modalidadeId;
-        this.quadraId = data.quadraId; // 👈 IMPORTANTE
+        this.quadraId = data.quadraId;
       } catch (err) {
         console.error('Erro ao carregar campeonato:', err);
       }
@@ -538,5 +617,100 @@ export default {
   color: #111827;
   background-color: #fff;
   outline: none;
+}
+
+.filtros-linha {
+  display: flex;
+  gap: 20px; 
+  flex-wrap: wrap; 
+}
+
+.filtros-linha .filtros-topo {
+  flex: 1; 
+  min-width: 150px; 
+}
+
+.dropdown-custom {
+  position: relative;
+  cursor: pointer;
+  margin-top: 5px;
+}
+
+.dropdown-selected {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
+  font-size: 15px;
+  color: #333;
+  min-height: 38px;
+}
+
+.dropdown-list {
+  position: absolute;
+  width: 100%;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-top: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-list ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.dropdown-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.dropdown-list li:hover {
+  background-color: #f1f1f1;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.input-busca-jogador {
+  width: 100%;
+  padding: 8px;
+  border: none;
+  border-bottom: 1px solid #ddd;
+  outline: none;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.sem-jogador {
+  padding: 10px;
+  text-align: center;
+  color: #999;
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .filtros-linha {
+    flex-direction: column; 
+    gap: 12px; 
+  }
 }
 </style>
