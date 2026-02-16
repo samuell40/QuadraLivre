@@ -105,7 +105,6 @@ async function listarPlacarPorFaseController(req, res) {
   }
 }
 
-
 async function listarFasesERodadasController(req, res) {
   try {
     const { campeonatoId } = req.params;

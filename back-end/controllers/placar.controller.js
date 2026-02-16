@@ -1,30 +1,5 @@
 const placarService = require('../services/placar.service');
 
-async function criarPlacarController(req, res) {
-  try {
-    const { campeonatoId, timeId } = req.body;
-
-    if (!campeonatoId || !timeId) {
-      return res.status(400).json({
-        erro: 'campeonatoId e timeId são obrigatórios.'
-      });
-    }
-
-    const placar = await placarService.criarPlacar({
-      campeonatoId,
-      timeId
-    });
-
-    return res.status(201).json({
-      mensagem: 'Placar criado com sucesso.',
-      placar
-    });
-
-  } catch (error) {
-    return res.status(500).json({ erro: error.message });
-  }
-}
-
 async function atualizarPlacarController(req, res) {
   try {
     const { id } = req.params;
@@ -33,7 +8,6 @@ async function atualizarPlacarController(req, res) {
     if (!id) {
       return res.status(400).json({ erro: 'ID do placar é obrigatório.' });
     }
-
     const placar = await placarService.atualizarPlacar(id, campos);
 
     return res.status(200).json({
@@ -65,4 +39,45 @@ async function listarPlacarPorCampeonatoController(req, res) {
   }
 }
 
-module.exports = { criarPlacarController, atualizarPlacarController, listarPlacarPorCampeonatoController };
+async function salvarOrdemController(req, res) {
+  try {
+    const { campeonatoId } = req.params
+    const { ordem } = req.body
+
+    if (!ordem || !Array.isArray(ordem)) {
+
+      return res.status(400).json({
+        erro: "ordem deve ser um array"
+      })
+
+    }
+    const resultado = await placarService.salvarOrdemClassificacao(
+      campeonatoId,
+      ordem
+    )
+
+    return res.json({
+      message: "Ordem salva com sucesso",
+      data: resultado
+    })
+
+  }
+  catch (error) {
+    return res.status(500).json({
+      erro: error.message
+    })
+  }
+}
+
+async function listarOrdemClassificacaoController(req, res) {
+  try {
+    const { campeonatoId } = req.params;
+    const ordem = await placarService.listarOrdemClassificacao(Number(campeonatoId));
+    res.json({ campeonatoId, ordem });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: error.message });
+  }
+}
+
+module.exports = { atualizarPlacarController, listarPlacarPorCampeonatoController, salvarOrdemController, listarOrdemClassificacaoController };

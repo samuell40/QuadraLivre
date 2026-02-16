@@ -1,9 +1,9 @@
 <template>
   <div class="layout">
     <NavBarQuadras />
-    <SidebarCampeonato />
+    <SidebarCampeonato @sidebar-toggle="sidebarCollapsed = $event" />
 
-    <div class="conteudo">
+    <div class="conteudo" :class="{ collapsed: sidebarCollapsed }">
       <NavBarUser v-if="!partidaIniciada" />
       <div class="header">
         <h1 class="title"> Registro Partida <span v-if="nomeModalidade">({{ nomeModalidade }})</span></h1>
@@ -71,12 +71,12 @@ export default {
 
   data() {
     return {
+      sidebarCollapsed: false,
       campeonatoSelecionado: '',
       quadraSelecionada: '',
       modalidadeSelecionada: '',
       timeSelecionado1: '',
       timeSelecionado2: '',
-
       campeonatosDisponiveis: [],
       quadrasDisponiveis: [],
       modalidadesDisponiveis: [],
@@ -122,7 +122,7 @@ export default {
     usuarioLogadoId() {
       return this.authStore.usuario?.id || null
     },
- 
+
     isVolei() {
       const modalidade = this.modalidadesDisponiveis.find(
         m => m.id === this.modalidadeSelecionada
@@ -620,6 +620,10 @@ export default {
   padding: 32px;
   margin-left: 250px;
   padding-top: 102px;
+}
+
+.conteudo.collapsed {
+  margin-left: 70px;
 }
 
 .sidebar {

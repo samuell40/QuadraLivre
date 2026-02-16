@@ -7,9 +7,6 @@
         <button class="btn-tipo" @click="abrirModalPartida">
           Adicionar Partida
         </button>
-        <button class="btn-tipo" @click="abrirModalFase">
-          Adicionar Fase
-        </button>
         <button class="btn-tipo" @click="abrirModalRodada">
           Adicionar Rodada
         </button>
@@ -27,10 +24,7 @@
   <div v-if="mostrarModalPartida" class="modal-overlay" @click.self="mostrarModalPartida = false">
     <div class="modal-content modal-times">
       <h2>Criar Partida</h2>
-
-      <!-- FASE E RODADA NA MESMA LINHA -->
       <div class="filtros-linha">
-        <!-- FASE -->
         <div class="filtros-topo">
           <label>Selecione a fase:</label>
           <select v-model="partida.faseId" @change="listarRodadas">
@@ -41,7 +35,6 @@
           </select>
         </div>
 
-        <!-- RODADA -->
         <div class="filtros-topo">
           <label>Selecione a rodada:</label>
           <select v-model="partida.rodadaId" :disabled="!rodadas.length">
@@ -117,38 +110,6 @@
     </div>
   </div>
 
-  <!-- MODAL DE CRIAR FASE -->
-  <div v-if="mostrarModalFase" class="modal-overlay" @click.self="mostrarModalFase = false">
-    <div class="modal-content modal-times">
-      <h2>Criar Nova Fase</h2>
-
-      <div class="filtros-topo">
-        <label for="nomeFase">Digite o nome da fase:</label>
-        <input id="nomeFase" v-model="nomeFase" type="text" placeholder="Ex: Eliminatórias" />
-      </div>
-
-      <label for="nomeFase">Selecione os times: {{ timesSelecionados.length }} selecionado(s)</label>
-
-      <div class="lista-times">
-        <div v-for="time in times" :key="time.id" class="time-card"
-          :class="{ selecionado: timesSelecionados.includes(time.id) }" @click="toggleTime(time.id)">
-          <div class="time-card-top">
-            <div class="time-foto" v-if="time.foto">
-              <img :src="time.foto" :alt="time.nome" />
-            </div>
-            <h3 class="time-nome">{{ time.nome }}</h3>
-          </div>
-          <span>{{ time._count?.jogadores }} jogadores</span>
-        </div>
-      </div>
-
-      <div class="botoes">
-        <button class="btn-save" @click="criarFase">Criar Fase</button>
-        <button class="btn-cancel" @click="mostrarModalFase = false">Voltar</button>
-      </div>
-    </div>
-  </div>
-
   <div v-if="mostrarModalRodada" class="modal-overlay" @click.self="mostrarModalRodada = false">
     <div class="modal-content modal-times">
       <h2>Criar Nova Rodada</h2>
@@ -169,7 +130,6 @@
 
       <div class="botoes">
         <button class="btn-save" @click="criarRodada">Criar Rodada</button>
-        <button class="btn-cancel" @click="mostrarModalRodada = false">Voltar</button>
       </div>
     </div>
   </div>
@@ -188,11 +148,8 @@ export default {
   data() {
     return {
       usuario: null,
-      mostrarModalFase: false,
       mostrarModalPartida: false,
-      nomeFase: '',
       times: [],
-      timesSelecionados: [],
       mostrarModalRodada: false,
       nomeRodada: '',
       fases: [],
@@ -216,7 +173,6 @@ export default {
 
   mounted() {
     this.usuario = JSON.parse(localStorage.getItem('usuario'));
-    console.log('USUÁRIO LOGADO (Modal):', this.usuario);
   },
 
   computed: {
@@ -278,13 +234,7 @@ export default {
         timeAId: '',
         timeBId: ''
       };
-
       this.mostrarModalPartida = true;
-    },
-
-    abrirModalFase() {
-      this.mostrarModalFase = true;
-      this.listarTimes();
     },
 
     async abrirModalRodada() {
@@ -311,44 +261,6 @@ export default {
       } catch (err) {
         console.error('Erro ao listar times:', err);
         Swal.fire('Erro', 'Não foi possível carregar os times.', 'error');
-      }
-    },
-
-    toggleTime(timeId) {
-      const index = this.timesSelecionados.indexOf(timeId);
-      if (index > -1) {
-        this.timesSelecionados.splice(index, 1);
-      } else {
-        this.timesSelecionados.push(timeId);
-      }
-    },
-
-    async criarFase() {
-      if (!this.nomeFase) {
-        Swal.fire('Erro', 'Informe o nome da fase.', 'error');
-        return;
-      }
-      if (this.timesSelecionados.length === 0) {
-        Swal.fire('Erro', 'Selecione pelo menos um time.', 'error');
-        return;
-      }
-
-      try {
-        const { data } = await api.post(`/campeonatos/${this.campeonatoId}/fases`, {
-          nome: this.nomeFase,
-          times: this.timesSelecionados
-        });
-        console.log('API resposta fase:', data);
-        Swal.fire('Sucesso', 'Fase criada com sucesso!', 'success');
-        this.$emit('faseCriada', data.fase);
-
-        this.mostrarModalFase = false;
-        this.nomeFase = '';
-        this.timesSelecionados = [];
-        this.times = [];
-      } catch (err) {
-        console.error('Erro ao criar fase:', err);
-        Swal.fire('Erro', 'Não foi possível criar a fase.', 'error');
       }
     },
 
@@ -425,7 +337,7 @@ export default {
         console.error('Erro ao criar partida:', err);
         Swal.fire(
           'Erro',
-          err.response?.data?.message || 'Erro ao criar partida.',
+          err.response?.data?.message,
           'error'
         );
       }
@@ -478,18 +390,28 @@ export default {
 }
 
 .btn-tipo {
-  padding: 12px;
+  padding: 12px 20px;
   font-size: 16px;
   border-radius: 8px;
   border: 1px solid #3b82f6;
   background-color: #fff;
   cursor: pointer;
-  transition: 0.2s;
+  transition: 0.3s; 
+  display: flex;
+  align-items: center;
+  text-align: left;
+  width: 100%;
 }
 
 .btn-tipo:hover {
   background-color: #3b82f6;
-  color: #fff;
+  color: white; 
+}
+
+.btn-tipo i {
+  margin-right: 12px;
+  width: 20px;
+  text-align: center;
 }
 
 .botoes {
@@ -514,7 +436,7 @@ export default {
 }
 
 .btn-cancel {
-  background-color: #7e7e7e;
+  background-color: #3b82f6;
 }
 
 .modal-times .lista-times {
@@ -621,13 +543,27 @@ export default {
 
 .filtros-linha {
   display: flex;
-  gap: 20px; 
-  flex-wrap: wrap; 
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
 .filtros-linha .filtros-topo {
-  flex: 1; 
-  min-width: 150px; 
+  flex: 1;
+  min-width: 150px;
+}
+
+.filtros-topo {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.filtros-topo label {
+  display: block;
+  font-size: 17px;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #374151;
 }
 
 .dropdown-custom {
@@ -709,8 +645,8 @@ export default {
 
 @media (max-width: 768px) {
   .filtros-linha {
-    flex-direction: column; 
-    gap: 12px; 
+    flex-direction: column;
+    gap: 12px;
   }
 }
 </style>

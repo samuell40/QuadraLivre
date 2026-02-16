@@ -18,7 +18,7 @@
             <thead>
               <tr>
                 <th>Nome</th>
-                <th>Função</th>
+                <th>Posição</th>
               </tr>
             </thead>
             <tbody>
@@ -218,7 +218,6 @@ export default {
 </script>
 
 <style scoped>
-/* Modal Overlay */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -230,10 +229,9 @@ export default {
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  padding: 16px; /* adiciona espaçamento em mobile */
+  padding: 16px; 
 }
 
-/* Modal Conteúdo */
 .modal-conteudo.modal-placar {
   background-color: #fff;
   border-radius: 12px;
@@ -248,7 +246,6 @@ export default {
   box-sizing: border-box;
 }
 
-/* Header */
 .header-placar {
   display: flex;
   justify-content: space-between;
@@ -256,13 +253,11 @@ export default {
   gap: 16px;
 }
 
-/* Título */
 .title_placar {
   color: #3b82f6;
   font-size: 28px;
 }
 
-/* Botão Gerenciar */
 .btn-gerenciar {
   background-color: #3b82f6;
   color: white;
@@ -274,7 +269,6 @@ export default {
   transition: background-color 0.2s;
 }
 
-/* Loader */
 .loader-container-centralizado,
 .sem-dados-centralizado {
   display: flex;

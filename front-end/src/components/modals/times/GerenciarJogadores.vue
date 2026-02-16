@@ -614,13 +614,13 @@ export default {
 
 .abas-container {
   display: flex;
-  flex-wrap: wrap; 
+  flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 20px;
-  justify-content: center;
 }
 
 .aba {
+  flex: 1; 
   text-align: center;
   padding: 10px 0;
   border-radius: 6px;

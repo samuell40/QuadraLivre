@@ -1,6 +1,39 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+const CRITERIOS_MODALIDADE = {
+  futebol: [
+    { value: "pontuacao", label: "Pontuação" },
+    { value: "vitorias", label: "Vitórias" },
+    { value: "saldoDeGols", label: "Saldo de gols" },
+    { value: "golsPro", label: "Gols pró" },
+    { value: "golsSofridos", label: "Gols sofridos" },
+    { value: "empates", label: "Empates" },
+    { value: "derrotas", label: "Derrotas" },
+    { value: "confrontoDireto", label: "Confronto direto" },
+    { value: "sorteio", label: "Sorteio" }
+  ],
+  futsal: [],
+  futebolDeAreia: [],
+  volei: [
+    { value: "pontuacao", label: "Pontuação" },
+    { value: "setsVencidos", label: "Sets vencidos" },
+    { value: "vitoria3x0", label: "Vitória 3x0" },
+    { value: "vitoria3x2", label: "Vitória 3x2" },
+    { value: "derrota2x3", label: "Derrota 2x3" },
+    { value: "derrota0x3", label: "Derrota 0x3" },
+    { value: "sorteio", label: "Sorteio" }
+  ],
+  voleiDeAreia: [],
+  futevolei: []
+};
+
+CRITERIOS_MODALIDADE.futsal = CRITERIOS_MODALIDADE.futebol;
+CRITERIOS_MODALIDADE.futebolDeAreia = CRITERIOS_MODALIDADE.futebol;
+CRITERIOS_MODALIDADE.voleiDeAreia = CRITERIOS_MODALIDADE.volei;
+CRITERIOS_MODALIDADE.futevolei = CRITERIOS_MODALIDADE.volei;
+
+
 async function criarCampeonato(data) {
   const {
     nome,
@@ -16,18 +49,13 @@ async function criarCampeonato(data) {
     foto
   } = data;
 
-  let listaDatasReais = [];
-
-  if (Array.isArray(datasJogos)) {
-    datasJogos.forEach(function (d) {
-      listaDatasReais.push(new Date(d));
-    });
-  }
-
+  let listaDatasReais = Array.isArray(datasJogos) ? datasJogos.map(d => new Date(d)) : [];
   const timesArray = Array.isArray(times) ? times : [];
 
-  return await prisma.$transaction(async (tx) => {
+  // Define ordem de classificação por modalidade
+  const ordemClassificacao = CRITERIOS_MODALIDADE[modalidadeId] || CRITERIOS_MODALIDADE.futebol;
 
+  return await prisma.$transaction(async (tx) => {
     if (listaDatasReais.length > 0) {
       const conflitos = await tx.agendamento.findMany({
         where: {
@@ -51,7 +79,7 @@ async function criarCampeonato(data) {
       hora: dataObj.getUTCHours(),
       quadraId: Number(quadraId),
       usuarioId: Number(usuarioId),
-      modalidadeId: Number(modalidadeId),
+      modalidadeId: modalidadeId,
       status: "Confirmado",
       tipo: "EVENTO",
       duracao: 1
@@ -67,6 +95,7 @@ async function criarCampeonato(data) {
         status,
         modalidadeId: Number(modalidadeId),
         quadraId: Number(quadraId),
+        ordemClassificacao, // <- definido por modalidade aqui
         times: {
           create: timesArray.map(timeId => ({ timeId: Number(timeId) }))
         },
@@ -82,70 +111,27 @@ async function criarCampeonato(data) {
       }
     });
 
+    // Cria fases e rodadas conforme o tipo
     if (tipo === "PONTOS_CORRIDOS") {
-      const fase = await tx.fase.create({
-        data: {
-          nome: "1° Fase",
-          campeonatoId: campeonato.id
-        }
-      });
-
-      await tx.rodada.create({
-        data: {
-          nome: "Rodada 1",
-          faseId: fase.id
-        }
-      });
-
-      await tx.placar.updateMany({
-        where: { campeonatoId: campeonato.id },
-        data: { faseId: fase.id }
-      });
+      const fase = await tx.fase.create({ data: { nome: "1° Fase", campeonatoId: campeonato.id } });
+      await tx.rodada.create({ data: { nome: "Rodada 1", faseId: fase.id } });
+      await tx.placar.updateMany({ where: { campeonatoId: campeonato.id }, data: { faseId: fase.id } });
     }
 
-    // ------------------- PONTOS CORRIDOS + ELIMINATORIAS -------------------
     if (tipo === "PONTOS_CORRIDOS_ELIMINATORIAS") {
-      const fase1 = await tx.fase.create({
-        data: {
-          nome: "1° Fase",
-          campeonatoId: campeonato.id
-        }
-      });
+      const fase1 = await tx.fase.create({ data: { nome: "1° Fase", campeonatoId: campeonato.id } });
+      await tx.rodada.create({ data: { nome: "Rodada 1", faseId: fase1.id } });
+      await tx.placar.updateMany({ where: { campeonatoId: campeonato.id }, data: { faseId: fase1.id } });
 
-      await tx.rodada.create({
-        data: { nome: "Rodada 1", faseId: fase1.id }
-      });
-
-      await tx.placar.updateMany({
-        where: { campeonatoId: campeonato.id },
-        data: { faseId: fase1.id }
-      });
-
-      // Fase de eliminatórias
-      const fase2 = await tx.fase.create({
-        data: {
-          nome: "Eliminatórias",
-          campeonatoId: campeonato.id
-        }
-      });
-
-      const rodadasElim = ["Quartas de Final", "Semifinal", "Final"];
-      for (const rodadaNome of rodadasElim) {
+      const fase2 = await tx.fase.create({ data: { nome: "Eliminatórias", campeonatoId: campeonato.id } });
+      for (const rodadaNome of ["Quartas de Final", "Semifinal", "Final"]) {
         await tx.rodada.create({ data: { nome: rodadaNome, faseId: fase2.id } });
       }
     }
 
-    // ------------------- ELIMINATORIAS PURAS -------------------
     if (tipo === "ELIMINATORIAS") {
-      const fase = await tx.fase.create({
-        data: {
-          nome: "Eliminatórias",
-          campeonatoId: campeonato.id
-        }
-      });
-
-      const rodadasElim = ["Quartas de Final", "Semifinal", "Final"];
-      for (const rodadaNome of rodadasElim) {
+      const fase = await tx.fase.create({ data: { nome: "Eliminatórias", campeonatoId: campeonato.id } });
+      for (const rodadaNome of ["Quartas de Final", "Semifinal", "Final"]) {
         await tx.rodada.create({ data: { nome: rodadaNome, faseId: fase.id } });
       }
     }
@@ -153,6 +139,7 @@ async function criarCampeonato(data) {
     return campeonato;
   });
 }
+
 
 async function removerCampeonato(campeonatoId) {
   if (!campeonatoId) {
@@ -219,6 +206,8 @@ async function listarCampeonatosPorModalidade(modalidadeId, ano) {
         },
         placares: {
           where: { visivel: true, deletedAt: null },
+          include: { time: true },
+          orderBy: { posicao: 'asc' }
         },
         agendamentos: {
           where: { deletedAt: null }
@@ -227,7 +216,12 @@ async function listarCampeonatosPorModalidade(modalidadeId, ano) {
       orderBy: { dataInicio: 'desc' }
     });
 
-    return campeonatos;
+    // Ajuste: adiciona os critérios de classificação
+    return campeonatos.map(c => ({
+      ...c,
+      criteriosClassificacao: c.ordemClassificacao || []
+    }));
+
   } catch (error) {
     console.error(error);
     throw new Error('Erro ao listar campeonatos por modalidade.');
@@ -239,7 +233,7 @@ async function listarCampeonatosAnoAtual() {
   const dataInicio = new Date(`${anoAtual}-01-01`);
   const dataFim = new Date(`${anoAtual}-12-31T23:59:59.999`);
 
-  return prisma.campeonato.findMany({
+  const campeonatos = await prisma.campeonato.findMany({
     where: {
       ativo: true,
       deletedAt: null,
@@ -256,6 +250,12 @@ async function listarCampeonatosAnoAtual() {
     },
     orderBy: { dataInicio: 'desc' }
   });
+
+  // Ajuste: inclui os critérios de classificação
+  return campeonatos.map(c => ({
+    ...c,
+    criteriosClassificacao: c.ordemClassificacao || []
+  }));
 }
 
 async function listarArtilhariaCampeonato(campeonatoId, limite = 5) {
@@ -413,4 +413,4 @@ async function criarRodada(faseId, nomeRodada) {
 
   return rodada;
 }
-module.exports = { criarCampeonato, removerCampeonato, listarCampeonatosPorModalidade, listarCampeonatosAnoAtual, listarArtilhariaCampeonato, getCampeonatoById, listarPlacarPorFase, listarFasesERodadas, criarFase, criarRodada };
+module.exports = { CRITERIOS_MODALIDADE, criarCampeonato, removerCampeonato, listarCampeonatosPorModalidade, listarCampeonatosAnoAtual, listarArtilhariaCampeonato, getCampeonatoById, listarPlacarPorFase, listarFasesERodadas, criarFase, criarRodada };

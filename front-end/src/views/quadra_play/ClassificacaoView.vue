@@ -1,26 +1,28 @@
 <template>
   <div class="layout">
     <NavBarQuadras />
-
     <SidebarCampeonato @sidebar-toggle="sidebarCollapsed = $event" />
 
     <div class="conteudo" :class="{ collapsed: sidebarCollapsed }">
       <div class="header">
         <h1 class="title">Classificação {{ campeonato?.nome }}</h1>
-      </div>
+        <button class="btn-add" @click="abrirConfiguracoes">
+          Configurações
+        </button>
 
-      <div v-if="fases.length" class="filtros-topo">
-        <div class="filtro-item">
-          <label class="filtro-titulo" for="fase-select">Selecione a Fase:</label>
-          <select id="fase-select" v-model="faseSelecionada" @change="carregarPlacarPorFase">
-            <option disabled value="">-- Escolha a Fase --</option>
-            <option v-for="fase in fases" :key="fase.id" :value="fase.id">{{ fase.nome }}</option>
-          </select>
-        </div>
       </div>
 
       <!-- PLACAR -->
       <div class="placar-wrapper" v-if="campeonato">
+        <div v-if="fases.length" class="filtros-topo">
+          <div class="filtro-item">
+            <label class="filtro-titulo" for="fase-select">Selecione a Fase:</label>
+            <select id="fase-select" v-model="faseSelecionada" @change="carregarPlacarPorFase">
+              <option disabled value="">-- Escolha a Fase --</option>
+              <option v-for="fase in fases" :key="fase.id" :value="fase.id">{{ fase.nome }}</option>
+            </select>
+          </div>
+        </div>
         <div class="placar-table">
           <div v-if="timesPlacar === null" class="loader-container-centralizado">
             <div class="loader"></div>
@@ -103,6 +105,9 @@
           </table>
         </div>
       </div>
+      <ModalConfiguracoesPlacar v-if="campeonato" v-model="modalConfiguracoes" :campeonato="campeonato"
+        @faseCriada="carregarFases" />
+
     </div>
   </div>
 </template>
@@ -111,11 +116,12 @@
 import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
 import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
 import { carregarCampeonato } from '@/utils/persistirCampeonato'
+import ModalConfiguracoesPlacar from '@/components/quadraplay/ModalConfiguracoesPlacar.vue'
 import api from '@/axios'
 
 export default {
   name: 'ClassificacaoView',
-  components: { SidebarCampeonato, NavBarQuadras },
+  components: { SidebarCampeonato, NavBarQuadras, ModalConfiguracoesPlacar },
 
   data() {
     return {
@@ -124,7 +130,8 @@ export default {
       fases: [],
       faseSelecionada: '',
       timesPlacar: null,
-      isLoading: true
+      isLoading: true,
+      modalConfiguracoes: false
     }
   },
 
@@ -134,7 +141,28 @@ export default {
     }
   },
 
+  async mounted() {
+    try {
+      this.campeonato = await carregarCampeonato(this.$route)
+      if (this.campeonato?.id) {
+        await this.carregarFases()
+      } else {
+        this.timesPlacar = []
+      }
+    } catch (err) {
+      console.error('Erro ao carregar classificação:', err)
+      this.timesPlacar = []
+      this.campeonato = null
+    } finally {
+      this.isLoading = false
+    }
+  },
+
   methods: {
+    abrirConfiguracoes() {
+      this.modalConfiguracoes = true
+    },
+
     async carregarFases() {
       if (!this.campeonato?.id) return
 
@@ -185,23 +213,6 @@ export default {
         this.timesPlacar = []
       }
     }
-  },
-
-  async mounted() {
-    try {
-      this.campeonato = await carregarCampeonato(this.$route)
-      if (this.campeonato?.id) {
-        await this.carregarFases()
-      } else {
-        this.timesPlacar = []
-      }
-    } catch (err) {
-      console.error('Erro ao carregar classificação:', err)
-      this.timesPlacar = []
-      this.campeonato = null
-    } finally {
-      this.isLoading = false
-    }
   }
 }
 </script>
@@ -225,11 +236,39 @@ export default {
   margin-left: 70px;
 }
 
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
 .title {
   color: #3b82f6;
   font-size: 28px;
   font-weight: bold;
-  margin-bottom: 20px;
+}
+
+.btn-add {
+  padding: 10px 18px;
+  background-color: #3b82f6;
+  border: none;
+  border-radius: 15px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.btn-add:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.btn-add:active {
+  transform: translateY(0);
 }
 
 .card-quadra {
@@ -443,7 +482,6 @@ export default {
   color: #152147;
 }
 
-/* Responsividade */
 @media (max-width: 768px) {
   .conteudo {
     margin-left: 0;
@@ -456,7 +494,27 @@ export default {
 
   .title {
     font-size: 22px;
-    margin-bottom: 14px;
+    margin-bottom: 0;
+  }
+
+  .header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .btn-add {
+    width: auto;
+    align-self: flex-end;
+    padding: 10px 14px;
+    font-size: 0;
+  }
+
+  .btn-add::after {
+    content: "⚙";
+    font-size: 18px;
   }
 
   .placar-wrapper {

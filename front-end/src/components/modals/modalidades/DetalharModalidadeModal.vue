@@ -4,9 +4,6 @@
 
       <div class="header-modal">
         <h2>Detalhes da Modalidade - {{ formatarNome(modalidade?.nome) }}</h2>
-        <button class="btn-gerenciar" @click="abrirModalFuncoes">
-          Gerenciar Funções
-        </button>
       </div>
 
       <!-- ACCORDION QUADRAS -->
@@ -47,74 +44,6 @@
       <div class="botoes">
         <button class="btn-cancel" @click="$emit('fechar')">Fechar</button>
       </div>
-
-      <!-- MODAL de GERENCIAR FUNÇÕES -->
-      <div v-if="modalFuncoes" class="modal-overlay" @click.self="modalFuncoes = false">
-        <div class="modal-content modal-funcoes">
-
-          <div class="header-modal">
-            <h2>Funções - {{ formatarNome(modalidade?.nome) }}</h2>
-
-            <button class="btn-add" @click="modalAddFuncao = true">
-              Adicionar Função
-            </button>
-          </div>
-
-          <div v-if="isLoadingFuncoes" class="loader-container-centralizado">
-            <div class="loader"></div>
-          </div>
-
-          <div v-else>
-            <div v-if="funcoes.length === 0" class="mensagem-placar">
-              Nenhuma função cadastrada.
-            </div>
-
-            <div v-else class="lista-modalidades">
-              <div class="card" v-for="f in funcoes" :key="f.id">
-                <div class="card-conteudo">
-                  <div class="info">
-                    <h2>{{ formatarNome(f.nome) }}</h2>
-                    <p>{{ f._count.jogadores }} jogador
-                    </p>
-                  </div>
-
-                  <button class="btn-remover" @click="removerFuncao(f.id)">
-                    Remover
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="botoes">
-            <button class="btn-cancel" @click="modalFuncoes = false">
-              Fechar
-            </button>
-          </div>
-
-          <!-- MODAL DE ADICIONAR FUNÇÃO -->
-          <div v-if="modalAddFuncao" class="modal-overlay" @click.self="modalAddFuncao = false">
-            <div class="modal-content modal-add">
-
-              <h2>Adicionar Função</h2>
-
-              <form @submit.prevent="cadastrarFuncao">
-                <div class="form-group">
-                  <label for="novaFuncao">Nome da Função</label>
-                  <input type="text" id="novaFuncao" v-model="novaFuncao" required />
-                </div>
-
-                <div class="botoes">
-                  <button type="submit" class="btn-save">Cadastrar</button>
-                  <button type="button" class="btn-fechar" @click="modalAddFuncao = false">
-                    Cancelar
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -136,11 +65,7 @@ export default {
       times: [],
       quadras: [],
       funcoes: [],
-      accordionAberto: 'quadras',
-      modalFuncoes: false,
-      modalAddFuncao: false,
-      isLoadingFuncoes: false,
-      novaFuncao: ''
+      accordionAberto: 'quadras'
     }
   },
 
@@ -178,12 +103,7 @@ export default {
     resetarEstado() {
       this.times = []
       this.quadras = []
-      this.funcoes = []
-      this.modalFuncoes = false
-      this.modalAddFuncao = false
       this.accordionAberto = 'quadras'
-      this.novaFuncao = ''
-      this.isLoadingFuncoes = false
     },
 
     async carregarTimes() {
@@ -201,68 +121,6 @@ export default {
         this.quadras = res.data
       } catch {
         Swal.fire('Erro', 'Erro ao carregar quadras', 'error')
-      }
-    },
-
-    abrirModalFuncoes() {
-      this.modalFuncoes = true
-      this.carregarFuncoes()
-    },
-
-    async carregarFuncoes() {
-      this.isLoadingFuncoes = true
-
-      try {
-        const res = await api.get('/listar/funcoes', {
-          params: { modalidadeId: this.modalidade.id }
-        })
-        this.funcoes = res.data
-      } catch {
-        Swal.fire('Erro', 'Erro ao carregar funções', 'error')
-      } finally {
-        this.isLoadingFuncoes = false
-      }
-    },
-
-    async cadastrarFuncao() {
-      if (!this.novaFuncao.trim()) {
-        Swal.fire('Atenção', 'Informe o nome da função', 'warning')
-        return
-      }
-
-      try {
-        await api.post('/adicionar/funcao', {
-          nome: this.novaFuncao.toLowerCase(),
-          modalidadeId: this.modalidade.id
-        })
-
-        Swal.fire('Sucesso', 'Função cadastrada!', 'success')
-        this.novaFuncao = ''
-        this.modalAddFuncao = false
-        this.carregarFuncoes()
-      } catch {
-        Swal.fire('Erro', 'Erro ao cadastrar função', 'error')
-      }
-    },
-
-    async removerFuncao(id) {
-      const ok = await Swal.fire({
-        title: 'Tem certeza que deseja remover a função?',
-        showCancelButton: true,
-        confirmButtonText: 'Sim',
-        cancelButtonText: 'Cancelar'
-      })
-
-      if (!ok.isConfirmed) return
-
-      try {
-        await api.delete('/remover/funcao', {
-          data: { id, modalidadeId: this.modalidade.id }
-        })
-
-        this.carregarFuncoes()
-      } catch {
-        Swal.fire('Erro', 'Erro ao remover função', 'error')
       }
     }
   }
@@ -460,32 +318,6 @@ export default {
   height: 250px;
   font-size: 18px;
   color: #555;
-}
-
-
-.modal-add {
-  background: white;
-  padding: 30px 40px;
-  border-radius: 10px;
-  width: 400px;
-  max-width: 90%;
-}
-
-.modal-add h2 {
-  margin-bottom: 20px;
-  color: #3b82f6;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-input[type='text'] {
-  width: 100%;
-  padding: 10px;
-  font-size: 16px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
 }
 
 .btn-save {
