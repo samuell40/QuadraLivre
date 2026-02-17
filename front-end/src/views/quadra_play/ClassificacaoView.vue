@@ -80,7 +80,7 @@
                 <th>3x2</th>
                 <th>2x3</th>
                 <th>0x3</th>
-                <th>W.O.</th>
+                <th>W.O</th>
               </tr>
             </thead>
             <tbody>

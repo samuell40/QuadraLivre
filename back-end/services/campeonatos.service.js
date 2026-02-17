@@ -33,7 +33,6 @@ CRITERIOS_MODALIDADE.futebolDeAreia = CRITERIOS_MODALIDADE.futebol;
 CRITERIOS_MODALIDADE.voleiDeAreia = CRITERIOS_MODALIDADE.volei;
 CRITERIOS_MODALIDADE.futevolei = CRITERIOS_MODALIDADE.volei;
 
-
 async function criarCampeonato(data) {
   const {
     nome,
@@ -52,10 +51,20 @@ async function criarCampeonato(data) {
   let listaDatasReais = Array.isArray(datasJogos) ? datasJogos.map(d => new Date(d)) : [];
   const timesArray = Array.isArray(times) ? times : [];
 
-  // Define ordem de classificação por modalidade
-  const ordemClassificacao = CRITERIOS_MODALIDADE[modalidadeId] || CRITERIOS_MODALIDADE.futebol;
-
   return await prisma.$transaction(async (tx) => {
+    const modalidadeDB = await tx.modalidade.findUnique({
+      where: { id: Number(modalidadeId) }
+    });
+
+    if (!modalidadeDB) throw new Error("Modalidade não encontrada no banco.");
+    const chaveAuto = modalidadeDB.nome
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, "") 
+      .replace(/\s+/g, '') 
+      .replace('deareia', 'DeAreia');
+
+    const ordemClassificacao = CRITERIOS_MODALIDADE[chaveAuto];
+
     if (listaDatasReais.length > 0) {
       const conflitos = await tx.agendamento.findMany({
         where: {
@@ -79,7 +88,7 @@ async function criarCampeonato(data) {
       hora: dataObj.getUTCHours(),
       quadraId: Number(quadraId),
       usuarioId: Number(usuarioId),
-      modalidadeId: modalidadeId,
+      modalidadeId: modalidadeDB.id,
       status: "Confirmado",
       tipo: "EVENTO",
       duracao: 1
@@ -93,9 +102,9 @@ async function criarCampeonato(data) {
         dataInicio: new Date(dataInicio),
         dataFim: new Date(dataFim),
         status,
-        modalidadeId: Number(modalidadeId),
+        modalidadeId: modalidadeDB.id,
         quadraId: Number(quadraId),
-        ordemClassificacao, // <- definido por modalidade aqui
+        ordemClassificacao, 
         times: {
           create: timesArray.map(timeId => ({ timeId: Number(timeId) }))
         },
@@ -111,7 +120,6 @@ async function criarCampeonato(data) {
       }
     });
 
-    // Cria fases e rodadas conforme o tipo
     if (tipo === "PONTOS_CORRIDOS") {
       const fase = await tx.fase.create({ data: { nome: "1° Fase", campeonatoId: campeonato.id } });
       await tx.rodada.create({ data: { nome: "Rodada 1", faseId: fase.id } });
@@ -139,7 +147,6 @@ async function criarCampeonato(data) {
     return campeonato;
   });
 }
-
 
 async function removerCampeonato(campeonatoId) {
   if (!campeonatoId) {

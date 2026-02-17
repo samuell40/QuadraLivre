@@ -53,7 +53,6 @@ import { useAuthStore } from '@/store'
 import SelecionarJogadores from '@/components/Partida/SelecionarJogadores.vue'
 import PlacarTime from '@/components/Partida/PlacarTimeFutebol.vue'
 import PlacarTimeVolei from '@/components/Partida/PlacarTimeVolei.vue'
-import PlacarTimeFutsal from '@/components/Partida/PlacarTimeFutsal.vue'
 import { carregarCampeonato } from '@/utils/persistirCampeonato'
 import api from '@/axios'
 import Swal from 'sweetalert2'
@@ -65,7 +64,6 @@ export default {
     NavBarUser,
     SelecionarJogadores,
     PlacarTime,
-    PlacarTimeFutsal,
     PlacarTimeVolei
   },
 
