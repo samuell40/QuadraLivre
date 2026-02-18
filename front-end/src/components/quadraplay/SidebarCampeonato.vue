@@ -49,7 +49,7 @@
                         </svg>
                         <span>Partidas</span>
                     </router-link>
-                    <router-link v-if="estaNaPartida" :to="{ name: 'Partida' }" class="menu-link submenu"
+                    <router-link v-if="estaNaPartida" :to="{ name: 'Partida',  query: { id: campeonatoId } }" class="menu-link submenu"
                         :class="{ active: isActiveRoute('Partida') }">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                             class="bi bi-controller" viewBox="0 0 16 16">

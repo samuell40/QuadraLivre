@@ -22,7 +22,7 @@
 
           <div class="filtro-item">
             <label for="rodada-select" class="filtro-titulo">Rodada</label>
-            <select id="rodada-select" v-model="rodadaSelecionada" @change="filtrarPartidasPorRodada">
+            <select id="rodada-select" v-model="rodadaSelecionada" @change="onRodadaChange">
               <option disabled value="">Selecione a Rodada</option>
               <option v-for="rodada in rodadas" :key="rodada.id" :value="rodada.id">
                 {{ rodada.nome }}
@@ -32,30 +32,18 @@
         </div>
 
         <ModalEscolhaTipo v-model="mostrarModalTipo" :campeonato-id="campeonatoSelecionado" @faseCriada="adicionarFase"
-          @rodadaCriada="adicionarRodada" />
+          @rodadaCriada="adicionarRodada" @partidaCriada="onPartidaCriada" />
 
         <!-- PARTIDAS -->
         <div class="partidas-wrapper">
-
           <ul class="lista-partidas">
-            <li v-for="partida in todasPartidas" :key="partida.id" class="card-partida"
+            <li v-for="partida in partidasValidas" :key="partida.id" class="card-partida"
               :class="classeStatusPartida(partida)">
               <div class="status-topo status-editavel" :class="classeStatusTexto(partida)"
                 @click="editarStatus(partida)">
-                <!-- TEXTO -->
                 <template v-if="partidaEditandoStatus !== partida.id">
                   <span class="texto-status">
-                    {{
-                      partida.status === 'FINALIZADA'
-                        ? 'ENCERRADA'
-                        : partida.status === 'EM_ANDAMENTO'
-                          ? 'EM ANDAMENTO'
-                          : partida.status === 'AGENDADA'
-                            ? 'AGUARDANDO'
-                            : partida.status === 'CANCELADA'
-                              ? 'CANCELADA'
-                              : ''
-                    }}
+                    {{ statusLabel(partida.status) }}
                   </span>
 
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
@@ -88,7 +76,6 @@
                   <img v-if="partida.timeB?.foto" :src="partida.timeB.foto" class="time-foto" />
                   <span class="time-nome">{{ partida.timeB?.nome }}</span>
                 </div>
-
               </div>
 
               <div class="usuario-criador">
@@ -102,11 +89,12 @@
             </li>
           </ul>
 
-          <div v-if="todasPartidas.length === 0" class="vazio">
+          <div v-if="partidasValidas.length === 0" class="vazio">
             Nenhuma partida encontrada.
           </div>
         </div>
       </div>
+
       <div class="add-half-circle" @click="abrirModalTipo">
         <span class="plus">+</span>
       </div>
@@ -119,17 +107,13 @@
 
           <select v-model="novoStatus" class="select-status-modal">
             <option v-for="status in statusDisponiveis" :key="status" :value="status">
-              {{ status.replace('_', ' ') }}
+              {{ statusLabel(status) || status.replace('_', ' ') }}
             </option>
           </select>
 
           <div class="botoes">
-            <button class="btn-save" @click="confirmarAlteracaoStatus">
-              Salvar
-            </button>
-            <button class="btn-cancel" @click="fecharModalStatus">
-              Cancelar
-            </button>
+            <button class="btn-save" @click="confirmarAlteracaoStatus">Salvar</button>
+            <button class="btn-cancel" @click="fecharModalStatus">Cancelar</button>
           </div>
         </div>
       </div>
@@ -138,12 +122,19 @@
 </template>
 
 <script>
-import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue';
-import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue';
-import ModalEscolhaTipo from '@/components/quadraplay/ModalEscolhaTipo.vue';
-import { carregarCampeonato } from '@/utils/persistirCampeonato';
-import api from '@/axios';
-import Swal from 'sweetalert2';
+import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
+import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
+import ModalEscolhaTipo from '@/components/quadraplay/ModalEscolhaTipo.vue'
+import { carregarCampeonato } from '@/utils/persistirCampeonato'
+import api from '@/axios'
+import Swal from 'sweetalert2'
+
+const STATUS_CONFIG = {
+  FINALIZADA: { label: 'ENCERRADA', card: 'partida-finalizada', text: 'status-finalizada' },
+  EM_ANDAMENTO: { label: 'EM ANDAMENTO', card: 'partida-andamento', text: 'status-andamento' },
+  AGENDADA: { label: 'AGUARDANDO', card: 'partida-agendada', text: 'status-agendada' },
+  CANCELADA: { label: 'CANCELADA', card: 'partida-cancelada', text: 'status-cancelada' }
+}
 
 export default {
   name: 'GerenciarPartidaView',
@@ -153,13 +144,12 @@ export default {
     return {
       fases: [],
       rodadas: [],
+      partidas: [],
       faseSelecionada: '',
       rodadaSelecionada: '',
       sidebarCollapsed: false,
       modalidades: [],
       campeonatos: [],
-      partidas: [],
-      partidasEncerradas: [],
       modalidadeSelecionada: '',
       campeonatoSelecionado: '',
       campeonato: null,
@@ -168,124 +158,212 @@ export default {
       mostrarModalStatus: false,
       statusDisponiveis: [],
       partidaSelecionada: null,
-      novoStatus: ''
+      novoStatus: '',
+      partidaEditandoStatus: null
     }
   },
 
   mounted() {
-    this.carregarCampeonatoSelecionado();
-    this.buscarModalidades();
-    this.buscarStatusPartida();
+    this.carregarCampeonatoSelecionado()
+    this.buscarModalidades()
+    this.buscarStatusPartida()
   },
 
   computed: {
-    todasPartidas() {
-      return [...(this.partidas || []), ...(this.partidasEncerradas || [])];
+    partidasValidas() {
+      const lista = Array.isArray(this.partidas) ? this.partidas.filter(p => p && p.id) : []
+      return lista.sort((a, b) => {
+        const da = new Date(a?.data || a?.createdAt || 0).getTime()
+        const db = new Date(b?.data || b?.createdAt || 0).getTime()
+        return db - da 
+      })
     }
   },
+
   methods: {
     abrirModalTipo() {
-      this.mostrarModalTipo = true;
+      this.mostrarModalTipo = true
     },
-    cancelarModalTipo() {
-      this.mostrarModalTipo = false;
-    },
-    selecionarTipo(tipo) {
-      this.mostrarModalTipo = false;
 
-      if (tipo === 'partida') {
-        this.criarFase();
-      } else if (tipo === 'rodada') {
-        this.adicionarRodada();
-      }
+    statusLabel(status) {
+      return STATUS_CONFIG[status]?.label
     },
+
     classeStatusPartida(partida) {
-      switch (partida.status) {
-        case 'FINALIZADA':
-          return 'partida-finalizada'
-        case 'EM_ANDAMENTO':
-          return 'partida-andamento'
-        case 'AGENDADA':
-          return 'partida-agendada'
-        case 'CANCELADA':
-          return 'partida-cancelada'
-        default:
-          return ''
-      }
+      return STATUS_CONFIG[partida?.status]?.card
     },
+
     classeStatusTexto(partida) {
-      switch (partida.status) {
-        case 'FINALIZADA':
-          return 'status-finalizada'
-        case 'EM_ANDAMENTO':
-          return 'status-andamento'
-        case 'AGENDADA':
-          return 'status-agendada'
-        case 'CANCELADA':
-          return 'status-cancelada'
-        default:
-          return ''
-      }
+      return STATUS_CONFIG[partida?.status]?.text
     },
 
     async carregarCampeonatoSelecionado() {
       try {
-        this.campeonato = await carregarCampeonato(this.$route);
-
+        this.campeonato = await carregarCampeonato(this.$route)
         if (this.campeonato?.id) {
-          this.modalidadeSelecionada = this.campeonato.modalidade?.id;
-          this.campeonatoSelecionado = this.campeonato.id;
-
-          await this.carregarFases();
-          this.filtrarPartidasPorRodada();
+          this.modalidadeSelecionada = this.campeonato.modalidade?.id
+          this.campeonatoSelecionado = this.campeonato.id
+          await this.carregarFases()
         }
       } catch (err) {
-        console.error('Erro ao carregar campeonato:', err);
+        console.error('Erro ao carregar campeonato:', err)
       } finally {
-        this.isLoading = false;
+        this.isLoading = false
+      }
+    },
+
+    async carregarFases() {
+      if (!this.campeonatoSelecionado) return
+
+      try {
+        const { data } = await api.get(`/fases/${this.campeonatoSelecionado}`)
+        this.fases = Array.isArray(data) ? data : []
+
+        if (!this.fases.length) {
+          this.faseSelecionada = ''
+          this.rodadas = []
+          this.rodadaSelecionada = ''
+          this.partidas = []
+          return
+        }
+
+        const existeFaseSelecionada = this.fases.some(f => f.id === this.faseSelecionada)
+        if (!this.faseSelecionada || !existeFaseSelecionada) {
+          this.faseSelecionada = this.fases[0].id
+        }
+
+        const faseObj = this.fases.find(f => f.id === this.faseSelecionada) || this.fases[0]
+        this.rodadas = Array.isArray(faseObj.rodadas) ? faseObj.rodadas : []
+
+        const existeRodadaSelecionada = this.rodadas.some(r => r.id === this.rodadaSelecionada)
+        if (!this.rodadaSelecionada || !existeRodadaSelecionada) {
+          this.rodadaSelecionada = this.rodadas.length ? this.rodadas[0].id : ''
+        }
+
+        await this.carregarPartidasPorFaseRodada()
+      } catch (error) {
+        console.error('Erro ao buscar fases/rodadas:', error)
+        this.fases = []
+        this.rodadas = []
+        this.faseSelecionada = ''
+        this.rodadaSelecionada = ''
+        this.partidas = []
       }
     },
 
     async buscarModalidades() {
       try {
-        const response = await api.get('/listar/modalidade');
-        this.modalidades = response.data;
+        const response = await api.get('/listar/modalidade')
+        this.modalidades = response.data
       } catch (error) {
-        console.error('Erro ao buscar modalidades:', error);
+        console.error('Erro ao buscar modalidades:', error)
       }
     },
 
-    async buscarCampeonatos() {
-      this.campeonatos = [];
-      this.campeonatoSelecionado = '';
-      this.partidas = [];
+    async buscarStatusPartida() {
+      try {
+        const response = await api.get('/partidas/status')
+        this.statusDisponiveis = Array.isArray(response.data) ? response.data : []
+      } catch (error) {
+        console.error('Erro ao buscar status:', error)
+      }
+    },
 
-      if (!this.modalidadeSelecionada) return;
+    async onPartidaCriada(partidaCriada) {
+      try {
+        this.mostrarModalTipo = false
+
+        const faseIdCriada = Number(partidaCriada?.faseId)
+        const rodadaIdCriada = Number(partidaCriada?.rodadaId)
+
+        await this.carregarFases()
+
+        if (faseIdCriada && this.fases.some(f => f.id === faseIdCriada)) {
+          this.faseSelecionada = faseIdCriada
+          const faseObj = this.fases.find(f => f.id === faseIdCriada)
+          this.rodadas = Array.isArray(faseObj?.rodadas) ? faseObj.rodadas : []
+
+          if (rodadaIdCriada && this.rodadas.some(r => r.id === rodadaIdCriada)) {
+            this.rodadaSelecionada = rodadaIdCriada
+          } else {
+            this.rodadaSelecionada = this.rodadas.length ? this.rodadas[0].id : ''
+          }
+        }
+
+        await this.carregarPartidasPorFaseRodada()
+      } catch (e) {
+        console.error('Erro ao atualizar lista após criar partida:', e)
+        await this.carregarFases()
+      }
+    },
+
+    async carregarPartidasPorFaseRodada() {
+      if (!this.campeonatoSelecionado || !this.faseSelecionada || !this.rodadaSelecionada) {
+        this.partidas = []
+        return
+      }
 
       try {
-        const response = await api.get(`/listar/${this.modalidadeSelecionada}`);
-        this.campeonatos = response.data;
+        const { data } = await api.get(`/partidas/${this.campeonatoSelecionado}/${this.faseSelecionada}/${this.rodadaSelecionada}`)
+        this.partidas = Array.isArray(data) ? data : []
       } catch (error) {
-        console.error('Erro ao buscar campeonatos:', error);
+        console.error('Erro ao buscar partidas por fase/rodada:', error)
+        this.partidas = []
       }
     },
 
-    onModalidadeChange() {
-      this.buscarCampeonatos();
+    async onFaseChange() {
+      const fase = this.fases.find(f => f.id === this.faseSelecionada)
+      this.rodadas = Array.isArray(fase?.rodadas) ? fase.rodadas : []
+      this.rodadaSelecionada = this.rodadas.length ? this.rodadas[0].id : ''
+      await this.carregarPartidasPorFaseRodada()
     },
 
-    async onCampeonatoChange() {
-      this.partidas = [];
-      this.partidasEncerradas = [];
-      this.fases = [];
-      this.rodadas = [];
-      this.faseSelecionada = '';
-      this.rodadaSelecionada = '';
-
-      if (!this.campeonatoSelecionado) return;
-
-      await this.carregarFases();
+    async onRodadaChange() {
+      await this.carregarPartidasPorFaseRodada()
     },
+
+    editarStatus(partida) {
+      this.partidaSelecionada = partida
+      this.novoStatus = partida?.status || ''
+      this.mostrarModalStatus = true
+    },
+
+    fecharModalStatus() {
+      this.mostrarModalStatus = false
+      this.partidaSelecionada = null
+      this.novoStatus = ''
+    },
+
+    async confirmarAlteracaoStatus() {
+      try {
+        await api.put(`/partidas/${this.partidaSelecionada.id}/status`, { status: this.novoStatus })
+        this.partidaSelecionada.status = this.novoStatus
+        this.fecharModalStatus()
+
+        Swal.fire({ icon: 'success', title: 'Status atualizado', timer: 1200, showConfirmButton: false })
+      } catch (error) {
+        console.error(error)
+        Swal.fire('Erro', 'Não foi possível alterar o status.', 'error')
+      }
+    },
+
+    async acessarPartida(partidaId) {
+      try {
+        if (!this.campeonato) throw new Error('Campeonato não encontrado')
+
+        localStorage.setItem('campeonatoSelecionado', JSON.stringify(this.campeonato))
+
+        this.$router.push({
+          path: '/partida',
+          query: { partidaId, id: this.campeonato.id }
+        })
+      } catch (error) {
+        console.error(error)
+        Swal.fire('Erro', 'Não foi possível acessar a partida.', 'error')
+      }
+    },
+
     async excluirPartida(partidaId) {
       const resultado = await Swal.fire({
         title: 'Tem certeza?',
@@ -296,168 +374,61 @@ export default {
         cancelButtonColor: '#3085d6',
         confirmButtonText: 'Sim, excluir',
         cancelButtonText: 'Cancelar'
-      });
+      })
 
-      if (!resultado.isConfirmed) return;
+      if (!resultado.isConfirmed) return
 
       try {
-        await api.delete(`/partidas/${partidaId}`);
+        await api.delete(`/partidas/${partidaId}`)
+
         await Swal.fire({
           title: 'Excluída!',
           text: 'A partida foi excluída com sucesso.',
           icon: 'success',
           timer: 1500,
           showConfirmButton: false
-        });
-        await this.buscarPartidasAtivas();
-        await this.buscarPartidasEncerradas();
+        })
+
+        await this.carregarFases()
       } catch (error) {
-        console.error(error);
-        Swal.fire({
-          title: 'Erro',
-          text: 'Não foi possível excluir a partida.',
-          icon: 'error'
-        });
+        console.error(error)
+        Swal.fire({ title: 'Erro', text: 'Não foi possível excluir a partida.', icon: 'error' })
       }
     },
 
     async retomarPartida(partidaId) {
       try {
-        const response = await api.get(`/partidas/${partidaId}/retornar`);
-        const partida = response.data;
-        this.$router.push({
-          path: '/partida',
-          query: { partidaId: partida.id }
-        });
-      } catch (error) {
-        console.error(error);
-        Swal.fire('Erro', 'Não foi possível retomar essa partida.', 'error');
-      }
-    },
-
-    async acessarPartida(partidaId) {
-      try {
-        if (!this.campeonato) {
-          throw new Error('Campeonato não encontrado')
-        }
-
-        localStorage.setItem(
-          'campeonatoSelecionado',
-          JSON.stringify(this.campeonato)
-        )
-
-        this.$router.push({
-          path: '/partida',
-          query: { partidaId }
-        })
-
+        const response = await api.get(`/partidas/${partidaId}/retornar`)
+        const partida = response.data
+        this.$router.push({ path: '/partida', query: { partidaId: partida.id } })
       } catch (error) {
         console.error(error)
-        Swal.fire(
-          'Erro',
-          'Não foi possível acessar a partida.',
-          'error'
-        )
+        Swal.fire('Erro', 'Não foi possível retomar essa partida.', 'error')
       }
     },
 
-    async carregarFases() {
-      if (!this.campeonatoSelecionado) return;
-
-      try {
-        const response = await api.get(`/partidas/${this.campeonatoSelecionado}/fases`);
-        this.fases = response.data;
-
-        if (this.fases.length > 0) {
-          this.faseSelecionada = this.fases[0].id;
-          const faseSelecionadaObj = this.fases.find(f => f.id === this.faseSelecionada);
-          this.rodadas = faseSelecionadaObj.rodadas || [];
-          this.rodadaSelecionada = this.rodadas.length ? this.rodadas[0].id : '';
-
-          this.filtrarPartidasPorRodada();
-        }
-      } catch (error) {
-        console.error('Erro ao buscar fases:', error);
-      }
-    },
-    onFaseChange() {
-      const fase = this.fases.find(f => f.id === this.faseSelecionada);
-      if (!fase) return;
-      this.rodadas = fase.rodadas || [];
-      this.rodadaSelecionada = this.rodadas.length ? this.rodadas[0].id : '';
-
-      this.filtrarPartidasPorRodada();
+    async adicionarFase(novaFase) {
+      this.fases.push(novaFase)
+      this.faseSelecionada = novaFase.id
+      this.rodadas = Array.isArray(novaFase.rodadas) ? novaFase.rodadas : []
+      this.rodadaSelecionada = this.rodadas.length ? this.rodadas[0].id : ''
+      await this.carregarPartidasPorFaseRodada()
     },
 
-    filtrarPartidasPorRodada() {
-      const fase = this.fases.find(f => f.id === this.faseSelecionada);
-      if (!fase) {
-        this.partidas = [];
-        return;
-      }
-      const rodada = fase.rodadas.find(r => r.id === this.rodadaSelecionada);
-      this.partidas = rodada ? rodada.partidas : [];
-    },
+    async adicionarRodada(novaRodada) {
+      const fase = this.fases.find(f => f.id === novaRodada.faseId)
+      if (!fase) return
 
-    async buscarStatusPartida() {
-      try {
-        const response = await api.get('/partidas/status');
-        this.statusDisponiveis = response.data;
-      } catch (error) {
-        console.error('Erro ao buscar status:', error);
-      }
-    },
+      fase.rodadas = Array.isArray(fase.rodadas) ? fase.rodadas : []
+      fase.rodadas.push(novaRodada)
 
-    editarStatus(partida) {
-      this.partidaSelecionada = partida;
-      this.novoStatus = partida.status;
-      this.mostrarModalStatus = true;
-    },
-    fecharModalStatus() {
-      this.mostrarModalStatus = false;
-      this.partidaSelecionada = null;
-    },
-
-    async confirmarAlteracaoStatus() {
-      try {
-        await api.put(`/partidas/${this.partidaSelecionada.id}/status`, {
-          status: this.novoStatus
-        });
-
-        this.partidaSelecionada.status = this.novoStatus;
-        this.fecharModalStatus();
-
-        Swal.fire({
-          icon: 'success',
-          title: 'Status atualizado',
-          timer: 1200,
-          showConfirmButton: false
-        });
-      } catch (error) {
-        console.error(error);
-        Swal.fire('Erro', 'Não foi possível alterar o status.', 'error');
-      }
-    },
-    adicionarFase(novaFase) {
-      this.fases.push(novaFase);
-      this.faseSelecionada = novaFase.id;
-      this.rodadas = novaFase.rodadas || [];
-      this.rodadaSelecionada = this.rodadas.length ? this.rodadas[0].id : '';
-      this.filtrarPartidasPorRodada();
-    },
-
-    adicionarRodada(novaRodada) {
-      const fase = this.fases.find(f => f.id === novaRodada.faseId);
-      if (!fase) return;
-      fase.rodadas.push(novaRodada);
-      this.rodadas = fase.rodadas;
-      this.rodadaSelecionada = novaRodada.id;
-
-      this.filtrarPartidasPorRodada();
+      this.rodadas = fase.rodadas
+      this.rodadaSelecionada = novaRodada.id
+      await this.carregarPartidasPorFaseRodada()
     }
   }
 }
-</script> 
+</script>
 
 <style scoped>
 .layout {
@@ -701,7 +672,8 @@ export default {
 .add-half-circle {
   position: absolute;
   top: 44%;
-  left: 58%; /* padrão para tela normal */
+  left: 58%;
+  /* padrão para tela normal */
   transform: translate(-50%, -50%);
   width: 42px;
   height: 42px;
@@ -727,8 +699,8 @@ export default {
 }
 
 .conteudo.collapsed .add-half-circle {
-  left: 52.5%; 
-  top: 44%;  
+  left: 52.5%;
+  top: 44%;
 }
 
 .modal-overlay {

@@ -3,13 +3,11 @@ const controller = require('../controllers/partida.controller')
 const validarJWT = require('../middlewares/auth');
 const router = express.Router();
 
-router.post('/partida', [validarJWT],  controller.criarPartidaController)
+router.post('/partida', [validarJWT], controller.criarPartidaController)
 
 router.put('/partidas/:partidaId/iniciar', controller.iniciarPartidaController);
 
-router.put('/partida/:id/encerrar' , controller.finalizarPartidaController);
-
-router.delete('/partidas/:partidaId', controller.excluirPartidaController);
+router.put('/partidas/:id/finalizar', controller.finalizarPartidaController)
 
 router.put('/partida/:id/parcial', [validarJWT], controller.atualizarParcialController);
 
@@ -31,7 +29,7 @@ router.put('/:partidaId/:jogadorId/remover', controller.removerJogadorDeCampoCon
 
 router.get('/detalhar/partida/:id', controller.detalharPartidaController)
 
-router.get('/partidas/:campeonatoId/fases', controller.listarPartidasPorFaseRodadaController);
+router.get('/partidas/:campeonatoId/:faseId/:rodadaId',controller.listarPartidasDaRodadaDaFaseController)
 
 router.get('/partidas/status', controller.listarStatusPartidaController);
 

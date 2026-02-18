@@ -230,18 +230,6 @@ export default {
   },
 
   methods: {
-    fecharModal() {
-      this.acaoLocal = '';
-      this.nomeJogador = '';
-      this.arquivoFoto = null;
-      this.jogadorSelecionado = null;
-      this.usuarioSelecionado = null;
-      this.jogadoresSelecionadosExistentes = [];
-      this.abrirDropdownUsuarios = false;
-      this.abrirDropdownJogadores = false;
-      this.$emit('fechar');
-    },
-
     handleImagemUpload(event) {
       const file = event.target.files[0];
       if (file) this.arquivoFoto = file;
@@ -361,7 +349,7 @@ export default {
         'success'
       );
     },
-    
+
     async adicionarJogadoresEmMassa() {
       const nomesDigitados = this.nomesJogadoresMassa
         .split(/[\n,]+/)
@@ -399,7 +387,7 @@ export default {
         return;
       }
 
-      const FOTO_PADRAO ='https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/Imagem%20padrao.png';
+      const FOTO_PADRAO = 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/Imagem%20padrao.png';
 
       for (const nome of nomesParaAdicionar) {
         await api.post('/adicionar', {
@@ -421,9 +409,9 @@ export default {
     toggleJogadorRemover(jogador) {
       const index = this.jogadoresSelecionadosRemover.findIndex(j => j.id === jogador.id);
       if (index !== -1) {
-        this.jogadoresSelecionadosRemover.splice(index, 1); 
+        this.jogadoresSelecionadosRemover.splice(index, 1);
       } else {
-        this.jogadoresSelecionadosRemover.push(jogador); 
+        this.jogadoresSelecionadosRemover.push(jogador);
       }
     },
 
@@ -459,7 +447,24 @@ export default {
       } catch (err) {
         this.handleError(err);
       }
-    }
+    },
+    fecharModal() {
+      this.acaoLocal = ''
+      this.nomeJogador = ''
+      this.arquivoFoto = null
+      this.jogadorSelecionado = null
+      this.usuarioSelecionado = null
+      this.jogadoresSelecionadosExistentes = []
+      this.jogadoresSelecionadosRemover = []
+      this.abrirDropdownUsuarios = false
+      this.abrirDropdownJogadores = false
+      this.abrirDropdownRemover = false
+      this.buscaJogador = ''
+      this.buscaUsuario = ''
+      this.buscaJogadorRemover = ''
+      this.nomesJogadoresMassa = ''
+      this.$emit('fechar')
+    },
   }
 };
 </script>
@@ -620,7 +625,7 @@ export default {
 }
 
 .aba {
-  flex: 1; 
+  flex: 1;
   text-align: center;
   padding: 10px 0;
   border-radius: 6px;
@@ -667,14 +672,14 @@ export default {
   }
 
   .botoes {
-    flex-direction: row; 
-    gap: 10px; 
-    flex-wrap: wrap; 
+    flex-direction: row;
+    gap: 10px;
+    flex-wrap: wrap;
   }
 
   .btn-save1,
   .btn-cancel-placar {
-    flex: 1; 
+    flex: 1;
     font-size: 15px;
   }
 
@@ -683,7 +688,7 @@ export default {
   }
 
   .aba {
-    flex: 1 1 100px; 
+    flex: 1 1 100px;
     font-size: 14px;
     padding: 8px;
   }

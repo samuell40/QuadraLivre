@@ -34,42 +34,11 @@ async function iniciarPartidaController(req, res) {
 
 async function finalizarPartidaController(req, res) {
   try {
-    const { id } = req.params;
-    const { usuarioId } = req.body;
-
-    if (!usuarioId) {
-      return res.status(400).json({ erro: "Usuário não informado." });
-    }
-
-    const partida = await partidas.finalizarPartida(id, { usuarioId });
-
-    res.json(partida);
+    const { id } = req.params
+    const result = await partidas.finalizarPartida(id)
+    return res.json(result)
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: error.message });
-  }
-}
-
-async function excluirPartidaController(req, res) {
-  try {
-    const { partidaId } = req.params;
-
-    if (!partidaId) {
-      return res.status(400).json({ error: "ID da partida é obrigatório" });
-    }
-
-    const partida = await partidas.excluirPartida(partidaId);
-
-    return res.status(200).json(partida);
-
-  } catch (error) {
-    console.error(error);
-
-    if (error.message === "Partida não encontrada") {
-      return res.status(404).json({ error: error.message });
-    }
-
-    return res.status(500).json({ error: error.message });
+    return res.status(400).json({ error: error.message })
   }
 }
 
@@ -259,19 +228,22 @@ async function detalharPartidaController(req, res) {
   }
 }
 
-async function listarPartidasPorFaseRodadaController(req, res) {
-  const { campeonatoId } = req.params;
+async function listarPartidasDaRodadaDaFaseController(req, res) {
+  const { campeonatoId, faseId, rodadaId } = req.params
+  const cId = Number(campeonatoId)
+  const fId = Number(faseId)
+  const rId = Number(rodadaId)
 
-  if (!campeonatoId) {
-    return res.status(400).json({ message: "O ID do campeonato é obrigatório." });
+  if (!cId || !fId || !rId) {
+    return res.status(400).json({ message: "IDs inválidos. Envie apenas números." })
   }
 
   try {
-    const fases = await partidas.listarPartidasPorFaseRodada(Number(campeonatoId));
-    return res.json(fases);
+    const partida = await partidas.listarPartidasDaRodadaDaFase(cId, fId, rId)
+    return res.json(partida)
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Erro ao listar partidas." });
+    console.error(error)
+    return res.status(500).json({ message: error.message })
   }
 }
 
@@ -315,7 +287,6 @@ module.exports = {
   criarPartidaController,
   iniciarPartidaController,
   finalizarPartidaController,
-  excluirPartidaController,
   atualizarParcialController,
   incrementarPlacarController,
   retornarPartidaController,
@@ -326,7 +297,7 @@ module.exports = {
   getJogadoresForaDaPartidaController,
   removerJogadorDeCampoController,
   detalharPartidaController,
-  listarPartidasPorFaseRodadaController,
+listarPartidasDaRodadaDaFaseController,
   listarStatusPartidaController,
   alterarStatusPartidaController
 };

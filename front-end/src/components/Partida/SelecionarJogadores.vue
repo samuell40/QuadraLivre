@@ -88,7 +88,7 @@ export default {
     time2Nome: String,
     regra: {
       type: Object,
-      required: true // { porTime, total }
+      required: true 
     }
   },
 

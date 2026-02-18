@@ -3,9 +3,16 @@
     <div class="modal-conteudo modal-placar">
       <div class="header-placar">
         <h2 class="title_placar">Jogadores do {{ time?.nome }}</h2>
-        <button class="btn-gerenciar" @click="$emit('gerenciar-jogadores')">
-          Gerenciar Jogadores
+        <button class="btn-gerenciar" @click="$emit('gerenciar-jogadores')" aria-label="Gerenciar Jogadores">
+          <span class="btn-gerenciar-texto">Gerenciar Jogadores</span>
+
+          <svg class="btn-gerenciar-icone" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+            viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+            <path
+              d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" />
+          </svg>
         </button>
+
       </div>
 
       <div v-if="isLoading" class="loader-container-centralizado">
@@ -28,11 +35,16 @@
                   {{ j.nome }}
                 </td>
                 <td>
-                  <select v-model="j.funcaoId" @change="alterarFuncao(j.id, j.funcaoId)" class="select-funcao">
-                    <option v-for="f in funcoes" :key="f.id" :value="f.id">
-                      {{ f.nome }}
-                    </option>
-                  </select>
+                  <div class="select-wrap">
+                    <select v-model="j.funcaoId" @change="alterarFuncao(j.id, j.funcaoId)" class="select-funcao">
+                      <option v-for="f in funcoes" :key="f.id" :value="f.id">
+                        {{ f.nome }}
+                      </option>
+                    </select>
+
+                    <span class="select-arrow">▾</span>
+                  </div>
+
                 </td>
               </tr>
             </tbody>
@@ -161,13 +173,11 @@ export default {
         cancelButtonText: 'Cancelar',
         showCancelButton: true
       }).then(result => {
-        // Trocar imagem
         if (result.isConfirmed) {
           this.jogadorImagemAtual = jogador;
           this.$refs.inputTrocarImagem.click();
         }
 
-        // Ver imagem
         if (result.isDenied) {
           Swal.fire({
             imageUrl: jogador.foto,
@@ -184,7 +194,6 @@ export default {
       if (!file || !this.jogadorImagemAtual) return;
 
       try {
-        // 1️⃣ upload da imagem
         const formData = new FormData();
         formData.append('file', file);
 
@@ -193,14 +202,11 @@ export default {
         });
 
         const fotoUrl = uploadRes.data.fileUrl || uploadRes.data.url;
-
-        // 2️⃣ chama a rota de alterar foto
         await api.put('/alterar/foto', {
           jogadorId: this.jogadorImagemAtual.id,
           foto: fotoUrl
         });
 
-        // 3️⃣ atualiza no front
         this.jogadorImagemAtual.foto = fotoUrl;
 
         Swal.fire('Sucesso', 'Imagem alterada com sucesso!', 'success');
@@ -229,7 +235,7 @@ export default {
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  padding: 16px; 
+  padding: 16px;
 }
 
 .modal-conteudo.modal-placar {
@@ -289,8 +295,13 @@ export default {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .placar-table {
@@ -299,7 +310,7 @@ export default {
   overflow-y: auto;
   border-radius: 12px;
   background-color: white;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .placar {
@@ -364,6 +375,45 @@ export default {
   cursor: pointer;
   margin-top: 20px;
   width: 100%;
+}
+
+.select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 220px;
+  max-width: 100%;
+}
+
+.select-funcao {
+  width: 100%;
+  appearance: none;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #4b5563;
+  border-radius: 10px;
+  padding: 10px 38px 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.select-funcao:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+.select-funcao:hover {
+  border-color: #9ca3af;
+}
+
+.select-arrow {
+  position: absolute;
+  right: 12px;
+  pointer-events: none;
+  font-size: 14px;
 }
 
 .modal-overlay {
@@ -437,8 +487,13 @@ export default {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .placar-table {
@@ -446,7 +501,7 @@ export default {
   overflow-y: auto;
   border-radius: 12px;
   background-color: white;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .placar {
@@ -512,6 +567,10 @@ export default {
   width: 100%;
 }
 
+.btn-gerenciar-icone {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .modal-conteudo.modal-placar {
     width: 100%;
@@ -520,24 +579,44 @@ export default {
   }
 
   .header-placar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
   }
 
   .title_placar {
-    text-align: center;
-    font-size: 20px;
+    text-align: left;
+    font-size: 18px;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .btn-gerenciar {
-    width: 100%;
-    text-align: center;
+    flex-shrink: 0;
+    width: auto;
+    padding: 10px 12px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  /* tabela menor, mantendo layout original */
+  .btn-gerenciar-texto {
+    display: none;
+  }
+
+  .btn-gerenciar-icone {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+  }
+
   .placar {
-    min-width: 0; /* remove scroll horizontal */
+    min-width: 0;
     width: 100%;
   }
 
@@ -574,41 +653,4 @@ export default {
     max-height: 50vh;
   }
 }
-
-/* Mobile muito pequeno */
-@media (max-width: 480px) {
-  .title_placar {
-    font-size: 18px;
-  }
-
-  .placar thead th {
-    font-size: 13px;
-    padding: 6px 4px;
-  }
-
-  .placar tbody td {
-    font-size: 12px;
-    padding: 4px 6px;
-  }
-
-  .time-image {
-    width: 24px;
-    height: 24px;
-  }
-
-  .select-funcao {
-    font-size: 11px;
-    padding: 2px 4px;
-  }
-
-  .btn-cancel-placar {
-    font-size: 13px;
-    padding: 6px 10px;
-  }
-
-  .placar-table {
-    max-height: 45vh;
-  }
-}
-
 </style>

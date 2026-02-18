@@ -9,13 +9,13 @@
     <div class="box">
       <p>Sets Vencidos</p>
       <div class="controls">
-        <button @click="decrement('setsVencidos')" :disabled="!temporizadorAtivo || !podeDiminuirSets">
+        <button @click="decrement('setsVencidos')" :disabled="!podeDiminuirSets || partidaEncerradaGlobal">
           −
         </button>
 
         <span class="valor">{{ localTime.setsVencidos }}</span>
 
-        <button @click="increment('setsVencidos')" :disabled="!temporizadorAtivo || partidaEncerradaGlobal">
+        <button @click="increment('setsVencidos')" :disabled="partidaEncerradaGlobal">
           +
         </button>
       </div>
@@ -25,13 +25,13 @@
     <div class="box">
       <p>Pontos do Set</p>
       <div class="controls">
-        <button @click="decrement('pontosSet')" :disabled="!temporizadorAtivo || partidaEncerradaGlobal">
+        <button @click="decrement('pontosSet')" :disabled="partidaEncerradaGlobal || !podeDiminuirPontos">
           −
         </button>
 
         <span class="valor">{{ localTime.pontosSet }}</span>
 
-        <button @click="increment('pontosSet')" :disabled="!temporizadorAtivo || partidaEncerradaGlobal">
+        <button @click="increment('pontosSet')" :disabled="partidaEncerradaGlobal">
           +
         </button>
       </div>
@@ -41,13 +41,13 @@
     <div class="box">
       <p>W.O</p>
       <div class="controls">
-        <button @click="decrement('wo')" :disabled="!temporizadorAtivo || localTime.wo <= 0">
+        <button @click="decrement('wo')" :disabled="localTime.wo <= 0 || partidaEncerradaGlobal">
           −
         </button>
 
         <span class="valor">{{ localTime.wo }}</span>
 
-        <button @click="increment('wo')" :disabled="!temporizadorAtivo || localTime.wo >= 1 || partidaEncerradaGlobal">
+        <button @click="increment('wo')" :disabled="localTime.wo >= 1 || partidaEncerradaGlobal">
           +
         </button>
       </div>
@@ -67,7 +67,6 @@ export default {
     timeData: { type: Object, required: true },
     partidaId: { type: [String, Number], required: true },
     setsAdversario: { type: Number, default: 0 },
-    temporizadorAtivo: { type: Boolean, default: false },
     woAdversario: { type: Number, default: 0 },
     partidaEncerradaGlobal: { type: Boolean, default: false }
   },
@@ -87,9 +86,7 @@ export default {
 
   computed: {
     podeDiminuirSets() {
-      if (this.localTime.setsVencidos < 3 && this.setsAdversario < 3) {
-        return true
-      }
+      if (this.localTime.setsVencidos < 3 && this.setsAdversario < 3) return true
       return this.localTime.setsVencidos === 3
     },
 
@@ -139,12 +136,13 @@ export default {
     },
 
     increment(campo) {
+      if (this.partidaEncerradaGlobal) return
+
       // 🏐 SE O ADVERSÁRIO DEU WO, ESTE TIME GANHA 3 SETS AUTOMATICAMENTE
       if (this.woAdversario === 1 && this.localTime.wo === 0) {
         this.localTime.setsVencidos = 3
         this.localTime.pontosSet = 0
         this.localTime.setsJogados = []
-
         this.emitUpdate()
         return
       }
@@ -158,7 +156,6 @@ export default {
         ) {
           this.localTime.setsVencidos++
         }
-
       } else if (campo === 'pontosSet') {
         if (
           this.localTime.setsVencidos < 3 &&
@@ -169,12 +166,9 @@ export default {
           this.localTime.pontosSet++
           this.verificarFechamentoSet()
         }
-
       } else if (campo === 'wo') {
         if (this.localTime.wo < 1) {
           this.localTime.wo = 1
-
-          // ❌ Time perdeu por WO → zera tudo
           this.localTime.setsVencidos = 0
           this.localTime.pontosSet = 0
           this.localTime.setsJogados = []
@@ -183,7 +177,6 @@ export default {
           this.$emit('wo')
           return
         }
-
       } else {
         this.localTime[campo]++
       }
@@ -192,7 +185,7 @@ export default {
     },
 
     decrement(campo) {
-      // ⛔ não deixa mexer se o adversário venceu por WO
+      if (this.partidaEncerradaGlobal) return
       if (this.woAdversario === 1) return
 
       if (campo === 'setsVencidos' && !this.podeDiminuirSets) return

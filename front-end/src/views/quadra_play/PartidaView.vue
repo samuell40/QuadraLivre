@@ -4,605 +4,405 @@
     <SidebarCampeonato @sidebar-toggle="sidebarCollapsed = $event" />
 
     <div class="conteudo" :class="{ collapsed: sidebarCollapsed }">
-      <NavBarUser v-if="!partidaIniciada" />
       <div class="header">
-        <h1 class="title"> Registro Partida <span v-if="nomeModalidade">({{ nomeModalidade }})</span></h1>
+        <h1 class="title">
+          Registro Partida
+        </h1>
       </div>
 
-      <div class="placares" v-if="partidaIniciada">
-        <!-- TIME A -->
-        <component :is="isVolei ? 'PlacarTimeVolei' : 'PlacarTime'" :timeKey="isVolei ? 'A' : null"
-          :timeNome="times.find(t => t.id === timeSelecionado1)?.nome || ''" :timeData="{
-            ...times.find(t => t.id === timeSelecionado1),
-            ...time1
-          }" :partida-id="partidaId" :temporizadorAtivo="temporizadorAtivo" :isFutsal="isFutsal"
-          :setsAdversario="isVolei ? time2.setsVencidos : 0" :pontosSetAdversario="isVolei ? time2.pontosSet : 0"
-          :woAdversario="isVolei && time2.wo ? 1 : 0" :partidaEncerradaGlobal="isVolei && partidaEncerradaVolei"
-          @update="atualizarTime('time1', $event)" />
-
-        <!-- TIME B -->
-        <component :is="isVolei ? 'PlacarTimeVolei' : 'PlacarTime'" :timeKey="isVolei ? 'B' : null"
-          :timeNome="times.find(t => t.id === timeSelecionado2)?.nome || ''" :timeData="{
-            ...times.find(t => t.id === timeSelecionado2),
-            ...time2
-          }" :partida-id="partidaId" :temporizadorAtivo="temporizadorAtivo" :isFutsal="isFutsal"
-          :setsAdversario="isVolei ? time1.setsVencidos : 0" :pontosSetAdversario="isVolei ? time1.pontosSet : 0"
-          :woAdversario="isVolei && time1.wo ? 1 : 0" :partidaEncerradaGlobal="isVolei && partidaEncerradaVolei"
-          @update="atualizarTime('time2', $event)" />
+      <div v-if="isLoading" class="loader-container-centralizado">
+        <div class="loader"></div>
       </div>
 
-      <div v-if="partidaIniciada" class="finalizar-container">
-        <button class="botao-finalizar" @click="finalizarPartida" :disabled="finalizandoPartida">
-          <span v-if="finalizandoPartida" class="loader-pequeno"></span>
-          <span v-else>Finalizar Partida</span>
-        </button>
-      </div>
-      <SelecionarJogadores v-if="mostrarModalJogadores && regraModalidade.porTime > 0" :aberto="mostrarModalJogadores"
-        :jogadoresTime1="jogadoresTime1" :jogadoresTime2="jogadoresTime2" :time1Nome="nomeTime1" :time2Nome="nomeTime2"
-        :regra="regraModalidade" @confirmar="confirmarJogadores" @fechar="mostrarModalJogadores = false" />
+      <div v-else>
+        <div v-if="placarComponent" class="placares">
+          <component
+            :is="placarComponent"
+            v-bind="placarPropsTimeA"
+            @incrementar-placar="onIncrementarPlacarTimeA"
+            @update="onUpdateTimeA"
+          />
+          <component
+            :is="placarComponent"
+            v-bind="placarPropsTimeB"
+            @incrementar-placar="onIncrementarPlacarTimeB"
+            @update="onUpdateTimeB"
+          />
+        </div>
 
+        <div class="finalizar-container">
+          <button
+            class="botao-finalizar"
+            :disabled="isFinalizada || isFinalizando || !partidaId"
+            @click="finalizarPartida"
+          >
+            <span v-if="isFinalizando">Finalizando...</span>
+            <span v-else-if="isFinalizada">Partida Finalizada</span>
+            <span v-else>Finalizar Partida</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
-import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
-import NavBarUser from '@/components/NavBarUser.vue'
-import { useAuthStore } from '@/store'
-import SelecionarJogadores from '@/components/Partida/SelecionarJogadores.vue'
-import PlacarTime from '@/components/Partida/PlacarTimeFutebol.vue'
-import PlacarTimeVolei from '@/components/Partida/PlacarTimeVolei.vue'
-import { carregarCampeonato } from '@/utils/persistirCampeonato'
 import api from '@/axios'
 import Swal from 'sweetalert2'
+import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
+import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
+import { carregarCampeonato } from '@/utils/persistirCampeonato'
+import PlacarTimeFutebol from '@/components/Partida/PlacarTimeFutebol.vue'
+import PlacarTimeVolei from '@/components/Partida/PlacarTimeVolei.vue'
+
+const MODALIDADES = {
+  FUTEBOL: new Set([1, 2, 4]),
+  VOLEI: new Set([3, 5, 6])
+}
 
 export default {
+  name: 'RegistroPartidaView',
+
   components: {
     NavBarQuadras,
     SidebarCampeonato,
-    NavBarUser,
-    SelecionarJogadores,
-    PlacarTime,
+    PlacarTimeFutebol,
     PlacarTimeVolei
   },
 
   data() {
     return {
       sidebarCollapsed: false,
-      campeonatoSelecionado: '',
-      quadraSelecionada: '',
-      modalidadeSelecionada: '',
-      timeSelecionado1: '',
-      timeSelecionado2: '',
-      campeonatosDisponiveis: [],
-      quadrasDisponiveis: [],
-      modalidadesDisponiveis: [],
-      times: [],
-      time1: {
-        golspro: 0,
-        faltas: 0,
-        substituicoes: 0,
-        cartaoamarelo: 0,
-        cartaovermelho: 0,
-        wo: false,
-        setsVencidos: 0,
-        pontosSet: 0,
-        setsJogados: []
-      },
-      time2: {
-        golspro: 0,
-        faltas: 0,
-        substituicoes: 0,
-        cartaoamarelo: 0,
-        cartaovermelho: 0,
-        wo: false,
-        setsVencidos: 0,
-        pontosSet: 0,
-        setsJogados: []
-      },
-      jogadoresTime1: [],
-      jogadoresTime2: [],
-      mostrarModalJogadores: false,
-      partidaIniciada: false,
-      temporizadorAtivo: false,
-      tempoSegundos: 0,
-      intervaloTimer: null,
-      partidaId: null
+      campeonato: null,
+      isLoading: true,
+      partidaId: null,
+      time1: null,
+      time2: null,
+      partida: null,
+      isFinalizando: false,
+      parcialTimeA: null,
+      parcialTimeB: null,
+      parcialTimer: null,
+      isSalvandoParcial: false
     }
   },
 
   computed: {
-    authStore() {
-      return useAuthStore()
+    isFinalizada() {
+      return this.partida?.status === 'FINALIZADA'
+    },
+    podeEditar() {
+      return !this.isFinalizada
     },
 
-    usuarioLogadoId() {
-      return this.authStore.usuario?.id || null
-    },
-
-    isVolei() {
-      const modalidade = this.modalidadesDisponiveis.find(
-        m => m.id === this.modalidadeSelecionada
-      )
-      return modalidade?.nome?.toLowerCase().includes('vôlei')
-    },
-    isFutsal() {
-      const modalidade = this.modalidadesDisponiveis.find(
-        m => m.id === this.modalidadeSelecionada
-      )
-
-      return modalidade?.nome?.toLowerCase().includes('futsal')
-    },
-
-    nomeTime1() {
-      return this.times.find(
-        t => t.id === this.timeSelecionado1)?.nome
-    },
-
-    nomeTime2() {
-      return this.times.find(
-        t => t.id === this.timeSelecionado2)?.nome
-    },
-
-    regraModalidade() {
-      const regras = {
-        futebol: { porTime: 11, total: 22 },
-        futsal: { porTime: 5, total: 10 },
-        'futebol de areia': { porTime: 5, total: 10 },
-        volei: { porTime: 6, total: 12 },
-        'vôlei': { porTime: 6, total: 12 },
-        'volei de areia': { porTime: 2, total: 4 },
-        futevolei: { porTime: 2, total: 4 }
-      }
-
-      const modalidade = this.modalidadesDisponiveis.find(
-        m => m.id === this.modalidadeSelecionada
-      )
-
-      if (!modalidade || !modalidade.nome) {
-        return { porTime: 0, total: 0 }
-      }
-
-      const nome = modalidade.nome.toLowerCase()
-
-      const regraEncontrada = Object.entries(regras).find(
-        ([key]) => nome.includes(key)
-      )
-
-      return regraEncontrada
-        ? regraEncontrada[1]
-        : { porTime: 0, total: 0 }
-    },
-    partidaEncerradaVolei() {
+    modalidadeId() {
       return (
-        this.time1.setsVencidos >= 3 ||
-        this.time2.setsVencidos >= 3 ||
-        this.time1.wo ||
-        this.time2.wo
+        this.partida?.modalidadeId ??
+        this.campeonato?.modalidade?.id ??
+        this.campeonato?.modalidadeId ??
+        null
       )
     },
-    nomeModalidade() {
-      const modalidade = this.modalidadesDisponiveis.find(
-        m => m.id === this.modalidadeSelecionada
-      )
 
-      if (!modalidade?.nome) return ''
+    modalidadeKey() {
+      const id = Number(this.modalidadeId)
+      if (!id) return null
+      if (MODALIDADES.FUTEBOL.has(id)) return 'FUTEBOL'
+      if (MODALIDADES.VOLEI.has(id)) return 'VOLEI'
+      return null
+    },
 
-      return modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1)
-    }
-  },
+    placarComponent() {
+      if (this.modalidadeKey === 'FUTEBOL') return 'PlacarTimeFutebol'
+      if (this.modalidadeKey === 'VOLEI') return 'PlacarTimeVolei'
+      return null
+    },
 
-  async mounted() {
-    const campeonato = await carregarCampeonato(this.$route)
+    placarIdTimeA() {
+      return this.partida?.placarTimeAId ?? this.partida?.placarAId ?? this.time1?.placarId ?? null
+    },
 
-    if (campeonato) {
-      this.campeonatoSelecionado = campeonato.id
-      this.modalidadeSelecionada = campeonato.modalidade?.id || ''
-    }
+    placarIdTimeB() {
+      return this.partida?.placarTimeBId ?? this.partida?.placarBId ?? this.time2?.placarId ?? null
+    },
 
-    const partidaId = this.$route.query.partidaId
+    placarPropsTimeA() {
+      if (!this.partidaId) return {}
 
-    if (partidaId) {
-      this.carregarPartidaEmAndamento(partidaId)
-    } else {
-      this.buscarQuadras()
+      if (this.placarComponent === 'PlacarTimeVolei') {
+        return {
+          timeKey: 'A',
+          timeNome: this.time1?.nome,
+          timeData: this.time1,
+          partidaId: this.partidaId,
+          setsAdversario: this.time2?.setsVencidos,
+          woAdversario: this.time2?.wo ? 1 : 0,
+          partidaEncerradaGlobal: this.isFinalizada,
+          podeEditar: this.podeEditar,
+          placarId: this.placarIdTimeA
+        }
+      }
+      return {
+        timeNome: this.time1?.nome,
+        timeData: this.time1,
+        partidaId: this.partidaId,
+        podeEditar: this.podeEditar,
+        placarId: this.placarIdTimeA
+      }
+    },
+
+    placarPropsTimeB() {
+      if (!this.partidaId) return {}
+
+      if (this.placarComponent === 'PlacarTimeVolei') {
+        return {
+          timeKey: 'B',
+          timeNome: this.time2?.nome,
+          timeData: this.time2,
+          partidaId: this.partidaId,
+          setsAdversario: this.time1?.setsVencidos,
+          woAdversario: this.time1?.wo ? 1 : 0,
+          partidaEncerradaGlobal: this.isFinalizada,
+          podeEditar: this.podeEditar,
+          placarId: this.placarIdTimeB
+        }
+      }
+
+      return {
+        timeNome: this.time2?.nome,
+        timeData: this.time2,
+        partidaId: this.partidaId,
+        podeEditar: this.podeEditar,
+        placarId: this.placarIdTimeB
+      }
     }
   },
 
   methods: {
-    async buscarQuadras() {
-      try {
-        const { data } = await api.get('/quadra')
-        this.quadrasDisponiveis = data
-      } catch (error) {
-        console.error(error)
+    mapTimeFutebol(time, lado, partida) {
+      return {
+        id: time?.id,
+        nome: time?.nome,
+        foto: time?.foto,
+
+        golspro: lado === 'A' ? (partida.pontosTimeA ?? 0) : (partida.pontosTimeB ?? 0),
+        faltas: lado === 'A' ? (partida.faltasTimeA ?? 0) : (partida.faltasTimeB ?? 0),
+        substituicoes: lado === 'A' ? (partida.substituicoesTimeA ?? 0) : (partida.substituicoesTimeB ?? 0),
+        cartaoamarelo: lado === 'A' ? (partida.cartoesAmarelosTimeA ?? 0) : (partida.cartoesAmarelosTimeB ?? 0),
+        cartaovermelho: lado === 'A' ? (partida.cartoesVermelhosTimeA ?? 0) : (partida.cartoesVermelhosTimeB ?? 0),
+        wo: lado === 'A' ? !!partida.woTimeA : !!partida.woTimeB,
+
+        placarId: lado === 'A' ? (partida.placarTimeAId ?? null) : (partida.placarTimeBId ?? null)
       }
     },
 
-    async buscarModalidades() {
-      if (!this.quadraSelecionada) return
+    mapTimeVolei(time, lado, partida) {
+      const setsVencidos = lado === 'A' ? (partida.pontosTimeA ?? 0) : (partida.pontosTimeB ?? 0)
+      const wo = lado === 'A' ? !!partida.woTimeA : !!partida.woTimeB
 
-      try {
-        const { data } = await api.get(`/quadra/${this.quadraSelecionada}/modalidades`)
-        this.modalidadesDisponiveis = data
-      } catch (error) {
-        console.error(error)
-      }
-    },
-
-    async buscarCampeonatos() {
-      try {
-        const { data } = await api.get(`/listar/${this.modalidadeSelecionada}`)
-        this.campeonatosDisponiveis = data
-      } catch (error) {
-        console.error(error)
-      }
-    },
-
-    async aoSelecionarCampeonato() {
-      this.timeSelecionado1 = ''
-      this.timeSelecionado2 = ''
-      this.times = []
-
-      await this.buscarTimes()
-    },
-
-    async buscarTimes() {
-      if (!this.campeonatoSelecionado) return
-
-      try {
-        const { data } = await api.get(`/${this.campeonatoSelecionado}/times`)
-
-        this.times = data
-      } catch (error) {
-        console.error('Erro ao buscar times do campeonato:', error)
-        this.times = []
-      }
-    },
-
-    async carregarJogadoresPorTime(tipo) {
-      try {
-        if (tipo === 'time1') {
-          const { data } = await api.get(`/time/${this.timeSelecionado1}`)
-          this.jogadoresTime1 = data
-        }
-
-        if (tipo === 'time2') {
-          const { data } = await api.get(`/time/${this.timeSelecionado2}`)
-          this.jogadoresTime2 = data
-        }
-      } catch (error) {
-        console.error(error)
-      }
-    },
-
-    async confirmarJogadores({ time1, time2 }) {
-      try {
-        const jogadores = []
-
-        time1.forEach(id => {
-          jogadores.push({
-            jogadorId: id,
-            timeId: Number(this.timeSelecionado1)
-          })
-        })
-
-        time2.forEach(id => {
-          jogadores.push({
-            jogadorId: id,
-            timeId: Number(this.timeSelecionado2)
-          })
-        })
-
-        const payload = {
-          usuarioId: Number(this.usuarioLogadoId),
-          quadraId: Number(this.quadraSelecionada),
-          campeonatoId: Number(this.campeonatoSelecionado),
-          modalidadeId: Number(this.modalidadeSelecionada),
-          timeAId: Number(this.timeSelecionado1),
-          timeBId: Number(this.timeSelecionado2),
-          jogadores
-        }
-
-        const resposta = await api.post('/partida', payload)
-
-        this.partidaId = resposta.data.id
-        this.mostrarModalJogadores = false
-        this.partidaIniciada = true
-        this.temporizadorAtivo = true
-        this.iniciarTemporizador()
-      } catch (error) {
-        console.error('Erro ao criar partida:', error)
-      }
-    },
-
-    async atualizarSelecao(tipo) {
-      if (tipo === 'quadra') {
-        this.modalidadeSelecionada = ''
-        this.campeonatoSelecionado = ''
-        this.timeSelecionado1 = ''
-        this.timeSelecionado2 = ''
-        this.times = []
-        this.modalidadesDisponiveis = []
-        this.campeonatosDisponiveis = []
-        await this.buscarModalidades()
-      }
-
-      if (tipo === 'modalidade') {
-        this.campeonatoSelecionado = ''
-        this.timeSelecionado1 = ''
-        this.timeSelecionado2 = ''
-        this.times = []
-
-        await this.buscarCampeonatos()
-      }
-
-    },
-    atualizarTime(time, novoTime) {
-      for (const chave in novoTime) {
-        this[time][chave] = novoTime[chave];
-      }
-
-      // 🔥 REGRA DE W.O NO VÔLEI
-      if (this.isVolei) {
-        // Time 1 deu W.O
-        if (this.time1.wo && !this.time2.wo) {
-          this.time1.setsVencidos = 0
-          this.time2.setsVencidos = 3
-          this.time1.setsJogados = []
-          this.time2.setsJogados = []
-        }
-
-        // Time 2 deu W.O
-        if (this.time2.wo && !this.time1.wo) {
-          this.time2.setsVencidos = 0
-          this.time1.setsVencidos = 3
-          this.time1.setsJogados = []
-          this.time2.setsJogados = []
+      let pontosSet = 0
+      if (Array.isArray(partida.sets) && partida.sets.length) {
+        const totalSets = (partida.pontosTimeA ?? 0) + (partida.pontosTimeB ?? 0)
+        const setAtualNum = totalSets + 1
+        const setAtual = partida.sets.find(s => s.numero === setAtualNum)
+        if (setAtual) {
+          pontosSet = lado === 'A' ? (setAtual.pontosTimeA ?? 0) : (setAtual.pontosTimeB ?? 0)
         }
       }
 
-      this.atualizarParcial();
+      const setsJogados = Array.isArray(partida.sets)
+        ? partida.sets.map(s => ({
+            numero: s.numero,
+            pontos: lado === 'A' ? (s.pontosTimeA ?? 0) : (s.pontosTimeB ?? 0),
+            time: lado
+          }))
+        : []
+
+      return {
+        id: time?.id,
+        nome: time?.nome,
+        foto: time?.foto,
+        setsVencidos,
+        pontosSet,
+        wo,
+        setsJogados,
+        placarId: lado === 'A' ? (partida.placarTimeAId ?? null) : (partida.placarTimeBId ?? null)
+      }
+    },
+
+    async carregarPartida() {
+      if (!this.partidaId) return
+
+      const res = await api.get(`/partidas/${this.partidaId}/retornar`)
+      const partida = res.data
+      this.partida = partida
+
+      if (this.modalidadeKey === 'VOLEI') {
+        this.time1 = this.mapTimeVolei(partida.timeA, 'A', partida)
+        this.time2 = this.mapTimeVolei(partida.timeB, 'B', partida)
+      } else {
+        this.time1 = this.mapTimeFutebol(partida.timeA, 'A', partida)
+        this.time2 = this.mapTimeFutebol(partida.timeB, 'B', partida)
+      }
+    },
+
+    async atualizarParcial(payload) {
+      if (!this.partidaId) return
+      if (!this.podeEditar) return
+
+      try {
+        this.isSalvandoParcial = true
+        await api.put(`/partida/${this.partidaId}/parcial`, payload)
+      } catch (error) {
+        console.error('[atualizarParcial] erro:', error)
+        const msg =
+          error.response?.data?.error ||
+          error.response?.data?.message ||
+          'Não foi possível atualizar o parcial.'
+        Swal.fire('Erro', msg, 'error')
+      } finally {
+        this.isSalvandoParcial = false
+      }
+    },
+
+    agendarSalvarParcial() {
+      if (this.parcialTimer) clearTimeout(this.parcialTimer)
+
+      this.parcialTimer = setTimeout(async () => {
+        const a = this.parcialTimeA
+        const b = this.parcialTimeB
+        if (!a || !b) return
+
+        let payload = {}
+
+        if (this.modalidadeKey === 'FUTEBOL') {
+          payload = {
+            pontosTimeA: a.golspro ?? 0,
+            pontosTimeB: b.golspro ?? 0,
+
+            faltasTimeA: a.faltas ?? 0,
+            faltasTimeB: b.faltas ?? 0,
+
+            substituicoesTimeA: a.substituicoes ?? 0,
+            substituicoesTimeB: b.substituicoes ?? 0,
+
+            cartoesAmarelosTimeA: a.cartaoamarelo ?? 0,
+            cartoesAmarelosTimeB: b.cartaoamarelo ?? 0,
+
+            cartoesVermelhosTimeA: a.cartaovermelho ?? 0,
+            cartoesVermelhosTimeB: b.cartaovermelho ?? 0,
+
+            woTimeA: !!a.wo,
+            woTimeB: !!b.wo
+          }
+        }
+
+        if (this.modalidadeKey === 'VOLEI') {
+          payload = {
+            pontosTimeA: a.setsVencidos ?? 0,
+            pontosTimeB: b.setsVencidos ?? 0,
+
+            woTimeA: (a.wo ?? 0) === 1,
+            woTimeB: (b.wo ?? 0) === 1,
+            sets: [
+              ...(Array.isArray(a.setsJogados) ? a.setsJogados : []),
+              ...(Array.isArray(b.setsJogados) ? b.setsJogados : [])
+            ]
+          }
+        }
+
+        await this.atualizarParcial(payload)
+      }, 300) 
+    },
+
+    onUpdateTimeA(parcial) {
+      this.parcialTimeA = parcial
+      this.agendarSalvarParcial()
+    },
+
+    onUpdateTimeB(parcial) {
+      this.parcialTimeB = parcial
+      this.agendarSalvarParcial()
+    },
+
+    async incrementarPlacar(placarId, incremento) {
+      if (!placarId) {
+        console.warn('[incrementarPlacar] placarId não encontrado. Incremento:', incremento)
+        return
+      }
+
+      if (!this.podeEditar) {
+        return Swal.fire('Bloqueado', 'A partida já foi finalizada.', 'info')
+      }
+
+      try {
+        const res = await api.put(`/placar/${placarId}/incrementar`, incremento)
+        return res.data
+      } catch (error) {
+        console.error('[incrementarPlacar] erro:', error)
+        const msg =
+          error.response?.data?.error ||
+          error.response?.data?.message ||
+          'Não foi possível atualizar o placar.'
+        Swal.fire('Erro', msg, 'error')
+      }
+    },
+
+    async onIncrementarPlacarTimeA(incremento) {
+      await this.incrementarPlacar(this.placarIdTimeA, incremento)
+    },
+
+    async onIncrementarPlacarTimeB(incremento) {
+      await this.incrementarPlacar(this.placarIdTimeB, incremento)
     },
 
     async finalizarPartida() {
+      if (!this.partidaId) return
+      if (this.isFinalizada) return
+
+      const confirm = await Swal.fire({
+        title: 'Finalizar partida?',
+        text: 'Depois de finalizada, a partida não deve mais ser editada.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sim, finalizar',
+        cancelButtonText: 'Cancelar'
+      })
+
+      if (!confirm.isConfirmed) return
+
+      this.isFinalizando = true
       try {
-        if (!this.partidaId) {
-          throw new Error('Partida não encontrada');
-        }
-
-        this.temporizadorAtivo = false;
-        if (this.intervaloTimer) {
-          clearInterval(this.intervaloTimer);
-          this.intervaloTimer = null;
-        }
-
-        await api.put(`/partida/${this.partidaId}/encerrar`, {
-          usuarioId: this.usuarioLogadoId
-        });
-
-        Swal.fire("Sucesso", "Partida finalizada e placar atualizado!", "success");
-
-        this.partidaIniciada = false;
-        this.mostrarPlacar = false;
-        this.tempoSegundos = 0;
-        this.partidaId = null;
-        this.limparDados();
-
+        await api.put(`/partidas/${this.partidaId}/finalizar`)
+        await Swal.fire('Sucesso', 'Partida finalizada!', 'success')
+        await this.carregarPartida()
       } catch (error) {
-        console.error('Erro ao finalizar partida:', error);
-        Swal.fire("Erro", "Não foi possível finalizar a partida.", "error");
-      }
-    },
-
-    async carregarPartidaEmAndamento(partidaId) {
-      try {
-        const { data } = await api.get(`/partidas/${partidaId}/retornar`);
-
-        await this.buscarQuadras();
-
-        await carregarCampeonato({
-          query: { id: data.campeonatoId }
-        });
-
-        this.partidaId = data.id;
-        this.partidaIniciada = true;
-        this.temporizadorAtivo = true;
-        this.tempoSegundos = data.tempoSegundos;
-        this.quadraSelecionada = data.quadraId;
-        this.modalidadeSelecionada = data.modalidadeId;
-        this.campeonatoSelecionado = data.campeonatoId;
-        this.timeSelecionado1 = data.timeAId;
-        this.timeSelecionado2 = data.timeBId;
-        const nomeModalidade = data.modalidade?.nome?.toLowerCase();
-        const isVolei = nomeModalidade.includes('vôlei');
-        const isFutsal = nomeModalidade.includes('futsal');
-
-        if (isVolei) {
-          // VÔLEI
-          this.time1.setsVencidos = data.pontosTimeA;
-          this.time2.setsVencidos = data.pontosTimeB;
-
-          this.time1.setsJogados = [];
-          this.time2.setsJogados = [];
-
-          if (Array.isArray(data.sets)) {
-            for (const set of data.sets) {
-              if (set.pontosA > 0) {
-                this.time1.setsJogados.push({
-                  numero: set.numero,
-                  pontos: set.pontosA
-                });
-              }
-
-              if (set.pontosB > 0) {
-                this.time2.setsJogados.push({
-                  numero: set.numero,
-                  pontos: set.pontosB
-                });
-              }
-            }
-          }
-
-          this.time1.pontosSet = 0;
-          this.time2.pontosSet = 0;
-
-          this.time1.wo = !!data.woTimeA;
-          this.time2.wo = !!data.woTimeB;
-
-        } else {
-          // FUTEBOL / FUTSAL
-          this.time1.golspro = data.pontosTimeA;
-          this.time2.golspro = data.pontosTimeB;
-
-          this.time1.faltas = data.faltasTimeA;
-          this.time2.faltas = data.faltasTimeB;
-
-          this.time1.cartaoamarelo = data.cartoesAmarelosTimeA;
-          this.time1.cartaovermelho = data.cartoesVermelhosTimeA;
-
-          this.time2.cartaoamarelo = data.cartoesAmarelosTimeB;
-          this.time2.cartaovermelho = data.cartoesVermelhosTimeB;
-
-          if (!isFutsal) {
-            this.time1.substituicoes = data.substituicoesTimeA;
-            this.time2.substituicoes = data.substituicoesTimeB;
-          } else {
-            this.time1.substituicoes = 0;
-            this.time2.substituicoes = 0;
-          }
-        }
-
-        await Promise.all([
-          this.buscarModalidades(),
-          this.buscarCampeonatos(),
-          this.buscarTimes()
-        ]);
-
-      } catch (error) {
-        Swal.fire(
-          'Erro',
-          'Partida não está mais disponível.',
-          'error'
-        );
-
-        this.$router.push('/gerenciar_partida');
-      }
-    },
-
-    async atualizarParcial() {
-      if (!this.partidaId) return;
-
-      try {
-        const isVolei = this.isVolei;
-        const isFutsal = this.isFutsal;
-
-        const payload = {
-          tempoSegundos: this.tempoSegundos,
-          woTimeA: !!this.time1.wo,
-          woTimeB: !!this.time2.wo,
-          emIntervalo: false
-        };
-
-        if (isVolei) {
-          // VÔLEI
-          const setsTimeA = this.time1.setsJogados || [];
-          const setsTimeB = this.time2.setsJogados || [];
-          const setsUnificados = [];
-
-          // Time A
-          for (const setA of setsTimeA) {
-            setsUnificados.push({
-              numero: setA.numero,
-              pontosA: setA.pontos,
-              pontosB: 0
-            });
-          }
-
-          // Time B
-          for (const setB of setsTimeB) {
-            const existente = setsUnificados.find(s => s.numero === setB.numero);
-
-            if (existente) {
-              existente.pontosB = setB.pontos;
-            } else {
-              setsUnificados.push({
-                numero: setB.numero,
-                pontosA: 0,
-                pontosB: setB.pontos
-              });
-            }
-          }
-
-          setsUnificados.sort((a, b) => a.numero - b.numero);
-
-          payload.pontosTimeA = this.time1.setsVencidos;
-          payload.pontosTimeB = this.time2.setsVencidos;
-          payload.sets = setsUnificados;
-
-        } else {
-          // ⚽ FUTEBOL / FUTSAL (base comum)
-          payload.pontosTimeA = this.time1.golspro;
-          payload.pontosTimeB = this.time2.golspro;
-          payload.faltasTimeA = this.time1.faltas;
-          payload.faltasTimeB = this.time2.faltas;
-
-          // 🚫 Substituição só no FUTEBOL
-          if (!isFutsal) {
-            payload.substituicoesTimeA = this.time1.substituicoes;
-            payload.substituicoesTimeB = this.time2.substituicoes;
-          }
-        }
-
-        await api.put(`/partida/${this.partidaId}/parcial`, payload);
-
-      } catch (err) {
-        console.error('Erro ao atualizar parcial:', err);
-        Swal.fire(
-          'Erro',
-          'Não foi possível atualizar o placar parcial.',
-          'error'
-        );
-      }
-    },
-
-    limparDados() {
-      this.quadraSelecionada = ''
-      this.timeSelecionado1 = ''
-      this.timeSelecionado2 = ''
-
-      this.times = []
-      this.modalidadesDisponiveis = []
-      this.campeonatosDisponiveis = []
-
-      this.jogadoresTime1 = []
-      this.jogadoresTime2 = []
-
-      this.time1 = {
-        golspro: 0,
-        faltas: 0,
-        substituicoes: 0,
-        cartaoamarelo: 0,
-        cartaovermelho: 0,
-        wo: false,
-        setsVencidos: 0,
-        pontosSet: 0,
-        setsJogados: []
-      }
-
-      this.time2 = {
-        golspro: 0,
-        faltas: 0,
-        substituicoes: 0,
-        cartaoamarelo: 0,
-        cartaovermelho: 0,
-        wo: false,
-        setsVencidos: 0,
-        pontosSet: 0,
-        setsJogados: []
+        const msg =
+          error.response?.data?.error ||
+          error.response?.data?.message ||
+          'Erro ao finalizar partida.'
+        Swal.fire('Erro', msg, 'error')
+      } finally {
+        this.isFinalizando = false
       }
     }
+  },
+
+  async mounted() {
+    try {
+      this.partidaId = this.$route.query.partidaId
+      this.campeonato = await carregarCampeonato(this.$route)
+      await this.carregarPartida()
+    } catch (err) {
+      console.error('Erro ao carregar:', err)
+      this.campeonato = null
+    } finally {
+      this.isLoading = false
+    }
+  },
+
+  beforeUnmount() {
+    if (this.parcialTimer) clearTimeout(this.parcialTimer)
   }
 }
 </script>
@@ -624,26 +424,6 @@ export default {
   margin-left: 70px;
 }
 
-.sidebar {
-  width: 250px;
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  background: #fff;
-  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.2);
-  z-index: 200;
-  transition: transform 0.3s ease;
-}
-
-.sidebar.closed {
-  transform: translateX(-100%);
-}
-
-.sidebar.open {
-  transform: translateX(0);
-}
-
 .title {
   font-size: 30px;
   color: #3b82f6;
@@ -657,54 +437,6 @@ export default {
   align-items: center;
   margin-bottom: 20px;
 }
-
-.placares {
-  display: flex;
-  gap: 30px;
-  margin-top: 30px;
-  justify-content: center;
-  border: 2px solid #3b82f6;
-  border-radius: 12px;
-  padding: 5px;
-}
-
-.dropdowns {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  align-items: center;
-}
-
-.dropdown-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin-bottom: 15px;
-  justify-content: flex-start;
-  width: 100%;
-}
-
-.dropdown-row.modalidade .team {
-  width: 99%;
-  display: flex;
-  flex-direction: column;
-}
-
-.dropdown-row .team {
-  flex: 1;
-  min-width: 200px;
-  display: flex;
-  flex-direction: column;
-}
-
-.dropdown {
-  width: 100%;
-  padding: 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-}
-
 
 .finalizar-container {
   padding-top: 30px;
@@ -723,80 +455,51 @@ export default {
   cursor: pointer;
 }
 
-h2 {
-  color: #3b82f6;
-  font-weight: bold;
-  font-size: 18px;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.loader-pequeno {
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #3b82f6;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  animation: spin 1s linear infinite;
-  display: inline-block;
-  vertical-align: middle;
-  margin-right: 5px;
+.placares {
+  display: flex;
+  gap: 30px;
+  margin-top: 30px;
+  justify-content: center;
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  padding: 5px;
+  flex-wrap: wrap;
+  align-items: flex-start;
 }
 
 @media (max-width: 768px) {
   .conteudo {
-    margin-left: 0;
+    margin-left: 0;      
     padding: 16px;
-    padding-top: 80px;
+    padding-top: 90px;  
   }
 
-  .sidebar {
-    transform: translateX(-100%);
-  }
-
-  .sidebar.open {
-    transform: translateX(0);
+  .conteudo.collapsed {
+    margin-left: 0;      
   }
 
   .title {
     font-size: 22px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    margin-top: 8px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 12px;
   }
 
   .placares {
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
+    gap: 14px;
+    margin-top: 18px;
+    padding: 10px;
+    justify-content: stretch;
   }
 
-  .dropdowns {
-    width: 100%;
-  }
-
-  .dropdown-row {
-    flex-direction: column;
-    gap: 15px;
-    width: 100%;
-  }
-
-  .dropdown-row .team,
-  .dropdown-row.modalidade .team {
-    width: 100% !important;
-  }
-
-  .finalizar-container {
-    margin: 20px 0;
-    width: 100%;
+  .botao-finalizar {
+    font-size: 16px;
+    padding: 14px;
   }
 }
 </style>

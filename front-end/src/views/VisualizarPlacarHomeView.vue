@@ -181,20 +181,10 @@
 
             <ul class="lista-partidas" :class="{ 'com-scroll': temScrollPartidas }">
               <li v-for="partida in partidas" :key="partida.id" class="card-partida"
-                :class="classeStatusPartida(partida)" @click="abrirModalPartida(partida.id)">
+                :class="statusClass(partida, 'card')" @click="abrirModalPartida(partida.id)">
 
-                <div class="status-topo" :class="classeStatusTexto(partida)">
-                  {{
-                    partida.status === 'FINALIZADA'
-                      ? 'ENCERRADA'
-                      : partida.status === 'EM_ANDAMENTO'
-                        ? 'EM ANDAMENTO'
-                        : partida.status === 'AGENDADA'
-                          ? 'AGUARDANDO'
-                          : partida.status === 'CANCELADA'
-                            ? 'CANCELADA'
-                            : ''
-                  }}
+                <div class="status-topo" :class="statusClass(partida, 'text')">
+                  {{ statusLabel(partida.status) }}
                 </div>
 
                 <div class="nome-quadra-visualizar">
@@ -232,19 +222,10 @@
                 <div class="infos">
                   <p>
                     <strong>Status:</strong>
-                    <span :class="classeStatusTexto(partidaDetalhada)">
-                      {{
-                        partidaDetalhada.status === 'FINALIZADA'
-                          ? 'Encerrada'
-                          : partidaDetalhada.status === 'EM_ANDAMENTO'
-                            ? 'Em andamento'
-                            : partidaDetalhada.status === 'AGENDADA'
-                              ? 'Não iniciada'
-                              : partidaDetalhada.status === 'CANCELADA'
-                                ? 'Cancelada'
-                                : ''
-                      }}
+                    <span :class="statusClass(partidaDetalhada, 'text')">
+                      {{ statusLabel(partidaDetalhada.status) }}
                     </span>
+
                   </p>
                   <p><strong>Faltas:</strong>
                     {{ partidaDetalhada.faltasTimeA }} x {{ partidaDetalhada.faltasTimeB }}
@@ -350,7 +331,6 @@
             </tbody>
           </table>
         </div>
-
       </div>
     </div>
   </div>
@@ -358,7 +338,14 @@
 
 <script>
 import api from '@/axios'
-import NavBarHome from '@/components/NavBarHome.vue';
+import NavBarHome from '@/components/NavBarHome.vue'
+
+const STATUS_CONFIG = {
+  FINALIZADA: { label: 'ENCERRADA', card: 'partida-finalizada', text: 'status-finalizada' },
+  EM_ANDAMENTO: { label: 'EM ANDAMENTO', card: 'partida-andamento', text: 'status-andamento' },
+  AGENDADA: { label: 'AGUARDANDO', card: 'partida-agendada', text: 'status-agendada' },
+  CANCELADA: { label: 'CANCELADA', card: 'partida-cancelada', text: 'status-cancelada' }
+}
 
 export default {
   name: 'VisualizarPlacarHome',
@@ -369,9 +356,9 @@ export default {
       campeonatos: [],
       campeonatoAtivo: null,
       fases: [],
-      rodadaSelecionada: '',
-      faseSelecionada: '',
       rodadas: [],
+      faseSelecionada: '',
+      rodadaSelecionada: '',
       partidas: [],
       timesPlacar: null,
       isLoading: false,
@@ -379,13 +366,13 @@ export default {
       loadingDetalhePartida: false,
       partidaDetalhada: null,
       artilharia: [],
-      loadingArtilharia: false,
+      loadingArtilharia: false
     }
   },
 
   computed: {
     campeonatoSelecionado() {
-      return this.campeonatos.find(c => c.id === this.campeonatoAtivo) || null
+      return this.campeonatos.find(c => c.id === this.campeonatoAtivo)
     },
 
     modalidadeNormalizada() {
@@ -397,41 +384,28 @@ export default {
     },
 
     temScrollPartidas() {
-      return this.partidas && this.partidas.length >= 10
+      return Array.isArray(this.partidas) && this.partidas.length >= 10
     }
   },
 
   methods: {
-    // ===== STATUS PARTIDA =====
-    classeStatusPartida(partida) {
-      switch (partida.status) {
-        case 'FINALIZADA': return 'partida-finalizada'
-        case 'EM_ANDAMENTO': return 'partida-andamento'
-        case 'AGENDADA': return 'partida-agendada'
-        case 'CANCELADA': return 'partida-cancelada'
-        default: return ''
-      }
+    statusClass(partida, tipo) {
+      const status = partida?.status
+      return STATUS_CONFIG[status]?.[tipo]
     },
 
-    classeStatusTexto(partida) {
-      switch (partida.status) {
-        case 'FINALIZADA': return 'status-finalizada'
-        case 'EM_ANDAMENTO': return 'status-andamento'
-        case 'AGENDADA': return 'status-agendada'
-        case 'CANCELADA': return 'status-cancelada'
-        default: return ''
-      }
+    statusLabel(status) {
+      return STATUS_CONFIG[status]?.label
     },
 
     selecionarCampeonato(id) {
       this.campeonatoAtivo = id
-      this.faseSelecionada = ''
-      this.rodadaSelecionada = ''
       this.fases = []
       this.rodadas = []
+      this.faseSelecionada = ''
+      this.rodadaSelecionada = ''
       this.partidas = []
       this.timesPlacar = null
-
       this.carregarFases(id)
       this.carregarArtilharia(id)
     },
@@ -440,8 +414,8 @@ export default {
       this.isLoading = true
       try {
         const { data } = await api.get('/todos/campeonatos')
-        this.campeonatos = data
-        if (data.length) this.selecionarCampeonato(data[0].id)
+        this.campeonatos = Array.isArray(data) ? data : []
+        if (this.campeonatos.length) this.selecionarCampeonato(this.campeonatos[0].id)
       } catch (err) {
         console.error('Erro ao carregar campeonatos:', err)
       } finally {
@@ -451,62 +425,91 @@ export default {
 
     async carregarFases(campeonatoId) {
       try {
-        const { data } = await api.get(`/partidas/${campeonatoId}/fases`)
-        this.fases = data
+        const { data } = await api.get(`/fases/${campeonatoId}/`)
+        this.fases = Array.isArray(data) ? data : []
 
-        if (this.fases.length > 0) {
-          this.faseSelecionada = this.fases[0].id
-          const faseSelecionadaObj = this.fases.find(f => f.id === this.faseSelecionada)
-          this.rodadas = faseSelecionadaObj?.rodadas || []
-          this.rodadaSelecionada = this.rodadas.length ? this.rodadas[0].id : ''
-
-          this.filtrarPartidasPorRodada()
-          this.carregarPlacar(campeonatoId)
+        if (!this.fases.length) {
+          this.faseSelecionada = ''
+          this.rodadas = []
+          this.rodadaSelecionada = ''
+          this.partidas = []
+          this.timesPlacar = []
+          return
         }
+
+        this.faseSelecionada = this.fases[0].id
+        const faseSelecionadaObj = this.fases.find(f => f.id === this.faseSelecionada)
+        this.rodadas = Array.isArray(faseSelecionadaObj?.rodadas) ? faseSelecionadaObj.rodadas : []
+        this.rodadaSelecionada = this.rodadas.length ? this.rodadas[0].id : ''
+
+        await this.carregarPartidasPorRodada()
+        await this.carregarPlacar(campeonatoId)
       } catch (err) {
         console.error('Erro ao carregar fases:', err)
+        this.fases = []
+        this.rodadas = []
+        this.faseSelecionada = ''
+        this.rodadaSelecionada = ''
+        this.partidas = []
       }
     },
 
-    onFaseChange() {
+    async onFaseChange() {
       const fase = this.fases.find(f => f.id === this.faseSelecionada)
-      this.rodadas = fase?.rodadas || []
+      this.rodadas = Array.isArray(fase?.rodadas) ? fase.rodadas : []
       this.rodadaSelecionada = this.rodadas.length ? this.rodadas[0].id : ''
 
-      this.filtrarPartidasPorRodada()
-      this.carregarPlacar(this.campeonatoAtivo)
+      await this.carregarPartidasPorRodada()
+      await this.carregarPlacar(this.campeonatoAtivo)
     },
 
-    filtrarPartidasPorRodada() {
-      const fase = this.fases.find(f => f.id === this.faseSelecionada)
-      if (!fase) {
+    async onRodadaChange() {
+      await this.carregarPartidasPorRodada()
+    },
+
+    async carregarPartidasPorRodada() {
+      if (!this.campeonatoAtivo || !this.faseSelecionada || !this.rodadaSelecionada) {
         this.partidas = []
         return
       }
-      const rodada = fase.rodadas.find(r => r.id === this.rodadaSelecionada)
-      this.partidas = rodada?.partidas || []
+
+      try {
+        const { data } = await api.get(`/partidas/${this.campeonatoAtivo}/${this.faseSelecionada}/${this.rodadaSelecionada}`)
+
+        const lista = Array.isArray(data) ? data : []
+        this.partidas = lista.sort((a, b) => {
+          const da = new Date(a?.data || a?.createdAt || 0).getTime()
+          const db = new Date(b?.data || b?.createdAt || 0).getTime()
+          return db - da
+        })
+      } catch (err) {
+        console.error('Erro ao carregar partidas por rodada:', err)
+        this.partidas = []
+      }
     },
 
     async carregarPlacar(campeonatoId) {
       if (!this.faseSelecionada) return
-
       this.timesPlacar = null
 
       try {
-        const { data } = await api.get(`/placar/fase/${campeonatoId}`,
-          {
-            params: {
-              faseId: this.faseSelecionada
-            }
-          }
-        )
+        const { data } = await api.get(`/placar/fase/${campeonatoId}`, {
+          params: { faseId: this.faseSelecionada }
+        })
+
+        if (!Array.isArray(data)) {
+          this.timesPlacar = []
+          return
+        }
+
         const fase = data.find(f => f.faseId == this.faseSelecionada)
-        this.timesPlacar = fase?.placares || []
+        this.timesPlacar = Array.isArray(fase?.placares) ? fase.placares : []
       } catch (err) {
         console.error('Erro ao carregar placar da fase:', err)
         this.timesPlacar = []
       }
     },
+
     async abrirModalPartida(partidaId) {
       this.mostrarModalPartida = true
       this.loadingDetalhePartida = true
@@ -534,7 +537,7 @@ export default {
 
       try {
         const { data } = await api.get(`/${campeonatoId}/artilharia`)
-        this.artilharia = data
+        this.artilharia = Array.isArray(data) ? data : []
       } catch (err) {
         console.error('Erro ao carregar artilharia:', err)
         this.artilharia = []

@@ -8,52 +8,47 @@
     <div class="box">
       <p>Gols Marcados</p>
       <div class="controls">
-        <button @click="abrirModalJogadores('gol')" :disabled="!temporizadorAtivo">−</button>
+        <button @click="abrirModalJogadores('gol')">−</button>
         <span class="valor">{{ localTime.golspro }}</span>
-        <button @click="abrirModalJogadores('gol')" :disabled="!temporizadorAtivo">+</button>
+        <button @click="abrirModalJogadores('gol')">+</button>
       </div>
     </div>
 
     <div class="box">
       <p>Cartão Amarelo</p>
       <div class="controls">
-        <button @click="abrirModalJogadores('amarelo')" :disabled="!temporizadorAtivo">−</button>
+        <button @click="abrirModalJogadores('amarelo')">−</button>
         <span class="valor">{{ localTime.cartaoamarelo }}</span>
-        <button @click="abrirModalJogadores('amarelo')" :disabled="!temporizadorAtivo">+</button>
+        <button @click="abrirModalJogadores('amarelo')">+</button>
       </div>
     </div>
 
     <div class="box">
       <p>Cartão Vermelho</p>
       <div class="controls">
-        <button @click="abrirModalJogadores('vermelho')" :disabled="!temporizadorAtivo">−</button>
+        <button @click="abrirModalJogadores('vermelho')">−</button>
         <span class="valor">{{ localTime.cartaovermelho }}</span>
-        <button @click="abrirModalJogadores('vermelho')" :disabled="!temporizadorAtivo">+</button>
+        <button @click="abrirModalJogadores('vermelho')">+</button>
       </div>
     </div>
 
     <div class="box">
       <p>Faltas</p>
       <div class="controls">
-        <button @click="decrementSimples('faltas')" :disabled="!temporizadorAtivo">−</button>
+        <button @click="decrementSimples('faltas')">−</button>
         <span class="valor">{{ localTime.faltas }}</span>
-        <button @click="incrementSimples('faltas')" :disabled="!temporizadorAtivo">+</button>
+        <button @click="incrementSimples('faltas')">+</button>
       </div>
     </div>
 
     <div class="box">
       <p>Substituições</p>
       <div class="controls">
-        <button @click="abrirModalRemoverJogador" :disabled="!temporizadorAtivo || localTime.substituicoes <= 0">
-          −
-        </button>
+        <button @click="abrirModalRemoverJogador" :disabled="localTime.substituicoes <= 0">−</button>
 
         <span class="valor">{{ localTime.substituicoes }}</span>
 
-        <button @click="abrirModalSubstituicao" :disabled="!temporizadorAtivo || localTime.substituicoes >= 3">
-          +
-        </button>
-
+        <button @click="abrirModalSubstituicao" :disabled="localTime.substituicoes >= 3">+</button>
       </div>
     </div>
 
@@ -105,8 +100,13 @@
         <div v-else class="colunas">
           <div class="coluna">
             <h3 class="subtitulo">Jogador que sai</h3>
-            <div v-for="j in jogadoresEmCampo" :key="j.id" class="jogador-card"
-              :class="{ selecionado: jogadorSai?.id === j.id }" @click="toggleJogadorSai(j)">
+            <div
+              v-for="j in jogadoresEmCampo"
+              :key="j.id"
+              class="jogador-card"
+              :class="{ selecionado: jogadorSai?.id === j.id }"
+              @click="toggleJogadorSai(j)"
+            >
               <div class="jogador-info">
                 <img v-if="j.foto" :src="j.foto" class="foto-jogador" />
                 <span class="nome">{{ j.nome }}</span>
@@ -116,8 +116,13 @@
 
           <div class="coluna">
             <h3 class="subtitulo">Jogador que entra</h3>
-            <div v-for="j in jogadoresBanco" :key="j.id" class="jogador-card"
-              :class="{ selecionado: jogadorEntra?.id === j.id }" @click="toggleJogadorEntra(j)">
+            <div
+              v-for="j in jogadoresBanco"
+              :key="j.id"
+              class="jogador-card"
+              :class="{ selecionado: jogadorEntra?.id === j.id }"
+              @click="toggleJogadorEntra(j)"
+            >
               <div class="jogador-info">
                 <img v-if="j.foto" :src="j.foto" class="foto-jogador" />
                 <span class="nome">{{ j.nome }}</span>
@@ -126,7 +131,6 @@
           </div>
         </div>
 
-        <!-- LISTA DE SUBSTITUIÇÕES PENDENTES -->
         <div v-if="substituicoesPendentes.length" class="coluna coluna-substituicoes">
           <h3 class="subtitulo">Substituições selecionadas</h3>
 
@@ -142,12 +146,12 @@
           </div>
         </div>
 
-
         <div class="botoes">
-          <button class="btn-save1" :disabled="!jogadorSai ||
-            !jogadorEntra ||
-            substituicoesPendentes.length >= 3
-            " @click="adicionarSubstituicao">
+          <button
+            class="btn-save1"
+            :disabled="!jogadorSai || !jogadorEntra || substituicoesPendentes.length >= 3"
+            @click="adicionarSubstituicao"
+          >
             Adicionar Substituição
           </button>
 
@@ -171,8 +175,13 @@
         </div>
 
         <div v-else class="lista-remover">
-          <div v-for="j in jogadoresEmCampo" :key="j.id" class="jogador-card"
-            :class="{ selecionado: jogadoresSelecionados.includes(j.id) }" @click="toggleSelecionado(j.id)">
+          <div
+            v-for="j in jogadoresEmCampo"
+            :key="j.id"
+            class="jogador-card"
+            :class="{ selecionado: jogadoresSelecionados.includes(j.id) }"
+            @click="toggleSelecionado(j.id)"
+          >
             <div class="jogador-info">
               <img v-if="j.foto" :src="j.foto" class="foto-jogador" />
               <span class="nome">{{ j.nome }}</span>
@@ -191,7 +200,6 @@
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -205,18 +213,17 @@ export default {
   props: {
     timeNome: String,
     timeData: Object,
-    partidaId: [String, Number],
-    temporizadorAtivo: Boolean
+    partidaId: [String, Number]
   },
 
   data() {
     return {
       localTime: {
-        golspro: this.timeData?.golspro,
-        cartaoamarelo: this.timeData?.cartaoamarelo,
-        cartaovermelho: this.timeData?.cartaovermelho,
-        faltas: this.timeData?.faltas,
-        substituicoes: this.timeData?.substituicoes
+        golspro: this.timeData?.golspro ?? 0,
+        cartaoamarelo: this.timeData?.cartaoamarelo ?? 0,
+        cartaovermelho: this.timeData?.cartaovermelho ?? 0,
+        faltas: this.timeData?.faltas ?? 0,
+        substituicoes: this.timeData?.substituicoes ?? 0
       },
       modalAberto: false,
       tipoEvento: 'gol',
@@ -229,7 +236,7 @@ export default {
       jogadorEntra: null,
       substituicoesPendentes: [],
       modalRemoverAberto: false,
-      jogadoresSelecionados: [],
+      jogadoresSelecionados: []
     }
   },
 
@@ -287,7 +294,6 @@ export default {
 
     async alterarEventoJogador(jogador, acao) {
       const incremento = acao === 'increment' ? 1 : -1
-      if (incremento === 0) return
 
       const payload = {
         jogadorId: jogador.id,
@@ -296,7 +302,6 @@ export default {
 
       if (this.tipoEvento === 'gol') {
         if (jogador.gols + incremento < 0) return
-
         jogador.gols += incremento
         this.localTime.golspro += incremento
         payload.gols = incremento
@@ -304,7 +309,6 @@ export default {
 
       if (this.tipoEvento === 'amarelo') {
         if (jogador.cartoesAmarelos + incremento < 0) return
-
         jogador.cartoesAmarelos += incremento
         this.localTime.cartaoamarelo += incremento
         payload.cartoesAmarelos = incremento
@@ -312,47 +316,39 @@ export default {
 
       if (this.tipoEvento === 'vermelho') {
         if (jogador.cartoesVermelhos + incremento < 0) return
-
         jogador.cartoesVermelhos += incremento
         this.localTime.cartaovermelho += incremento
         payload.cartoesVermelhos = incremento
       }
+
       this.emitUpdate()
 
       try {
         const res = await api.post('/atuacao', payload)
 
         if (res.data?.emCampo === false) {
-          Swal.fire(
-            'Expulsão!',
-            'Jogador expulso automaticamente.',
-            'warning'
-          )
+          Swal.fire('Expulsão!', 'Jogador expulso automaticamente.', 'warning')
           await this.carregarJogadores()
           await this.carregarJogadoresEmCampo()
         }
 
         await this.salvarPlacar()
       } catch (error) {
-        Swal.fire('Erro', error.response?.data?.message, error)
-
+        Swal.fire('Erro', error.response?.data?.message || 'Erro ao salvar atuação', 'error')
         await this.carregarJogadores()
       }
     },
 
     toggleJogadorSai(jogador) {
-      this.jogadorSai =
-        this.jogadorSai?.id === jogador.id ? null : jogador
+      this.jogadorSai = this.jogadorSai?.id === jogador.id ? null : jogador
     },
 
     toggleJogadorEntra(jogador) {
-      this.jogadorEntra =
-        this.jogadorEntra?.id === jogador.id ? null : jogador
+      this.jogadorEntra = this.jogadorEntra?.id === jogador.id ? null : jogador
     },
 
     async abrirModalSubstituicao() {
       if (this.substituicoesRestantes <= 0) return
-
       this.substituicaoModal = true
       this.jogadorSai = null
       this.jogadorEntra = null
@@ -371,9 +367,7 @@ export default {
       this.carregando = true
       try {
         const resEmCampo = await api.get(`/partida/${this.partidaId}`)
-        this.jogadoresEmCampo = resEmCampo.data.filter(
-          j => j.timeId === this.timeData.id
-        )
+        this.jogadoresEmCampo = resEmCampo.data.filter(j => j.timeId === this.timeData.id)
 
         const resBanco = await api.get(`/${this.partidaId}/${this.timeData.id}/jogadores-fora-partida`)
         this.jogadoresBanco = resBanco.data
@@ -392,9 +386,7 @@ export default {
       }
 
       const duplicada = this.substituicoesPendentes.some(
-        s =>
-          s.sai.id === this.jogadorSai.id ||
-          s.entra.id === this.jogadorEntra.id
+        s => s.sai.id === this.jogadorSai.id || s.entra.id === this.jogadorEntra.id
       )
 
       if (duplicada) {
@@ -418,14 +410,10 @@ export default {
             jogadorEntraId: sub.entra.id
           })
 
-          this.jogadoresEmCampo = this.jogadoresEmCampo.filter(
-            j => j.id !== sub.sai.id
-          )
+          this.jogadoresEmCampo = this.jogadoresEmCampo.filter(j => j.id !== sub.sai.id)
           this.jogadoresEmCampo.push(sub.entra)
 
-          this.jogadoresBanco = this.jogadoresBanco.filter(
-            j => j.id !== sub.entra.id
-          )
+          this.jogadoresBanco = this.jogadoresBanco.filter(j => j.id !== sub.entra.id)
 
           this.localTime.substituicoes++
         }
@@ -434,12 +422,12 @@ export default {
         await this.salvarPlacar()
 
         Swal.fire('Sucesso', `${this.substituicoesPendentes.length} substituição(ões) realizadas`, 'success')
-
         this.fecharModalSubstituicao()
-      } catch (error) {
+      } catch {
         Swal.fire('Erro', 'Erro ao realizar substituições', 'error')
       }
     },
+
     async abrirModalRemoverJogador() {
       this.modalRemoverAberto = true
       this.jogadoresSelecionados = []
@@ -453,8 +441,7 @@ export default {
 
     toggleSelecionado(jogadorId) {
       if (this.jogadoresSelecionados.includes(jogadorId)) {
-        this.jogadoresSelecionados =
-          this.jogadoresSelecionados.filter(id => id !== jogadorId)
+        this.jogadoresSelecionados = this.jogadoresSelecionados.filter(id => id !== jogadorId)
       } else {
         this.jogadoresSelecionados.push(jogadorId)
       }
@@ -464,10 +451,7 @@ export default {
       this.carregando = true
       try {
         const res = await api.get(`/partida/${this.partidaId}`)
-        console.log('Jogadores da partida:', res.data)
-        this.jogadoresEmCampo = res.data.filter(
-          j => j.timeId === this.timeData.id
-        )
+        this.jogadoresEmCampo = res.data.filter(j => j.timeId === this.timeData.id)
       } catch {
         Swal.fire('Erro', 'Erro ao carregar jogadores em campo', 'error')
       } finally {
@@ -478,23 +462,14 @@ export default {
     async confirmarRemocaoJogadores() {
       try {
         for (const jogadorId of this.jogadoresSelecionados) {
-          await api.put(
-            `/${this.partidaId}/${jogadorId}/remover`
-          )
-
-          this.jogadoresEmCampo = this.jogadoresEmCampo.filter(
-            j => j.id !== jogadorId
-          )
+          await api.put(`/${this.partidaId}/${jogadorId}/remover`)
+          this.jogadoresEmCampo = this.jogadoresEmCampo.filter(j => j.id !== jogadorId)
         }
 
         this.emitUpdate()
         await this.salvarPlacar()
 
-        Swal.fire(
-          'Sucesso',
-          'Jogador(es) removido(s) de campo',
-          'success'
-        )
+        Swal.fire('Sucesso', 'Jogador(es) removido(s) de campo', 'success')
         this.fecharModalRemover()
       } catch {
         Swal.fire('Erro', 'Erro ao remover jogadores', 'error')

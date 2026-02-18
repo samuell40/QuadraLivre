@@ -24,6 +24,7 @@
   <div v-if="mostrarModalPartida" class="modal-overlay" @click.self="mostrarModalPartida = false">
     <div class="modal-content modal-times">
       <h2>Criar Partida</h2>
+
       <div class="filtros-linha">
         <div class="filtros-topo">
           <label>Selecione a fase:</label>
@@ -45,6 +46,7 @@
           </select>
         </div>
       </div>
+
       <!-- TIME A -->
       <div class="filtros-topo">
         <label>Time 1:</label>
@@ -104,11 +106,19 @@
           </div>
         </div>
       </div>
+
       <div class="botoes">
-        <button class="btn-save" @click="criarPartida">Criar Partida</button>
+        <button class="btn-save" :disabled="!podeContinuar || criandoPartida" @click="continuarSelecionarJogadores">
+          <span v-if="criandoPartida">Aguarde...</span>
+          <span v-else>Continuar (selecionar jogadores)</span>
+        </button>
       </div>
     </div>
   </div>
+
+  <SelecionarJogadores :aberto="mostrarModalJogadores" :jogadoresTime1="jogadoresTime1" :jogadoresTime2="jogadoresTime2"
+    :time1Nome="timeASelecionadoObj?.nome || 'Time 1'" :time2Nome="timeBSelecionadoObj?.nome || 'Time 2'"
+    :regra="regraJogadores" @fechar="mostrarModalJogadores = false" @confirmar="onConfirmarJogadores" />
 
   <div v-if="mostrarModalRodada" class="modal-overlay" @click.self="mostrarModalRodada = false">
     <div class="modal-content modal-times">
@@ -136,20 +146,23 @@
 </template>
 
 <script>
-import api from '@/axios';
-import Swal from 'sweetalert2';
+import api from '@/axios'
+import Swal from 'sweetalert2'
+import SelecionarJogadores from '../Partida/SelecionarJogadores.vue';
 
 export default {
   name: 'ModalEscolherTipo',
+  components: { SelecionarJogadores },
+
   props: {
     modelValue: { type: Boolean, required: true },
     campeonatoId: { type: String, required: true }
   },
+
   data() {
     return {
       usuario: null,
       mostrarModalPartida: false,
-      times: [],
       mostrarModalRodada: false,
       nomeRodada: '',
       fases: [],
@@ -157,6 +170,7 @@ export default {
       modalidadeId: null,
       quadraId: null,
       rodadas: [],
+      times: [],
       partida: {
         faseId: '',
         rodadaId: '',
@@ -167,155 +181,189 @@ export default {
       abrirDropdownTimeB: false,
       buscaTimeA: '',
       buscaTimeB: '',
-    };
+      mostrarModalJogadores: false,
+      jogadoresTime1: [],
+      jogadoresTime2: [],
+      criandoPartida: false
+    }
   },
-  emits: ['update:modelValue', 'selecionar', 'rodadaCriada'],
+
+  emits: ['update:modelValue', 'selecionar', 'rodadaCriada', 'partidaCriada'],
 
   mounted() {
-    this.usuario = JSON.parse(localStorage.getItem('usuario'));
+    this.usuario = JSON.parse(localStorage.getItem('usuario'))
   },
 
   computed: {
     timeASelecionadoObj() {
-      return this.times.find(t => t.id === this.partida.timeAId);
+      return this.times.find(t => t.id === this.partida.timeAId)
     },
 
     timeBSelecionadoObj() {
-      return this.times.find(t => t.id === this.partida.timeBId);
+      return this.times.find(t => t.id === this.partida.timeBId)
     },
 
     timesFiltradosA() {
       return this.times
         .filter(t => t.id !== this.partida.timeBId)
-        .filter(t =>
-          t.nome.toLowerCase().includes(this.buscaTimeA.toLowerCase())
-        );
+        .filter(t => t.nome.toLowerCase().includes(this.buscaTimeA.toLowerCase()))
     },
 
     timesFiltradosB() {
       return this.times
         .filter(t => t.id !== this.partida.timeAId)
-        .filter(t =>
-          t.nome.toLowerCase().includes(this.buscaTimeB.toLowerCase())
-        );
+        .filter(t => t.nome.toLowerCase().includes(this.buscaTimeB.toLowerCase()))
+    },
+
+    podeContinuar() {
+      const { faseId, rodadaId, timeAId, timeBId } = this.partida
+      return !!faseId && !!rodadaId && !!timeAId && !!timeBId && timeAId !== timeBId
+    },
+
+    regraJogadores() {
+      const id = Number(this.modalidadeId)
+      const FUTEBOL = new Set([1, 2, 4])
+      const VOLEI = new Set([3, 5, 6])
+
+      if (FUTEBOL.has(id)) return { porTime: 11, total: 22 }
+      if (VOLEI.has(id)) return { porTime: 6, total: 12 }
+      return { porTime: 11, total: 22 }
     }
   },
 
   methods: {
     fechar() {
-      this.$emit('update:modelValue', false);
+      this.$emit('update:modelValue', false)
     },
+
     selecionar(tipo) {
-      this.$emit('selecionar', tipo);
-      this.fechar();
+      this.$emit('selecionar', tipo)
+      this.fechar()
     },
 
     selecionarTimeA(time) {
-      this.partida.timeAId = time.id;
-      this.abrirDropdownTimeA = false;
-      this.buscaTimeA = '';
+      this.partida.timeAId = time.id
+      this.abrirDropdownTimeA = false
+      this.buscaTimeA = ''
     },
 
     selecionarTimeB(time) {
-      this.partida.timeBId = time.id;
-      this.abrirDropdownTimeB = false;
-      this.buscaTimeB = '';
+      this.partida.timeBId = time.id
+      this.abrirDropdownTimeB = false
+      this.buscaTimeB = ''
     },
 
     async abrirModalPartida() {
-      await this.carregarModalidadeCampeonato();
-      await this.listarFases();
-      await this.listarTimes();
-      this.rodadas = [];
-
-      this.partida = {
-        faseId: '',
-        rodadaId: '',
-        timeAId: '',
-        timeBId: ''
-      };
-      this.mostrarModalPartida = true;
+      await this.carregarModalidadeCampeonato()
+      await this.listarFases()
+      await this.listarTimes()
+      this.rodadas = []
+      this.partida = { faseId: '', rodadaId: '', timeAId: '', timeBId: '' }
+      this.mostrarModalPartida = true
+      this.mostrarModalJogadores = false
+      this.jogadoresTime1 = []
+      this.jogadoresTime2 = []
     },
 
     async abrirModalRodada() {
-      await this.listarFases();
-      this.faseIdSelecionada = "";
-      this.mostrarModalRodada = true;
+      await this.listarFases()
+      this.faseIdSelecionada = ''
+      this.mostrarModalRodada = true
     },
 
     async listarFases() {
       try {
-        const { data } = await api.get(`/fases/${this.campeonatoId}/`);
-        this.fases = data || [];
+        const { data } = await api.get(`/fases/${this.campeonatoId}/`)
+        this.fases = data || []
       } catch (err) {
-        console.error('Erro ao listar fases:', err);
-        Swal.fire('Erro', 'Não foi possível carregar as fases.', 'error');
+        console.error('Erro ao listar fases:', err)
+        Swal.fire('Erro', 'Não foi possível carregar as fases.', 'error')
       }
     },
 
     async listarTimes() {
       try {
-        const { data } = await api.get(`/${this.campeonatoId}/times`);
-        this.times = data || [];
-        this.timesSelecionados = [];
+        const { data } = await api.get(`/${this.campeonatoId}/times`)
+        this.times = data || []
       } catch (err) {
-        console.error('Erro ao listar times:', err);
-        Swal.fire('Erro', 'Não foi possível carregar os times.', 'error');
+        console.error('Erro ao listar times:', err)
+        Swal.fire('Erro', 'Não foi possível carregar os times.', 'error')
       }
+    },
+
+    listarRodadas() {
+      const faseSelecionada = this.fases.find(f => f.id === Number(this.partida.faseId))
+      this.rodadas = faseSelecionada?.rodadas
+      this.partida.rodadaId = ''
     },
 
     async criarRodada() {
       if (!this.nomeRodada) {
-        Swal.fire('Erro', 'Informe o nome da rodada.', 'error');
-        return;
+        Swal.fire('Erro', 'Informe o nome da rodada.', 'error')
+        return
       }
       if (!this.faseIdSelecionada) {
-        Swal.fire('Erro', 'Selecione uma fase.', 'error');
-        return;
+        Swal.fire('Erro', 'Selecione uma fase.', 'error')
+        return
       }
 
       try {
         const { data } = await api.post(`/rodada/${this.campeonatoId}/${this.faseIdSelecionada}`, {
           nome: this.nomeRodada
-        });
-        Swal.fire('Sucesso', 'Rodada criada com sucesso!', 'success');
-        this.nomeRodada = '';
-        this.faseIdSelecionada = null;
-        this.mostrarModalRodada = false;
-        this.$emit('rodadaCriada', data.rodada);
+        })
+        Swal.fire('Sucesso', 'Rodada criada com sucesso!', 'success')
+        this.nomeRodada = ''
+        this.faseIdSelecionada = null
+        this.mostrarModalRodada = false
+        this.$emit('rodadaCriada', data.rodada)
       } catch (err) {
-        console.error('Erro ao criar rodada:', err);
-        Swal.fire('Erro', 'Não foi possível criar a rodada.', 'error');
+        console.error('Erro ao criar rodada:', err)
+        Swal.fire('Erro', 'Não foi possível criar a rodada.', 'error')
       }
     },
 
-    listarRodadas() {
-      const faseSelecionada = this.fases.find(
-        f => f.id === Number(this.partida.faseId)
-      );
-
-      this.rodadas = faseSelecionada?.rodadas || [];
-      this.partida.rodadaId = '';
+    async carregarModalidadeCampeonato() {
+      try {
+        const { data } = await api.get(`/campeonato/${this.campeonatoId}`)
+        this.modalidadeId = data.modalidadeId
+        this.quadraId = data.quadraId
+      } catch (err) {
+        console.error('Erro ao carregar campeonato:', err)
+      }
     },
 
-    async criarPartida() {
-      const { faseId, rodadaId, timeAId, timeBId } = this.partida;
+    async continuarSelecionarJogadores() {
+      const { faseId, rodadaId, timeAId, timeBId } = this.partida
 
       if (!faseId || !rodadaId || !timeAId || !timeBId) {
-        Swal.fire('Erro', 'Preencha todos os campos.', 'error');
-        return;
-      }
-
-      if (!this.modalidadeId) {
-        Swal.fire('Erro', 'Modalidade não encontrada para este campeonato.', 'error');
-        return;
+        Swal.fire('Erro', 'Preencha todos os campos.', 'error')
+        return
       }
 
       if (timeAId === timeBId) {
-        Swal.fire('Erro', 'Os times não podem ser iguais.', 'error');
-        return;
+        Swal.fire('Erro', 'Os times não podem ser iguais.', 'error')
+        return
       }
 
+      try {
+        const [resA, resB] = await Promise.all([
+          api.get(`/time/${timeAId}`),
+          api.get(`/time/${timeBId}`)
+        ])
+
+        this.jogadoresTime1 = resA.data
+        this.jogadoresTime2 = resB.data
+
+        this.mostrarModalJogadores = true
+      } catch (err) {
+        console.error('Erro ao carregar jogadores:', err)
+        Swal.fire('Erro', 'Não foi possível carregar os jogadores dos times.', 'error')
+      }
+    },
+
+    async onConfirmarJogadores(selecao) {
+      const { faseId, rodadaId, timeAId, timeBId } = this.partida
+      this.criandoPartida = true
       try {
         const payload = {
           campeonatoId: Number(this.campeonatoId),
@@ -325,35 +373,70 @@ export default {
           timeAId: Number(timeAId),
           timeBId: Number(timeBId),
           quadraId: Number(this.quadraId)
-        };
+        }
 
-        const { data } = await api.post('/partida', payload);
+        const { data } = await api.post('/partida', payload)
+        const partidaCriada = data
+        const partidaId = data?.id
 
-        Swal.fire('Sucesso', 'Partida criada com sucesso!', 'success');
-        this.mostrarModalPartida = false;
+        if (!partidaId) throw new Error('Partida criada sem ID.')
 
-        this.$emit('partidaCriada', data);
+        const idsTimeA = selecao?.time1 || []
+        const idsTimeB = selecao?.time2 || []
+
+        const reqsTimeA = idsTimeA.map((jogadorId) =>
+          api.post(`/${partidaId}/jogador/${jogadorId}`, {
+            timeId: Number(timeAId)
+          })
+        )
+
+        const reqsTimeB = idsTimeB.map((jogadorId) =>
+          api.post(`/${partidaId}/jogador/${jogadorId}`, {
+            timeId: Number(timeBId)
+          })
+        )
+
+        await Promise.all(reqsTimeA.concat(reqsTimeB))
+
+        const jogadoresPayload = []
+
+        idsTimeA.forEach((jogadorId) => {
+          jogadoresPayload.push({
+            jogadorId: Number(jogadorId),
+            timeId: Number(timeAId)
+          })
+        })
+
+        idsTimeB.forEach((jogadorId) => {
+          jogadoresPayload.push({
+            jogadorId: Number(jogadorId),
+            timeId: Number(timeBId)
+          })
+        })
+
+        await api.put(`/partidas/${partidaId}/iniciar`, {
+          jogadores: jogadoresPayload
+        })
+
+        Swal.fire('Sucesso', 'Partida criada e iniciada!', 'success')
+
+        this.mostrarModalJogadores = false
+        this.mostrarModalPartida = false
+
+        this.$emit('partidaCriada', partidaCriada)
       } catch (err) {
-        console.error('Erro ao criar partida:', err);
+        console.error('Erro no fluxo de criar/iniciar:', err)
         Swal.fire(
           'Erro',
           err.response?.data?.message,
           'error'
-        );
-      }
-    },
-
-    async carregarModalidadeCampeonato() {
-      try {
-        const { data } = await api.get(`/campeonato/${this.campeonatoId}`);
-        this.modalidadeId = data.modalidadeId;
-        this.quadraId = data.quadraId;
-      } catch (err) {
-        console.error('Erro ao carregar campeonato:', err);
+        )
+      } finally {
+        this.criandoPartida = false
       }
     }
   }
-};
+}
 </script>
 
 <style scoped>
@@ -396,7 +479,7 @@ export default {
   border: 1px solid #3b82f6;
   background-color: #fff;
   cursor: pointer;
-  transition: 0.3s; 
+  transition: 0.3s;
   display: flex;
   align-items: center;
   text-align: left;
@@ -405,7 +488,7 @@ export default {
 
 .btn-tipo:hover {
   background-color: #3b82f6;
-  color: white; 
+  color: white;
 }
 
 .btn-tipo i {
