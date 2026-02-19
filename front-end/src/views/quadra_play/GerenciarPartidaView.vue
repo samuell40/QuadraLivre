@@ -43,6 +43,7 @@
                 @click="editarStatus(partida)">
                 <template v-if="partidaEditandoStatus !== partida.id">
                   <span class="texto-status">
+                    <span v-if="partida.status === 'EM_ANDAMENTO'" class="status-live-dot" aria-hidden="true"></span>
                     {{ statusLabel(partida.status) }}
                   </span>
 
@@ -175,7 +176,7 @@ export default {
       return lista.sort((a, b) => {
         const da = new Date(a?.data || a?.createdAt || 0).getTime()
         const db = new Date(b?.data || b?.createdAt || 0).getTime()
-        return db - da 
+        return db - da
       })
     }
   },
@@ -580,6 +581,28 @@ export default {
   padding: 2px 8px;
   border-radius: 12px;
   font-weight: bold;
+}
+
+.texto-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #22c55e;
+  display: inline-block;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  animation: statusDotPulse 1s infinite;
+}
+
+@keyframes statusDotPulse {
+  0%   { transform: scale(0.9); opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0.7); }
+  70%  { transform: scale(1.2); opacity: 0.7; box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+  100% { transform: scale(0.9); opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0); }
 }
 
 .status-agendada {

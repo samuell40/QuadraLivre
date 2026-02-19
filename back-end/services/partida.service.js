@@ -79,14 +79,6 @@ async function iniciarPartida(partidaId, jogadores) {
       where: { id: Number(partidaId) }
     });
 
-    if (!partida) {
-      throw new Error("Partida não encontrada.");
-    }
-
-    if (partida.status !== "EM_ANDAMENTO") {
-      throw new Error("Só é possível iniciar partidas AGENDADAS.");
-    }
-
     // Atualiza status
     const partidaAtualizada = await tx.partida.update({
       where: { id: Number(partidaId) },
@@ -202,20 +194,25 @@ async function retornarPartida(partidaId) {
 
 }
 
-async function finalizarPartida(partidaId) {
+async function finalizarPartida(partidaId, payload = null) {
   const idNum = Number(partidaId)
+
   const partida = await prisma.partida.findUnique({
     where: { id: idNum },
-    select: {
-      id: true,
-      status: true,
-      campeonatoId: true,
-      modalidadeId: true,
-      quadraId: true,
-      timeAId: true,
-      timeBId: true
-    }
+    select: { id: true, status: true }
   })
+
+  if (partida.status === 'FINALIZADA') {
+    if (payload && Object.keys(payload).length) {
+      await prisma.partida.update({
+        where: { id: idNum },
+        data: payload
+      })
+    }
+
+    const atualizada = await retornarPartida(idNum)
+    return { mensagem: 'Dados atualizados sem alterar o status.', partida: atualizada }
+  }
 
   if (partida.status !== 'EM_ANDAMENTO') {
     throw new Error(`Não é possível finalizar: status atual é ${partida.status}.`)
@@ -223,18 +220,13 @@ async function finalizarPartida(partidaId) {
 
   await prisma.partida.update({
     where: { id: idNum },
-    data: {
-      status: 'FINALIZADA'
-    }
+    data: { status: 'FINALIZADA' }
   })
 
   const atualizada = await retornarPartida(idNum)
-
-  return {
-    mensagem: 'Partida finalizada com sucesso.',
-    partida: atualizada
-  }
+  return { mensagem: 'Partida finalizada com sucesso.', partida: atualizada }
 }
+
 
 async function atualizarParcial(
   id,
@@ -458,34 +450,31 @@ async function atualizarAtuacaoJogadorPartida({
     }
   });
 
-  const amarelos = Math.max(0, Number(cartoesAmarelos));
-  const vermelhos = Math.max(0, Number(cartoesVermelhos));
-
+  const amarelos = Number(cartoesAmarelos) || 0;
+  const vermelhos = Number(cartoesVermelhos) || 0;
+  const golsInc = Number(gols) || 0;
 
   if (!atuacao) {
-    const vermelhoAutomatico = amarelos >= 2 ? 1 : 0;
-    const totalVermelhos = vermelhos + vermelhoAutomatico;
-
     atuacao = await prisma.jogadorPartida.create({
       data: {
         jogadorId: Number(jogadorId),
         partidaId: Number(partidaId),
         timeId: jogador.timeId,
-        gols: Math.max(0, Number(gols)),
+        gols: golsInc,
         cartoesAmarelos: amarelos,
-        cartoesVermelhos: totalVermelhos,
-        emCampo: totalVermelhos === 0
+        cartoesVermelhos: vermelhos,
+        emCampo: true
       }
     });
 
     const isTimeA = jogador.timeId === partida.timeAId;
     const updatePartida = {};
 
-    if (amarelos > 0)
+    if (amarelos !== 0)
       updatePartida[isTimeA ? 'cartoesAmarelosTimeA' : 'cartoesAmarelosTimeB'] = { increment: amarelos };
 
-    if (totalVermelhos > 0)
-      updatePartida[isTimeA ? 'cartoesVermelhosTimeA' : 'cartoesVermelhosTimeB'] = { increment: totalVermelhos };
+    if (vermelhos !== 0)
+      updatePartida[isTimeA ? 'cartoesVermelhosTimeA' : 'cartoesVermelhosTimeB'] = { increment: vermelhos };
 
     if (Object.keys(updatePartida).length) {
       await prisma.partida.update({
@@ -497,32 +486,28 @@ async function atualizarAtuacaoJogadorPartida({
     return atuacao;
   }
 
-  let novosAmarelos = atuacao.cartoesAmarelos + amarelos;
-  let novosVermelhos = atuacao.cartoesVermelhos + vermelhos;
+  const novosAmarelos = (Number(atuacao.cartoesAmarelos) || 0) + amarelos;
+  const novosVermelhos = (Number(atuacao.cartoesVermelhos) || 0) + vermelhos;
 
-  if (atuacao.cartoesAmarelos < 2 && novosAmarelos >= 2) {
-    novosVermelhos += 1;
-  }
-
-  const incrementoVermelhos = novosVermelhos - atuacao.cartoesVermelhos;
+  const incrementoVermelhos = novosVermelhos - (Number(atuacao.cartoesVermelhos) || 0);
 
   atuacao = await prisma.jogadorPartida.update({
     where: { id: atuacao.id },
     data: {
-      gols: atuacao.gols + Math.max(0, Number(gols)),
+      gols: (Number(atuacao.gols) || 0) + golsInc,
       cartoesAmarelos: novosAmarelos,
       cartoesVermelhos: novosVermelhos,
-      emCampo: novosVermelhos === 0
+      emCampo: true
     }
   });
 
   const isTimeA = atuacao.timeId === partida.timeAId;
   const updatePartida = {};
 
-  if (amarelos > 0)
+  if (amarelos !== 0)
     updatePartida[isTimeA ? 'cartoesAmarelosTimeA' : 'cartoesAmarelosTimeB'] = { increment: amarelos };
 
-  if (incrementoVermelhos > 0)
+  if (incrementoVermelhos !== 0)
     updatePartida[isTimeA ? 'cartoesVermelhosTimeA' : 'cartoesVermelhosTimeB'] = { increment: incrementoVermelhos };
 
   if (Object.keys(updatePartida).length) {
@@ -546,15 +531,9 @@ async function substituirJogadorPartida(
     include: { modalidade: true }
   });
 
-  if (!partida) throw new Error("Partida não encontrada");
-  if (partida.finalizada)
-    throw new Error("Não é possível substituir jogadores em partida finalizada");
-
   const modalidade = partida.modalidade.nome.toLowerCase();
   const isFutebol = modalidade.includes("futebol");
-  const isFutsal = modalidade.includes("futsal");
 
-  // 🔎 Jogador que sai (precisa estar em campo)
   const jogadorSai = await prisma.jogadorPartida.findFirst({
     where: {
       partidaId: Number(partidaId),
@@ -563,10 +542,6 @@ async function substituirJogadorPartida(
     }
   });
 
-  if (!jogadorSai)
-    throw new Error("Jogador que sai não está em campo nesta partida");
-
-  // 🔎 Jogador que entra (pode já existir no banco)
   const jogadorEntraExistente = await prisma.jogadorPartida.findFirst({
     where: {
       partidaId: Number(partidaId),
@@ -574,34 +549,15 @@ async function substituirJogadorPartida(
     }
   });
 
-  if (jogadorEntraExistente?.emCampo)
-    throw new Error("Jogador que entra já está em campo");
-
-  // 🏳️ Descobre se é Time A ou B
   let tipoTime;
   if (partida.timeAId === jogadorSai.timeId) tipoTime = "A";
   else if (partida.timeBId === jogadorSai.timeId) tipoTime = "B";
-  else throw new Error("Time do jogador não pertence à partida");
 
-  // ⚽ REGRA DE SUBSTITUIÇÃO
-  // Futebol → limite 3
-  // Futsal → ilimitado
-  if (isFutebol) {
-    if (
-      (tipoTime === "A" && partida.substituicoesTimeA >= 3) ||
-      (tipoTime === "B" && partida.substituicoesTimeB >= 3)
-    ) {
-      throw new Error("Limite de 3 substituições por time atingido");
-    }
-  }
-
-  // 🔄 Tira jogador que sai
   await prisma.jogadorPartida.update({
     where: { id: jogadorSai.id },
     data: { emCampo: false }
   });
 
-  // 🔄 Coloca jogador que entra
   let novoJogador;
 
   if (jogadorEntraExistente) {
@@ -623,18 +579,16 @@ async function substituirJogadorPartida(
     });
   }
 
-  // Incrementa substituições APENAS se for futebol
-  if (isFutebol) {
-    const updateData =
-      tipoTime === "A"
-        ? { substituicoesTimeA: { increment: 1 } }
-        : { substituicoesTimeB: { increment: 1 } };
+  const updateData =
+    tipoTime === "A"
+      ? { substituicoesTimeA: { increment: 1 } }
+      : { substituicoesTimeB: { increment: 1 } };
 
-    await prisma.partida.update({
-      where: { id: Number(partidaId) },
-      data: updateData
-    });
-  }
+  await prisma.partida.update({
+    where: { id: Number(partidaId) },
+    data: updateData
+  });
+
 
   return novoJogador;
 }
@@ -780,8 +734,6 @@ async function listarPartidasDaRodadaDaFase(campeonatoId, faseId, rodadaId) {
         campeonatoId: Number(campeonatoId),
         faseId: Number(faseId),
         rodadaId: Number(rodadaId),
-        // se você tiver campo ativo na partida, pode ligar:
-        // ativo: true
       },
       include: {
         timeA: true,

@@ -184,6 +184,7 @@
                 :class="statusClass(partida, 'card')" @click="abrirModalPartida(partida.id)">
 
                 <div class="status-topo" :class="statusClass(partida, 'text')">
+                  <span v-if="partida.status === 'EM_ANDAMENTO'" class="status-live-dot" aria-hidden="true"></span>
                   {{ statusLabel(partida.status) }}
                 </div>
 
@@ -1006,6 +1007,24 @@ export default {
   font-weight: bold;
   color: #2563eb;
   margin-bottom: 6px;
+}
+
+.status-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #22c55e;
+  display: inline-block;
+  margin-right: 6px;
+  vertical-align: middle;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  animation: statusDotPulse 1s infinite;
+}
+
+@keyframes statusDotPulse {
+  0%   { transform: scale(0.9); opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0.7); }
+  70%  { transform: scale(1.2); opacity: 0.7; box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+  100% { transform: scale(0.9); opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0); }
 }
 
 .status-topo.encerrada {
