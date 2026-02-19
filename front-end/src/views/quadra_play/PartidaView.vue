@@ -152,52 +152,52 @@ export default {
         placarId: this.placarIdTimeB
       }
     },
+
     isEmAndamento() {
       return this.partida?.status === 'EM_ANDAMENTO'
     },
+
     botaoDesabilitado() {
       if (this.isFinalizando || !this.partidaId) return true
       if (this.isFinalizada) return !this.temAlteracao
       return false
     }
-
   },
+
   methods: {
     mapTimeFutebol(time, lado, partida) {
       return {
         id: time?.id,
         nome: time?.nome,
         foto: time?.foto,
-
         golspro: lado === 'A' ? (partida.pontosTimeA ?? 0) : (partida.pontosTimeB ?? 0),
         faltas: lado === 'A' ? (partida.faltasTimeA ?? 0) : (partida.faltasTimeB ?? 0),
         substituicoes: lado === 'A' ? (partida.substituicoesTimeA ?? 0) : (partida.substituicoesTimeB ?? 0),
         cartaoamarelo: lado === 'A' ? (partida.cartoesAmarelosTimeA ?? 0) : (partida.cartoesAmarelosTimeB ?? 0),
         cartaovermelho: lado === 'A' ? (partida.cartoesVermelhosTimeA ?? 0) : (partida.cartoesVermelhosTimeB ?? 0),
         wo: lado === 'A' ? !!partida.woTimeA : !!partida.woTimeB,
-
         placarId: lado === 'A' ? (partida.placarTimeAId) : (partida.placarTimeBId)
       }
     },
-
     mapTimeVolei(time, lado, partida) {
       const setsVencidos = lado === 'A' ? (partida.pontosTimeA ?? 0) : (partida.pontosTimeB ?? 0)
       const wo = lado === 'A' ? !!partida.woTimeA : !!partida.woTimeB
 
       let pontosSet = 0
+
       if (Array.isArray(partida.sets) && partida.sets.length) {
         const totalSets = (partida.pontosTimeA ?? 0) + (partida.pontosTimeB ?? 0)
         const setAtualNum = totalSets + 1
-        const setAtual = partida.sets.find(s => s.numero === setAtualNum)
+        const setAtual = partida.sets.find(s => Number(s.numero) === Number(setAtualNum))
         if (setAtual) {
-          pontosSet = lado === 'A' ? (setAtual.pontosTimeA ?? 0) : (setAtual.pontosTimeB ?? 0)
+          pontosSet = lado === 'A' ? (setAtual.pontosA ?? 0) : (setAtual.pontosB ?? 0)
         }
       }
 
       const setsJogados = Array.isArray(partida.sets)
         ? partida.sets.map(s => ({
           numero: s.numero,
-          pontos: lado === 'A' ? (s.pontosTimeA ?? 0) : (s.pontosTimeB ?? 0),
+          pontos: lado === 'A' ? (s.pontosA ?? 0) : (s.pontosB ?? 0),
           time: lado
         }))
         : []
@@ -210,7 +210,7 @@ export default {
         pontosSet,
         wo,
         setsJogados,
-        placarId: lado === 'A' ? (partida.placarTimeAId) : (partida.placarTimeBId)
+        placarId: lado === 'A' ? partida.placarTimeAId : partida.placarTimeBId
       }
     },
 
@@ -266,6 +266,11 @@ export default {
         await this.aplicarDeltaFutebol(lado, campo, delta)
         return
       }
+
+      if (this.modalidadeKey === 'VOLEI') {
+        await this.aplicarDeltaVolei(lado, campo, delta)
+        return
+      }
     },
 
     async aplicarDeltaFutebol(lado, campo, delta) {
@@ -306,10 +311,75 @@ export default {
       }
 
       Object.assign(this.partida, payload)
+      this.atualizarFlagAlteracao()
+      await this.atualizarParcial(payload)
+      await this.carregarPartida()
+    },
+
+    async aplicarDeltaVolei(lado, campo, delta) {
+      const p = this.partida
+      if (!p) return
+
+      const d = Number(delta || 0)
+      if (!Number.isFinite(d) || d === 0) return
+
+      const isA = lado === 'A'
+      const clamp0 = (n) => Math.max(0, Number(n || 0))
+
+      const payload = {
+        pontosTimeA: clamp0(p.pontosTimeA),
+        pontosTimeB: clamp0(p.pontosTimeB),
+        woTimeA: !!p.woTimeA,
+        woTimeB: !!p.woTimeB,
+
+        sets: Array.isArray(p.sets)
+          ? p.sets.map(s => ({
+            numero: Number(s.numero),
+            pontosA: clamp0(s.pontosA ?? s.pontosTimeA ?? 0),
+            pontosB: clamp0(s.pontosB ?? s.pontosTimeB ?? 0)
+          }))
+          : []
+      }
+
+      const totalSets = payload.pontosTimeA + payload.pontosTimeB
+      const setAtualNum = totalSets + 1
+
+      const getOrCreateSetAtual = () => {
+        let s = payload.sets.find(x => Number(x.numero) === Number(setAtualNum))
+        if (!s) {
+          s = { numero: setAtualNum, pontosA: 0, pontosB: 0 }
+          payload.sets.push(s)
+        }
+        s.pontosA = clamp0(s.pontosA)
+        s.pontosB = clamp0(s.pontosB)
+        return s
+      }
+
+      if (campo === 'setsVencidos') {
+        if (isA) payload.pontosTimeA = clamp0(payload.pontosTimeA + d)
+        else payload.pontosTimeB = clamp0(payload.pontosTimeB + d)
+      } else if (campo === 'pontosSet') {
+        const setAtual = getOrCreateSetAtual()
+        if (isA) setAtual.pontosA = clamp0(setAtual.pontosA + d)
+        else setAtual.pontosB = clamp0(setAtual.pontosB + d)
+      } else if (campo === 'wo') {
+        if (isA) payload.woTimeA = d > 0
+        else payload.woTimeB = d > 0
+
+        if (payload.woTimeA || payload.woTimeB) {
+          payload.pontosTimeA = 0
+          payload.pontosTimeB = 0
+          payload.sets = []
+        }
+      } else {
+        console.warn('[aplicarDeltaVolei] campo desconhecido:', campo)
+        return
+      }
+
+      Object.assign(this.partida, payload)
 
       this.atualizarFlagAlteracao()
       await this.atualizarParcial(payload)
-
       await this.carregarPartida()
     },
 
@@ -323,7 +393,6 @@ export default {
         const res = await api.put(`/placar/${placarId}/incrementar`, incremento)
         await this.carregarPartida()
         this.atualizarFlagAlteracao()
-
         return res.data
       } catch (error) {
         console.error('[incrementarPlacar] erro:', error)
@@ -362,20 +431,29 @@ export default {
       try {
         if (jaFinalizada) {
           const p = this.partida || {}
-          const payload = {
-            pontosTimeA: p.pontosTimeA ?? 0,
-            pontosTimeB: p.pontosTimeB ?? 0,
-            faltasTimeA: p.faltasTimeA ?? 0,
-            faltasTimeB: p.faltasTimeB ?? 0,
-            substituicoesTimeA: p.substituicoesTimeA ?? 0,
-            substituicoesTimeB: p.substituicoesTimeB ?? 0,
-            cartoesAmarelosTimeA: p.cartoesAmarelosTimeA ?? 0,
-            cartoesAmarelosTimeB: p.cartoesAmarelosTimeB ?? 0,
-            cartoesVermelhosTimeA: p.cartoesVermelhosTimeA ?? 0,
-            cartoesVermelhosTimeB: p.cartoesVermelhosTimeB ?? 0,
-            woTimeA: !!p.woTimeA,
-            woTimeB: !!p.woTimeB
-          }
+
+          const payload = this.modalidadeKey === 'VOLEI'
+            ? {
+              pontosTimeA: p.pontosTimeA ?? 0,
+              pontosTimeB: p.pontosTimeB ?? 0,
+              woTimeA: !!p.woTimeA,
+              woTimeB: !!p.woTimeB,
+              sets: Array.isArray(p.sets) ? p.sets : []
+            }
+            : {
+              pontosTimeA: p.pontosTimeA ?? 0,
+              pontosTimeB: p.pontosTimeB ?? 0,
+              faltasTimeA: p.faltasTimeA ?? 0,
+              faltasTimeB: p.faltasTimeB ?? 0,
+              substituicoesTimeA: p.substituicoesTimeA ?? 0,
+              substituicoesTimeB: p.substituicoesTimeB ?? 0,
+              cartoesAmarelosTimeA: p.cartoesAmarelosTimeA ?? 0,
+              cartoesAmarelosTimeB: p.cartoesAmarelosTimeB ?? 0,
+              cartoesVermelhosTimeA: p.cartoesVermelhosTimeA ?? 0,
+              cartoesVermelhosTimeB: p.cartoesVermelhosTimeB ?? 0,
+              woTimeA: !!p.woTimeA,
+              woTimeB: !!p.woTimeB
+            }
 
           await api.put(`/partida/${this.partidaId}/parcial`, payload)
           this.acabouDeSalvar = true
@@ -383,23 +461,14 @@ export default {
           await Swal.fire('Sucesso', 'Alterações salvas!', 'success')
           await this.carregarPartida()
           this.setSnapshotInicial()
-          this.$router.push({
-            name: 'gerenciar_partida',
-            query: { id: this.campeonato?.id }
-          })
-
+          this.$router.push({ name: 'gerenciar_partida', query: { id: this.campeonato?.id } })
           return
         }
 
         await api.put(`/partidas/${this.partidaId}/finalizar`)
         await Swal.fire('Sucesso', 'Partida finalizada!', 'success')
         await this.carregarPartida()
-
-        this.$router.push({
-          name: 'gerenciar_partida',
-          query: { id: this.campeonato?.id }
-        })
-
+        this.$router.push({ name: 'gerenciar_partida', query: { id: this.campeonato?.id } })
       } catch (error) {
         const msg =
           error.response?.data?.error ||
@@ -413,6 +482,17 @@ export default {
 
     criarSnapshotAtual() {
       const p = this.partida || {}
+
+      if (this.modalidadeKey === 'VOLEI') {
+        return JSON.stringify({
+          pontosTimeA: p.pontosTimeA ?? 0,
+          pontosTimeB: p.pontosTimeB ?? 0,
+          woTimeA: !!p.woTimeA,
+          woTimeB: !!p.woTimeB,
+          sets: Array.isArray(p.sets) ? p.sets : []
+        })
+      }
+
       return JSON.stringify({
         pontosTimeA: p.pontosTimeA ?? 0,
         pontosTimeB: p.pontosTimeB ?? 0,
@@ -438,9 +518,9 @@ export default {
     setSnapshotInicial() {
       this.snapshotInicial = this.criarSnapshotAtual()
       this.temAlteracao = false
-    },
-
+    }
   },
+
   async mounted() {
     try {
       this.partidaId = this.$route.query.partidaId
@@ -572,7 +652,7 @@ export default {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  margin-top: 18px; 
+  margin-top: 18px;
 }
 
 .placares {

@@ -228,9 +228,10 @@
                     </span>
 
                   </p>
-                  <p><strong>Faltas:</strong>
+                  <p v-if="!isVolei"><strong>Faltas:</strong>
                     {{ partidaDetalhada.faltasTimeA }} x {{ partidaDetalhada.faltasTimeB }}
                   </p>
+
                 </div>
 
                 <div class="placar-modal">
@@ -249,8 +250,7 @@
                   </div>
                 </div>
 
-                <!-- JOGADORES DA PARTIDA -->
-                <div class="jogadores-container">
+                <div v-if="!isVolei" class="jogadores-container">
                   <!-- TIME A -->
                   <div class="time-mobile-title">{{ partidaDetalhada.timeA.nome }}
                     <div class="jogadores-time">
@@ -291,6 +291,7 @@
                     </div>
                   </div>
                 </div>
+
               </div>
               <button class="btn-cancel-placar" @click="fecharModalPartida">
                 Fechar
@@ -300,7 +301,7 @@
         </div>
 
         <!--ARTILHARIA -->
-        <div class="artilharia-wrapper" v-if="campeonatoAtivo">
+        <div class="artilharia-wrapper" v-if="campeonatoAtivo && !isVolei">
           <h3 class="titulo-secao">Artilharia</h3>
 
           <div v-if="loadingArtilharia" class="loader-container-centralizado">
@@ -383,6 +384,9 @@ export default {
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
     },
+    isVolei() {
+      return ['volei', 'volei de areia', 'futevolei'].includes(this.modalidadeNormalizada)
+    },
 
     temScrollPartidas() {
       return Array.isArray(this.partidas) && this.partidas.length >= 10
@@ -407,8 +411,21 @@ export default {
       this.rodadaSelecionada = ''
       this.partidas = []
       this.timesPlacar = null
+      const camp = this.campeonatos.find(c => c.id === id)
+      const mod = (camp?.modalidade?.nome || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+
+      const ehVolei = ['volei', 'volei de areia', 'futevolei'].includes(mod)
+
       this.carregarFases(id)
-      this.carregarArtilharia(id)
+
+      if (!ehVolei) this.carregarArtilharia(id)
+      else {
+        this.artilharia = []
+        this.loadingArtilharia = false
+      }
     },
 
     async carregarCampeonatos() {
@@ -1022,9 +1039,23 @@ export default {
 }
 
 @keyframes statusDotPulse {
-  0%   { transform: scale(0.9); opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0.7); }
-  70%  { transform: scale(1.2); opacity: 0.7; box-shadow: 0 0 0 8px rgba(34,197,94,0); }
-  100% { transform: scale(0.9); opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  0% {
+    transform: scale(0.9);
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+
+  70% {
+    transform: scale(1.2);
+    opacity: 0.7;
+    box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+  }
+
+  100% {
+    transform: scale(0.9);
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
 }
 
 .status-topo.encerrada {
