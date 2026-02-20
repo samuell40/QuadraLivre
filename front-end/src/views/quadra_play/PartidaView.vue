@@ -54,11 +54,7 @@ import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
 import { carregarCampeonato } from '@/utils/persistirCampeonato'
 import PlacarTimeFutebol from '@/components/Partida/PlacarTimeFutebol.vue'
 import PlacarTimeVolei from '@/components/Partida/PlacarTimeVolei.vue'
-
-const MODALIDADES = {
-  FUTEBOL: new Set([1, 2, 4]),
-  VOLEI: new Set([3, 5, 6])
-}
+import PlacarTimeBeachTenis from '@/components/Partida/PlacarTimeBeachTenis.vue'
 
 export default {
   name: 'RegistroPartidaView',
@@ -67,7 +63,8 @@ export default {
     NavBarQuadras,
     SidebarCampeonato,
     PlacarTimeFutebol,
-    PlacarTimeVolei
+    PlacarTimeVolei,
+    PlacarTimeBeachTenis
   },
 
   data() {
@@ -86,7 +83,8 @@ export default {
       isSalvandoParcial: false,
       snapshotInicial: null,
       temAlteracao: false,
-      acabouDeSalvar: false
+      acabouDeSalvar: false,
+      modalidadesById: {}
     }
   },
 
@@ -94,9 +92,11 @@ export default {
     isFinalizada() {
       return this.partida?.status === 'FINALIZADA'
     },
+
     podeEditar() {
-      return !this.isFinalizada
+      return !this.isFinalizando && !!this.partidaId
     },
+
 
     modalidadeId() {
       return (
@@ -110,14 +110,26 @@ export default {
     modalidadeKey() {
       const id = Number(this.modalidadeId)
       if (!id) return null
-      if (MODALIDADES.FUTEBOL.has(id)) return 'FUTEBOL'
-      if (MODALIDADES.VOLEI.has(id)) return 'VOLEI'
-      return null
+      const key = this.modalidadesById[id]
+      if (key) return key
+      const nome =
+        this.partida?.modalidade?.nome ??
+        this.campeonato?.modalidade?.nome ??
+        ''
+
+      return this.keyDaModalidadePeloNome(nome)
+    },
+    isGrupoFutebol() {
+      return this.modalidadeKey === 'FUTEBOL' || this.modalidadeKey === 'FUTSAL'
+    },
+    isGrupoVolei() {
+      return this.modalidadeKey === 'VOLEI'
     },
 
     placarComponent() {
-      if (this.modalidadeKey === 'FUTEBOL') return 'PlacarTimeFutebol'
-      if (this.modalidadeKey === 'VOLEI') return 'PlacarTimeVolei'
+      if (this.isGrupoFutebol) return 'PlacarTimeFutebol'
+      if (this.isGrupoVolei) return 'PlacarTimeVolei'
+      if (this.modalidadeKey === 'BEACH_TENIS') return 'PlacarTimeBeachTenis'
       return null
     },
 
@@ -165,6 +177,40 @@ export default {
   },
 
   methods: {
+    normalizarNomeModalidade(nome) {
+      return String(nome || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+    },
+
+    keyDaModalidadePeloNome(nome) {
+      const n = this.normalizarNomeModalidade(nome)
+      if (n.includes('beach') && (n.includes('tenis') || n.includes('tennis'))) return 'BEACH_TENIS'
+      if (n.includes('futsal')) return 'FUTSAL'
+      if (n.includes('beach soccer') || (n.includes('futebol') && n.includes('areia'))) return 'FUTEBOL'
+      if (n.includes('futebol')) return 'FUTEBOL'
+      if (
+        n.includes('futevolei') ||
+        ((n.includes('volei') || n.includes('voleibol')) && n.includes('areia')) ||
+        n.includes('volei') ||
+        n.includes('voleibol')
+      ) return 'VOLEI'
+
+      return null
+    },
+
+    async carregarModalidades() {
+      const { data } = await api.get('/listar/modalidade')
+      const map = {}
+      for (const m of (data || [])) {
+        const key = this.keyDaModalidadePeloNome(m.nome)
+        if (key) map[Number(m.id)] = key
+      }
+
+      this.modalidadesById = map
+    },
+
     mapTimeFutebol(time, lado, partida) {
       return {
         id: time?.id,
@@ -214,16 +260,45 @@ export default {
       }
     },
 
+    mapTimeBeachTenis(time, lado, partida) {
+      const setsVencidos = lado === 'A' ? (partida.pontosTimeA ?? 0) : (partida.pontosTimeB ?? 0)
+      const wo = lado === 'A' ? !!partida.woTimeA : !!partida.woTimeB
+
+      // Set atual = soma dos sets vencidos + 1
+      const totalSets = (partida.pontosTimeA ?? 0) + (partida.pontosTimeB ?? 0)
+      const setAtualNum = totalSets + 1
+
+      let pontosTieBreak = 0
+      if (Array.isArray(partida.sets) && partida.sets.length) {
+        const setAtual = partida.sets.find(s => Number(s.numero) === Number(setAtualNum))
+        if (setAtual) {
+          pontosTieBreak = lado === 'A' ? (setAtual.pontosA ?? 0) : (setAtual.pontosB ?? 0)
+        }
+      }
+
+      return {
+        id: time?.id,
+        nome: time?.nome,
+        foto: time?.foto,
+        setsVencidos,
+        pontosTieBreak,
+        wo,
+        placarId: lado === 'A' ? partida.placarTimeAId : partida.placarTimeBId
+      }
+    },
+
     async carregarPartida() {
       if (!this.partidaId) return
       const res = await api.get(`/partidas/${this.partidaId}/retornar`)
       const partida = res.data
 
       this.partida = partida
-
       if (this.modalidadeKey === 'VOLEI') {
         this.time1 = this.mapTimeVolei(partida.timeA, 'A', partida)
         this.time2 = this.mapTimeVolei(partida.timeB, 'B', partida)
+      } else if (this.modalidadeKey === 'BEACH_TENIS') {
+        this.time1 = this.mapTimeBeachTenis(partida.timeA, 'A', partida)
+        this.time2 = this.mapTimeBeachTenis(partida.timeB, 'B', partida)
       } else {
         this.time1 = this.mapTimeFutebol(partida.timeA, 'A', partida)
         this.time2 = this.mapTimeFutebol(partida.timeB, 'B', partida)
@@ -248,6 +323,7 @@ export default {
 
       try {
         this.isSalvandoParcial = true
+        console.log('payload enviado:', JSON.stringify(payload))
         await api.put(`/partida/${this.partidaId}/parcial`, payload)
         this.atualizarFlagAlteracao()
       } catch (error) {
@@ -262,13 +338,18 @@ export default {
       if (!this.partidaId) return
       if (!this.partida) return
 
-      if (this.modalidadeKey === 'FUTEBOL') {
+      if (this.isGrupoFutebol) {
         await this.aplicarDeltaFutebol(lado, campo, delta)
         return
       }
 
-      if (this.modalidadeKey === 'VOLEI') {
+      if (this.isGrupoVolei) {
         await this.aplicarDeltaVolei(lado, campo, delta)
+        return
+      }
+
+      if (this.modalidadeKey === 'BEACH_TENIS') {
+        await this.aplicarDeltaBeachTenis(lado, campo, delta)
         return
       }
     },
@@ -383,6 +464,77 @@ export default {
       await this.carregarPartida()
     },
 
+    async aplicarDeltaBeachTenis(lado, campo, delta) {
+      const p = this.partida
+      if (!p) return
+
+      const d = Number(delta || 0)
+      if (!Number.isFinite(d) || d === 0) return
+
+      const isA = lado === 'A'
+      const clamp0 = (n) => Math.max(0, Number(n || 0))
+
+      const payload = {
+        pontosTimeA: clamp0(p.pontosTimeA),
+        pontosTimeB: clamp0(p.pontosTimeB),
+        woTimeA: !!p.woTimeA,
+        woTimeB: !!p.woTimeB,
+
+        sets: Array.isArray(p.sets)
+          ? p.sets.map(s => ({
+            numero: Number(s.numero),
+            pontosA: clamp0(s.pontosA ?? 0),
+            pontosB: clamp0(s.pontosB ?? 0)
+          }))
+          : []
+      }
+
+      const totalSets = payload.pontosTimeA + payload.pontosTimeB
+      const setAtualNum = totalSets + 1
+
+      const getOrCreateSetAtual = () => {
+        let s = payload.sets.find(x => Number(x.numero) === Number(setAtualNum))
+        if (!s) {
+          s = { numero: setAtualNum, pontosA: 0, pontosB: 0 }
+          payload.sets.push(s)
+        }
+        s.pontosA = clamp0(s.pontosA)
+        s.pontosB = clamp0(s.pontosB)
+        return s
+      }
+
+      if (campo === 'setsVencidos') {
+        if (isA) payload.pontosTimeA = clamp0(payload.pontosTimeA + d)
+        else payload.pontosTimeB = clamp0(payload.pontosTimeB + d)
+
+        getOrCreateSetAtual()
+
+      } else if (campo === 'pontosTieBreak') {
+        const setAtual = getOrCreateSetAtual()
+        if (isA) setAtual.pontosA = clamp0(setAtual.pontosA + d)
+        else setAtual.pontosB = clamp0(setAtual.pontosB + d)
+      } else if (campo === 'wo') {
+        if (isA) payload.woTimeA = d > 0
+        else payload.woTimeB = d > 0
+
+        if (payload.woTimeA || payload.woTimeB) {
+          payload.pontosTimeA = 0
+          payload.pontosTimeB = 0
+          payload.sets = []
+        }
+
+      } else {
+        console.warn('[aplicarDeltaBeachTenis] campo desconhecido:', campo)
+        return
+      }
+
+      Object.assign(this.partida, payload)
+      this.atualizarFlagAlteracao()
+
+      await this.atualizarParcial(payload)
+      await this.carregarPartida()
+    },
+
     async incrementarPlacar(placarId, incremento) {
       if (!placarId) {
         console.warn('[incrementarPlacar] placarId não encontrado. Incremento:', incremento)
@@ -413,6 +565,7 @@ export default {
 
       const jaFinalizada = this.isFinalizada
       if (jaFinalizada && !this.temAlteracao) return
+      const isGrupoVolei = this.modalidadeKey === 'VOLEI'
 
       const confirm = await Swal.fire({
         title: jaFinalizada ? 'Salvar alterações?' : 'Finalizar partida?',
@@ -431,8 +584,7 @@ export default {
       try {
         if (jaFinalizada) {
           const p = this.partida || {}
-
-          const payload = this.modalidadeKey === 'VOLEI'
+          const payload = isGrupoVolei
             ? {
               pontosTimeA: p.pontosTimeA ?? 0,
               pontosTimeB: p.pontosTimeB ?? 0,
@@ -481,9 +633,10 @@ export default {
     },
 
     criarSnapshotAtual() {
-      const p = this.partida || {}
+      const p = this.partida
+      const isGrupoVolei = this.modalidadeKey === 'VOLEI'
 
-      if (this.modalidadeKey === 'VOLEI') {
+      if (isGrupoVolei) {
         return JSON.stringify({
           pontosTimeA: p.pontosTimeA ?? 0,
           pontosTimeB: p.pontosTimeB ?? 0,
@@ -525,6 +678,8 @@ export default {
     try {
       this.partidaId = this.$route.query.partidaId
       this.campeonato = await carregarCampeonato(this.$route)
+
+      await this.carregarModalidades()
       await this.carregarPartida()
     } catch (err) {
       console.error('Erro ao carregar:', err)

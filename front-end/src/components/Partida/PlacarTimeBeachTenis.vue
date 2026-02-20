@@ -21,15 +21,15 @@
     </div>
 
     <div class="box">
-      <p>Pontos do Set</p>
+      <p>Pontos do Tie-break</p>
       <div class="controls">
-        <button @click="emitDelta('pontosSet', -1)" :disabled="!podeDiminuirPontos">
+        <button @click="emitDelta('pontosTieBreak', -1)" :disabled="!podeDiminuirTieBreak">
           −
         </button>
 
-        <span class="valor">{{ timeData?.pontosSet ?? 0 }}</span>
+        <span class="valor">{{ pontosTieBreakAtual }}</span>
 
-        <button @click="emitDelta('pontosSet', +1)" :disabled="!podeAumentarPontos">
+        <button @click="emitDelta('pontosTieBreak', +1)" :disabled="!podeAumentarTieBreak">
           +
         </button>
       </div>
@@ -54,25 +54,26 @@
 
 <script>
 export default {
-  name: 'PlacarTimeVolei',
+  name: 'PlacarTimeBeachTenis',
 
   props: {
     timeNome: { type: String, default: 'Time' },
     timeData: { type: Object, required: true },
     partidaId: { type: [String, Number], required: true },
     lado: { type: String, required: true },
+    podeEditar: { type: Boolean, default: true },
     setsAdversario: { type: Number, default: 0 },
     woAdversario: { type: Number, default: 0 },
-    partidaEncerradaGlobal: { type: Boolean, default: false }
+    partidaEncerradaGlobal: { type: Boolean, default: false },
   },
 
   computed: {
     setsVencidosAtual() {
-      return this.timeData?.setsVencidos ?? 0
+      return Number(this.timeData?.setsVencidos ?? 0)
     },
 
-    pontosSetAtual() {
-      return this.timeData?.pontosSet ?? 0
+    pontosTieBreakAtual() {
+      return Number(this.timeData?.pontosTieBreak ?? 0)
     },
 
     woAtual() {
@@ -80,35 +81,65 @@ export default {
     },
 
     podeDiminuirSets() {
-      return this.setsVencidosAtual > 0 && this.woAdversario === 0
-    },
-
-    podeAumentarSets() {
       return (
+        this.podeEditar &&
+        !this.partidaEncerradaGlobal &&
         this.woAtual === 0 &&
         this.woAdversario === 0
       )
     },
 
-    podeDiminuirPontos() {
-      return this.podeEditar && this.pontosSetAtual > 0 && this.woAtual === 0 && this.woAdversario === 0
+    podeAumentarSets() {
+      return (
+        this.podeEditar &&
+        !this.partidaEncerradaGlobal &&
+        this.woAtual === 0 &&
+        this.woAdversario === 0
+      )
     },
 
-    podeAumentarPontos() {
-      return this.woAtual === 0 && this.woAdversario === 0
+    podeDiminuirTieBreak() {
+      return (
+        this.podeEditar &&
+        !this.partidaEncerradaGlobal &&
+        this.pontosTieBreakAtual > 0 &&
+        this.woAtual === 0 &&
+        this.woAdversario === 0
+      )
+    },
+
+    podeAumentarTieBreak() {
+      return (
+        this.podeEditar &&
+        !this.partidaEncerradaGlobal &&
+        this.woAtual === 0 &&
+        this.woAdversario === 0
+      )
     },
 
     podeAumentarWo() {
-      return this.woAtual === 0 && this.woAdversario === 0
+      return (
+        this.podeEditar &&
+        !this.partidaEncerradaGlobal &&
+        this.woAtual === 0 &&
+        this.woAdversario === 0
+      )
     },
 
     podeDiminuirWo() {
-      return this.woAtual === 1 && this.woAdversario === 0
+      return (
+        this.podeEditar &&
+        !this.partidaEncerradaGlobal &&
+        this.woAtual === 1 &&
+        this.woAdversario === 0
+      )
     }
   },
 
   methods: {
     emitDelta(campo, delta) {
+      if (!this.podeEditar) return
+      if (this.partidaEncerradaGlobal) return
       this.$emit('parcial-delta', { lado: this.lado, campo, delta })
     }
   }

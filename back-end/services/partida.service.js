@@ -227,7 +227,6 @@ async function finalizarPartida(partidaId, payload = null) {
   return { mensagem: 'Partida finalizada com sucesso.', partida: atualizada }
 }
 
-
 async function atualizarParcial(
   id,
   {
@@ -237,8 +236,6 @@ async function atualizarParcial(
     woTimeA,
     woTimeB,
     sets,
-
-    // comuns futebol / futsal
     faltasTimeA,
     faltasTimeB,
     substituicoesTimeA,
@@ -266,23 +263,28 @@ async function atualizarParcial(
   const isVolei = modalidade.includes('volei')
   const isFutebol = modalidade.includes('futebol')
   const isFutsal = modalidade.includes('futsal')
+  const isBeachTenis = modalidade.includes('beach') && modalidade.includes('tenis')
 
   const dataUpdate = {}
-  if (pontosTimeA !== undefined) dataUpdate.pontosTimeA = pontosTimeA
-  if (pontosTimeB !== undefined) dataUpdate.pontosTimeB = pontosTimeB
-  if (tempoSegundos !== undefined) dataUpdate.tempoSegundos = tempoSegundos
-  if (woTimeA !== undefined) dataUpdate.woTimeA = woTimeA
-  if (woTimeB !== undefined) dataUpdate.woTimeB = woTimeB
+
+  if (pontosTimeA !== undefined) dataUpdate.pontosTimeA = Number(pontosTimeA)
+  if (pontosTimeB !== undefined) dataUpdate.pontosTimeB = Number(pontosTimeB)
+  if (tempoSegundos !== undefined) dataUpdate.tempoSegundos = Number(tempoSegundos)
+  if (woTimeA !== undefined) dataUpdate.woTimeA = !!woTimeA
+  if (woTimeB !== undefined) dataUpdate.woTimeB = !!woTimeB
 
   if (isFutebol || isFutsal) {
-    if (faltasTimeA !== undefined) dataUpdate.faltasTimeA = faltasTimeA
-    if (faltasTimeB !== undefined) dataUpdate.faltasTimeB = faltasTimeB
-    if (substituicoesTimeA !== undefined) dataUpdate.substituicoesTimeA = substituicoesTimeA
-    if (substituicoesTimeB !== undefined) dataUpdate.substituicoesTimeB = substituicoesTimeB
-    if (cartoesAmarelosTimeA !== undefined) dataUpdate.cartoesAmarelosTimeA = cartoesAmarelosTimeA
-    if (cartoesVermelhosTimeA !== undefined) dataUpdate.cartoesVermelhosTimeA = cartoesVermelhosTimeA
-    if (cartoesAmarelosTimeB !== undefined) dataUpdate.cartoesAmarelosTimeB = cartoesAmarelosTimeB
-    if (cartoesVermelhosTimeB !== undefined) dataUpdate.cartoesVermelhosTimeB = cartoesVermelhosTimeB
+    if (faltasTimeA !== undefined) dataUpdate.faltasTimeA = Number(faltasTimeA)
+    if (faltasTimeB !== undefined) dataUpdate.faltasTimeB = Number(faltasTimeB)
+
+    if (substituicoesTimeA !== undefined) dataUpdate.substituicoesTimeA = Number(substituicoesTimeA)
+    if (substituicoesTimeB !== undefined) dataUpdate.substituicoesTimeB = Number(substituicoesTimeB)
+
+    if (cartoesAmarelosTimeA !== undefined) dataUpdate.cartoesAmarelosTimeA = Number(cartoesAmarelosTimeA)
+    if (cartoesVermelhosTimeA !== undefined) dataUpdate.cartoesVermelhosTimeA = Number(cartoesVermelhosTimeA)
+
+    if (cartoesAmarelosTimeB !== undefined) dataUpdate.cartoesAmarelosTimeB = Number(cartoesAmarelosTimeB)
+    if (cartoesVermelhosTimeB !== undefined) dataUpdate.cartoesVermelhosTimeB = Number(cartoesVermelhosTimeB)
   }
 
   await prisma.partida.update({
@@ -290,24 +292,24 @@ async function atualizarParcial(
     data: dataUpdate
   })
 
-  if (isVolei && Array.isArray(sets) && sets.length) {
+  if ((isVolei || isBeachTenis) && Array.isArray(sets)) {
     for (const set of sets) {
       await prisma.setPartida.upsert({
         where: {
           partidaId_numero: {
             partidaId,
-            numero: set.numero
+            numero: Number(set.numero)
           }
         },
         update: {
-          pontosA: set.pontosA,
-          pontosB: set.pontosB
+          pontosA: Number(set.pontosA ?? 0),
+          pontosB: Number(set.pontosB ?? 0)
         },
         create: {
           partidaId,
-          numero: set.numero,
-          pontosA: set.pontosA,
-          pontosB: set.pontosB
+          numero: Number(set.numero),
+          pontosA: Number(set.pontosA ?? 0),
+          pontosB: Number(set.pontosB ?? 0)
         }
       })
     }

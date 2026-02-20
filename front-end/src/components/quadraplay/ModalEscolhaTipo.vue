@@ -222,11 +222,14 @@ export default {
 
     regraJogadores() {
       const id = Number(this.modalidadeId)
-      const FUTEBOL = new Set([1, 2, 4])
-      const VOLEI = new Set([3, 5, 6])
 
+      const FUTEBOL = new Set([1, 2, 7])
+      const VOLEI = new Set([3, 5, 6])
+      const BEACH_TENIS = new Set([4])
       if (FUTEBOL.has(id)) return { porTime: 11, total: 22 }
       if (VOLEI.has(id)) return { porTime: 6, total: 12 }
+      if (BEACH_TENIS.has(id)) return { porTime: 2, total: 4 }
+
       return { porTime: 11, total: 22 }
     }
   },
@@ -364,10 +367,34 @@ export default {
     async onConfirmarJogadores(selecao) {
       const { faseId, rodadaId, timeAId, timeBId } = this.partida
       this.criandoPartida = true
+
       try {
+        const modalidadeIdNum = Number(this.modalidadeId)
+
+        const FUTEBOL = new Set([1, 2, 7])
+        const VOLEI = new Set([3, 5, 6])
+        const BEACH_TENIS = new Set([4])
+        const regra =
+          FUTEBOL.has(modalidadeIdNum) ? { porTime: 11, total: 22 } :
+            VOLEI.has(modalidadeIdNum) ? { porTime: 6, total: 12 } :
+              BEACH_TENIS.has(modalidadeIdNum) ? { porTime: 2, total: 4 } :
+                { porTime: 11, total: 22 }
+
+        const idsTimeA = selecao?.time1 || []
+        const idsTimeB = selecao?.time2 || []
+
+        if (idsTimeA.length !== regra.porTime || idsTimeB.length !== regra.porTime) {
+          Swal.fire(
+            'Erro',
+            `Para esta modalidade, selecione exatamente ${regra.porTime} jogador(es) por time.`,
+            'error'
+          )
+          return
+        }
+
         const payload = {
           campeonatoId: Number(this.campeonatoId),
-          modalidadeId: Number(this.modalidadeId),
+          modalidadeId: modalidadeIdNum,
           faseId: Number(faseId),
           rodadaId: Number(rodadaId),
           timeAId: Number(timeAId),
@@ -378,59 +405,33 @@ export default {
         const { data } = await api.post('/partida', payload)
         const partidaCriada = data
         const partidaId = data?.id
-
         if (!partidaId) throw new Error('Partida criada sem ID.')
 
-        const idsTimeA = selecao?.time1 || []
-        const idsTimeB = selecao?.time2 || []
-
         const reqsTimeA = idsTimeA.map((jogadorId) =>
-          api.post(`/${partidaId}/jogador/${jogadorId}`, {
-            timeId: Number(timeAId)
-          })
+          api.post(`/${partidaId}/jogador/${jogadorId}`, { timeId: Number(timeAId) })
         )
 
         const reqsTimeB = idsTimeB.map((jogadorId) =>
-          api.post(`/${partidaId}/jogador/${jogadorId}`, {
-            timeId: Number(timeBId)
-          })
+          api.post(`/${partidaId}/jogador/${jogadorId}`, { timeId: Number(timeBId) })
         )
 
         await Promise.all(reqsTimeA.concat(reqsTimeB))
 
-        const jogadoresPayload = []
+        const jogadoresPayload = [
+          ...idsTimeA.map((jogadorId) => ({ jogadorId: Number(jogadorId), timeId: Number(timeAId) })),
+          ...idsTimeB.map((jogadorId) => ({ jogadorId: Number(jogadorId), timeId: Number(timeBId) }))
+        ]
 
-        idsTimeA.forEach((jogadorId) => {
-          jogadoresPayload.push({
-            jogadorId: Number(jogadorId),
-            timeId: Number(timeAId)
-          })
-        })
-
-        idsTimeB.forEach((jogadorId) => {
-          jogadoresPayload.push({
-            jogadorId: Number(jogadorId),
-            timeId: Number(timeBId)
-          })
-        })
-
-        await api.put(`/partidas/${partidaId}/iniciar`, {
-          jogadores: jogadoresPayload
-        })
+        await api.put(`/partidas/${partidaId}/iniciar`, { jogadores: jogadoresPayload })
 
         Swal.fire('Sucesso', 'Partida criada e iniciada!', 'success')
-
         this.mostrarModalJogadores = false
         this.mostrarModalPartida = false
-
         this.$emit('partidaCriada', partidaCriada)
+
       } catch (err) {
         console.error('Erro no fluxo de criar/iniciar:', err)
-        Swal.fire(
-          'Erro',
-          err.response?.data?.message,
-          'error'
-        )
+        Swal.fire('Erro', err.response?.data?.message, 'error')
       } finally {
         this.criandoPartida = false
       }
