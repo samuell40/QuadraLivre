@@ -14,6 +14,14 @@ router.get('/:campeonatoId/artilharia', controller.artilhariaCampeonatoControlle
 
 router.get('/campeonato/:id', controller.listarCampeonatoPorIdController);
 
+router.put('/campeonato/:id', controller.atualizarCampeonatoController);
+
+router.patch('/campeonato/:id/finalizar', controller.finalizarCampeonatoController);
+
+router.get('/campeonato/:id/regras', controller.obterRegrasCampeonatoController);
+
+router.put('/campeonato/:id/regras', controller.atualizarRegrasCampeonatoController);
+
 router.get('/placar/fase/:campeonatoId/', controller.listarPlacarPorFaseController);
 
 router.get('/fases/:campeonatoId/', controller.listarFasesERodadasController);

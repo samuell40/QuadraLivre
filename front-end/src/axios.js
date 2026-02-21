@@ -27,7 +27,11 @@ api.interceptors.response.use(
   (error) => {
     if (error.response) {
       const status = error.response.status;
-      const msg = error.response.data?.message || 'Ocorreu um erro inesperado.';
+      const msg =
+        error.response.data?.message ||
+        error.response.data?.erro ||
+        error.response.data?.detalhes ||
+        'Ocorreu um erro inesperado.';
       if (status === 401) {
         console.error('Erro de autenticação:', msg);
         Swal.fire({ icon: 'error', title: 'Erro de autenticação', text: msg });

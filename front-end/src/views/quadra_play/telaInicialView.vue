@@ -35,8 +35,12 @@
           <div class="card-quadra" v-for="campeonato in campeonatos" :key="campeonato.id"
             @click="abrirCampeonato(campeonato)">
 
-            <div class="status-badge" :class="campeonato.status === 'EM_ANDAMENTO' ? 'em-andamento' : 'finalizado'">
-              {{ campeonato.status === 'EM_ANDAMENTO' ? 'Em Andamento' : 'Finalizado' }}
+            <div
+              class="status-badge"
+              :class="classeStatus(campeonato.status)"
+              @click.stop="abrirModalStatus(campeonato)"
+            >
+              {{ rotuloStatus(campeonato.status) }}
             </div>
 
             <img :src="campeonato.foto" alt="Foto do campeonato" class="imagem-quadra">
@@ -52,6 +56,25 @@
     </div>
     <AdicionarCampeonatoModal :aberto="mostrarModal" @fechar="fecharModalAdicionarCampeonato"
       @atualizar="carregarCampeonatos" />
+
+    <div v-if="mostrarModalStatus" class="modal-overlay" @click.self="fecharModalStatus">
+      <div class="modal-content modal-status">
+        <h2 class="titulo-modal-status">Alterar status do campeonato</h2>
+
+        <label class="label-status">Selecione o status</label>
+
+        <select v-model="novoStatusCampeonato" class="select-status-modal">
+          <option v-for="status in statusDisponiveisCampeonato" :key="status" :value="status">
+            {{ rotuloStatus(status) }}
+          </option>
+        </select>
+
+        <div class="botoes">
+          <button class="btn-save" @click="confirmarAlteracaoStatusCampeonato">Salvar</button>
+          <button class="btn-cancel" @click="fecharModalStatus">Cancelar</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -80,7 +103,11 @@ export default {
       modalidadesDisponiveis: [],
       modalidadeSelecionada: null,
       anoSelecionado: new Date().getFullYear(),
-      mostrarModal: false
+      mostrarModal: false,
+      mostrarModalStatus: false,
+      campeonatoSelecionadoStatus: null,
+      novoStatusCampeonato: 'EM_ANDAMENTO',
+      statusDisponiveisCampeonato: ['EM_ANDAMENTO', 'FINALIZADO', 'CANCELADO']
     }
   },
 
@@ -115,6 +142,41 @@ export default {
 
     selecionarModalidade(id) {
       this.modalidadeSelecionada = id
+    },
+    rotuloStatus(status) {
+      if (status === 'FINALIZADO') return 'Finalizado'
+      if (status === 'CANCELADO') return 'Cancelado'
+      return 'Em Andamento'
+    },
+    classeStatus(status) {
+      if (status === 'FINALIZADO') return 'finalizado'
+      if (status === 'CANCELADO') return 'cancelado'
+      return 'em-andamento'
+    },
+    abrirModalStatus(campeonato) {
+      this.campeonatoSelecionadoStatus = campeonato
+      this.novoStatusCampeonato = campeonato?.status || 'EM_ANDAMENTO'
+      this.mostrarModalStatus = true
+    },
+    fecharModalStatus() {
+      this.mostrarModalStatus = false
+      this.campeonatoSelecionadoStatus = null
+      this.novoStatusCampeonato = 'EM_ANDAMENTO'
+    },
+    async confirmarAlteracaoStatusCampeonato() {
+      const campeonato = this.campeonatoSelecionadoStatus
+      if (!campeonato?.id) return
+      if (!this.novoStatusCampeonato || this.novoStatusCampeonato === campeonato.status) {
+        this.fecharModalStatus()
+        return
+      }
+      try {
+        await api.put(`/campeonato/${campeonato.id}`, { status: this.novoStatusCampeonato })
+        campeonato.status = this.novoStatusCampeonato
+        this.fecharModalStatus()
+      } catch (err) {
+        console.error('Erro ao atualizar status do campeonato:', err)
+      }
     },
     async carregarModalidades() {
       try {
@@ -272,6 +334,7 @@ export default {
   text-transform: uppercase;
   backdrop-filter: blur(4px);
   z-index: 5;
+  cursor: pointer;
 }
 
 .status-badge.em-andamento {
@@ -280,6 +343,94 @@ export default {
 
 .status-badge.finalizado {
   background: #f73434;
+}
+
+.status-badge.cancelado {
+  background: #6b7280;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px 40px;
+  border-radius: 10px;
+  width: 900px;
+  max-width: 95%;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.modal-status {
+  max-width: 900px;
+}
+
+.titulo-modal-status {
+  color: #3b82f6;
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+.label-status {
+  display: block;
+  margin-bottom: 10px;
+  color: #374151;
+  font-weight: 600;
+}
+
+.select-status-modal {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  color: #111827;
+  background-color: #fff;
+  cursor: pointer;
+  transition: 0.2s;
+  margin-bottom: 20px;
+}
+
+.select-status-modal:hover {
+  border-color: #3b82f6;
+}
+
+.select-status-modal:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.botoes {
+  display: flex;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.btn-save,
+.btn-cancel {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-size: 16px;
+}
+
+.btn-save {
+  background-color: #3b82f6;
+}
+
+.btn-cancel {
+  background-color: #7e7e7e;
 }
 
 .loader {
@@ -359,6 +510,14 @@ export default {
   .abas-container {
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
+  }
+
+  .modal-content {
+    padding: 18px;
+  }
+
+  .titulo-modal-status {
+    font-size: 22px;
   }
 }
 </style>

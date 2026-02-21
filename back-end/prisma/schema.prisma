@@ -113,6 +113,7 @@ model Campeonato {
   tipo               TipoCampeonato
   anexos             String?          @db.Text
   foto               String?          @db.VarChar(2048)
+  regras             Json?
   dataInicio         DateTime
   dataFim            DateTime?
   status             String           @default("EM_ANDAMENTO")

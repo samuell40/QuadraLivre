@@ -2,12 +2,12 @@ const campeonatoService = require('../services/campeonatos.service');
 
 async function criarCampeonatoController(req, res) {
   try {
-    const { nome, tipo, dataInicio, dataFim, status, modalidadeId, quadraId, times, datasJogos, foto } = req.body;
+    const { nome, tipo, dataInicio, dataFim, status, modalidadeId, quadraId, times, datasJogos, foto, regras } = req.body;
 
     const usuarioId = req.body.usuarioId;
 
     const novoCampeonato = await campeonatoService.criarCampeonato({
-      nome, tipo, dataInicio, dataFim, status, modalidadeId, quadraId, times, datasJogos, usuarioId, foto
+      nome, tipo, dataInicio, dataFim, status, modalidadeId, quadraId, times, datasJogos, usuarioId, foto, regras
     });
 
     return res.status(201).json(novoCampeonato);
@@ -18,6 +18,33 @@ async function criarCampeonatoController(req, res) {
       erro: "Erro ao criar campeonato",
       detalhes: error.message
     });
+  }
+}
+
+async function obterRegrasCampeonatoController(req, res) {
+  try {
+    const { id } = req.params;
+    const regras = await campeonatoService.getRegrasCampeonato(id);
+    return res.status(200).json({ regras });
+  } catch (error) {
+    return res.status(400).json({ erro: error.message });
+  }
+}
+
+async function atualizarRegrasCampeonatoController(req, res) {
+  try {
+    const { id } = req.params;
+    const { regras } = req.body;
+
+    if (!regras || typeof regras !== 'object') {
+      return res.status(400).json({ erro: 'regras deve ser um objeto.' });
+    }
+
+    const regrasAtualizadas = await campeonatoService.atualizarRegrasCampeonato(id, regras);
+    return res.status(200).json({ regras: regrasAtualizadas });
+  } catch (error) {
+    console.error('Erro ao atualizar regras do campeonato:', error);
+    return res.status(400).json({ erro: error.message });
   }
 }
 
@@ -90,6 +117,26 @@ async function listarCampeonatoPorIdController(req, res) {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Erro ao buscar campeonato' });
+  }
+}
+
+async function atualizarCampeonatoController(req, res) {
+  try {
+    const { id } = req.params;
+    const campeonato = await campeonatoService.atualizarDadosCampeonato(id, req.body || {});
+    return res.status(200).json(campeonato);
+  } catch (error) {
+    return res.status(400).json({ erro: error.message });
+  }
+}
+
+async function finalizarCampeonatoController(req, res) {
+  try {
+    const { id } = req.params;
+    const campeonato = await campeonatoService.finalizarCampeonato(id);
+    return res.status(200).json(campeonato);
+  } catch (error) {
+    return res.status(400).json({ erro: error.message });
   }
 }
 
@@ -174,4 +221,19 @@ async function adicionarRodadaController(req, res) {
   }
 }
 
-module.exports = { criarCampeonatoController, removerCampeonatoController, listarCampeonatosPorModalidadeController, listarCampeonatosAnoAtualController, artilhariaCampeonatoController, listarCampeonatoPorIdController, listarPlacarPorFaseController, listarFasesERodadasController, adicionarFaseController, adicionarRodadaController };
+module.exports = {
+  criarCampeonatoController,
+  removerCampeonatoController,
+  listarCampeonatosPorModalidadeController,
+  listarCampeonatosAnoAtualController,
+  artilhariaCampeonatoController,
+  listarCampeonatoPorIdController,
+  atualizarCampeonatoController,
+  finalizarCampeonatoController,
+  obterRegrasCampeonatoController,
+  atualizarRegrasCampeonatoController,
+  listarPlacarPorFaseController,
+  listarFasesERodadasController,
+  adicionarFaseController,
+  adicionarRodadaController
+};

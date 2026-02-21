@@ -32,6 +32,65 @@ CRITERIOS_MODALIDADE.futsal = CRITERIOS_MODALIDADE.futebol;
 CRITERIOS_MODALIDADE.futebolDeAreia = CRITERIOS_MODALIDADE.futebol;
 CRITERIOS_MODALIDADE.voleiDeAreia = CRITERIOS_MODALIDADE.volei;
 CRITERIOS_MODALIDADE.futevolei = CRITERIOS_MODALIDADE.volei;
+CRITERIOS_MODALIDADE.beachtenis = CRITERIOS_MODALIDADE.volei;
+CRITERIOS_MODALIDADE.beachtennis = CRITERIOS_MODALIDADE.volei;
+
+function normalizarTexto(texto) {
+  return String(texto || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+function grupoModalidade(nomeModalidade) {
+  const nome = normalizarTexto(nomeModalidade);
+  if (
+    nome.includes('volei') ||
+    nome.includes('futevolei') ||
+    (nome.includes('beach') && nome.includes('tenis'))
+  ) {
+    return 'VOLEI';
+  }
+  return 'FUTEBOL';
+}
+
+function regrasPadraoPorModalidade(nomeModalidade) {
+  const grupo = grupoModalidade(nomeModalidade);
+
+  if (grupo === 'VOLEI') {
+    return {
+      grupoRegras: 'VOLEI',
+      regraPontosVitoria: 'VITORIA_2_SEMPRE',
+      regraPontosDerrota: 'DERROTA_0_SEMPRE',
+      pontosEmpate: 0,
+      suspensaoAmarelos: null,
+      suspensaoVermelhos: null,
+      separarCartoesPorFase: false,
+      resetarCartoesCadaFase: false
+    };
+  }
+
+  return {
+    grupoRegras: 'FUTEBOL',
+    pontosVitoria: 3,
+    pontosEmpate: 1,
+    pontosDerrota: 0,
+    suspensaoAmarelos: null,
+    suspensaoVermelhos: null,
+    separarCartoesPorFase: false,
+    resetarCartoesCadaFase: false
+  };
+}
+
+const REGRAS_PADRAO_CAMPEONATO = regrasPadraoPorModalidade('futebol');
+
+function normalizarRegrasCampeonato(regras, nomeModalidade) {
+  return {
+    ...regrasPadraoPorModalidade(nomeModalidade),
+    ...(regras || {})
+  };
+}
 
 async function criarCampeonato(data) {
   const {
@@ -45,7 +104,8 @@ async function criarCampeonato(data) {
     times,
     datasJogos,
     usuarioId,
-    foto
+    foto,
+    regras
   } = data;
 
   let listaDatasReais = Array.isArray(datasJogos) ? datasJogos.map(d => new Date(d)) : [];
@@ -99,6 +159,7 @@ async function criarCampeonato(data) {
         nome,
         tipo,
         foto,
+        regras: normalizarRegrasCampeonato(regras, modalidadeDB.nome),
         dataInicio: new Date(dataInicio),
         dataFim: new Date(dataFim),
         status,
@@ -163,7 +224,7 @@ async function removerCampeonato(campeonatoId) {
   await prisma.$transaction([
     prisma.partida.updateMany({
       where: { campeonatoId: idNum },
-      data: { ativo: false, cancelada: true, deletedAt: agora }
+      data: { status: 'DELETADA' }
     }),
 
     prisma.placar.updateMany({
@@ -327,10 +388,142 @@ async function getCampeonatoById(id) {
       }
     });
 
-    return campeonato;
+    if (!campeonato) return null;
+    return {
+      ...campeonato,
+      regras: normalizarRegrasCampeonato(campeonato.regras, campeonato.modalidade?.nome)
+    };
   } catch (err) {
     throw err;
   }
+}
+
+async function getRegrasCampeonato(campeonatoId) {
+  const campeonato = await prisma.campeonato.findUnique({
+    where: { id: Number(campeonatoId) },
+    select: {
+      id: true,
+      modalidade: { select: { nome: true } },
+      regras: true
+    }
+  });
+
+  if (!campeonato) throw new Error("Campeonato nao encontrado");
+
+  return normalizarRegrasCampeonato(campeonato.regras, campeonato.modalidade?.nome);
+}
+
+async function atualizarRegrasCampeonato(campeonatoId, regras) {
+  const campeonatoAtual = await prisma.campeonato.findUnique({
+    where: { id: Number(campeonatoId) },
+    select: {
+      id: true,
+      modalidade: { select: { nome: true } }
+    }
+  });
+
+  if (!campeonatoAtual) throw new Error("Campeonato nao encontrado");
+
+  const atualizado = await prisma.campeonato.update({
+    where: { id: Number(campeonatoId) },
+    data: {
+      regras: normalizarRegrasCampeonato(regras, campeonatoAtual.modalidade?.nome)
+    },
+    select: {
+      id: true,
+      regras: true
+    }
+  });
+
+  return normalizarRegrasCampeonato(atualizado.regras, campeonatoAtual.modalidade?.nome);
+}
+
+async function atualizarDadosCampeonato(campeonatoId, dados) {
+  const id = Number(campeonatoId);
+  if (!id) throw new Error('ID de campeonato invalido');
+
+  const existente = await prisma.campeonato.findUnique({
+    where: { id },
+    select: { id: true }
+  });
+
+  if (!existente) throw new Error('Campeonato nao encontrado');
+
+  const payload = {};
+
+  if (typeof dados.nome === 'string' && dados.nome.trim()) {
+    payload.nome = dados.nome.trim();
+  }
+
+  if (typeof dados.foto === 'string') {
+    payload.foto = dados.foto.trim() || null;
+  }
+
+  if (dados.quadraId !== undefined) {
+    payload.quadraId = dados.quadraId ? Number(dados.quadraId) : null;
+  }
+
+  if (dados.dataFim !== undefined) {
+    payload.dataFim = dados.dataFim ? new Date(dados.dataFim) : null;
+  }
+
+  if (typeof dados.status === 'string' && dados.status.trim()) {
+    const statusNormalizado = dados.status.trim().toUpperCase();
+    const statusPermitidos = ['EM_ANDAMENTO', 'FINALIZADO', 'CANCELADO'];
+    if (!statusPermitidos.includes(statusNormalizado)) {
+      throw new Error('Status de campeonato invalido');
+    }
+    payload.status = statusNormalizado;
+  }
+
+  const atualizado = await prisma.campeonato.update({
+    where: { id },
+    data: payload,
+    include: {
+      modalidade: true,
+      quadra: true,
+      times: true,
+      partidas: true,
+      placares: true
+    }
+  });
+
+  return {
+    ...atualizado,
+    regras: normalizarRegrasCampeonato(atualizado.regras, atualizado.modalidade?.nome)
+  };
+}
+
+async function finalizarCampeonato(campeonatoId) {
+  const id = Number(campeonatoId);
+  if (!id) throw new Error('ID de campeonato invalido');
+
+  const existente = await prisma.campeonato.findUnique({
+    where: { id },
+    select: { id: true, status: true, dataFim: true }
+  });
+
+  if (!existente) throw new Error('Campeonato nao encontrado');
+
+  const atualizado = await prisma.campeonato.update({
+    where: { id },
+    data: {
+      status: 'FINALIZADO',
+      dataFim: existente.dataFim || new Date()
+    },
+    include: {
+      modalidade: true,
+      quadra: true,
+      times: true,
+      partidas: true,
+      placares: true
+    }
+  });
+
+  return {
+    ...atualizado,
+    regras: normalizarRegrasCampeonato(atualizado.regras, atualizado.modalidade?.nome)
+  };
 }
 
 async function listarPlacarPorFase(campeonatoId) {
@@ -420,4 +613,21 @@ async function criarRodada(faseId, nomeRodada) {
 
   return rodada;
 }
-module.exports = { CRITERIOS_MODALIDADE, criarCampeonato, removerCampeonato, listarCampeonatosPorModalidade, listarCampeonatosAnoAtual, listarArtilhariaCampeonato, getCampeonatoById, listarPlacarPorFase, listarFasesERodadas, criarFase, criarRodada };
+module.exports = {
+  CRITERIOS_MODALIDADE,
+  REGRAS_PADRAO_CAMPEONATO,
+  criarCampeonato,
+  removerCampeonato,
+  listarCampeonatosPorModalidade,
+  listarCampeonatosAnoAtual,
+  listarArtilhariaCampeonato,
+  getCampeonatoById,
+  atualizarDadosCampeonato,
+  finalizarCampeonato,
+  getRegrasCampeonato,
+  atualizarRegrasCampeonato,
+  listarPlacarPorFase,
+  listarFasesERodadas,
+  criarFase,
+  criarRodada
+};

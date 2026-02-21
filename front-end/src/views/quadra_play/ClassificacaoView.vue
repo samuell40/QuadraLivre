@@ -33,7 +33,7 @@
           </div>
 
           <!-- ===== FUTEBOL / FUTSAL ===== -->
-          <table v-else-if="['futebol', 'futebol de areia', 'futsal'].includes(modalidadeNormalizada)" class="placar">
+          <table v-else-if="isGrupoFutebol" class="placar">
             <thead>
               <tr>
                 <th>Time</th>
@@ -67,7 +67,7 @@
           </table>
 
           <!-- ===== VÔLEI ===== -->
-          <table v-else-if="['volei', 'volei de areia', 'futevolei'].includes(modalidadeNormalizada)" class="placar">
+          <table v-else-if="isGrupoVolei" class="placar">
             <thead>
               <tr>
                 <th>Time</th>
@@ -137,7 +137,25 @@ export default {
 
   computed: {
     modalidadeNormalizada() {
-      return this.campeonato?.modalidade?.nome?.toLowerCase()?.trim()
+      return String(this.campeonato?.modalidade?.nome || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+    },
+
+    isGrupoFutebol() {
+      return ['futebol', 'futebol de areia', 'futsal'].includes(this.modalidadeNormalizada)
+    },
+
+    isGrupoVolei() {
+      return [
+        'volei',
+        'volei de areia',
+        'futevolei',
+        'beach tenis',
+        'beach tennis'
+      ].includes(this.modalidadeNormalizada)
     }
   },
 
