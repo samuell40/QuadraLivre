@@ -81,6 +81,8 @@
 <script>
 import router from "@/router";
 
+const SIDEBAR_COLLAPSED_KEY = "sidebar_collapsed";
+
 export default {
   name: "SideBar",
   data() {
@@ -91,23 +93,29 @@ export default {
       sidebarVisible: true
     };
   },
+
   mounted() {
-    window.addEventListener("resize", this.handleResize)
-    this.handleResize()
-    this.usuario = JSON.parse(localStorage.getItem("usuario"))
+    window.addEventListener("resize", this.handleResize);
+    const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+    this.collapsed = saved === "1";
+
+    this.handleResize();
+    this.usuario = JSON.parse(localStorage.getItem("usuario"));
   },
 
   beforeUnmount() {
-    window.removeEventListener("resize", this.handleResize)
+    window.removeEventListener("resize", this.handleResize);
   },
+
   computed: {
     isPermissao4() {
-      return this.usuario?.permissaoId === 4
+      return this.usuario?.permissaoId === 4;
     }
   },
+
   methods: {
     isActive(path) {
-      return this.$route.path === path
+      return this.$route.path === path;
     },
 
     logout() {
@@ -115,31 +123,34 @@ export default {
       localStorage.removeItem("usuario");
       router.push("/");
     },
+
     handleResize() {
-      this.isMobile = window.innerWidth <= 768
+      this.isMobile = window.innerWidth <= 768;
 
       if (this.isMobile) {
-        this.sidebarVisible = false     // começa fechado
-        this.collapsed = false          // MOBILE NÃO COLAPSA
-        this.$emit('sidebar-toggle', false)
+        this.sidebarVisible = false; 
+        this.$emit("sidebar-toggle", false);
       } else {
-        this.sidebarVisible = true
+        this.sidebarVisible = true;
+        const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+        this.collapsed = saved === "1";
+        this.$emit("sidebar-toggle", this.collapsed);
       }
     },
 
     toggleCollapse() {
-      if (this.isMobile) return
-
-      this.collapsed = !this.collapsed
-      this.$emit('sidebar-toggle', this.collapsed)
+      if (this.isMobile) return;
+      this.collapsed = !this.collapsed;
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, this.collapsed ? "1" : "0");
+      this.$emit("sidebar-toggle", this.collapsed);
     },
 
     toggleSidebar() {
-      if (!this.isMobile) return
+      if (!this.isMobile) return;
 
-      this.sidebarVisible = !this.sidebarVisible
+      this.sidebarVisible = !this.sidebarVisible;
     }
-  },
+  }
 };
 </script>
 

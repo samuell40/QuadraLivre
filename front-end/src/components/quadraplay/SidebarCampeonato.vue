@@ -49,8 +49,8 @@
                         </svg>
                         <span>Partidas</span>
                     </router-link>
-                    <router-link v-if="estaNaPartida" :to="{ name: 'Partida',  query: { id: campeonatoId } }" class="menu-link submenu"
-                        :class="{ active: isActiveRoute('Partida') }">
+                    <router-link v-if="estaNaPartida" :to="{ name: 'Partida', query: { id: campeonatoId } }"
+                        class="menu-link submenu" :class="{ active: isActiveRoute('Partida') }">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                             class="bi bi-controller" viewBox="0 0 16 16">
                             <path
@@ -102,6 +102,8 @@
 import router from "@/router";
 import { useCampeonatoStore } from '@/storecampeonato'
 
+const SIDEBAR_COLLAPSED_KEY = "sidebar_collapsed";
+
 export default {
     name: "SideBar",
     data() {
@@ -112,23 +114,30 @@ export default {
             sidebarVisible: true
         };
     },
+
     mounted() {
-        window.addEventListener("resize", this.handleResize)
-        this.handleResize()
-        this.usuario = JSON.parse(localStorage.getItem("usuario"))
+        window.addEventListener("resize", this.handleResize);
+        const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+        this.collapsed = saved === "1";
+
+        this.handleResize();
+        this.usuario = JSON.parse(localStorage.getItem("usuario"));
     },
 
     beforeUnmount() {
-        window.removeEventListener("resize", this.handleResize)
+        window.removeEventListener("resize", this.handleResize);
     },
+
     computed: {
         isPermissao4() {
             return this.usuario?.permissaoId === 4
         },
+
         campeonatoId() {
             const store = useCampeonatoStore()
             return store.campeonatoAtivo?.id
         },
+
         estaNaPartida() {
             return this.$route.name === 'Partida'
         },
@@ -137,6 +146,7 @@ export default {
             return ['gerenciar_partida', 'Partida'].includes(this.$route.name)
         }
     },
+
     methods: {
         isActive(path) {
             return this.$route.path === path
@@ -145,26 +155,32 @@ export default {
         isActiveRoute(name) {
             return this.$route.name === name
         },
+
         logout() {
             localStorage.removeItem("token");
             localStorage.removeItem("usuario");
             router.push("/");
         },
+
         handleResize() {
             this.isMobile = window.innerWidth <= 768
+
             if (this.isMobile) {
                 this.sidebarVisible = false
-                this.collapsed = false
                 this.$emit('sidebar-toggle', false)
             } else {
                 this.sidebarVisible = true
+                const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY)
+                this.collapsed = saved === "1"
+                this.$emit('sidebar-toggle', this.collapsed)
             }
         },
 
         toggleCollapse() {
             if (this.isMobile) return
-
             this.collapsed = !this.collapsed
+            localStorage.setItem(SIDEBAR_COLLAPSED_KEY, this.collapsed ? "1" : "0")
+
             this.$emit('sidebar-toggle', this.collapsed)
         },
 
