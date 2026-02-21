@@ -17,7 +17,6 @@ model Usuario {
   quadraId    Int?
   ativo       Boolean   @default(true)
   deletedAt   DateTime?
-
   quadra               Quadra?          @relation(fields: [quadraId], references: [id])
   permissao            Permissao        @relation(fields: [permissaoId], references: [id])
   jogadorId            Int?             @unique

@@ -59,7 +59,7 @@
       </div>
 
       <div v-if="campeonato" class="card-regras">
-        <h2>{{ tituloConfiguracoes }}</h2>
+        <h2>Configurações do {{ String(campeonato?.modalidade?.nome).toLowerCase() }}</h2>
 
         <div class="abas-config-container">
           <button
@@ -76,7 +76,7 @@
             :class="{ ativa: abaConfigAtiva === 'criterios' }"
             @click="abrirAbaCriterios"
           >
-            Criterios de seleção
+            Criterios de classificação
           </button>
         </div>
 
@@ -143,6 +143,10 @@
         <p>Nenhum campeonato encontrado.</p>
       </div>
     </div>
+
+    <button v-if="mostrarBotaoTopo" type="button" class="btn-topo" @click="subirPagina">
+      ↑
+    </button>
   </div>
 </template>
 
@@ -173,6 +177,7 @@ export default {
       salvandoEdicao: false,
       removendoCampeonato: false,
       uploadingImagem: false,
+      mostrarBotaoTopo: false,
       imagemOriginal: '',
       quadras: [],
       formEdicao: {
@@ -187,10 +192,6 @@ export default {
   computed: {
     grupoAtual() {
       return grupoModalidade(this.campeonato?.modalidade?.nome)
-    },
-    tituloConfiguracoes() {
-      const modalidade = String(this.campeonato?.modalidade?.nome || 'esporte').toLowerCase()
-      return `Configuracoes do ${modalidade}`
     },
 
     camposRegras() {
@@ -225,6 +226,24 @@ export default {
 
       if (this.grupoAtual === 'VOLEI') {
         return [
+          {
+            key: 'quantidadeSetsPartida',
+            label: 'Quantidade de sets por partida',
+            options: [
+              { label: '1 set', value: 1 },
+              { label: '2 sets', value: 2 },
+              { label: '3 sets', value: 3 },
+              { label: '4 sets', value: 4 },
+              { label: '5 sets', value: 5 },
+              { label: '6 sets', value: 6 },
+              { label: '7 sets', value: 7 }
+            ]
+          },
+          {
+            key: 'pontosPorSet',
+            label: 'Quantidade de pontos do set',
+            options: opcoesNumericas(0, 50)
+          },
           {
             key: 'regraPontosVitoria',
             label: 'Pontos por vitoria',
@@ -273,6 +292,7 @@ export default {
   },
 
   async mounted() {
+    window.addEventListener('scroll', this.atualizarVisibilidadeBotaoTopo, { passive: true })
     try {
       this.campeonato = await carregarCampeonato(this.$route)
       if (this.campeonato) {
@@ -292,8 +312,17 @@ export default {
       this.isLoading = false
     }
   },
+  beforeUnmount() {
+    window.removeEventListener('scroll', this.atualizarVisibilidadeBotaoTopo)
+  },
 
   methods: {
+    atualizarVisibilidadeBotaoTopo() {
+      this.mostrarBotaoTopo = window.scrollY > 260
+    },
+    subirPagina() {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    },
     formatarDataParaInput(data) {
       if (!data) return ''
       return new Date(data).toISOString().slice(0, 10)
@@ -459,7 +488,7 @@ export default {
 
       const confirmacao = await Swal.fire({
         title: 'Remover campeonato?',
-        text: 'Essa acao remove o campeonato com soft delete e ele nao aparece mais na lista.',
+        text: 'Essa acao remove o campeonato é ele não aparecera mais na lista.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Sim, remover',
@@ -516,7 +545,7 @@ export default {
 .card-quadra {
   position: relative;
   width: 100%;
-  height: 360px;
+  height: 420px;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
@@ -528,6 +557,9 @@ export default {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
+  image-rendering: -webkit-optimize-contrast;
+  filter: contrast(1.04) saturate(1.04);
   transition: transform 0.5s ease;
 }
 
@@ -755,6 +787,28 @@ export default {
   cursor: not-allowed;
 }
 
+.btn-topo {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 999px;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+  z-index: 1100;
+}
+
+.btn-topo:hover {
+  background: #2563eb;
+}
+
 .loader-container-centralizado {
   display: flex;
   justify-content: center;
@@ -794,7 +848,7 @@ export default {
   }
 
   .card-quadra {
-    height: 220px;
+    height: 260px;
     border-radius: 12px;
   }
 
@@ -815,6 +869,14 @@ export default {
     width: 64px;
     height: 64px;
     border-width: 5px;
+  }
+
+  .btn-topo {
+    right: 14px;
+    bottom: 14px;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
   }
 }
 </style>

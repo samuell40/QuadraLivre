@@ -8,7 +8,7 @@
           <span :class="{ open: isMenuOpen }"></span>
         </div>
 
-        <div class="logo">Quadra Livre</div>
+        <div class="logo"></div>
         <a href="#" class="login-btn-mobile" @click.prevent="loginComGoogle">
           Login
         </a>
@@ -23,7 +23,7 @@
         </a>
       </div>
 
-      <ul class="nav-links" :class="{ active: isMenuOpen }">
+      <ul class="nav-links">
         <li v-if="$route.path !== '/times'">
           <a href="/times">
             Times
@@ -59,6 +59,42 @@
           </a>
         </li>
       </ul>
+
+      <div v-if="isMenuOpen" class="mobile-menu-overlay" @click="closeMenu"></div>
+      <aside class="mobile-drawer" :class="{ open: isMenuOpen }" @click.stop>
+        <div class="drawer-header">
+          <div class="drawer-brand"></div>
+          <button type="button" class="drawer-close" @click="closeMenu">x</button>
+        </div>
+
+        <div class="drawer-links">
+          <button type="button" class="drawer-link" :class="{ active: $route.path === '/times' }" @click="navegar('/times')">
+            Times
+          </button>
+          <button
+            type="button"
+            class="drawer-link"
+            :class="{ active: $route.path === '/visualizarplacarhome' }"
+            @click="navegar('/visualizarplacarhome')"
+          >
+            Tabelas de Classificacao
+          </button>
+          <button type="button" class="drawer-link" :class="{ active: $route.path === '/' }" @click="navegar('/')">
+            Tela Inicial
+          </button>
+        </div>
+
+        <div class="drawer-footer">
+          <a href="#" class="quadra-play" @click.prevent="loginQuadraPlayComGoogle">
+            QuadraPlay
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+              class="bi bi-arrow-left-right" viewBox="0 0 16 16">
+              <path fill-rule="evenodd"
+                d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5" />
+            </svg>
+          </a>
+        </div>
+      </aside>
     </div>
   </nav>
 </template>
@@ -81,12 +117,22 @@ export default {
     toggleMenu() {
       this.isMenuOpen = !this.isMenuOpen
     },
+    closeMenu() {
+      this.isMenuOpen = false
+    },
+    navegar(path) {
+      this.closeMenu()
+      if (this.$route.path !== path) {
+        router.push(path)
+      }
+    },
 
     irParaLogin() {
       this.mostrarModalLogin = true
     },
 
     loginComGoogle() {
+      this.closeMenu()
       const width = 500
       const height = 600
       const left = window.screenX + (window.outerWidth - width) / 2
@@ -152,6 +198,7 @@ export default {
       window.addEventListener('message', listener, false)
     },
     loginQuadraPlayComGoogle() {
+      this.closeMenu()
       const width = 500
       const height = 600
       const left = window.screenX + (window.outerWidth - width) / 2
@@ -335,17 +382,102 @@ export default {
   transition: 0.3s;
 }
 
-.nav-links.active {
+.mobile-menu-overlay {
+  position: fixed;
+  top: 70px;
+  left: 0;
+  width: 100%;
+  height: calc(100vh - 70px);
+  background: rgba(7, 13, 32, 0.48);
+  backdrop-filter: blur(3px);
+  z-index: 1200;
+}
+
+.mobile-drawer {
+  position: fixed;
+  top: 70px;
+  left: 0;
+  width: min(86vw, 340px);
+  height: calc(100vh - 70px);
+  background: #152147;
+  border-right: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 12px 0 24px rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
-  position: absolute;
-  top: 70px;
-  left: -1px;
-  background-color: #152147;
-  width: 80%;
-  max-width: 250px;
-  padding: 20px;
-  gap: 20px;
+  transform: translateX(-105%);
+  transition: transform 0.22s ease;
+  z-index: 1300;
+}
+
+.mobile-drawer.open {
+  transform: translateX(0);
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.drawer-brand {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.drawer-close {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.drawer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+}
+
+.drawer-link {
+  border: none;
+  background: transparent;
+  color: #fff;
+  text-align: left;
+  font-size: 22px;
+  padding: 14px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.drawer-link.active {
+  background: rgba(59, 130, 246, 0.16);
+  color: #60a5fa;
+}
+
+.drawer-footer {
+  margin-top: auto;
+  padding: 14px 12px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.drawer-footer .quadra-play {
+  justify-content: center;
+}
+
+.drawer-login {
+  display: block;
+  text-align: center;
 }
 
 
@@ -379,10 +511,6 @@ export default {
     display: none;
   }
 
-  .nav-links.active {
-    display: flex;
-  }
-
   .login-item {
     display: none;
   }
@@ -404,6 +532,13 @@ export default {
     font-size: 14px;
     text-decoration: none;
     z-index: 2000;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-overlay,
+  .mobile-drawer {
+    display: none;
   }
 }
 </style>

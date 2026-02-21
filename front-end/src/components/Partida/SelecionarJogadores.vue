@@ -1,15 +1,22 @@
 <template>
   <div v-if="aberto" class="modal-overlay" @click.self="$emit('fechar')">
     <div class="modal-content">
-      <h2>Selecione os Jogadores</h2>
+      <div class="modal-header">
+        <h2>Selecione os Jogadores</h2>
+        <button type="button" class="btn-close-x" @click="$emit('fechar')">x</button>
+      </div>
 
       <div class="colunas">
-        <!-- TIME 1 -->
         <div class="coluna">
           <h3>{{ time1Nome }}</h3>
 
           <div class="contador">
-            Selecionados: {{ selecionadosTime1.length }} / {{ regra.porTime }}
+            <template v-if="regraLivre">
+              Selecionados: {{ selecionadosTime1.length }}
+            </template>
+            <template v-else>
+              Selecionados: {{ selecionadosTime1.length }} / {{ regra.porTime }}
+            </template>
           </div>
 
           <div v-for="(jogadores, funcao) in jogadoresPorFuncaoTime1" :key="funcao">
@@ -17,9 +24,12 @@
 
             <div v-for="j in jogadores" :key="j.id" class="jogador-card">
               <label class="jogador-label">
-                <input type="checkbox" v-model="selecionadosTime1" :value="j.id" :disabled="selecionadosTime1.length >= regra.porTime &&
-                  !selecionadosTime1.includes(j.id)
-                  " />
+                <input
+                  type="checkbox"
+                  v-model="selecionadosTime1"
+                  :value="j.id"
+                  :disabled="!regraLivre && selecionadosTime1.length >= regra.porTime && !selecionadosTime1.includes(j.id)"
+                />
 
                 <div class="jogador-info">
                   <img :src="j.foto" alt="Foto" class="foto-jogador" />
@@ -32,12 +42,16 @@
           </div>
         </div>
 
-        <!-- TIME 2 -->
         <div class="coluna">
           <h3>{{ time2Nome }}</h3>
 
           <div class="contador">
-            Selecionados: {{ selecionadosTime2.length }} / {{ regra.porTime }}
+            <template v-if="regraLivre">
+              Selecionados: {{ selecionadosTime2.length }}
+            </template>
+            <template v-else>
+              Selecionados: {{ selecionadosTime2.length }} / {{ regra.porTime }}
+            </template>
           </div>
 
           <div v-for="(jogadores, funcao) in jogadoresPorFuncaoTime2" :key="funcao">
@@ -45,9 +59,12 @@
 
             <div v-for="j in jogadores" :key="j.id" class="jogador-card">
               <label class="jogador-label">
-                <input type="checkbox" v-model="selecionadosTime2" :value="j.id" :disabled="selecionadosTime2.length >= regra.porTime &&
-                  !selecionadosTime2.includes(j.id)
-                  " />
+                <input
+                  type="checkbox"
+                  v-model="selecionadosTime2"
+                  :value="j.id"
+                  :disabled="!regraLivre && selecionadosTime2.length >= regra.porTime && !selecionadosTime2.includes(j.id)"
+                />
 
                 <div class="jogador-info">
                   <img :src="j.foto" alt="Foto" class="foto-jogador" />
@@ -88,7 +105,7 @@ export default {
     time2Nome: String,
     regra: {
       type: Object,
-      required: true 
+      required: true
     }
   },
 
@@ -109,6 +126,9 @@ export default {
   },
 
   computed: {
+    regraLivre() {
+      return !!this.regra?.livre
+    },
     jogadoresPorFuncaoTime1() {
       return this.agruparPorFuncao(this.jogadoresTime1)
     },
@@ -123,7 +143,7 @@ export default {
         const funcao =
           jogador.funcao && jogador.funcao.nome
             ? jogador.funcao.nome
-            : 'Sem Função'
+            : 'Sem Funcao'
 
         if (!acc[funcao]) acc[funcao] = []
         acc[funcao].push(jogador)
@@ -132,31 +152,47 @@ export default {
     },
 
     confirmar() {
-      if (
-        this.selecionadosTime1.length !== this.regra.porTime ||
-        this.selecionadosTime2.length !== this.regra.porTime
-      ) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Número inválido de jogadores',
-          text: `Cada time deve ter exatamente ${this.regra.porTime} jogadores.`,
-          confirmButtonColor: '#3b82f6'
-        })
-        return
-      }
+      if (this.regraLivre) {
+        const minPorTime = Number(this.regra?.minPorTime || 1)
+        if (
+          this.selecionadosTime1.length < minPorTime ||
+          this.selecionadosTime2.length < minPorTime
+        ) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Numero invalido de jogadores',
+            text: `Cada time deve ter pelo menos ${minPorTime} jogador(es).`,
+            confirmButtonColor: '#3b82f6'
+          })
+          return
+        }
+      } else {
+        if (
+          this.selecionadosTime1.length !== this.regra.porTime ||
+          this.selecionadosTime2.length !== this.regra.porTime
+        ) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Numero invalido de jogadores',
+            text: `Cada time deve ter exatamente ${this.regra.porTime} jogadores.`,
+            confirmButtonColor: '#3b82f6'
+          })
+          return
+        }
 
-      const totalJogadores =
-        this.selecionadosTime1.length +
-        this.selecionadosTime2.length
+        const totalJogadores =
+          this.selecionadosTime1.length +
+          this.selecionadosTime2.length
 
-      if (totalJogadores !== this.regra.total) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Quantidade total incorreta',
-          text: `A partida deve ter exatamente ${this.regra.total} jogadores.`,
-          confirmButtonColor: '#3b82f6'
-        })
-        return
+        if (totalJogadores !== this.regra.total) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Quantidade total incorreta',
+            text: `A partida deve ter exatamente ${this.regra.total} jogadores.`,
+            confirmButtonColor: '#3b82f6'
+          })
+          return
+        }
       }
 
       this.$emit('confirmar', {
@@ -194,6 +230,30 @@ export default {
 .modal-content h2 {
   margin-bottom: 16px;
   color: #3b82f6;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-header h2 {
+  margin-bottom: 0;
+}
+
+.btn-close-x {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #3b82f6;
+  border-radius: 999px;
+  background: #fff;
+  color: #3b82f6;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
 }
 
 .contador {

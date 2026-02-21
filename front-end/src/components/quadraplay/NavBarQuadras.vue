@@ -222,6 +222,31 @@ export default {
 
 /* RESPONSIVO */
 @media (max-width: 768px) {
+  .navbar-container {
+    padding: 0 14px 0 10px;
+  }
+
+  .esquerda-section {
+    gap: 8px;
+  }
+
+  .logo-container {
+    margin-left: 34px;
+    gap: 8px;
+  }
+
+  .logo-img {
+    height: 50px;
+  }
+
+  .logo-text {
+    font-size: 20px;
+  }
+
+  .login {
+    padding: 6px 28px;
+  }
+
   .user-info {
     margin-right: 0;
     gap: 5px;

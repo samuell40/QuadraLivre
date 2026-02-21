@@ -61,9 +61,12 @@ export default {
     timeData: { type: Object, required: true },
     partidaId: { type: [String, Number], required: true },
     lado: { type: String, required: true },
+    podeEditar: { type: Boolean, default: true },
     setsAdversario: { type: Number, default: 0 },
     woAdversario: { type: Number, default: 0 },
-    partidaEncerradaGlobal: { type: Boolean, default: false }
+    partidaEncerradaGlobal: { type: Boolean, default: false },
+    maxSetsPartida: { type: Number, default: 5 },
+    maxPontosSet: { type: Number, default: 25 }
   },
 
   computed: {
@@ -85,8 +88,11 @@ export default {
 
     podeAumentarSets() {
       return (
+        this.podeEditar &&
+        !this.partidaEncerradaGlobal &&
         this.woAtual === 0 &&
-        this.woAdversario === 0
+        this.woAdversario === 0 &&
+        (this.setsVencidosAtual + this.setsAdversario) < this.maxSetsPartida
       )
     },
 
@@ -95,7 +101,12 @@ export default {
     },
 
     podeAumentarPontos() {
-      return this.woAtual === 0 && this.woAdversario === 0
+      return (
+        this.podeEditar &&
+        !this.partidaEncerradaGlobal &&
+        this.woAtual === 0 &&
+        this.woAdversario === 0
+      )
     },
 
     podeAumentarWo() {

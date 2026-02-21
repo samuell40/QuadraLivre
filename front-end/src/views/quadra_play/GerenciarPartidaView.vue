@@ -91,7 +91,9 @@
           </ul>
 
           <div v-if="partidasValidas.length === 0" class="vazio">
-            Nenhuma partida encontrada.
+            <button class="btn-add-partida-vazio" @click="abrirModalTipo">
+              Adicionar partida
+            </button>
           </div>
         </div>
       </div>
@@ -102,7 +104,10 @@
 
       <div v-if="mostrarModalStatus" class="modal-overlay" @click.self="fecharModalStatus">
         <div class="modal-content modal-status">
-          <h2 class="titulo-modal-status">Alterar status da partida</h2>
+          <div class="modal-header">
+            <h2 class="titulo-modal-status">Alterar status da partida</h2>
+            <button type="button" class="btn-close-x" @click="fecharModalStatus">x</button>
+          </div>
 
           <label class="label-status">Selecione o status</label>
 
@@ -114,7 +119,6 @@
 
           <div class="botoes">
             <button class="btn-save" @click="confirmarAlteracaoStatus">Salvar</button>
-            <button class="btn-cancel" @click="fecharModalStatus">Cancelar</button>
           </div>
         </div>
       </div>
@@ -751,6 +755,30 @@ export default {
   font-weight: bold;
 }
 
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-header h2 {
+  margin-bottom: 0;
+}
+
+.btn-close-x {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #3b82f6;
+  border-radius: 999px;
+  background: #fff;
+  color: #3b82f6;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
 .tipo-campeonato-lista {
   display: flex;
   flex-direction: column;
@@ -821,6 +849,23 @@ export default {
   font-style: italic;
   margin-top: 16px;
   text-align: center;
+}
+
+.btn-add-partida-vazio {
+  background-color: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 24px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.btn-add-partida-vazio:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
 }
 
 .modal-status {

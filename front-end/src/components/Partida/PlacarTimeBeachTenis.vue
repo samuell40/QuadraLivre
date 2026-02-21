@@ -65,6 +65,8 @@ export default {
     setsAdversario: { type: Number, default: 0 },
     woAdversario: { type: Number, default: 0 },
     partidaEncerradaGlobal: { type: Boolean, default: false },
+    maxSetsPartida: { type: Number, default: 5 },
+    maxPontosSet: { type: Number, default: 25 },
   },
 
   computed: {
@@ -94,7 +96,8 @@ export default {
         this.podeEditar &&
         !this.partidaEncerradaGlobal &&
         this.woAtual === 0 &&
-        this.woAdversario === 0
+        this.woAdversario === 0 &&
+        (this.setsVencidosAtual + this.setsAdversario) < this.maxSetsPartida
       )
     },
 

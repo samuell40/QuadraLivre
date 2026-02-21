@@ -27,6 +27,8 @@ function regrasPadraoPorModalidade(nomeModalidade) {
   if (grupo === 'VOLEI') {
     return {
       grupoRegras: 'VOLEI',
+      quantidadeSetsPartida: 5,
+      pontosPorSet: 25,
       regraPontosVitoria: 'VITORIA_2_SEMPRE',
       regraPontosDerrota: 'DERROTA_0_SEMPRE',
       pontosEmpate: 0,
@@ -618,6 +620,16 @@ async function retornarPartida(partidaId) {
       inicioPartida: true,
       status: true,
       modalidade: true,
+      campeonato: {
+        select: {
+          id: true,
+          nome: true,
+          regras: true,
+          modalidade: {
+            select: { nome: true }
+          }
+        }
+      },
       quadra: true,
       timeA: true,
       timeB: true,
@@ -666,6 +678,15 @@ async function retornarPartida(partidaId) {
     inicioPartida: partida.inicioPartida,
     status: partida.status,
     modalidade: partida.modalidade,
+    campeonato: partida.campeonato
+      ? {
+          ...partida.campeonato,
+          regras: normalizarRegrasCampeonato(
+            partida.campeonato.regras,
+            partida.campeonato.modalidade?.nome || partida.modalidade?.nome
+          )
+        }
+      : null,
     quadra: partida.quadra,
     timeA: partida.timeA,
     timeB: partida.timeB,
@@ -759,6 +780,22 @@ async function atualizarParcial(
   const isFutebol = modalidade.includes('futebol')
   const isFutsal = modalidade.includes('futsal')
   const isBeachTenis = modalidade.includes('beach') && modalidade.includes('tenis')
+  let regrasCampeonato = null
+
+  if (isVolei || isBeachTenis) {
+    const campeonato = await prisma.campeonato.findUnique({
+      where: { id: Number(partidaBase.campeonatoId) },
+      select: {
+        regras: true,
+        modalidade: { select: { nome: true } }
+      }
+    })
+
+    regrasCampeonato = normalizarRegrasCampeonato(
+      campeonato?.regras,
+      campeonato?.modalidade?.nome || partidaBase.modalidade?.nome
+    )
+  }
 
   const dataUpdate = {}
 
@@ -782,6 +819,53 @@ async function atualizarParcial(
     if (cartoesVermelhosTimeB !== undefined) dataUpdate.cartoesVermelhosTimeB = Number(cartoesVermelhosTimeB)
   }
 
+  if ((isVolei || isBeachTenis) && Array.isArray(sets)) {
+    const maxSets = Math.max(1, Number(regrasCampeonato?.quantidadeSetsPartida ?? 5))
+    const setsA = Number(dataUpdate.pontosTimeA ?? partidaBase.pontosTimeA ?? 0)
+    const setsB = Number(dataUpdate.pontosTimeB ?? partidaBase.pontosTimeB ?? 0)
+
+    if (setsA < 0 || setsB < 0) {
+      throw new Error('Quantidade de sets nao pode ser negativa.')
+    }
+
+    if (setsA > maxSets || setsB > maxSets || (setsA + setsB) > maxSets) {
+      throw new Error(`Quantidade de sets por partida excede o limite configurado (${maxSets}).`)
+    }
+
+    for (const set of sets) {
+      const numeroSet = Number(set.numero)
+      const pontosASet = Number(set.pontosA ?? 0)
+      const pontosBSet = Number(set.pontosB ?? 0)
+
+      if (numeroSet < 1 || numeroSet > maxSets) {
+        throw new Error(`Set invalido. O numero do set deve ficar entre 1 e ${maxSets}.`)
+      }
+
+      if (pontosASet < 0 || pontosBSet < 0) {
+        throw new Error('Pontos do set nao podem ser negativos.')
+      }
+
+      await prisma.setPartida.upsert({
+        where: {
+          partidaId_numero: {
+            partidaId,
+            numero: numeroSet
+          }
+        },
+        update: {
+          pontosA: pontosASet,
+          pontosB: pontosBSet
+        },
+        create: {
+          partidaId,
+          numero: numeroSet,
+          pontosA: pontosASet,
+          pontosB: pontosBSet
+        }
+      })
+    }
+  }
+
   await prisma.partida.update({
     where: { id: partidaId },
     data: dataUpdate
@@ -789,29 +873,6 @@ async function atualizarParcial(
 
   if (partidaBase.status === 'FINALIZADA') {
     await recalcularPlacarCampeonatoFase(partidaBase.campeonatoId, partidaBase.faseId)
-  }
-
-  if ((isVolei || isBeachTenis) && Array.isArray(sets)) {
-    for (const set of sets) {
-      await prisma.setPartida.upsert({
-        where: {
-          partidaId_numero: {
-            partidaId,
-            numero: Number(set.numero)
-          }
-        },
-        update: {
-          pontosA: Number(set.pontosA ?? 0),
-          pontosB: Number(set.pontosB ?? 0)
-        },
-        create: {
-          partidaId,
-          numero: Number(set.numero),
-          pontosA: Number(set.pontosA ?? 0),
-          pontosB: Number(set.pontosB ?? 0)
-        }
-      })
-    }
   }
 
   const partidaAtualizada = await prisma.partida.findUnique({

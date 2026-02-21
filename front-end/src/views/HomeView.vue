@@ -256,6 +256,9 @@
     </div>
     <VerificarLogin v-if="mostrarModalLogin" @fechar="mostrarModalLogin = false" @irParaLogin="irParaLogin"
       @loginComGoogle="loginComGoogle" />
+    <button v-if="mostrarBotaoTopo" type="button" class="btn-topo" @click="subirPagina">
+      ↑
+    </button>
     <Footer />
   </div>
 </template>
@@ -304,7 +307,8 @@ export default {
       mostrarModalLogin: false,
       mostrarModalPartida: false,
       partidaDetalhada: null,
-      loadingDetalhePartida: false
+      loadingDetalhePartida: false,
+      mostrarBotaoTopo: false
     }
   },
 
@@ -327,11 +331,21 @@ export default {
   },
 
   async mounted() {
+    window.addEventListener('scroll', this.atualizarVisibilidadeBotaoTopo, { passive: true })
     await this.carregarQuadras()
     await this.carregarCampeonatoMaisRecente()
   },
+  beforeUnmount() {
+    window.removeEventListener('scroll', this.atualizarVisibilidadeBotaoTopo)
+  },
 
   methods: {
+    atualizarVisibilidadeBotaoTopo() {
+      this.mostrarBotaoTopo = window.scrollY > 300
+    },
+    subirPagina() {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    },
     next() { if (this.$refs.carousel) this.$refs.carousel.next() },
     prev() { if (this.$refs.carousel) this.$refs.carousel.prev() },
 
@@ -719,6 +733,28 @@ p {
 .btn-prev:hover,
 .btn-next:hover {
   background-color: #eee;
+}
+
+.btn-topo {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 999px;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+  z-index: 1100;
+}
+
+.btn-topo:hover {
+  background: #2563eb;
 }
 
 .card {
@@ -1390,6 +1426,14 @@ p {
 }
 
 @media (max-width: 768px) {
+  .btn-topo {
+    right: 14px;
+    bottom: 14px;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+
   .tit_horario {
     font-size: 26px;
     margin-top: 20px;

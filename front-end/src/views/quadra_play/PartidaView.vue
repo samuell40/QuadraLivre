@@ -149,7 +149,10 @@ export default {
         timeData: this.time1,
         partidaId: this.partidaId,
         podeEditar: this.podeEditar,
-        placarId: this.placarIdTimeA
+        placarId: this.placarIdTimeA,
+        setsAdversario: Number(this.time2?.setsVencidos ?? 0),
+        maxSetsPartida: this.maxSetsPartida,
+        maxPontosSet: this.maxPontosSet
       }
     },
 
@@ -161,8 +164,27 @@ export default {
         timeData: this.time2,
         partidaId: this.partidaId,
         podeEditar: this.podeEditar,
-        placarId: this.placarIdTimeB
+        placarId: this.placarIdTimeB,
+        setsAdversario: Number(this.time1?.setsVencidos ?? 0),
+        maxSetsPartida: this.maxSetsPartida,
+        maxPontosSet: this.maxPontosSet
       }
+    },
+
+    regrasPartida() {
+      return (
+        this.partida?.campeonato?.regras ||
+        this.campeonato?.regras ||
+        {}
+      )
+    },
+
+    maxSetsPartida() {
+      return Math.max(1, Number(this.regrasPartida?.quantidadeSetsPartida ?? 5))
+    },
+
+    maxPontosSet() {
+      return Math.max(0, Number(this.regrasPartida?.pontosPorSet ?? 25))
     },
 
     isEmAndamento() {
@@ -328,7 +350,8 @@ export default {
         this.atualizarFlagAlteracao()
       } catch (error) {
         console.error('[atualizarParcial] erro:', error)
-        Swal.fire('Erro', 'error')
+        const msg = error.response?.data?.error || 'Nao foi possivel atualizar a partida.'
+        Swal.fire('Erro', msg, 'error')
       } finally {
         this.isSalvandoParcial = false
       }
@@ -437,12 +460,32 @@ export default {
       }
 
       if (campo === 'setsVencidos') {
+        if (d > 0) {
+          const totalSetsAtual = payload.pontosTimeA + payload.pontosTimeB
+          if (totalSetsAtual >= this.maxSetsPartida) return
+        }
         if (isA) payload.pontosTimeA = clamp0(payload.pontosTimeA + d)
         else payload.pontosTimeB = clamp0(payload.pontosTimeB + d)
       } else if (campo === 'pontosSet') {
         const setAtual = getOrCreateSetAtual()
+        if (d > 0) {
+          if (setAtualNum > this.maxSetsPartida) return
+        }
         if (isA) setAtual.pontosA = clamp0(setAtual.pontosA + d)
         else setAtual.pontosB = clamp0(setAtual.pontosB + d)
+
+        if (d > 0) {
+          const totalSetsAtual = payload.pontosTimeA + payload.pontosTimeB
+          const limitePontosSet = this.maxPontosSet
+
+          if (totalSetsAtual < this.maxSetsPartida && limitePontosSet >= 0) {
+            const pontosDoLado = isA ? setAtual.pontosA : setAtual.pontosB
+            if (pontosDoLado >= limitePontosSet) {
+              if (isA) payload.pontosTimeA = clamp0(payload.pontosTimeA + 1)
+              else payload.pontosTimeB = clamp0(payload.pontosTimeB + 1)
+            }
+          }
+        }
       } else if (campo === 'wo') {
         if (isA) payload.woTimeA = d > 0
         else payload.woTimeB = d > 0
@@ -504,6 +547,10 @@ export default {
       }
 
       if (campo === 'setsVencidos') {
+        if (d > 0) {
+          const totalSetsAtual = payload.pontosTimeA + payload.pontosTimeB
+          if (totalSetsAtual >= this.maxSetsPartida) return
+        }
         if (isA) payload.pontosTimeA = clamp0(payload.pontosTimeA + d)
         else payload.pontosTimeB = clamp0(payload.pontosTimeB + d)
 
@@ -511,8 +558,24 @@ export default {
 
       } else if (campo === 'pontosTieBreak') {
         const setAtual = getOrCreateSetAtual()
+        if (d > 0) {
+          if (setAtualNum > this.maxSetsPartida) return
+        }
         if (isA) setAtual.pontosA = clamp0(setAtual.pontosA + d)
         else setAtual.pontosB = clamp0(setAtual.pontosB + d)
+
+        if (d > 0) {
+          const totalSetsAtual = payload.pontosTimeA + payload.pontosTimeB
+          const limitePontosSet = this.maxPontosSet
+
+          if (totalSetsAtual < this.maxSetsPartida && limitePontosSet >= 0) {
+            const pontosDoLado = isA ? setAtual.pontosA : setAtual.pontosB
+            if (pontosDoLado >= limitePontosSet) {
+              if (isA) payload.pontosTimeA = clamp0(payload.pontosTimeA + 1)
+              else payload.pontosTimeB = clamp0(payload.pontosTimeB + 1)
+            }
+          }
+        }
       } else if (campo === 'wo') {
         if (isA) payload.woTimeA = d > 0
         else payload.woTimeB = d > 0

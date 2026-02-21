@@ -1,7 +1,10 @@
 <template>
   <div v-if="aberto" class="modal-overlay" @click.self="fecharModalAdicionarTime">
     <div class="modal-content">
-      <h2>Adicionar Time</h2>
+      <div class="modal-header">
+        <h2>Adicionar Time</h2>
+        <button type="button" class="btn-close-x" @click="fecharModalAdicionarTime">x</button>
+      </div>
       <form @submit.prevent="adicionarTime">
         <div class="form-group">
           <label>Modalidade:</label>
@@ -56,7 +59,6 @@
 
         <div class="buttons">
           <button type="submit" class="btn-save">Cadastrar</button>
-          <button type="button" class="btn-cancel" @click="fecharModalAdicionarTime">Cancelar</button>
         </div>
       </form>
     </div>
@@ -206,6 +208,30 @@ export default {
 .modal-content h2 {
   margin-bottom: 20px;
   color: #3b82f6;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-header h2 {
+  margin-bottom: 0;
+}
+
+.btn-close-x {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #3b82f6;
+  border-radius: 999px;
+  background: #fff;
+  color: #3b82f6;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
 }
 
 .form-group {

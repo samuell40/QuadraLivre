@@ -18,6 +18,8 @@ function regrasPadrao(grupo) {
   if (grupo === 'VOLEI') {
     return {
       grupoRegras: 'VOLEI',
+      quantidadeSetsPartida: 5,
+      pontosPorSet: 25,
       regraPontosVitoria: 'VITORIA_2_SEMPRE',
       regraPontosDerrota: 'DERROTA_0_SEMPRE',
       pontosEmpate: 0,

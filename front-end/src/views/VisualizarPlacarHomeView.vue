@@ -96,7 +96,7 @@
                 </tbody>
               </table>
 
-              <table v-else-if="['volei', 'volei de areia', 'futevolei'].includes(modalidadeNormalizada)"
+              <table v-else-if="['volei', 'volei de areia', 'futevolei', 'beach tenis', 'beach tennis'].includes(modalidadeNormalizada)"
                 class="placar">
                 <thead>
                   <tr>
@@ -157,7 +157,7 @@
             </div>
 
             <!-- ===== GLOSSÁRIO VÔLEI ===== -->
-            <div v-else-if="['volei', 'volei de areia', 'futevolei'].includes(modalidadeNormalizada)"
+            <div v-else-if="['volei', 'volei de areia', 'futevolei', 'beach tenis', 'beach tennis'].includes(modalidadeNormalizada)"
               class="glossario-placar">
               <strong>Glossário</strong>
               <ul>
@@ -231,7 +231,7 @@
                       {{ statusLabel(partidaDetalhada.status) }}
                     </span>
                   </p>
-                  <p v-if="!['volei', 'volei de areia', 'futevolei'].includes(
+                  <p v-if="!['volei', 'volei de areia', 'futevolei', 'beach tenis', 'beach tennis'].includes(
                     (partidaDetalhada?.modalidade?.nome || '')
                       .toLowerCase()
                       .normalize('NFD')
@@ -393,7 +393,7 @@ export default {
         .replace(/[\u0300-\u036f]/g, '')
     },
     isVolei() {
-      return ['volei', 'volei de areia', 'futevolei'].includes(this.modalidadeNormalizada)
+      return ['volei', 'volei de areia', 'futevolei', 'beach tenis', 'beach tennis'].includes(this.modalidadeNormalizada)
     },
 
     temScrollPartidas() {
@@ -425,7 +425,7 @@ export default {
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
 
-      const ehVolei = ['volei', 'volei de areia', 'futevolei'].includes(mod)
+      const ehVolei = ['volei', 'volei de areia', 'futevolei', 'beach tenis', 'beach tennis'].includes(mod)
 
       this.carregarFases(id)
 

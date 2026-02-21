@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div v-if="modelValue" class="modal-overlay" @click.self="fechar">
     <div class="modal-content">
       <h2>Configurações do campeonato</h2>
@@ -9,7 +9,7 @@
         </button>
 
         <button class="btn-tipo" @click="criteriosClassificacao">
-          Critérios de classificação
+          Criterios de Classificação
         </button>
 
         <button class="btn-tipo" @click="grupos">
@@ -28,12 +28,14 @@
   <!-- Modal para criar fase -->
   <div v-if="mostrarModalFase" class="modal-overlay" @click.self="fecharModalFase">
     <div class="modal-content modal-times">
-
-      <h2>Criar Nova Fase</h2>
+      <div class="modal-header">
+        <h2>Criar Nova Fase</h2>
+        <button type="button" class="btn-close-x" @click="fecharModalFase">x</button>
+      </div>
 
       <div class="filtros-topo">
         <label>Digite o nome da fase:</label>
-        <input v-model="nomeFase" type="text" placeholder="Ex: Eliminatórias" />
+        <input v-model="nomeFase" type="text" placeholder="Ex: Eliminatatorias" />
       </div>
 
       <label>
@@ -68,13 +70,15 @@
     </div>
   </div>
 
-  <!-- Modal de critérios de classificação -->
   <div v-if="mostrarModalCriterios" class="modal-overlay" @click.self="fecharModalCriterios">
     <div class="modal-content modal-criterios">
-      <h2>Critérios de classificação</h2>
+      <div class="modal-header">
+        <h2>Criterios de Classificação</h2>
+        <button type="button" class="btn-close-x" @click="fecharModalCriterios">x</button>
+      </div>
 
       <p class="descricao">
-        Arraste para definir a ordem de classificação
+        Arraste para definir a ordem de classificaÃ§Ã£o
       </p>
 
       <div class="lista-criterios">
@@ -82,7 +86,6 @@
           @dragstart="iniciarArraste(indice)" @dragover.prevent @drop="soltar(indice)">
           <span class="ordem">{{ indice + 1 }}</span>
           <span class="nome">{{ criterio.label }}</span>
-          <span class="drag">☰</span>
         </div>
       </div>
 
@@ -93,7 +96,7 @@
       </div>
 
       <div v-if="classificacao.length" class="classificacao-atual">
-        <h3>Classificação atual:</h3>
+        <h3>ClassificaÃ§Ã£o atual:</h3>
         <div v-for="(time, index) in classificacao" :key="time.timeId">
           {{ index + 1 }} - {{ time.time.nome }} - {{ time.pontuacao }} pts
         </div>
@@ -163,7 +166,7 @@ export default {
         }
 
       } catch (err) {
-        console.error("Erro ao carregar critérios:", err)
+        console.error("Erro ao carregar critÃ©rios:", err)
         this.criterios = []
       }
     },
@@ -216,7 +219,7 @@ export default {
         this.times = data
       } catch (err) {
         console.error(err)
-        Swal.fire("Erro", "Não foi possível carregar os times.", "error")
+        Swal.fire("Erro", "NÃ£o foi possÃ­vel carregar os times.", "error")
       }
     },
 
@@ -279,6 +282,30 @@ export default {
   margin-bottom: 20px;
   color: #3b82f6;
   font-weight: bold;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-header h2 {
+  margin-bottom: 0;
+}
+
+.btn-close-x {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #3b82f6;
+  border-radius: 999px;
+  background: #fff;
+  color: #3b82f6;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
 }
 
 .tipo-campeonato-lista {
@@ -424,11 +451,15 @@ export default {
 .criterio-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px;
+  gap: 12px;
+  padding: 12px 14px;
   border-bottom: 1px solid #e5e7eb;
   cursor: grab;
   background: white;
+}
+
+.criterio-item:last-child {
+  border-bottom: none;
 }
 
 .criterio-item:hover {
@@ -436,17 +467,29 @@ export default {
 }
 
 .ordem {
-  font-weight: bold;
-  width: 30px;
-  color: #3b82f6;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex: 0 0 auto;
 }
 
 .nome {
   flex: 1;
+  color: #0f172a;
+  font-weight: 600;
 }
 
 .drag {
   cursor: grab;
   color: #6b7280;
+  font-size: 18px;
 }
 </style>
+

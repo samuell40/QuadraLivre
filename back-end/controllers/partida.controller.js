@@ -55,7 +55,7 @@ async function atualizarParcialController(req, res) {
     return res.json(partidaAtualizada);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Erro ao atualizar a partida" });
+    return res.status(400).json({ error: err.message || "Erro ao atualizar a partida" });
   }
 }
 

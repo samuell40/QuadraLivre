@@ -1,7 +1,7 @@
 <template>
   <div v-if="mostrarModalTipo" class="modal-overlay" @click.self="cancelarCadastro">
     <div class="modal-content">
-      <h2>Escolha o Tipo de Campeonato</h2>
+        <h2>Escolha o Tipo de Campeonato</h2>
 
       <div class="tipo-campeonato-lista">
         <button v-for="tipo in tiposCampeonato" :key="tipo" class="btn-tipo" @click="selecionarTipo(tipo)">
@@ -18,7 +18,10 @@
   <!--MODAL DE CADASTRO -->
   <div v-if="aberto && !mostrarModalTipo" class="modal-overlay" @click.self="cancelarCadastro">
     <div class="modal-content">
-      <h2>Adicionar Campeonato</h2>
+      <div class="modal-header">
+        <h2>Adicionar Campeonato</h2>
+        <button type="button" class="btn-close-x" @click="cancelarCadastro">x</button>
+      </div>
 
       <form @submit.prevent="abrirModalTimes">
         <div class="form-group">
@@ -77,7 +80,6 @@
 
         <div class="botoes">
           <button type="submit" class="btn-save">Continuar</button>
-          <button type="button" class="btn-cancel" @click="cancelarCadastro">Cancelar</button>
         </div>
       </form>
     </div>
@@ -86,7 +88,10 @@
   <!--MODAL DE TIMES -->
   <div v-if="mostrarModalTimes" class="modal-overlay" @click.self="mostrarModalTimes = false">
     <div class="modal-content modal-times">
-      <h2>Selecione os Times</h2>
+      <div class="modal-header">
+        <h2>Selecione os Times</h2>
+        <button type="button" class="btn-close-x" @click="mostrarModalTimes = false">x</button>
+      </div>
 
       <div class="contador">{{ timesSelecionados.length }} selecionado(s)</div>
 
@@ -107,7 +112,6 @@
 
       <div class="botoes">
         <button class="btn-save" @click="finalizarCadastro">Criar Campeonato</button>
-        <button class="btn-cancel" @click="mostrarModalTimes = false">Voltar</button>
       </div>
     </div>
   </div>
@@ -316,6 +320,30 @@ export default {
   margin-bottom: 20px;
   color: #3b82f6;
   font-weight: bold;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-header h2 {
+  margin-bottom: 0;
+}
+
+.btn-close-x {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #3b82f6;
+  border-radius: 999px;
+  background: #fff;
+  color: #3b82f6;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
 }
 
 .tipo-campeonato-lista {

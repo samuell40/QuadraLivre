@@ -1,7 +1,10 @@
 <template>
   <div v-if="aberto" class="modal-overlay" @click.self="fecharModal">
     <div class="modal-content">
-      <h2>Gerenciar Jogadores - {{ time?.nome }}</h2>
+      <div class="modal-header">
+        <h2>Gerenciar Jogadores - {{ time?.nome }}</h2>
+        <button type="button" class="btn-close-x" @click="fecharModal">x</button>
+      </div>
 
       <div class="abas-container">
         <div class="aba" :class="{ ativa: acaoLocal === 'adicionarExistente' }"
@@ -141,10 +144,6 @@
           (acaoLocal === 'adicionarMassa' && !nomesJogadoresMassa)" @click="confirmar" class="btn-save1">
           Confirmar
         </button>
-
-        <button @click="fecharModal" :class="['btn-cancel-placar', !acaoLocal ? 'btn-cancel-ativo' : '']">
-          Cancelar
-        </button>
       </div>
 
     </div>
@@ -164,7 +163,7 @@ export default {
 
   data() {
     return {
-      acaoLocal: '',
+      acaoLocal: 'adicionarExistente',
       nomeJogador: '',
       buscaJogador: '',
       buscaUsuario: '',
@@ -216,9 +215,12 @@ export default {
   },
   watch: {
     aberto(novo) {
-      if (novo && this.time?.id) {
-        this.carregarJogadores();
-        this.carregarUsuariosDisponiveis();
+      if (novo) {
+        this.acaoLocal = 'adicionarExistente';
+        if (this.time?.id) {
+          this.carregarJogadores();
+          this.carregarUsuariosDisponiveis();
+        }
       }
     },
     time(novo) {
@@ -449,7 +451,7 @@ export default {
       }
     },
     fecharModal() {
-      this.acaoLocal = ''
+      this.acaoLocal = 'adicionarExistente'
       this.nomeJogador = ''
       this.arquivoFoto = null
       this.jogadorSelecionado = null
@@ -495,6 +497,30 @@ export default {
   margin-bottom: 20px;
   color: #3b82f6;
   text-align: center;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-header h2 {
+  margin-bottom: 0;
+}
+
+.btn-close-x {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #3b82f6;
+  border-radius: 999px;
+  background: #fff;
+  color: #3b82f6;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
 }
 
 .dropdown {

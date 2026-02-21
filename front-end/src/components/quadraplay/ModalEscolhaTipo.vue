@@ -23,7 +23,10 @@
   <!-- MODAL DE CRIAR PARTIDA -->
   <div v-if="mostrarModalPartida" class="modal-overlay" @click.self="mostrarModalPartida = false">
     <div class="modal-content modal-times">
-      <h2>Criar Partida</h2>
+      <div class="modal-header">
+        <h2>Criar Partida</h2>
+        <button type="button" class="btn-close-x" @click="mostrarModalPartida = false">x</button>
+      </div>
 
       <div class="filtros-linha">
         <div class="filtros-topo">
@@ -122,7 +125,10 @@
 
   <div v-if="mostrarModalRodada" class="modal-overlay" @click.self="mostrarModalRodada = false">
     <div class="modal-content modal-times">
-      <h2>Criar Nova Rodada</h2>
+      <div class="modal-header">
+        <h2>Criar Nova Rodada</h2>
+        <button type="button" class="btn-close-x" @click="mostrarModalRodada = false">x</button>
+      </div>
       <div class="filtros-topo">
         <label for="faseSelect">Selecione a fase:</label>
         <select id="faseSelect" v-model="faseIdSelecionada">
@@ -227,8 +233,8 @@ export default {
       const VOLEI = new Set([3, 5, 6])
       const BEACH_TENIS = new Set([4])
       if (FUTEBOL.has(id)) return { porTime: 11, total: 22 }
-      if (VOLEI.has(id)) return { porTime: 6, total: 12 }
-      if (BEACH_TENIS.has(id)) return { porTime: 2, total: 4 }
+      if (VOLEI.has(id)) return { livre: true, minPorTime: 1 }
+      if (BEACH_TENIS.has(id)) return { livre: true, minPorTime: 1 }
 
       return { porTime: 11, total: 22 }
     }
@@ -376,20 +382,30 @@ export default {
         const BEACH_TENIS = new Set([4])
         const regra =
           FUTEBOL.has(modalidadeIdNum) ? { porTime: 11, total: 22 } :
-            VOLEI.has(modalidadeIdNum) ? { porTime: 6, total: 12 } :
-              BEACH_TENIS.has(modalidadeIdNum) ? { porTime: 2, total: 4 } :
+            VOLEI.has(modalidadeIdNum) ? { livre: true, minPorTime: 1 } :
+              BEACH_TENIS.has(modalidadeIdNum) ? { livre: true, minPorTime: 1 } :
                 { porTime: 11, total: 22 }
 
         const idsTimeA = selecao?.time1 || []
         const idsTimeB = selecao?.time2 || []
 
-        if (idsTimeA.length !== regra.porTime || idsTimeB.length !== regra.porTime) {
-          Swal.fire(
-            'Erro',
-            `Para esta modalidade, selecione exatamente ${regra.porTime} jogador(es) por time.`,
-            'error'
-          )
-          return
+        if (regra.livre) {
+          const min = Number(regra.minPorTime || 1)
+          if (idsTimeA.length < min || idsTimeB.length < min) {
+            Swal.fire(
+              'Erro',
+              `Selecione pelo menos ${min} jogador(es) por time.`,
+              'error'
+            )
+            return
+          }
+        } else if (idsTimeA.length !== regra.porTime || idsTimeB.length !== regra.porTime) {
+            Swal.fire(
+              'Erro',
+              `Para esta modalidade, selecione exatamente ${regra.porTime} jogador(es) por time.`,
+              'error'
+            )
+            return
         }
 
         const payload = {
@@ -464,6 +480,30 @@ export default {
   margin-bottom: 20px;
   color: #3b82f6;
   font-weight: bold;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-header h2 {
+  margin-bottom: 0;
+}
+
+.btn-close-x {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #3b82f6;
+  border-radius: 999px;
+  background: #fff;
+  color: #3b82f6;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
 }
 
 .tipo-campeonato-lista {
