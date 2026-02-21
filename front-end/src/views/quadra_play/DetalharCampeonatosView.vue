@@ -67,7 +67,7 @@ export default {
   padding: 32px;
   margin-top: 70px;
   margin-left: 250px;
-  transition: margin-left 0.3s ease;
+  transition: margin-left 0.3s ease, padding 0.3s ease;
 }
 
 .conteudo.collapsed {
@@ -76,9 +76,10 @@ export default {
 
 .title {
   color: #3b82f6;
-  font-size: 28px;
+  font-size: 50px;
   font-weight: bold;
   margin-bottom: 20px;
+  line-height: 1.1;
 }
 
 .card-quadra {
@@ -130,12 +131,43 @@ export default {
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .conteudo,
+  .conteudo.collapsed {
+    margin-left: 0;     
+    padding: 16px;
   }
 
-  100% {
-    transform: rotate(360deg);
+  .title {
+    font-size: 35px;
+    margin-bottom: 14px;
+  }
+
+  .card-quadra {
+    height: 220px;
+    border-radius: 12px;
+  }
+
+  .overlay {
+    padding: 12px;
+  }
+
+  .campeonato-nome {
+    font-size: 18px;
+  }
+
+  .loader-container-centralizado {
+    margin-top: 90px;
+  }
+
+  .loader {
+    width: 64px;
+    height: 64px;
+    border-width: 5px;
   }
 }
 </style>

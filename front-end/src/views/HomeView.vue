@@ -1339,7 +1339,6 @@ p {
 
 .status-finalizada {
   color: #dc2626;
-  /* vermelho */
   font-weight: bold;
   background: rgba(220, 38, 38, 0.12);
   padding: 2px 8px;
@@ -1348,7 +1347,6 @@ p {
 
 .status-cancelada {
   color: #dc2626;
-  /* vermelho também */
   font-weight: bold;
   background: rgba(220, 38, 38, 0.08);
   padding: 2px 8px;

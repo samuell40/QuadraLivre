@@ -3,7 +3,11 @@
     <NavBarHome />
 
     <div class="conteudo">
-      <h1 class="title">Campeonatos</h1>
+      <h1 class="title">
+        <span v-if="campeonatoSelecionado" class="titulo-campeonato-selecionado">
+          {{ campeonatoSelecionado.nome }}
+        </span>
+      </h1>
       <div v-if="isLoading" class="loader"></div>
       <div v-else>
         <div class="abas-container">
@@ -228,7 +232,13 @@
                     </span>
 
                   </p>
-                  <p v-if="!isVolei"><strong>Faltas:</strong>
+                  <p v-if="!['volei', 'volei de areia', 'futevolei'].includes(
+                    (partidaDetalhada?.modalidade?.nome || '')
+                      .toLowerCase()
+                      .normalize('NFD')
+                      .replace(/[\u0300-\u036f]/g, '')
+                  )">
+                    <strong>Faltas:</strong>
                     {{ partidaDetalhada.faltasTimeA }} x {{ partidaDetalhada.faltasTimeB }}
                   </p>
 
@@ -610,7 +620,7 @@ export default {
 }
 
 .title {
-  font-size: 30px;
+  font-size: 50px;
   color: #3b82f6;
   font-weight: bold;
   margin-top: 2px;
@@ -1202,6 +1212,12 @@ export default {
   margin: 20px 0;
 }
 
+.time-mobile-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #3b82f6;
+}
+
 .placar-modal .time {
   display: flex;
   flex-direction: column;
@@ -1480,6 +1496,7 @@ export default {
 }
 
 @media (max-width: 768px) {
+
   .navbar-container {
     padding: 0 16px;
   }
@@ -1509,19 +1526,18 @@ export default {
     display: flex;
   }
 
-  /* ===== CONTEÚDO ===== */
   .conteudo {
     padding: 16px;
   }
 
   .title {
-    font-size: 22px;
+    font-size: 40px;
     margin-top: 10px;
   }
 
   .abas-container {
-    flex-direction: column;
-    grid-template-columns: repeat(4, 1fr);
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
   }
 
@@ -1531,19 +1547,25 @@ export default {
   }
 
   .placar {
-    min-width: 0;
-    /* remove scroll horizontal */
+    min-width: 600px;
     width: 100%;
   }
 
+  .placar-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .placar thead th {
-    font-size: 13px;
+    font-size: 12px;
     padding: 8px 6px;
+    white-space: nowrap;
   }
 
   .placar tbody td {
     font-size: 12px;
     padding: 6px 8px;
+    white-space: nowrap;
   }
 
   .time-info {
@@ -1551,8 +1573,8 @@ export default {
   }
 
   .time-image {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
   }
 
   .nome-time {
@@ -1561,28 +1583,16 @@ export default {
 
   .posicao {
     font-size: 12px;
-    min-width: 20px;
+    min-width: 18px;
   }
 
   .placar-table {
     max-height: 50vh;
   }
 
-  /* ===== MODAL ===== */
-  .modal-partida {
-    width: 95%;
-    max-height: 90vh;
-    overflow-y: auto;
-    padding: 16px;
-  }
-
-  .placar-modal {
-    flex-direction: column;
-    gap: 12px;
-  }
-
   .placar-e-partidas {
     flex-direction: column;
+    gap: 20px;
   }
 
   .partidas-wrapper {
@@ -1593,22 +1603,89 @@ export default {
   .placar-wrapper {
     order: 2;
     width: 100%;
+    min-width: 0;
   }
 
-  /* ===== JOGADORES ===== */
+  /* ===== MODAL PARTIDA ===== */
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 10px;
+  }
+
+  .modal-partida {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    max-height: 92vh;
+    overflow-y: auto;
+    padding: 16px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .modal-partida h2 {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  /* ===== MODAL PARTIDA ===== */
+  .placar-modal {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .placar-modal .time {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 13px;
+  }
+
+  .placar-modal img {
+    width: 38px;
+    height: 38px;
+  }
+
+  .resultado {
+    font-size: 26px;
+    font-weight: bold;
+  }
+
   .jogadores-container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
+    max-height: none;
+    overflow: visible;
   }
 
   .jogador-item {
     gap: 8px;
+    align-items: flex-start;
   }
 
   .foto-jogador {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
+  }
+
+  .dados-jogador .nome {
+    font-size: 13px;
+  }
+
+  .estatisticas {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .btn-cancel-placar {
+    position: sticky;
+    bottom: 0;
+    margin-top: 12px;
+    border-radius: 14px;
+    font-size: 14px;
   }
 
   .btn-voltar-mobile {
