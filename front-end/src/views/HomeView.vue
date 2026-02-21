@@ -999,9 +999,23 @@ p {
 }
 
 @keyframes statusDotPulse {
-  0%   { transform: scale(0.9); opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0.7); }
-  70%  { transform: scale(1.2); opacity: 0.7; box-shadow: 0 0 0 8px rgba(34,197,94,0); }
-  100% { transform: scale(0.9); opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  0% {
+    transform: scale(0.9);
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+
+  70% {
+    transform: scale(1.2);
+    opacity: 0.7;
+    box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+  }
+
+  100% {
+    transform: scale(0.9);
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
 }
 
 .status-topo.encerrada {
@@ -1503,7 +1517,7 @@ p {
 
   .modal-partida h2 {
     font-size: 22px;
-    text-align: center;
+    text-align: left;
   }
 
   .infos p {

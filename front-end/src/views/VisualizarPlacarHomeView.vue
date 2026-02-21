@@ -230,7 +230,6 @@
                     <span :class="statusClass(partidaDetalhada, 'text')">
                       {{ statusLabel(partidaDetalhada.status) }}
                     </span>
-
                   </p>
                   <p v-if="!['volei', 'volei de areia', 'futevolei'].includes(
                     (partidaDetalhada?.modalidade?.nome || '')
@@ -241,7 +240,6 @@
                     <strong>Faltas:</strong>
                     {{ partidaDetalhada.faltasTimeA }} x {{ partidaDetalhada.faltasTimeB }}
                   </p>
-
                 </div>
 
                 <div class="placar-modal">
@@ -1496,7 +1494,6 @@ export default {
 }
 
 @media (max-width: 768px) {
-
   .navbar-container {
     padding: 0 16px;
   }
@@ -1606,7 +1603,6 @@ export default {
     min-width: 0;
   }
 
-  /* ===== MODAL PARTIDA ===== */
   .modal-overlay {
     align-items: flex-end;
     padding: 10px;
@@ -1619,15 +1615,13 @@ export default {
     max-height: 92vh;
     overflow-y: auto;
     padding: 16px;
-    border-radius: 16px 16px 0 0;
+    border-radius: 16px 16px;
   }
 
   .modal-partida h2 {
-    font-size: 18px;
-    text-align: center;
+    text-align: left;
   }
 
-  /* ===== MODAL PARTIDA ===== */
   .placar-modal {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
@@ -1678,14 +1672,6 @@ export default {
   .estatisticas {
     flex-wrap: wrap;
     gap: 8px;
-  }
-
-  .btn-cancel-placar {
-    position: sticky;
-    bottom: 0;
-    margin-top: 12px;
-    border-radius: 14px;
-    font-size: 14px;
   }
 
   .btn-voltar-mobile {
