@@ -113,6 +113,12 @@ import api from '@/axios'
 import NavBarHome from '@/components/NavBarHome.vue'
 import TabelaClassificacao from '@/components/quadraplay/TabelaClassificacao.vue'
 import ListaPartidas from '@/components/quadraplay/ListaPartidas.vue'
+import {
+  EVENTO_CAMPEONATO_ATUALIZADO,
+  obterSocket,
+  inscreverCampeonatoSocket,
+  desinscreverCampeonatoSocket
+} from '@/services/socket'
 
 export default {
   name: 'VisualizarPlacarHome',
@@ -130,7 +136,12 @@ export default {
       timesPlacar: null,
       isLoading: false,
       artilharia: [],
-      loadingArtilharia: false
+      loadingArtilharia: false,
+      socket: null,
+      socketCampeonatoId: null,
+      onSocketAtualizacao: null,
+      socketTimerPartidas: null,
+      socketTimerPlacar: null
     }
   },
 
@@ -146,6 +157,7 @@ export default {
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
     },
+
     isVolei() {
       return ['volei', 'volei de areia', 'futevolei', 'beach tenis', 'beach tennis'].includes(this.modalidadeNormalizada)
     },
@@ -156,6 +168,89 @@ export default {
   },
 
   methods: {
+    conectarSocket() {
+      this.socket = obterSocket()
+
+      if (!this.onSocketAtualizacao) {
+        this.onSocketAtualizacao = (payload) => this.tratarAtualizacaoCampeonato(payload)
+      }
+
+      this.socket.off(EVENTO_CAMPEONATO_ATUALIZADO, this.onSocketAtualizacao)
+      this.socket.on(EVENTO_CAMPEONATO_ATUALIZADO, this.onSocketAtualizacao)
+    },
+
+    desconectarSocket() {
+      if (this.socket && this.onSocketAtualizacao) {
+        this.socket.off(EVENTO_CAMPEONATO_ATUALIZADO, this.onSocketAtualizacao)
+      }
+
+      if (this.socketCampeonatoId) {
+        desinscreverCampeonatoSocket(this.socketCampeonatoId)
+      }
+
+      this.socketCampeonatoId = null
+      this.onSocketAtualizacao = null
+    },
+
+    inscreverSocketAtual(campeonatoId) {
+      const id = Number(campeonatoId)
+      if (!id) return
+
+      if (this.socketCampeonatoId && this.socketCampeonatoId !== id) {
+        desinscreverCampeonatoSocket(this.socketCampeonatoId)
+      }
+
+      inscreverCampeonatoSocket(id)
+      this.socketCampeonatoId = id
+    },
+
+    agendarAtualizacaoPartidasSocket() {
+      clearTimeout(this.socketTimerPartidas)
+      this.socketTimerPartidas = setTimeout(() => {
+        this.carregarPartidasPorRodada()
+      }, 150)
+    },
+
+    agendarAtualizacaoPlacarSocket() {
+      clearTimeout(this.socketTimerPlacar)
+      this.socketTimerPlacar = setTimeout(() => {
+        if (this.campeonatoAtivo) this.carregarPlacar(this.campeonatoAtivo)
+      }, 150)
+    },
+
+    tratarAtualizacaoCampeonato(payload) {
+      const campeonatoEvento = Number(payload?.campeonatoId)
+      const campeonatoAtual = Number(this.campeonatoAtivo)
+
+      if (!campeonatoEvento || !campeonatoAtual || campeonatoEvento !== campeonatoAtual) {
+        return
+      }
+
+      const tipo = String(payload?.tipo || '')
+      const faseEvento = Number(payload?.faseId)
+      const rodadaEvento = Number(payload?.rodadaId)
+
+      const mesmaFase = !faseEvento || Number(this.faseSelecionada) === faseEvento
+      const mesmaRodada = !rodadaEvento || Number(this.rodadaSelecionada) === rodadaEvento
+
+      if (tipo === 'GOL_PARTIDA') {
+        if (mesmaFase && mesmaRodada) {
+          this.agendarAtualizacaoPartidasSocket()
+        }
+        return
+      }
+
+      if (['PARTIDA_CRIADA', 'PARTIDA_FINALIZADA', 'CLASSIFICACAO_ATUALIZADA', 'STATUS_PARTIDA_ATUALIZADO'].includes(tipo)) {
+        if (mesmaFase && mesmaRodada) {
+          this.agendarAtualizacaoPartidasSocket()
+        }
+
+        if (tipo !== 'PARTIDA_CRIADA' && mesmaFase) {
+          this.agendarAtualizacaoPlacarSocket()
+        }
+      }
+    },
+
     selecionarCampeonato(id) {
       this.campeonatoAtivo = id
       this.fases = []
@@ -164,6 +259,9 @@ export default {
       this.rodadaSelecionada = ''
       this.partidas = []
       this.timesPlacar = null
+
+      this.inscreverSocketAtual(id)
+
       const camp = this.campeonatos.find(c => c.id === id)
       const mod = (camp?.modalidade?.nome || '')
         .toLowerCase()
@@ -298,7 +396,14 @@ export default {
   },
 
   mounted() {
+    this.conectarSocket()
     this.carregarCampeonatos()
+  },
+
+  beforeUnmount() {
+    clearTimeout(this.socketTimerPartidas)
+    clearTimeout(this.socketTimerPlacar)
+    this.desconectarSocket()
   }
 }
 </script>
@@ -504,9 +609,3 @@ export default {
   }
 }
 </style>
-
-
-
-
-
-

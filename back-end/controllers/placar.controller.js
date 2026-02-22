@@ -1,4 +1,5 @@
 const placarService = require('../services/placar.service');
+const { emitirAtualizacaoCampeonato } = require('../socket');
 
 async function atualizarPlacarController(req, res) {
   try {
@@ -55,6 +56,11 @@ async function salvarOrdemController(req, res) {
       campeonatoId,
       ordem
     )
+
+    emitirAtualizacaoCampeonato({
+      tipo: 'CLASSIFICACAO_ATUALIZADA',
+      campeonatoId: Number(campeonatoId)
+    })
 
     return res.json({
       message: "Ordem salva com sucesso",

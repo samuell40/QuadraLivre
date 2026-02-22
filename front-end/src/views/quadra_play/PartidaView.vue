@@ -764,7 +764,7 @@ export default {
   flex: 1;
   padding: 32px;
   margin-left: 250px;
-  padding-top: 102px;
+  padding-top: 78px;
 }
 
 .conteudo.collapsed {
@@ -775,7 +775,7 @@ export default {
   font-size: 30px;
   color: #3b82f6;
   font-weight: bold;
-  margin-top: 12px;
+  margin-top: 20px;
 }
 
 .badge-status {
@@ -787,6 +787,7 @@ export default {
   border-radius: 999px;
   font-weight: 800;
   font-size: 20px;
+   margin-top: 20px;
 }
 
 .badge-ao-vivo {
@@ -889,7 +890,7 @@ export default {
   .conteudo {
     margin-left: 0;
     padding: 16px;
-    padding-top: 90px;
+    padding-top: 76px;
   }
 
   .conteudo.collapsed {
@@ -906,7 +907,7 @@ export default {
 
   .title {
     font-size: 22px;
-    margin-top: 8px;
+    margin-top: 0;
     margin-right: 10px;
     flex: 1;
     min-width: 0;

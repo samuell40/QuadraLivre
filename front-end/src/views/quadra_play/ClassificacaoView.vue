@@ -146,6 +146,12 @@ import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
 import { carregarCampeonato } from '@/utils/persistirCampeonato'
 import ModalConfiguracoesPlacar from '@/components/quadraplay/ModalConfiguracoesPlacar.vue'
 import api from '@/axios'
+import {
+  EVENTO_CAMPEONATO_ATUALIZADO,
+  obterSocket,
+  inscreverCampeonatoSocket,
+  desinscreverCampeonatoSocket
+} from '@/services/socket'
 
 export default {
   name: 'ClassificacaoView',
@@ -159,7 +165,11 @@ export default {
       faseSelecionada: '',
       timesPlacar: null,
       isLoading: true,
-      modalConfiguracoes: false
+      modalConfiguracoes: false,
+      socket: null,
+      socketCampeonatoId: null,
+      onSocketAtualizacao: null,
+      socketTimerPlacar: null
     }
   },
 
@@ -188,9 +198,12 @@ export default {
   },
 
   async mounted() {
+    this.conectarSocket()
+
     try {
       this.campeonato = await carregarCampeonato(this.$route)
       if (this.campeonato?.id) {
+        this.inscreverSocketAtual(this.campeonato.id)
         await this.carregarFases()
       } else {
         this.timesPlacar = []
@@ -204,7 +217,74 @@ export default {
     }
   },
 
+  beforeUnmount() {
+    clearTimeout(this.socketTimerPlacar)
+    this.desconectarSocket()
+  },
+
   methods: {
+    conectarSocket() {
+      this.socket = obterSocket()
+
+      if (!this.onSocketAtualizacao) {
+        this.onSocketAtualizacao = (payload) => this.tratarAtualizacaoCampeonato(payload)
+      }
+
+      this.socket.off(EVENTO_CAMPEONATO_ATUALIZADO, this.onSocketAtualizacao)
+      this.socket.on(EVENTO_CAMPEONATO_ATUALIZADO, this.onSocketAtualizacao)
+    },
+
+    desconectarSocket() {
+      if (this.socket && this.onSocketAtualizacao) {
+        this.socket.off(EVENTO_CAMPEONATO_ATUALIZADO, this.onSocketAtualizacao)
+      }
+
+      if (this.socketCampeonatoId) {
+        desinscreverCampeonatoSocket(this.socketCampeonatoId)
+      }
+
+      this.socketCampeonatoId = null
+      this.onSocketAtualizacao = null
+    },
+
+    inscreverSocketAtual(campeonatoId) {
+      const id = Number(campeonatoId)
+      if (!id) return
+
+      if (this.socketCampeonatoId && this.socketCampeonatoId !== id) {
+        desinscreverCampeonatoSocket(this.socketCampeonatoId)
+      }
+
+      inscreverCampeonatoSocket(id)
+      this.socketCampeonatoId = id
+    },
+
+    agendarAtualizacaoPlacarSocket() {
+      clearTimeout(this.socketTimerPlacar)
+      this.socketTimerPlacar = setTimeout(() => {
+        this.carregarPlacarPorFase()
+      }, 150)
+    },
+
+    tratarAtualizacaoCampeonato(payload) {
+      const campeonatoEvento = Number(payload?.campeonatoId)
+      const campeonatoAtual = Number(this.campeonato?.id)
+
+      if (!campeonatoEvento || !campeonatoAtual || campeonatoEvento !== campeonatoAtual) {
+        return
+      }
+
+      const tipo = String(payload?.tipo || '')
+      const faseEvento = Number(payload?.faseId)
+      const mesmaFase = !faseEvento || Number(this.faseSelecionada) === faseEvento
+
+      if (['PARTIDA_FINALIZADA', 'CLASSIFICACAO_ATUALIZADA', 'STATUS_PARTIDA_ATUALIZADO'].includes(tipo)) {
+        if (mesmaFase) {
+          this.agendarAtualizacaoPlacarSocket()
+        }
+      }
+    },
+
     abrirConfiguracoes() {
       this.modalConfiguracoes = true
     },

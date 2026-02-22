@@ -14,39 +14,45 @@
       </div>
     </div>
 
-    <div class="box">
-      <p>Cartão Amarelo</p>
-      <div class="controls">
-        <button @click="abrirModalJogadores('amarelo')">−</button>
-        <span class="valor">{{ timeData?.cartaoamarelo ?? 0 }}</span>
-        <button @click="abrirModalJogadores('amarelo')">+</button>
+    <!-- LINHA: Amarelo + Vermelho -->
+    <div class="row-2">
+      <div class="box">
+        <p>Cartão Amarelo</p>
+        <div class="controls">
+          <button @click="abrirModalJogadores('amarelo')">−</button>
+          <span class="valor">{{ timeData?.cartaoamarelo ?? 0 }}</span>
+          <button @click="abrirModalJogadores('amarelo')">+</button>
+        </div>
+      </div>
+
+      <div class="box">
+        <p>Cartão Vermelho</p>
+        <div class="controls">
+          <button @click="abrirModalJogadores('vermelho')">−</button>
+          <span class="valor">{{ timeData?.cartaovermelho ?? 0 }}</span>
+          <button @click="abrirModalJogadores('vermelho')">+</button>
+        </div>
       </div>
     </div>
 
-    <div class="box">
-      <p>Cartão Vermelho</p>
-      <div class="controls">
-        <button @click="abrirModalJogadores('vermelho')">−</button>
-        <span class="valor">{{ timeData?.cartaovermelho ?? 0 }}</span>
-        <button @click="abrirModalJogadores('vermelho')">+</button>
+    <!-- LINHA: Faltas + Substituições -->
+    <div class="row-2">
+      <div class="box">
+        <p>Faltas</p>
+        <div class="controls">
+          <button @click="emitDelta('faltas', -1)">−</button>
+          <span class="valor">{{ timeData?.faltas ?? 0 }}</span>
+          <button @click="emitDelta('faltas', +1)">+</button>
+        </div>
       </div>
-    </div>
 
-    <div class="box">
-      <p>Faltas</p>
-      <div class="controls">
-        <button @click="emitDelta('faltas', -1)">−</button>
-        <span class="valor">{{ timeData?.faltas ?? 0 }}</span>
-        <button @click="emitDelta('faltas', +1)">+</button>
-      </div>
-    </div>
-
-    <div class="box">
-      <p>Substituições</p>
-      <div class="controls">
-        <button @click="abrirModalRemoverJogador">−</button>
-        <span class="valor">{{ timeData?.substituicoes ?? 0 }}</span>
-        <button @click="abrirModalSubstituicao">+</button>
+      <div class="box">
+        <p>Substituições</p>
+        <div class="controls">
+          <button @click="abrirModalRemoverJogador">−</button>
+          <span class="valor">{{ timeData?.substituicoes ?? 0 }}</span>
+          <button @click="abrirModalSubstituicao">+</button>
+        </div>
       </div>
     </div>
 
@@ -92,13 +98,8 @@
         <div v-else class="colunas">
           <div class="coluna">
             <h3 class="subtitulo">Jogador que sai</h3>
-            <div
-              v-for="j in jogadoresEmCampo"
-              :key="j.id"
-              class="jogador-card"
-              :class="{ selecionado: jogadorSai?.id === j.id }"
-              @click="toggleJogadorSai(j)"
-            >
+            <div v-for="j in jogadoresEmCampo" :key="j.id" class="jogador-card"
+              :class="{ selecionado: jogadorSai?.id === j.id }" @click="toggleJogadorSai(j)">
               <div class="jogador-info">
                 <img v-if="j.foto" :src="j.foto" class="foto-jogador" />
                 <span class="nome">{{ j.nome }}</span>
@@ -108,13 +109,8 @@
 
           <div class="coluna">
             <h3 class="subtitulo">Jogador que entra</h3>
-            <div
-              v-for="j in jogadoresBanco"
-              :key="j.id"
-              class="jogador-card"
-              :class="{ selecionado: jogadorEntra?.id === j.id }"
-              @click="toggleJogadorEntra(j)"
-            >
+            <div v-for="j in jogadoresBanco" :key="j.id" class="jogador-card"
+              :class="{ selecionado: jogadorEntra?.id === j.id }" @click="toggleJogadorEntra(j)">
               <div class="jogador-info">
                 <img v-if="j.foto" :src="j.foto" class="foto-jogador" />
                 <span class="nome">{{ j.nome }}</span>
@@ -161,13 +157,8 @@
         <div v-if="carregando" class="loader">Carregando jogadores...</div>
 
         <div v-else class="lista-remover">
-          <div
-            v-for="j in jogadoresEmCampo"
-            :key="j.id"
-            class="jogador-card"
-            :class="{ selecionado: jogadoresSelecionados.includes(j.id) }"
-            @click="toggleSelecionado(j.id)"
-          >
+          <div v-for="j in jogadoresEmCampo" :key="j.id" class="jogador-card"
+            :class="{ selecionado: jogadoresSelecionados.includes(j.id) }" @click="toggleSelecionado(j.id)">
             <div class="jogador-info">
               <img v-if="j.foto" :src="j.foto" class="foto-jogador" />
               <span class="nome">{{ j.nome }}</span>
@@ -448,14 +439,14 @@ export default {
 .nome-time {
   background: #f9f9f9;
   border-bottom: 1px solid #ddd;
-  padding: 12px;
+  padding: 10px;
   color: #3b82f6;
   font-weight: bold;
-  font-size: 30px;
+  font-size: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   border: 2px solid #3b82f6;
 }
 
@@ -493,6 +484,16 @@ export default {
 
 .controls button:last-child {
   background-color: #3b82f6;
+}
+
+.row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.row-2 .box {
+  height: 100%;
 }
 
 .modal-overlay {
@@ -618,8 +619,8 @@ export default {
 }
 
 .foto-time {
-  width: 60px;
-  height: 60px;
+  width: 52px;
+  height: 52px;
   object-fit: contain;
   border-radius: 50%;
   background-color: #f1f5f9;
@@ -678,16 +679,22 @@ export default {
     padding: 20px;
   }
 
+  .modal-overlay {
+    align-items: stretch;
+    justify-content: stretch;
+    padding: 0;
+  }
+
   .nome-time {
-    font-size: 20px;
+    font-size: 18px;
     padding: 10px;
     flex-direction: column;
     gap: 6px;
   }
 
   .foto-time {
-    width: 48px;
-    height: 48px;
+    width: 42px;
+    height: 42px;
   }
 
   .box .controls {
@@ -708,8 +715,17 @@ export default {
   }
 
   .modal-content {
-    height: 95vh;
-    padding: 16px;
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    padding: 16px 12px calc(12px + env(safe-area-inset-bottom));
+  }
+
+  .modal-remover {
+    width: 100vw;
+    max-height: 100dvh;
   }
 
   .modal-titulo {
@@ -732,12 +748,24 @@ export default {
   }
 
   .coluna {
-    max-height: 35vh;
+    max-height: none;
+    min-height: 0;
   }
 
   .jogador-card {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .jogador-info {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .jogador-card .controls {
+    margin-top: 0;
     gap: 8px;
   }
 
@@ -748,16 +776,23 @@ export default {
 
   .botoes {
     flex-direction: column;
+    margin-top: 12px;
   }
 
   .btn-save1,
   .btn-cancel {
     width: 100%;
     font-size: 15px;
+    min-height: 46px;
   }
 
   .coluna-substituicoes {
     max-height: 120px;
+  }
+
+  .lista-remover {
+    margin: 12px 0;
+    min-height: 0;
   }
 }
 </style>

@@ -1,4 +1,5 @@
 const partidas = require('../services/partida.service');
+const { emitirAtualizacaoCampeonato } = require('../socket');
 
 async function criarPartidaController(req, res) {
   try {
@@ -9,6 +10,14 @@ async function criarPartidaController(req, res) {
       { modalidadeId, timeAId, timeBId, quadraId, campeonatoId, faseId, rodadaId },
       usuarioId
     );
+
+    emitirAtualizacaoCampeonato({
+      tipo: 'PARTIDA_CRIADA',
+      partidaId: partida?.id,
+      campeonatoId: partida?.campeonatoId,
+      faseId: partida?.faseId,
+      rodadaId: partida?.rodadaId
+    });
 
     res.status(201).json(partida);
   } catch (error) {
@@ -36,6 +45,15 @@ async function finalizarPartidaController(req, res) {
   try {
     const { id } = req.params
     const result = await partidas.finalizarPartida(id)
+
+    emitirAtualizacaoCampeonato({
+      tipo: 'PARTIDA_FINALIZADA',
+      partidaId: Number(id),
+      campeonatoId: result?.partida?.campeonatoId,
+      faseId: result?.partida?.faseId,
+      rodadaId: result?.partida?.rodadaId
+    })
+
     return res.json(result)
   } catch (error) {
     return res.status(400).json({ error: error.message })
@@ -51,7 +69,30 @@ async function atualizarParcialController(req, res) {
       return res.status(400).json({ error: "ID da partida é obrigatório" });
     }
 
+    const partidaAnterior = await partidas.retornarPartida(id);
     const partidaAtualizada = await partidas.atualizarParcial(id, dadosParciais);
+
+    const pontosAntesA = Number(partidaAnterior?.pontosTimeA ?? 0);
+    const pontosAntesB = Number(partidaAnterior?.pontosTimeB ?? 0);
+    const pontosDepoisA = Number(partidaAtualizada?.pontosTimeA ?? pontosAntesA);
+    const pontosDepoisB = Number(partidaAtualizada?.pontosTimeB ?? pontosAntesB);
+
+    const houveMudancaNoPlacar =
+      pontosAntesA !== pontosDepoisA ||
+      pontosAntesB !== pontosDepoisB;
+
+    if (houveMudancaNoPlacar) {
+      emitirAtualizacaoCampeonato({
+        tipo: 'GOL_PARTIDA',
+        partidaId: Number(id),
+        campeonatoId: partidaAtualizada?.campeonatoId ?? partidaAnterior?.campeonatoId,
+        faseId: partidaAtualizada?.faseId ?? partidaAnterior?.faseId,
+        rodadaId: partidaAtualizada?.rodadaId ?? partidaAnterior?.rodadaId,
+        pontosTimeA: pontosDepoisA,
+        pontosTimeB: pontosDepoisB
+      });
+    }
+
     return res.json(partidaAtualizada);
   } catch (err) {
     console.error(err);
@@ -271,6 +312,14 @@ async function alterarStatusPartidaController(req, res) {
     }
 
     const partida = await partidas.alterarStatusPartida(id, status);
+
+    emitirAtualizacaoCampeonato({
+      tipo: status === 'FINALIZADA' ? 'PARTIDA_FINALIZADA' : 'STATUS_PARTIDA_ATUALIZADO',
+      partidaId: Number(id),
+      campeonatoId: partida?.campeonatoId,
+      faseId: partida?.faseId,
+      rodadaId: partida?.rodadaId
+    });
 
     return res.json({
       message: 'Status da partida atualizado com sucesso',

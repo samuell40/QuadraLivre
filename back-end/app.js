@@ -8,6 +8,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 const session = require("express-session");
 const passport = require("./auth/passport");
+const { iniciarSocket } = require('./socket');
 
 // Rotas
 const authRoutes = require("./routes/auth.router");
@@ -29,6 +30,7 @@ const horarioQuadra = require('./routes/horario_quadra.router');
 const app = express();
 const server = http.createServer(app);
 const prisma = new PrismaClient();
+iniciarSocket(server);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
