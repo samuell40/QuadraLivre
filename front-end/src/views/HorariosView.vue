@@ -547,4 +547,34 @@ export default {
     transform: rotate(360deg);
   }
 }
+
+@media (max-width: 768px) {
+  .conteudo {
+    margin-left: 0;
+    padding: 80px 15px 20px 15px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .title {
+    font-size: 24px;
+    margin-top: 0;
+    text-align: center;
+  }
+
+  .controles-topo {
+    flex-direction: column;
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .select-quadra {
+    width: 100%;
+  }
+
+  .btn-pdf {
+    width: 100%;
+    justify-content: center; 
+  }
+}
 </style>

@@ -196,37 +196,39 @@
         </div>
       </Teleport>
 
-      <section class="section_graficos_top">
+      <div class="header-graficos-acoes">
+        <button @click="gerarPDFGraficos" class="btn-pdf-side" :disabled="loading" title="Baixar PDF">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+          </svg>
+          <span>Relatório PDF</span>
+        </button>
+      </div>
 
-        <div class="chart-container">
-          <canvas id="agendamentosModalidadeChart"></canvas>
+      <section class="section_graficos_top">
+        <div class="chart-wrapper">
+          <div class="chart-container">
+            <canvas id="agendamentosModalidadeChart"></canvas>
+          </div>
         </div>
 
-        <div class="chart-with-actions-container">
+        <div class="chart-wrapper">
           <div class="chart-area-pie">
             <canvas id="agendamentosTipoChart"></canvas>
           </div>
-
-          <div class="actions-area-pie">
-            <button @click="gerarPDFGraficos" class="btn-pdf-side" :disabled="loading" title="Baixar PDF">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-              </svg>
-              <span>PDF</span>
-            </button>
-          </div>
         </div>
-
       </section>
 
       <section class="section_graficos_bottom">
         <div v-if="loading" class="loader-container-centralizado">
           <div class="loader"></div>
         </div>
-        <div class="chart-container-full">
-          <canvas id="agendamentosMesChart"></canvas>
+        <div class="chart-wrapper">
+          <div class="chart-container-full">
+            <canvas id="agendamentosMesChart"></canvas>
+          </div>
         </div>
       </section>
 
@@ -853,6 +855,7 @@ export default {
   padding: 32px;
   margin-left: 250px;
   overflow-x: hidden;
+  min-width: 0;
 }
 
 .header-dashboard {
@@ -900,6 +903,49 @@ export default {
   font-size: 32px;
   font-weight: bold;
   color: #3b82f6;
+}
+
+.header-graficos-acoes {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 30px;
+  margin-bottom: 15px;
+}
+
+.header-graficos-acoes .btn-pdf-side {
+  width: auto;
+  flex-direction: row;
+  padding: 10px 16px;
+}
+
+.chart-wrapper {
+  flex: 1;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 10px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.section_graficos_top,
+.section_graficos_bottom {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.chart-container,
+.chart-container-full {
+  min-width: 500px;
+  position: relative;
+}
+
+.chart-area-pie {
+  min-width: 500px;
+  width: 100%;
+  height: 100%;
+  position: relative;
 }
 
 .section_graficos_top {
@@ -1397,6 +1443,9 @@ export default {
   .conteudo {
     margin-left: 0;
     padding: 20px;
+    width: 100%;
+    max-width: 100vw;
+    box-sizing: border-box;
   }
 
   .header-dashboard {
@@ -1428,13 +1477,64 @@ export default {
   .chart-container,
   .chart-container-full {
     height: 300px;
+    min-width: 0;
     width: 100%;
+  }
+
+  .chart-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .chart-area-pie {
+    height: 300px;
+    min-width: 0;
   }
 
   .card_aviso_item {
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
+  }
+
+  .header_avisos {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+
+  .header_actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .header_actions button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .avisos {
+    text-align: center;
+    margin: 0;
+  }
+
+  .avisos {
+    text-align: center;
+    margin: 0;
+  }
+
+  .section_graficos_top {
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .aviso_actions {
+    margin-top: 10px;
+    width: 100%;
+    justify-content: flex-end;
   }
 
   .aviso_right_side {

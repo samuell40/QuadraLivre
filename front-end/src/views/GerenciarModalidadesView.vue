@@ -318,4 +318,40 @@ export default {
     transform: rotate(360deg);
   }
 }
+
+@media (max-width: 768px) {
+  .conteudo {
+    margin-left: 0;
+    padding: 80px 20px 20px 20px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 15px;
+  }
+
+  .title {
+    font-size: 24px;
+    margin-top: 0;
+  }
+
+  .botoes {
+    width: 100%;
+  }
+
+  .btn-add {
+    width: 100%;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .lista-modalidades {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+}
 </style>

@@ -518,7 +518,6 @@ body,
   font-size: 12px;
   color: #64748b;
   margin-bottom: 8px;
-  font-style: italic;
 }
 
 .descricao {

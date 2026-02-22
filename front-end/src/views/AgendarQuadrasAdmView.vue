@@ -457,4 +457,44 @@ export default {
   color: #152147 !important;
   font-family: 'Montserrat', sans-serif !important;
 }
+
+@media (max-width: 768px) {
+  .layout> :first-child {
+    position: static !important;
+    width: 0 !important;
+    height: 0 !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  .conteudo {
+    margin-left: 0 !important;
+    padding: 80px 20px 20px 20px !important;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .titulo {
+    margin-top: 10px;
+    margin-bottom: 20px;
+  }
+
+  .titulo h1 {
+    font-size: 24px;
+  }
+
+  .quadras-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .card-quadra {
+    height: 220px;
+  }
+
+  .badge-interditada-overlay {
+    font-size: 24px;
+  }
+}
 </style>

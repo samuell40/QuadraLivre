@@ -8,6 +8,8 @@
       </svg>
     </button>
 
+    <div v-if="isMobile && sidebarVisible" class="sidebar-overlay" @click="closeSidebar"></div>
+
     <div v-if="sidebarVisible" class="sidebar">
       <img src="../assets/Cópia de xxxxx (2).png" class="logo" alt="Logo" />
 
@@ -133,6 +135,11 @@ export default {
         this.sidebarVisible = !this.sidebarVisible;
       } else {
         this.sidebarVisible = true;
+      }
+    },
+    closeSidebar() {
+      if (this.isMobile) {
+        this.sidebarVisible = false;
       }
     },
     toggleCategory(category) {
@@ -298,5 +305,21 @@ body {
   height: auto;
   display: block;
   margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9;
+  }
+
+  .sidebar {
+    z-index: 10;
+  }
 }
 </style>

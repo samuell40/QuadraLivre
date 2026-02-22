@@ -1,15 +1,5 @@
 <template>
   <div class="card">
-    <button class="btn-pdf-topo" @click="$emit('gerarPdf', agendamento)" title="Baixar Comprovante">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-        <path
-          d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
-        <path
-          d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
-      </svg>
-      Gerar Comprovante
-    </button>
-
     <h3>{{ agendamento.quadra?.nome || agendamento.quadra || 'Quadra' }}</h3>
 
     <p> Data:
@@ -26,21 +16,31 @@
       </span>
     </p>
 
-    <p v-if="agendamento.status === 'Confirmado' || agendamento.status === 'confirmado'">
+    <p v-if="agendamento.status?.toLowerCase() === 'confirmado'">
       Código de Verificação: <strong class="codigo-texto">{{ agendamento.codigoVerificacao || 'N/A' }}</strong>
     </p>
 
-    <p v-if="(agendamento.status === 'Recusado' || agendamento.status === 'recusado') && agendamento.motivoRecusa"
-      class="motivo-recusa">
+    <p v-if="agendamento.status?.toLowerCase() === 'recusado' && agendamento.motivoRecusa" class="motivo-recusa">
       Motivo da recusa: <strong>{{ agendamento.motivoRecusa }}</strong>
     </p>
 
-    <div class="buttons" v-if="mostrarBotoes">
-      <button v-if="agendamento.status !== 'Confirmado' && agendamento.status !== 'confirmado'"
-        @click="$emit('cancelar', agendamento.id)" class="cancelar">
-        Cancelar
+    <div class="actions-wrapper">
+      
+      <button v-if="agendamento.status?.toLowerCase() === 'confirmado'" class="btn-pdf" @click="$emit('gerarPdf', agendamento)" title="Baixar Comprovante">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
+          <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
+        </svg>
+        Comprovante
       </button>
-      <button class="novo" @click="$emit('novo')">Novo Agendamento</button>
+
+      <div class="buttons" v-if="mostrarBotoes">
+        <button v-if="agendamento.status?.toLowerCase() !== 'confirmado'" @click="$emit('cancelar', agendamento.id)" class="cancelar">
+          Cancelar
+        </button>
+        <button class="novo" @click="$emit('novo')">Novo Agendamento</button>
+      </div>
+      
     </div>
   </div>
 </template>
@@ -98,7 +98,7 @@ export default {
   position: relative;
 }
 
-.btn-pdf-topo {
+.btn-pdf {
   position: absolute;
   top: 24px;
   right: 24px;
@@ -110,6 +110,7 @@ export default {
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   font-weight: bold;
   font-size: 14px;
@@ -117,9 +118,13 @@ export default {
   transition: all 0.2s;
 }
 
-.btn-pdf-topo:hover {
+.btn-pdf:hover {
   background-color: #2563eb;
   transform: translateY(-2px);
+}
+
+.actions-wrapper {
+  display: block; 
 }
 
 h3 {
@@ -201,5 +206,40 @@ button.cancelar {
 button.novo {
   background-color: #3b82f6;
   color: white;
+}
+
+@media (max-width: 768px) {
+  h3 {
+    padding-right: 0;
+  }
+
+  .actions-wrapper {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+    align-items: stretch;
+  }
+
+  .btn-pdf {
+    position: static;
+    background-color: #1e3a8a;
+    flex: 1;
+    margin: 0;
+    font-size: 13px;
+    padding: 10px 8px;
+  }
+
+  .buttons {
+    margin-top: 0;
+    flex: 1;
+    display: flex;
+  }
+
+  button.cancelar,
+  button.novo {
+    flex: 1;
+    font-size: 13px;
+    padding: 10px 8px;
+  }
 }
 </style>

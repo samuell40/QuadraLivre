@@ -819,4 +819,68 @@ input:checked+.slider:before {
         transform: rotate(360deg);
     }
 }
+
+@media (max-width: 768px) {
+
+    .modal-content {
+        padding: 20px 15px;
+        width: 95%;
+    }
+
+    .tabs-header {
+        gap: 2px;
+        justify-content: space-between;
+        border-bottom: 1px solid #e2e8f0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tab-btn {
+        font-size: 13px;
+        padding: 10px 4px;
+        flex: 1;
+        text-align: center;
+        flex-shrink: 0;
+    }
+
+    .modal-footer {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 12px;
+        justify-content: space-between;
+    }
+
+    .btn-cancelar,
+    .btn-salvar {
+        flex: 1;
+        width: auto;
+        padding: 12px 0;
+        text-align: center;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    .add-horario-form {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .input-wrapper,
+    .time-input,
+    .btn-add {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .gerador-inputs {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .g-group input {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
 </style>

@@ -565,14 +565,57 @@ export default {
 @media (max-width: 900px) {
     .conteudo {
         margin-left: 0;
-    }
-
-    .checkbox-list {
-        grid-template-columns: repeat(2, 1fr);
+        padding: 20px;
     }
 
     .quadras-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-gerenciar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .header-gerenciar .title {
+        font-size: 24px;
+    }
+
+    .btn-cadastrar-topo {
+        width: 100%;
+        padding: 12px;
+        text-align: center;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 20px;
+    }
+
+    .modal-content .title {
+        font-size: 22px !important;
+    }
+
+    .checkbox-list {
+        grid-template-columns: 1fr;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .modal-botoes {
+        flex-direction: column-reverse;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .btn-cancelar,
+    .btn_salvar_modal {
+        width: 100%;
+        padding: 12px;
+        text-align: center;
     }
 }
 </style>
