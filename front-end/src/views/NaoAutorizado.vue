@@ -1,19 +1,19 @@
 <template>
-  <div class="not-authorized">
-      <div class="content">
-          <div class="header">
-              Acesso Negado!
-          </div>
-          <div class="body">
-              <p>
-                  Você não tem permissão para acessar esta página.
-              </p>
-              <div class="botoes">
-                  <button class="login" @click="loginComGoogle">Login com Google</button>
-              </div>
-          </div>
-      </div>
-  </div>
+    <div class="not-authorized">
+        <div class="content">
+            <div class="header">
+                Acesso Negado!
+            </div>
+            <div class="body">
+                <p>
+                    Você não tem permissão para acessar esta página.
+                </p>
+                <div class="botoes">
+                    <button class="login" @click="loginComGoogle">Login com Google</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
 
 <script>
@@ -21,51 +21,79 @@ import router from '@/router';
 import Swal from 'sweetalert2';
 
 export default {
-  name: 'NaoAutorizado',
-  methods: {
-     loginComGoogle() {
-      const width = 500, height = 600
-      const left = window.screenX + (window.outerWidth - width) / 2
-      const top = window.screenY + (window.outerHeight - height) / 2.5
-      const popup = window.open('http://localhost:3000/auth/google', 'Login com Google',
-        `width=${width},height=${height},left=${left},top=${top}`)
+    name: 'NaoAutorizado',
+    methods: {
+        loginComGoogle() {
+            const width = 500, height = 600
+            const left = window.screenX + (window.outerWidth - width) / 2
+            const top = window.screenY + (window.outerHeight - height) / 2.5
 
-      const listener = event => {
-        if (event.origin !== 'http://localhost:8080') return
-        const { token, erro, email, usuario } = event.data
+            const popup = window.open(
+                'http://localhost:3000/auth/google',
+                'Login com Google',
+                `width=${width},height=${height},left=${left},top=${top}`
+            )
 
-        if (erro === 'usuario_nao_cadastrado') {
-          Swal.fire({ icon: 'error', title: 'Conta não encontrada!', text: 'Redirecionando para cadastro...', timer: 3000, timerProgressBar: true, showConfirmButton: false, didOpen: () => Swal.showLoading() })
-            .then(() => window.location.href = `/cadastro?email=${encodeURIComponent(email)}`)
-        }
+            const listener = event => {
+                const origensPermitidas = ['https://quadra-livre.vercel.app', 'http://localhost:8080']
+                if (!origensPermitidas.includes(event.origin) && event.origin !== window.location.origin) return
 
-        if (token) {
-          localStorage.setItem('token', token)
-          localStorage.setItem('usuario', JSON.stringify(usuario))
-          const quadraSelecionada = JSON.parse(localStorage.getItem("quadraSelecionada") || "null")
+                const { token, erro, email, usuario } = event.data
 
-          if ([1, 2].includes(usuario.permissaoId)) {
-            router.push({ name: "Dashboard" })
-          } else if (usuario.permissaoId === 3) {
-            if (quadraSelecionada) {
-              router.push({ name: "agendar_quadra", query: { quadraId: quadraSelecionada.id } })
-              localStorage.removeItem("quadraSelecionada")
-            } else {
-              router.push({ name: "agendar_quadra" })
+                if (erro === 'usuario_nao_cadastrado') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Conta não encontrada!',
+                        text: 'Redirecionando para cadastro...',
+                        timer: 3000,
+                        timerProgressBar: true,
+                        showConfirmButton: false,
+                        didOpen: () => Swal.showLoading()
+                    }).then(() => {
+                        window.location.href = `/cadastro?email=${encodeURIComponent(email)}`
+                    })
+                    return
+                }
+
+                if (token && usuario) {
+                    localStorage.setItem('token', token)
+                    localStorage.setItem('usuario', JSON.stringify(usuario))
+
+                    const quadraStorage = localStorage.getItem('quadraSelecionada')
+                    const quadraSelecionada = quadraStorage ? JSON.parse(quadraStorage) : null
+                    const redirect = Array.isArray(this.$route.query.redirect)
+                        ? this.$route.query.redirect[0]
+                        : this.$route.query.redirect
+
+                    if (typeof redirect === 'string' && redirect.startsWith('/') && redirect !== '/NaoAutorizado') {
+                        router.replace(redirect)
+                        return
+                    }
+
+                    if ([1, 2].includes(usuario.permissaoId)) {
+                        router.push({ name: 'Dashboard' })
+                    } else if (usuario.permissaoId === 4) {
+                        router.push({ name: 'gerenciar_partida' })
+                    } else if (usuario.permissaoId === 3) {
+                        if (quadraSelecionada?.id) {
+                            router.push({ name: 'agendar_quadra', query: { quadraId: quadraSelecionada.id } })
+                            localStorage.removeItem('quadraSelecionada')
+                        } else {
+                            router.push({ name: 'agendar_quadra' })
+                        }
+                    } else {
+                        router.push({ name: 'Home' })
+                    }
+                }
+
+                window.removeEventListener('message', listener)
+                if (popup) popup.close()
             }
-          } else {
-            router.push({ name: "Home" })
-          }
+
+            window.addEventListener('message', listener, false)
         }
-
-        window.removeEventListener('message', listener)
-        if (popup) popup.close()
-      }
-
-      window.addEventListener('message', listener, false)
     }
-  }
-};
+}
 </script>
 
 <style scoped>
@@ -85,7 +113,7 @@ export default {
 }
 
 .content {
-    background-color: rgba(11, 19, 43, 0.95); 
+    background-color: rgba(11, 19, 43, 0.95);
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
     text-align: center;
@@ -110,7 +138,7 @@ export default {
 
 p {
     font-size: 18px;
-    color: #E5E7EB; 
+    color: #E5E7EB;
     margin-bottom: 30px;
     line-height: 1.5;
 }
@@ -141,16 +169,20 @@ button:focus {
     .content {
         max-width: 90%;
     }
+
     .header {
         font-size: 24px;
         padding: 20px 0;
     }
+
     .body {
         padding: 25px 20px;
     }
+
     p {
         font-size: 16px;
     }
+
     button {
         padding: 12px 20px;
         font-size: 15px;

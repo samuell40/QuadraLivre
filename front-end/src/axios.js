@@ -35,7 +35,12 @@ api.interceptors.response.use(
       if (status === 401) {
         console.error('Erro de autenticação:', msg);
         Swal.fire({ icon: 'error', title: 'Erro de autenticação', text: msg });
-        router.push('/NaoAutorizado');
+        const rotaAtual = router.currentRoute?.value?.fullPath;
+        if (rotaAtual && rotaAtual !== '/NaoAutorizado') {
+          router.push({ name: 'NaoAutorizado', query: { redirect: rotaAtual } });
+        } else {
+          router.push({ name: 'NaoAutorizado' });
+        }
       } else if (status === 403) {
         console.error('Acesso negado:', msg);
         Swal.fire({ icon: 'error', title: 'Acesso negado', text: msg });

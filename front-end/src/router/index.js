@@ -176,14 +176,15 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token');
   const usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+  const redirect = to.fullPath;
 
   if (to.meta.requiresAuth && !token) {
-    return next({ name: 'NaoAutorizado' });
+    return next({ name: 'NaoAutorizado', query: { redirect } });
   }
 
   if (to.meta.roles && usuario) {
     if (!to.meta.roles.includes(usuario.permissaoId)) {
-      return next({ name: 'NaoAutorizado' });
+      return next({ name: 'NaoAutorizado', query: { redirect } });
     }
   }
 
