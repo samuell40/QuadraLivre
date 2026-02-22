@@ -64,7 +64,8 @@
           </select>
         </div>
 
-        <div class="filtro-item">
+        <!-- Rodada só desktop -->
+        <div v-if="!isMobile" class="filtro-item filtro-rodada">
           <label class="filtro-titulo">Rodada</label>
           <select v-model="rodadaSelecionada" :disabled="!rodadas.length" @change="carregarPartidasPorRodada">
             <option disabled value="">Selecione a Rodada</option>
@@ -74,30 +75,31 @@
           </select>
         </div>
       </div>
+
       <div class="placar-container">
         <div class="placar-wrapper">
           <h3 class="titulo-secao">
             <span>Classificação do {{ nomeCampeonato }}</span>
           </h3>
 
-          <TabelaClassificacao
-            :times="placar"
-            :loading="isLoadingPlacar"
-            :modalidade="modalidadeNormalizada"
-            empty-text="Nenhum placar disponível no momento."
-          />
+          <TabelaClassificacao :times="placar" :loading="isLoadingPlacar" :modalidade="modalidadeNormalizada"
+            empty-text="Nenhum placar disponível no momento." />
         </div>
         <!-- PARTIDAS -->
         <div class="partidas-wrapper">
+          <div v-if="isMobile" class="filtro-item filtro-rodada-mobile">
+            <label class="filtro-titulo">Rodada</label>
+            <select v-model="rodadaSelecionada" :disabled="!rodadas.length" @change="carregarPartidasPorRodada">
+              <option disabled value="">Selecione a Rodada</option>
+              <option v-for="rodada in rodadas" :key="rodada.id" :value="rodada.id">
+                {{ rodada.nome }}
+              </option>
+            </select>
+          </div>
           <h3 class="titulo-secao">Placar</h3>
 
-          <ListaPartidas
-            :partidas="partidas"
-            :loading="isLoadingPartidas"
-            empty-title="Nenhuma partida disponível no momento."
-            quadra-class="nome-quadra-home"
-
-          />
+          <ListaPartidas :partidas="partidas" :loading="isLoadingPartidas"
+            empty-title="Nenhuma partida disponível no momento." quadra-class="nome-quadra-home" />
         </div>
       </div>
     </section>
@@ -110,7 +112,6 @@
     <Footer />
   </div>
 </template>
-
 
 <script>
 import NavBarHome from '@/components/NavBarHome.vue'
@@ -132,23 +133,19 @@ export default {
     return {
       quadras: [],
       isLoadingQuadras: true,
-
       campeonatoAtual: null,
       campeonatoId: null,
-
       fases: [],
       rodadas: [],
       faseSelecionada: '',
       rodadaSelecionada: '',
-
       placar: [],
       isLoadingPlacar: true,
-
       partidas: [],
       isLoadingPartidas: true,
-
       mostrarModalLogin: false,
-      mostrarBotaoTopo: false
+      mostrarBotaoTopo: false,
+      isMobile: window.innerWidth <= 768,
     }
   },
 
@@ -165,12 +162,18 @@ export default {
   },
 
   async mounted() {
+    const onResize = () => {
+      this.isMobile = window.innerWidth <= 768
+    }
+    window.addEventListener('resize', onResize)
+    this._onResize = onResize
     window.addEventListener('scroll', this.atualizarVisibilidadeBotaoTopo, { passive: true })
     await this.carregarQuadras()
     await this.carregarCampeonatoMaisRecente()
   },
   beforeUnmount() {
     window.removeEventListener('scroll', this.atualizarVisibilidadeBotaoTopo)
+    window.removeEventListener('resize', this._onResize)
   },
 
   methods: {
@@ -302,9 +305,7 @@ export default {
           return
         }
 
-        const { data } = await api.get(
-          `/partidas/${this.campeonatoId}/${this.faseSelecionada}/${this.rodadaSelecionada}`
-        )
+        const { data } = await api.get(`/partidas/${this.campeonatoId}/${this.faseSelecionada}/${this.rodadaSelecionada}`)
 
         const lista = Array.isArray(data) ? data : []
 
@@ -833,6 +834,29 @@ p {
     flex: 2;
     min-width: 400px;
     overflow-x: auto;
+  }
+
+  .filtros-topo {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .filtro-item {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .filtro-item select {
+    width: 100%;
+  }
+
+  .filtro-rodada-mobile {
+    margin-bottom: 12px;
+  }
+
+  .partidas-wrapper {
+    display: flex;
+    flex-direction: column;
   }
 }
 </style>

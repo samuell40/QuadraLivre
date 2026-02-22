@@ -355,7 +355,7 @@ export default {
 .nome-time {
   font-size: 14px;
   font-weight: 600;
-  color: #333;
+  color: #777;
   max-width: 120px;  
   overflow: hidden;
   text-overflow: ellipsis;
@@ -369,9 +369,17 @@ export default {
   gap: 5px;
   font-size: 40px;
   font-weight: 900;
-  color: #222;
+  color: #777;
   line-height: 1;
   margin-top: 14px;
+}
+
+.gols_placar {
+  font-size: 30px;
+  font-weight: bold;
+  color:  rgba(0, 0, 0);
+  padding: 2px 8px;
+  border-radius: 12px;
 }
 
 .divisor-x {
@@ -608,14 +616,6 @@ export default {
   align-items: center;
   gap: 10px;
   margin-top: 2px;
-}
-
-.gols_placar {
-  font-size: 30px;
-  font-weight: bold;
-  color: #1e3a8a;
-  padding: 2px 8px;
-  border-radius: 12px;
 }
 
 .gols {
