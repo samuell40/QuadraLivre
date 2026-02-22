@@ -103,6 +103,8 @@
 import router from '@/router'
 import Swal from 'sweetalert2'
 
+const QUADRA_PLAY_LOGIN_KEY = 'quadraPlayLoginAtivo'
+
 export default {
   name: 'NavbarQuadra',
 
@@ -167,6 +169,7 @@ export default {
         if (token && usuario) {
           localStorage.setItem('token', token)
           localStorage.setItem('usuario', JSON.stringify(usuario))
+          localStorage.removeItem(QUADRA_PLAY_LOGIN_KEY)
 
           const quadraSelecionada = JSON.parse(
             localStorage.getItem('quadraSelecionada')
@@ -233,14 +236,20 @@ export default {
           localStorage.setItem('usuario', JSON.stringify(usuario))
 
           if ([1, 2].includes(usuario.permissaoId)) {
+            localStorage.setItem(QUADRA_PLAY_LOGIN_KEY, '1')
             router.push({ name: 'TelaInicial' })
+          } else if (usuario.permissaoId === 4) {
+            localStorage.setItem(QUADRA_PLAY_LOGIN_KEY, '1')
+            router.push({ name: 'gerenciar_partida' })
           } else if (usuario.permissaoId === 3) {
+            localStorage.removeItem(QUADRA_PLAY_LOGIN_KEY)
             Swal.fire({
               icon: 'warning',
               title: 'Acesso negado',
               text: 'Você não tem permissão para acessar o QuadraPlay.'
             })
           } else {
+            localStorage.removeItem(QUADRA_PLAY_LOGIN_KEY)
             Swal.fire({
               icon: 'info',
               title: 'Acesso não permitido',

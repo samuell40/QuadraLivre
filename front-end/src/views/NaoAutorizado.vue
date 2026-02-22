@@ -20,6 +20,8 @@
 import router from '@/router';
 import Swal from 'sweetalert2';
 
+const QUADRA_PLAY_LOGIN_KEY = 'quadraPlayLoginAtivo'
+
 export default {
     name: 'NaoAutorizado',
     methods: {
@@ -58,6 +60,7 @@ export default {
                 if (token && usuario) {
                     localStorage.setItem('token', token)
                     localStorage.setItem('usuario', JSON.stringify(usuario))
+                    localStorage.removeItem(QUADRA_PLAY_LOGIN_KEY)
 
                     const quadraStorage = localStorage.getItem('quadraSelecionada')
                     const quadraSelecionada = quadraStorage ? JSON.parse(quadraStorage) : null

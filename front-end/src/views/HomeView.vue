@@ -372,6 +372,7 @@ export default {
         if (token && usuario) {
           localStorage.setItem('token', token)
           localStorage.setItem('usuario', JSON.stringify(usuario))
+          localStorage.removeItem('quadraPlayLoginAtivo')
 
           const quadraStorage = localStorage.getItem('quadraSelecionada')
           const quadraSelecionada = quadraStorage ? JSON.parse(quadraStorage) : null

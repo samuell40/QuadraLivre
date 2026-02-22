@@ -159,6 +159,7 @@ export default {
         logout() {
             localStorage.removeItem("token");
             localStorage.removeItem("usuario");
+            localStorage.removeItem("quadraPlayLoginAtivo");
             router.push("/");
         },
 

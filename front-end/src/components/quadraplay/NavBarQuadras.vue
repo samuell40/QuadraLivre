@@ -52,6 +52,7 @@ export default {
       localStorage.removeItem('token')
       localStorage.removeItem('usuario')
       localStorage.removeItem('quadraSelecionada')
+      localStorage.removeItem('quadraPlayLoginAtivo')
       this.$router.push('/')
     }
   }

@@ -22,6 +22,9 @@ import ClassificacaoView from '@/views/quadra_play/ClassificacaoView.vue';
 import MeusAvisosView from '../views/usuario/MeusAvisosView.vue';
 import telaInicialView from '@/views/quadra_play/telaInicialView.vue';
 
+const QUADRA_PLAY_LOGIN_KEY = 'quadraPlayLoginAtivo';
+const ROTAS_EXCECAO_QUADRA_PLAY = new Set(['NaoAutorizado', 'GoogleCallback']);
+
 const routes = [
   {
     path: '/',
@@ -81,7 +84,7 @@ const routes = [
     path: '/gerenciartimes',
     name: 'gerenciar_times',
     component: GerenciartimesView,
-    meta: { requiresAuth: true, roles: [1, 2] },
+    meta: { requiresAuth: true, roles: [1, 2], requiresQuadraPlayLogin: true },
   },
    {
     path: '/times',
@@ -93,13 +96,13 @@ const routes = [
     path: '/gerenciarpartida',
     name: 'gerenciar_partida',
     component: GerenciarPartidaView,
-    meta: { requiresAuth: true, roles: [1, 2, 4] },
+    meta: { requiresAuth: true, roles: [1, 2, 4], requiresQuadraPlayLogin: true },
   },
   {
     path: '/partida',
     name: 'Partida',
     component: () => import('@/views/quadra_play/PartidaView.vue'),
-    meta: { requiresAuth: true, roles: [1, 2, 4] }
+    meta: { requiresAuth: true, roles: [1, 2, 4], requiresQuadraPlayLogin: true }
   },
   {
     path: '/visualizarplacarhome',
@@ -148,19 +151,19 @@ const routes = [
     path: '/telainicial',
     name: 'TelaInicial',
     component: telaInicialView,
-    meta: { public: true },
+    meta: { requiresAuth: true, roles: [1, 2, 4], requiresQuadraPlayLogin: true },
   },
   {
     path: '/detalharcampeonatos',
     name: 'Detalhar_Campeonatos',
     component: DetalharCampeonatosView,
-    meta: { public: true },
+    meta: { requiresAuth: true, roles: [1, 2, 4], requiresQuadraPlayLogin: true },
   },
    {
     path: '/classificacao',
     name: 'Classificacao',
     component: ClassificacaoView,
-    meta: { public: true },
+    meta: { requiresAuth: true, roles: [1, 2, 4], requiresQuadraPlayLogin: true },
   },
 ];
 
@@ -176,9 +179,22 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token');
   const usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+  const loginQuadraPlayAtivo = localStorage.getItem(QUADRA_PLAY_LOGIN_KEY) === '1';
   const redirect = to.fullPath;
 
   if (to.meta.requiresAuth && !token) {
+    return next({ name: 'NaoAutorizado', query: { redirect } });
+  }
+
+  if (to.meta.requiresQuadraPlayLogin && !loginQuadraPlayAtivo) {
+    return next({ name: 'NaoAutorizado', query: { redirect } });
+  }
+
+  if (
+    loginQuadraPlayAtivo &&
+    !to.meta.requiresQuadraPlayLogin &&
+    !ROTAS_EXCECAO_QUADRA_PLAY.has(to.name)
+  ) {
     return next({ name: 'NaoAutorizado', query: { redirect } });
   }
 

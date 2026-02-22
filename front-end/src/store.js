@@ -26,6 +26,7 @@ export const useAuthStore = defineStore('auth', {
       // Remover do localStorage e dos cookies
       localStorage.removeItem('token');
       localStorage.removeItem('usuario');
+      localStorage.removeItem('quadraPlayLoginAtivo');
     },
     login(user, token) {
       this.setAuthData(user, token);
