@@ -17,6 +17,7 @@
                 <th>E</th>
                 <th>DER</th>
                 <th>SG</th>
+                <th>APR%</th>
               </tr>
             </thead>
             <tbody>
@@ -32,6 +33,7 @@
                 <td>{{ time.empates }}</td>
                 <td>{{ time.derrotas }}</td>
                 <td>{{ time.saldoDeGols }}</td>
+                <td>{{ time.aproveitamento ?? 0 }}%</td>
               </tr>
             </tbody>
           </table>

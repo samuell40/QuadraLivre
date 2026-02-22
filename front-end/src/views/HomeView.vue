@@ -80,180 +80,28 @@
             <span>Classificação do {{ nomeCampeonato }}</span>
           </h3>
 
-          <div v-if="isLoadingPlacar" class="loader"></div>
-
-          <div v-else-if="placar.length === 0" class="sem-dados">
-            Nenhum placar disponível no momento.
-          </div>
-
-          <table v-else class="placar">
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th>PTS</th>
-                <th>J</th>
-                <th>GM</th>
-                <th>GS</th>
-                <th>SG</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(time, index) in placar" :key="time.id">
-                <td class="time-info">
-                  <span class="posicao">{{ index + 1 }}º</span>
-                  <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
-                  {{ time.time?.nome }}
-                </td>
-                <td>{{ time.pontuacao }}</td>
-                <td>{{ time.jogos }}</td>
-                <td>{{ time.golsPro }}</td>
-                <td>{{ time.golsSofridos }}</td>
-                <td>{{ time.saldoDeGols }}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="glossario-placar">
-            <strong>Glossário</strong>
-            <ul>
-              <li><b>PTS</b>: Pontos</li>
-              <li><b>J</b>: Jogos</li>
-              <li><b>GM</b>: Gols Marcados</li>
-              <li><b>GS</b>: Gols Sofridos</li>
-              <li><b>SG</b>: Saldo de Gols</li>
-              <li><b>E</b>: Empates</li>
-              <li><b>VIT</b>: Vitórias</li>
-              <li><b>DER</b>: Derrotas</li>
-            </ul>
-          </div>
+          <TabelaClassificacao
+            :times="placar"
+            :loading="isLoadingPlacar"
+            :modalidade="modalidadeNormalizada"
+            empty-text="Nenhum placar disponível no momento."
+          />
         </div>
-
         <!-- PARTIDAS -->
         <div class="partidas-wrapper">
           <h3 class="titulo-secao">Placar</h3>
 
-          <div v-if="isLoadingPartidas" class="loader"></div>
+          <ListaPartidas
+            :partidas="partidas"
+            :loading="isLoadingPartidas"
+            empty-title="Nenhuma partida disponível no momento."
+            quadra-class="nome-quadra-home"
 
-          <div v-else-if="partidas.length === 0" class="sem-dados">
-            Nenhuma partida disponível no momento.
-          </div>
-
-          <!-- LISTA DE PARTIDAS -->
-          <ul v-else class="lista-partidas">
-            <li v-for="partida in partidas" :key="partida.id" class="card-partida" :class="statusClass(partida, 'card')"
-              @click="abrirModalPartida(partida.id)">
-              <div class="status-topo" :class="statusClass(partida, 'text')">
-                <span v-if="partida.status === 'EM_ANDAMENTO'" class="status-live-dot" aria-hidden="true"></span>
-                {{ statusLabel(partida.status) }}
-              </div>
-
-              <div class="nome-quadra-home">
-                {{ partida.quadra?.nome }}
-              </div>
-
-              <div class="conteudo-partida">
-                <div class="time lado">
-                  <img v-if="partida.timeA?.foto" :src="partida.timeA.foto" />
-                  <span>{{ partida.timeA?.nome }}</span>
-                </div>
-
-                <div class="placar-centro">
-                  <strong>{{ partida.pontosTimeA ?? 0 }}</strong>
-                  <span>x</span>
-                  <strong>{{ partida.pontosTimeB ?? 0 }}</strong>
-                </div>
-
-                <div class="time lado">
-                  <img v-if="partida.timeB?.foto" :src="partida.timeB.foto" />
-                  <span>{{ partida.timeB?.nome }}</span>
-                </div>
-              </div>
-            </li>
-          </ul>
+          />
         </div>
       </div>
     </section>
 
-    <!-- MODAL DETALHE PARTIDA -->
-    <div v-if="mostrarModalPartida" class="modal-overlay" @click.self="fecharModalPartida">
-      <div class="modal-partida">
-        <div v-if="loadingDetalhePartida" class="loader"></div>
-        <div v-else-if="partidaDetalhada">
-          <h2>Detalhes da Partida (Campeonato {{ partidaDetalhada.campeonato?.nome }})</h2>
-
-          <div class="infos">
-            <p>
-              <strong>Status:</strong>
-              <span :class="statusClass(partidaDetalhada, 'text')">
-                {{ statusLabel(partidaDetalhada.status) }}
-              </span>
-            </p>
-            <p><strong>Faltas:</strong>
-              {{ partidaDetalhada.faltasTimeA }} x {{ partidaDetalhada.faltasTimeB }}
-            </p>
-          </div>
-
-          <div class="placar-modal">
-            <div class="time">
-              <img v-if="partidaDetalhada.timeA?.foto" :src="partidaDetalhada.timeA.foto" />
-              <strong>{{ partidaDetalhada.timeA?.nome }}</strong>
-            </div>
-
-            <span class="resultado">
-              {{ partidaDetalhada.pontosTimeA }} x {{ partidaDetalhada.pontosTimeB }}
-            </span>
-
-            <div class="time">
-              <img v-if="partidaDetalhada.timeB?.foto" :src="partidaDetalhada.timeB.foto" />
-              <strong>{{ partidaDetalhada.timeB?.nome }}</strong>
-            </div>
-          </div>
-
-          <!-- JOGADORES DA PARTIDA -->
-          <div class="jogadores-container">
-            <!-- TIME A -->
-            <div class="time-mobile-title">{{ partidaDetalhada.timeA.nome }}
-              <div class="jogadores-time">
-                <div v-for="jp in partidaDetalhada.jogadoresPartida.filter(j => j.timeId === partidaDetalhada.timeA.id)"
-                  :key="jp.id" class="jogador-item">
-                  <img v-if="jp.jogador?.foto" :src="jp.jogador.foto" class="foto-jogador" />
-
-                  <div class="dados-jogador">
-                    <span class="nome">{{ jp.jogador?.nome }}</span>
-                    <div class="estatisticas">
-                      <span class="gols">⚽ {{ jp.gols }}</span>
-                      <span class="cartao amarelo">🟨 {{ jp.cartoesAmarelos }}</span>
-                      <span class="cartao vermelho">🟥 {{ jp.cartoesVermelhos }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- TIME B -->
-            <div class="time-mobile-title">{{ partidaDetalhada.timeB.nome }}
-              <div class="jogadores-time">
-                <div v-for="jp in partidaDetalhada.jogadoresPartida.filter(j => j.timeId === partidaDetalhada.timeB.id)"
-                  :key="jp.id" class="jogador-item">
-                  <img v-if="jp.jogador?.foto" :src="jp.jogador.foto" class="foto-jogador" />
-
-                  <div class="dados-jogador">
-                    <span class="nome">{{ jp.jogador?.nome }}</span>
-                    <div class="estatisticas">
-                      <span class="gols">⚽ {{ jp.gols }}</span>
-                      <span class="cartao amarelo">🟨 {{ jp.cartoesAmarelos }}</span>
-                      <span class="cartao vermelho">🟥 {{ jp.cartoesVermelhos }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <button class="btn-cancel-placar" @click="fecharModalPartida">
-          Fechar
-        </button>
-      </div>
-    </div>
     <VerificarLogin v-if="mostrarModalLogin" @fechar="mostrarModalLogin = false" @irParaLogin="irParaLogin"
       @loginComGoogle="loginComGoogle" />
     <button v-if="mostrarBotaoTopo" type="button" class="btn-topo" @click="subirPagina">
@@ -272,18 +120,13 @@ import { Carousel, Slide } from 'vue3-carousel'
 import Swal from 'sweetalert2'
 import VerificarLogin from '@/components/modals/Alertas/verificarLogin.vue'
 import api from '@/axios'
+import TabelaClassificacao from '@/components/quadraplay/TabelaClassificacao.vue'
+import ListaPartidas from '@/components/quadraplay/ListaPartidas.vue'
 import 'vue3-carousel/dist/carousel.css'
-
-const STATUS_CONFIG = {
-  FINALIZADA: { label: 'ENCERRADA', card: 'partida-finalizada', text: 'status-finalizada' },
-  EM_ANDAMENTO: { label: 'EM ANDAMENTO', card: 'partida-andamento', text: 'status-andamento' },
-  AGENDADA: { label: 'AGUARDANDO', card: 'partida-agendada', text: 'status-agendada' },
-  CANCELADA: { label: 'CANCELADA', card: 'partida-cancelada', text: 'status-cancelada' }
-}
 
 export default {
   name: 'HomeView',
-  components: { NavBarHome, Footer, Carousel, Slide, VerificarLogin },
+  components: { NavBarHome, Footer, Carousel, Slide, VerificarLogin, TabelaClassificacao, ListaPartidas },
 
   data() {
     return {
@@ -305,9 +148,6 @@ export default {
       isLoadingPartidas: true,
 
       mostrarModalLogin: false,
-      mostrarModalPartida: false,
-      partidaDetalhada: null,
-      loadingDetalhePartida: false,
       mostrarBotaoTopo: false
     }
   },
@@ -316,17 +156,11 @@ export default {
     nomeCampeonato() {
       return this.campeonatoAtual?.nome
     },
-
-    jogadoresTimeA() {
-      if (!this.partidaDetalhada) return []
-      return (this.partidaDetalhada.jogadoresPartida || [])
-        .filter(j => j.timeId === this.partidaDetalhada.timeA?.id)
-    },
-
-    jogadoresTimeB() {
-      if (!this.partidaDetalhada) return []
-      return (this.partidaDetalhada.jogadoresPartida || [])
-        .filter(j => j.timeId === this.partidaDetalhada.timeB?.id)
+    modalidadeNormalizada() {
+      return String(this.campeonatoAtual?.modalidade?.nome || 'futebol')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
     }
   },
 
@@ -348,17 +182,6 @@ export default {
     },
     next() { if (this.$refs.carousel) this.$refs.carousel.next() },
     prev() { if (this.$refs.carousel) this.$refs.carousel.prev() },
-
-    // ✅ UMA função pra classe (card ou text)
-    statusClass(partida, tipo) {
-      const status = partida?.status
-      return STATUS_CONFIG[status]?.[tipo] || ''
-    },
-
-    // ✅ UMA função pro texto do status
-    statusLabel(status) {
-      return STATUS_CONFIG[status]?.label || ''
-    },
 
     async carregarCampeonatoMaisRecente() {
       try {
@@ -496,28 +319,6 @@ export default {
       } finally {
         this.isLoadingPartidas = false
       }
-    },
-
-    async abrirModalPartida(partidaId) {
-      this.mostrarModalPartida = true
-      this.loadingDetalhePartida = true
-      this.partidaDetalhada = null
-
-      try {
-        const { data } = await api.get(`/detalhar/partida/${partidaId}`)
-        this.partidaDetalhada = data
-      } catch (err) {
-        console.error('Erro ao detalhar partida:', err)
-        Swal.fire('Erro', 'Não foi possível carregar os detalhes da partida', 'error')
-        this.mostrarModalPartida = false
-      } finally {
-        this.loadingDetalhePartida = false
-      }
-    },
-
-    fecharModalPartida() {
-      this.mostrarModalPartida = false
-      this.partidaDetalhada = null
     },
 
     verificarLogin(quadra) {
@@ -931,52 +732,10 @@ p {
   overflow-x: hidden;
 }
 
-.lista-partidas {
-  list-style: none;
-  padding: 0;
-}
-
-.lista-partidas li {
-  padding: 8px 0;
-  border-bottom: 1px solid #ddd;
-}
-
 .placar-home {
   width: 90%;
   margin: 20px auto 40px;
   overflow-x: auto;
-}
-
-.placar {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 700px;
-}
-
-.placar th {
-  background-color: #3b82f6;
-  color: white;
-  padding: 12px;
-  text-align: left;
-}
-
-.placar td {
-  padding: 10px;
-  border-bottom: 1px solid #e5e7eb;
-  color: #374151;
-}
-
-.time-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.posicao {
-  color: #3b82f6;
-  font-weight: bold;
-  min-width: 24px;
-  text-align: center;
 }
 
 .time-image {
@@ -996,42 +755,6 @@ p {
   color: #3b82f6;
   font-weight: bold;
   margin-top: 12px;
-}
-
-.card-partida {
-  border: 1.5px solid #3b82f6;
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 14px;
-  background: #fff;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-}
-
-.card-partida:hover {
-  transform: scale(1.05);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  z-index: 10;
-}
-
-.status-topo {
-  text-align: center;
-  font-size: 12px;
-  font-weight: bold;
-  color: #2563eb;
-  margin-bottom: 6px;
-}
-
-.status-live-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: #22c55e;
-  display: inline-block;
-  margin-right: 6px;
-  vertical-align: middle;
-  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
-  animation: statusDotPulse 1s infinite;
 }
 
 @keyframes statusDotPulse {
@@ -1054,182 +777,6 @@ p {
   }
 }
 
-.status-topo.encerrada {
-  color: #dc2626;
-}
-
-.conteudo-partida {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-}
-
-.nome-quadra-home {
-  text-align: center;
-  font-weight: 700;
-  font-size: 15px;
-  color: #3b82f6;
-  margin: 8px 0 12px 0;
-}
-
-.time.lado {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 17px;
-}
-
-.time.lado img {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.placar-centro {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 22px;
-  font-weight: bold;
-  color: #374151;
-}
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-}
-
-.placar tbody tr {
-  background-color: #ffffff;
-  transition: background-color 0.2s ease, transform 0.15s ease;
-}
-
-.placar tbody tr:hover {
-  background-color: #f3f4f6;
-  cursor: pointer;
-}
-
-.modal-partida {
-  background-color: #fff;
-  border-radius: 12px;
-  padding: 28px 36px;
-  width: fit-content;
-  min-width: 900px;
-  max-width: 95vw;
-  max-height: 90vh;
-  box-sizing: border-box;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  overflow: hidden;
-}
-
-.fechar {
-  position: absolute;
-  top: 16px;
-  right: 18px;
-  border: none;
-  background: transparent;
-  font-size: 22px;
-  cursor: pointer;
-  color: #6b7280;
-}
-
-.fechar:hover {
-  color: #1e3a8a;
-}
-
-.modal-partida h2 {
-  font-size: 30px;
-  color: #3b82f6;
-  margin: 0;
-}
-
-.campeonato {
-  color: #6b7280;
-  font-size: 15px;
-}
-
-.placar-modal {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 20px;
-  margin: 20px 0;
-}
-
-.placar-modal .time {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  font-size: 22px;
-  color: #374151;
-}
-
-.placar-modal img {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid #e5e7eb;
-}
-
-.glossario-placar {
-  margin-top: 12px;
-  padding: 10px 12px;
-  background: #f5f6fa;
-  border-radius: 6px;
-  font-size: 12px;
-  color: #333;
-}
-
-.glossario-placar strong {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 13px;
-}
-
-.glossario-placar ul {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 4px 10px;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.glossario-placar li b {
-  color: #152147;
-}
-
-.resultado {
-  font-size: 60px;
-  font-weight: bold;
-  color: #3b82f6;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.infos {
-  padding-top: 14px;
-}
-
-.infos p {
-  margin: 6px 0;
-  color: #4b5563;
-  font-size: 15px;
-}
-
 .loader-container-centralizado,
 .sem-dados-centralizado {
   display: flex;
@@ -1238,191 +785,6 @@ p {
   height: 200px;
   font-size: 16px;
   color: #555;
-}
-
-.coluna-time h3 {
-  text-align: center;
-  color: #3b82f6;
-  font-size: 18px;
-  border-bottom: 1px solid #3b82f6;
-  padding-bottom: 6px;
-  margin-bottom: 10px;
-}
-
-.jogador-card {
-  margin-bottom: 8px;
-}
-
-.jogador-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.foto-jogador {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid #ccc;
-}
-
-.dados-jogador {
-  display: flex;
-  flex-direction: column;
-}
-
-.nome {
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.dados-jogador small {
-  color: #6b7280;
-  font-size: 12px;
-}
-
-.jogadores-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  max-height: 220px;
-  overflow-y: auto;
-  padding-right: 6px;
-}
-
-.jogadores-time {
-  border: 1px solid #3b82f6;
-  border-radius: 10px;
-  padding: 12px;
-  background: #f9fafb;
-}
-
-.jogador-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 0;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.jogador-item:last-child {
-  border-bottom: none;
-}
-
-.estatisticas {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 2px;
-}
-
-.gols {
-  font-size: 18px;
-  font-weight: bold;
-  color: #1e3a8a;
-  background: #e0e7ff;
-  padding: 2px 8px;
-  border-radius: 12px;
-}
-
-.cartao {
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.cartao.amarelo {
-  color: #ca8a04;
-}
-
-.cartao.vermelho {
-  color: #dc2626;
-}
-
-.card-partida.partida-andamento {
-  border: 1px solid #16a34a;
-}
-
-.card-partida.partida-pausada {
-  border: 1px solid #facc15;
-}
-
-.card-partida.partida-finalizada {
-  border: 1px solid #dc2626;
-}
-
-.status-andamento {
-  color: #16a34a;
-  font-weight: bold;
-}
-
-.status-pausada {
-  color: #facc15;
-  font-weight: bold;
-}
-
-.status-finalizada {
-  color: #dc2626;
-  font-weight: bold;
-}
-
-.infos span[class^="status-"] {
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 14px;
-}
-
-.status-andamento {
-  background: rgba(22, 163, 74, 0.1);
-}
-
-.status-pausada {
-  background: rgba(250, 204, 21, 0.15);
-}
-
-.status-finalizada {
-  background: rgba(220, 38, 38, 0.12);
-}
-
-
-.status-finalizada {
-  color: #dc2626;
-  font-weight: bold;
-  background: rgba(220, 38, 38, 0.12);
-  padding: 2px 8px;
-  border-radius: 12px;
-}
-
-.status-cancelada {
-  color: #dc2626;
-  font-weight: bold;
-  background: rgba(220, 38, 38, 0.08);
-  padding: 2px 8px;
-  border-radius: 12px;
-}
-
-.btn-cancel-placar {
-  background-color: #3b82f6;
-  color: white;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  margin-top: 20px;
-  width: 100%;
-  font-size: 15px;
-}
-
-.btn-cancel-placar:hover {
-  background-color: #2563eb;
-}
-
-.time-mobile-title {
-  font-size: 20px;
-  font-weight: bold;
-  color: #3b82f6;
 }
 
 @media (max-width: 768px) {
@@ -1471,107 +833,6 @@ p {
     flex: 2;
     min-width: 400px;
     overflow-x: auto;
-  }
-
-  .placar {
-    width: 100%;
-    min-width: 700px;
-    border-collapse: collapse;
-  }
-
-  .placar table {
-    font-size: 12px;
-    min-width: unset;
-  }
-
-  .placar th,
-  .placar td {
-    padding: 6px;
-    font-size: 12px;
-  }
-
-  .modal-partida {
-    padding: 16px;
-    min-width: 90vw;
-    max-width: 95vw;
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-
-  .placar-modal {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    margin: 12px 0;
-    flex-wrap: nowrap;
-  }
-
-  .placar-modal .time {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    font-size: 14px;
-  }
-
-  .placar-modal .time img {
-    width: 40px;
-    height: 40px;
-  }
-
-  .resultado {
-    font-size: 36px;
-    font-weight: bold;
-    color: #3b82f6;
-  }
-
-  .jogadores-container {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    max-height: 300px;
-  }
-
-  .jogadores-time {
-    padding: 8px;
-  }
-
-  .foto-jogador {
-    width: 32px;
-    height: 32px;
-  }
-
-  .estatisticas {
-    gap: 4px;
-  }
-
-  .gols {
-    font-size: 14px;
-  }
-
-  .cartao {
-    font-size: 11px;
-  }
-
-  .btn-cancel-placar {
-    font-size: 14px;
-    padding: 8px 12px;
-  }
-
-  .modal-partida h2 {
-    font-size: 22px;
-    text-align: left;
-  }
-
-  .infos p {
-    font-size: 14px;
-  }
-
-  .time-mobile-title {
-    font-size: 20px;
-    font-weight: bold;
-    color: #3b82f6;
   }
 }
 </style>

@@ -39,12 +39,13 @@
                 <th>Time</th>
                 <th>PTS</th>
                 <th>J</th>
+                <th>VIT</th>
+                <th>E</th>
+                <th>DER</th>
                 <th>GM</th>
                 <th>GS</th>
                 <th>SG</th>
-                <th>E</th>
-                <th>VIT</th>
-                <th>DER</th>
+                <th>%</th>
               </tr>
             </thead>
             <tbody>
@@ -56,12 +57,13 @@
                 </td>
                 <td>{{ time.pontuacao }}</td>
                 <td>{{ time.jogos }}</td>
+                <td>{{ time.vitorias }}</td>
+                <td>{{ time.empates }}</td>
+                <td>{{ time.derrotas }}</td>
                 <td>{{ time.golsPro }}</td>
                 <td>{{ time.golsSofridos }}</td>
                 <td>{{ time.saldoDeGols }}</td>
-                <td>{{ time.empates }}</td>
-                <td>{{ time.vitorias }}</td>
-                <td>{{ time.derrotas }}</td>
+                <td>{{ time.aproveitamento ?? 0 }}%</td>
               </tr>
             </tbody>
           </table>
