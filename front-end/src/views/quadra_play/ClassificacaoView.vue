@@ -46,6 +46,7 @@
                 <th>GS</th>
                 <th>SG</th>
                 <th>%</th>
+                <th class="col-ultimos">Últimos Jogos</th>
               </tr>
             </thead>
             <tbody>
@@ -64,6 +65,18 @@
                 <td>{{ time.golsSofridos }}</td>
                 <td>{{ time.saldoDeGols }}</td>
                 <td>{{ time.aproveitamento ?? 0 }}%</td>
+                <td class="ultimos-jogos-cell">
+                  <div class="ultimos-jogos">
+                    <span
+                      v-for="(resultado, resultadoIndex) in obterUltimosJogos(time)"
+                      :key="`${time.id || index}-fut-${resultadoIndex}`"
+                      class="resultado-item"
+                      :class="classeResultado(resultado)"
+                    >
+                      {{ simboloResultado(resultado) }}
+                    </span>
+                  </div>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -83,6 +96,7 @@
                 <th>2x3</th>
                 <th>0x3</th>
                 <th>W.O</th>
+                <th class="col-ultimos">Últimos Jogos</th>
               </tr>
             </thead>
             <tbody>
@@ -102,6 +116,18 @@
                 <td>{{ time.derrota2x3 }}</td>
                 <td>{{ time.derrota0x3 }}</td>
                 <td>{{ time.derrotaWo }}</td>
+                <td class="ultimos-jogos-cell">
+                  <div class="ultimos-jogos">
+                    <span
+                      v-for="(resultado, resultadoIndex) in obterUltimosJogos(time)"
+                      :key="`${time.id || index}-vol-${resultadoIndex}`"
+                      class="resultado-item"
+                      :class="classeResultado(resultado)"
+                    >
+                      {{ simboloResultado(resultado) }}
+                    </span>
+                  </div>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -232,6 +258,117 @@ export default {
         console.error('Erro ao carregar placar da fase:', err)
         this.timesPlacar = []
       }
+    },
+    obterUltimosJogos(time) {
+      const candidatas = [
+        time?.ultimosJogos,
+        time?.ultimos_jogos,
+        time?.ultimosResultados,
+        time?.ultimos_resultados,
+        time?.historico,
+        time?.recentes,
+        time?.forma,
+        time?.form
+      ]
+
+      const bruto = candidatas.find(valor => Array.isArray(valor) || typeof valor === 'string')
+      let resultados = []
+
+      if (Array.isArray(bruto)) {
+        resultados = bruto.map(item => this.normalizarResultadoItem(item, time))
+      } else if (typeof bruto === 'string') {
+        resultados = this.extrairResultadosDeTexto(bruto)
+      }
+
+      const normalizados = resultados
+        .map(item => this.normalizarResultadoTexto(item))
+        .filter(item => ['V', 'E', 'D', '-'].includes(item))
+        .slice(0, 3)
+
+      while (normalizados.length < 3) normalizados.push('-')
+      return normalizados
+    },
+    extrairResultadosDeTexto(texto) {
+      const bruto = String(texto || '')
+        .toUpperCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+
+      if (!bruto) return []
+
+      const separadores = /[,\s;/|-]/
+      const tokens = separadores.test(bruto)
+        ? bruto.split(/[,\s;/|-]+/).filter(Boolean)
+        : bruto.split('')
+
+      return tokens.map(token => this.normalizarResultadoTexto(token))
+    },
+    normalizarResultadoItem(item, time) {
+      if (item == null) return '-'
+
+      if (typeof item === 'string' || typeof item === 'number') {
+        return this.normalizarResultadoTexto(item)
+      }
+
+      if (typeof item !== 'object') return '-'
+
+      const valorDireto =
+        item.resultado ??
+        item.status ??
+        item.tipo ??
+        item.code ??
+        item.valor ??
+        item.sigla
+
+      if (valorDireto != null) {
+        const direto = this.normalizarResultadoTexto(valorDireto)
+        if (direto !== '-') return direto
+      }
+
+      if (item.venceu === true || item.vitoria === true) return 'V'
+      if (item.empatou === true || item.empate === true) return 'E'
+      if (item.perdeu === true || item.derrota === true) return 'D'
+
+      const timeId = time?.timeId ?? time?.time?.id ?? time?.id
+      const vencedorId = item.vencedorId ?? item.timeVencedorId ?? item.ganhadorId
+      if (timeId != null && vencedorId != null) {
+        return String(vencedorId) === String(timeId) ? 'V' : 'D'
+      }
+
+      const pontosPro = item.golsPro ?? item.pontosPro ?? item.pontos ?? item.marcados
+      const pontosContra = item.golsContra ?? item.golsSofridos ?? item.pontosContra ?? item.sofridos
+      if (Number.isFinite(Number(pontosPro)) && Number.isFinite(Number(pontosContra))) {
+        if (Number(pontosPro) > Number(pontosContra)) return 'V'
+        if (Number(pontosPro) < Number(pontosContra)) return 'D'
+        return 'E'
+      }
+
+      return '-'
+    },
+    normalizarResultadoTexto(valor) {
+      const token = String(valor || '')
+        .toUpperCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+
+      if (['V', 'W', 'WIN', 'WON', 'VITORIA', 'VITORIAS', 'GANHOU'].includes(token)) return 'V'
+      if (['E', 'DRAW', 'EMPATE', 'EMPATES', 'TIE'].includes(token)) return 'E'
+      if (['D', 'L', 'LOSS', 'LOST', 'DERROTA', 'DERROTAS', 'PERDEU', 'X'].includes(token)) return 'D'
+      if (['-', 'N', 'NULL', 'SEM'].includes(token)) return '-'
+      return '-'
+    },
+    classeResultado(resultado) {
+      if (resultado === 'V') return 'resultado-v'
+      if (resultado === 'E') return 'resultado-e'
+      if (resultado === 'D') return 'resultado-d'
+      return 'resultado-n'
+    },
+    simboloResultado(resultado) {
+      if (resultado === 'V') return '\u2713'
+      if (resultado === 'D') return '\u2715'
+      return '-'
     }
   }
 }
@@ -447,6 +584,54 @@ export default {
   white-space: nowrap;
 }
 
+.col-ultimos {
+  text-align: center !important;
+  min-width: 136px;
+}
+
+.ultimos-jogos-cell {
+  min-width: 136px;
+}
+
+.ultimos-jogos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.resultado-item {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.resultado-v {
+  background-color: #16a34a;
+  color: #fff;
+}
+
+.resultado-e {
+  background-color: #9ca3af;
+  color: #fff;
+}
+
+.resultado-d {
+  background-color: #ef4444;
+  color: #fff;
+}
+
+.resultado-n {
+  background-color: #cbd5e1;
+  color: #334155;
+}
+
 .time-info {
   display: flex;
   align-items: center;
@@ -561,6 +746,17 @@ export default {
   .placar tbody td {
     font-size: 12px;
     padding: 6px 8px;
+  }
+
+  .col-ultimos,
+  .ultimos-jogos-cell {
+    min-width: 110px;
+  }
+
+  .resultado-item {
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
   }
 
   .time-info {

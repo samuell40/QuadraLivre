@@ -615,6 +615,94 @@ async function criarRodada(faseId, nomeRodada) {
 
   return rodada;
 }
+
+function resultadoTimeNaPartida(partida, timeId) {
+  const ehTimeA = Number(partida.timeAId) === Number(timeId);
+  const ehTimeB = Number(partida.timeBId) === Number(timeId);
+  if (!ehTimeA && !ehTimeB) return null;
+
+  const pontosA = Number(partida.pontosTimeA) || 0;
+  const pontosB = Number(partida.pontosTimeB) || 0;
+  const woA = Boolean(partida.woTimeA);
+  const woB = Boolean(partida.woTimeB);
+
+  if (woA && !woB) return ehTimeA ? 'D' : 'V';
+  if (woB && !woA) return ehTimeA ? 'V' : 'D';
+  if (pontosA > pontosB) return ehTimeA ? 'V' : 'D';
+  if (pontosB > pontosA) return ehTimeA ? 'D' : 'V';
+  return 'E';
+}
+
+function chaveHistorico(faseId, timeId) {
+  return `${Number(faseId)}:${Number(timeId)}`;
+}
+
+function adicionarResultadoNoHistorico(historicoMap, faseId, timeId, resultado) {
+  if (!faseId || !timeId || !resultado) return;
+  if (!['V', 'E', 'D'].includes(resultado)) return;
+
+  const chave = chaveHistorico(faseId, timeId);
+  const atual = historicoMap.get(chave) || [];
+  if (atual.length >= 3) return;
+
+  atual.push(resultado);
+  historicoMap.set(chave, atual);
+}
+
+async function listarPlacarPorFaseComUltimosJogos(campeonatoId, faseId = null) {
+  const fases = await listarPlacarPorFase(campeonatoId);
+  if (!Array.isArray(fases) || !fases.length) return [];
+
+  const faseIdNum = Number(faseId);
+  const fasesFiltradas =
+    Number.isFinite(faseIdNum) && faseIdNum > 0
+      ? fases.filter(fase => Number(fase.faseId) === faseIdNum)
+      : fases;
+
+  if (!fasesFiltradas.length) return [];
+
+  const fasesIds = fasesFiltradas.map(fase => Number(fase.faseId));
+  const partidasFinalizadas = await prisma.partida.findMany({
+    where: {
+      campeonatoId: Number(campeonatoId),
+      faseId: { in: fasesIds },
+      status: 'FINALIZADA'
+    },
+    select: {
+      id: true,
+      faseId: true,
+      timeAId: true,
+      timeBId: true,
+      pontosTimeA: true,
+      pontosTimeB: true,
+      woTimeA: true,
+      woTimeB: true,
+      data: true
+    },
+    orderBy: [
+      { data: 'desc' },
+      { id: 'desc' }
+    ]
+  });
+
+  const historicoPorTimeEFase = new Map();
+  for (const partida of partidasFinalizadas) {
+    const resultadoA = resultadoTimeNaPartida(partida, partida.timeAId);
+    const resultadoB = resultadoTimeNaPartida(partida, partida.timeBId);
+
+    adicionarResultadoNoHistorico(historicoPorTimeEFase, partida.faseId, partida.timeAId, resultadoA);
+    adicionarResultadoNoHistorico(historicoPorTimeEFase, partida.faseId, partida.timeBId, resultadoB);
+  }
+
+  return fasesFiltradas.map(fase => ({
+    ...fase,
+    placares: (fase.placares || []).map(placar => ({
+      ...placar,
+      ultimosJogos: historicoPorTimeEFase.get(chaveHistorico(fase.faseId, placar.timeId)) || []
+    }))
+  }));
+}
+
 module.exports = {
   CRITERIOS_MODALIDADE,
   REGRAS_PADRAO_CAMPEONATO,
@@ -628,7 +716,7 @@ module.exports = {
   finalizarCampeonato,
   getRegrasCampeonato,
   atualizarRegrasCampeonato,
-  listarPlacarPorFase,
+  listarPlacarPorFase: listarPlacarPorFaseComUltimosJogos,
   listarFasesERodadas,
   criarFase,
   criarRodada

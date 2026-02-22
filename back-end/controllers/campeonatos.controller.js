@@ -142,9 +142,10 @@ async function finalizarCampeonatoController(req, res) {
 
 async function listarPlacarPorFaseController(req, res) {
   const { campeonatoId } = req.params;
+  const { faseId } = req.query;
 
   try {
-    const placaresPorFase = await campeonatoService.listarPlacarPorFase(campeonatoId);
+    const placaresPorFase = await campeonatoService.listarPlacarPorFase(campeonatoId, faseId);
     res.status(200).json(placaresPorFase);
   } catch (error) {
     console.error(error);
