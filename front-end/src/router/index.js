@@ -24,6 +24,7 @@ import telaInicialView from '@/views/quadra_play/telaInicialView.vue';
 
 const QUADRA_PLAY_LOGIN_KEY = 'quadraPlayLoginAtivo';
 const ROTAS_EXCECAO_QUADRA_PLAY = new Set(['NaoAutorizado', 'GoogleCallback']);
+const ROTAS_PUBLICAS_LIBERADAS_QUADRA_PLAY = new Set(['Home', 'visualizar_placarhome', 'times']);
 
 const routes = [
   {
@@ -42,7 +43,7 @@ const routes = [
     path: '/agendamentos',
     name: 'Agendamentos',
     component: AgendamentosView,
-    meta: { public: true, roles: [2] },
+    meta: { requiresAuth: true, roles: [1, 2] },
   },
   {
     path: '/agendarquadra',
@@ -86,7 +87,7 @@ const routes = [
     component: GerenciartimesView,
     meta: { requiresAuth: true, roles: [1, 2], requiresQuadraPlayLogin: true },
   },
-   {
+  {
     path: '/times',
     name: 'times',
     component: TimesHomeView,
@@ -108,7 +109,7 @@ const routes = [
     path: '/visualizarplacarhome',
     name: 'visualizar_placarhome',
     component: VisualizarPlacarHomeView,
-    meta: { public: true},
+    meta: { public: true },
   },
   {
     path: '/usuarios',
@@ -138,14 +139,14 @@ const routes = [
     path: '/horarios',
     name: 'Horarios',
     component: HorariosView,
-    meta: { public: true },
+    meta: { requiresAuth: true, roles: [1, 2] },
   },
 
   {
     path: '/modalidades',
     name: 'Modalidades',
     component: GerenciarModalidadesView,
-    meta: { public: true },
+    meta: { requiresAuth: true, roles: [1, 2] },
   },
   {
     path: '/telainicial',
@@ -159,7 +160,7 @@ const routes = [
     component: DetalharCampeonatosView,
     meta: { requiresAuth: true, roles: [1, 2, 4], requiresQuadraPlayLogin: true },
   },
-   {
+  {
     path: '/classificacao',
     name: 'Classificacao',
     component: ClassificacaoView,
@@ -193,7 +194,8 @@ router.beforeEach((to, from, next) => {
   if (
     loginQuadraPlayAtivo &&
     !to.meta.requiresQuadraPlayLogin &&
-    !ROTAS_EXCECAO_QUADRA_PLAY.has(to.name)
+    !ROTAS_EXCECAO_QUADRA_PLAY.has(to.name) &&
+    !ROTAS_PUBLICAS_LIBERADAS_QUADRA_PLAY.has(to.name)
   ) {
     return next({ name: 'NaoAutorizado', query: { redirect } });
   }
