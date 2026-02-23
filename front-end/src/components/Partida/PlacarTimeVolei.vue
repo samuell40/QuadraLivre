@@ -1,5 +1,5 @@
 <template>
-  <div class="placar" :class="{ 'placar-finalizada': partidaEncerradaGlobal }">
+  <div class="placar" :class="{ 'placar-finalizada': partidaEncerradaGlobal, 'placar-andamento': partidaEmAndamentoGlobal }">
     <h2 class="nome-time">
       <img v-if="timeData?.foto" :src="timeData.foto" alt="Escudo do time" class="foto-time" />
       <span>{{ timeNome }}</span>
@@ -65,6 +65,7 @@ export default {
     setsAdversario: { type: Number, default: 0 },
     woAdversario: { type: Number, default: 0 },
     partidaEncerradaGlobal: { type: Boolean, default: false },
+    partidaStatus: { type: String, default: '' },
     maxSetsPartida: { type: Number, default: 5 },
     maxPontosSet: { type: Number, default: 25 }
   },
@@ -80,6 +81,10 @@ export default {
 
     woAtual() {
       return this.timeData?.wo ? 1 : 0
+    },
+
+    partidaEmAndamentoGlobal() {
+      return this.partidaStatus === 'EM_ANDAMENTO'
     },
 
     podeDiminuirSets() {
@@ -140,6 +145,14 @@ export default {
   margin: 0 auto;
 }
 
+.placar.placar-andamento {
+  border-color: #16a34a;
+}
+
+.placar.placar-finalizada {
+  border-color: #dc2626;
+}
+
 .nome-time {
   background: #f9f9f9;
   border-bottom: 1px solid #ddd;
@@ -159,6 +172,11 @@ export default {
   color: #dc2626;
 }
 
+.placar.placar-andamento .nome-time {
+  border-color: #16a34a;
+  color: #16a34a;
+}
+
 .foto-time {
   width: 60px;
   height: 60px;
@@ -172,6 +190,14 @@ export default {
   padding: 15px;
   border-radius: 8px;
   border: 1px solid #eee;
+}
+
+.placar.placar-andamento .box {
+  border-color: #86efac;
+}
+
+.placar.placar-finalizada .box {
+  border-color: #fca5a5;
 }
 
 .controls {
@@ -211,6 +237,14 @@ export default {
 
 .placar.placar-finalizada > .box .controls button:last-child {
   background-color: #dc2626;
+}
+
+.placar.placar-andamento > .box .controls button {
+  background-color: #166534;
+}
+
+.placar.placar-andamento > .box .controls button:last-child {
+  background-color: #16a34a;
 }
 
 .controls button:hover {

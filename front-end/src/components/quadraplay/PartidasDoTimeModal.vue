@@ -231,7 +231,7 @@ export default {
 
 .card-partida {
   position: relative;
-  border: 2px solid #e5e7eb;
+  border: 2px solid #2563eb;
   border-radius: 12px;
   padding: 10px 12px 8px;
   background: #fff;
@@ -243,23 +243,6 @@ export default {
 .card-partida:hover {
   transform: translateY(-2px);
 }
-
-.card-partida.partida-andamento {
-  border-color: #16a34a;
-}
-
-.card-partida.partida-finalizada {
-  border-color: #e11d48;
-}
-
-.card-partida.partida-cancelada {
-  border-color: #dc2626;
-}
-
-.card-partida.partida-agendada {
-  border-color: #2563eb;
-}
-
 
 .match-ribbon {
   position: absolute;

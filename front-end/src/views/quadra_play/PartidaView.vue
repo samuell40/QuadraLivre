@@ -1,11 +1,11 @@
 <template>
   <div class="layout">
-    <NavBarQuadras />
-    <SidebarCampeonato @sidebar-toggle="sidebarCollapsed = $event" />
+    <NavBarQuadras :partida-status="partida?.status || ''" />
+    <SidebarCampeonato :partida-status="partida?.status || ''" @sidebar-toggle="sidebarCollapsed = $event" />
 
     <div class="conteudo" :class="{ collapsed: sidebarCollapsed }">
       <div class="header">
-        <h1 class="title" :class="{ 'title-finalizada': isFinalizada }">Controles da Partida</h1>
+        <h1 class="title" :class="{ 'title-finalizada': isFinalizada, 'title-andamento': isEmAndamento }">Controles da Partida</h1>
 
         <span v-if="isEmAndamento" class="badge-status badge-ao-vivo">
           <span class="live-dot" aria-hidden="true"></span>
@@ -22,7 +22,7 @@
       </div>
 
       <div v-else>
-        <div v-if="placarComponent" class="placares" :class="{ 'placares-finalizada': isFinalizada }">
+        <div v-if="placarComponent" class="placares" :class="{ 'placares-finalizada': isFinalizada, 'placares-andamento': isEmAndamento }">
           <component :is="placarComponent" v-bind="placarPropsTimeA" @parcial-delta="onParcialDelta"
             @refresh="carregarPartida" />
 
@@ -30,7 +30,7 @@
             @refresh="carregarPartida" />
         </div>
 
-        <button class="botao-finalizar" :class="{ 'botao-finalizar-finalizada': isFinalizada }"
+        <button class="botao-finalizar" :class="{ 'botao-finalizar-finalizada': isFinalizada, 'botao-finalizar-andamento': isEmAndamento }"
           :disabled="botaoDesabilitado" @click="finalizarPartida">
           <span v-if="isFinalizando">Salvando...</span>
 
@@ -149,6 +149,7 @@ export default {
         timeNome: this.time1?.nome,
         timeData: this.time1,
         partidaId: this.partidaId,
+        partidaStatus: this.partida?.status || '',
         partidaEncerradaGlobal: this.isFinalizada,
         podeEditar: this.podeEditar,
         placarId: this.placarIdTimeA,
@@ -165,6 +166,7 @@ export default {
         timeNome: this.time2?.nome,
         timeData: this.time2,
         partidaId: this.partidaId,
+        partidaStatus: this.partida?.status || '',
         partidaEncerradaGlobal: this.isFinalizada,
         podeEditar: this.podeEditar,
         placarId: this.placarIdTimeB,
@@ -781,6 +783,10 @@ export default {
   margin-top: 20px;
 }
 
+.title.title-andamento {
+  color: #16a34a;
+}
+
 .title.title-finalizada {
   color: #dc2626;
 }
@@ -798,8 +804,8 @@ export default {
 }
 
 .badge-ao-vivo {
-  color: #3b82f6;
-  border: 2px solid #3b82f6;
+  color: #16a34a;
+  border: 2px solid #16a34a;
   animation: livePulse 1.2s infinite ease-in-out;
 }
 
@@ -880,6 +886,10 @@ export default {
   margin-top: 18px;
 }
 
+.botao-finalizar.botao-finalizar-andamento {
+  background-color: #16a34a;
+}
+
 .botao-finalizar.botao-finalizar-finalizada {
   background-color: #dc2626;
 }
@@ -894,6 +904,10 @@ export default {
   padding: 5px;
   flex-wrap: wrap;
   align-items: flex-start;
+}
+
+.placares.placares-andamento {
+  border-color: #16a34a;
 }
 
 .placares.placares-finalizada {

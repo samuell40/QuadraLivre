@@ -1,5 +1,5 @@
 <template>
-  <div class="placar" :class="{ 'placar-finalizada': partidaEncerradaGlobal }">
+  <div class="placar" :class="{ 'placar-finalizada': partidaEncerradaGlobal, 'placar-andamento': partidaEmAndamentoGlobal }">
     <h2 class="nome-time">
       <img v-if="timeData?.foto" :src="timeData.foto" alt="Escudo do time" class="foto-time" />
       <span>{{ timeNome }}</span>
@@ -58,8 +58,8 @@
 
     <!-- Modal eventos (gols/cartões) -->
     <div v-if="modalAberto" class="modal-overlay" @click.self="fecharModal">
-      <div class="modal-content" :class="{ 'modal-finalizada': partidaEncerradaGlobal }">
-        <h2 class="modal-titulo" :class="{ 'modal-titulo-finalizada': partidaEncerradaGlobal }">
+      <div class="modal-content" :class="modalStatusClass">
+        <h2 class="modal-titulo" :class="{ 'modal-titulo-finalizada': partidaEncerradaGlobal, 'modal-titulo-andamento': partidaEmAndamentoGlobal }">
           Selecione o Jogador – <span>{{ tituloEvento }}</span>
         </h2>
 
@@ -90,7 +90,7 @@
 
     <!-- Modal substituição -->
     <div v-if="substituicaoModal" class="modal-overlay" @click.self="fecharModalSubstituicao">
-      <div class="modal-content">
+      <div class="modal-content" :class="modalStatusClass">
         <h2 class="titulo-substituicao">Substituição de Jogadores</h2>
 
         <div v-if="carregando" class="loader">Carregando jogadores...</div>
@@ -151,7 +151,7 @@
 
     <!-- Modal remover -->
     <div v-if="modalRemoverAberto" class="modal-overlay" @click.self="fecharModalRemover">
-      <div class="modal-content modal-remover">
+      <div class="modal-content modal-remover" :class="modalStatusClass">
         <h2 class="modal-titulo">Remover jogadores de campo</h2>
 
         <div v-if="carregando" class="loader">Carregando jogadores...</div>
@@ -192,7 +192,8 @@ export default {
     timeData: Object,
     partidaId: [String, Number],
     lado: { type: String, required: true },
-    partidaEncerradaGlobal: { type: Boolean, default: false }
+    partidaEncerradaGlobal: { type: Boolean, default: false },
+    partidaStatus: { type: String, default: '' }
   },
 
   data() {
@@ -225,6 +226,17 @@ export default {
     partidaIdNum() {
       const n = Number(this.partidaId)
       return Number.isFinite(n) ? n : null
+    },
+
+    partidaEmAndamentoGlobal() {
+      return this.partidaStatus === 'EM_ANDAMENTO'
+    },
+
+    modalStatusClass() {
+      return {
+        'modal-finalizada': this.partidaEncerradaGlobal,
+        'modal-andamento': this.partidaEmAndamentoGlobal
+      }
     }
   },
 
@@ -469,6 +481,11 @@ export default {
   color: #dc2626;
 }
 
+.placar.placar-andamento .nome-time {
+  border-color: #16a34a;
+  color: #16a34a;
+}
+
 .box {
   background: #fafafa;
   padding: 15px;
@@ -520,6 +537,16 @@ export default {
   background-color: #dc2626;
 }
 
+.placar.placar-andamento > .box .controls button,
+.placar.placar-andamento > .row-2 .box .controls button {
+  background-color: #166534;
+}
+
+.placar.placar-andamento > .box .controls button:last-child,
+.placar.placar-andamento > .row-2 .box .controls button:last-child {
+  background-color: #16a34a;
+}
+
 .row-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -564,6 +591,10 @@ export default {
   color: #dc2626;
 }
 
+.modal-titulo.modal-titulo-andamento {
+  color: #16a34a;
+}
+
 .modal-content.modal-finalizada .jogador-card .controls button {
   background-color: #991b1b;
 }
@@ -582,6 +613,32 @@ export default {
 
 .modal-content.modal-finalizada .btn-save1 {
   background-color: #dc2626;
+}
+
+.modal-content.modal-andamento .jogador-card .controls button {
+  background-color: #166534;
+}
+
+.modal-content.modal-andamento .jogador-card .controls button:last-child {
+  background-color: #16a34a;
+}
+
+.modal-content.modal-andamento .coluna {
+  border-color: #16a34a;
+}
+
+.modal-content.modal-andamento .jogador-card {
+  border-color: #16a34a;
+}
+
+.modal-content.modal-andamento .btn-save1,
+.modal-content.modal-andamento .btn-cancel {
+  background-color: #16a34a;
+}
+
+.modal-content.modal-andamento .titulo-substituicao,
+.modal-content.modal-andamento .subtitulo {
+  color: #16a34a;
 }
 
 .titulo-substituicao {

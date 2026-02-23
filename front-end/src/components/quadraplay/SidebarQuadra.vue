@@ -1,6 +1,6 @@
 <template>
   <div>
-    <button class="button-sidebar d-block d-md-none" @click="toggleSidebar">
+    <button class="button-sidebar d-block d-md-none" :class="statusThemeClass" @click="toggleSidebar">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-list"
         viewBox="0 0 16 16">
         <path fill-rule="evenodd"
@@ -8,7 +8,7 @@
       </svg>
     </button>
 
-    <div v-if="sidebarVisible" class="sidebar_quadra" :class="{ collapsed: !isMobile && collapsed }">
+    <div v-if="sidebarVisible" class="sidebar_quadra" :class="[statusThemeClass, { collapsed: !isMobile && collapsed }]">
       <button v-if="!isMobile" class="collapse-btn" @click="toggleCollapse">
         <svg v-if="!collapsed" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
           class="bi bi-caret-left" viewBox="0 0 16 16">
@@ -85,6 +85,9 @@ const SIDEBAR_COLLAPSED_KEY = "sidebar_collapsed";
 
 export default {
   name: "SideBar",
+  props: {
+    partidaStatus: { type: String, default: '' }
+  },
   data() {
     return {
       usuario: null,
@@ -108,6 +111,12 @@ export default {
   },
 
   computed: {
+    statusThemeClass() {
+      if (this.partidaStatus === 'EM_ANDAMENTO') return 'status-andamento'
+      if (this.partidaStatus === 'FINALIZADA') return 'status-finalizada'
+      return ''
+    },
+
     isPermissao4() {
       return this.usuario?.permissaoId === 4;
     }
@@ -191,6 +200,14 @@ body {
   flex-direction: column;
 }
 
+.sidebar_quadra.status-andamento {
+  background-color: #14532d;
+}
+
+.sidebar_quadra.status-finalizada {
+  background-color: #7f1d1d;
+}
+
 .sidebar_quadra.collapsed {
   width: 70px;
 }
@@ -226,6 +243,22 @@ body {
 
 .collapse-btn:hover {
   background-color: #1e3a8a;
+}
+
+.sidebar_quadra.status-andamento .collapse-btn {
+  background-color: #15803d;
+}
+
+.sidebar_quadra.status-andamento .collapse-btn:hover {
+  background-color: #16a34a;
+}
+
+.sidebar_quadra.status-finalizada .collapse-btn {
+  background-color: #b91c1c;
+}
+
+.sidebar_quadra.status-finalizada .collapse-btn:hover {
+  background-color: #dc2626;
 }
 
 .sidebar_quadra a {
@@ -287,6 +320,16 @@ body {
   color: #3B82F6;
 }
 
+.sidebar_quadra.status-andamento a.active,
+.sidebar_quadra.status-andamento a.active svg {
+  color: #22c55e;
+}
+
+.sidebar_quadra.status-finalizada a.active,
+.sidebar_quadra.status-finalizada a.active svg {
+  color: #f87171;
+}
+
 
 .logout-button svg {
   margin-right: 8px;
@@ -312,6 +355,14 @@ body {
   cursor: pointer;
   background: transparent;
   color: rgb(240, 231, 231);
+}
+
+.button-sidebar.status-andamento {
+  color: #22c55e;
+}
+
+.button-sidebar.status-finalizada {
+  color: #f87171;
 }
 
 .logout-button {
@@ -352,6 +403,14 @@ body {
   font-size: 15px;
   color: #3b82f6;
   font-weight: bold;
+}
+
+.sidebar_quadra.status-andamento .user-info .user-name {
+  color: #22c55e;
+}
+
+.sidebar_quadra.status-finalizada .user-info .user-name {
+  color: #f87171;
 }
 
 .user-info .user-role {

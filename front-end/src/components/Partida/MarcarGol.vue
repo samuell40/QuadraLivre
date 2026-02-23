@@ -72,12 +72,18 @@ export default {
 
 .modal-content {
   background: #fff;
+  border: 2px solid #16a34a;
   border-radius: 12px;
   padding: 20px;
   width: min(420px, calc(100vw - 32px));
   max-height: min(80vh, 720px);
   overflow-y: auto;
   text-align: center;
+}
+
+.modal-content h2 {
+  color: #16a34a;
+  margin: 0 0 8px;
 }
 
 .lista-jogadores {
@@ -90,7 +96,8 @@ export default {
   padding: 12px;
   margin: 6px 0;
   border-radius: 8px;
-  background: #f3f3f3;
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
   cursor: pointer;
   transition: background 0.2s;
   font-size: 16px;
@@ -101,11 +108,11 @@ export default {
 }
 
 .jogador-item:hover {
-  background: #dbeafe;
+  background: #dcfce7;
 }
 
 .botao-fechar {
-  background: #ef4444;
+  background: #16a34a;
   color: white;
   padding: 10px 18px;
   border-radius: 6px;

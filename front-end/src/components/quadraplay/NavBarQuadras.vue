@@ -1,5 +1,5 @@
 <template>
-  <nav class="navbar-custom">
+  <nav :class="['navbar-custom', statusThemeClass]">
     <div class="navbar-container">
       <div class="esquerda-section">
 
@@ -16,7 +16,7 @@
         </div>
       </div>
       <div class="direita-nav">
-        <a href="#" class="login" @click.prevent="sair">
+        <a href="#" :class="['login', statusThemeClass]" @click.prevent="sair">
           Sair
         </a>
       </div>
@@ -28,6 +28,9 @@
 
 export default {
   name: 'NavbarQuadra',
+  props: {
+    partidaStatus: { type: String, default: '' }
+  },
 
   data() {
     return {
@@ -38,6 +41,14 @@ export default {
   },
   mounted() {
     this.usuario = JSON.parse(localStorage.getItem('usuario'))
+  },
+
+  computed: {
+    statusThemeClass() {
+      if (this.partidaStatus === 'EM_ANDAMENTO') return 'status-andamento'
+      if (this.partidaStatus === 'FINALIZADA') return 'status-finalizada'
+      return ''
+    }
   },
 
   methods: {
@@ -77,6 +88,16 @@ export default {
   font-family: "Montserrat", sans-serif;
   z-index: 1000;
   border-bottom: 3px solid #3b82f6;
+}
+
+.navbar-custom.status-andamento {
+  background-color: #14532d;
+  border-bottom-color: #16a34a;
+}
+
+.navbar-custom.status-finalizada {
+  background-color: #7f1d1d;
+  border-bottom-color: #dc2626;
 }
 
 .navbar-container {
@@ -219,6 +240,14 @@ export default {
   font-weight: 500;
   text-align: center;
   text-decoration: none;
+}
+
+.login.status-andamento {
+  background-color: #15803d;
+}
+
+.login.status-finalizada {
+  background-color: #b91c1c;
 }
 
 /* RESPONSIVO */
