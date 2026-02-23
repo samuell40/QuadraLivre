@@ -5,7 +5,7 @@
 
     <div class="conteudo" :class="{ collapsed: sidebarCollapsed }">
       <div class="header">
-        <h1 class="title">Controles da Partida</h1>
+        <h1 class="title" :class="{ 'title-finalizada': isFinalizada }">Controles da Partida</h1>
 
         <span v-if="isEmAndamento" class="badge-status badge-ao-vivo">
           <span class="live-dot" aria-hidden="true"></span>
@@ -22,7 +22,7 @@
       </div>
 
       <div v-else>
-        <div v-if="placarComponent" class="placares">
+        <div v-if="placarComponent" class="placares" :class="{ 'placares-finalizada': isFinalizada }">
           <component :is="placarComponent" v-bind="placarPropsTimeA" @parcial-delta="onParcialDelta"
             @refresh="carregarPartida" />
 
@@ -30,7 +30,8 @@
             @refresh="carregarPartida" />
         </div>
 
-        <button class="botao-finalizar" :disabled="botaoDesabilitado" @click="finalizarPartida">
+        <button class="botao-finalizar" :class="{ 'botao-finalizar-finalizada': isFinalizada }"
+          :disabled="botaoDesabilitado" @click="finalizarPartida">
           <span v-if="isFinalizando">Salvando...</span>
 
           <template v-else>
@@ -148,6 +149,7 @@ export default {
         timeNome: this.time1?.nome,
         timeData: this.time1,
         partidaId: this.partidaId,
+        partidaEncerradaGlobal: this.isFinalizada,
         podeEditar: this.podeEditar,
         placarId: this.placarIdTimeA,
         setsAdversario: Number(this.time2?.setsVencidos ?? 0),
@@ -163,6 +165,7 @@ export default {
         timeNome: this.time2?.nome,
         timeData: this.time2,
         partidaId: this.partidaId,
+        partidaEncerradaGlobal: this.isFinalizada,
         podeEditar: this.podeEditar,
         placarId: this.placarIdTimeB,
         setsAdversario: Number(this.time1?.setsVencidos ?? 0),
@@ -778,6 +781,10 @@ export default {
   margin-top: 20px;
 }
 
+.title.title-finalizada {
+  color: #dc2626;
+}
+
 .badge-status {
   display: inline-flex;
   align-items: center;
@@ -797,9 +804,8 @@ export default {
 }
 
 .badge-finalizada {
-  border: 2px solid #3b82f6;
-  color: #3b82f6;
-  animation: livePulse 1.2s infinite ease-in-out;
+  border: 2px solid #dc2626;
+  color: #dc2626;
 }
 
 .live-dot {
@@ -874,6 +880,10 @@ export default {
   margin-top: 18px;
 }
 
+.botao-finalizar.botao-finalizar-finalizada {
+  background-color: #dc2626;
+}
+
 .placares {
   display: flex;
   gap: 30px;
@@ -884,6 +894,10 @@ export default {
   padding: 5px;
   flex-wrap: wrap;
   align-items: flex-start;
+}
+
+.placares.placares-finalizada {
+  border-color: #dc2626;
 }
 
 @media (max-width: 768px) {

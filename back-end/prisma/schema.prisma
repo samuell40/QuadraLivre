@@ -24,6 +24,7 @@ model Usuario {
   agendamentos         Agendamento[]
   times                UsuarioTime[]
   partidasCriadas      Partida[]        @relation("UsuarioCriador")
+  partidasEditadas     Partida[]        @relation("UsuarioUltimaEdicao")
   partidasParticipando PartidaUsuario[]
 
   avisosCriados  Aviso[]
@@ -227,6 +228,9 @@ model Partida {
   substituicoesTimeB    Int              @default(0)
   usuarioCriadorId      Int
   usuarioCriador        Usuario          @relation("UsuarioCriador", fields: [usuarioCriadorId], references: [id])
+  usuarioUltimaEdicaoId Int?
+  usuarioUltimaEdicao   Usuario?         @relation("UsuarioUltimaEdicao", fields: [usuarioUltimaEdicaoId], references: [id])
+  ultimaEdicaoEm        DateTime?
   jogadoresPartida      JogadorPartida[]
   participantes         PartidaUsuario[]
   sets                  SetPartida[]

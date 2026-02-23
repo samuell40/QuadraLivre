@@ -7,7 +7,7 @@ router.post('/partida', [validarJWT], controller.criarPartidaController)
 
 router.put('/partidas/:partidaId/iniciar', controller.iniciarPartidaController);
 
-router.put('/partidas/:id/finalizar', controller.finalizarPartidaController)
+router.put('/partidas/:id/finalizar', [validarJWT], controller.finalizarPartidaController)
 
 router.put('/partida/:id/parcial', [validarJWT], controller.atualizarParcialController);
 
@@ -33,6 +33,6 @@ router.get('/partidas/:campeonatoId/:faseId/:rodadaId',controller.listarPartidas
 
 router.get('/partidas/status', controller.listarStatusPartidaController);
 
-router.put('/partidas/:id/status', controller.alterarStatusPartidaController);
+router.put('/partidas/:id/status', [validarJWT], controller.alterarStatusPartidaController);
 
 module.exports = router;

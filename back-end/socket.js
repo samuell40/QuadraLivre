@@ -23,6 +23,16 @@ function iniciarSocket(server) {
   });
 
   io.on('connection', (socket) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.info('[socket] cliente conectado:', socket.id, '| total:', io.engine.clientsCount);
+    }
+
+    socket.on('disconnect', (reason) => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.info('[socket] cliente desconectado:', socket.id, '| motivo:', reason, '| total:', io.engine.clientsCount);
+      }
+    });
+
     socket.on('campeonato:inscrever', ({ campeonatoId } = {}) => {
       const id = paraIdValido(campeonatoId);
       if (!id) return;
@@ -57,7 +67,24 @@ function emitirAtualizacaoCampeonato(payload = {}) {
   });
 }
 
+function emitirNotificacaoPartidaCriada(payload = {}) {
+  if (!io) return;
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.info('[socket] emitindo notificacao de partida criada:', {
+      partidaId: payload?.partidaId,
+      campeonatoId: payload?.campeonatoId
+    });
+  }
+
+  io.emit('notificacao:partida-criada', {
+    ...payload,
+    atualizadoEm: new Date().toISOString()
+  });
+}
+
 module.exports = {
   iniciarSocket,
-  emitirAtualizacaoCampeonato
+  emitirAtualizacaoCampeonato,
+  emitirNotificacaoPartidaCriada
 };

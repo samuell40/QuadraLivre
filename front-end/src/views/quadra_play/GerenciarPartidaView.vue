@@ -79,9 +79,19 @@
                 </div>
               </div>
 
-              <div class="usuario-criador">
-                Criado por:
-                <strong>{{ partida.usuarioCriador?.nome }}</strong>
+              <div class="meta-partida">
+                <div class="usuario-criador">
+                  Criado por:
+                  <strong>{{ partida.usuarioCriador?.nome }}</strong>
+                </div>
+
+                <div v-if="partida.status === 'FINALIZADA' && partida.ultimaEdicaoEm" class="usuario-editor">
+                  Editado em:
+                  <strong>{{ formatarDataHora(partida.ultimaEdicaoEm) }}</strong>
+                  <span v-if="partida.usuarioUltimaEdicao?.nome">
+                    ({{ partida.usuarioUltimaEdicao.nome }})
+                  </span>
+                </div>
               </div>
 
               <button class="btn-acessar" @click="acessarPartida(partida.id)">
@@ -271,6 +281,12 @@ export default {
       this.mostrarModalTipo = true
     },
 
+    formatarDataHora(data) {
+      const dt = new Date(data)
+      if (Number.isNaN(dt.getTime())) return '-'
+      return dt.toLocaleString('pt-BR')
+    },
+
     statusLabel(status) {
       return STATUS_CONFIG[status]?.label
     },
@@ -359,6 +375,12 @@ export default {
     async onPartidaCriada(partidaCriada) {
       try {
         this.mostrarModalTipo = false
+
+        const partidaIdCriada = Number(partidaCriada?.id)
+        if (partidaIdCriada) {
+          await this.acessarPartida(partidaIdCriada)
+          return
+        }
 
         const faseIdCriada = Number(partidaCriada?.faseId)
         const rodadaIdCriada = Number(partidaCriada?.rodadaId)
@@ -747,9 +769,25 @@ export default {
   border: 2px solid #3b82f6;
 }
 
+.meta-partida {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .usuario-criador {
   font-size: 13px;
   color: #6b7280;
+  text-align: left;
+}
+
+.usuario-editor {
+  font-size: 13px;
+  color: #6b7280;
+  text-align: right;
 }
 
 .placar-centro {

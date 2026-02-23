@@ -1,5 +1,5 @@
 <template>
-  <div class="placar">
+  <div class="placar" :class="{ 'placar-finalizada': partidaEncerradaGlobal }">
     <h2 class="nome-time">
       <img v-if="timeData?.foto" :src="timeData.foto" alt="Escudo do time" class="foto-time" />
       <span>{{ timeNome }}</span>
@@ -179,6 +179,11 @@ export default {
   border: 2px solid #3b82f6;
 }
 
+.placar.placar-finalizada .nome-time {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
 .foto-time {
   width: 60px;
   height: 60px;
@@ -223,6 +228,14 @@ export default {
 
 .controls button:last-child {
   background-color: #3b82f6;
+}
+
+.placar.placar-finalizada > .box .controls button {
+  background-color: #991b1b;
+}
+
+.placar.placar-finalizada > .box .controls button:last-child {
+  background-color: #dc2626;
 }
 
 .controls button:hover {

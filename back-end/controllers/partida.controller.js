@@ -1,5 +1,5 @@
 const partidas = require('../services/partida.service');
-const { emitirAtualizacaoCampeonato } = require('../socket');
+const { emitirAtualizacaoCampeonato, emitirNotificacaoPartidaCriada } = require('../socket');
 
 async function criarPartidaController(req, res) {
   try {
@@ -17,6 +17,16 @@ async function criarPartidaController(req, res) {
       campeonatoId: partida?.campeonatoId,
       faseId: partida?.faseId,
       rodadaId: partida?.rodadaId
+    });
+
+    emitirNotificacaoPartidaCriada({
+      partidaId: partida?.id,
+      campeonatoId: partida?.campeonatoId,
+      campeonatoNome: partida?.campeonato?.nome,
+      timeA: partida?.timeA?.nome,
+      timeB: partida?.timeB?.nome,
+      pontosTimeA: Number(partida?.pontosTimeA ?? 0),
+      pontosTimeB: Number(partida?.pontosTimeB ?? 0)
     });
 
     res.status(201).json(partida);
@@ -44,7 +54,7 @@ async function iniciarPartidaController(req, res) {
 async function finalizarPartidaController(req, res) {
   try {
     const { id } = req.params
-    const result = await partidas.finalizarPartida(id)
+    const result = await partidas.finalizarPartida(id, null, req.user?.id)
 
     emitirAtualizacaoCampeonato({
       tipo: 'PARTIDA_FINALIZADA',
@@ -70,7 +80,7 @@ async function atualizarParcialController(req, res) {
     }
 
     const partidaAnterior = await partidas.retornarPartida(id);
-    const partidaAtualizada = await partidas.atualizarParcial(id, dadosParciais);
+    const partidaAtualizada = await partidas.atualizarParcial(id, dadosParciais, req.user?.id);
 
     const pontosAntesA = Number(partidaAnterior?.pontosTimeA ?? 0);
     const pontosAntesB = Number(partidaAnterior?.pontosTimeB ?? 0);
@@ -311,7 +321,7 @@ async function alterarStatusPartidaController(req, res) {
       });
     }
 
-    const partida = await partidas.alterarStatusPartida(id, status);
+    const partida = await partidas.alterarStatusPartida(id, status, req.user?.id);
 
     emitirAtualizacaoCampeonato({
       tipo: status === 'FINALIZADA' ? 'PARTIDA_FINALIZADA' : 'STATUS_PARTIDA_ATUALIZADO',

@@ -565,9 +565,22 @@ async function iniciarPartida(partidaId, jogadores) {
       }
     });
 
-    // Cria jogadores da partida
-    if (jogadores && jogadores.length > 0) {
-      for (const j of jogadores) {
+    // Vincula jogadores da partida sem duplicar cadastro para o mesmo jogador.
+    if (Array.isArray(jogadores) && jogadores.length > 0) {
+      const jogadoresNormalizados = jogadores
+        .map(j => ({
+          jogadorId: Number(j?.jogadorId),
+          timeId: Number(j?.timeId)
+        }))
+        .filter(j => j.jogadorId > 0 && j.timeId > 0)
+
+      const jogadoresPorId = new Map()
+      for (const j of jogadoresNormalizados) {
+        jogadoresPorId.set(j.jogadorId, j)
+      }
+      const jogadoresUnicos = Array.from(jogadoresPorId.values())
+
+      for (const j of jogadoresUnicos) {
         await validarSuspensaoJogador({
           campeonatoId: partida.campeonatoId,
           faseId: partida.faseId,
@@ -575,14 +588,39 @@ async function iniciarPartida(partidaId, jogadores) {
         });
       }
 
-      await tx.jogadorPartida.createMany({
-        data: jogadores.map(j => ({
+      const idsJogadores = jogadoresUnicos.map(j => j.jogadorId)
+      const vinculosExistentes = await tx.jogadorPartida.findMany({
+        where: {
           partidaId: Number(partidaId),
-          jogadorId: Number(j.jogadorId),
-          timeId: Number(j.timeId),
-          emCampo: true
-        }))
-      });
+          jogadorId: { in: idsJogadores }
+        },
+        select: { jogadorId: true }
+      })
+
+      const idsExistentes = new Set(vinculosExistentes.map(v => Number(v.jogadorId)))
+
+      if (idsExistentes.size > 0) {
+        await tx.jogadorPartida.updateMany({
+          where: {
+            partidaId: Number(partidaId),
+            jogadorId: { in: Array.from(idsExistentes) }
+          },
+          data: { emCampo: true }
+        })
+      }
+
+      const novosVinculos = jogadoresUnicos.filter(j => !idsExistentes.has(j.jogadorId))
+
+      if (novosVinculos.length > 0) {
+        await tx.jogadorPartida.createMany({
+          data: novosVinculos.map(j => ({
+            partidaId: Number(partidaId),
+            jogadorId: j.jogadorId,
+            timeId: j.timeId,
+            emCampo: true
+          }))
+        })
+      }
     }
 
     return partidaAtualizada;
@@ -621,6 +659,7 @@ async function retornarPartida(partidaId) {
       timeBId: true,
       inicioPartida: true,
       status: true,
+      ultimaEdicaoEm: true,
       modalidade: true,
       campeonato: {
         select: {
@@ -653,7 +692,13 @@ async function retornarPartida(partidaId) {
         include: { usuario: true, permissao: true }
       },
 
-      usuarioCriador: true
+      usuarioCriador: true,
+      usuarioUltimaEdicao: {
+        select: {
+          id: true,
+          nome: true
+        }
+      }
     }
   });
 
@@ -698,12 +743,21 @@ async function retornarPartida(partidaId) {
     jogadoresPartida: partida.jogadoresPartida,
     participantes: partida.participantes,
     usuarioCriador: partida.usuarioCriador,
+    ultimaEdicaoEm: partida.ultimaEdicaoEm,
+    usuarioUltimaEdicao: partida.usuarioUltimaEdicao
   };
 
 }
 
-async function finalizarPartida(partidaId, payload = null) {
+async function finalizarPartida(partidaId, payload = null, usuarioEditorId = null) {
   const idNum = Number(partidaId)
+  const editorIdNum = Number(usuarioEditorId)
+  const dadosEdicao = Number.isFinite(editorIdNum) && editorIdNum > 0
+    ? {
+        usuarioUltimaEdicaoId: editorIdNum,
+        ultimaEdicaoEm: new Date()
+      }
+    : {}
 
   const partida = await prisma.partida.findUnique({
     where: { id: idNum },
@@ -714,7 +768,10 @@ async function finalizarPartida(partidaId, payload = null) {
     if (payload && Object.keys(payload).length) {
       const partidaComContexto = await prisma.partida.update({
         where: { id: idNum },
-        data: payload,
+        data: {
+          ...payload,
+          ...dadosEdicao
+        },
         select: {
           campeonatoId: true,
           faseId: true
@@ -734,7 +791,9 @@ async function finalizarPartida(partidaId, payload = null) {
 
   const partidaFinalizada = await prisma.partida.update({
     where: { id: idNum },
-    data: { status: 'FINALIZADA' },
+    data: {
+      status: 'FINALIZADA'
+    },
     select: {
       campeonatoId: true,
       faseId: true
@@ -764,7 +823,8 @@ async function atualizarParcial(
     cartoesVermelhosTimeA,
     cartoesAmarelosTimeB,
     cartoesVermelhosTimeB
-  }
+  },
+  usuarioEditorId = null
 ) {
   const partidaId = Number(id)
 
@@ -870,6 +930,16 @@ async function atualizarParcial(
     }
   }
 
+  const editorIdNum = Number(usuarioEditorId)
+  if (
+    partidaBase.status === 'FINALIZADA' &&
+    Number.isFinite(editorIdNum) &&
+    editorIdNum > 0
+  ) {
+    dataUpdate.usuarioUltimaEdicaoId = editorIdNum
+    dataUpdate.ultimaEdicaoEm = new Date()
+  }
+
   await prisma.partida.update({
     where: { id: partidaId },
     data: dataUpdate
@@ -887,6 +957,12 @@ async function atualizarParcial(
       modalidade: true,
       jogadoresPartida: { include: { jogador: true } },
       participantes: { include: { usuario: true } },
+      usuarioUltimaEdicao: {
+        select: {
+          id: true,
+          nome: true
+        }
+      },
       sets: true
     }
   })
@@ -942,6 +1018,29 @@ async function vincularJogadorPartida(partidaId, jogadorId, timeId, stats = {}) 
     throw new Error("Time não pertence a esta partida");
   }
 
+  const vinculoExistente = await prisma.jogadorPartida.findFirst({
+    where: {
+      partidaId: Number(partidaId),
+      jogadorId: Number(jogadorId)
+    }
+  });
+
+  if (vinculoExistente) {
+    const dadosAtualizacao = {
+      timeId: Number(timeId),
+      emCampo: true
+    };
+
+    if (typeof stats.gols === 'number') dadosAtualizacao.gols = stats.gols;
+    if (typeof stats.cartoesAmarelos === 'number') dadosAtualizacao.cartoesAmarelos = stats.cartoesAmarelos;
+    if (typeof stats.cartoesVermelhos === 'number') dadosAtualizacao.cartoesVermelhos = stats.cartoesVermelhos;
+
+    return prisma.jogadorPartida.update({
+      where: { id: vinculoExistente.id },
+      data: dadosAtualizacao
+    });
+  }
+
   const vinculo = await prisma.jogadorPartida.create({
     data: {
       partidaId: Number(partidaId),
@@ -984,20 +1083,36 @@ async function listarJogadoresSelecionados(partidaId) {
     }
   });
 
-  return jogadoresPartida.map(jp => ({
-    id: jp.jogador.id,
-    nome: jp.jogador.nome,
-    foto: jp.jogador.foto,
-    funcao: jp.jogador.funcao?.nome,
+  const jogadoresUnicos = new Map();
 
-    timeId: jp.time.id,
-    timeNome: jp.time.nome,
-    timeFoto: jp.time.foto,
+  for (const jp of jogadoresPartida) {
+    const jogadorId = Number(jp.jogador.id);
+    const existente = jogadoresUnicos.get(jogadorId);
 
-    gols: jp.gols,
-    cartoesAmarelos: jp.cartoesAmarelos,
-    cartoesVermelhos: jp.cartoesVermelhos
-  }));
+    if (!existente) {
+      jogadoresUnicos.set(jogadorId, {
+        id: jp.jogador.id,
+        nome: jp.jogador.nome,
+        foto: jp.jogador.foto,
+        funcao: jp.jogador.funcao?.nome,
+
+        timeId: jp.time.id,
+        timeNome: jp.time.nome,
+        timeFoto: jp.time.foto,
+
+        gols: Number(jp.gols) || 0,
+        cartoesAmarelos: Number(jp.cartoesAmarelos) || 0,
+        cartoesVermelhos: Number(jp.cartoesVermelhos) || 0
+      });
+      continue;
+    }
+
+    existente.gols += Number(jp.gols) || 0;
+    existente.cartoesAmarelos += Number(jp.cartoesAmarelos) || 0;
+    existente.cartoesVermelhos += Number(jp.cartoesVermelhos) || 0;
+  }
+
+  return Array.from(jogadoresUnicos.values());
 }
 
 async function atualizarAtuacaoJogadorPartida({
@@ -1103,8 +1218,13 @@ async function substituirJogadorPartida(
     include: { modalidade: true }
   });
 
-  const modalidade = partida.modalidade.nome.toLowerCase();
-  const isFutebol = modalidade.includes("futebol");
+  if (!partida) {
+    throw new Error("Partida não encontrada");
+  }
+
+  if (partida.status === 'FINALIZADA') {
+    throw new Error("Não é possível alterar substituições em partida finalizada");
+  }
 
   await validarSuspensaoJogador({
     campeonatoId: partida.campeonatoId,
@@ -1120,6 +1240,10 @@ async function substituirJogadorPartida(
     }
   });
 
+  if (!jogadorSai) {
+    throw new Error("Jogador de saída não está em campo nesta partida");
+  }
+
   const jogadorEntraExistente = await prisma.jogadorPartida.findFirst({
     where: {
       partidaId: Number(partidaId),
@@ -1131,17 +1255,35 @@ async function substituirJogadorPartida(
   if (partida.timeAId === jogadorSai.timeId) tipoTime = "A";
   else if (partida.timeBId === jogadorSai.timeId) tipoTime = "B";
 
-  await prisma.jogadorPartida.update({
-    where: { id: jogadorSai.id },
+  await prisma.jogadorPartida.updateMany({
+    where: {
+      partidaId: Number(partidaId),
+      jogadorId: Number(jogadorSaiId),
+      emCampo: true
+    },
     data: { emCampo: false }
   });
 
   let novoJogador;
 
   if (jogadorEntraExistente) {
-    novoJogador = await prisma.jogadorPartida.update({
-      where: { id: jogadorEntraExistente.id },
-      data: { emCampo: true }
+    await prisma.jogadorPartida.updateMany({
+      where: {
+        partidaId: Number(partidaId),
+        jogadorId: Number(jogadorEntraId)
+      },
+      data: {
+        emCampo: true,
+        timeId: jogadorSai.timeId
+      }
+    });
+
+    novoJogador = await prisma.jogadorPartida.findFirst({
+      where: {
+        partidaId: Number(partidaId),
+        jogadorId: Number(jogadorEntraId)
+      },
+      orderBy: { id: 'desc' }
     });
   } else {
     novoJogador = await prisma.jogadorPartida.create({
@@ -1217,26 +1359,29 @@ async function removerJogadorDeCampo(partidaId, jogadorId) {
     throw new Error("Partida não encontrada");
   }
 
-  if (partida.finalizada) {
+  if (partida.status === 'FINALIZADA') {
     throw new Error("Não é possível alterar jogadores em partida finalizada");
   }
 
-  const jogadorEmCampo = await prisma.jogadorPartida.findFirst({
+  const jogadoresAtualizados = await prisma.jogadorPartida.updateMany({
     where: {
       partidaId: Number(partidaId),
       jogadorId: Number(jogadorId),
       emCampo: true
-    }
+    },
+    data: { emCampo: false }
   });
 
-  if (!jogadorEmCampo) {
+  if (!jogadoresAtualizados.count) {
     throw new Error("Jogador não está em campo nesta partida");
   }
 
-  // Remove o jogador do campo
-  const jogadorAtualizado = await prisma.jogadorPartida.update({
-    where: { id: jogadorEmCampo.id },
-    data: { emCampo: false }
+  const jogadorAtualizado = await prisma.jogadorPartida.findFirst({
+    where: {
+      partidaId: Number(partidaId),
+      jogadorId: Number(jogadorId)
+    },
+    orderBy: { id: 'desc' }
   });
 
   return jogadorAtualizado;
@@ -1318,6 +1463,12 @@ async function listarPartidasDaRodadaDaFase(campeonatoId, faseId, rodadaId) {
         timeB: true,
         quadra: true,
         usuarioCriador: true,
+        usuarioUltimaEdicao: {
+          select: {
+            id: true,
+            nome: true
+          }
+        },
         modalidade: true,
         fase: true,
         rodada: true,
@@ -1362,7 +1513,7 @@ function listarStatusPartida() {
   ];
 }
 
-async function alterarStatusPartida(partidaId, novoStatus) {
+async function alterarStatusPartida(partidaId, novoStatus, usuarioEditorId = null) {
   const partida = await prisma.partida.findUnique({
     where: { id: Number(partidaId) },
     select: {
@@ -1407,3 +1558,4 @@ module.exports = {
   listarStatusPartida,
   alterarStatusPartida
 };
+

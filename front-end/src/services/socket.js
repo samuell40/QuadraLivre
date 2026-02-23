@@ -2,6 +2,7 @@
 import api from '@/axios'
 
 export const EVENTO_CAMPEONATO_ATUALIZADO = 'campeonato:atualizado'
+export const EVENTO_NOTIFICACAO_PARTIDA_CRIADA = 'notificacao:partida-criada'
 
 let socket = null
 

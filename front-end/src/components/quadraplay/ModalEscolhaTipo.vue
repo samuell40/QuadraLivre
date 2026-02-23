@@ -162,7 +162,7 @@ export default {
 
   props: {
     modelValue: { type: Boolean, required: true },
-    campeonatoId: { type: String, required: true }
+    campeonatoId: { type: [String, Number], required: true }
   },
 
   data() {
@@ -174,6 +174,7 @@ export default {
       fases: [],
       faseIdSelecionada: null,
       modalidadeId: null,
+      modalidadeNome: '',
       quadraId: null,
       rodadas: [],
       times: [],
@@ -194,7 +195,7 @@ export default {
     }
   },
 
-  emits: ['update:modelValue', 'selecionar', 'rodadaCriada', 'partidaCriada'],
+  emits: ['update:modelValue', 'selecionar', 'faseCriada', 'rodadaCriada', 'partidaCriada'],
 
   mounted() {
     this.usuario = JSON.parse(localStorage.getItem('usuario'))
@@ -227,20 +228,41 @@ export default {
     },
 
     regraJogadores() {
-      const id = Number(this.modalidadeId)
-
-      const FUTEBOL = new Set([1, 2, 7])
-      const VOLEI = new Set([3, 5, 6])
-      const BEACH_TENIS = new Set([4])
-      if (FUTEBOL.has(id)) return { porTime: 11, total: 22 }
-      if (VOLEI.has(id)) return { livre: true, minPorTime: 1 }
-      if (BEACH_TENIS.has(id)) return { livre: true, minPorTime: 1 }
-
-      return { porTime: 11, total: 22 }
+      return this.obterRegraJogadores()
     }
   },
 
   methods: {
+    normalizarNomeModalidade(nome) {
+      return String(nome || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+    },
+
+    obterRegraJogadores() {
+      const id = Number(this.modalidadeId)
+      const nomeNormalizado = this.normalizarNomeModalidade(this.modalidadeNome)
+
+      // Futsal e futebol de areia: sem limite fixo por time.
+      if (nomeNormalizado.includes('futsal') || (nomeNormalizado.includes('futebol') && nomeNormalizado.includes('areia'))) {
+        return { livre: true, minPorTime: 1 }
+      }
+
+      // Fallback por IDs para manter compatibilidade com dados antigos.
+      const FUTEBOL_11 = new Set([1])
+      const FUTSAL_E_AREIA = new Set([2, 7])
+      const VOLEI = new Set([3, 5, 6])
+      const BEACH_TENIS = new Set([4])
+
+      if (FUTSAL_E_AREIA.has(id)) return { livre: true, minPorTime: 1 }
+      if (VOLEI.has(id) || BEACH_TENIS.has(id)) return { livre: true, minPorTime: 1 }
+      if (FUTEBOL_11.has(id)) return { porTime: 11, total: 22 }
+
+      return { porTime: 11, total: 22 }
+    },
+
     fechar() {
       this.$emit('update:modelValue', false)
     },
@@ -335,6 +357,7 @@ export default {
       try {
         const { data } = await api.get(`/campeonato/${this.campeonatoId}`)
         this.modalidadeId = data.modalidadeId
+        this.modalidadeNome = data?.modalidade?.nome || ''
         this.quadraId = data.quadraId
       } catch (err) {
         console.error('Erro ao carregar campeonato:', err)
@@ -376,15 +399,7 @@ export default {
 
       try {
         const modalidadeIdNum = Number(this.modalidadeId)
-
-        const FUTEBOL = new Set([1, 2, 7])
-        const VOLEI = new Set([3, 5, 6])
-        const BEACH_TENIS = new Set([4])
-        const regra =
-          FUTEBOL.has(modalidadeIdNum) ? { porTime: 11, total: 22 } :
-            VOLEI.has(modalidadeIdNum) ? { livre: true, minPorTime: 1 } :
-              BEACH_TENIS.has(modalidadeIdNum) ? { livre: true, minPorTime: 1 } :
-                { porTime: 11, total: 22 }
+        const regra = this.obterRegraJogadores()
 
         const idsTimeA = selecao?.time1 || []
         const idsTimeB = selecao?.time2 || []
@@ -422,16 +437,6 @@ export default {
         const partidaCriada = data
         const partidaId = data?.id
         if (!partidaId) throw new Error('Partida criada sem ID.')
-
-        const reqsTimeA = idsTimeA.map((jogadorId) =>
-          api.post(`/${partidaId}/jogador/${jogadorId}`, { timeId: Number(timeAId) })
-        )
-
-        const reqsTimeB = idsTimeB.map((jogadorId) =>
-          api.post(`/${partidaId}/jogador/${jogadorId}`, { timeId: Number(timeBId) })
-        )
-
-        await Promise.all(reqsTimeA.concat(reqsTimeB))
 
         const jogadoresPayload = [
           ...idsTimeA.map((jogadorId) => ({ jogadorId: Number(jogadorId), timeId: Number(timeAId) })),

@@ -1,5 +1,5 @@
 <template>
-  <div class="placar">
+  <div class="placar" :class="{ 'placar-finalizada': partidaEncerradaGlobal }">
     <h2 class="nome-time">
       <img v-if="timeData?.foto" :src="timeData.foto" alt="Escudo do time" class="foto-time" />
       <span>{{ timeNome }}</span>
@@ -49,17 +49,17 @@
       <div class="box">
         <p>Substituições</p>
         <div class="controls">
-          <button @click="abrirModalRemoverJogador">−</button>
+          <button @click="abrirModalRemoverJogador" :disabled="partidaEncerradaGlobal">−</button>
           <span class="valor">{{ timeData?.substituicoes ?? 0 }}</span>
-          <button @click="abrirModalSubstituicao">+</button>
+          <button @click="abrirModalSubstituicao" :disabled="partidaEncerradaGlobal">+</button>
         </div>
       </div>
     </div>
 
     <!-- Modal eventos (gols/cartões) -->
     <div v-if="modalAberto" class="modal-overlay" @click.self="fecharModal">
-      <div class="modal-content">
-        <h2 class="modal-titulo">
+      <div class="modal-content" :class="{ 'modal-finalizada': partidaEncerradaGlobal }">
+        <h2 class="modal-titulo" :class="{ 'modal-titulo-finalizada': partidaEncerradaGlobal }">
           Selecione o Jogador – <span>{{ tituloEvento }}</span>
         </h2>
 
@@ -191,7 +191,8 @@ export default {
     timeNome: String,
     timeData: Object,
     partidaId: [String, Number],
-    lado: { type: String, required: true }
+    lado: { type: String, required: true },
+    partidaEncerradaGlobal: { type: Boolean, default: false }
   },
 
   data() {
@@ -310,6 +311,10 @@ export default {
 
     async abrirModalSubstituicao() {
       if (!this.partidaIdNum) return
+      if (this.partidaEncerradaGlobal) {
+        Swal.fire('Partida encerrada', 'Nao e possivel editar substituicoes.', 'info')
+        return
+      }
       this.substituicaoModal = true
       this.jogadorSai = null
       this.jogadorEntra = null
@@ -341,6 +346,7 @@ export default {
     },
 
     adicionarSubstituicao() {
+      if (this.partidaEncerradaGlobal) return
       if (!this.jogadorSai || !this.jogadorEntra) return
       this.substituicoesPendentes.push({ sai: this.jogadorSai, entra: this.jogadorEntra })
       this.jogadorSai = null
@@ -349,6 +355,10 @@ export default {
 
     async confirmarTodasSubstituicoes() {
       if (!this.partidaIdNum) return
+      if (this.partidaEncerradaGlobal) {
+        Swal.fire('Partida encerrada', 'Nao e possivel editar substituicoes.', 'info')
+        return
+      }
 
       try {
         for (const sub of this.substituicoesPendentes) {
@@ -370,6 +380,10 @@ export default {
 
     async abrirModalRemoverJogador() {
       if (!this.partidaIdNum) return
+      if (this.partidaEncerradaGlobal) {
+        Swal.fire('Partida encerrada', 'Nao e possivel editar substituicoes.', 'info')
+        return
+      }
       this.modalRemoverAberto = true
       this.jogadoresSelecionados = []
       await this.carregarJogadoresEmCampo()
@@ -450,6 +464,11 @@ export default {
   border: 2px solid #3b82f6;
 }
 
+.placar.placar-finalizada .nome-time {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
 .box {
   background: #fafafa;
   padding: 15px;
@@ -484,6 +503,21 @@ export default {
 
 .controls button:last-child {
   background-color: #3b82f6;
+}
+
+.controls button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.placar.placar-finalizada > .box .controls button,
+.placar.placar-finalizada > .row-2 .box .controls button {
+  background-color: #991b1b;
+}
+
+.placar.placar-finalizada > .box .controls button:last-child,
+.placar.placar-finalizada > .row-2 .box .controls button:last-child {
+  background-color: #dc2626;
 }
 
 .row-2 {
@@ -524,6 +558,30 @@ export default {
   color: #3b82f6;
   font-size: 30px;
   font-weight: bold;
+}
+
+.modal-titulo.modal-titulo-finalizada {
+  color: #dc2626;
+}
+
+.modal-content.modal-finalizada .jogador-card .controls button {
+  background-color: #991b1b;
+}
+
+.modal-content.modal-finalizada .jogador-card .controls button:last-child {
+  background-color: #dc2626;
+}
+
+.modal-content.modal-finalizada .coluna {
+  border-color: #dc2626;
+}
+
+.modal-content.modal-finalizada .jogador-card {
+  border-color: #dc2626;
+}
+
+.modal-content.modal-finalizada .btn-save1 {
+  background-color: #dc2626;
 }
 
 .titulo-substituicao {
@@ -796,3 +854,5 @@ export default {
   }
 }
 </style>
+
+
