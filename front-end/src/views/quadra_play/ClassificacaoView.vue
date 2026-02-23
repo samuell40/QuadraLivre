@@ -17,9 +17,16 @@
         <div v-if="fases.length" class="filtros-topo">
           <div class="filtro-item">
             <label class="filtro-titulo" for="fase-select">Selecione a Fase:</label>
-            <select id="fase-select" v-model="faseSelecionada" @change="carregarPlacarPorFase">
+            <select id="fase-select" v-model="faseSelecionada" @change="onFaseChange">
               <option disabled value="">-- Escolha a Fase --</option>
               <option v-for="fase in fases" :key="fase.id" :value="fase.id">{{ fase.nome }}</option>
+            </select>
+          </div>
+          <div class="filtro-item">
+            <label class="filtro-titulo" for="rodada-select">Selecione a Rodada:</label>
+            <select id="rodada-select" v-model="rodadaSelecionada" :disabled="!rodadas.length" @change="onRodadaChange">
+              <option disabled value="">-- Escolha a Rodada --</option>
+              <option v-for="rodada in rodadas" :key="rodada.id" :value="rodada.id">{{ rodada.nome }}</option>
             </select>
           </div>
         </div>
@@ -39,9 +46,9 @@
                 <th>Time</th>
                 <th>PTS</th>
                 <th>J</th>
-                <th>VIT</th>
+                <th>V</th>
                 <th>E</th>
-                <th>DER</th>
+                <th>D</th>
                 <th>GM</th>
                 <th>GS</th>
                 <th>SG</th>
@@ -51,7 +58,7 @@
             </thead>
             <tbody>
               <tr v-for="(time, index) in timesPlacar" :key="time.id">
-                <td class="time-info">
+                <td class="time-info time-info-click" @click="abrirModalPartidasTime(time)">
                   <span class="posicao">{{ index + 1 }}º</span>
                   <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
                   <span class="nome-time">{{ time.time?.nome }}</span>
@@ -101,7 +108,7 @@
             </thead>
             <tbody>
               <tr v-for="(time, index) in timesPlacar" :key="time.id">
-                <td class="time-info">
+                <td class="time-info time-info-click" @click="abrirModalPartidasTime(time)">
                   <span class="posicao">{{ index + 1 }}º</span>
                   <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
                   <span class="nome-time">{{ time.time?.nome }}</span>
@@ -133,6 +140,15 @@
           </table>
         </div>
       </div>
+      <PartidasDoTimeModal
+        v-model="mostrarModalPartidasTime"
+        :time="timeSelecionadoPartidas"
+        :partidas="partidas"
+        :fase-nome="nomeFaseSelecionada"
+        :rodada-nome="nomeRodadaSelecionada"
+        :campeonato-nome="campeonato?.nome || ''"
+        :loading="isLoadingPartidas"
+      />
       <ModalConfiguracoesPlacar v-if="campeonato" v-model="modalConfiguracoes" :campeonato="campeonato"
         @faseCriada="carregarFases" />
 
@@ -145,6 +161,7 @@ import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
 import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
 import { carregarCampeonato } from '@/utils/persistirCampeonato'
 import ModalConfiguracoesPlacar from '@/components/quadraplay/ModalConfiguracoesPlacar.vue'
+import PartidasDoTimeModal from '@/components/quadraplay/PartidasDoTimeModal.vue'
 import api from '@/axios'
 import {
   EVENTO_CAMPEONATO_ATUALIZADO,
@@ -155,7 +172,7 @@ import {
 
 export default {
   name: 'ClassificacaoView',
-  components: { SidebarCampeonato, NavBarQuadras, ModalConfiguracoesPlacar },
+  components: { SidebarCampeonato, NavBarQuadras, ModalConfiguracoesPlacar, PartidasDoTimeModal },
 
   data() {
     return {
@@ -163,13 +180,20 @@ export default {
       campeonato: null,
       fases: [],
       faseSelecionada: '',
+      rodadas: [],
+      rodadaSelecionada: '',
       timesPlacar: null,
+      partidas: [],
+      isLoadingPartidas: false,
+      mostrarModalPartidasTime: false,
+      timeSelecionadoPartidas: null,
       isLoading: true,
       modalConfiguracoes: false,
       socket: null,
       socketCampeonatoId: null,
       onSocketAtualizacao: null,
-      socketTimerPlacar: null
+      socketTimerPlacar: null,
+      socketTimerPartidas: null
     }
   },
 
@@ -194,6 +218,14 @@ export default {
         'beach tenis',
         'beach tennis'
       ].includes(this.modalidadeNormalizada)
+    },
+
+    nomeFaseSelecionada() {
+      return this.fases.find(f => Number(f.id) === Number(this.faseSelecionada))?.nome || ''
+    },
+
+    nomeRodadaSelecionada() {
+      return this.rodadas.find(r => Number(r.id) === Number(this.rodadaSelecionada))?.nome || ''
     }
   },
 
@@ -219,6 +251,7 @@ export default {
 
   beforeUnmount() {
     clearTimeout(this.socketTimerPlacar)
+    clearTimeout(this.socketTimerPartidas)
     this.desconectarSocket()
   },
 
@@ -266,6 +299,13 @@ export default {
       }, 150)
     },
 
+    agendarAtualizacaoPartidasSocket() {
+      clearTimeout(this.socketTimerPartidas)
+      this.socketTimerPartidas = setTimeout(() => {
+        this.carregarPartidasPorRodada()
+      }, 150)
+    },
+
     tratarAtualizacaoCampeonato(payload) {
       const campeonatoEvento = Number(payload?.campeonatoId)
       const campeonatoAtual = Number(this.campeonato?.id)
@@ -276,7 +316,22 @@ export default {
 
       const tipo = String(payload?.tipo || '')
       const faseEvento = Number(payload?.faseId)
+      const rodadaEvento = Number(payload?.rodadaId)
       const mesmaFase = !faseEvento || Number(this.faseSelecionada) === faseEvento
+      const mesmaRodada = !rodadaEvento || Number(this.rodadaSelecionada) === rodadaEvento
+
+      if (tipo === 'GOL_PARTIDA') {
+        if (mesmaFase && mesmaRodada) {
+          this.agendarAtualizacaoPartidasSocket()
+        }
+        return
+      }
+
+      if (['PARTIDA_CRIADA', 'PARTIDA_FINALIZADA', 'STATUS_PARTIDA_ATUALIZADO'].includes(tipo)) {
+        if (mesmaFase && mesmaRodada) {
+          this.agendarAtualizacaoPartidasSocket()
+        }
+      }
 
       if (['PARTIDA_FINALIZADA', 'CLASSIFICACAO_ATUALIZADA', 'STATUS_PARTIDA_ATUALIZADO'].includes(tipo)) {
         if (mesmaFase) {
@@ -289,22 +344,68 @@ export default {
       this.modalConfiguracoes = true
     },
 
+    abrirModalPartidasTime(time) {
+      this.timeSelecionadoPartidas = this.normalizarTimePlacar(time)
+      if (!this.timeSelecionadoPartidas) return
+      this.mostrarModalPartidasTime = true
+    },
+
+    normalizarTimePlacar(time) {
+      const payload = {
+        id: Number(time?.timeId ?? time?.time?.id ?? time?.id),
+        nome: time?.time?.nome ?? time?.nome ?? '',
+        foto: time?.time?.foto ?? time?.foto ?? ''
+      }
+
+      if (!Number.isFinite(payload.id) || payload.id <= 0) return null
+      return payload
+    },
+
+    atualizarRodadasDaFase() {
+      const fase = this.fases.find(f => Number(f.id) === Number(this.faseSelecionada))
+      this.rodadas = Array.isArray(fase?.rodadas) ? fase.rodadas : []
+      this.rodadaSelecionada = this.rodadas.length ? this.rodadas[0].id : ''
+    },
+
+    async onFaseChange() {
+      this.atualizarRodadasDaFase()
+      await this.carregarPlacarPorFase()
+      await this.carregarPartidasPorRodada()
+    },
+
+    async onRodadaChange() {
+      await this.carregarPartidasPorRodada()
+    },
+
     async carregarFases() {
       if (!this.campeonato?.id) return
 
       try {
-        const res = await api.get(`/placar/fase/${this.campeonato.id}`)
-        this.fases = res.data.map(f => ({
-          id: f.faseId,
-          nome: f.nomeFase
-        }))
+        const { data } = await api.get(`/fases/${this.campeonato.id}/`)
+        this.fases = Array.isArray(data) ? data : []
 
-        if (this.fases.length) {
-          this.faseSelecionada = this.fases[0].id
-          this.carregarPlacarPorFase()
+        if (!this.fases.length) {
+          this.faseSelecionada = ''
+          this.rodadas = []
+          this.rodadaSelecionada = ''
+          this.partidas = []
+          this.timesPlacar = []
+          return
         }
+
+        this.faseSelecionada = this.fases[0].id
+        this.atualizarRodadasDaFase()
+
+        await this.carregarPlacarPorFase()
+        await this.carregarPartidasPorRodada()
       } catch (err) {
         console.error('Erro ao carregar fases:', err)
+        this.fases = []
+        this.faseSelecionada = ''
+        this.rodadas = []
+        this.rodadaSelecionada = ''
+        this.partidas = []
+        this.timesPlacar = []
       }
     },
 
@@ -339,6 +440,32 @@ export default {
         this.timesPlacar = []
       }
     },
+
+    async carregarPartidasPorRodada() {
+      this.isLoadingPartidas = true
+
+      try {
+        if (!this.campeonato?.id || !this.faseSelecionada || !this.rodadaSelecionada) {
+          this.partidas = []
+          return
+        }
+
+        const { data } = await api.get(`/partidas/${this.campeonato.id}/${this.faseSelecionada}/${this.rodadaSelecionada}`)
+        const lista = Array.isArray(data) ? data : []
+
+        this.partidas = lista.sort((a, b) => {
+          const da = new Date(a?.data || a?.createdAt || 0).getTime()
+          const db = new Date(b?.data || b?.createdAt || 0).getTime()
+          return db - da
+        })
+      } catch (err) {
+        console.error('Erro ao carregar partidas por rodada:', err)
+        this.partidas = []
+      } finally {
+        this.isLoadingPartidas = false
+      }
+    },
+
     obterUltimosJogos(time) {
       const candidatas = [
         time?.ultimosJogos,
@@ -716,6 +843,14 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.time-info.time-info-click {
+  cursor: pointer;
+}
+
+.time-info.time-info-click .nome-time {
+  text-decoration: underline;
 }
 
 .posicao {

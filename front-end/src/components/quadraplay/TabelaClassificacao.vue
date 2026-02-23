@@ -14,9 +14,9 @@
           <th>Time</th>
           <th>PTS</th>
           <th>J</th>
-          <th>VIT</th>
+          <th>V</th>
           <th>E</th>
-          <th>DER</th>
+          <th>D</th>
           <th>GM</th>
           <th>GS</th>
           <th>SG</th>
@@ -26,7 +26,7 @@
       </thead>
       <tbody>
         <tr v-for="(time, index) in times" :key="time.id">
-          <td class="time-info">
+          <td class="time-info time-info-click" @click="onTimeClick(time)">
             <span class="posicao">{{ index + 1 }}º</span>
             <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
             <span class="nome-time">{{ time.time?.nome }}</span>
@@ -59,8 +59,8 @@
           <th>Time</th>
           <th>PTS</th>
           <th>J</th>
-          <th>VIT</th>
-          <th>DER</th>
+          <th>V</th>
+          <th>D</th>
           <th>STV</th>
           <th>3x0</th>
           <th>3x2</th>
@@ -72,7 +72,7 @@
       </thead>
       <tbody>
         <tr v-for="(time, index) in times" :key="time.id">
-          <td class="time-info">
+          <td class="time-info time-info-click" @click="onTimeClick(time)">
             <span class="posicao">{{ index + 1 }}º</span>
             <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
             <span class="nome-time">{{ time.time?.nome }}</span>
@@ -147,6 +147,7 @@ export default {
     emptyText: { type: String, default: 'Nenhum placar encontrado para este campeonato.' },
     showGlossary: { type: Boolean, default: true }
   },
+  emits: ['time-click'],
   computed: {
     modalidadeNormalizada() {
       return String(this.modalidade || '')
@@ -163,6 +164,16 @@ export default {
     }
   },
   methods: {
+    onTimeClick(time) {
+      const payload = {
+        id: Number(time?.timeId ?? time?.time?.id ?? time?.id),
+        nome: time?.time?.nome ?? time?.nome ?? '',
+        foto: time?.time?.foto ?? time?.foto ?? ''
+      }
+
+      if (!Number.isFinite(payload.id) || payload.id <= 0) return
+      this.$emit('time-click', payload)
+    },
     obterUltimosJogos(time) {
       const candidatas = [
         time?.ultimosJogos,
@@ -368,6 +379,14 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.time-info.time-info-click {
+  cursor: pointer;
+}
+
+.time-info.time-info-click .nome-time {
+  text-decoration: underline;
 }
 
 .posicao {

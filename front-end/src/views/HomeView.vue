@@ -83,7 +83,7 @@
           </h3>
 
           <TabelaClassificacao :times="placar" :loading="isLoadingPlacar" :modalidade="modalidadeNormalizada"
-            empty-text="Nenhum placar disponível no momento." />
+            empty-text="Nenhum placar disponível no momento." @time-click="abrirModalPartidasTime" />
         </div>
         <!-- PARTIDAS -->
         <div class="partidas-wrapper">
@@ -104,8 +104,15 @@
       </div>
     </section>
 
-    <VerificarLogin v-if="mostrarModalLogin" @fechar="mostrarModalLogin = false" @irParaLogin="irParaLogin"
-      @loginComGoogle="loginComGoogle" />
+    <PartidasDoTimeModal
+      v-model="mostrarModalPartidasTime"
+      :time="timeSelecionadoPartidas"
+      :partidas="partidas"
+      :fase-nome="nomeFaseSelecionada"
+      :rodada-nome="nomeRodadaSelecionada"
+      :campeonato-nome="nomeCampeonato"
+      :loading="isLoadingPartidas"
+    />
     <button v-if="mostrarBotaoTopo" type="button" class="btn-topo" @click="subirPagina">
       ↑
     </button>
@@ -119,10 +126,10 @@ import Footer from '@/components/Footer.vue'
 import router from '@/router'
 import { Carousel, Slide } from 'vue3-carousel'
 import Swal from 'sweetalert2'
-import VerificarLogin from '@/components/modals/Alertas/verificarLogin.vue'
 import api from '@/axios'
 import TabelaClassificacao from '@/components/quadraplay/TabelaClassificacao.vue'
 import ListaPartidas from '@/components/quadraplay/ListaPartidas.vue'
+import PartidasDoTimeModal from '@/components/quadraplay/PartidasDoTimeModal.vue'
 import {
   EVENTO_CAMPEONATO_ATUALIZADO,
   obterSocket,
@@ -133,7 +140,7 @@ import 'vue3-carousel/dist/carousel.css'
 
 export default {
   name: 'HomeView',
-  components: { NavBarHome, Footer, Carousel, Slide, VerificarLogin, TabelaClassificacao, ListaPartidas },
+  components: { NavBarHome, Footer, Carousel, Slide, TabelaClassificacao, ListaPartidas, PartidasDoTimeModal },
 
   data() {
     return {
@@ -149,7 +156,8 @@ export default {
       isLoadingPlacar: true,
       partidas: [],
       isLoadingPartidas: true,
-      mostrarModalLogin: false,
+      mostrarModalPartidasTime: false,
+      timeSelecionadoPartidas: null,
       mostrarBotaoTopo: false,
       isMobile: window.innerWidth <= 768,
       socket: null,
@@ -169,6 +177,12 @@ export default {
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
+    },
+    nomeFaseSelecionada() {
+      return this.fases.find(f => Number(f.id) === Number(this.faseSelecionada))?.nome || ''
+    },
+    nomeRodadaSelecionada() {
+      return this.rodadas.find(r => Number(r.id) === Number(this.rodadaSelecionada))?.nome || ''
     }
   },
 
@@ -196,6 +210,10 @@ export default {
   },
 
   methods: {
+    abrirModalPartidasTime(time) {
+      this.timeSelecionadoPartidas = time
+      this.mostrarModalPartidasTime = true
+    },
     conectarSocket() {
       this.socket = obterSocket()
 
@@ -443,10 +461,6 @@ export default {
         localStorage.setItem('quadraSelecionada', JSON.stringify(quadra))
         this.loginComGoogle()
       }
-    },
-
-    irParaLogin() {
-      this.mostrarModalLogin = true
     },
 
     loginComGoogle() {
@@ -974,3 +988,4 @@ p {
   }
 }
 </style>
+

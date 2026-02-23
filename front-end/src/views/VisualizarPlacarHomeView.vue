@@ -53,6 +53,7 @@
               :loading="timesPlacar === null"
               :modalidade="modalidadeNormalizada"
               empty-text="Nenhum placar encontrado para este campeonato."
+              @time-click="abrirModalPartidasTime"
             />
 
           </div>
@@ -103,6 +104,16 @@
             </tbody>
           </table>
         </div>
+
+        <PartidasDoTimeModal
+          v-model="mostrarModalPartidasTime"
+          :time="timeSelecionadoPartidas"
+          :partidas="partidas"
+          :fase-nome="nomeFaseSelecionada"
+          :rodada-nome="nomeRodadaSelecionada"
+          :campeonato-nome="campeonatoSelecionado?.nome || ''"
+          :loading="isLoadingPartidas"
+        />
       </div>
     </div>
   </div>
@@ -113,6 +124,7 @@ import api from '@/axios'
 import NavBarHome from '@/components/NavBarHome.vue'
 import TabelaClassificacao from '@/components/quadraplay/TabelaClassificacao.vue'
 import ListaPartidas from '@/components/quadraplay/ListaPartidas.vue'
+import PartidasDoTimeModal from '@/components/quadraplay/PartidasDoTimeModal.vue'
 import {
   EVENTO_CAMPEONATO_ATUALIZADO,
   obterSocket,
@@ -122,7 +134,7 @@ import {
 
 export default {
   name: 'VisualizarPlacarHome',
-  components: { NavBarHome, TabelaClassificacao, ListaPartidas },
+  components: { NavBarHome, TabelaClassificacao, ListaPartidas, PartidasDoTimeModal },
 
   data() {
     return {
@@ -133,6 +145,9 @@ export default {
       faseSelecionada: '',
       rodadaSelecionada: '',
       partidas: [],
+      isLoadingPartidas: false,
+      mostrarModalPartidasTime: false,
+      timeSelecionadoPartidas: null,
       timesPlacar: null,
       isLoading: false,
       artilharia: [],
@@ -164,10 +179,23 @@ export default {
 
     temScrollPartidas() {
       return Array.isArray(this.partidas) && this.partidas.length >= 10
+    },
+
+    nomeFaseSelecionada() {
+      return this.fases.find(f => Number(f.id) === Number(this.faseSelecionada))?.nome || ''
+    },
+
+    nomeRodadaSelecionada() {
+      return this.rodadas.find(r => Number(r.id) === Number(this.rodadaSelecionada))?.nome || ''
     }
   },
 
   methods: {
+    abrirModalPartidasTime(time) {
+      this.timeSelecionadoPartidas = time
+      this.mostrarModalPartidasTime = true
+    },
+
     conectarSocket() {
       this.socket = obterSocket()
 
@@ -337,8 +365,11 @@ export default {
     },
 
     async carregarPartidasPorRodada() {
+      this.isLoadingPartidas = true
+
       if (!this.campeonatoAtivo || !this.faseSelecionada || !this.rodadaSelecionada) {
         this.partidas = []
+        this.isLoadingPartidas = false
         return
       }
 
@@ -354,6 +385,8 @@ export default {
       } catch (err) {
         console.error('Erro ao carregar partidas por rodada:', err)
         this.partidas = []
+      } finally {
+        this.isLoadingPartidas = false
       }
     },
 
