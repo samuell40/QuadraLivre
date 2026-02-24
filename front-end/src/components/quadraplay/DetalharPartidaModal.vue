@@ -14,8 +14,12 @@
               {{ statusLabel(partidaDetalhada.status) }}
             </span>
           </p>
+          <p v-if="!isPartidaEmAndamento">
+            <strong v-if="!isPartidaFinalizada">Data Prevista: </strong>
+            {{ formatarDataPartida(partidaDetalhada?.data || partidaDetalhada?.createdAt) }}
+          </p>
 
-          <p v-if="!isDetalheVolei">
+          <p v-if="!isDetalheVolei && !isPartidaAgendada">
             <strong>Faltas:</strong>
             {{ partidaDetalhada.faltasTimeA ?? 0 }} x {{ partidaDetalhada.faltasTimeB ?? 0 }}
           </p>
@@ -30,7 +34,11 @@
             </p>
           </div>
 
-          <span class="resultado">
+          <span v-if="isPartidaAgendada" class="resultado">
+            x
+          </span>
+
+          <span v-else class="resultado">
             {{ partidaDetalhada.pontosTimeA ?? 0 }} x {{ partidaDetalhada.pontosTimeB ?? 0 }}
           </span>
 
@@ -47,10 +55,15 @@
           <div class="time-mobile-title">
             {{ partidaDetalhada.timeA?.nome }}
             <div class="jogadores-time">
-              <div v-for="jp in jogadoresTimeA" :key="jp.id" class="jogador-item">
+              <p v-if="semEscalacaoTimeA" class="sem-escalacao">Escalacao nao definida</p>
+              <div v-else v-for="jp in jogadoresTimeA" :key="jp.id" class="jogador-item"
+                :class="{ 'jogador-suspenso': jogadorSuspenso(jp) }">
                 <img v-if="jp.jogador?.foto" :src="jp.jogador.foto" class="foto-jogador" alt="Foto do jogador" />
                 <div class="dados-jogador">
-                  <span class="nome">{{ jp.jogador?.nome }}</span>
+                  <span class="nome" :class="{ 'nome-suspenso': jogadorSuspenso(jp) }">{{ jp.jogador?.nome }}</span>
+                  <span v-if="jogadorSuspenso(jp)" class="status-suspenso" :title="jp.motivoSuspensao || 'Jogador suspenso'">
+                    Suspenso
+                  </span>
                   <div v-if="temEstatisticas(jp)" class="estatisticas">
                     <span v-if="temGols(jp)" class="estat-item gols" title="Bola">
                       ⚽
@@ -77,10 +90,15 @@
           <div class="time-mobile-title">
             {{ partidaDetalhada.timeB?.nome }}
             <div class="jogadores-time">
-              <div v-for="jp in jogadoresTimeB" :key="jp.id" class="jogador-item">
+              <p v-if="semEscalacaoTimeB" class="sem-escalacao">Escalacao nao definida</p>
+              <div v-else v-for="jp in jogadoresTimeB" :key="jp.id" class="jogador-item"
+                :class="{ 'jogador-suspenso': jogadorSuspenso(jp) }">
                 <img v-if="jp.jogador?.foto" :src="jp.jogador.foto" class="foto-jogador" alt="Foto do jogador" />
                 <div class="dados-jogador">
-                  <span class="nome">{{ jp.jogador?.nome }}</span>
+                  <span class="nome" :class="{ 'nome-suspenso': jogadorSuspenso(jp) }">{{ jp.jogador?.nome }}</span>
+                  <span v-if="jogadorSuspenso(jp)" class="status-suspenso" :title="jp.motivoSuspensao || 'Jogador suspenso'">
+                    Suspenso
+                  </span>
                   <div v-if="temEstatisticas(jp)" class="estatisticas">
                     <span v-if="temGols(jp)" class="estat-item gols" title="Bola">
                       ⚽
@@ -118,7 +136,7 @@ import api from '@/axios'
 const STATUS_CONFIG = {
   FINALIZADA: { label: 'ENCERRADA', card: 'partida-finalizada', text: 'status-finalizada' },
   EM_ANDAMENTO: { label: 'EM ANDAMENTO', card: 'partida-andamento', text: 'status-andamento' },
-  AGENDADA: { label: 'AGUARDANDO', card: 'partida-agendada', text: 'status-agendada' },
+  AGENDADA: { label: 'AGENDADA', card: 'partida-agendada', text: 'status-agendada' },
   CANCELADA: { label: 'CANCELADA', card: 'partida-cancelada', text: 'status-cancelada' }
 }
 
@@ -149,6 +167,21 @@ export default {
     },
     isDetalheVolei() {
       return ['volei', 'volei de areia', 'futevolei', 'beach tenis', 'beach tennis'].includes(this.modalidadeDetalheNormalizada)
+    },
+    isPartidaAgendada() {
+      return String(this.partidaDetalhada?.status || '') === 'AGENDADA'
+    },
+    isPartidaEmAndamento() {
+      return String(this.partidaDetalhada?.status || '') === 'EM_ANDAMENTO'
+    },
+    isPartidaFinalizada() {
+      return String(this.partidaDetalhada?.status || '') === 'FINALIZADA'
+    },
+    semEscalacaoTimeA() {
+      return this.isPartidaAgendada || this.jogadoresTimeA.length === 0
+    },
+    semEscalacaoTimeB() {
+      return this.isPartidaAgendada || this.jogadoresTimeB.length === 0
     },
     jogadoresTimeA() {
       if (!this.partidaDetalhada) return []
@@ -218,6 +251,16 @@ export default {
     statusLabel(status) {
       return STATUS_CONFIG[status]?.label || ''
     },
+    formatarDataPartida(data) {
+      const dt = new Date(data)
+      if (Number.isNaN(dt.getTime())) return '-'
+
+      const diaSemana = dt.toLocaleDateString('pt-BR', { weekday: 'long' })
+      const dataFormatada = dt.toLocaleDateString('pt-BR')
+      const diaCapitalizado = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)
+
+      return `${diaCapitalizado} - ${dataFormatada}`
+    },
     listarNomesGoleadores(jogadoresPartida) {
       const nomes = [...new Set((Array.isArray(jogadoresPartida) ? jogadoresPartida : [])
         .filter(j => this.temGols(j))
@@ -237,6 +280,9 @@ export default {
     },
     temCartaoVermelho(jogadorPartida) {
       return this.valorPositivo(jogadorPartida?.cartoesVermelhos) > 0
+    },
+    jogadorSuspenso(jogadorPartida) {
+      return !!jogadorPartida?.suspenso
     },
     temEstatisticas(jogadorPartida) {
       return this.temGols(jogadorPartida) ||
@@ -383,12 +429,26 @@ export default {
   background: #f9fafb;
 }
 
+.sem-escalacao {
+  margin: 4px 0;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+}
+
 .jogador-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 0;
+  padding: 8px;
   border-bottom: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.jogador-item.jogador-suspenso {
+  background: #fff1f2;
 }
 
 .jogador-item:last-child {
@@ -418,6 +478,22 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 260px;
+}
+
+.nome.nome-suspenso {
+  color: #b91c1c;
+}
+
+.status-suspenso {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #fca5a5;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .estatisticas {

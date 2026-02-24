@@ -1,14 +1,50 @@
 <template>
   <div v-if="modelValue" class="modal-overlay" @click.self="fechar">
-    <div class="modal-content">
-      <h2>Escolha a ação</h2>
+    <div class="modal-content modal-escolha">
+      <div class="modal-header">
+        <span class="title">Escolha a Ação</span>
+        <button type="button" class="btn-close-x" @click="fechar">x</button>
+      </div>
 
       <div class="tipo-campeonato-lista">
-        <button class="btn-tipo" @click="abrirModalPartida">
-          Adicionar Partida
+        <button class="btn-tipo btn-tipo-card" @click="abrirModalPartida('ADICIONAR')">
+          <span class="btn-tipo-titulo btn-tipo-titulo-com-icone">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg"
+              viewBox="0 0 16 16">
+              <path fill-rule="evenodd"
+                d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2" />
+            </svg>
+            <span class="titulo-acao-modal">Adicionar Partida</span>
+          </span>
+          <small class="btn-tipo-sub">Cria uma partida para iniciar agora</small>
         </button>
-        <button class="btn-tipo" @click="abrirModalRodada">
-          Adicionar Rodada
+
+        <button class="btn-tipo btn-tipo-card" @click="abrirModalPartida('AGENDAR')">
+          <span class="btn-tipo-titulo btn-tipo-titulo-com-icone">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar3"
+              viewBox="0 0 16 16">
+              <path
+                d="M14 0H2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2M1 3.857C1 3.384 1.448 3 2 3h12c.552 0 1 .384 1 .857v10.286c0 .473-.448.857-1 .857H2c-.552 0-1-.384-1-.857z" />
+              <path
+                d="M6.5 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2" />
+            </svg>
+            <span class="titulo-acao-modal">Agendar Partida</span>
+          </span>
+          <small class="btn-tipo-sub">Define data e horário para jogar depois</small>
+        </button>
+
+        <button class="btn-tipo btn-tipo-card" @click="abrirModalRodada">
+          <span class="btn-tipo-titulo btn-tipo-titulo-com-icone">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-repeat"
+              viewBox="0 0 16 16">
+              <path
+                d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41m-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9" />
+              <path fill-rule="evenodd"
+                d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5 5 0 0 0 8 3M3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9z" />
+            </svg>
+            <span class="titulo-acao-modal">Adicionar Rodada</span>
+          </span>
+          <small class="btn-tipo-sub">Cria uma nova rodada na fase atual</small>
         </button>
       </div>
 
@@ -24,7 +60,7 @@
   <div v-if="mostrarModalPartida" class="modal-overlay" @click.self="mostrarModalPartida = false">
     <div class="modal-content modal-times">
       <div class="modal-header">
-        <h2>Criar Partida</h2>
+        <span class="title">{{ modoCriacaoPartida === 'AGENDAR' ? 'Agendar Partida' : 'Adicionar Partida' }}</span>
         <button type="button" class="btn-close-x" @click="mostrarModalPartida = false">x</button>
       </div>
 
@@ -110,7 +146,19 @@
         </div>
       </div>
 
-      <div class="botoes">
+      <div v-if="modoCriacaoPartida === 'AGENDAR'" class="filtros-topo">
+        <label>Data e hora da partida:</label>
+        <input v-model="partida.data" type="datetime-local" />
+      </div>
+
+      <div class="botoes" v-if="modoCriacaoPartida === 'AGENDAR'">
+        <button class="btn-save" :disabled="!podeContinuar || criandoPartida" @click="salvarPartidaAgendada">
+          <span v-if="criandoPartida">Aguarde...</span>
+          <span v-else>Salvar partida</span>
+        </button>
+      </div>
+
+      <div class="botoes" v-else>
         <button class="btn-save" :disabled="!podeContinuar || criandoPartida" @click="continuarSelecionarJogadores">
           <span v-if="criandoPartida">Aguarde...</span>
           <span v-else>Continuar (selecionar jogadores)</span>
@@ -126,7 +174,7 @@
   <div v-if="mostrarModalRodada" class="modal-overlay" @click.self="mostrarModalRodada = false">
     <div class="modal-content modal-times">
       <div class="modal-header">
-        <h2>Criar Nova Rodada</h2>
+        <span class="title">Criar Nova Rodada</span>
         <button type="button" class="btn-close-x" @click="mostrarModalRodada = false">x</button>
       </div>
       <div class="filtros-topo">
@@ -154,7 +202,7 @@
 <script>
 import api from '@/axios'
 import Swal from 'sweetalert2'
-import SelecionarJogadores from '../Partida/SelecionarJogadores.vue';
+import SelecionarJogadores from '../Partida/SelecionarJogadores.vue'
 
 export default {
   name: 'ModalEscolherTipo',
@@ -170,6 +218,7 @@ export default {
       usuario: null,
       mostrarModalPartida: false,
       mostrarModalRodada: false,
+      modoCriacaoPartida: 'ADICIONAR',
       nomeRodada: '',
       fases: [],
       faseIdSelecionada: null,
@@ -182,7 +231,8 @@ export default {
         faseId: '',
         rodadaId: '',
         timeAId: '',
-        timeBId: ''
+        timeBId: '',
+        data: ''
       },
       abrirDropdownTimeA: false,
       abrirDropdownTimeB: false,
@@ -223,8 +273,10 @@ export default {
     },
 
     podeContinuar() {
-      const { faseId, rodadaId, timeAId, timeBId } = this.partida
-      return !!faseId && !!rodadaId && !!timeAId && !!timeBId && timeAId !== timeBId
+      const { faseId, rodadaId, timeAId, timeBId, data } = this.partida
+      const baseOk = !!faseId && !!rodadaId && !!timeAId && !!timeBId && timeAId !== timeBId
+      if (this.modoCriacaoPartida === 'AGENDAR') return baseOk && !!data
+      return baseOk
     },
 
     regraJogadores() {
@@ -245,12 +297,10 @@ export default {
       const id = Number(this.modalidadeId)
       const nomeNormalizado = this.normalizarNomeModalidade(this.modalidadeNome)
 
-      // Futsal e futebol de areia: sem limite fixo por time.
       if (nomeNormalizado.includes('futsal') || (nomeNormalizado.includes('futebol') && nomeNormalizado.includes('areia'))) {
         return { livre: true, minPorTime: 1 }
       }
 
-      // Fallback por IDs para manter compatibilidade com dados antigos.
       const FUTEBOL_11 = new Set([1])
       const FUTSAL_E_AREIA = new Set([2, 7])
       const VOLEI = new Set([3, 5, 6])
@@ -284,12 +334,13 @@ export default {
       this.buscaTimeB = ''
     },
 
-    async abrirModalPartida() {
+    async abrirModalPartida(modo = 'ADICIONAR') {
       await this.carregarModalidadeCampeonato()
       await this.listarFases()
       await this.listarTimes()
+      this.modoCriacaoPartida = modo
       this.rodadas = []
-      this.partida = { faseId: '', rodadaId: '', timeAId: '', timeBId: '' }
+      this.partida = { faseId: '', rodadaId: '', timeAId: '', timeBId: '', data: '' }
       this.mostrarModalPartida = true
       this.mostrarModalJogadores = false
       this.jogadoresTime1 = []
@@ -308,7 +359,7 @@ export default {
         this.fases = data || []
       } catch (err) {
         console.error('Erro ao listar fases:', err)
-        Swal.fire('Erro', 'Não foi possível carregar as fases.', 'error')
+        Swal.fire('Erro', 'Nao foi possivel carregar as fases.', 'error')
       }
     },
 
@@ -318,7 +369,7 @@ export default {
         this.times = data || []
       } catch (err) {
         console.error('Erro ao listar times:', err)
-        Swal.fire('Erro', 'Não foi possível carregar os times.', 'error')
+        Swal.fire('Erro', 'Nao foi possivel carregar os times.', 'error')
       }
     },
 
@@ -349,7 +400,7 @@ export default {
         this.$emit('rodadaCriada', data.rodada)
       } catch (err) {
         console.error('Erro ao criar rodada:', err)
-        Swal.fire('Erro', 'Não foi possível criar a rodada.', 'error')
+        Swal.fire('Erro', 'Nao foi possivel criar a rodada.', 'error')
       }
     },
 
@@ -373,23 +424,34 @@ export default {
       }
 
       if (timeAId === timeBId) {
-        Swal.fire('Erro', 'Os times não podem ser iguais.', 'error')
+        Swal.fire('Erro', 'Os times nao podem ser iguais.', 'error')
         return
       }
 
       try {
         const [resA, resB] = await Promise.all([
-          api.get(`/time/${timeAId}`),
-          api.get(`/time/${timeBId}`)
+          api.get('/partidas/escalacao/jogadores', {
+            params: {
+              campeonatoId: this.campeonatoId,
+              faseId,
+              timeId: timeAId
+            }
+          }),
+          api.get('/partidas/escalacao/jogadores', {
+            params: {
+              campeonatoId: this.campeonatoId,
+              faseId,
+              timeId: timeBId
+            }
+          })
         ])
 
-        this.jogadoresTime1 = resA.data
-        this.jogadoresTime2 = resB.data
-
+        this.jogadoresTime1 = Array.isArray(resA.data) ? resA.data : []
+        this.jogadoresTime2 = Array.isArray(resB.data) ? resB.data : []
         this.mostrarModalJogadores = true
       } catch (err) {
         console.error('Erro ao carregar jogadores:', err)
-        Swal.fire('Erro', 'Não foi possível carregar os jogadores dos times.', 'error')
+        Swal.fire('Erro', 'Nao foi possivel carregar os jogadores dos times.', 'error')
       }
     },
 
@@ -407,20 +469,12 @@ export default {
         if (regra.livre) {
           const min = Number(regra.minPorTime || 1)
           if (idsTimeA.length < min || idsTimeB.length < min) {
-            Swal.fire(
-              'Erro',
-              `Selecione pelo menos ${min} jogador(es) por time.`,
-              'error'
-            )
+            Swal.fire('Erro', `Selecione pelo menos ${min} jogador(es) por time.`, 'error')
             return
           }
         } else if (idsTimeA.length !== regra.porTime || idsTimeB.length !== regra.porTime) {
-            Swal.fire(
-              'Erro',
-              `Para esta modalidade, selecione exatamente ${regra.porTime} jogador(es) por time.`,
-              'error'
-            )
-            return
+          Swal.fire('Erro', `Para esta modalidade, selecione exatamente ${regra.porTime} jogador(es) por time.`, 'error')
+          return
         }
 
         const payload = {
@@ -430,12 +484,12 @@ export default {
           rodadaId: Number(rodadaId),
           timeAId: Number(timeAId),
           timeBId: Number(timeBId),
-          quadraId: Number(this.quadraId)
+          quadraId: Number(this.quadraId),
+          status: 'EM_ANDAMENTO'
         }
 
-        const { data } = await api.post('/partida', payload)
-        const partidaCriada = data
-        const partidaId = data?.id
+        const { data: partidaCriada } = await api.post('/partida', payload)
+        const partidaId = partidaCriada?.id
         if (!partidaId) throw new Error('Partida criada sem ID.')
 
         const jogadoresPayload = [
@@ -449,10 +503,53 @@ export default {
         this.mostrarModalJogadores = false
         this.mostrarModalPartida = false
         this.$emit('partidaCriada', partidaCriada)
-
       } catch (err) {
         console.error('Erro no fluxo de criar/iniciar:', err)
-        Swal.fire('Erro', err.response?.data?.message, 'error')
+        const mensagem = err.response?.data?.erro || err.response?.data?.message || 'Nao foi possivel criar/iniciar.'
+        Swal.fire('Erro', mensagem, 'error')
+      } finally {
+        this.criandoPartida = false
+      }
+    },
+
+    async salvarPartidaAgendada() {
+      const { faseId, rodadaId, timeAId, timeBId, data } = this.partida
+      this.criandoPartida = true
+
+      if (!faseId || !rodadaId || !timeAId || !timeBId || !data) {
+        Swal.fire('Erro', 'Preencha todos os campos.', 'error')
+        this.criandoPartida = false
+        return
+      }
+
+      if (timeAId === timeBId) {
+        Swal.fire('Erro', 'Os times nao podem ser iguais.', 'error')
+        this.criandoPartida = false
+        return
+      }
+
+      try {
+        const payload = {
+          campeonatoId: Number(this.campeonatoId),
+          modalidadeId: Number(this.modalidadeId),
+          faseId: Number(faseId),
+          rodadaId: Number(rodadaId),
+          timeAId: Number(timeAId),
+          timeBId: Number(timeBId),
+          quadraId: Number(this.quadraId),
+          data,
+          status: 'AGENDADA'
+        }
+
+        const { data: partidaCriada } = await api.post('/partida', payload)
+
+        Swal.fire('Sucesso', 'Partida agendada com sucesso!', 'success')
+        this.mostrarModalPartida = false
+        this.$emit('partidaCriada', partidaCriada)
+      } catch (err) {
+        console.error('Erro ao agendar partida:', err)
+        const mensagem = err.response?.data?.erro || err.response?.data?.message || 'Nao foi possivel agendar.'
+        Swal.fire('Erro', mensagem, 'error')
       } finally {
         this.criandoPartida = false
       }
@@ -465,7 +562,7 @@ export default {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(15, 23, 42, 0.55);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -473,18 +570,15 @@ export default {
 }
 
 .modal-content {
-  background: white;
+  background: #fff;
   padding: 30px 40px;
-  border-radius: 10px;
-  width: 900px;
-  max-width: 95%;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-}
-
-.modal-content h2 {
-  margin-bottom: 20px;
-  color: #3b82f6;
-  font-weight: bold;
+  border-radius: 16px;
+  width: min(900px, 95vw);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.22);
+  font-family: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .modal-header {
@@ -495,77 +589,158 @@ export default {
 }
 
 .modal-header h2 {
-  margin-bottom: 0;
+  margin: 0;
+  color: var(--primary);
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.title_placar {
+  color: #3b82f6;
+  font-size: 24px;
+  font-weight: bold;
 }
 
 .btn-close-x {
-  width: 34px;
-  height: 34px;
-  border: 1px solid #3b82f6;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(59, 130, 246, 0.55);
   border-radius: 999px;
   background: #fff;
-  color: #3b82f6;
-  font-size: 20px;
+  color: var(--text);
+  font-size: 18px;
   line-height: 1;
   cursor: pointer;
   flex: 0 0 auto;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-close-x:hover {
+  background: rgba(59, 130, 246, 0.08);
+  transform: translateY(-1px);
+  border-color: rgba(59, 130, 246, 0.9);
+}
+
+.modal-escolha {
+  width: min(720px, 92vw);
+  padding: 26px 28px;
+  border-radius: 18px;
+  text-align: left;
 }
 
 .tipo-campeonato-lista {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 14px;
+  margin: 10px 0 18px;
 }
 
 .btn-tipo {
-  padding: 12px 20px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: 1px solid #3b82f6;
-  background-color: #fff;
-  cursor: pointer;
-  transition: 0.3s;
-  display: flex;
-  align-items: center;
-  text-align: left;
   width: 100%;
+  cursor: pointer;
+  transition: 0.2s ease;
+  border: none;
+  background: transparent;
+  padding: 0;
 }
 
-.btn-tipo:hover {
-  background-color: #3b82f6;
-  color: white;
+.btn-tipo-card {
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
+  text-align: left;
+  color: var(--text);
 }
 
-.btn-tipo i {
-  margin-right: 12px;
+.btn-tipo-card:hover {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-tipo-card:active {
+  transform: translateY(0);
+}
+
+.btn-tipo-titulo {
+  font-weight: 800;
+  color: #000;
+  font-size: 18px;
+  letter-spacing: -0.1px;
+  width: 100%;
+  text-align: left;
+}
+
+.btn-tipo-titulo-com-icone {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-tipo-titulo-com-icone svg {
+  color: #3b82f6;
   width: 20px;
-  text-align: center;
+  height: 20px;
+  flex: 0 0 20px;
+}
+
+.btn-tipo-sub {
+  font-size: 13px;
+  font-weight: 600;
+  color:  #777;
+  line-height: 1.25;
+  width: 100%;
+  text-align: left;
 }
 
 .botoes {
   display: flex;
   gap: 10px;
-  margin-top: 1rem;
-}
-
-.btn-save,
-.btn-cancel {
-  flex: 1;
-  padding: 10px 0;
-  border-radius: 20px;
-  border: none;
-  cursor: pointer;
-  color: white;
-  font-size: 16px;
+  margin-top: 12px;
 }
 
 .btn-save {
+  flex: 1;
+  padding: 12px 0;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  color: #Ffff;
+  ;
+  font-size: 16px;
+  font-weight: 800;
   background-color: #3b82f6;
+  ;
 }
 
 .btn-cancel {
-  background-color: #3b82f6;
+  flex: 1;
+  padding: 12px 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 800;
+  background: transparent;
+  color: #3b82f6;;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.modal-escolha .modal-header .title {
+  text-align: left;
+}
+
+
+.btn-cancel:hover,
+.btn-cancel-sec:hover {
+  background: rgba(59, 130, 246, 0.06);
+  border-color: rgba(59, 130, 246, 0.55);
+  transform: translateY(-1px);
 }
 
 .modal-times .lista-times {
@@ -574,21 +749,22 @@ export default {
   gap: 14px;
   max-height: 300px;
   overflow-y: auto;
-  border: 1px solid #3b82f6;
-  border-radius: 8px;
+  border: 1px solid rgba(59, 130, 246, 0.45);
+  border-radius: 10px;
   padding: 12px;
   background-color: #fff;
 }
 
 .modal-times label {
-  font-size: 17px;
-  margin-bottom: 6px;
+  font-size: 14px;
+  margin-bottom: 8px;
+  font-weight: 700;
+  color: var(--text);
 }
 
-/* CARD DO TIME */
 .time-card {
-  border: 1px solid #3b82f6;
-  border-radius: 8px;
+  border: 1px solid rgba(59, 130, 246, 0.55);
+  border-radius: 10px;
   padding: 12px 16px;
   cursor: pointer;
   transition: 0.2s;
@@ -596,11 +772,12 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  color: var(--text);
 }
 
 .time-card.selecionado {
-  background: #3b82f6;
-  color: white;
+  background: var(--primary);
+  color: #fff;
   border-color: #1e40af;
 }
 
@@ -620,54 +797,60 @@ export default {
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
-  border: 1px solid #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.6);
 }
 
 .time-nome {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 800;
+  color: inherit;
 }
 
 .time-jogadores {
   font-size: 14px;
-  color: #555;
+  color: var(--text-2);
 }
 
-.filtros-topo select {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-  color: #111827;
-  background-color: #fff;
-  cursor: pointer;
-  transition: 0.2s;
+.filtros-topo {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
 }
 
-.filtros-topo select:hover {
-  border-color: #3b82f6;
+.filtros-topo label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 8px;
+  font-weight: 700;
+  color: var(--text);
 }
 
-.filtros-topo select:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-.filtros-topo select option[disabled] {
-  color: #9ca3af;
-}
-
+.filtros-topo select,
 .filtros-topo input {
   width: 100%;
   padding: 10px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-  color: #111827;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 15px;
+  color: var(--text);
   background-color: #fff;
   outline: none;
+  transition: 0.2s;
+}
+
+.filtros-topo select:hover,
+.filtros-topo input:hover {
+  border-color: rgba(59, 130, 246, 0.65);
+}
+
+.filtros-topo select:focus,
+.filtros-topo input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+.filtros-topo select option[disabled] {
+  color: var(--text-3);
 }
 
 .filtros-linha {
@@ -681,20 +864,6 @@ export default {
   min-width: 150px;
 }
 
-.filtros-topo {
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-}
-
-.filtros-topo label {
-  display: block;
-  font-size: 17px;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: #374151;
-}
-
 .dropdown-custom {
   position: relative;
   cursor: pointer;
@@ -705,26 +874,31 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
   background-color: #fff;
   font-size: 15px;
-  color: #333;
-  min-height: 38px;
+  color: var(--text);
+  min-height: 42px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dropdown-selected:hover {
+  border-color: rgba(59, 130, 246, 0.65);
 }
 
 .dropdown-list {
   position: absolute;
   width: 100%;
   background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  margin-top: 4px;
-  max-height: 200px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  margin-top: 6px;
+  max-height: 220px;
   overflow-y: auto;
   z-index: 10;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
 }
 
 .dropdown-list ul {
@@ -739,13 +913,14 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   cursor: pointer;
   transition: background 0.2s;
+  color: var(--text);
 }
 
 .dropdown-list li:hover {
-  background-color: #f1f1f1;
+  background-color: rgba(59, 130, 246, 0.06);
 }
 
 .avatar {
@@ -757,9 +932,9 @@ export default {
 
 .input-busca-jogador {
   width: 100%;
-  padding: 8px;
+  padding: 10px 12px;
   border: none;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #e5e7eb;
   outline: none;
   font-size: 14px;
   margin-bottom: 5px;
@@ -768,14 +943,35 @@ export default {
 .sem-jogador {
   padding: 10px;
   text-align: center;
-  color: #999;
+  color: var(--text-2);
   font-size: 13px;
+  font-weight: 700;
 }
 
 @media (max-width: 768px) {
+  .modal-content {
+    padding: 20px 18px;
+    border-radius: 14px;
+  }
+
+  .modal-escolha h2 {
+    font-size: 26px;
+  }
+
+  .btn-tipo-titulo {
+    font-size: 16px;
+  }
+
   .filtros-linha {
     flex-direction: column;
     gap: 12px;
+  }
+
+  .btn-save,
+  .btn-cancel,
+  .btn-cancel-sec {
+    padding: 11px 0;
+    font-size: 15px;
   }
 }
 </style>

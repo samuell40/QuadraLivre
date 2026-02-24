@@ -12,7 +12,7 @@
 
   <ul v-else class="lista-partidas" :class="{ 'com-scroll': enableScroll || partidas.length > 5 }">
     <li v-for="partida in partidas" :key="partida.id" class="card-partida" :class="statusClass(partida, 'card')"
-      @click="abrirModalPartida(partida.id)">
+      @click="abrirModalPartida(partida)">
       <div class="match-ribbon" :class="statusClass(partida, 'text')">
         <span v-if="partida.status === 'EM_ANDAMENTO'" class="status-live-dot"></span>
         {{ statusLabel(partida.status) }}
@@ -25,7 +25,11 @@
             <span class="nome-time">{{ partida.timeA?.nome }}</span>
           </div>
 
-          <div class="placar-centro">
+          <div v-if="partida.status === 'CANCELADA'" class="placar-centro-agendado">
+            <span class="divisor-x">x</span>
+          </div>
+
+          <div v-else class="placar-centro">
             <span class="gols-placar">{{ partida.pontosTimeA ?? 0 }}</span>
             <span class="divisor-x">x</span>
             <span class="gols-placar">{{ partida.pontosTimeB ?? 0 }}</span>
@@ -38,6 +42,10 @@
         </div>
 
         <div class="match-divider"></div>
+
+        <div v-if="partida.status !== 'EM_ANDAMENTO'" class="data-partida">
+          {{ formatarDiaSemanaData(partida?.data || partida?.createdAt) }}
+        </div>
 
         <div class="nome-quadra" :class="quadraClass">
           <span class="dot-quadra"></span> {{ partida.quadra?.nome }}
@@ -55,7 +63,7 @@ import DetalharPartidaModal from '@/components/quadraplay/DetalharPartidaModal.v
 const STATUS_CONFIG = {
   FINALIZADA: { label: 'ENCERRADA', card: 'partida-finalizada', text: 'status-finalizada' },
   EM_ANDAMENTO: { label: 'EM ANDAMENTO', card: 'partida-andamento', text: 'status-andamento' },
-  AGENDADA: { label: 'AGUARDANDO', card: 'partida-agendada', text: 'status-agendada' },
+  AGENDADA: { label: 'AGENDADA', card: 'partida-agendada', text: 'status-agendada' },
   CANCELADA: { label: 'CANCELADA', card: 'partida-cancelada', text: 'status-cancelada' }
 }
 
@@ -79,8 +87,11 @@ export default {
     }
   },
   methods: {
-    abrirModalPartida(partidaId) {
-      const id = Number(partidaId)
+    abrirModalPartida(partida) {
+      const status = String(partida?.status || '').toUpperCase()
+      if (status === 'CANCELADA') return
+
+      const id = Number(partida?.id ?? partida)
       if (!Number.isFinite(id) || id <= 0) return
       this.partidaSelecionadaId = id
       this.mostrarModalPartida = true
@@ -91,6 +102,17 @@ export default {
     },
     statusLabel(status) {
       return STATUS_CONFIG[status]?.label || ''
+    },
+    formatarDiaSemanaData(data) {
+      const dt = new Date(data)
+      if (Number.isNaN(dt.getTime())) return '-'
+
+      const diaSemana = dt.toLocaleDateString('pt-BR', { weekday: 'long' })
+      const dataFormatada = dt.toLocaleDateString('pt-BR')
+      const horaFormatada = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      const diaCapitalizado = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)
+
+      return `${diaCapitalizado} - ${dataFormatada} às ${horaFormatada}`
     }
   }
 }
@@ -190,6 +212,10 @@ export default {
   border-color: #e11d48;
 }
 
+.card-partida.partida-finalizada .conteudo-card-interno {
+  padding: 2px 12px 6px;
+}
+
 .match-ribbon.status-finalizada {
   background: #bd1c1c;
 }
@@ -203,11 +229,11 @@ export default {
 }
 
 .card-partida.partida-agendada {
-  border-color: #2563eb;
+  border-color: #f59e0b;
 }
 
 .match-ribbon.status-agendada {
-  background: #2563eb;
+  background: #f59e0b;
 }
 
 .conteudo-card-interno {
@@ -262,6 +288,19 @@ export default {
   margin-top: 14px;
 }
 
+.placar-centro-agendado {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 70px;
+  margin-top: 14px;
+}
+
+.placar-centro-agendado .divisor-x {
+  font-size: 28px;
+  font-weight: 700;
+}
+
 .gols-placar {
   font-size: 30px;
   font-weight: bold;
@@ -280,6 +319,14 @@ export default {
   height: 1px;
   background-color: #f2f2f2;
   margin-bottom: 3%;
+}
+
+.data-partida {
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+  color: #334155;
+  margin: -4px 0 8px;
 }
 
 .nome-quadra {

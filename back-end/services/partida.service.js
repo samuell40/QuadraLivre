@@ -423,7 +423,23 @@ async function recalcularPlacarCampeonatoFase(campeonatoId, faseId) {
 }
 
 async function validarSuspensaoJogador({ campeonatoId, faseId, jogadorId }) {
-  if (!campeonatoId || !jogadorId) return;
+  const jogadorIdNum = Number(jogadorId);
+  if (!campeonatoId || !jogadorIdNum) return;
+
+  const suspensoes = await mapearSuspensaoJogadores({
+    campeonatoId,
+    faseId,
+    jogadorIds: [jogadorIdNum]
+  });
+
+  const status = suspensoes.get(jogadorIdNum);
+  if (!status?.suspenso) return;
+
+  throw new Error(status.motivoSuspensao || 'Jogador suspenso.');
+}
+
+async function carregarContextoSuspensao(campeonatoId, faseId) {
+  if (!campeonatoId) return null;
 
   const campeonato = await prisma.campeonato.findUnique({
     where: { id: Number(campeonatoId) },
@@ -433,13 +449,22 @@ async function validarSuspensaoJogador({ campeonatoId, faseId, jogadorId }) {
     }
   });
 
-  if (!campeonato) return;
+  if (!campeonato) return null;
 
   const regras = normalizarRegrasCampeonato(campeonato.regras, campeonato.modalidade?.nome);
   const limiteAmarelos = Number(regras.suspensaoAmarelos);
   const limiteVermelhos = Number(regras.suspensaoVermelhos);
+  const usaLimiteAmarelos = Number.isFinite(limiteAmarelos) && limiteAmarelos > 0;
+  const usaLimiteVermelhos = Number.isFinite(limiteVermelhos) && limiteVermelhos > 0;
 
-  if (!Number.isFinite(limiteAmarelos) && !Number.isFinite(limiteVermelhos)) return;
+  if (!usaLimiteAmarelos && !usaLimiteVermelhos) {
+    return {
+      ativo: false,
+      limiteAmarelos,
+      limiteVermelhos,
+      filtrosPartida: null
+    };
+  }
 
   const filtrosPartida = {
     campeonatoId: Number(campeonatoId),
@@ -450,10 +475,79 @@ async function validarSuspensaoJogador({ campeonatoId, faseId, jogadorId }) {
     filtrosPartida.faseId = faseId ? Number(faseId) : null;
   }
 
-  const resumo = await prisma.jogadorPartida.aggregate({
+  return {
+    ativo: true,
+    limiteAmarelos,
+    limiteVermelhos,
+    filtrosPartida
+  };
+}
+
+function avaliarSuspensaoPorCartoes({
+  amarelos = 0,
+  vermelhos = 0,
+  limiteAmarelos = NaN,
+  limiteVermelhos = NaN
+}) {
+  const amarelosNum = Number(amarelos) || 0;
+  const vermelhosNum = Number(vermelhos) || 0;
+
+  const usaLimiteAmarelos = Number.isFinite(limiteAmarelos) && limiteAmarelos > 0;
+  const usaLimiteVermelhos = Number.isFinite(limiteVermelhos) && limiteVermelhos > 0;
+
+  const atingiuAmarelos = usaLimiteAmarelos && amarelosNum >= limiteAmarelos;
+  const vermelhosEquivalentesPorAmarelos = atingiuAmarelos ? 1 : 0;
+  const vermelhosConsiderados = vermelhosNum + vermelhosEquivalentesPorAmarelos;
+  const atingiuVermelhos = usaLimiteVermelhos && vermelhosConsiderados >= limiteVermelhos;
+
+  if (atingiuAmarelos) {
+    return {
+      suspenso: true,
+      motivo: 'AMARELOS',
+      motivoSuspensao: `Jogador suspenso: atingiu ${limiteAmarelos} cartoes amarelos (equivale a 1 cartao vermelho).`,
+      amarelos: amarelosNum,
+      vermelhos: vermelhosNum,
+      vermelhosConsiderados
+    };
+  }
+
+  if (atingiuVermelhos) {
+    return {
+      suspenso: true,
+      motivo: 'VERMELHOS',
+      motivoSuspensao: `Jogador suspenso: atingiu ${limiteVermelhos} cartoes vermelhos.`,
+      amarelos: amarelosNum,
+      vermelhos: vermelhosNum,
+      vermelhosConsiderados
+    };
+  }
+
+  return {
+    suspenso: false,
+    motivo: null,
+    motivoSuspensao: null,
+    amarelos: amarelosNum,
+    vermelhos: vermelhosNum,
+    vermelhosConsiderados
+  };
+}
+
+async function mapearCartoesAcumuladosJogadores(jogadorIds, filtrosPartida) {
+  const ids = Array.from(
+    new Set((Array.isArray(jogadorIds) ? jogadorIds : [])
+      .map(id => Number(id))
+      .filter(id => Number.isFinite(id) && id > 0))
+  );
+
+  if (!ids.length || !filtrosPartida) {
+    return new Map();
+  }
+
+  const acumulados = await prisma.jogadorPartida.groupBy({
+    by: ['jogadorId'],
     where: {
-      jogadorId: Number(jogadorId),
-      partida: filtrosPartida
+      jogadorId: { in: ids },
+      partida: { is: filtrosPartida }
     },
     _sum: {
       cartoesAmarelos: true,
@@ -461,16 +555,92 @@ async function validarSuspensaoJogador({ campeonatoId, faseId, jogadorId }) {
     }
   });
 
-  const amarelos = Number(resumo._sum.cartoesAmarelos) || 0;
-  const vermelhos = Number(resumo._sum.cartoesVermelhos) || 0;
-
-  if (Number.isFinite(limiteAmarelos) && limiteAmarelos > 0 && amarelos >= limiteAmarelos) {
-    throw new Error(`Jogador suspenso por cartoes amarelos (limite: ${limiteAmarelos}).`);
+  const porJogador = new Map();
+  for (const item of acumulados) {
+    porJogador.set(Number(item.jogadorId), {
+      amarelos: Number(item._sum?.cartoesAmarelos) || 0,
+      vermelhos: Number(item._sum?.cartoesVermelhos) || 0
+    });
   }
 
-  if (Number.isFinite(limiteVermelhos) && limiteVermelhos > 0 && vermelhos >= limiteVermelhos) {
-    throw new Error(`Jogador suspenso por cartoes vermelhos (limite: ${limiteVermelhos}).`);
+  return porJogador;
+}
+
+async function mapearSuspensaoJogadores({ campeonatoId, faseId, jogadorIds }) {
+  const ids = Array.from(
+    new Set((Array.isArray(jogadorIds) ? jogadorIds : [])
+      .map(id => Number(id))
+      .filter(id => Number.isFinite(id) && id > 0))
+  );
+
+  const resultado = new Map();
+  if (!ids.length || !campeonatoId) return resultado;
+
+  const contexto = await carregarContextoSuspensao(campeonatoId, faseId);
+  if (!contexto?.ativo) return resultado;
+
+  const cartoesPorJogador = await mapearCartoesAcumuladosJogadores(ids, contexto.filtrosPartida);
+
+  for (const jogadorId of ids) {
+    const cartoes = cartoesPorJogador.get(jogadorId) || { amarelos: 0, vermelhos: 0 };
+    resultado.set(jogadorId, avaliarSuspensaoPorCartoes({
+      amarelos: cartoes.amarelos,
+      vermelhos: cartoes.vermelhos,
+      limiteAmarelos: contexto.limiteAmarelos,
+      limiteVermelhos: contexto.limiteVermelhos
+    }));
   }
+
+  return resultado;
+}
+
+async function listarJogadoresParaEscalacao({ campeonatoId, faseId, timeId }) {
+  const timeIdNum = Number(timeId);
+  if (!timeIdNum) throw new Error('timeId invalido');
+
+  const time = await prisma.time.findUnique({
+    where: { id: timeIdNum },
+    include: {
+      jogadores: {
+        include: {
+          jogador: {
+            include: {
+              funcao: true,
+              atuacoes: true
+            }
+          }
+        }
+      }
+    }
+  });
+
+  if (!time) throw new Error('Time nao encontrado');
+
+  const jogadoresBase = time.jogadores
+    .map(jt => jt?.jogador)
+    .filter(Boolean)
+    .map(j => ({
+      id: j.id,
+      nome: j.nome,
+      foto: j.foto,
+      funcao: j.funcao,
+      atuacoes: j.atuacoes
+    }));
+
+  const suspensoes = await mapearSuspensaoJogadores({
+    campeonatoId,
+    faseId,
+    jogadorIds: jogadoresBase.map(j => j.id)
+  });
+
+  return jogadoresBase.map(jogador => {
+    const suspensao = suspensoes.get(Number(jogador.id));
+    return {
+      ...jogador,
+      suspenso: !!suspensao?.suspenso,
+      motivoSuspensao: suspensao?.motivoSuspensao || null
+    };
+  });
 }
 
 async function criarPartida(data, usuarioId) {
@@ -482,14 +652,25 @@ async function criarPartida(data, usuarioId) {
   const rodadaId = Number(data.rodadaId);
   const usuarioCriadorId = Number(usuarioId);
   const quadraId = Number(data.quadraId);
+  const dataPartida = data?.data ? new Date(data.data) : null;
+  const statusPartida = String(data?.status || 'AGENDADA').toUpperCase();
+  const statusPermitidos = new Set(['AGENDADA', 'EM_ANDAMENTO', 'FINALIZADA', 'CANCELADA']);
 
-  const campeonato = await prisma.campeonato.findUnique({
-    where: { id: campeonatoId },
-    select: { quadraId: true }
-  });
+  if (!statusPermitidos.has(statusPartida)) {
+    throw new Error('Status de partida inválido.');
+  }
+
+  if (statusPartida === 'AGENDADA' && (!dataPartida || Number.isNaN(dataPartida.getTime()))) {
+    throw new Error('Data da partida é obrigatória para agendamento.');
+  }
+
+  if (dataPartida && Number.isNaN(dataPartida.getTime())) {
+    throw new Error('Data da partida inválida.');
+  }
 
   const dataCreate = {
-    status: 'EM_ANDAMENTO',
+    status: statusPartida,
+    data: dataPartida || new Date(),
 
     modalidade: {
       connect: { id: modalidadeId }
@@ -519,6 +700,10 @@ async function criarPartida(data, usuarioId) {
       connect: { id: usuarioCriadorId }
     }
   };
+
+  if (statusPartida === 'EM_ANDAMENTO') {
+    dataCreate.inicioPartida = new Date();
+  }
 
   if (quadraId) {
     dataCreate.quadra = {
@@ -632,7 +817,7 @@ async function retornarPartida(partidaId) {
     where: {
       id: Number(partidaId),
       status: {
-        in: ['EM_ANDAMENTO', 'FINALIZADA']
+        in: ['AGENDADA', 'EM_ANDAMENTO', 'FINALIZADA']
       }
     },
     select: {
@@ -1447,6 +1632,27 @@ async function detalharPartida(partidaId) {
     throw new Error('Partida não encontrada')
   }
 
+  const idsJogadores = Array.from(new Set(
+    (Array.isArray(partida.jogadoresPartida) ? partida.jogadoresPartida : [])
+      .map(jp => Number(jp?.jogadorId))
+      .filter(id => Number.isFinite(id) && id > 0)
+  ))
+
+  const suspensoes = await mapearSuspensaoJogadores({
+    campeonatoId: partida.campeonatoId,
+    faseId: partida.faseId,
+    jogadorIds: idsJogadores
+  })
+
+  partida.jogadoresPartida = (partida.jogadoresPartida || []).map(jp => {
+    const suspensao = suspensoes.get(Number(jp?.jogadorId))
+    return {
+      ...jp,
+      suspenso: !!suspensao?.suspenso,
+      motivoSuspensao: suspensao?.motivoSuspensao || null
+    }
+  })
+
   return partida
 }
 
@@ -1457,6 +1663,7 @@ async function listarPartidasDaRodadaDaFase(campeonatoId, faseId, rodadaId) {
         campeonatoId: Number(campeonatoId),
         faseId: Number(faseId),
         rodadaId: Number(rodadaId),
+        status: { not: 'DELETADA' }
       },
       include: {
         timeA: true,
@@ -1507,6 +1714,7 @@ async function listarPartidasDaRodadaDaFase(campeonatoId, faseId, rodadaId) {
 
 function listarStatusPartida() {
   return [
+    'AGENDADA',
     'EM_ANDAMENTO',
     'FINALIZADA',
     'CANCELADA'
@@ -1528,6 +1736,10 @@ async function alterarStatusPartida(partidaId, novoStatus, usuarioEditorId = nul
     status: novoStatus
   };
 
+  if (novoStatus === 'EM_ANDAMENTO') {
+    dadosAtualizacao.inicioPartida = new Date();
+  }
+
   const partidaAtualizada = await prisma.partida.update({
     where: { id: partida.id },
     data: dadosAtualizacao
@@ -1538,6 +1750,48 @@ async function alterarStatusPartida(partidaId, novoStatus, usuarioEditorId = nul
   }
 
   return partidaAtualizada;
+}
+
+async function removerPartida(partidaId, usuarioEditorId = null) {
+  const idNum = Number(partidaId);
+  if (!idNum) {
+    throw new Error('Partida invalida.');
+  }
+
+  const partida = await prisma.partida.findUnique({
+    where: { id: idNum },
+    select: {
+      id: true,
+      status: true,
+      campeonatoId: true,
+      faseId: true,
+      rodadaId: true
+    }
+  });
+
+  if (!partida) {
+    throw new Error('Partida nao encontrada.');
+  }
+
+  if (!['CANCELADA', 'EM_ANDAMENTO'].includes(partida.status)) {
+    throw new Error('Somente partidas canceladas ou em andamento podem ser removidas.');
+  }
+
+  const editorIdNum = Number(usuarioEditorId);
+  const dadosEdicao = Number.isFinite(editorIdNum) && editorIdNum > 0
+    ? {
+        usuarioUltimaEdicaoId: editorIdNum,
+        ultimaEdicaoEm: new Date()
+      }
+    : {};
+
+  return prisma.partida.update({
+    where: { id: idNum },
+    data: {
+      status: 'DELETADA',
+      ...dadosEdicao
+    }
+  });
 }
 
 module.exports = {
@@ -1552,10 +1806,12 @@ module.exports = {
   atualizarAtuacaoJogadorPartida,
   substituirJogadorPartida,
   getJogadoresForaDaPartida,
+  listarJogadoresParaEscalacao,
   removerJogadorDeCampo,
   detalharPartida,
   listarPartidasDaRodadaDaFase,
   listarStatusPartida,
-  alterarStatusPartida
+  alterarStatusPartida,
+  removerPartida
 };
 

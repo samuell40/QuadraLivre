@@ -1,19 +1,50 @@
 ﻿<template>
   <div v-if="modelValue" class="modal-overlay" @click.self="fechar">
-    <div class="modal-content">
-      <h2>Configurações do campeonato</h2>
+    <div class="modal-content modal-escolha-config">
+      <div class="modal-header">
+        <span class="title">Configurações de Classificacao</span>
+        <button type="button" class="btn-close-x" @click="fechar">x</button>
+      </div>
 
       <div class="tipo-campeonato-lista">
-        <button class="btn-tipo" @click="abrirModalFase">
-          Adicionar fase
+        <button class="btn-tipo btn-tipo-card" @click="abrirModalFase">
+          <span class="btn-tipo-titulo btn-tipo-titulo-com-icone">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stack"
+              viewBox="0 0 16 16">
+              <path
+                d="m14.12 10.163 1.715.858c.22.11.22.424 0 .534L8.267 15.34a.6.6 0 0 1-.534 0L.165 11.555a.299.299 0 0 1 0-.534l1.716-.858 5.317 2.659c.505.252 1.1.252 1.604 0l5.317-2.66zM7.733.063a.6.6 0 0 1 .534 0l7.568 3.784a.3.3 0 0 1 0 .535L8.267 8.165a.6.6 0 0 1-.534 0L.165 4.382a.299.299 0 0 1 0-.535z" />
+              <path
+                d="m14.12 6.576 1.715.858c.22.11.22.424 0 .534l-7.568 3.784a.6.6 0 0 1-.534 0L.165 7.968a.299.299 0 0 1 0-.534l1.716-.858 5.317 2.659c.505.252 1.1.252 1.604 0z" />
+            </svg>
+            <span class="titulo-acao-modal">Adicionar fase</span>
+          </span>
+          <small class="btn-tipo-sub">Cria uma nova fase e seleciona os times participantes</small>
         </button>
 
-        <button class="btn-tipo" @click="criteriosClassificacao">
-          Criterios de Classificação
+        <button class="btn-tipo btn-tipo-card" @click="criteriosClassificacao">
+          <span class="btn-tipo-titulo btn-tipo-titulo-com-icone">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list-ol"
+              viewBox="0 0 16 16">
+              <path fill-rule="evenodd"
+                d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5" />
+              <path
+                d="M1.713 11.865v-.474H2c.217 0 .363-.137.363-.317 0-.185-.158-.31-.361-.31-.223 0-.367.152-.373.31h-.59c.016-.467.373-.787.986-.787.588-.002.954.291.957.703a.595.595 0 0 1-.492.594v.033a.615.615 0 0 1 .569.631c.003.533-.502.8-1.051.8-.656 0-1-.37-1.008-.794h.582c.008.178.186.306.422.309.254 0 .424-.145.422-.35-.002-.195-.155-.348-.414-.348h-.3zm-.004-4.699h-.604v-.035c0-.408.295-.844.958-.844.583 0 .96.326.96.756 0 .389-.257.617-.476.848l-.537.572v.03h1.054V9H1.143v-.395l.957-.99c.138-.142.293-.304.293-.508 0-.18-.147-.32-.342-.32a.33.33 0 0 0-.342.338zM2.564 5h-.635V2.924h-.031l-.598.42v-.567l.629-.443h.635z" />
+            </svg>
+            <span class="titulo-acao-modal">Criterios de Classificacao</span>
+          </span>
+          <small class="btn-tipo-sub">Define a ordem dos criterios usados na classificacao</small>
         </button>
 
-        <button class="btn-tipo" @click="grupos">
-          Grupos
+        <button class="btn-tipo btn-tipo-card" @click="grupos">
+          <span class="btn-tipo-titulo btn-tipo-titulo-com-icone">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people-fill"
+              viewBox="0 0 16 16">
+              <path
+                d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" />
+            </svg>
+            <span class="titulo-acao-modal">Grupos</span>
+          </span>
+          <small class="btn-tipo-sub">Organiza os grupos do campeonato</small>
         </button>
       </div>
 
@@ -308,47 +339,109 @@ export default {
   flex: 0 0 auto;
 }
 
+.modal-escolha-config {
+  width: min(720px, 92vw);
+  padding: 26px 28px;
+  border-radius: 18px;
+  text-align: left;
+}
+
+.modal-escolha-config .modal-header {
+  margin-bottom: 10px;
+}
+
+.title{
+  color: #3b82f6;
+  font-size: 34px;
+  font-weight: bold;
+}
+
 .tipo-campeonato-lista {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 14px;
+  margin: 10px 0 18px;
 }
 
 .btn-tipo {
-  padding: 12px 20px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: 1px solid #3b82f6;
-  background-color: #fff;
-  cursor: pointer;
-  transition: 0.2s;
-  display: flex;
-  align-items: center;
-  text-align: left;
   width: 100%;
+  cursor: pointer;
+  transition: 0.2s ease;
+  border: none;
+  background: transparent;
+  padding: 0;
 }
 
-.btn-tipo:hover {
-  background-color: #3b82f6;
-  color: white;
+.btn-tipo-card {
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
+  text-align: left;
+  color: #0f172a;
+}
+
+.btn-tipo-card:hover {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-tipo-card:active {
+  transform: translateY(0);
+}
+
+.btn-tipo-titulo {
+  font-weight: 800;
+  color: #000;
+  font-size: 18px;
+  letter-spacing: -0.1px;
+  width: 100%;
+  text-align: left;
+}
+
+.btn-tipo-titulo-com-icone {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-tipo-titulo-com-icone svg {
+  color: #3b82f6;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+}
+
+.btn-tipo-sub {
+  font-size: 13px;
+  font-weight: 600;
+  color: #777;
+  line-height: 1.25;
+  width: 100%;
+  text-align: left;
 }
 
 .botoes {
   display: flex;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: 12px;
 }
 
 .btn-save,
 .btn-cancel {
   flex: 1;
   padding: 10px;
-  border-radius: 20px;
+  border-radius: 999px;
   border: none;
   cursor: pointer;
   font-size: 16px;
   color: white;
+  font-weight: 700;
 }
 
 .btn-save {
@@ -357,6 +450,12 @@ export default {
 
 .btn-cancel {
   background-color: #3b82f6;
+}
+
+.modal-escolha-config .btn-cancel {
+  background: transparent;
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.35);
 }
 
 .modal-times .lista-times {
@@ -492,4 +591,3 @@ export default {
   font-size: 18px;
 }
 </style>
-

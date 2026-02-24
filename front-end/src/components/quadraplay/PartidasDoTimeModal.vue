@@ -29,7 +29,7 @@
 
       <ul v-else class="lista-partidas">
         <li v-for="partida in partidasDoTime" :key="partida.id" class="card-partida"
-          :class="statusClassCard(partida.status)" @click="abrirDetalharPartida(partida.id)">
+          :class="statusClassCard(partida.status)" @click="abrirDetalharPartida(partida)">
           <div class="match-ribbon" :class="statusClassRibbon(partida.status)">
             <span v-if="partida.status === 'EM_ANDAMENTO'" class="status-live-dot" aria-hidden="true"></span>
             {{ statusLabel(partida.status) }}
@@ -41,7 +41,12 @@
               <span class="nome">{{ partida.timeA?.nome }}</span>
             </div>
 
-            <div class="placar-centro">
+            <div v-if="partida.status === 'CANCELADA'"
+              class="placar-centro placar-centro-agendado">
+              <span>x</span>
+            </div>
+
+            <div v-else class="placar-centro">
               <strong>{{ partida.pontosTimeA ?? 0 }}</strong>
               <span>x</span>
               <strong>{{ partida.pontosTimeB ?? 0 }}</strong>
@@ -55,13 +60,15 @@
 
           <div class="match-divider"></div>
 
+          <div class="data-linha" :class="{ 'data-linha-oculta': partida.status === 'EM_ANDAMENTO' }">
+            {{ formatarDiaSemanaData(partida?.data || partida?.createdAt) }}
+          </div>
+
           <div class="quadra-linha">
             {{ partida.quadra?.nome}}
           </div>
         </li>
       </ul>
-
-      <button type="button" class="btn-fechar" @click="fechar">Fechar</button>
     </div>
   </div>
 
@@ -74,7 +81,7 @@ import DetalharPartidaModal from '@/components/quadraplay/DetalharPartidaModal.v
 const STATUS_CONFIG = {
   FINALIZADA: { label: 'ENCERRADA', cls: 'status-finalizada' },
   EM_ANDAMENTO: { label: 'EM ANDAMENTO', cls: 'status-andamento' },
-  AGENDADA: { label: 'AGUARDANDO', cls: 'status-agendada' },
+  AGENDADA: { label: 'AGENDADA', cls: 'status-agendada' },
   CANCELADA: { label: 'CANCELADA', cls: 'status-cancelada' }
 }
 
@@ -133,8 +140,11 @@ export default {
     fechar() {
       this.$emit('update:modelValue', false)
     },
-    abrirDetalharPartida(partidaId) {
-      const id = Number(partidaId)
+    abrirDetalharPartida(partida) {
+      const status = String(partida?.status || '').toUpperCase()
+      if (status === 'CANCELADA') return
+
+      const id = Number(partida?.id ?? partida)
       if (!Number.isFinite(id) || id <= 0) return
       this.partidaSelecionadaId = id
       this.mostrarDetalharPartida = true
@@ -150,6 +160,17 @@ export default {
       if (status === 'FINALIZADA') return 'partida-finalizada'
       if (status === 'CANCELADA') return 'partida-cancelada'
       return 'partida-agendada'
+    },
+    formatarDiaSemanaData(data) {
+      const dt = new Date(data)
+      if (Number.isNaN(dt.getTime())) return '-'
+
+      const diaSemana = dt.toLocaleDateString('pt-BR', { weekday: 'long' })
+      const dataFormatada = dt.toLocaleDateString('pt-BR')
+      const horaFormatada = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      const diaCapitalizado = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)
+
+      return `${diaCapitalizado} - ${dataFormatada} às ${horaFormatada}`
     }
   }
 }
@@ -191,8 +212,7 @@ export default {
 
 .modal-title {
   color: #3b82f6;
-  margin: 0;
-  font-size: 28px;
+  font-size: 24px;
 }
 
 .btn-close {
@@ -213,12 +233,12 @@ export default {
 .lista-partidas {
   list-style: none;
   margin: 0;
-  padding: 10px;
+  padding: 10px 10px;
   overflow-y: auto;
   overflow-x: visible;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  gap: 15px;
   align-items: start;
   border: 2px solid #3b82f6;
   border-radius: 12px;
@@ -244,19 +264,21 @@ export default {
   transform: translateY(-2px);
 }
 
+.card-partida.partida-agendada {
+  border-color: #f59e0b;
+}
+
 .match-ribbon {
   position: absolute;
-  top: 0;
+  top: -10px;
   left: 50%;
   transform: translateX(-50%);
   background: #111827;
   color: #ffffff;
   padding: 3px 14px;
-  /* ✅ menor */
   border-radius: 0 0 14px 14px;
   font-weight: 800;
   font-size: 10px;
-  /* ✅ menor */
   letter-spacing: 0.5px;
   text-transform: uppercase;
   z-index: 2;
@@ -264,7 +286,6 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  /* ✅ menor */
 }
 
 .status-live-dot {
@@ -273,7 +294,6 @@ export default {
   border-radius: 999px;
   background: #22c55e;
   border: 2px solid #fff;
-  /* ✅ borda branca na bolinha */
   display: inline-block;
   box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
   animation: statusDotPulse 1s infinite;
@@ -292,14 +312,13 @@ export default {
 }
 
 .match-ribbon.status-agendada {
-  background: #2563eb;
+  background: #f59e0b;
 }
 
 .match-divider {
   height: 1px;
   background-color: #f2f2f2;
   margin: 6px 8px 3px;
-  /* ✅ menor */
 }
 
 @keyframes statusDotPulse {
@@ -322,14 +341,12 @@ export default {
   }
 }
 
-/* ✅ menos altura: margin-top menor + tamanhos menores */
 .placar-linha {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 10px;
   margin-top: 12px;
-  /* ✅ antes 20px */
 }
 
 .time-lado {
@@ -356,28 +373,22 @@ export default {
   order: 1;
 }
 
-/* ✅ escudo menor */
 .escudo {
   width: 24px;
-  /* ✅ antes 30px */
   height: 24px;
-  /* ✅ antes 30px */
   border-radius: 50%;
   object-fit: cover;
   flex: 0 0 auto;
 }
 
-/* ✅ nome menor */
 .nome {
   color: #1f2937;
   font-weight: 800;
   font-size: 16px;
-  /* ✅ antes 20px */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 180px;
-  /* ✅ antes 240px */
 }
 
 .placar-centro {
@@ -385,12 +396,9 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  /* ✅ menor */
   padding: 4px 8px;
-  /* ✅ menor */
   border-radius: 999px;
   min-width: 78px;
-  /* ✅ menor */
 }
 
 .placar-centro strong {
@@ -407,6 +415,14 @@ export default {
   line-height: 1;
 }
 
+.placar-centro-agendado {
+  min-width: 78px;
+}
+
+.placar-centro-agendado span {
+  font-size: 22px;
+}
+
 .quadra-linha {
   margin-top: 5px;
   color: #3b82f6;
@@ -414,16 +430,36 @@ export default {
   text-align: center;
 }
 
+.data-linha {
+  margin-top: 2px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  min-height: 18px;
+}
+
+.data-linha-oculta {
+  visibility: hidden;
+}
+
 .btn-fechar {
   margin-top: 14px;
   width: 100%;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 12px;
-  background: #3b82f6;
-  color: #fff;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 999px;
+  padding: 12px 0;
+  background: transparent;
+  color: #3b82f6;
   cursor: pointer;
-  font-weight: 700;
+  font-weight: 800;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-fechar:hover {
+  background: rgba(59, 130, 246, 0.06);
+  border-color: rgba(59, 130, 246, 0.55);
+  transform: translateY(-1px);
 }
 
 .loader-container-centralizado,

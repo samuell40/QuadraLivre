@@ -22,19 +22,22 @@
           <div v-for="(jogadores, funcao) in jogadoresPorFuncaoTime1" :key="funcao">
             <h4 class="funcao-titulo">{{ funcao }}</h4>
 
-            <div v-for="j in jogadores" :key="j.id" class="jogador-card">
-              <label class="jogador-label">
+            <div v-for="j in jogadores" :key="j.id" class="jogador-card" :class="{ suspenso: jogadorSuspenso(j) }">
+              <label class="jogador-label" :class="{ suspenso: jogadorSuspenso(j) }">
                 <input
                   type="checkbox"
                   v-model="selecionadosTime1"
                   :value="j.id"
-                  :disabled="!regraLivre && selecionadosTime1.length >= regra.porTime && !selecionadosTime1.includes(j.id)"
+                  :disabled="checkboxDesabilitado(j, 'time1')"
                 />
 
                 <div class="jogador-info">
                   <img :src="j.foto" alt="Foto" class="foto-jogador" />
                   <div class="dados-jogador">
-                    <span class="nome">{{ j.nome }}</span>
+                    <span class="nome" :class="{ suspenso: jogadorSuspenso(j) }">{{ j.nome }}</span>
+                    <span v-if="jogadorSuspenso(j)" class="tag-suspenso" :title="j.motivoSuspensao || 'Jogador suspenso'">
+                      Suspenso
+                    </span>
                   </div>
                 </div>
               </label>
@@ -57,19 +60,22 @@
           <div v-for="(jogadores, funcao) in jogadoresPorFuncaoTime2" :key="funcao">
             <h4 class="funcao-titulo">{{ funcao }}</h4>
 
-            <div v-for="j in jogadores" :key="j.id" class="jogador-card">
-              <label class="jogador-label">
+            <div v-for="j in jogadores" :key="j.id" class="jogador-card" :class="{ suspenso: jogadorSuspenso(j) }">
+              <label class="jogador-label" :class="{ suspenso: jogadorSuspenso(j) }">
                 <input
                   type="checkbox"
                   v-model="selecionadosTime2"
                   :value="j.id"
-                  :disabled="!regraLivre && selecionadosTime2.length >= regra.porTime && !selecionadosTime2.includes(j.id)"
+                  :disabled="checkboxDesabilitado(j, 'time2')"
                 />
 
                 <div class="jogador-info">
                   <img :src="j.foto" alt="Foto" class="foto-jogador" />
                   <div class="dados-jogador">
-                    <span class="nome">{{ j.nome }}</span>
+                    <span class="nome" :class="{ suspenso: jogadorSuspenso(j) }">{{ j.nome }}</span>
+                    <span v-if="jogadorSuspenso(j)" class="tag-suspenso" :title="j.motivoSuspensao || 'Jogador suspenso'">
+                      Suspenso
+                    </span>
                   </div>
                 </div>
               </label>
@@ -138,6 +144,24 @@ export default {
   },
 
   methods: {
+    jogadorSuspenso(jogador) {
+      return !!jogador?.suspenso
+    },
+
+    estaSuspensoPorId(jogadores, jogadorId) {
+      const jogador = (Array.isArray(jogadores) ? jogadores : []).find(j => Number(j.id) === Number(jogadorId))
+      return this.jogadorSuspenso(jogador)
+    },
+
+    checkboxDesabilitado(jogador, time) {
+      if (this.jogadorSuspenso(jogador)) return true
+
+      const selecionados = time === 'time1' ? this.selecionadosTime1 : this.selecionadosTime2
+      return !this.regraLivre &&
+        selecionados.length >= this.regra.porTime &&
+        !selecionados.includes(jogador.id)
+    },
+
     agruparPorFuncao(jogadores) {
       return jogadores.reduce((acc, jogador) => {
         const funcao =
@@ -152,6 +176,23 @@ export default {
     },
 
     confirmar() {
+      const suspensosSelecionadosTime1 = this.selecionadosTime1.filter(id =>
+        this.estaSuspensoPorId(this.jogadoresTime1, id)
+      )
+      const suspensosSelecionadosTime2 = this.selecionadosTime2.filter(id =>
+        this.estaSuspensoPorId(this.jogadoresTime2, id)
+      )
+
+      if (suspensosSelecionadosTime1.length || suspensosSelecionadosTime2.length) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Jogador suspenso',
+          text: 'Remova os jogadores suspensos da escalacao para iniciar a partida.',
+          confirmButtonColor: '#3b82f6'
+        })
+        return
+      }
+
       if (this.regraLivre) {
         const minPorTime = Number(this.regra?.minPorTime || 1)
         if (
@@ -319,6 +360,15 @@ export default {
 
 .jogador-card {
   margin-bottom: 8px;
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.jogador-card.suspenso {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
 }
 
 .jogador-label {
@@ -326,6 +376,10 @@ export default {
   align-items: center;
   gap: 10px;
   cursor: pointer;
+}
+
+.jogador-label.suspenso {
+  cursor: not-allowed;
 }
 
 .jogador-info {
@@ -345,6 +399,23 @@ export default {
 .nome {
   font-weight: 600;
   font-size: 14px;
+}
+
+.nome.suspenso {
+  color: #b91c1c;
+}
+
+.tag-suspenso {
+  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #b91c1c;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
 }
 
 .botoes {

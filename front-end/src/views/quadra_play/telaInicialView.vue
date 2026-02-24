@@ -35,11 +35,8 @@
           <div class="card-quadra" v-for="campeonato in campeonatos" :key="campeonato.id"
             @click="abrirCampeonato(campeonato)">
 
-            <div
-              class="status-badge"
-              :class="classeStatus(campeonato.status)"
-              @click.stop="abrirModalStatus(campeonato)"
-            >
+            <div class="status-badge" :class="classeStatus(campeonato.status)"
+              @click.stop="abrirModalStatus(campeonato)">
               {{ rotuloStatus(campeonato.status) }}
             </div>
 
@@ -233,6 +230,9 @@ export default {
   margin-top: 70px;
   margin-left: 250px;
   transition: margin-left 0.3s ease;
+  background: #f8fafc;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .conteudo.collapsed {
@@ -241,6 +241,77 @@ export default {
 
 .conteudo.collapsed .quadras-grid {
   grid-template-columns: repeat(2, 1fr);
+}
+
+.header-campeonatos {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.title {
+  margin: 0;
+  color:  #3b82f6;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.btn-add {
+  padding: 12px 18px;
+  background-color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 999px;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  box-shadow: 0 10px 18px rgba(59, 130, 246, 0.22);
+}
+
+.btn-add:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(59, 130, 246, 0.28);
+}
+
+.abas-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+  margin-bottom: 22px;
+}
+
+.aba {
+  text-align: center;
+  padding: 10px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  background: #f1f5f9;
+  color: #334155;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.aba:hover {
+  background: #eaf2ff;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 16px rgba(15, 23, 42, 0.06);
+}
+
+.aba.ativa {
+  background: #3b82f6;
+  color: #fff;
+  border-color: rgba(59, 130, 246, 0.45);
+  box-shadow: 0 14px 24px rgba(59, 130, 246, 0.22);
 }
 
 .quadras-grid {
@@ -253,108 +324,126 @@ export default {
   position: relative;
   width: 100%;
   height: 260px;
-  border-radius: 16px;
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
   cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.14);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  background: #0b1220;
 }
 
 .card-quadra:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
-}
-
-.card-quadra:hover .imagem-quadra {
-  transform: scale(1.05);
+  transform: translateY(-6px);
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.22);
 }
 
 .imagem-quadra {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s ease;
+  transition: transform 0.45s ease;
+  filter: saturate(1.05) contrast(1.02);
+}
+
+.card-quadra:hover .imagem-quadra {
+  transform: scale(1.05);
 }
 
 .overlay {
   position: absolute;
-  bottom: 0;
+  inset: auto 0 0 0;
   width: 100%;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.95), rgba(17, 1, 1, 0.336));
-  color: white;
-  padding: 20px;
+  padding: 18px 18px 16px;
+  background: linear-gradient(to top,
+      rgba(15, 23, 42, 0.92),
+      rgba(15, 23, 42, 0.40),
+      rgba(15, 23, 42, 0.10));
+  color: #fff;
   display: flex;
   flex-direction: column;
+  gap: 6px;
 }
 
 .campeonato {
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 800;
   margin: 0;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.4px;
+  line-height: 1.12;
 }
 
 .modalidade {
+  margin: 0 0 10px;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 2px;
-  margin-bottom: 12px;
-  opacity: 0.9;
-  font-weight: 500;
+  opacity: 0.92;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.86);
 }
 
 .btn-acessar {
-  background-color: #3B82F6;
-  color: white;
+  background-color: #3b82f6;
+  color: #fff;
   border: none;
-  padding: 12px;
+  padding: 12px 12px;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   width: 100%;
-  transition: all 0.2s;
+  transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
   text-transform: uppercase;
-  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+  letter-spacing: 1px;
+  box-shadow: 0 10px 18px rgba(59, 130, 246, 0.25);
 }
 
 .btn-acessar:hover {
-  background-color: #2563EB;
-  box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(59, 130, 246, 0.32);
 }
 
 .status-badge {
   position: absolute;
-  top: 15px;
-  right: 15px;
-  padding: 6px 14px;
-  border-radius: 8px;
+  top: 14px;
+  right: 14px;
+  padding: 7px 12px;
+  border-radius: 999px;
   font-size: 11px;
-  font-weight: bold;
-  color: white;
+  font-weight: 900;
+  letter-spacing: 0.7px;
   text-transform: uppercase;
-  backdrop-filter: blur(4px);
+  color: #fff;
   z-index: 5;
   cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(8px);
+  transition: transform 0.15s ease;
 }
 
 .status-badge.em-andamento {
-  background: #3B82F6;
+  background: rgba(34, 197, 94, 0.88);
 }
 
 .status-badge.finalizado {
-  background: #f73434;
+  background: rgba(239, 68, 68, 0.90);
 }
 
 .status-badge.cancelado {
-  background: #6b7280;
+  background: rgba(100, 116, 139, 0.90);
+}
+
+.status-badge:hover {
+  transform: translateY(-1px);
 }
 
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(15, 23, 42, 0.55);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -362,12 +451,12 @@ export default {
 }
 
 .modal-content {
-  background: white;
-  padding: 30px 40px;
-  border-radius: 10px;
-  width: 900px;
-  max-width: 95%;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  background: #fff;
+  padding: 26px 28px;
+  border-radius: 16px;
+  width: min(560px, 92vw);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.22);
+  color: #0f172a;
 }
 
 .modal-header {
@@ -375,161 +464,125 @@ export default {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-}
-
-.modal-header h2 {
-  margin-bottom: 0;
-}
-
-.btn-close-x {
-  width: 34px;
-  height: 34px;
-  border: 1px solid #3b82f6;
-  border-radius: 999px;
-  background: #fff;
-  color: #3b82f6;
-  font-size: 20px;
-  line-height: 1;
-  cursor: pointer;
-  flex: 0 0 auto;
-}
-
-.modal-status {
-  max-width: 900px;
+  margin-bottom: 12px;
 }
 
 .titulo-modal-status {
-  color: #3b82f6;
-  font-size: 28px;
-  margin-bottom: 20px;
+  color: #2563eb;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  margin: 0;
+}
+
+.btn-close-x {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(37, 99, 235, 0.55);
+  border-radius: 999px;
+  background: #fff;
+  color: #2563eb;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-close-x:hover {
+  background: rgba(37, 99, 235, 0.08);
+  transform: translateY(-1px);
+  border-color: rgba(37, 99, 235, 0.9);
 }
 
 .label-status {
   display: block;
   margin-bottom: 10px;
-  color: #374151;
-  font-weight: 600;
+  color: #334155;
+  font-weight: 700;
 }
 
 .select-status-modal {
   width: 100%;
   padding: 10px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-  color: #111827;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  font-size: 15px;
+  color: #0f172a;
   background-color: #fff;
   cursor: pointer;
   transition: 0.2s;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .select-status-modal:hover {
-  border-color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.65);
 }
 
 .select-status-modal:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
 }
 
 .botoes {
   display: flex;
   gap: 10px;
-  margin-top: 1rem;
-}
-
-.btn-save,
-.btn-cancel {
-  flex: 1;
-  padding: 10px 0;
-  border-radius: 20px;
-  border: none;
-  cursor: pointer;
-  color: white;
-  font-size: 16px;
+  margin-top: 8px;
 }
 
 .btn-save {
+  flex: 1;
+  padding: 12px 0;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 900;
   background-color: #3b82f6;
+  transition: background 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+}
+
+.btn-save:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
 }
 
 .btn-cancel {
-  background-color: #7e7e7e;
+  flex: 1;
+  padding: 12px 0;
+  border-radius: 999px;
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  background: transparent;
+  color: #2563eb;
+  font-size: 15px;
+  font-weight: 900;
 }
 
 .loader {
   margin-top: 20px;
+  color: #334155;
+  font-weight: 700;
 }
 
-.title {
-  color: #3b82f6;
-  font-size: 28px;
-  font-weight: bold;
-}
-
-.header-campeonatos {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.btn-add {
-  padding: 10px 16px;
-  background-color: #3b82f6;
-  border: none;
-  border-radius: 20px;
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.abas-container {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
-  margin-top: 16px;
-  margin-bottom: 25px;
-}
-
-.aba {
-  text-align: center;
-  padding: 10px 0;
-  border-radius: 6px;
-  cursor: pointer;
-  background-color: #f1f1f1;
-  font-weight: 500;
-  color: #333;
-  transition: all 0.2s;
-  border: none;
-}
-
-.aba:hover {
-  background-color: #e0e0e0;
-}
-
-.aba.ativa {
-  background-color: #3b82f6;
-  color: white;
-}
 
 @media (max-width: 768px) {
   .conteudo {
     margin-left: 0 !important;
     margin-top: 70px;
+    padding: 18px;
   }
 
   .header-campeonatos {
     align-items: flex-start;
-    gap: 8px;
+    flex-direction: column;
+    gap: 10px;
   }
 
   .btn-add {
-    padding: 8px 8px;
+    width: 100%;
+    padding: 10px 12px;
     font-size: 14px;
   }
 
@@ -538,11 +591,17 @@ export default {
     gap: 8px;
   }
 
-  .modal-content {
-    padding: 18px;
+  .quadras-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 
-  .titulo-modal-status {
+  .card-quadra {
+    height: 230px;
+    border-radius: 16px;
+  }
+
+  .campeonato {
     font-size: 22px;
   }
 }

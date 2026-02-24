@@ -96,7 +96,7 @@
               </option>
             </select>
           </div>
-          <h3 class="titulo-secao">Placar</h3>
+          <h3 class="titulo-secao">Resultados</h3>
 
           <ListaPartidas :partidas="partidas" :loading="isLoadingPartidas"
             empty-title="Nenhuma partida disponível no momento." quadra-class="nome-quadra-home" />
@@ -104,15 +104,9 @@
       </div>
     </section>
 
-    <PartidasDoTimeModal
-      v-model="mostrarModalPartidasTime"
-      :time="timeSelecionadoPartidas"
-      :partidas="partidas"
-      :fase-nome="nomeFaseSelecionada"
-      :rodada-nome="nomeRodadaSelecionada"
-      :campeonato-nome="nomeCampeonato"
-      :loading="isLoadingPartidas"
-    />
+    <PartidasDoTimeModal v-model="mostrarModalPartidasTime" :time="timeSelecionadoPartidas" :partidas="partidas"
+      :fase-nome="nomeFaseSelecionada" :rodada-nome="nomeRodadaSelecionada" :campeonato-nome="nomeCampeonato"
+      :loading="isLoadingPartidas" />
     <button v-if="mostrarBotaoTopo" type="button" class="btn-topo" @click="subirPagina">
       ↑
     </button>
@@ -315,8 +309,17 @@ export default {
 
     async carregarCampeonatoMaisRecente() {
       try {
-        const { data } = await api.get('/listar/1')
-        this.campeonatoAtual = data?.[0]
+        const { data } = await api.get('/todos/campeonatos')
+        const campeonatos = Array.isArray(data) ? data : []
+        const maisRecente = campeonatos
+          .slice()
+          .sort((a, b) => {
+            const dataA = new Date(a?.dataInicio || a?.createdAt || 0).getTime()
+            const dataB = new Date(b?.dataInicio || b?.createdAt || 0).getTime()
+            return dataB - dataA
+          })[0]
+
+        this.campeonatoAtual = maisRecente || null
         this.campeonatoId = this.campeonatoAtual?.id
 
         if (!this.campeonatoId) return
@@ -693,6 +696,8 @@ p {
   border-radius: 12px;
   height: 350px;
   background-color: #f3f4f6;
+  border: 2px solid #3b82f6;
+  border-radius: 16px;
 }
 
 .card.is-interditada .imagem {
@@ -988,4 +993,3 @@ p {
   }
 }
 </style>
-

@@ -226,11 +226,8 @@ export default {
 <style scoped>
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -239,40 +236,52 @@ export default {
 }
 
 .modal-conteudo.modal-placar {
-  background-color: #fff;
-  border-radius: 12px;
-  padding: 30px 40px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 26px 28px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  width: 900px;
-  max-width: 100%;
-  max-height: 95vh;
+  gap: 18px;
+  width: min(960px, 100%);
+  max-height: 92vh;
   overflow: hidden;
   box-sizing: border-box;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(15, 23, 42, 0.06);
 }
 
 .header-placar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 .title_placar {
   color: #3b82f6;
-  font-size: 28px;
+  font-size: 24px;
+  font-weight: bold;
 }
 
 .btn-gerenciar {
-  background-color: #3b82f6;
-  color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  border: none;
+  background: #3b82f6;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(59, 130, 246, 0.35);
   cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s;
+  font-weight: 800;
+  transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 10px 18px rgba(59, 130, 246, 0.22);
+}
+
+.btn-gerenciar:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(59, 130, 246, 0.28);
 }
 
 .loader-container-centralizado,
@@ -280,71 +289,96 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 250px;
-  font-size: 18px;
-  color: #555;
+  height: 240px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #475569;
 }
 
 .loader {
   border: 6px solid #f3f3f3;
   border-top: 6px solid #3b82f6;
   border-radius: 50%;
-  width: 80px;
-  height: 80px;
+  width: 78px;
+  height: 78px;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
+  to {
     transform: rotate(360deg);
   }
 }
 
 .placar-table {
-  max-height: 55vh;
-  overflow-x: auto;
-  overflow-y: auto;
-  border-radius: 12px;
-  background-color: white;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  max-height: 58vh;
+  overflow: auto;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+  position: relative;
+  isolation: isolate;
+}
+
+.placar-table::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+
+.placar-table::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.35);
+  border-radius: 999px;
+}
+
+.placar-table::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.55);
 }
 
 .placar {
   width: 100%;
-  border-collapse: collapse;
-  border: 1px solid #e5e7eb;
-  min-width: 700px;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 720px;
 }
 
 .placar thead th {
-  background-color: #1e3a8a;
-  color: white;
-  font-weight: bold;
-  padding: 14px 12px;
-  font-size: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #1e3a8a;
+  color: #fff;
+  font-weight: 900;
+  padding: 12px 12px;
+  font-size: 14px;
   text-align: left;
-  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.placar tbody td:first-child {
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 3;
+}
+
+.placar thead th:first-child {
+  position: sticky;
+  left: 0;
+  background: #1e3a8a;
+  z-index: 4;
 }
 
 .placar tbody td {
-  color: #4b5563;
+  color: #334155;
   padding: 12px;
-  font-size: 15px;
-  border-bottom: 1px solid #e5e7eb;
-  border-right: 1px solid #e5e7eb;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  background: #fff;
 }
 
-.placar tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.placar tbody td:last-child,
-.placar thead th:last-child {
-  border-right: none;
+.placar tbody tr:hover td {
+  background: #f8fafc;
 }
 
 .placar tbody td:nth-child(2),
@@ -355,26 +389,16 @@ export default {
 .time-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .time-image {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   object-fit: cover;
   border-radius: 50%;
-  border: 1px solid #ccc;
-}
-
-.btn-cancel-placar {
-  background-color: #3b82f6;
-  color: white;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  margin-top: 20px;
-  width: 100%;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  background: #fff;
 }
 
 .select-wrap {
@@ -388,25 +412,25 @@ export default {
 .select-funcao {
   width: 100%;
   appearance: none;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  color: #4b5563;
-  border-radius: 10px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  color: #0f172a;
+  border-radius: 12px;
   padding: 10px 38px 10px 12px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.select-funcao:hover {
+  border-color: rgba(59, 130, 246, 0.55);
 }
 
 .select-funcao:focus {
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
-}
-
-.select-funcao:hover {
-  border-color: #9ca3af;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
 }
 
 .select-arrow {
@@ -414,157 +438,25 @@ export default {
   right: 12px;
   pointer-events: none;
   font-size: 14px;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  padding: 16px;
-}
-
-.modal-conteudo.modal-placar {
-  background-color: #fff;
-  border-radius: 12px;
-  padding: 30px 40px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  width: 900px;
-  max-width: 100%;
-  max-height: 95vh;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-.header-placar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-}
-
-.title_placar {
-  color: #3b82f6;
-  font-size: 28px;
-}
-
-.btn-gerenciar {
-  background-color: #3b82f6;
-  color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s;
-}
-
-.loader-container-centralizado,
-.sem-dados-centralizado {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 250px;
-  font-size: 18px;
-  color: #555;
-}
-
-.loader {
-  border: 6px solid #f3f3f3;
-  border-top: 6px solid #3b82f6;
-  border-radius: 50%;
-  width: 80px;
-  height: 80px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.placar-table {
-  max-height: 55vh;
-  overflow-y: auto;
-  border-radius: 12px;
-  background-color: white;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.placar {
-  width: 100%;
-  border-collapse: collapse;
-  border: 1px solid #e5e7eb;
-}
-
-.placar thead th {
-  background-color: #1e3a8a;
-  color: white;
-  font-weight: bold;
-  padding: 14px 12px;
-  font-size: 16px;
-  text-align: left;
-  border-right: 1px solid #e5e7eb;
-}
-
-.placar tbody td {
-  color: #4b5563;
-  padding: 12px;
-  font-size: 15px;
-  border-bottom: 1px solid #e5e7eb;
-  border-right: 1px solid #e5e7eb;
-}
-
-.placar tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.placar tbody td:last-child,
-.placar thead th:last-child {
-  border-right: none;
-}
-
-.placar tbody td:nth-child(2),
-.placar thead th:nth-child(2) {
-  text-align: center;
-}
-
-.time-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.time-image {
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
-  border-radius: 50%;
-  border: 1px solid #ccc;
+  color: #334155;
 }
 
 .btn-cancel-placar {
-  background-color: #3b82f6;
-  color: white;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 20px;
+  background: transparent;
+  color: #3b82f6;
+  padding: 12px 16px;
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  border-radius: 999px;
   cursor: pointer;
-  margin-top: 20px;
   width: 100%;
+  font-weight: 900;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-cancel-placar:hover {
+  background: rgba(37, 99, 235, 0.06);
+  border-color: rgba(37, 99, 235, 0.55);
+  transform: translateY(-1px);
 }
 
 .btn-gerenciar-icone {
@@ -575,19 +467,14 @@ export default {
   .modal-conteudo.modal-placar {
     width: 100%;
     padding: 16px;
-    border-radius: 10px;
+    border-radius: 12px;
   }
 
   .header-placar {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
+    gap: 10px;
   }
 
   .title_placar {
-    text-align: left;
     font-size: 18px;
     flex: 1;
     white-space: nowrap;
@@ -621,17 +508,13 @@ export default {
   }
 
   .placar thead th {
-    font-size: 14px;
-    padding: 8px 6px;
+    font-size: 13px;
+    padding: 9px 8px;
   }
 
   .placar tbody td {
     font-size: 13px;
-    padding: 6px 8px;
-  }
-
-  .time-info {
-    gap: 6px;
+    padding: 8px;
   }
 
   .time-image {
@@ -639,18 +522,23 @@ export default {
     height: 28px;
   }
 
+  .select-wrap {
+    width: 170px;
+  }
+
   .select-funcao {
     font-size: 12px;
-    padding: 4px 6px;
+    padding: 8px 34px 8px 10px;
+    border-radius: 10px;
+  }
+
+  .placar-table {
+    max-height: 52vh;
   }
 
   .btn-cancel-placar {
     font-size: 14px;
-    padding: 8px 12px;
-  }
-
-  .placar-table {
-    max-height: 50vh;
+    padding: 10px 12px;
   }
 }
 </style>

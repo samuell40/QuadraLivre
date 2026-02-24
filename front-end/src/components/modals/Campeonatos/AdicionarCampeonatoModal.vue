@@ -1,16 +1,73 @@
 <template>
   <div v-if="mostrarModalTipo" class="modal-overlay" @click.self="cancelarCadastro">
-    <div class="modal-content">
-        <h2>Escolha o Tipo de Campeonato</h2>
+    <div class="modal-content modal-escolha-tipo-campeonato">
+      <div class="modal-header header-escolha-tipo">
+        <h2 class="titulo-escolha-tipo">Escolha o Tipo de Campeonato</h2>
+        <button type="button" class="btn-close-x" @click="cancelarCadastro">x</button>
+      </div>
 
       <div class="tipo-campeonato-lista">
-        <button v-for="tipo in tiposCampeonato" :key="tipo" class="btn-tipo" @click="selecionarTipo(tipo)">
-          {{ tipo.replaceAll('_', ' ') }}
+        <button
+          v-for="tipo in tiposCampeonatoCards"
+          :key="tipo.value"
+          class="btn-tipo btn-tipo-card"
+          :class="{ 'tipo-card-principal': tipoSelecionado === tipo.value }"
+          @click="selecionarTipo(tipo.value)"
+        >
+          <span class="btn-tipo-icone" aria-hidden="true">
+            <svg
+              v-if="tipo.value === 'PONTOS_CORRIDOS'"
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              fill="currentColor"
+              class="bi bi-trophy-fill"
+              viewBox="0 0 16 16"
+            >
+              <path
+                d="M2.5.5A.5.5 0 0 1 3 0h10a.5.5 0 0 1 .5.5q0 .807-.034 1.536a3 3 0 1 1-1.133 5.89c-.79 1.865-1.878 2.777-2.833 3.011v2.173l1.425.356c.194.048.377.135.537.255L13.3 15.1a.5.5 0 0 1-.3.9H3a.5.5 0 0 1-.3-.9l1.838-1.379c.16-.12.343-.207.537-.255L6.5 13.11v-2.173c-.955-.234-2.043-1.146-2.833-3.012a3 3 0 1 1-1.132-5.89A33 33 0 0 1 2.5.5m.099 2.54a2 2 0 0 0 .72 3.935c-.333-1.05-.588-2.346-.72-3.935m10.083 3.935a2 2 0 0 0 .72-3.935c-.133 1.59-.388 2.885-.72 3.935"
+              />
+            </svg>
+
+            <svg
+              v-else-if="tipo.value === 'PONTOS_CORRIDOS_ELIMINATORIAS'"
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              fill="currentColor"
+              class="bi bi-diagram-3-fill"
+              viewBox="0 0 16 16"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M6 3.5A1.5 1.5 0 0 1 7.5 2h1A1.5 1.5 0 0 1 10 3.5v1A1.5 1.5 0 0 1 8.5 6v1H14a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0v-1A.5.5 0 0 1 2 7h5.5V6A1.5 1.5 0 0 1 6 4.5zm-6 8A1.5 1.5 0 0 1 1.5 10h1A1.5 1.5 0 0 1 4 11.5v1A1.5 1.5 0 0 1 2.5 14h-1A1.5 1.5 0 0 1 0 12.5zm6 0A1.5 1.5 0 0 1 7.5 10h1a1.5 1.5 0 0 1 1.5 1.5v1A1.5 1.5 0 0 1 8.5 14h-1A1.5 1.5 0 0 1 6 12.5zm6 0a1.5 1.5 0 0 1 1.5-1.5h1a1.5 1.5 0 0 1 1.5 1.5v1a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5z"
+              />
+            </svg>
+
+            <svg
+              v-else
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              fill="currentColor"
+              class="bi bi-lightning-charge-fill"
+              viewBox="0 0 16 16"
+            >
+              <path
+                d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z"
+              />
+            </svg>
+          </span>
+
+          <span class="btn-tipo-conteudo">
+            <span class="btn-tipo-titulo">{{ tipo.titulo }}</span>
+            <small class="btn-tipo-sub">{{ tipo.descricao }}</small>
+          </span>
         </button>
       </div>
 
-      <div class="botoes">
-        <button type="button" class="btn-save" @click="cancelarCadastro">Cancelar</button>
+      <div class="botoes botoes-escolha-tipo">
+        <button type="button" class="btn-cancelar-escolha-tipo" @click="cancelarCadastro">Cancelar</button>
       </div>
     </div>
   </div>
@@ -129,7 +186,6 @@ export default {
 
   data() {
     return {
-      tiposCampeonato: ['PONTOS_CORRIDOS', 'PONTOS_CORRIDOS_ELIMINATORIAS', 'ELIMINATORIAS'],
       mostrarModalTipo: false,
       tipoSelecionado: '',
 
@@ -160,6 +216,28 @@ export default {
       this.quadraSelecionada = ''
       if (valor) this.carregarQuadras(valor)
       else this.quadras = []
+    }
+  },
+
+  computed: {
+    tiposCampeonatoCards() {
+      return [
+        {
+          value: 'PONTOS_CORRIDOS',
+          titulo: 'Pontos Corridos',
+          descricao: 'Tabela unica com classificacao geral'
+        },
+        {
+          value: 'PONTOS_CORRIDOS_ELIMINATORIAS',
+          titulo: 'Pontos Corridos Eliminatorias',
+          descricao: 'Pontos corridos seguido de eliminatorias'
+        },
+        {
+          value: 'ELIMINATORIAS',
+          titulo: 'Eliminatorias',
+          descricao: 'Estilo mata-mata de competicao'
+        }
+      ]
     }
   },
 
@@ -346,26 +424,129 @@ export default {
   flex: 0 0 auto;
 }
 
+.modal-escolha-tipo-campeonato {
+  width: min(720px, 92vw);
+  border-radius: 18px;
+  padding: 26px 28px;
+  overflow: visible;
+}
+
+.header-escolha-tipo {
+  margin-bottom: 12px;
+}
+
+.titulo-escolha-tipo {
+  margin: 0;
+  color: #3b82f6;
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.modal-escolha-tipo-campeonato .btn-close-x {
+  width: 34px;
+  height: 34px;
+  border-color: #3b82f6;
+  font-size: 20px;
+}
+
+.modal-escolha-tipo-campeonato .btn-close-x:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+
 .tipo-campeonato-lista {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 14px;
+  margin: 10px 0 18px;
 }
 
 .btn-tipo {
-  padding: 12px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: 1px solid #3b82f6;
-  background-color: #fff;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
   cursor: pointer;
-  transition: 0.2s;
 }
 
-.btn-tipo:hover {
-  background-color: #3b82f6;
-  color: #fff;
+.btn-tipo-card {
+  border: 1px solid rgba(59, 130, 246, 0.65);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  background: #fff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-tipo-card.tipo-card-principal {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.14) 0%, rgba(59, 130, 246, 0.08) 100%);
+}
+
+.btn-tipo-card:hover {
+  transform: translateY(-1px);
+  border-color: #3b82f6;
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.12);
+}
+
+.btn-tipo-icone {
+  color: #3b82f6;
+  width: 28px;
+  flex: 0 0 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-tipo-icone svg {
+  width: 24px;
+  height: 24px;
+}
+
+.btn-tipo-conteudo {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.btn-tipo-titulo {
+  color: #111827;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.btn-tipo-sub {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.botoes-escolha-tipo {
+  margin-top: 12px;
+}
+
+.btn-cancelar-escolha-tipo {
+  width: 100%;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 999px;
+  padding: 12px 0;
+  color: #3b82f6;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 800;
+  background: transparent;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-cancelar-escolha-tipo:hover {
+  background: rgba(59, 130, 246, 0.06);
+  border-color: rgba(59, 130, 246, 0.55);
+  transform: translateY(-1px);
 }
 
 .botoes {
@@ -523,6 +704,51 @@ select {
 }
 
 @media (max-width: 768px) {
+  .modal-escolha-tipo-campeonato {
+    width: 96vw;
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+
+  .titulo-escolha-tipo {
+    font-size: 34px;
+  }
+
+  .modal-escolha-tipo-campeonato .btn-close-x {
+    width: 44px;
+    height: 44px;
+    font-size: 30px;
+  }
+
+  .btn-tipo-card {
+    padding: 14px;
+    gap: 12px;
+    border-radius: 14px;
+  }
+
+  .btn-tipo-icone {
+    width: 36px;
+    flex-basis: 36px;
+  }
+
+  .btn-tipo-icone svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .btn-tipo-titulo {
+    font-size: 17px;
+  }
+
+  .btn-tipo-sub {
+    font-size: 12px;
+  }
+
+  .btn-cancelar-escolha-tipo {
+    font-size: 18px;
+    padding: 14px 0;
+  }
+
   .lista-times {
     grid-template-columns: 1fr;
   }

@@ -38,12 +38,10 @@
           <GerenciarJogadores :aberto="modalGerenciarJogadoresAberto" :time="timeSelecionadoDetalhe"
             @fechar="modalGerenciarJogadoresAberto = false" @atualizar-lista="atualizarJogadores" />
 
-          <!-- LOADING DOS TIMES -->
           <div v-if="isLoadingTimes" class="loader-container-centralizado">
             <div class="loader"></div>
           </div>
 
-          <!-- LISTA -->
           <div v-else>
             <div v-if="times && times.length" class="lista-times">
               <div v-for="time in times" :key="time.id" class="card">
@@ -256,6 +254,10 @@ export default {
   margin-top: 70px;
   margin-left: 250px;
   transition: margin-left 0.3s ease;
+  background: #f8fafc;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .conteudo.collapsed {
@@ -272,13 +274,15 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 14px;
 }
 
 .title {
-  color: #3b82f6;
-  font-size: 28px;
-  font-weight: bold;
   margin: 0;
+  color:  #3b82f6;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
 }
 
 .header {
@@ -290,34 +294,51 @@ export default {
 
 .botoes {
   display: flex;
-  gap: 20px;
+  gap: 12px;
   align-items: center;
 }
 
 .btn-modalidade,
 .btn-add {
-  padding: 8px 14px;
-  border: none;
-  border-radius: 20px;
+  padding: 12px 18px;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 999px;
   cursor: pointer;
-  color: white;
+  color: #fff;
+  background-color: #3b82f6;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  box-shadow: 0 10px 18px rgba(59, 130, 246, 0.22);
+  transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.btn-modalidade {
-  background-color: #3b82f6;
-}
-
-.btn-add {
-  background-color: #3b82f6;
+.btn-modalidade:hover,
+.btn-add:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(59, 130, 246, 0.28);
 }
 
 .dropdown {
   width: 100%;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 16px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  font-size: 15px;
+  color: #0f172a;
+  background: #fff;
   margin-bottom: 10px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dropdown:hover {
+  border-color: rgba(59, 130, 246, 0.65);
+}
+
+.dropdown:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
 }
 
 .dropdown-row {
@@ -333,27 +354,33 @@ export default {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 10px;
-  margin-bottom: 25px;
+  margin: 16px 0 22px;
 }
 
 .aba {
   text-align: center;
-  padding: 10px 0;
-  border-radius: 6px;
+  padding: 10px 10px;
+  border-radius: 12px;
   cursor: pointer;
-  background-color: #f1f1f1;
-  font-weight: 500;
-  color: #333;
-  transition: all 0.2s;
+  background: #f1f5f9;
+  color: #334155;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
 }
 
 .aba:hover {
-  background-color: #e0e0e0;
+  background: #eaf2ff;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 16px rgba(15, 23, 42, 0.06);
 }
 
 .aba.ativa {
-  background-color: #3b82f6;
-  color: white;
+  background: #3b82f6;
+  color: #fff;
+  border-color: rgba(59, 130, 246, 0.45);
+  box-shadow: 0 14px 24px rgba(59, 130, 246, 0.22);
 }
 
 .lista-times {
@@ -366,41 +393,42 @@ export default {
 .card {
   display: flex;
   flex-direction: column;
-  background-color: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  gap: 15px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  gap: 14px;
+  background: #fff;
+  border-radius: 18px;
+  padding: 18px 18px 16px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* ZOOM */
 .card:hover {
-  transform: scale(1.05);
-  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 18px 32px rgba(15, 23, 42, 0.12);
 }
 
 .card-conteudo {
   display: flex;
   flex-direction: row;
-  gap: 20px;
+  gap: 18px;
   align-items: center;
   justify-content: space-between;
 }
 
 .foto {
-  flex: 0 0 100px;
+  flex: 0 0 96px;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 .foto img {
-  width: 100px;
-  height: 100px;
+  width: 92px;
+  height: 92px;
   border-radius: 50%;
-  border: 2px solid #276ef1;
   object-fit: cover;
+  border: 2px solid rgba(59, 130, 246, 0.75);
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.12);
 }
 
 .info {
@@ -408,24 +436,27 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  gap: 4px;
 }
 
 .info h2 {
   margin: 0;
   font-size: 20px;
-  color: #333;
-  font-weight: bold;
+  color: #0f172a;
+  font-weight: 800;
+  letter-spacing: -0.2px;
 }
 
 .info p {
-  margin: 4px 0;
-  color: #666;
+  margin: 0;
+  color: #475569;
   font-size: 14px;
+  font-weight: 600;
 }
 
-.botoes {
+.card .botoes {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   margin-top: 10px;
   justify-content: flex-end;
 }
@@ -433,21 +464,40 @@ export default {
 .btn-editar,
 .btn-detalhar {
   flex: 1;
-  padding: 5px 0;
-  border: none;
-  border-radius: 20px;
+  padding: 12px 0;
+  border-radius: 999px;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .btn-editar {
-  background-color: #3b82f6;
-  color: white;
+  border: none;
+  background: #3b82f6;
+  color: #fff;
+  box-shadow: 0 10px 18px rgba(59, 130, 246, 0.20);
+}
+
+.btn-editar:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(59, 130, 246, 0.28);
 }
 
 .btn-detalhar {
-  background-color: #7E7E7E;
-  color: white;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  color: #64748b;
+}
+
+.btn-detalhar:hover {
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.06);
+  transform: translateY(-1px);
 }
 
 .loader-container-centralizado {
@@ -483,7 +533,11 @@ export default {
 @media (max-width: 768px) {
   .conteudo {
     margin-left: 0;
-    padding: 20px;
+    padding: 18px;
+  }
+
+  .title {
+    font-size: 28px;
   }
 
   .lista-times {
@@ -509,7 +563,7 @@ export default {
     font-size: 13px;
   }
 
-  .botoes {
+  .card .botoes {
     flex-direction: column;
     gap: 10px;
   }
@@ -517,7 +571,7 @@ export default {
   .btn-editar,
   .btn-detalhar {
     width: 100%;
-    padding: 8px 0;
+    padding: 11px 0;
   }
 
   .abas-container {

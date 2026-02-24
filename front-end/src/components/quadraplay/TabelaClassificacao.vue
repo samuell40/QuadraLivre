@@ -108,9 +108,9 @@
     <div class="glossario-grid">
       <p><b>PTS</b>: Pontos</p>
       <p><b>J</b>: Jogos</p>
-      <p><b>VIT</b>: Vitórias</p>
+      <p><b>V</b>: Vitórias</p>
       <p><b>E</b>: Empates</p>
-      <p><b>DER</b>: Derrotas</p>
+      <p><b>D</b>: Derrotas</p>
       <p><b>GM</b>: Gols Marcados</p>
       <p><b>GS</b>: Gols Sofridos</p>
       <p><b>SG</b>: Saldo de Gols</p>
@@ -125,8 +125,8 @@
     <div class="glossario-grid">
       <p><b>PTS</b>: Pontos</p>
       <p><b>J</b>: Jogos</p>
-      <p><b>VIT</b>: Vitórias</p>
-      <p><b>DER</b>: Derrotas</p>
+      <p><b>V</b>: Vitórias</p>
+      <p><b>D</b>: Derrotas</p>
       <p><b>STV</b>: Sets Vencidos</p>
       <p><b>3x0</b>: Vitória por 3 sets a 0</p>
       <p><b>3x2</b>: Vitória por 3 sets a 2</p>

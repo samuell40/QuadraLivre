@@ -34,31 +34,36 @@
         <ModalEscolhaTipo v-model="mostrarModalTipo" :campeonato-id="campeonatoSelecionado" @faseCriada="adicionarFase"
           @rodadaCriada="adicionarRodada" @partidaCriada="onPartidaCriada" />
 
-        <!-- PARTIDAS -->
         <div class="partidas-wrapper">
           <ul class="lista-partidas">
             <li v-for="partida in partidasValidas" :key="partida.id" class="card-partida"
               :class="classeStatusPartida(partida)">
-              <div class="status-topo status-editavel" :class="classeStatusTexto(partida)"
-                @click="editarStatus(partida)">
-                <template v-if="partidaEditandoStatus !== partida.id">
-                  <span class="texto-status">
-                    <span v-if="partida.status === 'EM_ANDAMENTO'" class="status-live-dot" aria-hidden="true"></span>
-                    {{ statusLabel(partida.status) }}
-                  </span>
+              <div class="status-topo" @click="editarStatus(partida)">
+                <div class="status-pill"
+                  :class="[classeStatusTexto(partida), { 'status-editavel': partida.status !== 'FINALIZADA' }]">
+                  <template v-if="partidaEditandoStatus !== partida.id">
+                    <span class="texto-status">
+                      <span v-if="partida.status === 'EM_ANDAMENTO'" class="status-live-dot" aria-hidden="true"></span>
+                      {{ statusLabel(partida.status) }}
+                    </span>
 
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
-                    class="bi bi-pencil-square icone-status" viewBox="0 0 16 16">
-                    <path
-                      d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293z" />
-                    <path
-                      d="M13.752 4.396l-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.815z" />
-                  </svg>
-                </template>
+                    <svg v-if="partida.status !== 'FINALIZADA'" xmlns="http://www.w3.org/2000/svg" width="14"
+                      height="14" fill="currentColor" class="bi bi-pencil-square icone-status" viewBox="0 0 16 16">
+                      <path
+                        d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293z" />
+                      <path
+                        d="M13.752 4.396l-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.815z" />
+                    </svg>
+                  </template>
+                </div>
               </div>
 
               <div class="nome-quadra">
-                {{ partida.quadra?.nome }}
+                <span>{{ partida.quadra?.nome }}</span>
+                <span v-if="(partida?.data || partida?.createdAt) && partida.status !== 'EM_ANDAMENTO'"
+                  class="data-info">
+                  | {{ formatarDiaSemanaData(partida?.data || partida?.createdAt) }}
+                </span>
               </div>
 
               <div class="conteudo-partida">
@@ -68,9 +73,14 @@
                 </div>
 
                 <div class="placar-centro">
-                  <strong>{{ partida.pontosTimeA ?? 0 }}</strong>
-                  <span>x</span>
-                  <strong>{{ partida.pontosTimeB ?? 0 }}</strong>
+                  <template v-if="partida.status === 'AGENDADA'">
+                    <span>x</span>
+                  </template>
+                  <template v-else>
+                    <strong>{{ partida.pontosTimeA ?? 0 }}</strong>
+                    <span>x</span>
+                    <strong>{{ partida.pontosTimeB ?? 0 }}</strong>
+                  </template>
                 </div>
 
                 <div class="time lado">
@@ -94,8 +104,11 @@
                 </div>
               </div>
 
-              <button class="btn-acessar" @click="acessarPartida(partida.id)">
+              <button v-if="partida.status !== 'CANCELADA'" class="btn-acessar" @click="acessarPartida(partida)">
                 {{ partida.status === 'FINALIZADA' ? 'Editar' : 'Acessar' }}
+              </button>
+              <button v-else class="btn-acessar" @click="removerPartidaCancelada(partida)">
+                Remover
               </button>
             </li>
           </ul>
@@ -112,8 +125,13 @@
         <span class="plus">+</span>
       </div>
 
+      <SelecionarJogadores :aberto="mostrarModalJogadores" :jogadoresTime1="jogadoresTime1"
+        :jogadoresTime2="jogadoresTime2" :time1Nome="partidaParaEscalacao?.timeA?.nome || 'Time 1'"
+        :time2Nome="partidaParaEscalacao?.timeB?.nome || 'Time 2'" :regra="regraJogadoresEscalacao"
+        @fechar="fecharModalJogadores" @confirmar="confirmarJogadoresAntesDeAcessar" />
+
       <div v-if="mostrarModalStatus" class="modal-overlay" @click.self="fecharModalStatus">
-        <div class="modal-content modal-status">
+        <div class="modal-content modal-status" :class="classeVisualStatusModal">
           <div class="modal-header">
             <h2 class="titulo-modal-status">Alterar status da partida</h2>
             <button type="button" class="btn-close-x" @click="fecharModalStatus">x</button>
@@ -121,8 +139,11 @@
 
           <label class="label-status">Selecione o status</label>
 
-          <select v-model="novoStatus" class="select-status-modal">
-            <option v-for="status in statusDisponiveis" :key="status" :value="status">
+          <select v-model="novoStatus" class="select-status-modal" :class="classeVisualStatusModal">
+            <option v-if="statusAtualModal" :value="statusAtualModal" hidden>
+              {{ statusLabel(statusAtualModal) || statusAtualModal.replace('_', ' ') }}
+            </option>
+            <option v-for="status in statusDisponiveisModal" :key="status" :value="status">
               {{ statusLabel(status) || status.replace('_', ' ') }}
             </option>
           </select>
@@ -140,6 +161,7 @@
 import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
 import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
 import ModalEscolhaTipo from '@/components/quadraplay/ModalEscolhaTipo.vue'
+import SelecionarJogadores from '@/components/Partida/SelecionarJogadores.vue'
 import { carregarCampeonato } from '@/utils/persistirCampeonato'
 import api from '@/axios'
 import Swal from 'sweetalert2'
@@ -151,15 +173,16 @@ import {
 } from '@/services/socket'
 
 const STATUS_CONFIG = {
-  FINALIZADA: { label: 'ENCERRADA', card: 'partida-finalizada', text: 'status-finalizada' },
-  EM_ANDAMENTO: { label: 'EM ANDAMENTO', card: 'partida-andamento', text: 'status-andamento' },
-  AGENDADA: { label: 'AGUARDANDO', card: 'partida-agendada', text: 'status-agendada' },
-  CANCELADA: { label: 'CANCELADA', card: 'partida-cancelada', text: 'status-cancelada' }
+  FINALIZADA: { label: 'ENCERRADA', card: 'card-finalizada', text: 'status-finalizada' },
+  EM_ANDAMENTO: { label: 'EM ANDAMENTO', card: 'card-andamento', text: 'status-andamento' },
+  AGENDADA: { label: 'AGENDADA', card: 'card-agendada', text: 'status-agendada' },
+  CANCELADA: { label: 'CANCELADA', card: 'card-cancelada', text: 'status-cancelada' },
+  DELETADA: { label: 'DELETAR', card: 'card-cancelada', text: 'status-cancelada' }
 }
 
 export default {
   name: 'GerenciarPartidaView',
-  components: { SidebarCampeonato, NavBarQuadras, ModalEscolhaTipo },
+  components: { SidebarCampeonato, NavBarQuadras, ModalEscolhaTipo, SelecionarJogadores },
 
   data() {
     return {
@@ -177,9 +200,14 @@ export default {
       isLoading: true,
       mostrarModalTipo: false,
       mostrarModalStatus: false,
+      mostrarModalJogadores: false,
       statusDisponiveis: [],
       partidaSelecionada: null,
+      partidaParaEscalacao: null,
+      jogadoresTime1: [],
+      jogadoresTime2: [],
       novoStatus: '',
+      statusAtualModal: '',
       partidaEditandoStatus: null,
       socket: null,
       socketCampeonatoId: null,
@@ -208,6 +236,23 @@ export default {
         const db = new Date(b?.data || b?.createdAt || 0).getTime()
         return db - da
       })
+    },
+
+    regraJogadoresEscalacao() {
+      return this.obterRegraJogadoresPorPartida(this.partidaParaEscalacao)
+    },
+
+    statusDisponiveisModal() {
+      const statusAtual = String(this.partidaSelecionada?.status || '').toUpperCase()
+      return this.obterStatusDisponiveisModal(statusAtual)
+    },
+
+    classeVisualStatusModal() {
+      const status = String(this.novoStatus || this.statusAtualModal || '').toUpperCase()
+      if (status === 'EM_ANDAMENTO') return 'status-visual-andamento'
+      if (status === 'FINALIZADA') return 'status-visual-finalizada'
+      if (status === 'CANCELADA' || status === 'DELETADA') return 'status-visual-cancelada'
+      return 'status-visual-agendada'
     }
   },
 
@@ -287,6 +332,18 @@ export default {
       return dt.toLocaleString('pt-BR')
     },
 
+    formatarDiaSemanaData(data) {
+      const dt = new Date(data)
+      if (Number.isNaN(dt.getTime())) return '-'
+
+      const diaSemana = dt.toLocaleDateString('pt-BR', { weekday: 'long' })
+      const dataFormatada = dt.toLocaleDateString('pt-BR')
+      const horaFormatada = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      const diaCapitalizado = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)
+
+      return `${diaCapitalizado} - ${dataFormatada} às ${horaFormatada}`
+    },
+
     statusLabel(status) {
       return STATUS_CONFIG[status]?.label
     },
@@ -297,6 +354,32 @@ export default {
 
     classeStatusTexto(partida) {
       return STATUS_CONFIG[partida?.status]?.text
+    },
+
+    normalizarNomeModalidade(nome) {
+      return String(nome || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+    },
+
+    obterRegraJogadoresPorPartida(partida) {
+      const nome = this.normalizarNomeModalidade(partida?.modalidade?.nome)
+
+      if (nome.includes('futsal') || (nome.includes('futebol') && nome.includes('areia'))) {
+        return { livre: true, minPorTime: 1 }
+      }
+
+      if (
+        nome.includes('volei') ||
+        nome.includes('futevolei') ||
+        (nome.includes('beach') && (nome.includes('tenis') || nome.includes('tennis')))
+      ) {
+        return { livre: true, minPorTime: 1 }
+      }
+
+      return { porTime: 11, total: 22 }
     },
 
     async carregarCampeonatoSelecionado() {
@@ -377,8 +460,9 @@ export default {
         this.mostrarModalTipo = false
 
         const partidaIdCriada = Number(partidaCriada?.id)
-        if (partidaIdCriada) {
-          await this.acessarPartida(partidaIdCriada)
+        const statusCriada = String(partidaCriada?.status || '')
+        if (partidaIdCriada && statusCriada === 'EM_ANDAMENTO') {
+          await this.acessarPartida(partidaCriada)
           return
         }
 
@@ -401,7 +485,7 @@ export default {
 
         await this.carregarPartidasPorFaseRodada()
       } catch (e) {
-        console.error('Erro ao atualizar lista após criar partida:', e)
+        console.error('Erro ao atualizar lista apos criar partida:', e)
         await this.carregarFases()
       }
     },
@@ -432,9 +516,31 @@ export default {
       await this.carregarPartidasPorFaseRodada()
     },
 
+    obterStatusDisponiveisModal(statusAtualInformado = '') {
+      const lista = Array.isArray(this.statusDisponiveis) ? this.statusDisponiveis : []
+      const statusAtual = String(statusAtualInformado || '').toUpperCase()
+      let opcoes = [...lista]
+
+      if (statusAtual === 'EM_ANDAMENTO') {
+        opcoes = opcoes.filter(status => status !== 'AGENDADA')
+        if (!opcoes.includes('DELETADA')) opcoes.push('DELETADA')
+      } else if (statusAtual === 'FINALIZADA') {
+        opcoes = opcoes.filter(status => status !== 'AGENDADA' && status !== 'FINALIZADA')
+      } else if (statusAtual === 'CANCELADA') {
+        opcoes = opcoes.filter(status => status !== 'AGENDADA' && status !== 'FINALIZADA')
+        if (!opcoes.includes('DELETADA')) opcoes.push('DELETADA')
+      }
+
+      return opcoes.filter(status => status !== statusAtual)
+    },
+
     editarStatus(partida) {
+      const statusAtual = String(partida?.status || '').toUpperCase()
+      if (statusAtual === 'FINALIZADA') return
+
       this.partidaSelecionada = partida
-      this.novoStatus = partida?.status || ''
+      this.statusAtualModal = statusAtual
+      this.novoStatus = statusAtual
       this.mostrarModalStatus = true
     },
 
@@ -442,10 +548,28 @@ export default {
       this.mostrarModalStatus = false
       this.partidaSelecionada = null
       this.novoStatus = ''
+      this.statusAtualModal = ''
     },
 
     async confirmarAlteracaoStatus() {
       try {
+        if (!this.novoStatus) {
+          Swal.fire('Atencao', 'Selecione um status.', 'info')
+          return
+        }
+
+        if (this.novoStatus === this.statusAtualModal) {
+          Swal.fire('Atencao', 'Selecione um novo status na listagem.', 'info')
+          return
+        }
+
+        if (this.novoStatus === 'DELETADA') {
+          const partida = this.partidaSelecionada
+          this.fecharModalStatus()
+          await this.removerPartidaCancelada(partida)
+          return
+        }
+
         await api.put(`/partidas/${this.partidaSelecionada.id}/status`, { status: this.novoStatus })
         this.partidaSelecionada.status = this.novoStatus
         this.fecharModalStatus()
@@ -453,13 +577,68 @@ export default {
         Swal.fire({ icon: 'success', title: 'Status atualizado', timer: 1200, showConfirmButton: false })
       } catch (error) {
         console.error(error)
-        Swal.fire('Erro', 'Não foi possível alterar o status.', 'error')
+        Swal.fire('Erro', 'Nao foi possivel alterar o status.', 'error')
       }
     },
 
-    async acessarPartida(partidaId) {
+    fecharModalJogadores() {
+      this.mostrarModalJogadores = false
+      this.partidaParaEscalacao = null
+      this.jogadoresTime1 = []
+      this.jogadoresTime2 = []
+    },
+
+    async abrirEscalacaoInicial(partida) {
+      const [resA, resB] = await Promise.all([
+        api.get('/partidas/escalacao/jogadores', {
+          params: {
+            campeonatoId: partida.campeonatoId,
+            faseId: partida.faseId,
+            timeId: partida.timeAId
+          }
+        }),
+        api.get('/partidas/escalacao/jogadores', {
+          params: {
+            campeonatoId: partida.campeonatoId,
+            faseId: partida.faseId,
+            timeId: partida.timeBId
+          }
+        })
+      ])
+
+      this.partidaParaEscalacao = partida
+      this.jogadoresTime1 = Array.isArray(resA.data) ? resA.data : []
+      this.jogadoresTime2 = Array.isArray(resB.data) ? resB.data : []
+      this.mostrarModalJogadores = true
+    },
+
+    async confirmarJogadoresAntesDeAcessar(selecao) {
       try {
-        if (!this.campeonato) throw new Error('Campeonato não encontrado')
+        const partida = this.partidaParaEscalacao
+        if (!partida?.id) return
+
+        const idsTimeA = Array.isArray(selecao?.time1) ? selecao.time1 : []
+        const idsTimeB = Array.isArray(selecao?.time2) ? selecao.time2 : []
+
+        const jogadoresPayload = [
+          ...idsTimeA.map((jogadorId) => ({ jogadorId: Number(jogadorId), timeId: Number(partida.timeAId) })),
+          ...idsTimeB.map((jogadorId) => ({ jogadorId: Number(jogadorId), timeId: Number(partida.timeBId) }))
+        ]
+
+        await api.put(`/partidas/${partida.id}/iniciar`, { jogadores: jogadoresPayload })
+        this.fecharModalJogadores()
+        await this.carregarPartidasPorFaseRodada()
+        await this.irParaTelaPartida(partida.id)
+      } catch (error) {
+        console.error(error)
+        const mensagem = error.response?.data?.erro || error.response?.data?.message || 'Nao foi possivel iniciar a partida.'
+        Swal.fire('Erro', mensagem, 'error')
+      }
+    },
+
+    async irParaTelaPartida(partidaId) {
+      try {
+        if (!this.campeonato) throw new Error('Campeonato nao encontrado')
 
         localStorage.setItem('campeonatoSelecionado', JSON.stringify(this.campeonato))
 
@@ -469,19 +648,59 @@ export default {
         })
       } catch (error) {
         console.error(error)
-        Swal.fire('Erro', 'Não foi possível acessar a partida.', 'error')
+        Swal.fire('Erro', 'Nao foi possivel acessar a partida.', 'error')
       }
     },
 
-    async excluirPartida(partidaId) {
+    async acessarPartida(partida) {
+      try {
+        const partidaObj = partida && typeof partida === 'object'
+          ? partida
+          : this.partidasValidas.find(p => Number(p.id) === Number(partida))
+
+        const partidaId = Number(partidaObj?.id || partida)
+        if (!partidaId) throw new Error('Partida invalida.')
+
+        if (partidaObj?.status === 'AGENDADA') {
+          Swal.fire('Atencao', 'No dia da partida, altere o status para EM ANDAMENTO para iniciar.', 'info')
+          return
+        }
+
+        if (partidaObj?.status === 'EM_ANDAMENTO') {
+          const { data } = await api.get(`/partida/${partidaId}`)
+          const jogadoresSelecionados = Array.isArray(data) ? data : []
+
+          if (!jogadoresSelecionados.length) {
+            await this.abrirEscalacaoInicial(partidaObj)
+            return
+          }
+        }
+
+        await this.irParaTelaPartida(partidaId)
+      } catch (error) {
+        console.error(error)
+        Swal.fire('Erro', 'Nao foi possivel acessar a partida.', 'error')
+      }
+    },
+
+    async removerPartidaCancelada(partida) {
+      const partidaId = Number(partida?.id || partida)
+      if (!partidaId) return
+
+      const statusAtual = String(partida?.status || '').toUpperCase()
+      if (!['CANCELADA', 'EM_ANDAMENTO'].includes(statusAtual)) {
+        Swal.fire('Atencao', 'Somente partidas canceladas ou em andamento podem ser removidas.', 'info')
+        return
+      }
+
       const resultado = await Swal.fire({
         title: 'Tem certeza?',
-        text: 'Essa ação não poderá ser desfeita!',
+        text: 'A partida sera removida da listagem.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
         cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Sim, excluir',
+        confirmButtonText: 'Sim, remover',
         cancelButtonText: 'Cancelar'
       })
 
@@ -491,17 +710,18 @@ export default {
         await api.delete(`/partidas/${partidaId}`)
 
         await Swal.fire({
-          title: 'Excluída!',
-          text: 'A partida foi excluída com sucesso.',
+          title: 'Removida!',
+          text: 'A partida foi removida com sucesso.',
           icon: 'success',
           timer: 1500,
           showConfirmButton: false
         })
 
-        await this.carregarFases()
+        await this.carregarPartidasPorFaseRodada()
       } catch (error) {
         console.error(error)
-        Swal.fire({ title: 'Erro', text: 'Não foi possível excluir a partida.', icon: 'error' })
+        const mensagem = error.response?.data?.error || 'Nao foi possivel remover a partida.'
+        Swal.fire({ title: 'Erro', text: mensagem, icon: 'error' })
       }
     },
 
@@ -512,7 +732,7 @@ export default {
         this.$router.push({ path: '/partida', query: { partidaId: partida.id } })
       } catch (error) {
         console.error(error)
-        Swal.fire('Erro', 'Não foi possível retomar essa partida.', 'error')
+        Swal.fire('Erro', 'Nao foi possivel retomar essa partida.', 'error')
       }
     },
 
@@ -655,40 +875,99 @@ export default {
 }
 
 .card-partida {
-  border: 1.9px solid #3b82f6;
+  border: 1.6px solid #e5e7eb;
   border-radius: 12px;
   padding: 35px;
-  background: #fff;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: #ffffff;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   cursor: pointer;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
 }
 
 .card-partida:hover {
-  transform: scale(1.03);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
 }
 
-.status-topo {
-  text-align: center;
+.card-partida.card-agendada {
+  border-color: rgba(251, 191, 36, 0.55);
+}
+
+.card-partida.card-andamento {
+  border-color: rgba(34, 197, 94, 0.55);
+}
+
+.card-partida.card-cancelada {
+  border-color: rgba(239, 68, 68, 0.55);
+}
+
+.card-partida.card-finalizada {
+  border-color: rgba(220, 38, 38, 0.55);
+}
+
+.status-topo{
+  display: flex;
+  justify-content: center;
+  margin: 0 0 12px;
+}
+
+.status-pill{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 14px;
+  border-radius: 999px;
   font-size: 12px;
-  font-weight: bold;
-  margin-bottom: 6px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10);
+  transform: translateY(-2px);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
 
-.status-finalizada {
-  color: #dc2626;
-  background: rgba(220, 38, 38, 0.12);
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-weight: bold;
+.status-topo:hover .status-pill{
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
+}
+
+.status-editavel{
+  cursor: pointer;
+}
+
+.status-editavel:hover{
+  opacity: 0.85;
+}
+
+.status-topo:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
+}
+
+.status-agendada {
+  background: rgba(251, 191, 36, 0.18);
+  color: #b45309;
+  border: 1px solid rgba(251, 191, 36, 0.35);
 }
 
 .status-andamento {
-  color: #16a34a;
-  background: rgba(22, 163, 74, 0.1);
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-weight: bold;
+  background: rgba(34, 197, 94, 0.14);
+  color: #15803d;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.status-cancelada {
+  background: rgba(239, 68, 68, 0.14);
+  color: #b91c1c;
+  border: 1px solid rgba(239, 68, 68, 0.30);
+}
+
+.status-finalizada {
+  background: rgba(220, 38, 38, 0.12);
+  color: #b91c1c;
+  border: 1px solid rgba(220, 38, 38, 0.28);
 }
 
 .texto-status {
@@ -698,35 +977,33 @@ export default {
 }
 
 .status-live-dot {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: 999px;
   background: #22c55e;
   display: inline-block;
-  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
   animation: statusDotPulse 1s infinite;
 }
 
 @keyframes statusDotPulse {
-  0%   { transform: scale(0.9); opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0.7); }
-  70%  { transform: scale(1.2); opacity: 0.7; box-shadow: 0 0 0 8px rgba(34,197,94,0); }
-  100% { transform: scale(0.9); opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0); }
-}
+  0% {
+    transform: scale(0.9);
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
 
-.status-agendada {
-  color: #2563eb;
-  background: rgba(37, 99, 235, 0.1);
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-weight: bold;
-}
+  70% {
+    transform: scale(1.2);
+    opacity: 0.7;
+    box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+  }
 
-.status-cancelada {
-  color: #dc2626;
-  background: rgba(220, 38, 38, 0.08);
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-weight: bold;
+  100% {
+    transform: scale(0.9);
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
 }
 
 .status-editavel {
@@ -766,7 +1043,8 @@ export default {
   height: 36px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #3b82f6;
+  border: 2px solid rgba(148, 163, 184, 0.4);
+  background: #fff;
 }
 
 .meta-partida {
@@ -791,16 +1069,25 @@ export default {
 }
 
 .placar-centro {
-  font-size: 30px;
-  font-weight: bold;
-  min-width: 60px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 26px;
+  font-weight: 800;
+  min-width: 72px;
   text-align: center;
 }
 
 .placar-centro span {
-  font-size: 18px;
-  margin: 0 6px;
-  font-weight: 600;
+  font-size: 22px;
+  margin: 0;
+  font-weight: 800;
+  color: #334155;
+}
+
+.placar-centro strong {
+  color: #0f172a;
 }
 
 .time-nome {
@@ -811,16 +1098,25 @@ export default {
 .nome-quadra {
   text-align: center;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 14px;
   color: #3b82f6;
-  margin: 8px 0 12px 0;
+  margin: 8px 0 10px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.nome-quadra .data-info {
+  color: #64748b;
+  font-weight: 600;
 }
 
 .add-half-circle {
   position: absolute;
   top: 44%;
   left: 58%;
-  /* padrão para tela normal */
   transform: translate(-50%, -50%);
   width: 42px;
   height: 42px;
@@ -897,6 +1193,7 @@ export default {
   line-height: 1;
   cursor: pointer;
   flex: 0 0 auto;
+  transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
 }
 
 .tipo-campeonato-lista {
@@ -990,11 +1287,23 @@ export default {
 
 .modal-status {
   max-width: 900px;
+  border-top: 4px solid #2563eb;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.modal-status .btn-save {
+  transition: background-color 0.2s ease;
 }
 
 .titulo-modal-status {
   color: #3b82f6;
   font-size: 28px;
+  transition: color 0.2s ease;
+}
+
+.label-status {
+  color: #334155;
+  transition: color 0.2s ease;
 }
 
 .select-status-modal {
@@ -1018,6 +1327,130 @@ export default {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.modal-status.status-visual-agendada {
+  border-top-color: #2563eb;
+}
+
+.modal-status.status-visual-agendada .titulo-modal-status,
+.modal-status.status-visual-agendada .label-status {
+  color: #2563eb;
+}
+
+.modal-status.status-visual-agendada .btn-close-x {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.modal-status.status-visual-agendada .btn-close-x:hover {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.modal-status.status-visual-agendada .btn-save {
+  background-color: #2563eb;
+}
+
+.modal-status.status-visual-agendada .btn-save:hover {
+  background-color: #1d4ed8;
+}
+
+.modal-status.status-visual-andamento {
+  border-top-color: #16a34a;
+}
+
+.modal-status.status-visual-andamento .titulo-modal-status,
+.modal-status.status-visual-andamento .label-status {
+  color: #16a34a;
+}
+
+.modal-status.status-visual-andamento .btn-close-x {
+  border-color: #16a34a;
+  color: #16a34a;
+}
+
+.modal-status.status-visual-andamento .btn-close-x:hover {
+  background: rgba(22, 163, 74, 0.08);
+}
+
+.modal-status.status-visual-andamento .btn-save {
+  background-color: #16a34a;
+}
+
+.modal-status.status-visual-andamento .btn-save:hover {
+  background-color: #15803d;
+}
+
+.modal-status.status-visual-finalizada {
+  border-top-color: #bd1c1c;
+}
+
+.modal-status.status-visual-finalizada .titulo-modal-status,
+.modal-status.status-visual-finalizada .label-status {
+  color: #bd1c1c;
+}
+
+.modal-status.status-visual-finalizada .btn-close-x {
+  border-color: #bd1c1c;
+  color: #bd1c1c;
+}
+
+.modal-status.status-visual-finalizada .btn-close-x:hover {
+  background: rgba(189, 28, 28, 0.08);
+}
+
+.modal-status.status-visual-finalizada .btn-save {
+  background-color: #bd1c1c;
+}
+
+.modal-status.status-visual-finalizada .btn-save:hover {
+  background-color: #991b1b;
+}
+
+.modal-status.status-visual-cancelada {
+  border-top-color: #dc2626;
+}
+
+.modal-status.status-visual-cancelada .titulo-modal-status,
+.modal-status.status-visual-cancelada .label-status {
+  color: #dc2626;
+}
+
+.modal-status.status-visual-cancelada .btn-close-x {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.modal-status.status-visual-cancelada .btn-close-x:hover {
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.modal-status.status-visual-cancelada .btn-save {
+  background-color: #dc2626;
+}
+
+.modal-status.status-visual-cancelada .btn-save:hover {
+  background-color: #b91c1c;
+}
+
+.select-status-modal.status-visual-agendada {
+  border-color: #2563eb;
+  background-color: rgba(37, 99, 235, 0.08);
+}
+
+.select-status-modal.status-visual-andamento {
+  border-color: #16a34a;
+  background-color: rgba(22, 163, 74, 0.08);
+}
+
+.select-status-modal.status-visual-finalizada {
+  border-color: #bd1c1c;
+  background-color: rgba(189, 28, 28, 0.08);
+}
+
+.select-status-modal.status-visual-cancelada {
+  border-color: #dc2626;
+  background-color: rgba(220, 38, 38, 0.08);
 }
 
 @media (max-width: 768px) {
@@ -1083,6 +1516,5 @@ export default {
     z-index: 10;
     transition: background 0.2s;
   }
-
 }
 </style>

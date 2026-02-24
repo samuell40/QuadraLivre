@@ -3,11 +3,11 @@ const { emitirAtualizacaoCampeonato, emitirNotificacaoPartidaCriada } = require(
 
 async function criarPartidaController(req, res) {
   try {
-    const { modalidadeId, timeAId, timeBId, quadraId, campeonatoId, faseId, rodadaId } = req.body;
+    const { modalidadeId, timeAId, timeBId, quadraId, campeonatoId, faseId, rodadaId, data, status } = req.body;
     const usuarioId = req.user.id; 
     
     const partida = await partidas.criarPartida(
-      { modalidadeId, timeAId, timeBId, quadraId, campeonatoId, faseId, rodadaId },
+      { modalidadeId, timeAId, timeBId, quadraId, campeonatoId, faseId, rodadaId, data, status },
       usuarioId
     );
 
@@ -42,6 +42,14 @@ async function iniciarPartidaController(req, res) {
     const { jogadores } = req.body;
 
     const partida = await partidas.iniciarPartida(partidaId, jogadores);
+
+    emitirAtualizacaoCampeonato({
+      tipo: 'STATUS_PARTIDA_ATUALIZADO',
+      partidaId: Number(partidaId),
+      campeonatoId: partida?.campeonatoId,
+      faseId: partida?.faseId,
+      rodadaId: partida?.rodadaId
+    });
 
     res.status(200).json(partida);
 
@@ -176,6 +184,31 @@ async function listarJogadoresSelecionadosController(req, res) {
   } catch (error) {
     console.error("Erro ao listar jogadores selecionados:", error);
     return res.status(500).json({ error: "Erro ao listar jogadores selecionados." });
+  }
+}
+
+async function listarJogadoresEscalacaoController(req, res) {
+  try {
+    const { campeonatoId, faseId, timeId } = req.query;
+
+    if (!campeonatoId || !timeId) {
+      return res.status(400).json({
+        error: 'campeonatoId e timeId sao obrigatorios.'
+      });
+    }
+
+    const jogadores = await partidas.listarJogadoresParaEscalacao({
+      campeonatoId: Number(campeonatoId),
+      faseId: faseId === undefined || faseId === null || faseId === ''
+        ? null
+        : Number(faseId),
+      timeId: Number(timeId)
+    });
+
+    return res.json(jogadores);
+  } catch (error) {
+    console.error('Erro ao listar jogadores para escalacao:', error);
+    return res.status(400).json({ error: error.message });
   }
 }
 
@@ -342,6 +375,30 @@ async function alterarStatusPartidaController(req, res) {
   }
 }
 
+async function removerPartidaController(req, res) {
+  try {
+    const { id } = req.params;
+    const partida = await partidas.removerPartida(id, req.user?.id);
+
+    emitirAtualizacaoCampeonato({
+      tipo: 'STATUS_PARTIDA_ATUALIZADO',
+      partidaId: Number(id),
+      campeonatoId: partida?.campeonatoId,
+      faseId: partida?.faseId,
+      rodadaId: partida?.rodadaId
+    });
+
+    return res.json({
+      message: 'Partida removida com sucesso',
+      partida
+    });
+  } catch (error) {
+    return res.status(400).json({
+      error: error.message
+    });
+  }
+}
+
 module.exports = {
   criarPartidaController,
   iniciarPartidaController,
@@ -351,6 +408,7 @@ module.exports = {
   retornarPartidaController,
   adicionarJogadorPartidaController,
   listarJogadoresSelecionadosController,
+  listarJogadoresEscalacaoController,
   atualizarAtuacaoJogadorController,
   substituirJogadorController,
   getJogadoresForaDaPartidaController,
@@ -358,5 +416,6 @@ module.exports = {
   detalharPartidaController,
 listarPartidasDaRodadaDaFaseController,
   listarStatusPartidaController,
-  alterarStatusPartidaController
+  alterarStatusPartidaController,
+  removerPartidaController
 };

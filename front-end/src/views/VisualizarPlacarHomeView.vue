@@ -58,7 +58,7 @@
 
           </div>
           <div class="partidas-wrapper">
-            <h3 class="titulo-secao">Placar</h3>
+            <h3 class="titulo-secao">Resultados</h3>
 
             <ListaPartidas
               :partidas="partidas"

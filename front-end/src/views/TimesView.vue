@@ -137,7 +137,7 @@ export default {
 
             try {
                 const { data } = await api.get(`/time/${time.id}`)
-                this.jogadores = data 
+                this.jogadores = data
             } catch (err) {
                 console.error('Erro ao carregar jogadores', err)
             } finally {
@@ -282,6 +282,7 @@ export default {
     display: flex;
     flex-direction: column;
     background-color: #fff;
+    border: 1px solid #3b82f6;
     border-radius: 12px;
     padding: 20px;
     gap: 15px;
