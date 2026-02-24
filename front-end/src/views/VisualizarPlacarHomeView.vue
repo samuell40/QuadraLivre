@@ -50,7 +50,7 @@
             <TabelaClassificacao v-if="campeonatoAtivo" :times="Array.isArray(timesPlacar) ? timesPlacar : []"
               :loading="timesPlacar === null" :modalidade="modalidadeNormalizada"
               empty-text="Nenhum placar encontrado para este campeonato." @time-click="abrirModalPartidasTime" />
-            <div v-else class="sem-dados-centralizado">
+            <div v-else class="sem-dados-centralizado sem-dados-alinhado">
               Nenhuma tabela de classificação disponível no momento.
             </div>
 
@@ -60,7 +60,7 @@
 
             <ListaPartidas :partidas="partidas" empty-title="Nenhuma partida cadastrada ainda"
               empty-subtitle="Assim que as partidas forem criadas ou iniciadas, elas aparecerão aqui."
-              :enable-scroll="temScrollPartidas" quadra-class="nome-quadra-visualizar"
+              :enable-scroll="temScrollPartidas" quadra-class="nome-quadra-visualizar" empty-align="left"
               @time-click="abrirModalPartidasTime" />
 
           </div>
@@ -580,6 +580,10 @@ export default {
   text-align: center;
   color: #6b7280;
   padding: 24px 0;
+}
+
+.sem-dados-centralizado.sem-dados-alinhado {
+  text-align: left;
 }
 
 .artilharia-wrapper {

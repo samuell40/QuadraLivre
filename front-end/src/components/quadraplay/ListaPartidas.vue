@@ -3,7 +3,7 @@
     <div class="loader"></div>
   </div>
 
-  <div v-else-if="!partidas.length" class="sem-dados-centralizado">
+  <div v-else-if="!partidas.length" class="sem-dados-centralizado" :class="{ 'sem-dados-alinhado': emptyAlign === 'left' }">
     <div>
       <p class="empty-title">{{ emptyTitle }}</p>
       <p v-if="emptySubtitle" class="empty-subtitle">{{ emptySubtitle }}</p>
@@ -82,7 +82,8 @@ export default {
     emptyTitle: { type: String, default: 'Nenhuma partida cadastrada ainda' },
     emptySubtitle: { type: String, default: '' },
     enableScroll: { type: Boolean, default: false },
-    quadraClass: { type: String, default: '' }
+    quadraClass: { type: String, default: '' },
+    emptyAlign: { type: String, default: 'center' }
   },
   emits: ['time-click'],
   data() {
@@ -375,6 +376,11 @@ export default {
   font-size: 16px;
   color: #555;
   text-align: center;
+}
+
+.sem-dados-centralizado.sem-dados-alinhado {
+  justify-content: flex-start;
+  text-align: left;
 }
 
 .empty-title {

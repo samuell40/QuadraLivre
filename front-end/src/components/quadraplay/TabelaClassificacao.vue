@@ -106,7 +106,7 @@
   </div>
 
   <!-- GLOSSÁRIO FUTEBOL -->
-  <div v-if="showGlossary && isGrupoFutebol" class="glossario-placar">
+  <div v-if="showGlossary && temTabela && isGrupoFutebol" class="glossario-placar">
     <strong>Glossário</strong>
 
     <div class="glossario-grid">
@@ -123,7 +123,7 @@
   </div>
 
   <!-- GLOSSÁRIO VÔLEI -->
-  <div v-if="showGlossary && isGrupoVolei" class="glossario-placar">
+  <div v-if="showGlossary && temTabela && isGrupoVolei" class="glossario-placar">
     <strong>Glossário</strong>
 
     <div class="glossario-grid">
@@ -165,6 +165,9 @@ export default {
     },
     isGrupoVolei() {
       return ['volei', 'volei de areia', 'futevolei', 'beach tenis', 'beach tennis'].includes(this.modalidadeNormalizada)
+    },
+    temTabela() {
+      return !this.loading && Array.isArray(this.times) && this.times.length > 0
     }
   },
   methods: {

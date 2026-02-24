@@ -323,12 +323,26 @@ export default {
         this.campeonatoAtual = maisRecente || null
         this.campeonatoId = this.campeonatoAtual?.id
 
-        if (!this.campeonatoId) return
+        if (!this.campeonatoId) {
+          this.fases = []
+          this.rodadas = []
+          this.faseSelecionada = ''
+          this.rodadaSelecionada = ''
+          this.placar = []
+          this.partidas = []
+          this.isLoadingPlacar = false
+          this.isLoadingPartidas = false
+          return
+        }
 
         this.inscreverSocketAtual(this.campeonatoId)
         await this.carregarFases(this.campeonatoId)
       } catch (err) {
         console.error('Erro ao carregar campeonato mais recente:', err)
+        this.placar = []
+        this.partidas = []
+        this.isLoadingPlacar = false
+        this.isLoadingPartidas = false
       }
     },
 
@@ -346,6 +360,9 @@ export default {
     },
 
     async carregarFases(campeonatoId) {
+      this.isLoadingPlacar = true
+      this.isLoadingPartidas = true
+
       try {
         const { data } = await api.get(`/fases/${campeonatoId}/`)
 
@@ -354,7 +371,10 @@ export default {
           this.rodadas = []
           this.faseSelecionada = ''
           this.rodadaSelecionada = ''
+          this.placar = []
           this.partidas = []
+          this.isLoadingPlacar = false
+          this.isLoadingPartidas = false
           return
         }
 
@@ -364,7 +384,10 @@ export default {
           this.faseSelecionada = ''
           this.rodadas = []
           this.rodadaSelecionada = ''
+          this.placar = []
           this.partidas = []
+          this.isLoadingPlacar = false
+          this.isLoadingPartidas = false
           return
         }
 
@@ -384,7 +407,10 @@ export default {
         this.rodadas = []
         this.faseSelecionada = ''
         this.rodadaSelecionada = ''
+        this.placar = []
         this.partidas = []
+        this.isLoadingPlacar = false
+        this.isLoadingPartidas = false
       }
     },
 
@@ -394,7 +420,10 @@ export default {
       if (!fase) {
         this.rodadas = []
         this.rodadaSelecionada = ''
+        this.placar = []
         this.partidas = []
+        this.isLoadingPlacar = false
+        this.isLoadingPartidas = false
         return
       }
 
@@ -407,7 +436,11 @@ export default {
     },
 
     async carregarPlacarPorFase(campeonatoId) {
-      if (!this.faseSelecionada) return
+      if (!campeonatoId || !this.faseSelecionada) {
+        this.placar = []
+        this.isLoadingPlacar = false
+        return
+      }
       this.isLoadingPlacar = true
 
       try {
