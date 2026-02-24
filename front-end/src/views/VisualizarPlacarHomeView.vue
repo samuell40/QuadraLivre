@@ -50,6 +50,9 @@
             <TabelaClassificacao v-if="campeonatoAtivo" :times="Array.isArray(timesPlacar) ? timesPlacar : []"
               :loading="timesPlacar === null" :modalidade="modalidadeNormalizada"
               empty-text="Nenhum placar encontrado para este campeonato." @time-click="abrirModalPartidasTime" />
+            <div v-else class="sem-dados-centralizado">
+              Nenhuma tabela de classificação disponível no momento.
+            </div>
 
           </div>
           <div class="partidas-wrapper">

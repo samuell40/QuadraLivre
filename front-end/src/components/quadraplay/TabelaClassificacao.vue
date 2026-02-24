@@ -99,6 +99,10 @@
         </tr>
       </tbody>
     </table>
+
+    <div v-else class="sem-dados-centralizado">
+      {{ emptyText }}
+    </div>
   </div>
 
   <!-- GLOSSÁRIO FUTEBOL -->
