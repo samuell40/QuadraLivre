@@ -98,7 +98,10 @@
                         <img v-if="jp.jogador?.foto" :src="jp.jogador.foto" class="foto-jogador" />
 
                         <div class="dados-jogador">
-                          <span class="nome">{{ jp.jogador?.nome }}</span>
+                          <div class="linha-nome">
+                            <span v-if="temNumeroJogador(jp.jogador?.numero)" class="numero-jogador">#{{ jp.jogador?.numero }}</span>
+                            <span class="nome">{{ jp.jogador?.nome }}</span>
+                          </div>
                           <div class="estatisticas">
                             <span class="gols">⚽ {{ jp.gols }}</span>
                             <span class="cartao amarelo">🟨 {{ jp.cartoesAmarelos }}</span>
@@ -118,7 +121,10 @@
                         <img v-if="jp.jogador?.foto" :src="jp.jogador.foto" class="foto-jogador" />
 
                         <div class="dados-jogador">
-                          <span class="nome">{{ jp.jogador?.nome }}</span>
+                          <div class="linha-nome">
+                            <span v-if="temNumeroJogador(jp.jogador?.numero)" class="numero-jogador">#{{ jp.jogador?.numero }}</span>
+                            <span class="nome">{{ jp.jogador?.nome }}</span>
+                          </div>
                           <div class="estatisticas">
                             <span class="gols">⚽ {{ jp.gols }}</span>
                             <span class="cartao amarelo">🟨 {{ jp.cartoesAmarelos }}</span>
@@ -153,6 +159,10 @@ data() {
     }
   },
   methods: {
+    temNumeroJogador(numero) {
+      const numeroNormalizado = Number(numero)
+      return Number.isInteger(numeroNormalizado) && numeroNormalizado > 0
+    },
     classeStatusPartida(partida) {
       switch (partida.status) {
         case 'FINALIZADA':
@@ -430,9 +440,30 @@ data() {
   flex-direction: column;
 }
 
+.linha-nome {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .nome {
   font-weight: 600;
   font-size: 14px;
+}
+
+.numero-jogador {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #bfdbfe;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .dados-jogador small {

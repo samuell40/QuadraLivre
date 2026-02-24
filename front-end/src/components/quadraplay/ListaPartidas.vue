@@ -22,7 +22,9 @@
         <div class="conteudo-partida">
           <div class="time lado">
             <img v-if="partida.timeA?.foto" :src="partida.timeA.foto" alt="Escudo Time A" />
-            <span class="nome-time">{{ partida.timeA?.nome }}</span>
+            <button type="button" class="nome-time nome-time-btn" @click.stop="abrirModalPartidasTime(partida.timeA)">
+              {{ partida.timeA?.nome }}
+            </button>
           </div>
 
           <div v-if="partida.status === 'CANCELADA'" class="placar-centro-agendado">
@@ -37,7 +39,9 @@
 
           <div class="time lado">
             <img v-if="partida.timeB?.foto" :src="partida.timeB.foto" alt="Escudo Time B" />
-            <span class="nome-time">{{ partida.timeB?.nome }}</span>
+            <button type="button" class="nome-time nome-time-btn" @click.stop="abrirModalPartidasTime(partida.timeB)">
+              {{ partida.timeB?.nome }}
+            </button>
           </div>
         </div>
 
@@ -80,6 +84,7 @@ export default {
     enableScroll: { type: Boolean, default: false },
     quadraClass: { type: String, default: '' }
   },
+  emits: ['time-click'],
   data() {
     return {
       mostrarModalPartida: false,
@@ -87,6 +92,16 @@ export default {
     }
   },
   methods: {
+    abrirModalPartidasTime(time) {
+      const id = Number(time?.id ?? time?.timeId ?? time?.time?.id)
+      if (!Number.isFinite(id) || id <= 0) return
+
+      this.$emit('time-click', {
+        id,
+        nome: time?.nome ?? time?.time?.nome ?? '',
+        foto: time?.foto ?? time?.time?.foto ?? ''
+      })
+    },
     abrirModalPartida(partida) {
       const status = String(partida?.status || '').toUpperCase()
       if (status === 'CANCELADA') return
@@ -275,6 +290,18 @@ export default {
   text-overflow: ellipsis;
   white-space: nowrap;
   margin-top: 10%;
+}
+
+.nome-time-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.nome-time-btn:hover {
+  color: #2563eb;
 }
 
 .placar-centro {

@@ -9,10 +9,10 @@
             <span class="primeira-linha">Com o Quadra Livre, <span class="destaque_sublinhado">agendar</span></span>
           </div>
           <div>
-            <span class="segunda-linha destaque">sua quadra ficou ainda mais fácil.</span>
+            <span class="segunda-linha destaque">seu treino ficou ainda mais fácil.</span>
           </div>
         </h1>
-        <p>Com poucos cliques, encontre e reserve a quadra ideal para o seu jogo.</p>
+        <p>Com poucos cliques, encontre e reserve a quadra ideal para o seu treino.</p>
       </div>
     </section>
 
@@ -99,7 +99,8 @@
           <h3 class="titulo-secao">Resultados</h3>
 
           <ListaPartidas :partidas="partidas" :loading="isLoadingPartidas"
-            empty-title="Nenhuma partida disponível no momento." quadra-class="nome-quadra-home" />
+            empty-title="Nenhuma partida disponível no momento." quadra-class="nome-quadra-home"
+            @time-click="abrirModalPartidasTime" />
         </div>
       </div>
     </section>
@@ -551,33 +552,38 @@ export default {
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .texto-centro {
-  background-color: #050B2C;
   color: white;
-  padding: 16px 60px;
+  padding: 42px 60px;
   margin-top: 70px;
   display: flex;
   justify-content: center;
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(59,130,246,0.22), transparent 55%),
+    linear-gradient(180deg, #050B2C 0%, #040a24 100%);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.conteudo-centralizado {
+  width: min(1100px, 100%);
 }
 
 .texto {
-  font-size: 40px;
-  font-weight: bold;
-  line-height: 1.3;
+  font-family: "Montserrat";
+  font-size: 46px;
+  font-weight: 900;
+  line-height: 1.12;
+  letter-spacing: -0.6px;
   text-align: left;
   display: inline-block;
+  margin: 0;
 }
 
 .primeira-linha,
@@ -591,9 +597,9 @@ export default {
 }
 
 h1 {
-  font-size: 80px;
   font-family: "Montserrat";
-  margin-bottom: 16px;
+  margin: 0 0 16px;
+  font-size: inherit;
 }
 
 h3 {
@@ -601,26 +607,31 @@ h3 {
   font-family: "Montserrat";
   font-weight: bold;
   margin-bottom: 16px;
-  color: #ffff;
+  color: #fff;
 }
 
 p {
-  color: #888;
+  margin-top: 14px;
+  color: rgba(255,255,255,0.62);
   font-size: 18px;
+  line-height: 1.6;
+  max-width: 62ch;
 }
 
 .tit_horario {
   font-size: 28px;
-  color: #7E7E7E;
-  margin-top: 50px;
-  margin-bottom: 5px;
+  color: #64748b;
+  margin: 42px 0 10px;
   text-align: center;
-  font-weight: bold;
+  font-weight: 900;
+  letter-spacing: -0.4px;
 }
 
 .destaque_sublinhado {
-  text-decoration: underline;
-  color: #3B82F6;
+  text-decoration: none;
+  color: #60a5fa;
+  border-bottom: 3px solid rgba(96,165,250,0.55);
+  padding-bottom: 2px;
 }
 
 .agendamento {
@@ -653,19 +664,25 @@ p {
 
 .btn-prev,
 .btn-next {
-  background-color: #D9D9D9;
-  color: #7E7E7E;
-  border: none;
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  font-size: 28px;
+  background: rgba(15, 23, 42, 0.08);
+  color: #334155;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  font-size: 22px;
   cursor: pointer;
+  transition: 0.15s ease;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .btn-prev:hover,
 .btn-next:hover {
-  background-color: #eee;
+  background: rgba(59,130,246,0.10);
+  border-color: rgba(59,130,246,0.35);
+  color: #1d4ed8;
+  transform: translateY(-1px);
 }
 
 .btn-topo {
@@ -693,11 +710,19 @@ p {
 .card {
   position: relative;
   overflow: hidden;
-  border-radius: 12px;
   height: 350px;
   background-color: #f3f4f6;
-  border: 2px solid #3b82f6;
-  border-radius: 16px;
+  border: 1px solid rgba(59,130,246,0.30);
+  border-radius: 18px;
+
+  box-shadow: 0 14px 30px rgba(0,0,0,0.10);
+  transition: 0.18s ease;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 42px rgba(0,0,0,0.16);
+  border-color: rgba(59,130,246,0.55);
 }
 
 .card.is-interditada .imagem {
@@ -711,7 +736,12 @@ p {
   left: 0;
   width: 100%;
   height: 75%;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 50%, transparent 100%);
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(0, 0, 0, 0.5) 50%,
+    transparent 100%
+  );
   z-index: 1;
   pointer-events: none;
 }
@@ -725,10 +755,10 @@ p {
   font-size: 11px;
   font-weight: 800;
   padding: 6px 10px;
-  border-radius: 4px;
+  border-radius: 8px; 
   z-index: 3;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  letter-spacing: 0.5px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+  letter-spacing: 0.6px;
 }
 
 .imagem {
@@ -753,7 +783,7 @@ p {
 
 .info h3 {
   color: #ffffff;
-  font-weight: 800;
+  font-weight: 900;
   font-size: 22px;
   margin: 0;
   text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
@@ -773,27 +803,25 @@ p {
 .btn-agendar {
   width: fit-content;
   align-self: flex-start;
-
-  padding: 8px 16px;
-  border-radius: 6px;
-  border: none;
-  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.18);
+  font-weight: 800;
   font-size: 14px;
   cursor: pointer;
-  background-color: #3B82F6;
+  background: #3B82F6;
   color: white;
-  transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.btn-agendar:hover {
-  background-color: #60a5fa;
-
+  transition: 0.15s ease;
+  box-shadow: 0 10px 20px rgba(59,130,246,0.25);
 }
 
 .btn-agendar:hover:not(:disabled) {
-  background-color: #2563eb;
+  background: #2563eb;
   transform: translateY(-1px);
+}
+
+.btn-agendar:active:not(:disabled) {
+  transform: translateY(0px) scale(0.99);
 }
 
 .btn-agendar:disabled {
@@ -801,6 +829,7 @@ p {
   color: #d1d5db;
   cursor: not-allowed;
   box-shadow: none;
+  border-color: transparent;
 }
 
 .descricao,
@@ -835,11 +864,11 @@ p {
 .filtro-item select {
   width: 100%;
   padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
   font-size: 14px;
   background-color: white;
-  color: #333;
+  color: #334155;
   appearance: none;
   cursor: pointer;
 }
@@ -851,8 +880,9 @@ p {
 
 .placar-container {
   display: flex;
-  gap: 40px;
+  gap: 32px; 
   flex-wrap: wrap;
+  align-items: flex-start;
 }
 
 .placar-wrapper {
@@ -887,7 +917,7 @@ p {
 .titulo-secao {
   font-size: 20px;
   color: #3b82f6;
-  font-weight: bold;
+  font-weight: 800;
   margin-top: 12px;
 }
 
@@ -922,6 +952,19 @@ p {
 }
 
 @media (max-width: 768px) {
+  .texto-centro {
+    padding: 30px 16px;
+  }
+
+  .texto {
+    font-size: 34px;
+    line-height: 1.15;
+  }
+
+  p {
+    font-size: 16px;
+  }
+
   .btn-topo {
     right: 14px;
     bottom: 14px;
@@ -945,17 +988,17 @@ p {
 
   .btn-prev,
   .btn-next {
-    width: 60px;
-    height: 60px;
-    font-size: 30px;
+    width: 52px;
+    height: 52px;
+    font-size: 24px;
   }
 
   .btn-prev {
-    margin-right: -11px;
+    margin-right: -8px;
   }
 
   .btn-next {
-    margin-left: -11px;
+    margin-left: -8px;
   }
 
   .placar-home {

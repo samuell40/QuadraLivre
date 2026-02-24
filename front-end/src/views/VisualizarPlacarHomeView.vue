@@ -47,26 +47,18 @@
           <!-- PLACAR -->
           <div class="placar-wrapper">
             <h3 class="titulo-secao">Tabela de Classificação</h3>
-            <TabelaClassificacao
-              v-if="campeonatoAtivo"
-              :times="Array.isArray(timesPlacar) ? timesPlacar : []"
-              :loading="timesPlacar === null"
-              :modalidade="modalidadeNormalizada"
-              empty-text="Nenhum placar encontrado para este campeonato."
-              @time-click="abrirModalPartidasTime"
-            />
+            <TabelaClassificacao v-if="campeonatoAtivo" :times="Array.isArray(timesPlacar) ? timesPlacar : []"
+              :loading="timesPlacar === null" :modalidade="modalidadeNormalizada"
+              empty-text="Nenhum placar encontrado para este campeonato." @time-click="abrirModalPartidasTime" />
 
           </div>
           <div class="partidas-wrapper">
             <h3 class="titulo-secao">Resultados</h3>
 
-            <ListaPartidas
-              :partidas="partidas"
-              empty-title="Nenhuma partida cadastrada ainda"
+            <ListaPartidas :partidas="partidas" empty-title="Nenhuma partida cadastrada ainda"
               empty-subtitle="Assim que as partidas forem criadas ou iniciadas, elas aparecerão aqui."
-              :enable-scroll="temScrollPartidas"
-              quadra-class="nome-quadra-visualizar"
-            />
+              :enable-scroll="temScrollPartidas" quadra-class="nome-quadra-visualizar"
+              @time-click="abrirModalPartidasTime" />
 
           </div>
         </div>
@@ -105,15 +97,9 @@
           </table>
         </div>
 
-        <PartidasDoTimeModal
-          v-model="mostrarModalPartidasTime"
-          :time="timeSelecionadoPartidas"
-          :partidas="partidas"
-          :fase-nome="nomeFaseSelecionada"
-          :rodada-nome="nomeRodadaSelecionada"
-          :campeonato-nome="campeonatoSelecionado?.nome || ''"
-          :loading="isLoadingPartidas"
-        />
+        <PartidasDoTimeModal v-model="mostrarModalPartidasTime" :time="timeSelecionadoPartidas" :partidas="partidas"
+          :fase-nome="nomeFaseSelecionada" :rodada-nome="nomeRodadaSelecionada"
+          :campeonato-nome="campeonatoSelecionado?.nome || ''" :loading="isLoadingPartidas" />
       </div>
     </div>
   </div>
@@ -454,13 +440,14 @@ export default {
 }
 
 .title {
-  margin: 0 0 14px;
+  margin: 0 0 10px;
 }
 
 .titulo-campeonato-selecionado {
   color: #3b82f6;
-  font-size: 56px;
-  font-weight: 700;
+  font-size: 40px;
+  line-height: 1.05;
+  letter-spacing: -0.5px
 }
 
 .loader {
@@ -475,17 +462,17 @@ export default {
 
 .abas-container {
   display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
+  gap: 10px;
+  margin-bottom: 12px;
   flex-wrap: wrap;
 }
 
 .aba {
-  padding: 10px 14px;
+  padding: 8px 12px;
   border: 1px solid #d1d5db;
-  border-radius: 10px;
+  border-radius: 999px;
   cursor: pointer;
-  font-weight: 600;
+  font-size: 14px;
   color: #475569;
   background: #fff;
 }
@@ -496,23 +483,52 @@ export default {
 }
 
 .foto-campeonato-container {
+  position: relative;
   margin-bottom: 16px;
   border-radius: 14px;
   overflow: hidden;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.10);
+}
+
+.foto-campeonato-container::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.02), rgba(0,0,0,0.20));
 }
 
 .foto-campeonato {
   width: 100%;
-  max-height: 360px;
+  max-height: 220px;
   object-fit: cover;
   display: block;
+  transform: scale(1.03);
+  transition: transform 220ms ease;
+}
+
+.foto-campeonato-container:hover .foto-campeonato {
+  transform: scale(1.06);
+}
+
+.foto-campeonato-container::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 45%;
+  z-index: 3;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  background: rgba(0,0,0,0.04);
+  pointer-events: none;
 }
 
 .filtros-topo {
   display: flex;
-  gap: 14px;
+  gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .filtro-item {
@@ -530,22 +546,23 @@ export default {
 
 .filtro-item select {
   width: 100%;
-  padding: 8px 10px;
-  border-radius: 6px;
+  padding: 10px 12px;
+  border-radius: 10px;
   border: 1px solid #d1d5db;
   background: #fff;
 }
 
 .placar-e-partidas {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 20px;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 22px;
+  align-items: start;
 }
 
 .titulo-secao {
-  margin: 10px 0;
+  margin: 4px 0 12px;
   color: #3b82f6;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
 }
 
@@ -630,15 +647,19 @@ export default {
   }
 
   .titulo-campeonato-selecionado {
-    font-size: 38px;
+    font-size: 32px;
   }
 
   .placar-e-partidas {
     grid-template-columns: 1fr;
   }
 
+  .foto-campeonato {
+    max-height: 160px;
+  }
+
   .titulo-secao {
-    font-size: 24px;
+    font-size: 20px;
   }
 }
 </style>

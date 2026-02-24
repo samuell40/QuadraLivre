@@ -622,6 +622,7 @@ async function listarJogadoresParaEscalacao({ campeonatoId, faseId, timeId }) {
     .map(j => ({
       id: j.id,
       nome: j.nome,
+      numero: j.numero,
       foto: j.foto,
       funcao: j.funcao,
       atuacoes: j.atuacoes
@@ -1259,6 +1260,7 @@ async function listarJogadoresSelecionados(partidaId) {
         select: {
           id: true,
           nome: true,
+          numero: true,
           foto: true,
           funcao: {
             select: { nome: true }
@@ -1278,6 +1280,7 @@ async function listarJogadoresSelecionados(partidaId) {
       jogadoresUnicos.set(jogadorId, {
         id: jp.jogador.id,
         nome: jp.jogador.nome,
+        numero: jp.jogador.numero,
         foto: jp.jogador.foto,
         funcao: jp.jogador.funcao?.nome,
 
@@ -1529,6 +1532,7 @@ async function getJogadoresForaDaPartida(partidaId, timeId) {
   return jogadoresFora.map(jt => ({
     id: jt.jogador.id,
     nome: jt.jogador.nome,
+    numero: jt.jogador.numero,
     foto: jt.jogador.foto,
     funcao: jt.jogador.funcao?.nome,
     timeId
@@ -1615,6 +1619,7 @@ async function detalharPartida(partidaId) {
             select: {
               id: true,
               nome: true,
+              numero: true,
               foto: true
             }
           }

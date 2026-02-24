@@ -32,11 +32,8 @@
             @fechar="fecharModalAdicionarTime" @atualizar="carregarTimes" />
 
           <DetalharTimes :aberto="modalDetalharTimeAberto" :time="timeSelecionadoDetalhe"
-            :modalidadeSelecionada="modalidadeSelecionada" ref="detalharJogadores" @fechar="fecharModalDetalharTime"
-            @gerenciar-jogadores="modalGerenciarJogadoresAberto = true" />
-
-          <GerenciarJogadores :aberto="modalGerenciarJogadoresAberto" :time="timeSelecionadoDetalhe"
-            @fechar="modalGerenciarJogadoresAberto = false" @atualizar-lista="atualizarJogadores" />
+            :modalidadeSelecionada="modalidadeSelecionada" @fechar="fecharModalDetalharTime"
+            @atualizar-lista="carregarTimes" />
 
           <div v-if="isLoadingTimes" class="loader-container-centralizado">
             <div class="loader"></div>
@@ -87,7 +84,6 @@ import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue';
 import SidebarQuadra from '@/components/quadraplay/SidebarQuadra.vue';
 import AdicionarTimeModal from '@/components/modals/times/AdicionarTimesModal.vue';
 import DetalharTimes from '@/components/modals/times/DetalharTimes.vue';
-import GerenciarJogadores from '@/components/modals/times/GerenciarJogadores.vue';
 import Swal from 'sweetalert2';
 import api from '@/axios';
 
@@ -97,8 +93,7 @@ export default {
     NavBarQuadras,
     SidebarQuadra,
     AdicionarTimeModal,
-    DetalharTimes,
-    GerenciarJogadores
+    DetalharTimes
   },
   data() {
     return {
@@ -110,7 +105,6 @@ export default {
       timeSelecionadoDetalhe: null,
       modalAdicionarTimeAberto: false,
       modalDetalharTimeAberto: false,
-      modalGerenciarJogadoresAberto: false,
       acaoGerenciarModalidade: '',
       fotoTime: '',
       timeParaAdicionar: '',
@@ -142,17 +136,6 @@ export default {
     fecharModalDetalharTime() {
       this.modalDetalharTimeAberto = false;
       this.timeSelecionadoDetalhe = null;
-    },
-
-    abrirModalGerenciarJogadores() {
-      this.modalGerenciarJogadoresAberto = true;
-    },
-
-    async atualizarJogadores() {
-      if (this.$refs.detalharJogadores && this.timeSelecionadoDetalhe?.id) {
-        this.$refs.detalharJogadores.carregarJogadores(this.timeSelecionadoDetalhe.id);
-      }
-      await this.carregarTimes();
     },
 
     editarTime(time) {

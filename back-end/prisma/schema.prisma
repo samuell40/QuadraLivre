@@ -264,6 +264,7 @@ model TreinadorTime {
 model Jogador {
   id        Int              @id @default(autoincrement())
   nome      String
+  numero    Int?
   foto      String?          @db.VarChar(2048)
   funcaoId  Int?
   usuario   Usuario?

@@ -2,7 +2,7 @@ const jogadorService = require('../services/jogador.service');
 
 async function adicionarJogadorController(req, res) {
   try {
-    const { timeId, nome, foto, funcaoId, usuarioId } = req.body;
+    const { timeId, nome, foto, funcaoId, usuarioId, numero } = req.body;
 
     if (!timeId) {
       return res.status(400).json({ message: "timeId é obrigatório" });
@@ -19,6 +19,14 @@ async function adicionarJogadorController(req, res) {
 
     if (usuarioId) {
       dadosJogador.usuarioId = Number(usuarioId);
+    }
+
+    if (numero !== undefined && numero !== null && String(numero).trim() !== '') {
+      const numeroNormalizado = Number(numero);
+      if (!Number.isInteger(numeroNormalizado) || numeroNormalizado <= 0) {
+        return res.status(400).json({ message: "numero deve ser um inteiro positivo" });
+      }
+      dadosJogador.numero = numeroNormalizado;
     }
 
     const novoJogador = await jogadorService.adicionarJogador(dadosJogador);

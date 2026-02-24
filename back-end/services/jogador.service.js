@@ -32,6 +32,7 @@ async function adicionarJogador(dados) {
   const jogador = await prisma.jogador.create({
     data: {
       nome: dados.nome,
+      numero: dados.numero ?? null,
       foto: dados.foto,
       funcaoId: funcaoIdFinal,
     },
@@ -152,6 +153,7 @@ async function listarJogadoresPorTime(timeId) {
   return time.jogadores.map(jt => ({
     id: jt.jogador.id,
     nome: jt.jogador.nome,
+    numero: jt.jogador.numero,
     foto: jt.jogador.foto,
     funcao: jt.jogador.funcao,
     atuacoes: jt.jogador.atuacoes,
@@ -175,6 +177,7 @@ async function listarTodosJogadores(modalidadeId) {
   return jogadores.map(j => ({
     id: j.id,
     nome: j.nome,
+    numero: j.numero,
     foto: j.foto,
     funcao: j.funcao,
     atuacoes: j.atuacoes,

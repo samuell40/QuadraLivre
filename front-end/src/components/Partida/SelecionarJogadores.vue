@@ -34,6 +34,7 @@
                 <div class="jogador-info">
                   <img :src="j.foto" alt="Foto" class="foto-jogador" />
                   <div class="dados-jogador">
+                    <span v-if="temNumeroJogador(j.numero)" class="numero-jogador">#{{ j.numero }}</span>
                     <span class="nome" :class="{ suspenso: jogadorSuspenso(j) }">{{ j.nome }}</span>
                     <span v-if="jogadorSuspenso(j)" class="tag-suspenso" :title="j.motivoSuspensao || 'Jogador suspenso'">
                       Suspenso
@@ -72,6 +73,7 @@
                 <div class="jogador-info">
                   <img :src="j.foto" alt="Foto" class="foto-jogador" />
                   <div class="dados-jogador">
+                    <span v-if="temNumeroJogador(j.numero)" class="numero-jogador">#{{ j.numero }}</span>
                     <span class="nome" :class="{ suspenso: jogadorSuspenso(j) }">{{ j.nome }}</span>
                     <span v-if="jogadorSuspenso(j)" class="tag-suspenso" :title="j.motivoSuspensao || 'Jogador suspenso'">
                       Suspenso
@@ -144,6 +146,10 @@ export default {
   },
 
   methods: {
+    temNumeroJogador(numero) {
+      const numeroNormalizado = Number(numero)
+      return Number.isInteger(numeroNormalizado) && numeroNormalizado > 0
+    },
     jogadorSuspenso(jogador) {
       return !!jogador?.suspenso
     },
@@ -386,6 +392,28 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.dados-jogador {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.numero-jogador {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #bfdbfe;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .foto-jogador {

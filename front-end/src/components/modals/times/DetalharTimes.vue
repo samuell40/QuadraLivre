@@ -2,8 +2,8 @@
   <div v-if="aberto" class="modal-overlay">
     <div class="modal-conteudo modal-placar">
       <div class="header-placar">
-        <h2 class="title_placar">Jogadores do {{ time?.nome }}</h2>
-        <button class="btn-gerenciar" @click="$emit('gerenciar-jogadores')" aria-label="Gerenciar Jogadores">
+        <h2 class="title_placar">Jogadores do {{ formatarInicialMaiuscula(time?.nome) }}</h2>
+        <button class="btn-gerenciar" @click="abrirModalGerenciarJogadores" aria-label="Gerenciar Jogadores">
           <span class="btn-gerenciar-texto">Gerenciar Jogadores</span>
 
           <svg class="btn-gerenciar-icone" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -32,7 +32,8 @@
               <tr v-for="j in jogadores" :key="j.id">
                 <td class="time-info">
                   <img :src="j.foto" alt="Foto" class="time-image time-image-click" @click.stop="gerenciarImagem(j)" />
-                  {{ j.nome }}
+                  <span v-if="temNumeroJogador(j.numero)" class="numero-jogador">#{{ j.numero }}</span>
+                  {{ formatarInicialMaiuscula(j.nome) }}
                 </td>
                 <td>
                   <div class="select-wrap">
@@ -61,13 +62,20 @@
   </div>
   <input ref="inputTrocarImagem" type="file" accept=".jpg,.jpeg,.png" style="display: none"
     @change="handleTrocarImagem" />
+  <GerenciarJogadores :aberto="modalGerenciarJogadoresAberto" :time="time"
+    @fechar="fecharModalGerenciarJogadores" @atualizar-lista="onAtualizarJogadores" />
 </template>
 
 <script>
 import api from '@/axios';
+import GerenciarJogadores from '@/components/modals/times/GerenciarJogadores.vue';
 import Swal from 'sweetalert2';
 
 export default {
+  components: {
+    GerenciarJogadores
+  },
+  emits: ['fechar', 'atualizar-lista'],
   props: {
     aberto: Boolean,
     time: Object,
@@ -79,7 +87,8 @@ export default {
       jogadores: [],
       funcoes: [],
       isLoading: false,
-      jogadorImagemAtual: null
+      jogadorImagemAtual: null,
+      modalGerenciarJogadoresAberto: false
     };
   },
   watch: {
@@ -88,6 +97,8 @@ export default {
         console.log('Modal aberto, modalidade selecionada:', this.modalidadeSelecionada);
         this.carregarFuncoes();
         this.carregarJogadores(this.time.id);
+      } else {
+        this.modalGerenciarJogadoresAberto = false;
       }
     },
     modalidadeSelecionada(novoValor) {
@@ -103,6 +114,23 @@ export default {
     }
   },
   methods: {
+    abrirModalGerenciarJogadores() {
+      this.modalGerenciarJogadoresAberto = true;
+    },
+    fecharModalGerenciarJogadores() {
+      this.modalGerenciarJogadoresAberto = false;
+    },
+    async onAtualizarJogadores() {
+      this.modalGerenciarJogadoresAberto = false;
+      if (this.time?.id) {
+        await this.carregarJogadores(this.time.id);
+      }
+      this.$emit('atualizar-lista');
+    },
+    formatarInicialMaiuscula(texto) {
+      if (!texto) return '';
+      return String(texto).replace(/(^|\s)\S/g, letra => letra.toUpperCase());
+    },
     async carregarFuncoes() {
       console.log('Carregando funções para modalidadeId:', this.modalidadeSelecionadaId);
 
@@ -139,6 +167,7 @@ export default {
           lista.push({
             id: j.id,
             nome: j.nome,
+            numero: j.numero,
             foto: j.foto,
             funcao: j.funcao,
             funcaoId: funcaoId
@@ -161,6 +190,10 @@ export default {
       } catch (err) {
         console.error('Erro ao atualizar função:', err);
       }
+    },
+    temNumeroJogador(numero) {
+      const numeroNormalizado = Number(numero)
+      return Number.isInteger(numeroNormalizado) && numeroNormalizado > 0
     },
     gerenciarImagem(jogador) {
       Swal.fire({
@@ -390,6 +423,21 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.numero-jogador {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #bfdbfe;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .time-image {

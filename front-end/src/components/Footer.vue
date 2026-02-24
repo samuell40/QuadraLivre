@@ -95,116 +95,153 @@ export default {
 
 <style scoped>
 .footer {
-    background: #152147;
-    color: #fff;
-    padding: 60px 80px 90px;
-    position: relative;
+  background: #152147;
+  color: #fff;
+  padding: 60px 80px 90px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* brilho sutil no topo (bem leve) */
+.footer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    900px 260px at 20% 0%,
+    rgba(59, 130, 246, 0.18),
+    transparent 60%
+  );
+  pointer-events: none;
 }
 
 .footer-container {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 60px;
+  position: relative; /* pra ficar acima do ::before */
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 60px;
+  align-items: start;
 }
 
 .footer-col h3 {
-    font-size: 18px;
-    margin-bottom: 14px;
-    font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 14px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
 }
 
 .footer-col ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .footer-col ul li {
-    font-size: 14px;
-    color: #d1d5db;
-    margin-bottom: 10px;
-    cursor: pointer;
+  font-size: 14px;
+  color: rgba(209, 213, 219, 0.9);
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: color 0.18s ease, transform 0.18s ease;
 }
 
 .footer-col ul li:hover {
-    color: #3b82f6;
+  color: #3b82f6;
+  transform: translateX(2px);
 }
 
+/* ÍCONES - maiores + hover mais “premium” */
 .social-icons {
-    display: flex;
-    gap: 14px;
-    margin-top: 10px;
+  display: flex;
+  gap: 14px;
+  margin-top: 12px;
 }
 
 .social-icons svg {
-    cursor: pointer;
-    color: #d1d5db;
+  cursor: pointer;
+  color: rgba(209, 213, 219, 0.9);
+  width: 22px;
+  height: 22px;
+  transition: color 0.18s ease, transform 0.18s ease, opacity 0.18s ease;
+  opacity: 0.92;
 }
 
 .social-icons svg:hover {
-    color: #3b82f6;
+  color: #3b82f6;
+  transform: translateY(-2px);
+  opacity: 1;
 }
 
 .suporte-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(209, 213, 219, 0.95);
 }
 
+/* Logo do parceiro com “badge” suave pra não ficar colado no branco */
 .parceiro-img {
-    width: 100%;
-    max-width: 200px;
+  width: 100%;
+  max-width: 220px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 12px 14px;
+  border-radius: 12px;
+  box-sizing: border-box;
 }
 
+/* linha inferior mais suave + tipografia */
 .footer-bottom {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 20px;
-    text-align: center;
-    font-size: 14px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 20px;
+  text-align: center;
+  font-size: 14px;
+  color: rgba(209, 213, 219, 0.9);
 }
 
 .footer-link {
-    color: #d1d5db;
-    text-decoration: none;
-    font-size: 14px;
-    transition: color 0.3s;
+  color: rgba(209, 213, 219, 0.9);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.18s ease;
 }
 
 .footer-link:hover {
-    color: #3b82f6;
+  color: #3b82f6;
 }
 
 .branding {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
+/* Responsivo */
 @media (max-width: 768px) {
-    .footer {
-        padding: 40px 20px 140px;
-    }
+  .footer {
+    padding: 40px 20px 140px;
+  }
 
-    .footer-container {
-        grid-template-columns: 1fr;
-        gap: 30px;
-        text-align: center;
-    }
+  .footer-container {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    text-align: center;
+  }
 
-    .social-icons {
-        justify-content: center;
-    }
+  .social-icons {
+    justify-content: center;
+  }
 
-    .parceiro-img {
-        margin: 0 auto;
-    }
+  .parceiro-img {
+    margin: 0 auto;
+    max-width: 240px;
+  }
 
-    .suporte-item {
-        justify-content: center;
-    }
+  .suporte-item {
+    justify-content: center;
+  }
 }
 </style>

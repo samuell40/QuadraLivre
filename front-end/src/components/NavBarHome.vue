@@ -24,20 +24,20 @@
       </div>
 
       <ul class="nav-links">
-        <li v-if="$route.path !== '/times'">
-          <a href="/times">
+        <li>
+          <a href="/times" :class="{ active: $route.path === '/times' }">
             Times
           </a>
         </li>
 
-        <li v-if="$route.path !== '/visualizarplacarhome'">
-          <a href="/visualizarplacarhome">
+        <li>
+          <a href="/visualizarplacarhome" :class="{ active: $route.path === '/visualizarplacarhome' }">
             Tabelas de Classificação
           </a>
         </li>
 
-        <li v-if="$route.path !== '/'">
-          <a href="/">
+        <li>
+          <a href="/" :class="{ active: $route.path === '/' }">
             Tela Inicial
           </a>
         </li>
@@ -324,6 +324,10 @@ export default {
   color: #ffffff;
   text-decoration: none;
   font-weight: 500;
+}
+
+.nav-links li a.active {
+  color: #3B82F6;
 }
 
 .nav-links li a:hover {

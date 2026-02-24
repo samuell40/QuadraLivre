@@ -55,11 +55,12 @@
           <div class="time-mobile-title">
             {{ partidaDetalhada.timeA?.nome }}
             <div class="jogadores-time">
-              <p v-if="semEscalacaoTimeA" class="sem-escalacao">Escalacao nao definida</p>
+              <p v-if="semEscalacaoTimeA" class="sem-escalacao">Escalacão não Definida</p>
               <div v-else v-for="jp in jogadoresTimeA" :key="jp.id" class="jogador-item"
                 :class="{ 'jogador-suspenso': jogadorSuspenso(jp) }">
                 <img v-if="jp.jogador?.foto" :src="jp.jogador.foto" class="foto-jogador" alt="Foto do jogador" />
                 <div class="dados-jogador">
+                  <span v-if="temNumeroJogador(jp.jogador?.numero)" class="numero-jogador">#{{ jp.jogador?.numero }}</span>
                   <span class="nome" :class="{ 'nome-suspenso': jogadorSuspenso(jp) }">{{ jp.jogador?.nome }}</span>
                   <span v-if="jogadorSuspenso(jp)" class="status-suspenso" :title="jp.motivoSuspensao || 'Jogador suspenso'">
                     Suspenso
@@ -90,11 +91,12 @@
           <div class="time-mobile-title">
             {{ partidaDetalhada.timeB?.nome }}
             <div class="jogadores-time">
-              <p v-if="semEscalacaoTimeB" class="sem-escalacao">Escalacao nao definida</p>
+              <p v-if="semEscalacaoTimeB" class="sem-escalacao">Escalação não Definida</p>
               <div v-else v-for="jp in jogadoresTimeB" :key="jp.id" class="jogador-item"
                 :class="{ 'jogador-suspenso': jogadorSuspenso(jp) }">
                 <img v-if="jp.jogador?.foto" :src="jp.jogador.foto" class="foto-jogador" alt="Foto do jogador" />
                 <div class="dados-jogador">
+                  <span v-if="temNumeroJogador(jp.jogador?.numero)" class="numero-jogador">#{{ jp.jogador?.numero }}</span>
                   <span class="nome" :class="{ 'nome-suspenso': jogadorSuspenso(jp) }">{{ jp.jogador?.nome }}</span>
                   <span v-if="jogadorSuspenso(jp)" class="status-suspenso" :title="jp.motivoSuspensao || 'Jogador suspenso'">
                     Suspenso
@@ -280,6 +282,10 @@ export default {
     },
     temCartaoVermelho(jogadorPartida) {
       return this.valorPositivo(jogadorPartida?.cartoesVermelhos) > 0
+    },
+    temNumeroJogador(numero) {
+      const numeroNormalizado = Number(numero)
+      return Number.isInteger(numeroNormalizado) && numeroNormalizado > 0
     },
     jogadorSuspenso(jogadorPartida) {
       return !!jogadorPartida?.suspenso
@@ -478,6 +484,21 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 260px;
+}
+
+.numero-jogador {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #bfdbfe;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .nome.nome-suspenso {

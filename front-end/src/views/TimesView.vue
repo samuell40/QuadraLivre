@@ -9,7 +9,7 @@
                 <div class="abas-container">
                     <div class="aba" v-for="m in modalidades" :key="m.id" :class="{ ativa: modalidadeAtiva === m.id }"
                         @click="selecionarModalidade(m.id)">
-                        {{ m.nome }}
+                        {{ formatarTextoCapitalizado(m.nome) }}
                     </div>
                 </div>
 
@@ -68,7 +68,8 @@
                                 <div v-for="j in lista" :key="j.id" class="card-jogador">
                                     <img :src="j.foto" />
                                     <div class="nome-jogador">
-                                        {{ j.nome }}
+                                        <span v-if="temNumeroJogador(j.numero)" class="numero-jogador">#{{ j.numero }}</span>
+                                        <span>{{ formatarTextoCapitalizado(j.nome) }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -129,6 +130,16 @@ export default {
     },
 
     methods: {
+        formatarTextoCapitalizado(texto) {
+            if (!texto) return ''
+            return String(texto)
+                .toLowerCase()
+                .replace(/(^|\s)\S/g, letra => letra.toUpperCase())
+        },
+        temNumeroJogador(numero) {
+            const numeroNormalizado = Number(numero)
+            return Number.isInteger(numeroNormalizado) && numeroNormalizado > 0
+        },
         async abrirModalJogadores(time) {
             this.timeSelecionado = time
             this.mostrarModal = true
@@ -208,6 +219,7 @@ export default {
 }
 </script>
 
+
 <style scoped>
 .layout {
     display: flex;
@@ -245,85 +257,87 @@ export default {
 }
 
 .abas-container {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    display: flex;
+    flex-wrap: wrap;
     gap: 10px;
-    margin-bottom: 25px;
+    margin-bottom: 18px;
 }
 
 .aba {
-    text-align: center;
-    padding: 10px 0;
-    border-radius: 6px;
+    padding: 8px 14px;
+    border-radius: 999px;
     cursor: pointer;
-    background-color: #f1f1f1;
-    font-weight: 500;
-    color: #333;
-    transition: all 0.2s;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    font-weight: 600;
+    color: #475569;
+    transition: 0.15s ease;
+    user-select: none;
 }
 
 .aba:hover {
-    background-color: #e0e0e0;
+    border-color: #3b82f6;
+    background: #f8fafc;
 }
 
 .aba.ativa {
-    background-color: #3b82f6;
-    color: white;
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: #fff;
+    box-shadow: 0 10px 22px rgba(59, 130, 246, 0.18);
 }
 
 .lista-times {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-    margin-top: 20px;
+    gap: 18px;
+    margin-top: 14px;
 }
 
 .card {
-    display: flex;
-    flex-direction: column;
-    background-color: #fff;
-    border: 1px solid #3b82f6;
-    border-radius: 12px;
-    padding: 20px;
-    gap: 15px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.06);
+    cursor: pointer;
+    transition: 0.15s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    border-color: #3b82f6;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.10);
 }
 
 .card-conteudo {
     display: flex;
-    flex-direction: row;
-    gap: 20px;
+    gap: 16px;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
 }
 
 .foto {
-    flex: 0 0 100px;
+    flex: 0 0 72px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 .foto img {
-    width: 100px;
-    height: 100px;
+    width: 72px;
+    height: 72px;
     border-radius: 50%;
-    border: 2px solid #276ef1;
+    border: 2px solid #dbeafe;
     object-fit: cover;
-}
-
-.info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    background: #f8fafc;
 }
 
 .info h2 {
     margin: 0;
-    font-size: 20px;
-    color: #7E7E7E;
-    font-weight: bold;
+    font-size: 18px;
+    color: #334155;
+    font-weight: 800;
 }
 
 .info p {
@@ -344,87 +358,173 @@ export default {
 
 .modal-conteudo.modal-placar {
     background-color: #fff;
-    border-radius: 12px;
-    padding: 30px 40px;
+    border-radius: 16px;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    width: fit-content;
-    min-width: 900px;
-    max-width: 90vw;
+    width: min(980px, 92vw);
     max-height: 80vh;
     overflow: hidden;
     box-sizing: border-box;
+    box-shadow: 0 18px 55px rgba(0, 0, 0, 0.25);
 }
 
-.modal-jogadores {
+.header-placar {
+    padding: 18px 22px;
+    border-bottom: 1px solid #eef2f7;
     display: flex;
-    flex-direction: column;
-    gap: 40px;
-    overflow-y: auto;
-    max-height: 55vh;
-    padding-right: 10px;
-}
-
-.titulo-funcao {
-    font-size: 15px;
-    font-weight: bold;
-    color: #7E7E7E;
-    border-left: 4px solid #3b82f6;
-    padding-left: 10px;
-    margin-bottom: 20px;
-}
-
-.grid-jogadores {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 20px;
-}
-
-.card-jogador {
-    background: #fff;
-    border-radius: 6px;
-    border: 1px solid #e5e7eb;
-    text-align: center;
-    padding: 10px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.card-jogador:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-}
-
-.card-jogador img {
-    width: 100%;
-    height: 220px;
-    object-fit: cover;
-    background: #f9fafb;
-}
-
-.nome-jogador {
-    margin-top: 10px;
-    background: #3b82f6;
-    color: #fff;
-    font-weight: bold;
-    padding: 6px 4px;
-    font-size: 14px;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .title_placar {
     color: #3b82f6;
-    font-size: 28px;
+    font-size: 24px;
+    margin: 0;
+}
+
+.btn-fechar-x {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    color: #334155;
+    transition: 0.15s ease;
+}
+
+.btn-fechar-x:hover {
+    border-color: #3b82f6;
+    color: #1d4ed8;
+    background: #eff6ff;
+}
+
+.modal-jogadores {
+    padding: 18px 18px 18px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow-y: auto;
+    max-height: calc(80vh - 140px);
+    scrollbar-gutter: stable;
+}
+
+.modal-jogadores::-webkit-scrollbar {
+    width: 10px;
+}
+
+.modal-jogadores::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-jogadores::-webkit-scrollbar-thumb {
+    background: rgba(15, 23, 42, 0.18);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+}
+
+.modal-jogadores::-webkit-scrollbar-thumb:hover {
+    background: rgba(15, 23, 42, 0.28);
+    border: 3px solid transparent;
+    background-clip: content-box;
+}
+
+.modal-jogadores {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(15, 23, 42, 0.25) transparent;
+}
+
+.titulo-funcao {
+    font-size: 13px;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    border-left: 3px solid #3b82f6;
+    padding-left: 10px;
+    margin-bottom: 16px;
+}
+
+.grid-jogadores {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 14px;
+}
+
+.card-jogador {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    text-align: center;
+    transition: 0.15s ease;
+}
+
+.card-jogador:hover {
+    transform: translateY(-3px);
+    border-color: #3b82f6;
+    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.10);
+}
+
+.card-jogador img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    background: #f3f4f6;
+    display: block;
+}
+
+.nome-jogador {
+    margin: 0;
+    padding: 8px 10px;
+    background: #fff;
+    color: #334155;
+    font-weight: 800;
+    font-size: 13px;
+    border-top: 1px solid #eef2f7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.numero-jogador {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid #bfdbfe;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
 }
 
 .btn-cancel-placar {
-    background-color: #3b82f6;
-    color: white;
-    padding: 10px 16px;
-    border: none;
-    border-radius: 20px;
+    margin: 18px 22px 22px;
+    padding: 16px 20px;
+    width: calc(100% - 44px);
+    border-radius: 999px;
+    border: 2px solid #3b82f6;
+    background: transparent;
+    color: #3b82f6;
+    font-weight: 700;
+    font-size: 16px;
     cursor: pointer;
-    margin-top: 20px;
-    width: 100%;
+    transition: all 0.2s ease;
+}
+
+.btn-cancel-placar:hover {
+    background: #3b82f6;
+    color: #fff;
+    box-shadow: 0 10px 20px rgba(59, 130, 246, 0.25);
 }
 
 @media (max-width: 768px) {
@@ -437,13 +537,12 @@ export default {
     }
 
     .abas-container {
-        grid-template-columns: repeat(4, 1fr);
         gap: 8px;
     }
 
     .aba {
         font-size: 14px;
-        padding: 10px;
+        padding: 10px 12px;
     }
 
     .lista-times {
@@ -451,35 +550,33 @@ export default {
     }
 
     .modal-conteudo.modal-placar {
-        padding: 20px;
-        min-width: 90vw;
-        max-width: 95vw;
-        max-height: 75vh;
-        overflow-y: auto;
+        width: 94vw;
+        max-height: 78vh;
+        padding: 0;
+        overflow: hidden;
     }
 
     .title_placar {
-        font-size: 20px;
+        font-size: 18px;
     }
 
     .modal-jogadores {
-        max-height: 50vh;
-        gap: 20px;
+        max-height: calc(78vh - 140px);
+        gap: 18px;
     }
 
     .grid-jogadores {
         grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-        gap: 15px;
+        gap: 12px;
     }
 
     .card-jogador img {
-        height: 140px;
+        aspect-ratio: 1 / 1;
     }
 
     .nome-jogador {
         font-size: 12px;
-        padding: 4px 2px;
+        padding: 6px 8px;
     }
-
 }
 </style>
