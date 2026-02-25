@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/campeonatos.controller')
+const validarJWT = require('../middlewares/auth');
 
 router.post('/criar/campeonato', controller.criarCampeonatoController);
 
@@ -9,6 +10,10 @@ router.delete('/removerCampeonato/:id', controller.removerCampeonatoController);
 router.get('/listar/:modalidadeId', controller.listarCampeonatosPorModalidadeController);
 
 router.get('/todos/campeonatos', controller.listarCampeonatosAnoAtualController)
+
+router.get('/campeonatos/mesario/andamento', [validarJWT], controller.listarCampeonatosEmAndamentoMesarioController);
+router.get('/campeonato/:id/mesarios', [validarJWT], controller.listarMesariosCampeonatoController);
+router.put('/campeonato/:id/mesarios', [validarJWT], controller.atualizarMesariosCampeonatoController);
 
 router.get('/:campeonatoId/artilharia', controller.artilhariaCampeonatoController );
 

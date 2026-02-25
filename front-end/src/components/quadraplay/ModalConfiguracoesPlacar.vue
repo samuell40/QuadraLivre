@@ -2,7 +2,7 @@
   <div v-if="modelValue && !mostrarModalFase && !mostrarModalCriterios" class="modal-overlay" @click.self="fechar">
     <div class="modal-content modal-escolha-config">
       <div class="modal-header">
-        <span class="title">Configurações de Classificacao</span>
+        <span class="title">Configurações de Classificação</span>
         <button type="button" class="btn-close-x" @click="fechar">x</button>
       </div>
 
@@ -30,9 +30,9 @@
               <path
                 d="M1.713 11.865v-.474H2c.217 0 .363-.137.363-.317 0-.185-.158-.31-.361-.31-.223 0-.367.152-.373.31h-.59c.016-.467.373-.787.986-.787.588-.002.954.291.957.703a.595.595 0 0 1-.492.594v.033a.615.615 0 0 1 .569.631c.003.533-.502.8-1.051.8-.656 0-1-.37-1.008-.794h.582c.008.178.186.306.422.309.254 0 .424-.145.422-.35-.002-.195-.155-.348-.414-.348h-.3zm-.004-4.699h-.604v-.035c0-.408.295-.844.958-.844.583 0 .96.326.96.756 0 .389-.257.617-.476.848l-.537.572v.03h1.054V9H1.143v-.395l.957-.99c.138-.142.293-.304.293-.508 0-.18-.147-.32-.342-.32a.33.33 0 0 0-.342.338zM2.564 5h-.635V2.924h-.031l-.598.42v-.567l.629-.443h.635z" />
             </svg>
-            <span class="titulo-acao-modal">Criterios de Classificacao</span>
+            <span class="titulo-acao-modal">Critérios de Classificação</span>
           </span>
-          <small class="btn-tipo-sub">Define a ordem dos criterios usados na classificacao</small>
+          <small class="btn-tipo-sub">Define a ordem dos critérios usados na classificação</small>
         </button>
 
         <button class="btn-tipo btn-tipo-card" @click="grupos">
@@ -66,7 +66,7 @@
 
       <div class="filtros-topo">
         <label>Digite o nome da fase:</label>
-        <input v-model="nomeFase" type="text" placeholder="Ex: Eliminatatorias" />
+        <input v-model="nomeFase" type="text" placeholder="Ex: Eliminatórias" />
       </div>
 
       <label>
@@ -104,12 +104,12 @@
   <div v-if="mostrarModalCriterios" class="modal-overlay" @click.self="fecharModalCriterios">
     <div class="modal-content modal-criterios">
       <div class="modal-header">
-        <h2>Criterios de Classificação</h2>
+        <h2>Critérios de Classificação</h2>
         <button type="button" class="btn-close-x" @click="fecharModalCriterios">x</button>
       </div>
 
       <p class="descricao">
-        Arraste para definir a ordem de classificaÃ§Ã£o
+        Arraste para definir a ordem de classificação
       </p>
 
       <div class="lista-criterios">
@@ -127,7 +127,7 @@
       </div>
 
       <div v-if="classificacao.length" class="classificacao-atual">
-        <h3>ClassificaÃ§Ã£o atual:</h3>
+        <h3>Classificação atual:</h3>
         <div v-for="(time, index) in classificacao" :key="time.timeId">
           {{ index + 1 }} - {{ time.time.nome }} - {{ time.pontuacao }} pts
         </div>
@@ -197,7 +197,7 @@ export default {
         }
 
       } catch (err) {
-        console.error("Erro ao carregar critÃ©rios:", err)
+        console.error("Erro ao carregar critérios:", err)
         this.criterios = []
       }
     },
@@ -250,7 +250,7 @@ export default {
         this.times = data
       } catch (err) {
         console.error(err)
-        Swal.fire("Erro", "NÃ£o foi possÃ­vel carregar os times.", "error")
+        Swal.fire("Erro", "Não foi possível carregar os times.", "error")
       }
     },
 

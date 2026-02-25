@@ -19,6 +19,7 @@
 <script>
 import router from '@/router';
 import Swal from 'sweetalert2';
+import { redirecionarMesarioPosLogin } from '@/utils/quadraPlayMesarioRedirect';
 
 const QUADRA_PLAY_LOGIN_KEY = 'quadraPlayLoginAtivo'
 
@@ -36,7 +37,7 @@ export default {
                 `width=${width},height=${height},left=${left},top=${top}`
             )
 
-            const listener = event => {
+            const listener = async event => {
                 const origensPermitidas = ['https://quadra-livre.vercel.app', 'http://localhost:8080']
                 if (!origensPermitidas.includes(event.origin) && event.origin !== window.location.origin) return
 
@@ -76,7 +77,8 @@ export default {
                     if ([1, 2].includes(usuario.permissaoId)) {
                         router.push({ name: 'Dashboard' })
                     } else if (usuario.permissaoId === 4) {
-                        router.push({ name: 'gerenciar_partida' })
+                        localStorage.setItem(QUADRA_PLAY_LOGIN_KEY, '1')
+                        await redirecionarMesarioPosLogin(router)
                     } else if (usuario.permissaoId === 3) {
                         if (quadraSelecionada?.id) {
                             router.push({ name: 'agendar_quadra', query: { quadraId: quadraSelecionada.id } })

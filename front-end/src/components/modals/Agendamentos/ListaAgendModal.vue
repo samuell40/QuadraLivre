@@ -22,9 +22,6 @@
         </div>
       </div>
 
-      <DetalheAgendModal v-if="agendamentoSelecionado" :agendamento="agendamentoSelecionado"
-        @fechar="agendamentoSelecionado = null" />
-
       <button class="btn-cancelar" @click="$emit('fechar')">Fechar</button>
     </div>
   </div>
@@ -33,21 +30,19 @@
 <script>
 import api from '@/axios';
 import Swal from 'sweetalert2';
-import DetalheAgendModal from './DetalharAgendModal.vue';
 
 export default {
   name: 'ListaAgendModal',
+  emits: ['fechar', 'ver-detalhes'],
   props: {
     quadraId: { type: Number, required: true },
     datas: { type: Array, required: true }
   },
   data() {
     return {
-      horariosPorDia: {},
-      agendamentoSelecionado: null
+      horariosPorDia: {}
     };
   },
-  components: { DetalheAgendModal },
   watch: {
     datas: {
       immediate: true,
@@ -80,7 +75,7 @@ export default {
 
           if (agendamento) {
             agendamento.usuarioNome = agendamento.usuario?.nome || agendamento.usuario || 'Usuário';
-            agendamento.timeNome = agendamento.time?.nome || 'Não vinculado';
+            agendamento.timeNome = agendamento.time?.nome || 'Nao vinculado';
           }
 
           horarios.push({ hora: h, agendamento: agendamento || null, data });
@@ -109,7 +104,7 @@ export default {
     },
 
     selecionarAgendamento(agendamento) {
-      this.agendamentoSelecionado = agendamento;
+      this.$emit('ver-detalhes', agendamento);
     },
     formatarData(d) {
       return `${String(d.dia).padStart(2, '0')}/${String(d.mes).padStart(2, '0')}/${d.ano}`;
@@ -298,3 +293,4 @@ export default {
   }
 }
 </style>
+

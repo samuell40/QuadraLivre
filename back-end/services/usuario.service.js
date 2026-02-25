@@ -72,6 +72,22 @@ async function atualizarUsuario(user) {
 }
 
 async function getUsuarios() {
+  let cadastroPorUsuarioId = new Map();
+
+  try {
+    const linhasCadastro = await prisma.$queryRawUnsafe(
+      'SELECT "id", "createdAt" FROM "Usuario"'
+    );
+
+    if (Array.isArray(linhasCadastro)) {
+      cadastroPorUsuarioId = new Map(
+        linhasCadastro.map(item => [Number(item.id), item.createdAt || null])
+      );
+    }
+  } catch (error) {
+    cadastroPorUsuarioId = new Map();
+  }
+
   const usuarios = await prisma.usuario.findMany({
     where: {
       ativo: true,
@@ -149,6 +165,11 @@ async function getUsuarios() {
       ? new Date(Math.max(...datasAgendamentos.map(data => data.getTime())))
       : null;
 
+    const dataCadastro =
+      cadastroPorUsuarioId.get(Number(user.id)) ||
+      user.createdAt ||
+      null;
+
     if (user.jogador) {
       jogador = {
         id: user.jogador.id,
@@ -171,6 +192,7 @@ async function getUsuarios() {
       email: user.email,
       telefone: user.telefone,
       foto: user.foto,
+      dataCadastro,
       permissaoId: user.permissaoId,
       permissao: user.permissao,
       quadra: user.quadra,

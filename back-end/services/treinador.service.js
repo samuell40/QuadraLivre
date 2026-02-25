@@ -1,54 +1,68 @@
-const { PrismaClient } = require('@prisma/client');
+﻿const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { enviarEmailVinculoTreinador } = require('./email.service');
 
 async function tornarUsuarioTreinador(usuarioId, timeId) {
-  // garante que usuário existe
+  // garante que usuario existe
   const usuario = await prisma.usuario.findUnique({
     where: { id: usuarioId },
+    select: {
+      id: true,
+      nome: true,
+      email: true,
+    },
   });
 
   if (!usuario) {
-    throw new Error('Usuário não encontrado');
+    throw new Error('Usuario nao encontrado');
   }
 
   // garante que o time existe
   const time = await prisma.time.findUnique({
     where: { id: timeId },
+    include: {
+      modalidade: true,
+    },
   });
 
   if (!time) {
-    throw new Error('Time não encontrado');
+    throw new Error('Time nao encontrado');
   }
 
-  // remove vínculos antigos do usuário
+  // remove vinculos de jogador do usuario ao promover para treinador
   await prisma.usuarioTime.deleteMany({
     where: { usuarioId },
   });
 
-  await prisma.treinadorTime.deleteMany({
-    where: { usuarioId },
+  // Mantem vinculos anteriores do treinador e aplica apenas no time selecionado.
+  // Cada time continua com apenas 1 treinador (timeId unico).
+  const treinadorTime = await prisma.$transaction(async (tx) => {
+    await tx.usuario.update({
+      where: { id: usuarioId },
+      data: {
+        permissaoId: 5,
+      },
+    });
+
+    return tx.treinadorTime.upsert({
+      where: { timeId },
+      update: {
+        usuarioId,
+        ativo: true,
+        deletedAt: null,
+      },
+      create: {
+        usuarioId,
+        timeId,
+      },
+    });
   });
 
-  // remove treinador antigo do time (1 treinador por time)
-  await prisma.treinadorTime.deleteMany({
-    where: { timeId },
-  });
-
-  // atualiza permissão para treinador (5)
-  await prisma.usuario.update({
-    where: { id: usuarioId },
-    data: {
-      permissaoId: 5,
-    },
-  });
-
-  // cria vínculo treinador ↔ time
-  const treinadorTime = await prisma.treinadorTime.create({
-    data: {
-      usuarioId,
-      timeId,
-    },
-  });
+  try {
+    await enviarEmailVinculoTreinador(usuario, time);
+  } catch (erroEmail) {
+    console.error('Erro ao enviar email de vinculacao de treinador:', erroEmail);
+  }
 
   return treinadorTime;
 }

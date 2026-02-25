@@ -470,18 +470,24 @@ export default {
 
   .conteudo {
     margin-left: 0 !important;
-    padding: 80px 20px 20px 20px !important;
+    padding: 12px 20px 20px 20px !important;
     width: 100%;
     box-sizing: border-box;
   }
 
   .titulo {
-    margin-top: 10px;
+    margin-top: 0;
     margin-bottom: 20px;
+    padding-left: 52px;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
   }
 
   .titulo h1 {
     font-size: 24px;
+    margin: 0;
+    line-height: 1.2;
   }
 
   .quadras-grid {

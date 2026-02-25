@@ -200,6 +200,12 @@ export default {
   color: white;
   font-weight: bold;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  min-height: 40px;
+  line-height: 1.1;
 }
 
 .search-container {
@@ -322,36 +328,60 @@ export default {
 @media (max-width: 768px) {
   .conteudo {
     margin-left: 0;
-    padding: 80px 20px 20px 20px;
+    padding: 12px 20px 20px 20px !important;
     width: 100%;
     box-sizing: border-box;
   }
 
   .header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: nowrap;
     margin-bottom: 15px;
   }
 
   .title {
     font-size: 24px;
-    margin-top: 0;
+    line-height: 1.2;
+    margin: 0;
+    padding-left: 52px;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
   }
 
   .botoes {
-    width: 100%;
+    width: auto;
+    flex-shrink: 0;
   }
 
   .btn-add {
-    width: 100%;
-    padding: 12px;
+    width: auto;
+    min-height: 40px;
+    min-width: 126px;
+    padding: 9px 12px;
+    font-size: 14px;
+    border-radius: 14px;
     text-align: center;
   }
 
   .lista-modalidades {
     grid-template-columns: 1fr;
     gap: 15px;
+  }
+}
+
+@media (max-width: 420px) {
+  .btn-add {
+    min-height: 38px;
+    min-width: 116px;
+    padding: 8px 10px;
+    font-size: 13px;
+    border-radius: 10px;
   }
 }
 </style>

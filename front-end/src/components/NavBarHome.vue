@@ -102,6 +102,7 @@
 <script>
 import router from '@/router'
 import Swal from 'sweetalert2'
+import { redirecionarMesarioPosLogin } from '@/utils/quadraPlayMesarioRedirect'
 
 const QUADRA_PLAY_LOGIN_KEY = 'quadraPlayLoginAtivo'
 
@@ -146,7 +147,7 @@ export default {
         `width=${width},height=${height},left=${left},top=${top}`
       )
 
-      const listener = event => {
+      const listener = async event => {
         if (event.origin !== 'https://quadra-livre.vercel.app') return
 
         const { token, erro, email, usuario } = event.data
@@ -178,8 +179,9 @@ export default {
           if ([1, 2].includes(usuario.permissaoId)) {
             router.push({ name: 'Dashboard' })
           } else if (usuario.permissaoId === 4) {
-            router.push({ name: 'gerenciar_partida' })
-          } else if (usuario.permissaoId === 3) {
+            localStorage.setItem(QUADRA_PLAY_LOGIN_KEY, '1')
+            await redirecionarMesarioPosLogin(router)
+          } else if ([3, 5].includes(usuario.permissaoId)) {
             if (quadraSelecionada) {
               router.push({
                 name: 'agendar_quadra',
@@ -213,7 +215,7 @@ export default {
         `width=${width},height=${height},left=${left},top=${top}`
       )
 
-      const listener = event => {
+      const listener = async event => {
         if (event.origin !== 'https://quadra-livre.vercel.app') return
 
         const { token, erro, email, usuario } = event.data
@@ -240,8 +242,8 @@ export default {
             router.push({ name: 'TelaInicial' })
           } else if (usuario.permissaoId === 4) {
             localStorage.setItem(QUADRA_PLAY_LOGIN_KEY, '1')
-            router.push({ name: 'gerenciar_partida' })
-          } else if (usuario.permissaoId === 3) {
+            await redirecionarMesarioPosLogin(router)
+          } else if ([3, 5].includes(usuario.permissaoId)) {
             localStorage.removeItem(QUADRA_PLAY_LOGIN_KEY)
             Swal.fire({
               icon: 'warning',

@@ -45,7 +45,7 @@ async function enviarEmailNovaModalidade(dev, modalidadeNome) {
 }
 
 async function enviarEmailAlteracaoPermissao(usuario) {
-  if (![1, 2].includes(usuario.permissaoId)) return;
+  if (![1, 2, 4].includes(usuario.permissaoId)) return;
 
   const descricaoFormatada = formatarPermissao(usuario.permissao.descricao);
 
@@ -119,6 +119,89 @@ async function enviarEmailVinculoTime(usuario, time, jogador) {
   })
 }
 
+async function enviarEmailVinculoMesarioCampeonato(mesario, campeonato) {
+  if (!mesario?.email) return;
+
+  const nomeMesario = mesario?.nome || 'Mesario';
+  const nomeCampeonato = campeonato?.nome || 'Campeonato';
+  const nomeModalidade = campeonato?.modalidade?.nome || '';
+  const nomeQuadra = campeonato?.quadra?.nome || '';
+
+  const blocoModalidade = nomeModalidade
+    ? `<p style="margin: 8px 0; font-size: 16px; line-height: 1.5;">
+         Modalidade: <strong>${nomeModalidade}</strong>
+       </p>`
+    : '';
+
+  const blocoQuadra = nomeQuadra
+    ? `<p style="margin: 8px 0; font-size: 16px; line-height: 1.5;">
+         Quadra: <strong>${nomeQuadra}</strong>
+       </p>`
+    : '';
+
+  const html = `
+  <div style="font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px;">
+    <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 10px; color: #333; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
+      <h2 style="color: #3b82f6; margin-top: 0; font-size: 24px;">Ola, ${nomeMesario}!</h2>
+      <p style="margin: 12px 0; font-size: 18px; line-height: 1.5;">
+        Voce foi vinculado como <strong>Mesario</strong> ao campeonato <strong>${nomeCampeonato}</strong>.
+      </p>
+
+      ${blocoModalidade}
+      ${blocoQuadra}
+
+      <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
+        Atenciosamente,<br/>Equipe QuadraLivre
+      </p>
+    </div>
+  </div>
+  `;
+
+  return enviarEmail({
+    to: mesario.email,
+    subject: 'Vinculacao de mesario em campeonato',
+    html
+  });
+}
+
+async function enviarEmailVinculoTreinador(usuario, time) {
+  if (!usuario?.email) return;
+
+  const nomeUsuario = usuario?.nome || 'Usuario';
+  const nomeTime = time?.nome || 'Time';
+  const nomeModalidade = time?.modalidade?.nome || '';
+
+  const blocoModalidade = nomeModalidade
+    ? `<p style="margin: 8px 0; font-size: 16px; line-height: 1.5;">
+         Modalidade: <strong>${nomeModalidade}</strong>
+       </p>`
+    : '';
+
+  const html = `
+  <div style="font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px;">
+    <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 10px; color: #333; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
+      <h2 style="color: #3b82f6; margin-top: 0; font-size: 24px;">Ola, ${nomeUsuario}!</h2>
+      <p style="margin: 12px 0; font-size: 18px; line-height: 1.5;">
+        Sua permissao foi atualizada para <strong>Treinador</strong> e voce foi vinculado ao time
+        <strong>${nomeTime}</strong>.
+      </p>
+
+      ${blocoModalidade}
+
+      <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
+        Atenciosamente,<br/>Equipe QuadraLivre
+      </p>
+    </div>
+  </div>
+  `;
+
+  return enviarEmail({
+    to: usuario.email,
+    subject: 'Vinculacao como treinador',
+    html
+  });
+}
+
 async function enviarEmailStatusAgendamento(agendamento) {
   const statusFormatado = agendamento.status === 'Confirmado' ? 'confirmado' : 'recusado';
 
@@ -187,4 +270,13 @@ async function enviarEmailNovoAviso(emailsDestinatarios, aviso) {
   });
 }
 
-module.exports = { enviarEmail, enviarEmailNovaModalidade, enviarEmailAlteracaoPermissao, enviarEmailVinculoTime, enviarEmailStatusAgendamento, enviarEmailNovoAviso };
+module.exports = {
+  enviarEmail,
+  enviarEmailNovaModalidade,
+  enviarEmailAlteracaoPermissao,
+  enviarEmailVinculoTime,
+  enviarEmailVinculoMesarioCampeonato,
+  enviarEmailVinculoTreinador,
+  enviarEmailStatusAgendamento,
+  enviarEmailNovoAviso
+};

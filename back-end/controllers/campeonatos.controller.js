@@ -130,6 +130,56 @@ async function atualizarCampeonatoController(req, res) {
   }
 }
 
+async function listarCampeonatosEmAndamentoMesarioController(req, res) {
+  try {
+    const usuarioId = Number(req.user?.id);
+
+    if (!usuarioId) {
+      return res.status(401).json({ error: 'Usuario nao autenticado.' });
+    }
+
+    const campeonatos = await campeonatoService.listarCampeonatosEmAndamentoMesario(usuarioId);
+    return res.status(200).json(campeonatos);
+  } catch (error) {
+    console.error('Erro ao listar campeonatos do mesario:', error);
+    return res.status(500).json({ error: 'Erro ao listar campeonatos do mesario.' });
+  }
+}
+
+async function listarMesariosCampeonatoController(req, res) {
+  try {
+    const permissaoId = Number(req.user?.permissaoId);
+    if (![1, 2].includes(permissaoId)) {
+      return res.status(403).json({ error: 'Sem permissao para listar mesarios do campeonato.' });
+    }
+
+    const campeonatoId = Number(req.params.id);
+    const dados = await campeonatoService.listarMesariosCampeonato(campeonatoId);
+    return res.status(200).json(dados);
+  } catch (error) {
+    console.error('Erro ao listar mesarios do campeonato:', error);
+    return res.status(400).json({ error: error.message || 'Erro ao listar mesarios do campeonato.' });
+  }
+}
+
+async function atualizarMesariosCampeonatoController(req, res) {
+  try {
+    const permissaoId = Number(req.user?.permissaoId);
+    if (![1, 2].includes(permissaoId)) {
+      return res.status(403).json({ error: 'Sem permissao para atualizar mesarios do campeonato.' });
+    }
+
+    const campeonatoId = Number(req.params.id);
+    const mesariosIds = Array.isArray(req.body?.mesariosIds) ? req.body.mesariosIds : [];
+
+    const dados = await campeonatoService.atualizarMesariosCampeonato(campeonatoId, mesariosIds);
+    return res.status(200).json(dados);
+  } catch (error) {
+    console.error('Erro ao atualizar mesarios do campeonato:', error);
+    return res.status(400).json({ error: error.message || 'Erro ao atualizar mesarios do campeonato.' });
+  }
+}
+
 async function finalizarCampeonatoController(req, res) {
   try {
     const { id } = req.params;
@@ -227,6 +277,9 @@ module.exports = {
   removerCampeonatoController,
   listarCampeonatosPorModalidadeController,
   listarCampeonatosAnoAtualController,
+  listarCampeonatosEmAndamentoMesarioController,
+  listarMesariosCampeonatoController,
+  atualizarMesariosCampeonatoController,
   artilhariaCampeonatoController,
   listarCampeonatoPorIdController,
   atualizarCampeonatoController,

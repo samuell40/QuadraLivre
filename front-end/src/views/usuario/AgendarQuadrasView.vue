@@ -256,6 +256,47 @@ export default {
         return;
       }
 
+      if (agendamentoDoModal.fixo && Array.isArray(agendamentoDoModal.lote)) {
+        const loteFormatado = agendamentoDoModal.lote.map(item => ({
+          ...item,
+          usuarioId: authStore.usuario.id,
+          quadraId: this.quadraSelecionada.id
+        }));
+
+        try {
+          Swal.fire({
+            title: "Processando agenda fixa...",
+            html: "Isso pode levar alguns segundos.",
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+          });
+
+          await api.post("/agendamentos/fixos", {
+            lote: loteFormatado,
+            usuarioId: authStore.usuario.id
+          });
+
+          Swal.fire({
+            icon: "success",
+            title: "Agenda fixa salva!",
+            text: `Os horários fixos da quadra ${this.quadraSelecionada.nome} foram atualizados com sucesso.`,
+            confirmButtonColor: "#1E3A8A"
+          });
+
+          this.mostrarModalAgendamento = false;
+        } catch (err) {
+          const msgErro = err.response?.data?.error || err.response?.data?.message || "Não foi possível processar os agendamentos fixos.";
+          Swal.fire({
+            icon: "error",
+            title: "Erro ao salvar agenda fixa",
+            text: msgErro,
+            confirmButtonColor: "#1E3A8A"
+          });
+        }
+
+        return;
+      }
+
       const agendamento = {
         ...agendamentoDoModal,
         usuarioId: authStore.usuario.id,

@@ -1,13 +1,13 @@
-<template>
+﻿<template>
   <div class="modal-overlay" @click.self="$emit('fechar')">
     <div class="modal-content">
       <div class="modal-header">
         <h2 class="titulo_h2">Detalhes do Agendamento</h2>
-        <span class="badge-tipo">{{ agendamento.tipo}}</span>
+        <span class="badge-tipo">{{ agendamento.tipo }}</span>
       </div>
 
       <div class="detalhes-box">
-        <p><strong>Realizado por:</strong> {{ agendamento.usuario?.nome || 'Usuário desconhecido' }}</p>
+        <p><strong>Realizado por:</strong> {{ obterNomeUsuario(agendamento) }}</p>
 
         <p>
           <strong>Data:</strong> {{ formatarDataHora(agendamento) }}
@@ -15,7 +15,7 @@
 
         <p><strong>Duração:</strong> {{ agendamento.duracao }} hora(s)</p>
 
-        <p><strong>Time:</strong> {{ agendamento.time?.nome || 'Não vinculado' }}</p>
+        <p><strong>Time:</strong> {{ obterNomeTime(agendamento) }}</p>
         <p><strong>Código de Verificação:</strong> {{ agendamento.codigoVerificacao || 'N/A' }}</p>
 
         <div v-if="agendamento.motivoRecusa" class="alerta-recusa">
@@ -30,34 +30,59 @@
 
 <script>
 export default {
-  name: "DetalheAgendModal",
+  name: 'DetalheAgendModal',
   props: {
     agendamento: { type: Object, required: true }
   },
   methods: {
+    normalizarTextoExibicao(texto) {
+      if (typeof texto !== 'string') return texto
+      return texto
+        .replace(/NÃ£o/g, 'Não')
+        .replace(/N�o/g, 'Não')
+        .replace(/UsuÃ¡rio/g, 'Usuário')
+    },
+
+    obterNomeUsuario(ag) {
+      if (ag?.usuario?.nome) return this.normalizarTextoExibicao(ag.usuario.nome)
+      if (typeof ag?.usuario === 'string' && ag.usuario.trim()) return this.normalizarTextoExibicao(ag.usuario)
+      if (typeof ag?.usuarioNome === 'string' && ag.usuarioNome.trim()) return this.normalizarTextoExibicao(ag.usuarioNome)
+      return 'Usuário desconhecido'
+    },
+
+    obterNomeTime(ag) {
+      if (ag?.time?.nome) return this.normalizarTextoExibicao(ag.time.nome)
+      if (typeof ag?.time === 'string' && ag.time.trim()) return this.normalizarTextoExibicao(ag.time)
+      if (typeof ag?.timeNome === 'string' && ag.timeNome.trim()) return this.normalizarTextoExibicao(ag.timeNome)
+      return 'Não vinculado'
+    },
+
     formatarDataHora(ag) {
       if (ag.datahora) {
-        const dataObj = new Date(ag.datahora);
-
-        return dataObj.toLocaleDateString('pt-BR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
-        }) + ' às ' + dataObj.toLocaleTimeString('pt-BR', {
-          hour: '2-digit',
-          minute: '2-digit'
-        });
+        const dataObj = new Date(ag.datahora)
+        return (
+          dataObj.toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          }) +
+          ' às ' +
+          dataObj.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        )
       }
 
-      const dia = String(ag.dia).padStart(2, '0');
-      const mes = String(ag.mes).padStart(2, '0');
-      const ano = ag.ano;
-      const hora = String(ag.hora).padStart(2, '0');
+      const dia = String(ag.dia).padStart(2, '0')
+      const mes = String(ag.mes).padStart(2, '0')
+      const ano = ag.ano
+      const hora = String(ag.hora).padStart(2, '0')
 
-      return `${dia}/${mes}/${ano} às ${hora}:00`;
+      return `${dia}/${mes}/${ano} às ${hora}:00`
     }
   }
-};
+}
 </script>
 
 <style scoped>

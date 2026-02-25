@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { enviarEmailVinculoMesarioCampeonato } = require('./email.service');
 
 const CRITERIOS_MODALIDADE = {
   futebol: [
@@ -326,6 +327,179 @@ async function listarCampeonatosAnoAtual() {
     ...c,
     criteriosClassificacao: c.ordemClassificacao || []
   }));
+}
+
+function extrairMesariosVinculados(regras) {
+  if (!regras || typeof regras !== 'object') return [];
+  const ids = Array.isArray(regras.mesariosVinculados) ? regras.mesariosVinculados : [];
+
+  return ids
+    .map(id => Number(id))
+    .filter(id => Number.isInteger(id) && id > 0);
+}
+
+async function listarCampeonatosEmAndamentoMesario(usuarioId) {
+  const id = Number(usuarioId);
+
+  if (!id) {
+    throw new Error('usuarioId invalido');
+  }
+
+  const usuario = await prisma.usuario.findUnique({
+    where: { id },
+    select: { permissaoId: true, ativo: true, deletedAt: true }
+  });
+
+  if (!usuario || !usuario.ativo || usuario.deletedAt) {
+    throw new Error('Usuario nao encontrado');
+  }
+
+  if (Number(usuario.permissaoId) !== 4) {
+    return [];
+  }
+
+  const campeonatosEmAndamento = await prisma.campeonato.findMany({
+    where: {
+      ativo: true,
+      deletedAt: null,
+      status: 'EM_ANDAMENTO'
+    },
+    include: {
+      modalidade: true,
+      quadra: true
+    },
+    orderBy: { dataInicio: 'desc' }
+  });
+
+  const campeonatosVinculados = campeonatosEmAndamento.filter(campeonato =>
+    extrairMesariosVinculados(campeonato.regras).includes(id)
+  );
+
+  return campeonatosVinculados;
+}
+
+async function listarMesariosCampeonato(campeonatoId) {
+  const id = Number(campeonatoId);
+  if (!id) {
+    throw new Error('ID do campeonato invalido.');
+  }
+
+  const campeonato = await prisma.campeonato.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      regras: true
+    }
+  });
+
+  if (!campeonato) {
+    throw new Error('Campeonato nao encontrado.');
+  }
+
+  const vinculadosIds = extrairMesariosVinculados(campeonato.regras);
+
+  const mesarios = await prisma.usuario.findMany({
+    where: {
+      permissaoId: 4,
+      ativo: true,
+      deletedAt: null
+    },
+    select: {
+      id: true,
+      nome: true,
+      email: true,
+      foto: true
+    },
+    orderBy: { nome: 'asc' }
+  });
+
+  return {
+    mesarios,
+    vinculadosIds
+  };
+}
+
+async function atualizarMesariosCampeonato(campeonatoId, mesariosIds = []) {
+  const id = Number(campeonatoId);
+  if (!id) {
+    throw new Error('ID do campeonato invalido.');
+  }
+
+  const campeonato = await prisma.campeonato.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      nome: true,
+      regras: true,
+      modalidade: {
+        select: { nome: true }
+      },
+      quadra: {
+        select: { nome: true }
+      }
+    }
+  });
+
+  if (!campeonato) {
+    throw new Error('Campeonato nao encontrado.');
+  }
+
+  const idsVinculadosAntes = extrairMesariosVinculados(campeonato.regras);
+  const idsLimpos = [...new Set((Array.isArray(mesariosIds) ? mesariosIds : [])
+    .map(valor => Number(valor))
+    .filter(valor => Number.isInteger(valor) && valor > 0))];
+
+  let mesariosValidos = [];
+  if (idsLimpos.length > 0) {
+    mesariosValidos = await prisma.usuario.findMany({
+      where: {
+        id: { in: idsLimpos },
+        permissaoId: 4,
+        ativo: true,
+        deletedAt: null
+      },
+      select: {
+        id: true,
+        nome: true,
+        email: true
+      }
+    });
+
+    if (mesariosValidos.length !== idsLimpos.length) {
+      throw new Error('Um ou mais usuarios informados nao sao mesarios validos.');
+    }
+  }
+
+  const regrasBase = (campeonato.regras && typeof campeonato.regras === 'object')
+    ? campeonato.regras
+    : {};
+
+  const regrasAtualizadas = {
+    ...regrasBase,
+    mesariosVinculados: idsLimpos
+  };
+
+  await prisma.campeonato.update({
+    where: { id },
+    data: { regras: regrasAtualizadas }
+  });
+
+  const novosVinculosIds = idsLimpos.filter(idMesario => !idsVinculadosAntes.includes(idMesario));
+  if (novosVinculosIds.length > 0) {
+    const mesariosNovos = mesariosValidos.filter(item => novosVinculosIds.includes(Number(item.id)));
+    const envios = mesariosNovos.map(mesario =>
+      enviarEmailVinculoMesarioCampeonato(mesario, campeonato)
+    );
+
+    const resultadosEnvio = await Promise.allSettled(envios);
+    resultadosEnvio.forEach((resultado) => {
+      if (resultado.status === 'rejected') {
+        console.error('Erro ao enviar email de vinculo de mesario no campeonato:', resultado.reason);
+      }
+    });
+  }
+
+  return listarMesariosCampeonato(id);
 }
 
 async function listarArtilhariaCampeonato(campeonatoId, limite = 5) {
@@ -710,6 +884,9 @@ module.exports = {
   removerCampeonato,
   listarCampeonatosPorModalidade,
   listarCampeonatosAnoAtual,
+  listarCampeonatosEmAndamentoMesario,
+  listarMesariosCampeonato,
+  atualizarMesariosCampeonato,
   listarArtilhariaCampeonato,
   getCampeonatoById,
   atualizarDadosCampeonato,

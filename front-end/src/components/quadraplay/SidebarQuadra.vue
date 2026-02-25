@@ -32,7 +32,7 @@
           <span>Campeonatos</span>
         </a>
 
-        <a href="/gerenciartimes" :class="{ active: isActive('/gerenciartimes') }">
+        <a v-if="!isPermissao4" href="/gerenciartimes" :class="{ active: isActive('/gerenciartimes') }">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people-fill"
             viewBox="0 0 16 16">
             <path
@@ -40,7 +40,7 @@
           </svg>
           <span>Gerenciar Times</span>
         </a>
-        <a href="/gerenciartimes" :class="{ active: isActive('/gerenciartimes') }">
+        <a v-if="!isPermissao4" href="/gerenciartimes" :class="{ active: isActive('/gerenciartimes') }">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
             class="bi bi-card-checklist" viewBox="0 0 16 16">
             <path

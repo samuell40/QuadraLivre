@@ -8,7 +8,7 @@
       <div class="conteudo" :class="{ collapsed: sidebarCollapsed }">
         <div class="header-campeonatos">
           <h2 class="title">Campeonatos</h2>
-          <button class="btn-add" @click="abrirModalAdicionarCampeonato">
+          <button v-if="!isMesario" class="btn-add" @click="abrirModalAdicionarCampeonato">
             Adicionar Campeonato
           </button>
         </div>
@@ -36,7 +36,7 @@
             @click="abrirCampeonato(campeonato)">
 
             <div class="status-badge" :class="classeStatus(campeonato.status)"
-              @click.stop="abrirModalStatus(campeonato)">
+              @click.stop="!isMesario && abrirModalStatus(campeonato)">
               {{ rotuloStatus(campeonato.status) }}
             </div>
 
@@ -81,7 +81,7 @@
 import { useCampeonatoStore } from '@/storecampeonato';
 import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
 import SidebarQuadra from '@/components/quadraplay/SidebarQuadra.vue'
-import AdicionarCampeonatoModal from '@/components/modals/Campeonatos/AdicionarCampeonatoModal.vue';
+import AdicionarCampeonatoModal from '@/components/quadraplay/Campeonatos/AdicionarCampeonatoModal.vue';
 import router from '@/router';
 import api from '@/axios'
 
@@ -97,7 +97,9 @@ export default {
   data() {
     return {
       sidebarCollapsed: false,
+      usuarioLogado: null,
       campeonatos: [],
+      campeonatosMesario: [],
       isLoading: false,
       modalidadesDisponiveis: [],
       modalidadeSelecionada: null,
@@ -110,15 +112,37 @@ export default {
     }
   },
 
+  computed: {
+    isMesario() {
+      return Number(this.usuarioLogado?.permissaoId) === 4
+    }
+  },
+
   mounted() {
+    try {
+      this.usuarioLogado = JSON.parse(localStorage.getItem('usuario') || 'null')
+    } catch (error) {
+      this.usuarioLogado = null
+    }
+
+    if (this.isMesario) {
+      this.carregarCampeonatosMesario()
+      return
+    }
+
     this.carregarModalidades()
   },
 
   watch: {
     modalidadeSelecionada() {
+      if (this.isMesario) {
+        this.aplicarFiltroCampeonatosMesario()
+        return
+      }
       this.carregarCampeonatos()
     },
     anoSelecionado() {
+      if (this.isMesario) return
       this.carregarCampeonatos()
     }
   },
@@ -141,6 +165,9 @@ export default {
 
     selecionarModalidade(id) {
       this.modalidadeSelecionada = id
+      if (this.isMesario) {
+        this.aplicarFiltroCampeonatosMesario()
+      }
     },
     rotuloStatus(status) {
       if (status === 'FINALIZADO') return 'Finalizado'
@@ -189,6 +216,11 @@ export default {
     },
 
     async carregarCampeonatos() {
+      if (this.isMesario) {
+        this.aplicarFiltroCampeonatosMesario()
+        return
+      }
+
       this.isLoading = true
 
       try {
@@ -213,6 +245,44 @@ export default {
         this.isLoading = false
       }
     },
+
+    aplicarFiltroCampeonatosMesario() {
+      const base = Array.isArray(this.campeonatosMesario) ? this.campeonatosMesario : []
+
+      if (!this.modalidadeSelecionada) {
+        this.campeonatos = [...base]
+        return
+      }
+
+      this.campeonatos = base.filter(c => Number(c?.modalidadeId) === Number(this.modalidadeSelecionada))
+    },
+
+    async carregarCampeonatosMesario() {
+      this.isLoading = true
+      try {
+        const { data } = await api.get('/campeonatos/mesario/andamento')
+        this.campeonatosMesario = Array.isArray(data) ? data : []
+
+        const modalidadesMap = new Map()
+        this.campeonatosMesario.forEach(campeonato => {
+          const modalidadeId = Number(campeonato?.modalidadeId)
+          const modalidadeNome = campeonato?.modalidade?.nome
+          if (modalidadeId && modalidadeNome && !modalidadesMap.has(modalidadeId)) {
+            modalidadesMap.set(modalidadeId, { id: modalidadeId, nome: modalidadeNome })
+          }
+        })
+
+        this.modalidadesDisponiveis = Array.from(modalidadesMap.values())
+        this.aplicarFiltroCampeonatosMesario()
+      } catch (err) {
+        console.error('Erro ao carregar campeonatos do mesario:', err)
+        this.campeonatosMesario = []
+        this.campeonatos = []
+        this.modalidadesDisponiveis = []
+      } finally {
+        this.isLoading = false
+      }
+    }
   }
 }
 </script>

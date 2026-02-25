@@ -1,11 +1,18 @@
-<template>
+﻿<template>
   <div class="layout">
     <SideBar />
     <div class="conteudo">
       <h1 class="title">Usuarios</h1>
       <NavBarUse />
-      <input type="text" placeholder="Digite o nome do usuÃ¡rio..." v-model="busca" class="input-busca"
-        :disabled="isLoading" />
+      <div class="input-busca-wrapper">
+        <svg xmlns="http://www.w3.org/2000/svg" class="input-busca-icone" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" placeholder="Digite o nome do usuario..." v-model="busca" class="input-busca"
+          :disabled="isLoading" />
+      </div>
 
       <div v-if="isLoading" class="loader-container-centralizado">
         <div class="loader"></div>
@@ -16,12 +23,16 @@
           <div class="card" v-for="usuario in usuariosFiltrados" :key="usuario.id">
             <div class="card-conteudo">
               <div class="foto">
-                <img :src="usuario.foto" alt="Foto do usuÃ¡rio" />
+                <img :src="usuario.foto" alt="Foto do usuario" />
               </div>
 
               <div class="info">
-                <h2>{{ usuario.nome }}</h2>
-                <p>{{ usuario.permissao?.descricao }}</p>
+                <div class="info-header">
+                  <h2>{{ usuario.nome }}</h2>
+                  <div class="badge-permissao badge-permissao-lista">
+                    <span>{{ String(usuario.permissao?.descricao || 'Sem permissao').toUpperCase() }}</span>
+                  </div>
+                </div>
                 <p class="detalhe-contato">
                   <span>{{ usuario.email }}</span>
                   <svg v-if="usuario.email" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
@@ -52,7 +63,7 @@
               <button class="btn-editar" @click="editarUsuario(usuario)">
                 {{ usuarioLogado.permissaoId === 2
                   ? 'Gerenciar Usuarios'
-                  : 'Alterar Permissões'
+                  : 'Alterar Permissoes'
                 }}
 
               </button>
@@ -61,40 +72,44 @@
             </div>
           </div>
         </div>
-        <p v-else class="sem-resultados">Nenhum usuÃ¡rio encontrado.</p>
+        <p v-else class="sem-resultados">Nenhum usuario encontrado.</p>
       </div>
     </div>
 
     <!-- Modal de detalhar -->
-    <div v-if="mostrarDetalhes" class="modal-overlay" @click.self="fecharDetalhes">
+    <div v-if="mostrarDetalhes" class="modal-overlay " @click.self="fecharDetalhes">
       <div class="modal-content modal-detalhes-user">
         <div class="modal-user-header">
           <div class="header-left">
             <h2 class="modal-title">Detalhes do Usuario</h2>
           </div>
 
-          <button class="btn-close-x btn-close-x-user" @click="fecharDetalhes">
+          <button class="btn-close-x btn-close-x-user" @click="fecharDetalhes" aria-label="Fechar detalhes">
             x
           </button>
         </div>
-        <div class="user-profile">
-          <div class="avatar-wrap">
-            <img class="avatar-lg" :src="usuarioSelecionado.foto" />
+
+        <div class="user-top-grid">
+          <div class="user-profile">
+            <div class="avatar-wrap">
+              <img class="avatar-lg" :src="usuarioSelecionado.foto" />
+            </div>
+
+            <div class="user-identity">
+              <div class="user-name">{{ usuarioSelecionado.nome }}</div>
+              <div class="badge-permissao">
+                <span>{{ permissaoSelecionadaLabel }}</span>
+              </div>
+            </div>
           </div>
 
-          <div class="user-identity">
-            <div class="user-name">{{ usuarioSelecionado.nome }}</div>
-          </div>
-        </div>
-
-        <div class="user-grid">
-          <div class="info-card">
+          <div class="info-card contato-card">
             <div class="card-title">Contato</div>
 
             <div class="info-row">
               <div class="info-label">E-mail</div>
               <div class="info-value info-actions">
-                <span class="text-clip">{{ usuarioSelecionado.email || 'NÃ£o informado' }}</span>
+                <span class="text-clip">{{ usuarioSelecionado.email || 'Nao informado' }}</span>
 
                 <button v-if="usuarioSelecionado.email" class="icon-btn" @click="contatoGmail(usuarioSelecionado)">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 48 48">
@@ -113,49 +128,54 @@
             <div class="info-row">
               <div class="info-label">Telefone</div>
               <div class="info-value info-actions">
-                <span class="text-clip">{{ usuarioSelecionado.telefone || 'NÃ£o informado' }}</span>
+                <span class="text-clip">{{ usuarioSelecionado.telefone || 'Nao informado' }}</span>
 
                 <button v-if="usuarioSelecionado.telefone" class="icon-btn icon-btn-wa"
                   @click="contatoWhatsApp(usuarioSelecionado)">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#25D366" viewBox="0 0 16 16">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#25D366" viewBox="0 0 16 16">
                     <path
-                      d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326z" />
+                      d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232" />
                   </svg>
                 </button>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Perfil -->
-          <div class="info-card">
+        <div class="user-grid">
+
+          <div class="info-card perfil-card">
             <div class="card-title">Perfil</div>
 
-            <div class="info-row">
-              <div class="info-label">Permissões</div>
-              <div class="info-value">
-                {{ usuarioSelecionado.permissao?.descricao }}
+            <div class="perfil-highlight">
+              <div class="perfil-highlight-title">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="shield-icon">
+                  <path d="M12 2.75l7 3.1v5.1c0 4.06-2.45 7.86-7 10.3-4.55-2.44-7-6.24-7-10.3v-5.1l7-3.1z"
+                    stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+                  <path d="M9.4 12.3l1.7 1.7 3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+                <span>Perfil</span>
+              </div>
+
+              <div class="perfil-cadastro">
+                Cadastrado desde: <strong>{{ dataCadastroSelecionado }}</strong>
               </div>
             </div>
 
             <div class="info-row" v-if="usuarioSelecionado.permissaoId === 2">
               <div class="info-label">Quadra</div>
-              <div class="info-value">
-                {{ usuarioSelecionado.quadra?.nome || 'NÃ£o vinculada' }}
-              </div>
+              <div class="info-value">{{ usuarioSelecionado.quadra?.nome || 'Nao vinculada' }}</div>
             </div>
 
             <div class="info-row" v-if="usuarioSelecionado.permissaoId === 5">
               <div class="info-label">Times (Treinador)</div>
-              <div class="info-value">
-                {{usuarioSelecionado.timesComoTreinador?.map(t => t.nome).join(', ') || 'Nenhum'}}
-              </div>
+              <div class="info-value">{{ usuarioSelecionado.timesComoTreinador?.map(t => t.nome).join(', ') || 'Nenhum' }}</div>
             </div>
 
             <div class="info-row" v-if="usuarioSelecionado.permissaoId === 3">
               <div class="info-label">Times</div>
-              <div class="info-value">
-                {{usuarioSelecionado.times?.map(t => t.nome).join(', ') || 'Nenhum'}}
-              </div>
+              <div class="info-value">{{ usuarioSelecionado.times?.map(t => t.nome).join(', ') || 'Nenhum' }}</div>
             </div>
 
             <div class="info-row" v-if="usuarioSelecionado.permissaoId === 3 && usuarioSelecionado.jogador">
@@ -164,46 +184,32 @@
             </div>
           </div>
 
-          <!-- EstatÃ­sticas -->
           <div class="info-card stats-card">
             <div class="card-title">Estatisticas</div>
 
             <div class="stats-inline">
               <div class="stat">
-                <div class="stat-label">Agendamentos no mes</div>
-                <div class="stat-kpi">
-                  <span class="stat-value">{{ agendamentosNoMesSelecionado }}</span>
-                </div>
-              </div>
-
-              <div class="stat" v-if="usuarioSelecionado.permissaoId === 5">
-                <div class="stat-label">Times vinculados</div>
-                <div class="stat-kpi">
-                  <span class="stat-value">{{ totalTimesTreinadorSelecionado }}</span>
-                </div>
+                <span class="stat-label">Agendamentos no mes de {{ nomeMesAtual }}:</span>
+                <span class="stat-value">{{ agendamentosNoMesSelecionado }}</span>
               </div>
 
               <div class="stat">
-                <div class="stat-label">Ultima atividade</div>
-                <div class="stat-kpi stat-kpi-text">
-                  <span class="stat-text">{{ ultimaAtividadeSelecionado }}</span>
-                </div>
+                <span class="stat-label">Ultima atividade:</span>
+                <span class="stat-text">{{ ultimaAtividadeSelecionado }}</span>
               </div>
             </div>
           </div>
-
         </div>
 
-        <button class="btn-fechar btn-fechar-premium" @click="fecharDetalhes">
+        <button class="btn-fechar-premium" @click="fecharDetalhes">
           Fechar
         </button>
       </div>
     </div>
-    <!-- Modal de ediÃ§Ã£o -->
     <div v-if="mostrarEditar" class="modal-overlay">
       <div class="modal-content modal-content-edicao">
         <div class="modal-header-edicao">
-          <h2>Alterar PermissÃµes</h2>
+          <h2>Alterar Permissoes</h2>
           <button type="button" class="btn-close-x" @click="fecharEditar" :disabled="isSalvando"
             aria-label="Fechar modal">
             x
@@ -215,7 +221,6 @@
         </div>
 
         <div v-else>
-          <!-- ABAS DE PERMISSÃƒO -->
           <div class="abas-container">
             <div class="aba" v-for="p in permissoesFiltradas" :key="p.id" :class="{ ativa: form.permissaoId === p.id }"
               @click="form.permissaoId = p.id">
@@ -274,7 +279,7 @@
             </div>
             <!-- MESARIO -->
             <div class="campo" v-if="form.permissaoId === 4">
-              <strong>MesÃ¡rio:</strong>
+              <strong>Mesário:</strong>
             </div>
 
           </div>
@@ -383,18 +388,30 @@ export default {
       )
     },
 
+    permissaoSelecionadaLabel() {
+      return String(this.usuarioSelecionado?.permissao?.descricao || 'Sem permissao').toUpperCase()
+    },
+
+    dataCadastroSelecionado() {
+      const valor =
+        this.usuarioSelecionado?.dataCadastro ||
+        this.usuarioSelecionado?.createdAt ||
+        this.usuarioSelecionado?.criadoEm ||
+        null
+      return this.formatarDataExtenso(valor)
+    },
+
     agendamentosNoMesSelecionado() {
       return Number(this.usuarioSelecionado?.agendamentosNoMes || 0)
     },
 
-    ultimaAtividadeSelecionado() {
-      return this.formatarDataHora(this.usuarioSelecionado?.ultimaAtividade)
+    nomeMesAtual() {
+      const nomeMes = new Date().toLocaleDateString('pt-BR', { month: 'long' })
+      return nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)
     },
 
-    totalTimesTreinadorSelecionado() {
-      return Array.isArray(this.usuarioSelecionado?.timesComoTreinador)
-        ? this.usuarioSelecionado.timesComoTreinador.length
-        : 0
+    ultimaAtividadeSelecionado() {
+      return this.formatarDataHora(this.usuarioSelecionado?.ultimaAtividade)
     },
   },
 
@@ -440,6 +457,21 @@ export default {
       })
     },
 
+    formatarDataExtenso(data) {
+      if (!data) return 'Nao informado'
+
+      const dataObj = new Date(data)
+      if (Number.isNaN(dataObj.getTime())) return 'Nao informado'
+
+      const base = dataObj.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      })
+
+      return base.replace(/ de ([^ ]+)/, (_, mes) => ` de ${mes.charAt(0).toUpperCase()}${mes.slice(1)}`)
+    },
+
     async listarPermissoes() {
       const resPerm = await api.get('/permissoes')
       this.permissoes = resPerm.data
@@ -461,7 +493,7 @@ export default {
         const response = await api.get('/usuarios')
         this.usuarios = response.data || []
       } catch (error) {
-        console.error('Erro ao carregar usuÃ¡rios:', error)
+        console.error('Erro ao carregar usuários:', error)
         this.usuarios = []
       } finally {
         this.isLoading = false
@@ -484,6 +516,9 @@ export default {
         this.form.permissaoId = Number(usuario.permissaoId)
         this.form.quadra = usuario.quadra?.id ?? ''
         this.form.timeId = usuario.times?.[0]?.id || ''
+        if (this.form.permissaoId === 5) {
+          this.form.timeId = usuario.timesComoTreinador?.[0]?.id || ''
+        }
         this.form.jogadorId
 
         if (this.form.permissaoId === 3 && this.form.timeId) {
@@ -531,8 +566,8 @@ export default {
         if (!this.form.permissaoId) {
           await Swal.fire({
             icon: 'warning',
-            title: 'AtenÃ§Ã£o',
-            text: 'Selecione uma permissÃ£o vÃ¡lida.',
+            title: 'Atenção',
+            text: 'Selecione uma permissão válida.',
           })
           return
         }
@@ -540,7 +575,7 @@ export default {
         if (this.form.permissaoId === 2 && !this.form.quadra) {
           await Swal.fire({
             icon: 'warning',
-            title: 'AtenÃ§Ã£o',
+            title: 'Atenção',
             text: 'Administrador precisa estar vinculado a uma quadra.',
           })
           return
@@ -549,7 +584,7 @@ export default {
         if (this.form.permissaoId === 5 && !this.form.timeId) {
           await Swal.fire({
             icon: 'warning',
-            title: 'AtenÃ§Ã£o',
+            title: 'Atenção',
             text: 'Selecione um time para o treinador.',
           })
           return
@@ -576,7 +611,7 @@ export default {
           })
         }
 
-        Swal.fire('Sucesso', 'UsuÃ¡rio atualizado com sucesso!', 'success')
+        Swal.fire('Sucesso', 'Usuário atualizado com sucesso!', 'success')
         this.mostrarEditar = false
         this.carregarUsuarios()
       } catch (err) {
@@ -600,8 +635,8 @@ export default {
       if (!usuario.telefone) {
         Swal.fire({
           icon: 'warning',
-          title: 'AtenÃ§Ã£o',
-          text: 'UsuÃ¡rio nÃ£o possui telefone cadastrado.',
+          title: 'Atenção',
+          text: 'Usuário não possui telefone cadastrado.',
         })
         return
       }
@@ -615,8 +650,8 @@ export default {
       if (!usuario.email) {
         Swal.fire({
           icon: 'warning',
-          title: 'AtenÃ§Ã£o',
-          text: 'UsuÃ¡rio nÃ£o possui e-mail cadastrado.',
+          title: 'Atenção',
+          text: 'Usuário não possui e-mail cadastrado.',
         })
         return
       }
@@ -644,7 +679,7 @@ export default {
 
 .conteudo {
   flex: 1;
-  padding: 32px;
+  padding: 22px 24px;
   margin-left: 250px;
 }
 
@@ -652,7 +687,8 @@ export default {
   font-size: 30px;
   color: #3b82f6;
   font-weight: bold;
-  margin-top: 12px;
+  margin-top: 4px;
+  margin-bottom: 8px;
 }
 
 .SideBar {
@@ -665,21 +701,30 @@ export default {
   transition: transform 0.3s ease;
 }
 
-/* =========================
-   INPUTS MAIS "PREMIUM"
-   - borda suave
-   - foco azul + box-shadow leve
-   - altura consistente
-   ========================= */
+.input-busca-wrapper {
+  position: relative;
+  margin-top: 14px;
+  margin-bottom: 14px;
+}
 
-/* Busca */
+.input-busca-icone {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
 .input-busca {
-  padding: 12px 12px;
+  padding: 12px 12px 12px 42px;
   border: 1px solid rgba(15, 23, 42, 0.14);
   border-radius: 12px;
   width: 100%;
-  margin-top: 10px;
-  margin-bottom: 25px;
+  margin-top: 0;
+  margin-bottom: 0;
   font-size: 14px;
   color: #0f172a;
   background: #fff;
@@ -697,7 +742,10 @@ export default {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
 }
 
-/* Selects (globais) */
+.input-busca-wrapper:focus-within .input-busca-icone {
+  color: #3b82f6;
+}
+
 select {
   padding: 12px 12px;
   border: 1px solid rgba(15, 23, 42, 0.14);
@@ -765,12 +813,10 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
 }
 
-/* ========================= */
-
 .usuarios {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  gap: 14px;
 }
 
 .sem-resultados {
@@ -785,31 +831,39 @@ select:focus {
   flex-direction: column;
   background-color: white;
   border-radius: 12px;
-  padding: 20px;
-  gap: 15px;
+  padding: 14px;
+  gap: 8px;
+  min-height: 0;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
 .card-conteudo {
   display: flex;
   flex-direction: row;
-  gap: 20px;
+  gap: 14px;
   align-items: center;
   justify-content: space-between;
 }
 
 .foto {
-  flex: 0 0 100px;
+  flex: 0 0 92px;
+  width: 92px;
+  height: 92px;
   display: flex;
   justify-content: center;
   align-items: center;
+  border-radius: 999px;
+  padding: 4px;
+  background: linear-gradient(145deg, #90dcff 0%, #56b8ff 45%, #2e78f4 100%);
+  box-shadow: 0 0 0 2px #ebf6ff, 0 0 0 4px rgba(86, 184, 255, 0.30), 0 6px 14px rgba(45, 116, 229, 0.24);
 }
 
 .foto img {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  border: 2px solid #276ef1;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  border: 2px solid #d9eaff;
+  background: #d7dfec;
   object-fit: cover;
 }
 
@@ -820,23 +874,32 @@ select:focus {
   justify-content: center;
 }
 
+.info-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 1px;
+}
+
 .info h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   color: #333;
   font-weight: bold;
+  text-transform: uppercase;
 }
 
 .info p {
-  margin: 4px 0;
+  margin: 3px 0;
   color: #666;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .botoes {
   display: flex;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 8px;
+  margin-top: 6px;
   justify-content: flex-end;
 }
 
@@ -848,6 +911,7 @@ select:focus {
   border-radius: 20px;
   cursor: pointer;
   font-weight: bold;
+  transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .btn-editar {
@@ -1115,25 +1179,16 @@ select:focus {
   }
 }
 
-/* =========================
-   MODAL MASTER DETALHES USER
-   ========================= */
-
-/* =========================
-   MODAL - DETALHES USUÁRIO (MASTER)
-   ========================= */
-
 .modal-content.modal-detalhes-user {
-  width: min(980px, calc(100% - 24px));
-  max-height: calc(100vh - 72px);
+  width: min(840px, 90%);
+  max-height: calc(100vh - 96px);
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none;
-  background: #fff;
-  border-radius: 18px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.28);
-  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid #d4dced;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.24);
+  padding: 12px;
 }
 
 .modal-content.modal-detalhes-user::-webkit-scrollbar {
@@ -1141,64 +1196,68 @@ select:focus {
   height: 0;
 }
 
-/* header */
 .modal-user-header {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  border-bottom: 1px solid #dbe3f0;
   padding-bottom: 6px;
   margin-bottom: 6px;
 }
 
 .header-left {
   display: flex;
-  gap: 10px;
   align-items: center;
-  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .modal-title {
   margin: 0;
-  font-size: 32px;
+  font-size: 21px;
+  line-height: 32px;
   font-weight: 900;
-  color: #3b82f6;
+  color: #3873d7;
+  letter-spacing: 0.2px;
 }
 
-.badge-permissao {
+.btn-close-x-user {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(59, 130, 246, 0.55);
+  background: #fff;
+  color: #3b82f6;
+  cursor: pointer;
+  font-size: 17px;
+  line-height: 1;
   display: inline-flex;
   align-items: center;
-  line-height: 1;
-  padding: 7px 12px;
-  min-height: 30px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 900;
-  color: #2563eb;
-  background: #dbeafe;
-  white-space: nowrap;
-  transform: translateY(-6px);
+  justify-content: center;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-/* close */
-.btn-close-x-user {
-  width: 38px;
-  height: 38px;
-  border-radius: 999px;
-  border: 1px solid rgba(37, 99, 235, 0.4);
-  background: #fff;
-  color: #2563eb;
-  cursor: pointer;
-  font-size: 22px;
+.btn-close-x-user:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+  transform: translateY(-1px);
 }
 
-/* perfil */
+.user-top-grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 8px;
+  margin-top: 6px;
+}
+
 .user-profile {
   display: flex;
-  gap: 12px;
-  padding: 10px;
-  border-radius: 14px;
-  background: #f8fbff;
-  border: 1px solid rgba(59, 130, 246, 0.18);
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 12px;
+  background: #edf2fa;
+  border: 1px solid #c9d7ee;
 }
 
 .avatar-wrap {
@@ -1206,7 +1265,8 @@ select:focus {
   height: 76px;
   border-radius: 999px;
   padding: 3px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(145deg, #90dcff 0%, #56b8ff 45%, #2e78f4 100%);
+  box-shadow: 0 0 0 2px #ebf6ff, 0 0 0 4px rgba(86, 184, 255, 0.30), 0 6px 14px rgba(45, 116, 229, 0.24);
 }
 
 .avatar-lg {
@@ -1214,24 +1274,64 @@ select:focus {
   height: 100%;
   border-radius: 999px;
   object-fit: cover;
+  border: 2px solid #d9eaff;
+  background: #d7dfec;
+}
+
+.user-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .user-name {
   font-weight: 900;
-  font-size: 18px;
+  font-size: 17px;
+  line-height: 1.05;
+  text-transform: uppercase;
+  color: #202f4a;
 }
 
-.user-sub {
-  font-size: 13px;
-  color: #64748b;
-  overflow-wrap: anywhere;
+.badge-permissao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 12px;
+  min-height: 30px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #3b82f6;
+  background: #dbeafe;
+  border: 1px solid #bfdbfe;
+  white-space: nowrap;
+  box-shadow: none;
 }
 
-/* grid */
+.badge-permissao-panel {
+  margin-top: 8px;
+}
+
+.badge-permissao-lista {
+  margin: 0;
+  width: fit-content;
+  padding: 4px 9px;
+  min-height: 24px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.shield-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
 .user-grid {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 10px;
+  grid-template-columns: 1fr;
+  gap: 8px;
   margin-top: 8px;
 }
 
@@ -1240,43 +1340,83 @@ select:focus {
 }
 
 .info-card {
-  background: #fff;
-  border-radius: 14px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #d2dceb;
+  padding: 10px;
 }
 
 .card-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
-  margin-bottom: 8px;
+  color: #233556;
+  margin-bottom: 6px;
 }
 
-/* rows */
 .info-row {
   display: grid;
-  grid-template-columns: 140px 1fr;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  background: #f8fafc;
-  margin-bottom: 8px;
+  grid-template-columns: 124px 1fr;
+  gap: 6px;
+  padding: 7px 9px;
+  border-radius: 10px;
+  border: 1px solid #d9e2f0;
+  
+  margin-bottom: 6px;
+}
+
+.perfil-card .info-row:last-child {
+  margin-bottom: 0;
+}
+
+.contato-card .info-row:last-child {
+  margin-bottom: 0;
 }
 
 .info-label {
+  font-size: 14px;
   font-weight: 900;
+  color: #253a5b;
 }
 
 .info-value {
+  font-size: 14px;
   font-weight: 600;
+  color: #2e3f5b;
 }
 
-/* actions */
+.perfil-highlight {
+  border: 1px solid #d9e2f0;
+  border-radius: 10px;
+  padding: 7px 9px;
+  margin-bottom: 6px;
+}
+
+.perfil-highlight-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #2a3f62;
+  font-size: 15px;
+  font-weight: 700;
+  border-bottom: 1px solid #d4deee;
+  padding-bottom: 5px;
+}
+
+.perfil-cadastro {
+  margin-top: 6px;
+  color: #3f526f;
+  font-size: 14px;
+}
+
+.perfil-cadastro strong {
+  color: #25395b;
+  font-weight: 900;
+}
+
 .info-actions {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .text-clip {
@@ -1286,140 +1426,164 @@ select:focus {
 }
 
 .icon-btn {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  border: 1px solid rgba(15, 23, 42, 0.10);
-  background: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  border: 1px solid #cad6e9;
+  background: #ecf2fb;
   cursor: pointer;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .icon-btn:hover {
-  background: rgba(59, 130, 246, 0.08);
+  background: #e3ebf8;
 }
 
-/* stats */
 .stats-inline {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .stats-card .stat {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px;
-  border-radius: 12px;
-  background: #f8fbff;
-  min-width: 0;
+  justify-content: flex-start;
+  gap: 5px;
+  padding: 8px 9px;
+  border-radius: 10px;
+  border: 1px solid #dbe3f1;
 }
 
 .stat-label {
+  font-size: 14px;
   font-weight: 500;
-  color: #475569;
+  color: #445774;
 }
 
-.stat-kpi {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-end;
-  line-height: 1;
-}
-
-.stat-value {
-  font-size: 36px;
-  font-weight: 900;
-  line-height: 1;
-  color: #1e3a8a;
-}
-
-.stat-kpi-text {
-  line-height: 1.2;
-}
-
+.stat-value,
 .stat-text {
   font-size: 14px;
   font-weight: 700;
-  color: #1e293b;
-  text-align: right;
+  color: #233758;
 }
 
-/* footer */
 .btn-fechar-premium {
   width: 100%;
-  margin-top: 10px;
-  padding: 10px;
+  margin-top: 8px;
+  padding: 9px;
   border-radius: 999px;
-  font-weight: 900;
-  color: #fff;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  border: none;
+  font-weight: 800;
+  font-size: 15px;
+  background: #f5f7fb;
+  color:  #3b82f6;
+  border: 2px solid #3b82f6;
 }
+
 
 @media (max-width: 768px) {
   .modal-content.modal-detalhes-user {
     width: calc(100% - 12px);
-    max-height: calc(100vh - 36px);
-    padding: 12px 10px;
-    border-radius: 12px;
+    max-height: calc(100vh - 20px);
+    padding: 12px;
+    border-radius: 18px;
   }
 
   .modal-user-header {
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .header-left {
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
   }
 
   .modal-title {
     font-size: 24px;
+    line-height: 36px;
+  }
+
+  .btn-close-x-user {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
   }
 
   .user-profile {
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    text-align: center;
-    padding: 8px;
-    gap: 8px;
+    gap: 12px;
+  }
+
+  .user-top-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .avatar-wrap {
+    width: 94px;
+    height: 94px;
+    box-shadow: 0 0 0 3px #ebf6ff, 0 0 0 6px rgba(86, 184, 255, 0.35), 0 8px 20px rgba(45, 116, 229, 0.22);
+  }
+
+  .user-name {
+    font-size: 24px;
+  }
+
+  .user-identity {
+    min-width: 0;
+  }
+
+  .badge-permissao {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+  .badge-permissao-lista {
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .user-grid {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .info-card {
+    border-radius: 16px;
+    padding: 10px;
   }
 
   .info-row {
     grid-template-columns: 1fr;
-    gap: 4px;
+    gap: 6px;
+    padding: 10px;
+    border-radius: 12px;
   }
 
   .info-actions {
     grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
+    align-items: center;
+  }
+
+  .icon-btn {
+    width: 42px;
+    height: 42px;
+  }
+
+  .stats-inline {
+    grid-template-columns: 1fr;
     gap: 8px;
   }
 
   .stats-card .stat {
-    gap: 8px;
-    padding: 8px;
+    flex-wrap: wrap;
   }
 
-  .stat-kpi {
-    align-items: flex-start;
-  }
-
-  .stat-text {
-    text-align: left;
+  .btn-fechar-premium {
+    padding: 12px;
+    border-radius: 16px;
   }
 }
-
 @media (max-width: 768px) {
   .SideBar {
     transform: translateX(-100%);
@@ -1439,13 +1603,19 @@ select:focus {
 
   .conteudo {
     margin-left: 0;
-            padding: 80px 16px 16px 16px; 
+    padding: 12px 16px 16px 16px !important;
     width: 100%;
     box-sizing: border-box;
   }
 
   .title {
     font-size: 24px;
+    line-height: 1.2;
+    margin: 0 0 8px 0;
+    padding-left: 52px;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
   }
 
   .usuarios {
@@ -1453,19 +1623,51 @@ select:focus {
     gap: 15px;
   }
 
+  .card {
+    min-height: auto;
+  }
+
   .card-conteudo {
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    text-align: center;
+    justify-content: flex-start;
+    gap: 12px;
+    text-align: left;
+  }
+
+  .foto {
+    flex: 0 0 80px;
+    width: 80px;
+    height: 80px;
+    padding: 3px;
+    box-shadow: 0 0 0 2px #ebf6ff, 0 0 0 3px rgba(86, 184, 255, 0.28), 0 5px 10px rgba(45, 116, 229, 0.2);
   }
 
   .foto img {
-    width: 80px;
-    height: 80px;
+    width: 100%;
+    height: 100%;
   }
 
   .info h2 {
     font-size: 18px;
+  }
+
+  .info-header {
+    justify-content: flex-start;
+    gap: 6px;
+  }
+
+  .info-header .badge-permissao-lista {
+    margin: 0;
+    font-size: 10px;
+    padding: 2px 7px;
+    min-height: 20px;
+    border-radius: 9px;
+  }
+
+  .info {
+    min-width: 0;
+    width: 100%;
   }
 
   .info p {
@@ -1473,12 +1675,16 @@ select:focus {
   }
 
   .botoes {
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: row;
+    gap: 8px;
   }
 
-  .btn-editar,
-  .btn-detalhar,
+  .botoes .btn-editar,
+  .botoes .btn-detalhar {
+    width: calc(50% - 4px);
+    padding: 8px 0;
+  }
+
   .btn-salvarEdicao {
     width: 100%;
     padding: 8px 0;

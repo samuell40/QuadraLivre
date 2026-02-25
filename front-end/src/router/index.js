@@ -4,7 +4,6 @@ import DashboardView from '@/views/DashboardView.vue';
 import AgendamentosView from '../views/AgendamentosView.vue';
 import NaoAutorizado from '@/views/NaoAutorizado.vue';
 import CadastroView from '../views/CadastroView.vue';
-import CadastrarQuadraView from '../views/CadastrarQuadraView.vue';
 import GerenciarQuadrasView from '@/views/GerenciarQuadrasView.vue';
 import VisualizarPlacarHomeView from '@/views/VisualizarPlacarHomeView.vue';
 import GerenciarPartidaView from '@/views/quadra_play/GerenciarPartidaView.vue';
@@ -49,7 +48,7 @@ const routes = [
     path: '/agendarquadra',
     name: 'agendar_quadra',
     component: AgendarQuadrasView,
-    meta: { requiresAuth: true, roles: [3] },
+    meta: { requiresAuth: true, roles: [3, 5] },
   },
   {
     path: '/agendarquadrasadm',
@@ -61,19 +60,13 @@ const routes = [
     path: '/meusagendamentos',
     name: 'meus_agendamentos',
     component: MeusAgendamentosView,
-    meta: { requiresAuth: true, roles: [3] },
+    meta: { requiresAuth: true, roles: [3, 5] },
   },
   {
     path: '/meusavisos',
     name: 'meus_avisos',
     component: MeusAvisosView,
-    meta: { requiresAuth: true, roles: [3] },
-  },
-  {
-    path: '/cadastrarquadra',
-    name: 'cadastrar_quadra',
-    component: CadastrarQuadraView,
-    meta: { requiresAuth: true, roles: [1, 2] },
+    meta: { requiresAuth: true, roles: [3, 5] },
   },
   {
     path: '/gerenciarquadras',
@@ -164,7 +157,7 @@ const routes = [
     path: '/classificacao',
     name: 'Classificacao',
     component: ClassificacaoView,
-    meta: { requiresAuth: true, roles: [1, 2, 4], requiresQuadraPlayLogin: true },
+    meta: { requiresAuth: true, roles: [1, 2], requiresQuadraPlayLogin: true },
   },
 ];
 

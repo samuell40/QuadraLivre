@@ -289,9 +289,9 @@ body,
 .content-wrapper {
   flex: 1;
   width: 100%;
-  max-width: 1200px;
-  margin: 60px auto 0 auto;
-  padding: 32px 20px;
+  max-width: none;
+  margin: 60px 0 0 0;
+  padding: 32px 40px;
   box-sizing: border-box;
   overflow-x: hidden;
 }
@@ -622,7 +622,7 @@ body,
 
 @media (max-width: 768px) {
   .content-wrapper {
-    padding: 24px 16px 16px;
+    padding: 24px 20px 16px;
   }
 
   .title {

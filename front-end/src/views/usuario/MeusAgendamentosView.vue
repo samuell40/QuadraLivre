@@ -321,9 +321,9 @@ onMounted(() => {
 .conteudo-agendamento {
   flex: 1;
   width: 100%;
-  max-width: 1200px;
-  margin: 60px auto 0 auto;
-  padding: 32px 20px;
+  max-width: none;
+  margin: 60px 0 0 0;
+  padding: 32px 40px;
   box-sizing: border-box;
   overflow-x: hidden;
 }
@@ -548,7 +548,7 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .conteudo-agendamento {
-    padding: 24px 16px 16px;
+    padding: 12px 20px 16px !important;
   }
 
   .titulo-container-agendamento {

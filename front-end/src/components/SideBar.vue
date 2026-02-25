@@ -21,6 +21,39 @@
         </div>
       </div>
 
+      <!-- AGENDAMENTOS -->
+      <div v-if="!isPermissao4" class="sidebar-category">
+        <div class="sidebar-category-header" @click="toggleCategory('agendamentos')">
+          <span>Agendamentos</span>
+          <span>{{ openCategory === 'agendamentos' ? '▲' : '▼' }}</span>
+        </div>
+        <div v-show="openCategory === 'agendamentos'">
+          <a v-if="usuario?.permissaoId !== 1" href="/agendamentos" :class="{ active: isActive('/agendamentos') }">
+            <svg width="16" height="16" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M9.375 7.5V1.25M21.875 7.5V1.25M26.875 21.25V26.875H4.375V23.125M26.7038 10.625H4.19M0.625 22.8125V23.125H23L23.1875 22.8125L23.48 22.1988C25.7152 17.5009 26.875 12.3638 26.875 7.16125V4.375H4.375V7.035C4.37505 12.2777 3.1973 17.4535 0.92875 22.18L0.625 22.8125Z"
+                stroke="white" />
+            </svg>
+            <span>Agendamentos</span>
+          </a>
+
+          <a href="/agendarquadrasadm" :class="{ active: isActive('/agendarquadrasadm') }">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
+              <path fill="white" d="M3 4h18v2H3V4zm0 4h18v2H3V8zm0 4h18v2H3v-2zm0 4h12v2H3v-2z" />
+            </svg>
+            <span>Agendar Quadras</span>
+          </a>
+
+          <a href="/horarios" :class="{ active: isActive('/horarios') }">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
+              <path fill="white"
+                d="M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1zm0 20a9 9 0 1 1 9-9 9.01 9.01 0 0 1-9 9zm.5-9.25V6h-1v6l5.25 3.15.5-.86z" />
+            </svg>
+            <span>Horários</span>
+          </a>
+        </div>
+      </div>
+
       <!-- ADMINISTRAÇÃO -->
       <div v-if="!isPermissao4" class="sidebar-category">
         <div class="sidebar-category-header" @click="toggleCategory('admin')">
@@ -51,39 +84,6 @@
                 d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h3V2h2v2h6V2h2v2h3q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm7.25-2h1.5v-1.5h-1.5zm4.25-3H18q.425 0 .713-.288T19 14v-4q0-.425-.288-.712T18 9h-2.5q-.425 0-.712.288T14.5 10v4q0 .425.288.713T15.5 15M5 15h4.5v-1.5h-3v-1h2q.425 0 .713-.288T9.5 11.5V10q0-.425-.288-.712T8.5 9H5v1.5h3v1H6q-.425 0-.712.288T5 12.5zm6.25-.5h1.5V13h-1.5zm4.75-1v-3h1.5v3zM11.25 11h1.5V9.5h-1.5zm0-3.5h1.5V6h-1.5z" />
             </svg>
             <span>Gerenciar Modalidades</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- AGENDAMENTOS -->
-      <div v-if="!isPermissao4" class="sidebar-category">
-        <div class="sidebar-category-header" @click="toggleCategory('agendamentos')">
-          <span>Agendamentos</span>
-          <span>{{ openCategory === 'agendamentos' ? '▲' : '▼' }}</span>
-        </div>
-        <div v-show="openCategory === 'agendamentos'">
-          <a v-if="usuario?.permissaoId !== 1" href="/agendamentos" :class="{ active: isActive('/agendamentos') }">
-            <svg width="16" height="16" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M9.375 7.5V1.25M21.875 7.5V1.25M26.875 21.25V26.875H4.375V23.125M26.7038 10.625H4.19M0.625 22.8125V23.125H23L23.1875 22.8125L23.48 22.1988C25.7152 17.5009 26.875 12.3638 26.875 7.16125V4.375H4.375V7.035C4.37505 12.2777 3.1973 17.4535 0.92875 22.18L0.625 22.8125Z"
-                stroke="white" />
-            </svg>
-            <span>Agendamentos</span>
-          </a>
-
-          <a href="/agendarquadrasadm" :class="{ active: isActive('/agendarquadrasadm') }">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
-              <path fill="white" d="M3 4h18v2H3V4zm0 4h18v2H3V8zm0 4h18v2H3v-2zm0 4h12v2H3v-2z" />
-            </svg>
-            <span>Agendar Quadras</span>
-          </a>
-
-          <a href="/horarios" :class="{ active: isActive('/horarios') }">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
-              <path fill="white"
-                d="M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1zm0 20a9 9 0 1 1 9-9 9.01 9.01 0 0 1-9 9zm.5-9.25V6h-1v6l5.25 3.15.5-.86z" />
-            </svg>
-            <span>Horários</span>
           </a>
         </div>
       </div>
@@ -240,20 +240,22 @@ body {
 
 .button-sidebar {
   position: fixed;
-  top: -4px;
-  left: -3px;
-  font-size: 7px;
-  padding: 10px 14px;
-  border: none;
+  top: 8px;
+  left: 8px;
+  width: 44px;
+  height: 44px;
+  padding: 8px;
+  border: 1px solid rgba(21, 33, 71, 0.12);
   outline: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 5px;
+  border-radius: 10px;
   z-index: 1000;
   cursor: pointer;
-  background: transparent;
-  color: rgb(240, 231, 231);
+  background: rgba(255, 255, 255, 0.92);
+  color: #152147;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18);
 }
 
 .button-sidebar.hidden {
@@ -308,6 +310,24 @@ body {
 }
 
 @media (max-width: 768px) {
+  .button-sidebar {
+    top: 10px;
+    left: 10px;
+    width: 42px;
+    height: 42px;
+    padding: 7px;
+  }
+
+  .button-sidebar svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .conteudo,
+  .conteudo-agendamento {
+    padding-top: 64px !important;
+  }
+
   .sidebar-overlay {
     position: fixed;
     top: 0;

@@ -38,16 +38,20 @@
           <ul class="lista-partidas">
             <li v-for="partida in partidasValidas" :key="partida.id" class="card-partida"
               :class="classeStatusPartida(partida)">
-              <div class="status-topo" @click="editarStatus(partida)">
+              <div
+                class="status-topo"
+                :class="{ 'status-topo-clickable': podeAlterarStatus(partida) }"
+                @click="editarStatus(partida)"
+              >
                 <div class="status-pill"
-                  :class="[classeStatusTexto(partida), { 'status-editavel': partida.status !== 'FINALIZADA' }]">
+                  :class="[classeStatusTexto(partida), { 'status-editavel': podeAlterarStatus(partida) }]">
                   <template v-if="partidaEditandoStatus !== partida.id">
                     <span class="texto-status">
                       <span v-if="partida.status === 'EM_ANDAMENTO'" class="status-live-dot" aria-hidden="true"></span>
                       {{ statusLabel(partida.status) }}
                     </span>
 
-                    <svg v-if="partida.status !== 'FINALIZADA'" xmlns="http://www.w3.org/2000/svg" width="14"
+                    <svg v-if="podeAlterarStatus(partida)" xmlns="http://www.w3.org/2000/svg" width="14"
                       height="14" fill="currentColor" class="bi bi-pencil-square icone-status" viewBox="0 0 16 16">
                       <path
                         d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293z" />
@@ -104,8 +108,14 @@
                 </div>
               </div>
 
-              <button v-if="partida.status !== 'CANCELADA'" class="btn-acessar" @click="acessarPartida(partida)">
-                {{ partida.status === 'FINALIZADA' ? 'Editar' : 'Acessar' }}
+              <button
+                v-if="partida.status !== 'CANCELADA'"
+                class="btn-acessar"
+                :class="{ 'btn-acessar-disabled': isMesario && partida.status === 'FINALIZADA' }"
+                :disabled="isMesario && partida.status === 'FINALIZADA'"
+                @click="acessarPartida(partida)"
+              >
+                {{ partida.status === 'FINALIZADA' ? (isMesario ? 'Finalizada' : 'Editar') : 'Acessar' }}
               </button>
               <button v-else class="btn-acessar" @click="removerPartidaCancelada(partida)">
                 Remover
@@ -229,6 +239,18 @@ export default {
   },
 
   computed: {
+    usuarioLogado() {
+      try {
+        return JSON.parse(localStorage.getItem('usuario') || 'null')
+      } catch (error) {
+        return null
+      }
+    },
+
+    isMesario() {
+      return Number(this.usuarioLogado?.permissaoId) === 4
+    },
+
     partidasValidas() {
       const lista = Array.isArray(this.partidas) ? this.partidas.filter(p => p && p.id) : []
       return lista.sort((a, b) => {
@@ -354,6 +376,12 @@ export default {
 
     classeStatusTexto(partida) {
       return STATUS_CONFIG[partida?.status]?.text
+    },
+
+    podeAlterarStatus(partida) {
+      const statusAtual = String(partida?.status || '').toUpperCase()
+      if (!statusAtual) return false
+      return statusAtual !== 'FINALIZADA'
     },
 
     normalizarNomeModalidade(nome) {
@@ -525,6 +553,7 @@ export default {
         opcoes = opcoes.filter(status => status !== 'AGENDADA')
         if (!opcoes.includes('DELETADA')) opcoes.push('DELETADA')
       } else if (statusAtual === 'FINALIZADA') {
+        if (this.isMesario) return []
         opcoes = opcoes.filter(status => status !== 'AGENDADA' && status !== 'FINALIZADA')
       } else if (statusAtual === 'CANCELADA') {
         opcoes = opcoes.filter(status => status !== 'AGENDADA' && status !== 'FINALIZADA')
@@ -535,8 +564,8 @@ export default {
     },
 
     editarStatus(partida) {
+      if (!this.podeAlterarStatus(partida)) return
       const statusAtual = String(partida?.status || '').toUpperCase()
-      if (statusAtual === 'FINALIZADA') return
 
       this.partidaSelecionada = partida
       this.statusAtualModal = statusAtual
@@ -553,6 +582,12 @@ export default {
 
     async confirmarAlteracaoStatus() {
       try {
+        if (this.isMesario && String(this.statusAtualModal || '').toUpperCase() === 'FINALIZADA') {
+          Swal.fire('Atencao', 'Nao e permitido alterar o status de partidas finalizadas.', 'info')
+          this.fecharModalStatus()
+          return
+        }
+
         if (!this.novoStatus) {
           Swal.fire('Atencao', 'Selecione um status.', 'info')
           return
@@ -663,6 +698,11 @@ export default {
 
         if (partidaObj?.status === 'AGENDADA') {
           Swal.fire('Atencao', 'No dia da partida, altere o status para EM ANDAMENTO para iniciar.', 'info')
+          return
+        }
+
+        if (this.isMesario && partidaObj?.status === 'FINALIZADA') {
+          Swal.fire('Atencao', 'Partidas finalizadas nao podem ser editadas.', 'info')
           return
         }
 
@@ -928,7 +968,7 @@ export default {
   transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
 
-.status-topo:hover .status-pill{
+.status-topo-clickable:hover .status-pill{
   transform: translateY(-3px);
   box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
 }
@@ -941,7 +981,7 @@ export default {
   opacity: 0.85;
 }
 
-.status-topo:hover {
+.status-topo-clickable:hover {
   transform: translateY(-3px);
   box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
 }
@@ -1259,6 +1299,16 @@ export default {
 
 .btn-acessar:hover {
   background-color: #2563eb;
+}
+
+.btn-acessar.btn-acessar-disabled {
+  background-color: #cbd5e1;
+  color: #475569;
+  cursor: not-allowed;
+}
+
+.btn-acessar.btn-acessar-disabled:hover {
+  background-color: #cbd5e1;
 }
 
 .vazio {

@@ -1,4 +1,4 @@
-  <template>
+﻿  <template>
     <div class="layout">
       <NavBarHome />
 
@@ -546,7 +546,7 @@
               router.push({ name: 'Dashboard' })
             } else if (usuario.permissaoId === 4) {
               router.push({ name: 'gerenciar_partida' })
-            } else if (usuario.permissaoId === 3) {
+            } else if ([3, 5].includes(usuario.permissaoId)) {
               if (quadraSelecionada?.id) {
                 router.push({ name: 'agendar_quadra', query: { quadraId: quadraSelecionada.id } })
                 localStorage.removeItem('quadraSelecionada')

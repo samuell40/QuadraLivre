@@ -553,15 +553,20 @@ export default {
 @media (max-width: 768px) {
   .conteudo {
     margin-left: 0;
-    padding: 80px 15px 20px 15px;
+    padding: 12px 15px 20px 15px !important;
     width: 100%;
     box-sizing: border-box;
   }
 
   .title {
     font-size: 24px;
-    margin-top: 0;
-    text-align: center;
+    line-height: 1.2;
+    margin: 0;
+    text-align: left;
+    padding-left: 52px;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
   }
 
   .controles-topo {

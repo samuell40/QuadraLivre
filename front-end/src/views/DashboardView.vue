@@ -1473,7 +1473,7 @@ export default {
 
   .conteudo {
     margin-left: 0;
-    padding: 20px;
+    padding: 12px 16px 16px !important;
     width: 100%;
     max-width: 100vw;
     box-sizing: border-box;
@@ -1483,6 +1483,17 @@ export default {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
+    margin-top: 0;
+  }
+
+  .title {
+    font-size: 24px;
+    line-height: 1.2;
+    margin: 0;
+    padding-left: 52px;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
   }
 
   .chart-with-actions-container {

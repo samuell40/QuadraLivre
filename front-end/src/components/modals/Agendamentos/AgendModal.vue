@@ -222,7 +222,7 @@ export default {
   computed: {
     podeAgendarFixo() {
       const p = this.authStore.usuario?.permissaoId;
-      return p === 1 || p === 2;
+      return p === 1 || p === 2 || p === 5;
     },
     modalidadePadronizada() {
       if (!this.modalidadeSelecionada) return ""

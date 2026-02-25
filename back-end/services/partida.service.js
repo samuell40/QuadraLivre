@@ -1737,6 +1737,14 @@ async function alterarStatusPartida(partidaId, novoStatus, usuarioEditorId = nul
     }
   });
 
+  if (!partida) {
+    throw new Error('Partida nao encontrada.');
+  }
+
+  if (String(partida.status || '').toUpperCase() === 'FINALIZADA') {
+    throw new Error('Nao e permitido alterar o status de partidas finalizadas.');
+  }
+
   const dadosAtualizacao = {
     status: novoStatus
   };

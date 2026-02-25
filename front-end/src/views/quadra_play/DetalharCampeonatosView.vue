@@ -16,7 +16,7 @@
         <img :src="campeonato.foto" alt="Foto do campeonato" class="imagem-quadra">
       </div>
 
-      <div v-if="campeonato" class="card-edicao">
+      <div v-if="campeonato && !isMesario" class="card-edicao">
         <h2>Informacoes do campeonato</h2>
 
         <div class="regras-grid">
@@ -61,7 +61,7 @@
       <div v-if="campeonato" class="card-regras">
         <h2>Configurações do {{ String(campeonato?.modalidade?.nome).toLowerCase() }}</h2>
 
-        <div class="abas-config-container">
+        <div v-if="!isMesario" class="abas-config-container">
           <button
             type="button"
             class="aba-config"
@@ -76,11 +76,29 @@
             :class="{ ativa: abaConfigAtiva === 'criterios' }"
             @click="abrirAbaCriterios"
           >
-            Criterios de classificação
+            Criterios de classificacao
+          </button>
+          <button
+            v-if="podeGerenciarMesarios"
+            type="button"
+            class="aba-config"
+            :class="{ ativa: abaConfigAtiva === 'mesarios' }"
+            @click="abrirAbaMesarios"
+          >
+            Mesarios
           </button>
         </div>
 
-        <div v-if="abaConfigAtiva === 'regras'">
+        <div v-if="isMesario" class="regras-visualizacao">
+          <div class="regras-grid">
+            <div class="regra-item" v-for="campo in camposRegras" :key="`visual-${campo.key}`">
+              <label class="regra-label">{{ campo.label }}</label>
+              <div class="regra-valor">{{ obterLabelRegra(campo) }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div v-else-if="abaConfigAtiva === 'regras'">
           <div class="regras-grid">
             <div class="regra-item" v-for="campo in camposRegras" :key="campo.key">
               <label class="regra-label">{{ campo.label }}</label>
@@ -100,7 +118,7 @@
           </div>
         </div>
 
-        <div v-else class="criterios-wrapper">
+        <div v-else-if="abaConfigAtiva === 'criterios'" class="criterios-wrapper">
           <p class="descricao-criterios">
             Arraste para definir a ordem de classificacao.
           </p>
@@ -131,15 +149,66 @@
             </button>
           </div>
         </div>
-      </div>
 
-      <div v-if="campeonato" class="actions-finish">
+        <div v-else class="mesarios-wrapper">
+          <p class="descricao-criterios">
+            Vincule os mesarios que podem atuar neste campeonato.
+          </p>
+
+          <div class="campo-busca-mesario">
+            <input
+              v-model.trim="buscaMesario"
+              type="text"
+              class="regra-select"
+              placeholder="Buscar mesario por nome ou email"
+            />
+          </div>
+
+          <div v-if="carregandoMesarios" class="vazio-criterios">
+            Carregando mesarios...
+          </div>
+
+          <div v-else-if="!mesariosDisponiveis.length" class="vazio-criterios">
+            Nenhum mesario disponivel para vinculo.
+          </div>
+
+          <div v-else-if="!mesariosFiltrados.length" class="vazio-criterios">
+            Nenhum mesario encontrado para a busca informada.
+          </div>
+
+          <div v-else class="lista-mesarios">
+            <label
+              v-for="mesario in mesariosFiltrados"
+              :key="mesario.id"
+              class="mesario-item"
+            >
+              <input
+                type="checkbox"
+                :checked="mesariosSelecionados.includes(mesario.id)"
+                @change="alternarMesarioSelecionado(mesario.id)"
+              />
+              <img v-if="mesario.foto" :src="mesario.foto" alt="" class="mesario-avatar" />
+              <div class="mesario-info">
+                <strong>{{ mesario.nome }}</strong>
+                <span>{{ mesario.email }}</span>
+              </div>
+            </label>
+          </div>
+
+          <div class="actions">
+            <button class="btn-save" :disabled="salvandoMesarios" @click="salvarMesariosCampeonato">
+              {{ salvandoMesarios ? 'Salvando...' : 'Salvar mesarios' }}
+            </button>
+          </div>
+        </div>
+      </div>
+      <div v-if="campeonato && !isMesario" class="actions-finish">
         <button class="btn-finish" :disabled="removendoCampeonato" @click="removerCampeonato">
           {{ removendoCampeonato ? 'Removendo...' : 'Remover campeonato' }}
         </button>
       </div>
 
-      <div v-else>
+      <div v-if="!campeonato">
         <p>Nenhum campeonato encontrado.</p>
       </div>
     </div>
@@ -185,11 +254,32 @@ export default {
         foto: '',
         quadraId: null,
         dataFim: ''
-      }
+      },
+      mesariosDisponiveis: [],
+      mesariosSelecionados: [],
+      buscaMesario: '',
+      carregandoMesarios: false,
+      salvandoMesarios: false
     }
   },
 
   computed: {
+    usuarioLogado() {
+      try {
+        return JSON.parse(localStorage.getItem('usuario') || 'null')
+      } catch (error) {
+        return null
+      }
+    },
+
+    isMesario() {
+      return Number(this.usuarioLogado?.permissaoId) === 4
+    },
+
+    podeGerenciarMesarios() {
+      return [1, 2].includes(Number(this.usuarioLogado?.permissaoId))
+    },
+
     grupoAtual() {
       return grupoModalidade(this.campeonato?.modalidade?.nome)
     },
@@ -288,6 +378,17 @@ export default {
         },
         ...comuns
       ]
+    },
+
+    mesariosFiltrados() {
+      const termo = String(this.buscaMesario || '').trim().toLowerCase()
+      if (!termo) return this.mesariosDisponiveis
+
+      return this.mesariosDisponiveis.filter(mesario => {
+        const nome = String(mesario?.nome || '').toLowerCase()
+        const email = String(mesario?.email || '').toLowerCase()
+        return nome.includes(termo) || email.includes(termo)
+      })
     }
   },
 
@@ -326,6 +427,16 @@ export default {
     formatarDataParaInput(data) {
       if (!data) return ''
       return new Date(data).toISOString().slice(0, 10)
+    },
+    obterLabelRegra(campo) {
+      const valor = this.formRegras?.[campo.key]
+      const opcao = Array.isArray(campo?.options)
+        ? campo.options.find(item => String(item?.value) === String(valor))
+        : null
+
+      if (opcao?.label) return opcao.label
+      if (valor === null || valor === undefined || valor === '') return '-'
+      return String(valor)
     },
 
     preencherFormularioEdicao() {
@@ -437,6 +548,76 @@ export default {
       this.abaConfigAtiva = 'criterios'
       if (!this.criteriosClassificacao.length) {
         this.carregarCriteriosClassificacao()
+      }
+    },
+    abrirAbaMesarios() {
+      this.abaConfigAtiva = 'mesarios'
+      if (!this.mesariosDisponiveis.length) {
+        this.carregarMesariosCampeonato()
+      }
+    },
+    nomeMesarioPorId(idMesario) {
+      const mesario = this.mesariosDisponiveis.find(item => Number(item.id) === Number(idMesario))
+      return mesario?.nome || `Mesario #${idMesario}`
+    },
+    alternarMesarioSelecionado(idMesario) {
+      const id = Number(idMesario)
+      if (!id) return
+
+      if (this.mesariosSelecionados.includes(id)) {
+        this.mesariosSelecionados = this.mesariosSelecionados.filter(item => item !== id)
+      } else {
+        this.mesariosSelecionados = [...this.mesariosSelecionados, id]
+      }
+    },
+    removerMesarioSelecionado(idMesario) {
+      const id = Number(idMesario)
+      this.mesariosSelecionados = this.mesariosSelecionados.filter(item => item !== id)
+    },
+    async carregarMesariosCampeonato() {
+      if (!this.campeonato?.id || !this.podeGerenciarMesarios) return
+
+      this.carregandoMesarios = true
+      try {
+        const { data } = await api.get(`/campeonato/${this.campeonato.id}/mesarios`)
+        this.mesariosDisponiveis = Array.isArray(data?.mesarios) ? data.mesarios : []
+        this.mesariosSelecionados = Array.isArray(data?.vinculadosIds)
+          ? data.vinculadosIds.map(id => Number(id)).filter(id => Number.isInteger(id) && id > 0)
+          : []
+      } catch (err) {
+        console.error('Erro ao carregar mesarios do campeonato:', err)
+        this.mesariosDisponiveis = []
+        this.mesariosSelecionados = []
+      } finally {
+        this.carregandoMesarios = false
+      }
+    },
+    async salvarMesariosCampeonato() {
+      if (!this.campeonato?.id || !this.podeGerenciarMesarios) return
+
+      this.salvandoMesarios = true
+      try {
+        const payload = {
+          mesariosIds: this.mesariosSelecionados
+        }
+
+        const { data } = await api.put(`/campeonato/${this.campeonato.id}/mesarios`, payload)
+        this.mesariosDisponiveis = Array.isArray(data?.mesarios) ? data.mesarios : this.mesariosDisponiveis
+        this.mesariosSelecionados = Array.isArray(data?.vinculadosIds)
+          ? data.vinculadosIds.map(id => Number(id)).filter(id => Number.isInteger(id) && id > 0)
+          : []
+
+        this.campeonato.regras = {
+          ...(this.campeonato.regras || {}),
+          mesariosVinculados: [...this.mesariosSelecionados]
+        }
+
+        await Swal.fire('Sucesso', 'Mesarios atualizados com sucesso.', 'success')
+      } catch (err) {
+        console.error('Erro ao salvar mesarios do campeonato:', err)
+        await Swal.fire('Erro', 'Nao foi possivel salvar os mesarios.', 'error')
+      } finally {
+        this.salvandoMesarios = false
       }
     },
     async carregarCriteriosClassificacao() {
@@ -646,6 +827,97 @@ export default {
   margin-bottom: 4px;
 }
 
+.mesarios-wrapper {
+  margin-top: 4px;
+}
+
+.campo-busca-mesario {
+  margin-bottom: 12px;
+}
+
+.lista-mesarios {
+  border: 1px solid #93c5fd;
+  border-radius: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+.mesario-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  cursor: pointer;
+  background: #fff;
+}
+
+.mesario-item:last-child {
+  border-bottom: none;
+}
+
+.mesario-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.mesario-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mesario-info strong {
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.mesario-info span {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.mesarios-selecionados {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.rotulo-selecionados {
+  color: #334155;
+  font-weight: 700;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.chips-mesarios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1;
+}
+
+.chip-mesario {
+  border: 1px solid #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sem-vinculo-mesario {
+  color: #6b7280;
+  font-size: 13px;
+}
+
 .criterio-item {
   display: flex;
   align-items: center;
@@ -713,6 +985,16 @@ export default {
   background: #fff;
 }
 
+.regra-valor {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 16px;
+  color: #111827;
+  background: #f8fafc;
+}
+
 .actions {
   margin-top: 16px;
   display: flex;
@@ -737,14 +1019,18 @@ export default {
 }
 
 .btn-finish {
-  background-color: #3b82f6;
-  color: #fff;
-  border: none;
+  background-color: #fff;
+  color: #dc2626;
+  border: 1.5px solid #dc2626;
   border-radius: 10px;
   padding: 10px 16px;
   font-size: 14px;
   cursor: pointer;
   width: 100%;
+}
+
+.btn-finish:hover {
+  background-color: #fef2f2;
 }
 
 .btn-finish:disabled {
@@ -880,3 +1166,4 @@ export default {
   }
 }
 </style>
+

@@ -34,7 +34,7 @@
           <small class="btn-tipo-sub">Define data e horário para jogar depois</small>
         </button>
 
-        <button class="btn-tipo btn-tipo-card" @click="abrirModalRodada">
+        <button v-if="!isMesario" class="btn-tipo btn-tipo-card" @click="abrirModalRodada">
           <span class="btn-tipo-titulo btn-tipo-titulo-com-icone">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-repeat"
               viewBox="0 0 16 16">
@@ -253,6 +253,10 @@ export default {
   },
 
   computed: {
+    isMesario() {
+      return Number(this.usuario?.permissaoId) === 4
+    },
+
     timeASelecionadoObj() {
       return this.times.find(t => t.id === this.partida.timeAId)
     },
@@ -349,6 +353,7 @@ export default {
     },
 
     async abrirModalRodada() {
+      if (this.isMesario) return
       await this.listarFases()
       this.faseIdSelecionada = ''
       this.mostrarModalRodada = true
@@ -381,6 +386,11 @@ export default {
     },
 
     async criarRodada() {
+      if (this.isMesario) {
+        Swal.fire('Atencao', 'Mesario nao pode criar rodada.', 'info')
+        return
+      }
+
       if (!this.nomeRodada) {
         Swal.fire('Erro', 'Informe o nome da rodada.', 'error')
         return

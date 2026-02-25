@@ -217,6 +217,7 @@ const abrirModalHojeEAmanha = () => {
 };
 
 const abrirModalDetalhes = (agendamento) => {
+  modalAberto.value = false;
   agendamentoSelecionado.value = normalizarAgendamento(agendamento);
   detalheAberto.value = true;
 };
@@ -453,19 +454,23 @@ onMounted(() => carregarAgendamentos());
 @media (max-width: 768px) {
   .conteudo-agendamento {
     margin-left: 0;
-    padding: 54px 16px 16px;
+    padding: 12px 16px 16px !important;
   }
 
   .titulo-container-agendamento {
     align-items: center;
     justify-content: space-between;
     gap: 8px;
+    padding-left: 52px;
+    min-height: 42px;
     margin-bottom: 14px;
   }
 
   .titulo-agendamento {
     font-size: 24px;
     line-height: 1.2;
+    min-width: 0;
+    flex: 1;
     padding-right: 8px;
   }
 
