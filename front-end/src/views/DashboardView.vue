@@ -105,8 +105,11 @@
       <Teleport to="body">
         <div v-if="exibirModalAviso" class="modal-overlay" @click.self="exibirModalAviso = false">
           <div class="modal-content modal-large">
-            <div class="header_avisos" style="border:none;">
+            <div class="header_avisos modal-header-aviso" style="border:none;">
               <h3 class="avisos_lidos">Cadastrar Novo Aviso</h3>
+              <button type="button" class="btn-close-x-modal" @click="exibirModalAviso = false" aria-label="Fechar modal">
+                x
+              </button>
             </div>
             <div style="flex: 1; overflow-y: auto;">
               <div class="form-group" v-if="usuarioLogado.permissaoId === 1">
@@ -133,12 +136,9 @@
                 <label for="fixarNovo">Fixar este aviso no topo?</label>
               </div>
             </div>
-            <div class="modal-actions">
+            <div class="modal-actions modal-actions-single">
               <button @click="enviarAviso" class="btn-confirmar" :disabled="enviando">
                 {{ enviando ? 'Postando...' : 'Postar Aviso' }}
-              </button>
-              <button @click="exibirModalAviso = false" class="btn-cancelar">
-                Cancelar
               </button>
             </div>
           </div>
@@ -1309,6 +1309,37 @@ export default {
   flex: 1;
 }
 
+.modal-actions-single .btn-confirmar {
+  width: 100%;
+}
+
+.modal-header-aviso {
+  align-items: center;
+}
+
+.btn-close-x-modal {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(59, 130, 246, 0.55);
+  border-radius: 999px;
+  background: #fff;
+  color: #3b82f6;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-close-x-modal:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+  transform: translateY(-1px);
+}
+
 .form-group-checkbox {
   display: flex;
   align-items: center;
@@ -1503,6 +1534,12 @@ export default {
     flex-direction: column;
     align-items: stretch;
     gap: 15px;
+  }
+
+  .modal-header-aviso {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
   }
 
   .header_actions {

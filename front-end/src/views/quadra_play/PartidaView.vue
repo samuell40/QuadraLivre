@@ -53,9 +53,9 @@ import Swal from 'sweetalert2'
 import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
 import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
 import { carregarCampeonato } from '@/utils/persistirCampeonato'
-import PlacarTimeFutebol from '@/components/Partida/PlacarTimeFutebol.vue'
-import PlacarTimeVolei from '@/components/Partida/PlacarTimeVolei.vue'
-import PlacarTimeBeachTenis from '@/components/Partida/PlacarTimeBeachTenis.vue'
+import PlacarTimeFutebol from '@/components/quadraplay/Partida/PlacarTimeFutebol.vue'
+import PlacarTimeVolei from '@/components/quadraplay/Partida/PlacarTimeVolei.vue'
+import PlacarTimeBeachTenis from '@/components/quadraplay/Partida/PlacarTimeBeachTenis.vue'
 
 export default {
   name: 'RegistroPartidaView',

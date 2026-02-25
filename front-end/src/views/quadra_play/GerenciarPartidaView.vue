@@ -161,7 +161,7 @@
 import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
 import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
 import ModalEscolhaTipo from '@/components/quadraplay/ModalEscolhaTipo.vue'
-import SelecionarJogadores from '@/components/Partida/SelecionarJogadores.vue'
+import SelecionarJogadores from '@/components/quadraplay/Partida/SelecionarJogadores.vue'
 import { carregarCampeonato } from '@/utils/persistirCampeonato'
 import api from '@/axios'
 import Swal from 'sweetalert2'

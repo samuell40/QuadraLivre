@@ -1,8 +1,12 @@
 <template>
   <div class="modal-overlay" @click.self="$emit('fechar')">
     <div class="modal-content">
-
-      <h2 class="modal-title">{{ quadra?.nome }}</h2>
+      <div class="modal-header">
+        <h2 class="modal-title">{{ quadra?.nome }}</h2>
+        <button type="button" class="btn-close-x" @click="$emit('fechar')" aria-label="Fechar modal">
+          x
+        </button>
+      </div>
 
       <div class="tabs-container" v-if="podeAgendarFixo">
         <div class="tabs-list">
@@ -157,7 +161,6 @@
           <button @click="confirmarGeral" class="btn-confirmar" :disabled="!validarFormulario()">
             {{ modoAgendamento === 'fixo' ? 'Gerar Agendamentos' : 'Confirmar' }}
           </button>
-          <button @click="$emit('fechar')" class="btn-cancelar">Cancelar</button>
         </div>
       </div>
     </div>
@@ -543,15 +546,44 @@ export default {
   overflow: hidden;
 }
 
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #fff;
+}
+
 .modal-title {
   margin: 0;
-  padding: 20px 24px;
   color: #3F85F6;
-  text-align: center;
   font-size: 20px;
   font-weight: 700;
-  background-color: #fff;
-  border-bottom: 1px solid #e5e7eb;
+}
+
+.btn-close-x {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(59, 130, 246, 0.55);
+  border-radius: 999px;
+  background: #fff;
+  color: #3b82f6;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-close-x:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+  transform: translateY(-1px);
 }
 
 .modal-body {
@@ -832,13 +864,7 @@ label {
   cursor: not-allowed;
 }
 
-.btn-cancelar {
-  background-color: #f3f4f6;
-  color: #4b5563;
-}
-
-.btn-confirmar:hover:not(:disabled),
-.btn-cancelar:hover {
+.btn-confirmar:hover:not(:disabled) {
   opacity: 0.9;
 }
 

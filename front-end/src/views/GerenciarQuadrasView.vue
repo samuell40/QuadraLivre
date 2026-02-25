@@ -76,10 +76,15 @@
                 </div>
             </div>
 
-            <div v-if="quadraEditando" class="modal-overlay">
+            <div v-if="quadraEditando" class="modal-overlay" @click.self="quadraEditando = null">
                 <div class="modal-content">
-                    <h2 class="title" style="margin-bottom: 20px; font-size: 30px;">Editar Unidade: {{
-                        quadraEditando.nome }}</h2>
+                    <div class="modal-header-edicao-quadra">
+                        <h2 class="title modal-title-edicao">Editar Unidade: {{ quadraEditando.nome }}</h2>
+                        <button type="button" class="btn-close-x-modal" @click="quadraEditando = null"
+                            aria-label="Fechar modal">
+                            x
+                        </button>
+                    </div>
                     <form @submit.prevent="salvarEdicao">
                         <div class="form-group">
                             <label for="nome">Nome da Quadra:</label>
@@ -104,7 +109,6 @@
                             <input type="file" id="imagem" @change="handleFileChange" accept=".jpg, .jpeg, .png" />
                         </div>
                         <div class="modal-botoes">
-                            <button type="button" class="btn-cancelar" @click="quadraEditando = null">Cancelar</button>
                             <button type="submit" class="btn_salvar_modal">Confirmar Alterações</button>
                         </div>
                     </form>
@@ -459,6 +463,42 @@ export default {
     color: #152147;
 }
 
+.modal-header-edicao-quadra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.modal-title-edicao {
+    margin: 0;
+    font-size: 30px;
+}
+
+.btn-close-x-modal {
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(59, 130, 246, 0.55);
+    border-radius: 999px;
+    background: #fff;
+    color: #3b82f6;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-close-x-modal:hover {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #ef4444;
+    transform: translateY(-1px);
+}
+
 .form-group {
     display: flex;
     flex-direction: column;
@@ -509,20 +549,8 @@ export default {
 }
 
 .modal-botoes {
-    display: flex;
-    justify-content: flex-end;
-    gap: 15px;
+    display: block;
     margin-top: 30px;
-}
-
-.btn-cancelar {
-    background: #D9D9D9;
-    color: #152147;
-    border: none;
-    padding: 10px 25px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
 }
 
 .btn_salvar_modal {
@@ -532,8 +560,8 @@ export default {
     border-radius: 6px;
     cursor: pointer;
     font-weight: bold;
-    padding: 10px 30px;
-    width: auto;
+    padding: 12px;
+    width: 100%;
 }
 
 .loader-container-centralizado {
@@ -600,18 +628,15 @@ export default {
     }
 
     .checkbox-list {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         max-height: 200px;
         overflow-y: auto;
     }
 
     .modal-botoes {
-        flex-direction: column-reverse;
-        gap: 10px;
         margin-top: 20px;
     }
 
-    .btn-cancelar,
     .btn_salvar_modal {
         width: 100%;
         padding: 12px;

@@ -110,6 +110,44 @@ async function getUsuarios() {
   return usuarios.map(user => {
     let jogador = null;
     let timesJogador = [];
+    const agendamentosAtivos = (user.agendamentos || []).filter(ag => !ag.deletedAt);
+    const agora = new Date();
+
+    const obterDataAgendamento = agendamento => {
+      if (agendamento?.datahora) {
+        return new Date(agendamento.datahora);
+      }
+
+      if (
+        Number.isInteger(agendamento?.ano) &&
+        Number.isInteger(agendamento?.mes) &&
+        Number.isInteger(agendamento?.dia)
+      ) {
+        return new Date(
+          agendamento.ano,
+          Math.max(0, agendamento.mes - 1),
+          agendamento.dia,
+          agendamento.hora || 0,
+          0,
+          0
+        );
+      }
+
+      return null;
+    };
+
+    const datasAgendamentos = agendamentosAtivos
+      .map(obterDataAgendamento)
+      .filter(data => data instanceof Date && !Number.isNaN(data.getTime()));
+
+    const agendamentosNoMes = datasAgendamentos.filter(data =>
+      data.getMonth() === agora.getMonth() &&
+      data.getFullYear() === agora.getFullYear()
+    ).length;
+
+    const ultimaAtividade = datasAgendamentos.length
+      ? new Date(Math.max(...datasAgendamentos.map(data => data.getTime())))
+      : null;
 
     if (user.jogador) {
       jogador = {
@@ -151,7 +189,9 @@ async function getUsuarios() {
           nome: tt.time.nome,
         })),
 
-      totalAgendamentos: user.agendamentos.length,
+      totalAgendamentos: agendamentosAtivos.length,
+      agendamentosNoMes,
+      ultimaAtividade,
     };
   });
 }

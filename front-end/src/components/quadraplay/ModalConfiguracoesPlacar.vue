@@ -1,5 +1,5 @@
 ﻿<template>
-  <div v-if="modelValue" class="modal-overlay" @click.self="fechar">
+  <div v-if="modelValue && !mostrarModalFase && !mostrarModalCriterios" class="modal-overlay" @click.self="fechar">
     <div class="modal-content modal-escolha-config">
       <div class="modal-header">
         <span class="title">Configurações de Classificacao</span>

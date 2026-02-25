@@ -121,86 +121,113 @@ export default {
 <style scoped>
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1200;
+  padding: 16px;
 }
 
 .modal-content {
-  background: #fff;
-  padding: 1.5rem;
-  border-radius: 10px;
-  width: 900px;
-  max-height: 80vh;
+  width: min(900px, 100%);
+  max-height: 90vh;
   overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable both-edges;
+  background: #fff;
+  padding: 32px 36px;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.28);
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .modal-content h2 {
-  font-size: 30px;
+  margin: 0 0 14px;
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -0.3px;
   color: #3b82f6;
 }
 
-.dia-container h3 {
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-  color: #1f2937;
+.dias-wrapper {
+  margin-top: 16px;
+  border-radius: 16px;
+  padding: 18px;
+  background: #f8fbff;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.05);
 }
 
 .dia-container {
-  padding: 12px 0;
+  padding: 14px 0;
 }
 
-.dias-wrapper {
-  border: 2px solid #3B82F6;
-  border-radius: 12px;
-  padding: 16px;
-  margin-top: 16px;
-  background-color: #ffffff;
+.dia-container h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 900;
+  color: #0f172a;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .horarios-linha {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 8px;
 }
 
 .horario {
-  flex: 0 0 70px;
-  height: 40px;
+  flex: 0 0 74px;
+  height: 44px;
+  padding: 6px 8px;
   text-align: center;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  border-radius: 6px;
-  font-weight: 200;
-  cursor: pointer;
+  border-radius: 12px;
+  font-weight: 800;
+  cursor: default;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-.horario.agendado {
-  background-color: #3B82F6;
-  color: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
 .horario.disponivel {
-  background-color: #E5E7EB;
-  color: #111827;
+  background: #f1f5f9;
+  color: #334155;
+  cursor: default;
 }
 
-.detalhes-agendamento {
-  padding: 10px;
-  border: 1px solid #3B82F6;
-  border-radius: 8px;
-  background-color: #eff6ff;
-  margin: 10px 0;
+.horario.disponivel:hover {
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.06);
+}
+
+.horario.agendado {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 12px 22px rgba(37, 99, 235, 0.18);
+  cursor: pointer;
+}
+
+.horario.agendado:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 30px rgba(37, 99, 235, 0.26);
+}
+
+.horario.agendado:active {
+  transform: translateY(0);
 }
 
 .nome-agendamento-sm {
@@ -210,20 +237,64 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  opacity: 0.9;
+  opacity: 0.95;
+  max-width: 100%;
+}
+
+.detalhes-agendamento {
+  padding: 10px 12px;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 12px;
+  background: #f8fbff;
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.05);
+  margin: 10px 0;
 }
 
 .btn-cancelar {
-  margin-top: 15px;
-  background-color: #3b82f6;
-  color: white;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 20px;
+  width: 100%;
+  margin-top: 18px;
+  padding: 12px 16px;
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  border-radius: 999px;
   cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+  color: #fff;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 14px 26px rgba(37, 99, 235, 0.18);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
 .btn-cancelar:hover {
-  background-color: #2563EB;
+  transform: translateY(-1px);
+  box-shadow: 0 18px 34px rgba(37, 99, 235, 0.24);
+  filter: brightness(0.98);
+}
+
+.btn-cancelar:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    padding: 18px 16px;
+    border-radius: 14px;
+    scrollbar-gutter: auto;
+  }
+
+  .modal-content h2 {
+    font-size: 24px;
+  }
+
+  .dias-wrapper {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .horario {
+    flex: 0 0 72px;
+    height: 44px;
+    border-radius: 12px;
+  }
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div v-if="aberto" class="modal-overlay">
+  <div v-if="aberto && !modalGerenciarJogadoresAberto" class="modal-overlay">
     <div class="modal-conteudo modal-placar">
       <div class="header-placar">
         <h2 class="title_placar">Jogadores do {{ formatarInicialMaiuscula(time?.nome) }}</h2>
@@ -62,8 +62,10 @@
   </div>
   <input ref="inputTrocarImagem" type="file" accept=".jpg,.jpeg,.png" style="display: none"
     @change="handleTrocarImagem" />
-  <div v-if="modalGerenciarJogadoresAberto" class="modal-overlay-gerenciar" @click.self="fecharModalGerenciarJogadores">
-    <div class="modal-content-gerenciar">
+    <div v-if="modalGerenciarJogadoresAberto" class="modal-overlay-gerenciar" @click.self="fecharModalGerenciarJogadores">
+    <div class="modal-content-gerenciar"
+      :class="{ 'modal-content-gerenciar-sem-scroll': gerenciarAcaoLocal === 'adicionar' }"
+      @scroll.passive="atualizarPosicaoDropdownsGerenciar">
       <div class="modal-header-gerenciar">
         <h2>Gerenciar Jogadores - {{ formatarInicialMaiuscula(time?.nome) }}</h2>
         <button type="button" class="btn-close-x-gerenciar" @click="fecharModalGerenciarJogadores">x</button>
@@ -99,15 +101,17 @@
             placeholder="Digite o numero da camisa" class="dropdown-gerenciar" />
 
           <label>Vincular usuario</label>
-          <div class="dropdown-custom-gerenciar">
-            <div class="dropdown-selected-gerenciar" @click="gerenciarAbrirDropdownUsuarios = !gerenciarAbrirDropdownUsuarios">
+          <div ref="dropdownUsuariosAnchor" class="dropdown-custom-gerenciar">
+            <div class="dropdown-selected-gerenciar"
+              @click.stop="toggleDropdownUsuarios">
               <img v-if="gerenciarUsuarioSelecionado?.foto" :src="gerenciarUsuarioSelecionado.foto" class="avatar" />
               <span>
                 {{ gerenciarUsuarioSelecionado?.nome || 'Selecione um usuario (opcional)' }}
               </span>
             </div>
 
-            <div v-if="gerenciarAbrirDropdownUsuarios" class="dropdown-list-gerenciar">
+            <div v-if="gerenciarAbrirDropdownUsuarios" ref="dropdownUsuariosLista"
+              class="dropdown-list-gerenciar dropdown-list-gerenciar-solto" :style="dropdownUsuariosStyle" @click.stop>
               <input v-model="gerenciarBuscaUsuario" type="text" placeholder="Buscar usuario..."
                 class="input-busca-jogador-gerenciar" @click.stop />
 
@@ -131,8 +135,9 @@
 
         <div v-if="gerenciarAcaoLocal === 'adicionarExistente'" class="form-group-gerenciar">
           <label>Adicionar jogador existente:</label>
-          <div class="dropdown-custom-gerenciar">
-            <div class="dropdown-selected-gerenciar" @click="gerenciarAbrirDropdownJogadores = !gerenciarAbrirDropdownJogadores">
+          <div ref="dropdownJogadoresAnchor" class="dropdown-custom-gerenciar">
+            <div class="dropdown-selected-gerenciar"
+              @click.stop="toggleDropdownJogadores">
               <img v-if="gerenciarJogadorSelecionadoExistente?.foto" :src="gerenciarJogadorSelecionadoExistente.foto"
                 class="avatar" />
               <span v-if="gerenciarJogadoresSelecionadosExistentes.length === 0">
@@ -143,40 +148,45 @@
               </span>
             </div>
 
-            <ul v-if="gerenciarAbrirDropdownJogadores" class="dropdown-list-gerenciar">
+            <div v-if="gerenciarAbrirDropdownJogadores" ref="dropdownJogadoresLista"
+              class="dropdown-list-gerenciar dropdown-list-gerenciar-solto" :style="dropdownJogadoresStyle" @click.stop>
               <input v-model="gerenciarBuscaJogador" type="text" placeholder="Buscar por nome ou numero..."
                 class="input-busca-jogador-gerenciar" @click.stop />
 
-              <li v-if="gerenciarJogadoresExistentesFiltradosComBusca.length === 0" class="sem-jogador-gerenciar">
-                Nenhum jogador disponivel
-              </li>
+              <ul>
+                <li v-if="gerenciarJogadoresExistentesFiltradosComBusca.length === 0" class="sem-jogador-gerenciar">
+                  Nenhum jogador disponivel
+                </li>
 
-              <li v-for="j in gerenciarJogadoresExistentesFiltradosComBusca" :key="j.id"
-                @click.stop="toggleJogadorExistente(j)" :class="{ selecionado: isJogadorSelecionado(j.id) }">
-                <img :src="j.foto" class="avatar" />
-                <span v-if="temNumeroJogador(j.numero)" class="numero-jogador">#{{ j.numero }}</span>
-                <span>
-                  {{ formatarInicialMaiuscula(j.nome) }}
-                  <span v-if="j.times && j.times.length">
-                    ({{ formatarInicialMaiuscula(j.times[0].nome) }})
+                <li v-for="j in gerenciarJogadoresExistentesFiltradosComBusca" :key="j.id"
+                  @click.stop="toggleJogadorExistente(j)" :class="{ selecionado: isJogadorSelecionado(j.id) }">
+                  <img :src="j.foto" class="avatar" />
+                  <span v-if="temNumeroJogador(j.numero)" class="numero-jogador">#{{ j.numero }}</span>
+                  <span>
+                    {{ formatarInicialMaiuscula(j.nome) }}
+                    <span v-if="j.times && j.times.length">
+                      ({{ formatarInicialMaiuscula(j.times[0].nome) }})
+                    </span>
                   </span>
-                </span>
-              </li>
-            </ul>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
         <div v-if="gerenciarAcaoLocal === 'remover'" class="form-group-gerenciar">
           <label>Escolha o(s) jogador(es):</label>
-          <div class="dropdown-custom-gerenciar">
-            <div class="dropdown-selected-gerenciar" @click="gerenciarAbrirDropdownRemover = !gerenciarAbrirDropdownRemover">
+          <div ref="dropdownRemoverAnchor" class="dropdown-custom-gerenciar">
+            <div class="dropdown-selected-gerenciar"
+              @click.stop="toggleDropdownRemover">
               <span v-if="gerenciarJogadoresSelecionadosRemover.length === 0">Selecione jogador(es)</span>
               <span v-else>
                 {{ gerenciarJogadoresSelecionadosRemover.length }} jogador(es) selecionado(s)
               </span>
             </div>
 
-            <div v-if="gerenciarAbrirDropdownRemover" class="dropdown-list-gerenciar">
+            <div v-if="gerenciarAbrirDropdownRemover" ref="dropdownRemoverLista"
+              class="dropdown-list-gerenciar dropdown-list-gerenciar-solto" :style="dropdownRemoverStyle" @click.stop>
               <input v-model="gerenciarBuscaJogadorRemover" type="text" placeholder="Buscar por nome ou numero..."
                 class="input-busca-jogador-gerenciar" @click.stop />
 
@@ -200,18 +210,17 @@
       <div v-if="gerenciarAcaoLocal === 'adicionarMassa'" class="form-group-gerenciar">
         <label>Adicionar jogadores em massa:</label>
         <textarea v-model="gerenciarNomesJogadoresMassa" class="dropdown-gerenciar" rows="4"
-          placeholder="Ex:\nSamuel 40, Pedro 30\nJoao 10"></textarea>
+          placeholder="Ex:Tiago 04, Pedro 06, Joao 10"></textarea>
         <small style="color:#666">
           Informe no formato nome numero, separado por virgula ou quebra de linha
         </small>
       </div>
 
       <div class="botoes-gerenciar">
-        <button v-if="gerenciarAcaoLocal" class="btn-save1-gerenciar" @click="confirmarGerenciar"
-          :disabled="(gerenciarAcaoLocal === 'adicionar' && (!gerenciarNomeJogador || !gerenciarNumeroJogadorValido)) ||
-            (gerenciarAcaoLocal === 'adicionarExistente' && gerenciarJogadoresSelecionadosExistentes.length === 0) ||
-            (gerenciarAcaoLocal === 'remover' && gerenciarJogadoresSelecionadosRemover.length === 0) ||
-            (gerenciarAcaoLocal === 'adicionarMassa' && !gerenciarNomesJogadoresMassa)">
+        <button v-if="gerenciarAcaoLocal" class="btn-save1-gerenciar" @click="confirmarGerenciar" :disabled="(gerenciarAcaoLocal === 'adicionar' && (!gerenciarNomeJogador || !gerenciarNumeroJogadorValido)) ||
+          (gerenciarAcaoLocal === 'adicionarExistente' && gerenciarJogadoresSelecionadosExistentes.length === 0) ||
+          (gerenciarAcaoLocal === 'remover' && gerenciarJogadoresSelecionadosRemover.length === 0) ||
+          (gerenciarAcaoLocal === 'adicionarMassa' && !gerenciarNomesJogadoresMassa)">
           Confirmar
         </button>
       </div>
@@ -255,7 +264,12 @@ export default {
       gerenciarAbrirDropdownJogadores: false,
       gerenciarAbrirDropdownRemover: false,
       gerenciarBuscaJogadorRemover: '',
-      gerenciarNomesJogadoresMassa: ''
+      gerenciarNomesJogadoresMassa: '',
+      gerenciarDropdownPosicoes: {
+        usuarios: null,
+        jogadores: null,
+        remover: null
+      }
     };
   },
   watch: {
@@ -309,9 +323,131 @@ export default {
       return this.gerenciarJogadores
         .filter(j => j.times.some(t => t.id === timeIdAtual))
         .filter(j => this.jogadorCombinaBusca(j, this.gerenciarBuscaJogadorRemover));
+    },
+    dropdownUsuariosStyle() {
+      return this.gerenciarDropdownPosicoes.usuarios || {};
+    },
+    dropdownJogadoresStyle() {
+      return this.gerenciarDropdownPosicoes.jogadores || {};
+    },
+    dropdownRemoverStyle() {
+      return this.gerenciarDropdownPosicoes.remover || {};
     }
   },
+  mounted() {
+    document.addEventListener('mousedown', this.handleClickForaDropdownGerenciar);
+    document.addEventListener('touchstart', this.handleClickForaDropdownGerenciar);
+    window.addEventListener('resize', this.atualizarPosicaoDropdownsGerenciar);
+    window.addEventListener('scroll', this.atualizarPosicaoDropdownsGerenciar, true);
+  },
+  beforeUnmount() {
+    document.removeEventListener('mousedown', this.handleClickForaDropdownGerenciar);
+    document.removeEventListener('touchstart', this.handleClickForaDropdownGerenciar);
+    window.removeEventListener('resize', this.atualizarPosicaoDropdownsGerenciar);
+    window.removeEventListener('scroll', this.atualizarPosicaoDropdownsGerenciar, true);
+  },
   methods: {
+    fecharDropdownsGerenciar() {
+      this.gerenciarAbrirDropdownUsuarios = false;
+      this.gerenciarAbrirDropdownJogadores = false;
+      this.gerenciarAbrirDropdownRemover = false;
+    },
+    toggleDropdownUsuarios() {
+      const vaiAbrir = !this.gerenciarAbrirDropdownUsuarios;
+      this.fecharDropdownsGerenciar();
+      if (vaiAbrir) {
+        this.atualizarPosicaoDropdownGerenciar('usuarios');
+        this.gerenciarAbrirDropdownUsuarios = true;
+        this.$nextTick(() => this.atualizarPosicaoDropdownGerenciar('usuarios'));
+      }
+    },
+    toggleDropdownJogadores() {
+      const vaiAbrir = !this.gerenciarAbrirDropdownJogadores;
+      this.fecharDropdownsGerenciar();
+      if (vaiAbrir) {
+        this.atualizarPosicaoDropdownGerenciar('jogadores');
+        this.gerenciarAbrirDropdownJogadores = true;
+        this.$nextTick(() => this.atualizarPosicaoDropdownGerenciar('jogadores'));
+      }
+    },
+    toggleDropdownRemover() {
+      const vaiAbrir = !this.gerenciarAbrirDropdownRemover;
+      this.fecharDropdownsGerenciar();
+      if (vaiAbrir) {
+        this.atualizarPosicaoDropdownGerenciar('remover');
+        this.gerenciarAbrirDropdownRemover = true;
+        this.$nextTick(() => this.atualizarPosicaoDropdownGerenciar('remover'));
+      }
+    },
+    atualizarPosicaoDropdownGerenciar(tipo) {
+      const mapa = {
+        usuarios: 'dropdownUsuariosAnchor',
+        jogadores: 'dropdownJogadoresAnchor',
+        remover: 'dropdownRemoverAnchor'
+      };
+
+      const anchor = this.$refs[mapa[tipo]];
+      if (!anchor) return;
+
+      const rect = anchor.getBoundingClientRect();
+      const margemTela = 8;
+      const alturaPadrao = 280;
+      const espacoAbaixo = window.innerHeight - rect.bottom - margemTela;
+      const espacoAcima = rect.top - margemTela;
+      const abreParaCima = espacoAbaixo < 170 && espacoAcima > espacoAbaixo;
+
+      const largura = Math.min(rect.width, window.innerWidth - margemTela * 2);
+      const left = Math.max(margemTela, Math.min(rect.left, window.innerWidth - largura - margemTela));
+      const maxHeightBase = abreParaCima ? espacoAcima - 14 : espacoAbaixo - 14;
+      const maxHeight = Math.min(alturaPadrao, Math.max(120, Math.floor(maxHeightBase)));
+      const top = abreParaCima
+        ? Math.max(margemTela, rect.top - maxHeight - 8)
+        : rect.bottom + 8;
+
+      this.gerenciarDropdownPosicoes[tipo] = {
+        top: `${Math.round(top)}px`,
+        left: `${Math.round(left)}px`,
+        width: `${Math.round(largura)}px`,
+        maxHeight: `${maxHeight}px`
+      };
+    },
+    atualizarPosicaoDropdownsGerenciar() {
+      if (!this.modalGerenciarJogadoresAberto) return;
+      if (this.gerenciarAbrirDropdownUsuarios) this.atualizarPosicaoDropdownGerenciar('usuarios');
+      if (this.gerenciarAbrirDropdownJogadores) this.atualizarPosicaoDropdownGerenciar('jogadores');
+      if (this.gerenciarAbrirDropdownRemover) this.atualizarPosicaoDropdownGerenciar('remover');
+    },
+    handleClickForaDropdownGerenciar(event) {
+      if (!this.modalGerenciarJogadoresAberto) return;
+
+      const alvo = event.target;
+      const areasAbertas = [
+        {
+          aberto: this.gerenciarAbrirDropdownUsuarios,
+          anchor: this.$refs.dropdownUsuariosAnchor,
+          lista: this.$refs.dropdownUsuariosLista
+        },
+        {
+          aberto: this.gerenciarAbrirDropdownJogadores,
+          anchor: this.$refs.dropdownJogadoresAnchor,
+          lista: this.$refs.dropdownJogadoresLista
+        },
+        {
+          aberto: this.gerenciarAbrirDropdownRemover,
+          anchor: this.$refs.dropdownRemoverAnchor,
+          lista: this.$refs.dropdownRemoverLista
+        }
+      ];
+
+      const clicouDentroDeDropdownAberto = areasAbertas.some(area =>
+        area.aberto &&
+        ((area.anchor && area.anchor.contains(alvo)) || (area.lista && area.lista.contains(alvo)))
+      );
+
+      if (!clicouDentroDeDropdownAberto) {
+        this.fecharDropdownsGerenciar();
+      }
+    },
     resetarModalGerenciarEstado() {
       this.gerenciarAcaoLocal = 'adicionarExistente';
       this.gerenciarNomeJogador = '';
@@ -329,6 +465,9 @@ export default {
       this.gerenciarAbrirDropdownRemover = false;
       this.gerenciarBuscaJogadorRemover = '';
       this.gerenciarNomesJogadoresMassa = '';
+      this.gerenciarDropdownPosicoes.usuarios = null;
+      this.gerenciarDropdownPosicoes.jogadores = null;
+      this.gerenciarDropdownPosicoes.remover = null;
     },
     abrirModalGerenciarJogadores() {
       if (!this.time?.id) return;
@@ -764,7 +903,8 @@ export default {
 .title_placar {
   color: #3b82f6;
   font-size: 24px;
-  font-weight: bold;
+  font-weight: 900;
+  margin: 0;
 }
 
 .btn-gerenciar {
@@ -777,12 +917,19 @@ export default {
   font-weight: 800;
   transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
   box-shadow: 0 10px 18px rgba(59, 130, 246, 0.22);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .btn-gerenciar:hover {
   background: #2563eb;
   transform: translateY(-1px);
   box-shadow: 0 14px 26px rgba(59, 130, 246, 0.28);
+}
+
+.btn-gerenciar:active {
+  transform: translateY(0);
 }
 
 .loader-container-centralizado,
@@ -904,7 +1051,7 @@ export default {
   background: #dbeafe;
   color: #1d4ed8;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1;
 }
 
@@ -915,6 +1062,16 @@ export default {
   border-radius: 50%;
   border: 1px solid rgba(59, 130, 246, 0.35);
   background: #fff;
+}
+
+.time-image-click {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.time-image-click:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.12);
 }
 
 .select-wrap {
@@ -981,23 +1138,32 @@ export default {
 
 .modal-overlay-gerenciar {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1100;
+  padding: 18px;
 }
 
 .modal-content-gerenciar {
-  background: white;
-  padding: 30px 40px;
-  border-radius: 10px;
-  width: 900px;
-  max-width: 90%;
+  width: min(720px, 100%);
+  max-height: 92vh;
+  overflow-y: auto;
+  overflow-x: visible;
+  background: #fff;
+  border-radius: 16px;
+  padding: 22px 22px 18px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.28);
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.modal-content-gerenciar.modal-content-gerenciar-sem-scroll {
+  overflow-y: hidden;
 }
 
 .modal-header-gerenciar {
@@ -1005,164 +1171,264 @@ export default {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  margin-bottom: 14px;
 }
 
 .modal-header-gerenciar h2 {
-  margin-bottom: 20px;
+  margin: 0;
   color: #3b82f6;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -0.2px;
 }
 
 .btn-close-x-gerenciar {
-  width: 34px;
-  height: 34px;
-  border: 1px solid #3b82f6;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(37, 99, 235, 0.35);
   border-radius: 999px;
   background: #fff;
   color: #3b82f6;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
   cursor: pointer;
-  flex: 0 0 auto;
-}
-
-.dropdown-gerenciar {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 15px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-}
-
-.botoes-gerenciar {
-  display: flex;
-  gap: 10px;
-  margin-top: 1rem;
-}
-
-.btn-save1-gerenciar {
-  flex: 1;
-  padding: 10px 0;
-  border-radius: 20px;
-  border: none;
-  cursor: pointer;
-  color: white;
-  font-size: 16px;
-  background-color: #3b82f6;
-}
-
-.dropdown-custom-gerenciar {
-  position: relative;
-  cursor: pointer;
-  margin-top: 10px;
-  margin-bottom: 15px;
-  width: 100%;
-}
-
-.dropdown-selected-gerenciar {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background-color: #fff;
-  font-size: 15px;
-  color: #333;
-  min-height: 38px;
+  justify-content: center;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease, color 0.2s ease;
 }
 
-.dropdown-selected-gerenciar img.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.dropdown-list-gerenciar {
-  position: absolute;
-  width: 100%;
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  margin-top: 4px;
-  max-height: 250px;
-  overflow-y: auto;
-  z-index: 9999;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.dropdown-list-gerenciar li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  cursor: pointer;
-}
-
-.dropdown-list-gerenciar img.avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.input-busca-jogador-gerenciar {
-  width: 100%;
-  padding: 8px;
-  border: none;
-  border-bottom: 1px solid #ddd;
-  outline: none;
-  font-size: 14px;
-}
-
-.dropdown-list-gerenciar ul {
-  max-height: 180px;
-  overflow-y: auto;
-}
-
-.sem-jogador-gerenciar {
-  padding: 10px;
-  text-align: center;
-  color: #999;
-  font-size: 13px;
-}
-
-.selecionado {
-  background-color: #eef6ff;
-  font-weight: bold;
+.btn-close-x-gerenciar:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+  transform: translateY(-1px);
 }
 
 .abas-container-gerenciar {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 20px;
+  padding: 10px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  margin-bottom: 14px;
 }
 
 .aba-gerenciar {
-  flex: 1;
+  flex: 1 1 140px;
   text-align: center;
-  padding: 10px 0;
-  border-radius: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
   cursor: pointer;
-  background-color: #f1f1f1;
-  font-weight: 500;
-  color: #333;
-  transition: all 0.2s;
+  background: transparent;
+  font-weight: 800;
+  color: #334155;
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease, color 0.2s ease;
+  user-select: none;
+  border: 1px solid transparent;
 }
 
 .aba-gerenciar:hover {
-  background-color: #e0e0e0;
+  background: rgba(59, 130, 246, 0.08);
+  transform: translateY(-1px);
 }
 
 .aba-gerenciar.ativa {
-  background-color: #3b82f6;
-  color: white;
+  background: #3b82f6;
+  color: #fff;
+  box-shadow: 0 12px 22px rgba(37, 99, 235, 0.22);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .conteudo-aba-gerenciar {
   margin-top: 10px;
+}
+
+.form-group-gerenciar label {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 800;
+  color: #475569;
+  margin: 10px 0 6px;
+}
+
+.dropdown-gerenciar {
+  width: 100%;
+  padding: 12px 12px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  font-size: 14px;
+  color: #0f172a;
+  background: #fff;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.dropdown-gerenciar:hover {
+  border-color: rgba(59, 130, 246, 0.55);
+}
+
+.dropdown-gerenciar:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+textarea.dropdown-gerenciar {
+  resize: vertical;
+  min-height: 110px;
+}
+
+.dropdown-custom-gerenciar {
+  position: relative;
+  cursor: pointer;
+  margin-top: 8px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.dropdown-selected-gerenciar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  border-radius: 12px;
+  background-color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  min-height: 44px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.dropdown-selected-gerenciar:hover {
+  border-color: rgba(59, 130, 246, 0.55);
+}
+
+.dropdown-selected-gerenciar:active {
+  transform: translateY(0);
+}
+
+.dropdown-selected-gerenciar img.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.dropdown-list-gerenciar {
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  border-radius: 14px;
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 1300;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+  padding: 6px 0;
+}
+
+.dropdown-list-gerenciar-solto {
+  position: fixed;
+  margin-top: 0;
+}
+
+.input-busca-jogador-gerenciar {
+  width: calc(100% - 16px);
+  margin: 6px 8px 8px;
+  padding: 10px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  outline: none;
+  font-size: 14px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input-busca-jogador-gerenciar:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
+}
+
+.dropdown-list-gerenciar ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 210px;
+  overflow-y: auto;
+}
+
+.dropdown-list-gerenciar li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.dropdown-list-gerenciar li:hover {
+  background: #f8fafc;
+}
+
+.dropdown-list-gerenciar img.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.sem-jogador-gerenciar {
+  padding: 12px;
+  text-align: center;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.selecionado {
+  background: rgba(59, 130, 246, 0.12);
+  font-weight: 900;
+}
+
+.botoes-gerenciar {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.btn-save1-gerenciar {
+  flex: 1;
+  padding: 12px 0;
+  border-radius: 999px;
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  cursor: pointer;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 900;
+  background: #3b82f6;
+  box-shadow: 0 14px 26px rgba(37, 99, 235, 0.22);
+  transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.btn-save1-gerenciar:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 18px 34px rgba(37, 99, 235, 0.28);
+}
+
+.btn-save1-gerenciar:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+  box-shadow: none;
 }
 
 @media (max-width: 768px) {
@@ -1245,46 +1511,37 @@ export default {
 
   .modal-overlay-gerenciar {
     align-items: flex-start;
-    padding: 20px 10px;
+    padding: 16px 10px;
   }
 
   .modal-content-gerenciar {
     width: 100%;
     max-width: 100%;
-    padding: 20px;
-    border-radius: 8px;
+    padding: 16px;
+    border-radius: 14px;
   }
 
   .modal-header-gerenciar h2 {
     font-size: 18px;
   }
 
-  .dropdown-gerenciar,
-  .dropdown-selected-gerenciar {
-    font-size: 14px;
-  }
-
   .botoes-gerenciar {
-    flex-direction: row;
     gap: 10px;
-    flex-wrap: wrap;
   }
 
   .btn-save1-gerenciar {
-    flex: 1;
-    font-size: 15px;
+    font-size: 14px;
   }
 
   .abas-container-gerenciar {
     gap: 8px;
+    padding: 8px;
   }
 
   .aba-gerenciar {
-    flex: 1 1 100px;
-    font-size: 14px;
-    padding: 8px;
+    flex: 1 1 48%;
+    font-size: 13px;
+    padding: 10px 8px;
   }
 }
 </style>
-
-

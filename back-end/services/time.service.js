@@ -27,69 +27,55 @@ async function removerTime(id) {
   const timeId = Number(id);
   const agora = new Date();
 
-  return await prisma.$transaction(async (prisma) => {
+  return await prisma.$transaction(async tx => {
+    const timeAtual = await tx.time.findFirst({
+      where: { id: timeId, deletedAt: null }
+    });
 
-    await prisma.treinadorTime.updateMany({
-      where: { timeId },
+    if (!timeAtual) return null;
+
+    await tx.treinadorTime.updateMany({
+      where: { timeId, deletedAt: null },
+      data: { ativo: false, deletedAt: agora }
+    });
+
+    await tx.usuarioTime.updateMany({
+      where: { timeId, deletedAt: null },
+      data: { ativo: false, deletedAt: agora }
+    });
+
+    await tx.agendamento.updateMany({
+      where: { timeId, deletedAt: null },
       data: { deletedAt: agora }
     });
 
-    await prisma.usuarioTime.updateMany({
-      where: { timeId },
-      data: { deletedAt: agora }
-    });
-
-    await prisma.agendamento.updateMany({
-      where: { timeId },
-      data: { deletedAt: agora }
-    });
-
-    const partidas = await prisma.partida.findMany({
+    await tx.partida.updateMany({
       where: {
-        OR: [{ timeAId: timeId }, { timeBId: timeId }]
+        OR: [{ timeAId: timeId }, { timeBId: timeId }],
+        status: { not: 'DELETADA' }
       },
-      select: { id: true }
+      data: { status: 'DELETADA' }
     });
 
-    const partidaIds = partidas.map(p => p.id);
-
-    if (partidaIds.length) {
-      await prisma.partidaUsuario.updateMany({
-        where: { partidaId: { in: partidaIds } },
-        data: { deletedAt: agora }
-      });
-
-      await prisma.jogadorPartida.updateMany({
-        where: { partidaId: { in: partidaIds } },
-        data: { deletedAt: agora }
-      });
-    }
-
-    await prisma.partida.updateMany({
-      where: { OR: [{ timeAId: timeId }, { timeBId: timeId }] },
-      data: { deletedAt: agora }
+    await tx.jogadorTime.updateMany({
+      where: { timeId, deletedAt: null },
+      data: { ativo: false, deletedAt: agora }
     });
 
-    await prisma.jogadorTime.updateMany({
-      where: { timeId },
-      data: { deletedAt: agora }
+    await tx.placar.updateMany({
+      where: { timeId, deletedAt: null },
+      data: { visivel: false, deletedAt: agora }
     });
 
-    await prisma.placar.updateMany({
-      where: { timeId },
-      data: { visivel: false }
+    await tx.campeonatoTime.updateMany({
+      where: { timeId, deletedAt: null },
+      data: { ativo: false, deletedAt: agora }
     });
 
-    await prisma.campeonatoTime.updateMany({
-      where: { timeId },
-      data: { ativo: false }
-    });
-
-    return prisma.time.update({
+    return tx.time.update({
       where: { id: timeId },
       data: { deletedAt: agora, ativo: false }
     });
-
   });
 }
 

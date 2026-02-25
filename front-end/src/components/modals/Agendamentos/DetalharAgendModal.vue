@@ -1,11 +1,12 @@
 <template>
   <div class="modal-overlay" @click.self="$emit('fechar')">
     <div class="modal-content">
-      <h2 class="titulo_h2">Detalhes do Agendamento</h2>
+      <div class="modal-header">
+        <h2 class="titulo_h2">Detalhes do Agendamento</h2>
+        <span class="badge-tipo">{{ agendamento.tipo}}</span>
+      </div>
 
       <div class="detalhes-box">
-        <h3 class="subtitulo_h3">{{ agendamento.tipo || 'Agendamento' }}</h3>
-
         <p><strong>Realizado por:</strong> {{ agendamento.usuario?.nome || 'Usuário desconhecido' }}</p>
 
         <p>
@@ -13,7 +14,6 @@
         </p>
 
         <p><strong>Duração:</strong> {{ agendamento.duracao }} hora(s)</p>
-        <p><strong>Tipo:</strong> {{ agendamento.tipo }}</p>
 
         <p><strong>Time:</strong> {{ agendamento.time?.nome || 'Não vinculado' }}</p>
         <p><strong>Código de Verificação:</strong> {{ agendamento.codigoVerificacao || 'N/A' }}</p>
@@ -63,81 +63,172 @@ export default {
 <style scoped>
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+  z-index: 1300;
+  padding: 16px;
 }
 
 .modal-content {
-  background: #fff;
-  padding: 2rem;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 900px;
+  width: min(900px, 100%);
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  padding: 28px 30px;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.28);
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.titulo_h2 {
+  margin: 0;
+  color: #3b82f6;
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -0.3px;
+  line-height: 1.15;
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.badge-tipo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border: 1px solid rgba(37, 99, 235, 0.22);
+  box-shadow: 0 10px 18px rgba(37, 99, 235, 0.18);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .detalhes-box {
-  border: 2px solid #3B82F6;
-  border-radius: 10px;
-  padding: 20px;
-  margin-top: 12px;
-  margin-bottom: 20px;
+  margin-top: 10px;
+  margin-bottom: 18px;
+  padding: 18px 18px 16px;
+  border-radius: 16px;
+  background: #f9fbff;
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
 }
 
 .detalhes-box p {
   margin: 10px 0;
-  font-size: 16px;
-  color: #374151;
+  font-size: 15px;
+  color: #334155;
+  line-height: 1.45;
 }
 
-.titulo_h2 {
-  color: #3B82F6;
-  font-size: 30px;
-  margin-bottom: 1rem;
-  text-align: left;
-}
-
-.subtitulo_h3 {
-  color: #3B82F6;
-  font-size: 20px;
-  margin-bottom: 15px;
-  border-bottom: 1px solid #e2e8f0;
-  padding-bottom: 5px;
-}
-
-.btn-cancelar {
-  display: block;
-  width: 100%;
-  margin-top: 15px;
-  background-color: #3b82f6;
-  color: white;
-  padding: 12px 16px;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-cancelar:hover {
-  background-color: #2563EB;
+.detalhes-box p strong {
+  color: #0f172a;
+  font-weight: 900;
 }
 
 .alerta-recusa {
-  margin-top: 10px;
-  padding: 10px;
-  background-color: #fee2e2;
-  color: #991b1b;
-  border-radius: 6px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
   font-size: 14px;
+  font-weight: 700;
+  background: #fff1f2;
+  color: #991b1b;
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.06);
+}
+
+.alerta-recusa strong {
+  font-weight: 900;
+}
+
+.btn-cancelar {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px 16px;
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 14px;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 14px 26px rgba(37, 99, 235, 0.18);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.btn-cancelar:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 34px rgba(37, 99, 235, 0.24);
+  filter: brightness(0.98);
+}
+
+.btn-cancelar:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 12px;
+  }
+
+  .modal-content {
+    padding: 16px 14px;
+    border-radius: 14px;
+  }
+
+  .modal-header {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .titulo_h2 {
+    font-size: 20px;
+    line-height: 1.15;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .badge-tipo {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .detalhes-box {
+    padding: 12px 12px 10px;
+    border-radius: 14px;
+  }
+
+  .detalhes-box p {
+    margin: 8px 0;
+    font-size: 14px;
+  }
+
+  .btn-cancelar {
+    padding: 12px 14px;
+    margin-top: 12px;
+  }
 }
 </style>

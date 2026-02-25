@@ -380,6 +380,9 @@ export default {
 
 .sem-dados-centralizado.sem-dados-alinhado {
   justify-content: flex-start;
+  align-items: flex-start;
+  min-height: 0;
+  padding: 24px 0;
   text-align: left;
 }
 

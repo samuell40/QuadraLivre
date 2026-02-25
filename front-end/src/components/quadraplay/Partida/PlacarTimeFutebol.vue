@@ -58,7 +58,7 @@
 
     <!-- Modal eventos (gols/cartões) -->
     <div v-if="modalAberto" class="modal-overlay" @click.self="fecharModal">
-      <div class="modal-content" :class="modalStatusClass">
+      <div class="modal-content modal-evento" :class="modalStatusClass">
         <h2 class="modal-titulo" :class="{ 'modal-titulo-finalizada': partidaEncerradaGlobal, 'modal-titulo-andamento': partidaEmAndamentoGlobal }">
           Selecione o Jogador – <span>{{ tituloEvento }}</span>
         </h2>
@@ -836,6 +836,17 @@ export default {
     max-height: 100dvh;
     border-radius: 0;
     padding: 16px 12px calc(12px + env(safe-area-inset-bottom));
+  }
+
+  .modal-content.modal-evento {
+    width: calc(100vw - 20px);
+    max-width: 720px;
+    height: auto;
+    max-height: calc(100dvh - 20px);
+    border-radius: 12px;
+    padding: 16px 12px;
+    margin: 10px auto;
+    align-self: flex-start;
   }
 
   .modal-remover {

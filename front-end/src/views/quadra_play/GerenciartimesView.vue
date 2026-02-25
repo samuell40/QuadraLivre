@@ -82,8 +82,8 @@
 <script>
 import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue';
 import SidebarQuadra from '@/components/quadraplay/SidebarQuadra.vue';
-import AdicionarTimeModal from '@/components/modals/times/AdicionarTimesModal.vue';
-import DetalharTimes from '@/components/modals/times/DetalharTimes.vue';
+import AdicionarTimeModal from '@/components/quadraplay/times/AdicionarTimesModal.vue';
+import DetalharTimes from '@/components/quadraplay/times/DetalharTimes.vue';
 import Swal from 'sweetalert2';
 import api from '@/axios';
 

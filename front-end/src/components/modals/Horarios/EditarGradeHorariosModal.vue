@@ -6,6 +6,9 @@
                     <h2 class="title">Editar Grade de Horários</h2>
                     <p class="subtitle">{{ quadra.nome }}</p>
                 </div>
+                <button type="button" class="btn-close-x" @click="fechar" aria-label="Fechar modal">
+                    x
+                </button>
             </div>
 
             <div v-if="isLoading" class="loader-container">
@@ -137,7 +140,6 @@
             </div>
 
             <div class="modal-footer">
-                <button class="btn-cancelar" @click="fechar" :disabled="isSaving">Cancelar</button>
                 <button class="btn-salvar" @click="salvarGradeCompleta" :disabled="isSaving || isLoading">
                     {{ isSaving ? 'Salvando...' : 'Salvar Alterações' }}
                 </button>
@@ -327,6 +329,29 @@ export default {
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 24px;
+}
+
+.btn-close-x {
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(59, 130, 246, 0.55);
+    border-radius: 999px;
+    background: #fff;
+    color: #3b82f6;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-close-x:hover {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #ef4444;
+    transform: translateY(-1px);
 }
 
 .title {
@@ -756,31 +781,15 @@ input:checked+.slider:before {
     margin-top: 32px;
     padding-top: 20px;
     border-top: 1px solid #f1f5f9;
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-}
-
-.btn-cancelar {
-    background: #f1f5f9;
-    color: #475569;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.btn-cancelar:hover {
-    background: #e2e8f0;
+    display: block;
 }
 
 .btn-salvar {
     background: #3B82F6;
     color: white;
     border: none;
-    padding: 12px 32px;
+    padding: 12px;
+    width: 100%;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
@@ -844,21 +853,37 @@ input:checked+.slider:before {
     }
 
     .modal-footer {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: nowrap;
-        gap: 12px;
-        justify-content: space-between;
+        display: block;
     }
 
-    .btn-cancelar,
     .btn-salvar {
-        flex: 1;
-        width: auto;
-        padding: 12px 0;
+        width: 100%;
+        padding: 12px;
         text-align: center;
         font-size: 14px;
-        white-space: nowrap;
+    }
+
+    .dias-checks {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .chk-item {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .lista-horarios {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .horario-chip {
+        width: 100%;
+        box-sizing: border-box;
+        justify-content: space-between;
     }
 
     .add-horario-form {

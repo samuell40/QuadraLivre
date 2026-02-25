@@ -78,12 +78,13 @@
 
       <div class="placar-container">
         <div class="placar-wrapper">
-          <h3 class="titulo-secao">
-            <span>Classificação do {{ nomeCampeonato }}</span>
-          </h3>
+          <h3 class="titulo-secao">Classificação do {{ nomeCampeonato }}</h3>
 
-          <TabelaClassificacao :times="placar" :loading="isLoadingPlacar" :modalidade="modalidadeNormalizada"
-            empty-text="Nenhum placar disponível no momento." @time-click="abrirModalPartidasTime" />
+          <TabelaClassificacao v-if="isLoadingPlacar || (Array.isArray(placar) && placar.length > 0)" :times="placar"
+            :loading="isLoadingPlacar" :modalidade="modalidadeNormalizada" @time-click="abrirModalPartidasTime" />
+          <div v-else class="sem-dados-centralizado sem-dados-alinhado">
+            Nenhuma tabela de classificação disponível no momento.
+          </div>
         </div>
         <!-- PARTIDAS -->
         <div class="partidas-wrapper">
@@ -99,7 +100,7 @@
           <h3 class="titulo-secao">Resultados</h3>
 
           <ListaPartidas :partidas="partidas" :loading="isLoadingPartidas"
-            empty-title="Nenhuma partida disponível no momento." quadra-class="nome-quadra-home"
+            empty-title="Nenhuma partida disponível no momento." quadra-class="nome-quadra-home" empty-align="left"
             @time-click="abrirModalPartidasTime" />
         </div>
       </div>
@@ -982,6 +983,16 @@ p {
   height: 200px;
   font-size: 16px;
   color: #555;
+}
+
+.sem-dados-centralizado.sem-dados-alinhado {
+  justify-content: flex-start;
+  align-items: flex-start;
+  height: auto;
+  min-height: 0;
+  padding: 24px 0;
+  color: #6b7280;
+  text-align: left;
 }
 
 @media (max-width: 768px) {

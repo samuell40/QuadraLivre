@@ -1,7 +1,12 @@
 <template>
   <div class="modal-overlay" @click.self="fecharModal">
     <div class="modal-content">
-      <h2 class="modal-titulo">Motivo da Recusa</h2>
+      <div class="modal-header">
+        <h2 class="modal-titulo">Motivo da Recusa</h2>
+        <button class="btn-close-x" @click="fecharModal" :disabled="loading" aria-label="Fechar modal">
+          x
+        </button>
+      </div>
       <p class="modal-descricao">Explique porque o agendamento não pode ser aceito:</p>
 
       <textarea 
@@ -17,9 +22,6 @@
         <button class="modal-btn-confirmar" @click="confirmarRecusa" :disabled="loading">
           <span v-if="loading" class="loader-btn"></span>
           <span v-else>Confirmar Recusa</span>
-        </button>
-        <button class="modal-btn-cancelar" @click="fecharModal" :disabled="loading">
-          Cancelar
         </button>
       </div>
     </div>
@@ -80,12 +82,20 @@ const confirmarRecusa = () => {
   background: white;
   width: 100%;
   max-width: 600px;
-  padding: 32px;
+  padding: 28px;
   border-radius: 16px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
   animation: fadeInScale 0.3s ease-out;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
 @keyframes fadeInScale {
@@ -97,15 +107,43 @@ const confirmarRecusa = () => {
   font-size: 26px;
   font-weight: 800;
   color: #3B82F6;
-  margin: 0 0 12px 0;
-  text-align: center;
+  margin: 0;
+}
+
+.btn-close-x {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(59, 130, 246, 0.55);
+  border-radius: 999px;
+  background: #fff;
+  color: #3b82f6;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-close-x:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+  transform: translateY(-1px);
+}
+
+.btn-close-x:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .modal-descricao {
   font-size: 15px;
   color: #6b7280;
   margin-bottom: 24px;
-  text-align: center;
+  text-align: left;
   line-height: 1.5;
 }
 
@@ -139,16 +177,13 @@ const confirmarRecusa = () => {
 }
 
 .modal-actions-container {
-  display: flex;
-  justify-content: space-between;
+  display: block;
   width: 100%;
-  gap: 16px;
   margin-top: 24px;
 }
 
-.modal-btn-confirmar,
-.modal-btn-cancelar {
-  flex: 1;
+.modal-btn-confirmar {
+  width: 100%;
   padding: 14px 0;
   border: none;
   border-radius: 10px;
@@ -168,24 +203,12 @@ const confirmarRecusa = () => {
   color: white;
 }
 
-.modal-btn-cancelar {
-  background-color: #f3f4f6;
-  color: #4b5563;
-}
-
 .modal-btn-confirmar:hover:not(:disabled) {
   background-color: #1e3a8a;
   transform: translateY(-2px);
 }
 
-.modal-btn-cancelar:hover:not(:disabled) {
-  background-color: #e5e7eb;
-  color: #1f2937;
-  transform: translateY(-2px);
-}
-
-.modal-btn-confirmar:disabled,
-.modal-btn-cancelar:disabled {
+.modal-btn-confirmar:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -209,13 +232,6 @@ const confirmarRecusa = () => {
   }
   .modal-titulo {
     font-size: 22px;
-  }
-  .modal-actions-container {
-    flex-direction: column-reverse;
-    gap: 12px;
-  }
-  .modal-btn-confirmar, .modal-btn-cancelar {
-    width: 100%;
   }
 }
 </style>

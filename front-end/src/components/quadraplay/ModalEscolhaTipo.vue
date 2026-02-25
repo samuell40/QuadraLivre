@@ -1,5 +1,6 @@
 <template>
-  <div v-if="modelValue" class="modal-overlay" @click.self="fechar">
+  <div v-if="modelValue && !mostrarModalPartida && !mostrarModalRodada && !mostrarModalJogadores" class="modal-overlay"
+    @click.self="fechar">
     <div class="modal-content modal-escolha">
       <div class="modal-header">
         <span class="title">Escolha a Ação</span>
@@ -202,7 +203,7 @@
 <script>
 import api from '@/axios'
 import Swal from 'sweetalert2'
-import SelecionarJogadores from '../Partida/SelecionarJogadores.vue'
+import SelecionarJogadores from './Partida/SelecionarJogadores.vue'
 
 export default {
   name: 'ModalEscolherTipo',
