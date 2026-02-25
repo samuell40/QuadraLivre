@@ -1,5 +1,9 @@
-﻿<template>
-  <div v-if="modelValue && !mostrarModalFase && !mostrarModalCriterios" class="modal-overlay" @click.self="fechar">
+<template>
+  <div
+    v-if="modelValue && !mostrarModalFase && !mostrarModalCriterios && !mostrarModalColunas"
+    class="modal-overlay"
+    @click.self="fechar"
+  >
     <div class="modal-content modal-escolha-config">
       <div class="modal-header">
         <span class="title">Configurações de Classificação</span>
@@ -33,6 +37,17 @@
             <span class="titulo-acao-modal">Critérios de Classificação</span>
           </span>
           <small class="btn-tipo-sub">Define a ordem dos critérios usados na classificação</small>
+        </button>
+
+        <button class="btn-tipo btn-tipo-card" @click="colunasClassificacao">
+          <span class="btn-tipo-titulo btn-tipo-titulo-com-icone">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-layout-text-window-reverse" viewBox="0 0 16 16">
+              <path d="M13.5 1a1.5 1.5 0 0 1 1.5 1.5v11A1.5 1.5 0 0 1 13.5 15h-11A1.5 1.5 0 0 1 1 13.5v-11A1.5 1.5 0 0 1 2.5 1h11zm-11 1A.5.5 0 0 0 2 2.5v2h12v-2a.5.5 0 0 0-.5-.5h-11zM14 5.5H2v8a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-8z"/>
+              <path d="M3 7h2v2H3V7zm0 3h2v2H3v-2zm3-3h7v1H6V7zm0 3h7v1H6v-1z"/>
+            </svg>
+            <span class="titulo-acao-modal">Colunas da Tabela</span>
+          </span>
+          <small class="btn-tipo-sub">Seleciona quais colunas devem aparecer no placar</small>
         </button>
 
         <button class="btn-tipo btn-tipo-card" @click="grupos">
@@ -134,11 +149,60 @@
       </div>
     </div>
   </div>
+
+  <div v-if="mostrarModalColunas" class="modal-overlay" @click.self="fecharModalColunas">
+    <div class="modal-content modal-criterios modal-colunas">
+      <div class="modal-header">
+        <h2>Colunas da Tabela</h2>
+        <button type="button" class="btn-close-x" @click="fecharModalColunas">x</button>
+      </div>
+
+      <p class="descricao">
+        Arraste para ordenar e marque as colunas que devem aparecer na tabela de classificação
+      </p>
+
+      <div class="lista-criterios lista-colunas">
+        <label class="coluna-item coluna-item-fixa">
+          <input type="checkbox" checked disabled />
+          <span class="nome">Time</span>
+          <span class="sigla-coluna">TIME</span>
+        </label>
+
+        <label
+          v-for="(coluna, indice) in colunasOrdenadas"
+          :key="coluna.key"
+          class="coluna-item"
+          :class="{ 'coluna-item-ativa': colunaSelecionada(coluna.key), dragging: indiceArrasteColuna === indice }"
+          draggable="true"
+          @dragstart="iniciarArrasteColuna($event, indice)"
+          @dragover.prevent
+          @drop="soltarColuna(indice)"
+          @dragend="finalizarArrasteColuna"
+        >
+          <span class="drag-handle" aria-hidden="true">::</span>
+          <input v-model="colunasSelecionadas" type="checkbox" :value="coluna.key" />
+          <span class="nome">{{ coluna.label }}</span>
+          <span class="sigla-coluna">{{ coluna.abbr }}</span>
+        </label>
+      </div>
+
+      <div class="botoes">
+        <button class="btn-save" @click="salvarColunas">
+          Salvar colunas
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
 import api from "@/axios"
 import Swal from "sweetalert2"
+import {
+  getColunasClassificacaoPorModalidade,
+  getChavesPadraoColunasClassificacao,
+  resolverColunasVisiveisClassificacao
+} from "@/utils/classificacaoColunas"
 
 export default {
   name: "ModalConfiguracoesCampeonato",
@@ -148,18 +212,31 @@ export default {
     campeonato: Object
   },
 
-  emits: ["update:modelValue", "faseCriada", "criterios", "grupos"],
+  emits: ["update:modelValue", "faseCriada", "criterios", "colunas", "grupos"],
 
   data() {
     return {
       mostrarModalFase: false,
       mostrarModalCriterios: false,
+      mostrarModalColunas: false,
       nomeFase: "",
       times: [],
       timesSelecionados: [],
       criterios: [],
+      colunasSelecionadas: [],
+      ordemColunas: [],
       classificacao: [],
-      indiceArraste: null
+      indiceArraste: null,
+      indiceArrasteColuna: null
+    }
+  },
+
+  computed: {
+    colunasDisponiveis() {
+      return getColunasClassificacaoPorModalidade(this.campeonato?.modalidade?.nome)
+    },
+    colunasOrdenadas() {
+      return this.ordemColunas.length ? this.ordemColunas : this.colunasDisponiveis
     }
   },
 
@@ -179,23 +256,26 @@ export default {
       this.timesSelecionados = []
     },
 
+    async carregarConfiguracoesClassificacao() {
+      const resp = await api.get(`/ordem/classificacao/${this.campeonato.id}`)
+      const data = resp.data || {}
+
+      const ordem = Array.isArray(data?.ordem) ? data.ordem : []
+      const colunasApi = Array.isArray(data?.colunas) ? data.colunas : []
+
+      this.criterios = ordem.slice()
+      this.colunasSelecionadas = resolverColunasVisiveisClassificacao(
+        this.campeonato?.modalidade?.nome,
+        colunasApi
+      )
+      this.montarOrdemColunas(this.colunasSelecionadas)
+      this.classificacao = Array.isArray(data?.classificacao) ? data.classificacao : []
+    },
+
     async criteriosClassificacao() {
       this.mostrarModalCriterios = true
       try {
-        const resp = await api.get(`/ordem/classificacao/${this.campeonato.id}`)
-        const data = resp.data
-
-        if (data?.ordem?.length) {
-          this.criterios = data.ordem.slice()
-        } else {
-          this.criterios = []
-        }
-        if (data && data.classificacao) {
-          this.classificacao = data.classificacao
-        } else {
-          this.classificacao = []
-        }
-
+        await this.carregarConfiguracoesClassificacao()
       } catch (err) {
         console.error("Erro ao carregar critérios:", err)
         this.criterios = []
@@ -206,14 +286,93 @@ export default {
       this.mostrarModalCriterios = false
     },
 
+    async colunasClassificacao() {
+      this.mostrarModalColunas = true
+      try {
+        await this.carregarConfiguracoesClassificacao()
+      } catch (err) {
+        console.error("Erro ao carregar colunas da classificação:", err)
+        this.colunasSelecionadas = getChavesPadraoColunasClassificacao(this.campeonato?.modalidade?.nome)
+        this.montarOrdemColunas(this.colunasSelecionadas)
+      }
+    },
+
+    fecharModalColunas() {
+      this.mostrarModalColunas = false
+    },
+
     iniciarArraste(indice) {
       this.indiceArraste = indice
     },
 
     soltar(indiceDestino) {
+      if (this.indiceArraste === null || this.indiceArraste === indiceDestino) return
       const criterioMovido = this.criterios[this.indiceArraste]
+      if (!criterioMovido) {
+        this.indiceArraste = null
+        return
+      }
       this.criterios.splice(this.indiceArraste, 1)
       this.criterios.splice(indiceDestino, 0, criterioMovido)
+      this.indiceArraste = null
+    },
+
+    colunaSelecionada(chave) {
+      return this.colunasSelecionadas.includes(chave)
+    },
+
+    montarOrdemColunas(colunasSelecionadas = []) {
+      const selecionadasNormalizadas = resolverColunasVisiveisClassificacao(
+        this.campeonato?.modalidade?.nome,
+        colunasSelecionadas
+      )
+      const disponiveis = this.colunasDisponiveis
+      const mapa = new Map(disponiveis.map(coluna => [coluna.key, coluna]))
+      const adicionadas = new Set()
+      const ordem = []
+
+      for (const chave of selecionadasNormalizadas) {
+        if (!mapa.has(chave) || adicionadas.has(chave)) continue
+        ordem.push(mapa.get(chave))
+        adicionadas.add(chave)
+      }
+
+      for (const coluna of disponiveis) {
+        if (adicionadas.has(coluna.key)) continue
+        ordem.push(coluna)
+        adicionadas.add(coluna.key)
+      }
+
+      this.ordemColunas = ordem
+    },
+
+    iniciarArrasteColuna(event, indice) {
+      this.indiceArrasteColuna = indice
+      if (event?.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move"
+        event.dataTransfer.setData("text/plain", String(indice))
+      }
+    },
+
+    soltarColuna(indiceDestino) {
+      if (this.indiceArrasteColuna === null || this.indiceArrasteColuna === indiceDestino) return
+
+      const ordemAtual = this.colunasOrdenadas.slice()
+      const colunaMovida = ordemAtual[this.indiceArrasteColuna]
+      if (!colunaMovida) {
+        this.indiceArrasteColuna = null
+        return
+      }
+
+      ordemAtual.splice(this.indiceArrasteColuna, 1)
+      ordemAtual.splice(indiceDestino, 0, colunaMovida)
+
+      this.ordemColunas = ordemAtual
+      this.indiceArrasteColuna = null
+    },
+
+    finalizarArrasteColuna() {
+      this.indiceArrasteColuna = null
     },
 
     async salvarOrdem() {
@@ -228,6 +387,7 @@ export default {
           target: ".modal-criterios"
         })
 
+        this.$emit("criterios", ordem)
         this.fecharModalCriterios()
       } catch {
         Swal.fire({
@@ -235,6 +395,52 @@ export default {
           text: "Erro ao salvar ordem",
           icon: "error",
           target: ".modal-criterios"
+        })
+      }
+    },
+
+    async salvarColunas() {
+      const selecionadas = new Set(this.colunasSelecionadas)
+      const ordemSelecionada = this.colunasOrdenadas
+        .map(coluna => coluna.key)
+        .filter(chave => selecionadas.has(chave))
+
+      const colunas = resolverColunasVisiveisClassificacao(
+        this.campeonato?.modalidade?.nome,
+        ordemSelecionada
+      )
+
+      if (!Array.isArray(colunas) || !colunas.length) {
+        await Swal.fire({
+          title: "Atenção",
+          text: "Selecione ao menos uma coluna.",
+          icon: "warning",
+          target: ".modal-colunas"
+        })
+        return
+      }
+
+      try {
+        await api.put(`/campeonatos/${this.campeonato.id}/classificacao/ordem`, { colunas })
+
+        this.colunasSelecionadas = colunas
+        this.montarOrdemColunas(colunas)
+        this.$emit("colunas", colunas)
+
+        await Swal.fire({
+          title: "Sucesso",
+          text: "Colunas salvas com sucesso",
+          icon: "success",
+          target: ".modal-colunas"
+        })
+
+        this.fecharModalColunas()
+      } catch {
+        await Swal.fire({
+          title: "Erro",
+          text: "Erro ao salvar colunas",
+          icon: "error",
+          target: ".modal-colunas"
         })
       }
     },
@@ -589,5 +795,77 @@ export default {
   cursor: grab;
   color: #6b7280;
   font-size: 18px;
+}
+
+.modal-colunas {
+  width: 900px;
+}
+
+.lista-colunas {
+  max-height: 380px;
+}
+
+.coluna-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #e5e7eb;
+  cursor: grab;
+  background: white;
+  user-select: none;
+}
+
+.coluna-item:last-child {
+  border-bottom: none;
+}
+
+.coluna-item:hover {
+  background: #f9fafb;
+}
+
+.coluna-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #3b82f6;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.coluna-item-ativa {
+  background: #f8fbff;
+}
+
+.coluna-item.dragging {
+  opacity: 0.6;
+}
+
+.drag-handle {
+  color: #94a3b8;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  flex: 0 0 auto;
+}
+
+.coluna-item-fixa {
+  background: #f8fafc;
+  cursor: not-allowed;
+  user-select: auto;
+}
+
+.coluna-item-fixa input[type="checkbox"] {
+  cursor: not-allowed;
+}
+
+.sigla-coluna {
+  margin-left: auto;
+  border: 1px solid #bfdbfe;
+  background: #dbeafe;
+  color: #1d4ed8;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
 }
 </style>

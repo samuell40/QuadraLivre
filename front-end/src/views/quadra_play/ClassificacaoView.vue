@@ -40,20 +40,17 @@
           </div>
 
           <!-- ===== FUTEBOL / FUTSAL ===== -->
-          <table v-else-if="isGrupoFutebol" class="placar">
+          <table v-else-if="isGrupoFutebol || isGrupoVolei" class="placar">
             <thead>
               <tr>
                 <th>Time</th>
-                <th>PTS</th>
-                <th>J</th>
-                <th>V</th>
-                <th>E</th>
-                <th>D</th>
-                <th>GM</th>
-                <th>GS</th>
-                <th>SG</th>
-                <th>%</th>
-                <th class="col-ultimos">Últimos Jogos</th>
+                <th
+                  v-for="coluna in colunasTabelaClassificacao"
+                  :key="`head-${coluna.key}`"
+                  :class="{ 'col-ultimos': coluna.key === 'ultimosJogos' }"
+                >
+                  {{ coluna.abbr }}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -63,81 +60,31 @@
                   <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
                   <span class="nome-time">{{ time.time?.nome }}</span>
                 </td>
-                <td>{{ time.pontuacao }}</td>
-                <td>{{ time.jogos }}</td>
-                <td>{{ time.vitorias }}</td>
-                <td>{{ time.empates }}</td>
-                <td>{{ time.derrotas }}</td>
-                <td>{{ time.golsPro }}</td>
-                <td>{{ time.golsSofridos }}</td>
-                <td>{{ time.saldoDeGols }}</td>
-                <td>{{ time.aproveitamento ?? 0 }}%</td>
-                <td class="ultimos-jogos-cell">
-                  <div class="ultimos-jogos">
-                    <span
-                      v-for="(resultado, resultadoIndex) in obterUltimosJogos(time)"
-                      :key="`${time.id || index}-fut-${resultadoIndex}`"
-                      class="resultado-item"
-                      :class="classeResultado(resultado)"
-                    >
-                      {{ simboloResultado(resultado) }}
-                    </span>
-                  </div>
+                <td
+                  v-for="coluna in colunasTabelaClassificacao"
+                  :key="`${time.id || time.timeId || index}-${coluna.key}`"
+                  :class="{ 'ultimos-jogos-cell': coluna.key === 'ultimosJogos' }"
+                >
+                  <template v-if="coluna.key === 'ultimosJogos'">
+                    <div class="ultimos-jogos">
+                      <span
+                        v-for="(resultado, resultadoIndex) in obterUltimosJogos(time)"
+                        :key="`${time.id || index}-res-${resultadoIndex}`"
+                        class="resultado-item"
+                        :class="classeResultado(resultado)"
+                      >
+                        {{ simboloResultado(resultado) }}
+                      </span>
+                    </div>
+                  </template>
+                  <template v-else>
+                    {{ formatarValorColuna(time, coluna.key) }}
+                  </template>
                 </td>
               </tr>
             </tbody>
           </table>
 
-          <!-- ===== VÔLEI ===== -->
-          <table v-else-if="isGrupoVolei" class="placar">
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th>PTS</th>
-                <th>J</th>
-                <th>VIT</th>
-                <th>DER</th>
-                <th>STV</th>
-                <th>3x0</th>
-                <th>3x2</th>
-                <th>2x3</th>
-                <th>0x3</th>
-                <th>W.O</th>
-                <th class="col-ultimos">Últimos Jogos</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(time, index) in timesPlacar" :key="time.id">
-                <td class="time-info time-info-click" @click="abrirModalPartidasTime(time)">
-                  <span class="posicao">{{ index + 1 }}º</span>
-                  <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
-                  <span class="nome-time">{{ time.time?.nome }}</span>
-                </td>
-                <td>{{ time.pontuacao }}</td>
-                <td>{{ time.jogos }}</td>
-                <td>{{ time.vitorias }}</td>
-                <td>{{ time.derrotas }}</td>
-                <td>{{ time.setsVencidos }}</td>
-                <td>{{ time.vitoria3x0 }}</td>
-                <td>{{ time.vitoria3x2 }}</td>
-                <td>{{ time.derrota2x3 }}</td>
-                <td>{{ time.derrota0x3 }}</td>
-                <td>{{ time.derrotaWo }}</td>
-                <td class="ultimos-jogos-cell">
-                  <div class="ultimos-jogos">
-                    <span
-                      v-for="(resultado, resultadoIndex) in obterUltimosJogos(time)"
-                      :key="`${time.id || index}-vol-${resultadoIndex}`"
-                      class="resultado-item"
-                      :class="classeResultado(resultado)"
-                    >
-                      {{ simboloResultado(resultado) }}
-                    </span>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
         </div>
       </div>
       <PartidasDoTimeModal
@@ -149,8 +96,13 @@
         :campeonato-nome="campeonato?.nome || ''"
         :loading="isLoadingPartidas"
       />
-      <ModalConfiguracoesPlacar v-if="campeonato" v-model="modalConfiguracoes" :campeonato="campeonato"
-        @faseCriada="carregarFases" />
+      <ModalConfiguracoesPlacar
+        v-if="campeonato"
+        v-model="modalConfiguracoes"
+        :campeonato="campeonato"
+        @faseCriada="carregarFases"
+        @colunas="atualizarColunasClassificacao"
+      />
 
     </div>
   </div>
@@ -163,6 +115,10 @@ import { carregarCampeonato } from '@/utils/persistirCampeonato'
 import ModalConfiguracoesPlacar from '@/components/quadraplay/ModalConfiguracoesPlacar.vue'
 import PartidasDoTimeModal from '@/components/quadraplay/PartidasDoTimeModal.vue'
 import api from '@/axios'
+import {
+  getColunasClassificacaoPorModalidade,
+  resolverColunasVisiveisClassificacao
+} from '@/utils/classificacaoColunas'
 import {
   EVENTO_CAMPEONATO_ATUALIZADO,
   obterSocket,
@@ -189,6 +145,7 @@ export default {
       timeSelecionadoPartidas: null,
       isLoading: true,
       modalConfiguracoes: false,
+      colunasClassificacaoVisiveis: [],
       socket: null,
       socketCampeonatoId: null,
       onSocketAtualizacao: null,
@@ -218,6 +175,32 @@ export default {
         'beach tenis',
         'beach tennis'
       ].includes(this.modalidadeNormalizada)
+    },
+
+    colunasVisiveisClassificacao() {
+      const colunasConfiguradas = this.colunasClassificacaoVisiveis.length
+        ? this.colunasClassificacaoVisiveis
+        : this.campeonato?.regras?.colunasClassificacao
+
+      return resolverColunasVisiveisClassificacao(
+        this.modalidadeNormalizada,
+        colunasConfiguradas
+      )
+    },
+
+    colunasVisiveisSet() {
+      return new Set(this.colunasVisiveisClassificacao)
+    },
+
+    colunasTabelaClassificacao() {
+      const mapa = new Map(
+        getColunasClassificacaoPorModalidade(this.modalidadeNormalizada)
+          .map(coluna => [coluna.key, coluna])
+      )
+
+      return this.colunasVisiveisClassificacao
+        .map(chave => mapa.get(chave))
+        .filter(Boolean)
     },
 
     nomeFaseSelecionada() {
@@ -342,6 +325,34 @@ export default {
 
     abrirConfiguracoes() {
       this.modalConfiguracoes = true
+    },
+
+    mostrarColuna(chave) {
+      return this.colunasVisiveisSet.has(chave)
+    },
+
+    formatarValorColuna(time, chave) {
+      if (chave === 'aproveitamento') {
+        return `${time?.aproveitamento ?? 0}%`
+      }
+
+      return time?.[chave] ?? ''
+    },
+
+    atualizarColunasClassificacao(colunas) {
+      const colunasResolvidas = resolverColunasVisiveisClassificacao(
+        this.modalidadeNormalizada,
+        colunas
+      )
+
+      this.colunasClassificacaoVisiveis = colunasResolvidas
+      this.campeonato = {
+        ...(this.campeonato || {}),
+        regras: {
+          ...(this.campeonato?.regras || {}),
+          colunasClassificacao: colunasResolvidas
+        }
+      }
     },
 
     abrirModalPartidasTime(time) {

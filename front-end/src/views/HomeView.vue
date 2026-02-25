@@ -80,8 +80,14 @@
           <div class="placar-wrapper">
             <h3 class="titulo-secao">Classificação do {{ nomeCampeonato }}</h3>
 
-            <TabelaClassificacao v-if="isLoadingPlacar || (Array.isArray(placar) && placar.length > 0)" :times="placar"
-              :loading="isLoadingPlacar" :modalidade="modalidadeNormalizada" @time-click="abrirModalPartidasTime" />
+            <TabelaClassificacao
+              v-if="isLoadingPlacar || (Array.isArray(placar) && placar.length > 0)"
+              :times="placar"
+              :loading="isLoadingPlacar"
+              :modalidade="modalidadeNormalizada"
+              :colunas-visiveis="colunasClassificacaoVisiveis"
+              @time-click="abrirModalPartidasTime"
+            />
             <div v-else class="sem-dados-centralizado sem-dados-alinhado">
               Nenhuma tabela de classificação disponível no momento.
             </div>
@@ -173,6 +179,11 @@
           .toLowerCase()
           .normalize('NFD')
           .replace(/[\u0300-\u036f]/g, '')
+      },
+      colunasClassificacaoVisiveis() {
+        return Array.isArray(this.campeonatoAtual?.regras?.colunasClassificacao)
+          ? this.campeonatoAtual.regras.colunasClassificacao
+          : []
       },
       nomeFaseSelecionada() {
         return this.fases.find(f => Number(f.id) === Number(this.faseSelecionada))?.nome || ''
@@ -456,11 +467,31 @@
 
           const fase = res.data.find(f => f.faseId == this.faseSelecionada)
           this.placar = Array.isArray(fase?.placares) ? fase.placares : []
+          await this.carregarColunasClassificacao(campeonatoId)
         } catch (err) {
           console.error('Erro ao carregar placar:', err)
           this.placar = []
         } finally {
           this.isLoadingPlacar = false
+        }
+      },
+
+      async carregarColunasClassificacao(campeonatoId) {
+        if (!campeonatoId) return
+
+        try {
+          const { data } = await api.get(`/ordem/classificacao/${campeonatoId}`)
+          const colunas = Array.isArray(data?.colunas) ? data.colunas : []
+
+          this.campeonatoAtual = {
+            ...(this.campeonatoAtual || {}),
+            regras: {
+              ...(this.campeonatoAtual?.regras || {}),
+              colunasClassificacao: colunas
+            }
+          }
+        } catch (err) {
+          console.error('Erro ao carregar colunas da classificacao:', err)
         }
       },
 

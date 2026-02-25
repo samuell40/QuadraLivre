@@ -3,24 +3,52 @@ const prisma = new PrismaClient();
 
 const CRITERIOS_PADRAO = {
   futebol: [
-    { value: "pontuacao", label: "Pontuação" },
-    { value: "vitorias", label: "Vitórias" },
-    { value: "saldoDeGols", label: "Saldo de gols" },
-    { value: "golsPro", label: "Gols pró" },
-    { value: "golsSofridos", label: "Gols sofridos" },
-    { value: "empates", label: "Empates" },
-    { value: "derrotas", label: "Derrotas" },
-    { value: "confrontoDireto", label: "Confronto direto" },
-    { value: "sorteio", label: "Sorteio" }
+    { value: 'pontuacao', label: 'Pontuacao' },
+    { value: 'vitorias', label: 'Vitorias' },
+    { value: 'saldoDeGols', label: 'Saldo de gols' },
+    { value: 'golsPro', label: 'Gols pro' },
+    { value: 'golsSofridos', label: 'Gols sofridos' },
+    { value: 'empates', label: 'Empates' },
+    { value: 'derrotas', label: 'Derrotas' },
+    { value: 'confrontoDireto', label: 'Confronto direto' },
+    { value: 'sorteio', label: 'Sorteio' }
   ],
   volei: [
-    { value: "pontuacao", label: "Pontuação" },
-    { value: "setsVencidos", label: "Sets vencidos" },
-    { value: "vitoria3x0", label: "Vitória 3x0" },
-    { value: "vitoria3x2", label: "Vitória 3x2" },
-    { value: "derrota2x3", label: "Derrota 2x3" },
-    { value: "derrota0x3", label: "Derrota 0x3" },
-    { value: "sorteio", label: "Sorteio" }
+    { value: 'pontuacao', label: 'Pontuacao' },
+    { value: 'setsVencidos', label: 'Sets vencidos' },
+    { value: 'vitoria3x0', label: 'Vitoria 3x0' },
+    { value: 'vitoria3x2', label: 'Vitoria 3x2' },
+    { value: 'derrota2x3', label: 'Derrota 2x3' },
+    { value: 'derrota0x3', label: 'Derrota 0x3' },
+    { value: 'sorteio', label: 'Sorteio' }
+  ]
+};
+
+const COLUNAS_PADRAO = {
+  futebol: [
+    'pontuacao',
+    'jogos',
+    'vitorias',
+    'empates',
+    'derrotas',
+    'golsPro',
+    'golsSofridos',
+    'saldoDeGols',
+    'aproveitamento',
+    'ultimosJogos'
+  ],
+  volei: [
+    'pontuacao',
+    'jogos',
+    'vitorias',
+    'derrotas',
+    'setsVencidos',
+    'vitoria3x0',
+    'vitoria3x2',
+    'derrota2x3',
+    'derrota0x3',
+    'derrotaWo',
+    'ultimosJogos'
   ]
 };
 
@@ -47,6 +75,31 @@ function grupoModalidade(nomeModalidade) {
 function criteriosPadraoPorModalidade(nomeModalidade) {
   const grupo = grupoModalidade(nomeModalidade);
   return grupo === 'VOLEI' ? CRITERIOS_PADRAO.volei : CRITERIOS_PADRAO.futebol;
+}
+
+function colunasPadraoPorModalidade(nomeModalidade) {
+  const grupo = grupoModalidade(nomeModalidade);
+  return grupo === 'VOLEI' ? COLUNAS_PADRAO.volei : COLUNAS_PADRAO.futebol;
+}
+
+function normalizarColunasClassificacao(colunas, nomeModalidade) {
+  const padrao = colunasPadraoPorModalidade(nomeModalidade);
+
+  if (!Array.isArray(colunas) || colunas.length === 0) {
+    return [...padrao];
+  }
+
+  const validas = new Set(padrao);
+  const colunasNormalizadas = [];
+
+  for (const coluna of colunas) {
+    const chave = String(coluna || '');
+    if (validas.has(chave) && !colunasNormalizadas.includes(chave)) {
+      colunasNormalizadas.push(chave);
+    }
+  }
+
+  return colunasNormalizadas.length ? colunasNormalizadas : [...padrao];
 }
 
 function regrasPadraoPorModalidade(nomeModalidade) {
@@ -121,34 +174,84 @@ async function listarPlacarPorCampeonato(campeonatoId) {
   });
 }
 
-async function salvarOrdemClassificacao(campeonatoId, novaOrdem) {
-  const campeonato = await prisma.campeonato.update({
-    where: { id: Number(campeonatoId) },
-    data: { ordemClassificacao: novaOrdem },
+async function salvarOrdemClassificacao(campeonatoId, novaOrdem = null, colunasVisiveis = null) {
+  const id = Number(campeonatoId);
+  const atualizarOrdem = Array.isArray(novaOrdem);
+  const atualizarColunas = Array.isArray(colunasVisiveis);
+
+  if (!atualizarOrdem && !atualizarColunas) {
+    throw new Error('Informe ao menos ordem ou colunas para atualizar.');
+  }
+
+  const campeonatoAtual = await prisma.campeonato.findUnique({
+    where: { id },
     select: {
       id: true,
       regras: true,
+      ordemClassificacao: true,
       modalidade: { select: { nome: true } }
     }
   });
+
+  if (!campeonatoAtual) {
+    throw new Error('Campeonato nao encontrado');
+  }
+
+  const dataUpdate = {};
+
+  if (atualizarOrdem) {
+    dataUpdate.ordemClassificacao = novaOrdem;
+  }
+
+  if (atualizarColunas) {
+    const regrasBase = normalizarRegrasCampeonato(campeonatoAtual.regras, campeonatoAtual.modalidade?.nome);
+    dataUpdate.regras = {
+      ...regrasBase,
+      colunasClassificacao: normalizarColunasClassificacao(colunasVisiveis, campeonatoAtual.modalidade?.nome)
+    };
+  }
+
+  const campeonato = await prisma.campeonato.update({
+    where: { id },
+    data: dataUpdate,
+    select: {
+      id: true,
+      regras: true,
+      ordemClassificacao: true,
+      modalidade: { select: { nome: true } }
+    }
+  });
+
+  const ordemFinal = Array.isArray(campeonato.ordemClassificacao) ? campeonato.ordemClassificacao : [];
+  const colunasFinal = normalizarColunasClassificacao(
+    campeonato.regras?.colunasClassificacao,
+    campeonato.modalidade?.nome
+  );
+
+  if (!atualizarOrdem) {
+    return {
+      ordem: ordemFinal.length ? ordemFinal : criteriosPadraoPorModalidade(campeonato.modalidade?.nome),
+      colunas: colunasFinal
+    };
+  }
 
   const regras = normalizarRegrasCampeonato(campeonato.regras, campeonato.modalidade?.nome);
   const grupo = grupoModalidade(campeonato.modalidade?.nome);
 
   const placares = await prisma.placar.findMany({
-    where: { campeonatoId: Number(campeonatoId), visivel: true, deletedAt: null },
+    where: { campeonatoId: id, visivel: true, deletedAt: null },
     include: { time: true }
   });
 
   async function calcularConfrontoDireto(timeAId, timeBId) {
     const partidas = await prisma.partida.findMany({
       where: {
-        campeonatoId: Number(campeonatoId),
+        campeonatoId: id,
         OR: [
           { timeAId, timeBId },
           { timeAId: timeBId, timeBId: timeAId }
         ],
-        status: "FINALIZADA"
+        status: 'FINALIZADA'
       }
     });
 
@@ -204,6 +307,7 @@ async function salvarOrdemClassificacao(campeonatoId, novaOrdem) {
         pontosB += e;
       }
     }
+
     return pontosB - pontosA;
   }
 
@@ -223,14 +327,14 @@ async function salvarOrdemClassificacao(campeonatoId, novaOrdem) {
       const b = placares[j];
       let resultado = 0;
 
-      for (const criterio of novaOrdem) {
-        if (criterio.value === "confrontoDireto") {
+      for (const criterio of ordemFinal) {
+        if (criterio.value === 'confrontoDireto') {
           resultado = await getConfronto(a.timeId, b.timeId);
           if (resultado !== 0) break;
           continue;
         }
 
-        if (criterio.value === "sorteio") {
+        if (criterio.value === 'sorteio') {
           resultado = Math.random() - 0.5;
           break;
         }
@@ -250,7 +354,6 @@ async function salvarOrdemClassificacao(campeonatoId, novaOrdem) {
     }
   }
 
-  // Atualiza a posição no banco
   for (let i = 0; i < placares.length; i++) {
     await prisma.placar.update({
       where: { id: placares[i].id },
@@ -258,8 +361,10 @@ async function salvarOrdemClassificacao(campeonatoId, novaOrdem) {
     });
   }
 
-  return placares.map((p, index) => {
-    return {
+  return {
+    ordem: ordemFinal.length ? ordemFinal : criteriosPadraoPorModalidade(campeonato.modalidade?.nome),
+    colunas: colunasFinal,
+    placares: placares.map((p, index) => ({
       id: p.id,
       timeId: p.timeId,
       campeonatoId: p.campeonatoId,
@@ -273,10 +378,9 @@ async function salvarOrdemClassificacao(campeonatoId, novaOrdem) {
       visivel: p.visivel,
       deletedAt: p.deletedAt,
       posicao: index + 1,
-      time: p.time 
-    }
-  });
-
+      time: p.time
+    }))
+  };
 }
 
 async function listarOrdemClassificacao(campeonatoId) {
@@ -288,18 +392,29 @@ async function listarOrdemClassificacao(campeonatoId) {
       modalidadeId: true,
       modalidade: { select: { nome: true } },
       ordemClassificacao: true,
-    },
+      regras: true
+    }
   });
 
   if (!campeonato) {
-    throw new Error("Campeonato não encontrado");
+    throw new Error('Campeonato nao encontrado');
   }
 
-  if (Array.isArray(campeonato.ordemClassificacao) && campeonato.ordemClassificacao.length > 0) {
-    return campeonato.ordemClassificacao;
-  }
+  const ordem = Array.isArray(campeonato.ordemClassificacao) && campeonato.ordemClassificacao.length > 0
+    ? campeonato.ordemClassificacao
+    : criteriosPadraoPorModalidade(campeonato.modalidade?.nome);
 
-  return criteriosPadraoPorModalidade(campeonato.modalidade?.nome);
+  const colunas = normalizarColunasClassificacao(
+    campeonato.regras?.colunasClassificacao,
+    campeonato.modalidade?.nome
+  );
+
+  return { ordem, colunas };
 }
 
-module.exports = { atualizarPlacar, listarPlacarPorCampeonato, salvarOrdemClassificacao, listarOrdemClassificacao };
+module.exports = {
+  atualizarPlacar,
+  listarPlacarPorCampeonato,
+  salvarOrdemClassificacao,
+  listarOrdemClassificacao
+};

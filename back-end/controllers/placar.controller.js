@@ -43,18 +43,22 @@ async function listarPlacarPorCampeonatoController(req, res) {
 async function salvarOrdemController(req, res) {
   try {
     const { campeonatoId } = req.params
-    const { ordem } = req.body
+    const { ordem, colunas } = req.body
 
-    if (!ordem || !Array.isArray(ordem)) {
+    const temOrdem = Array.isArray(ordem)
+    const temColunas = Array.isArray(colunas)
+
+    if (!temOrdem && !temColunas) {
 
       return res.status(400).json({
-        erro: "ordem deve ser um array"
+        erro: "ordem e/ou colunas devem ser arrays"
       })
 
     }
     const resultado = await placarService.salvarOrdemClassificacao(
       campeonatoId,
-      ordem
+      temOrdem ? ordem : null,
+      temColunas ? colunas : null
     )
 
     emitirAtualizacaoCampeonato({
@@ -63,7 +67,7 @@ async function salvarOrdemController(req, res) {
     })
 
     return res.json({
-      message: "Ordem salva com sucesso",
+      message: "Configuracao salva com sucesso",
       data: resultado
     })
 
@@ -78,8 +82,12 @@ async function salvarOrdemController(req, res) {
 async function listarOrdemClassificacaoController(req, res) {
   try {
     const { campeonatoId } = req.params;
-    const ordem = await placarService.listarOrdemClassificacao(Number(campeonatoId));
-    res.json({ campeonatoId, ordem });
+    const configuracao = await placarService.listarOrdemClassificacao(Number(campeonatoId));
+    res.json({
+      campeonatoId,
+      ordem: configuracao?.ordem || [],
+      colunas: configuracao?.colunas || []
+    });
   } catch (error) {
     console.error(error);
     res.status(400).json({ error: error.message });

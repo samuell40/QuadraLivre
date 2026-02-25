@@ -6,14 +6,16 @@
             <div v-if="isLoading" class="loader"></div>
 
             <div v-else>
-                <div class="abas-container">
-                    <div class="aba" v-for="m in modalidades" :key="m.id" :class="{ ativa: modalidadeAtiva === m.id }"
-                        @click="selecionarModalidade(m.id)">
-                        {{ formatarTextoCapitalizado(m.nome) }}
+                <div class="times-header">
+                    <h1 class="title">Times</h1>
+
+                    <div class="abas-container">
+                        <div class="aba" v-for="m in modalidades" :key="m.id" :class="{ ativa: modalidadeAtiva === m.id }"
+                            @click="selecionarModalidade(m.id)">
+                            {{ formatarTextoCapitalizado(m.nome) }}
+                        </div>
                     </div>
                 </div>
-
-                <h1 class="title">Times</h1>
 
                 <div v-if="isLoadingTimes" class="loader"></div>
 
@@ -229,15 +231,20 @@ export default {
 }
 
 .conteudo {
-    margin-top: 90px;
+    margin-top: 64px;
     padding: 20px 60px;
 }
 
 .title {
-    font-size: 30px;
+    font-size: 40px;
     color: #3b82f6;
     font-weight: bold;
     margin-bottom: 20px;
+}
+
+.times-header {
+    display: flex;
+    flex-direction: column;
 }
 
 .loader {
@@ -529,11 +536,21 @@ export default {
 
 @media (max-width: 768px) {
     .conteudo {
-        padding: 16px;
+        margin-top: 45px;
+        padding: 0 16px 16px;
+    }
+
+    .times-header .title {
+        order: 1;
+        margin: 0 0 12px;
+    }
+
+    .times-header .abas-container {
+        order: 2;
     }
 
     .title {
-        font-size: 22px;
+        font-size: 30px;
     }
 
     .abas-container {

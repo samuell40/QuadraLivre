@@ -8,93 +8,46 @@
       {{ emptyText }}
     </div>
 
-    <table v-else-if="isGrupoFutebol" class="placar grupo-futebol">
+    <table v-else-if="isGrupoFutebol || isGrupoVolei" class="placar" :class="isGrupoFutebol ? 'grupo-futebol' : 'grupo-volei'">
       <thead>
         <tr>
           <th>Time</th>
-          <th>PTS</th>
-          <th>J</th>
-          <th>V</th>
-          <th>E</th>
-          <th>D</th>
-          <th>GM</th>
-          <th>GS</th>
-          <th>SG</th>
-          <th>%</th>
-          <th class="col-ultimos">Últimos Jogos</th>
+          <th
+            v-for="coluna in colunasTabela"
+            :key="`head-${coluna.key}`"
+            :class="{ 'col-ultimos': coluna.key === 'ultimosJogos' }"
+          >
+            {{ coluna.abbr }}
+          </th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(time, index) in times" :key="time.id">
+        <tr v-for="(time, index) in times" :key="time.id || time.timeId || index">
           <td class="time-info time-info-click" @click="onTimeClick(time)">
             <span class="posicao">{{ index + 1 }}º</span>
             <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
             <span class="nome-time">{{ time.time?.nome }}</span>
           </td>
-          <td>{{ time.pontuacao }}</td>
-          <td>{{ time.jogos }}</td>
-          <td>{{ time.vitorias }}</td>
-          <td>{{ time.empates }}</td>
-          <td>{{ time.derrotas }}</td>
-          <td>{{ time.golsPro }}</td>
-          <td>{{ time.golsSofridos }}</td>
-          <td>{{ time.saldoDeGols }}</td>
-          <td>{{ time.aproveitamento ?? 0 }}%</td>
-          <td class="ultimos-jogos-cell">
-            <div class="ultimos-jogos">
-              <span v-for="(resultado, resultadoIndex) in obterUltimosJogos(time)"
-                :key="`${time.id || index}-fut-${resultadoIndex}`" class="resultado-item"
-                :class="classeResultado(resultado)">
-                {{ simboloResultado(resultado) }}
-              </span>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <table v-else-if="isGrupoVolei" class="placar grupo-volei">
-      <thead>
-        <tr>
-          <th>Time</th>
-          <th>PTS</th>
-          <th>J</th>
-          <th>V</th>
-          <th>D</th>
-          <th>STV</th>
-          <th>3x0</th>
-          <th>3x2</th>
-          <th>2x3</th>
-          <th>0x3</th>
-          <th>W.O.</th>
-          <th class="col-ultimos">Últimos Jogos</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(time, index) in times" :key="time.id">
-          <td class="time-info time-info-click" @click="onTimeClick(time)">
-            <span class="posicao">{{ index + 1 }}º</span>
-            <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
-            <span class="nome-time">{{ time.time?.nome }}</span>
-          </td>
-          <td>{{ time.pontuacao }}</td>
-          <td>{{ time.jogos }}</td>
-          <td>{{ time.vitorias }}</td>
-          <td>{{ time.derrotas }}</td>
-          <td>{{ time.setsVencidos }}</td>
-          <td>{{ time.vitoria3x0 }}</td>
-          <td>{{ time.vitoria3x2 }}</td>
-          <td>{{ time.derrota2x3 }}</td>
-          <td>{{ time.derrota0x3 }}</td>
-          <td>{{ time.derrotaWo }}</td>
-          <td class="ultimos-jogos-cell">
-            <div class="ultimos-jogos">
-              <span v-for="(resultado, resultadoIndex) in obterUltimosJogos(time)"
-                :key="`${time.id || index}-vol-${resultadoIndex}`" class="resultado-item"
-                :class="classeResultado(resultado)">
-                {{ simboloResultado(resultado) }}
-              </span>
-            </div>
+          <td
+            v-for="coluna in colunasTabela"
+            :key="`${time.id || time.timeId || index}-${coluna.key}`"
+            :class="{ 'ultimos-jogos-cell': coluna.key === 'ultimosJogos' }"
+          >
+            <template v-if="coluna.key === 'ultimosJogos'">
+              <div class="ultimos-jogos">
+                <span
+                  v-for="(resultado, resultadoIndex) in obterUltimosJogos(time)"
+                  :key="`${time.id || index}-res-${resultadoIndex}`"
+                  class="resultado-item"
+                  :class="classeResultado(resultado)"
+                >
+                  {{ simboloResultado(resultado) }}
+                </span>
+              </div>
+            </template>
+            <template v-else>
+              {{ formatarValorColuna(time, coluna.key) }}
+            </template>
           </td>
         </tr>
       </tbody>
@@ -105,43 +58,46 @@
     </div>
   </div>
 
-  <!-- GLOSSÁRIO FUTEBOL -->
   <div v-if="showGlossary && temTabela && isGrupoFutebol" class="glossario-placar">
-    <strong>Glossário</strong>
+    <strong>Glossario</strong>
 
     <div class="glossario-grid">
-      <p><b>PTS</b>: Pontos</p>
-      <p><b>J</b>: Jogos</p>
-      <p><b>V</b>: Vitórias</p>
-      <p><b>E</b>: Empates</p>
-      <p><b>D</b>: Derrotas</p>
-      <p><b>GM</b>: Gols Marcados</p>
-      <p><b>GS</b>: Gols Sofridos</p>
-      <p><b>SG</b>: Saldo de Gols</p>
-      <p><b>%</b>: Aproveitamento</p>
+      <p v-if="mostrarColuna('pontuacao')"><b>PTS</b>: Pontos</p>
+      <p v-if="mostrarColuna('jogos')"><b>J</b>: Jogos</p>
+      <p v-if="mostrarColuna('vitorias')"><b>V</b>: Vitorias</p>
+      <p v-if="mostrarColuna('empates')"><b>E</b>: Empates</p>
+      <p v-if="mostrarColuna('derrotas')"><b>D</b>: Derrotas</p>
+      <p v-if="mostrarColuna('golsPro')"><b>GM</b>: Gols marcados</p>
+      <p v-if="mostrarColuna('golsSofridos')"><b>GS</b>: Gols sofridos</p>
+      <p v-if="mostrarColuna('saldoDeGols')"><b>SG</b>: Saldo de gols</p>
+      <p v-if="mostrarColuna('aproveitamento')"><b>%</b>: Aproveitamento</p>
     </div>
   </div>
 
-  <!-- GLOSSÁRIO VÔLEI -->
   <div v-if="showGlossary && temTabela && isGrupoVolei" class="glossario-placar">
-    <strong>Glossário</strong>
+    <strong>Glossario</strong>
 
     <div class="glossario-grid">
-      <p><b>PTS</b>: Pontos</p>
-      <p><b>J</b>: Jogos</p>
-      <p><b>V</b>: Vitórias</p>
-      <p><b>D</b>: Derrotas</p>
-      <p><b>STV</b>: Sets Vencidos</p>
-      <p><b>3x0</b>: Vitória por 3 sets a 0</p>
-      <p><b>3x2</b>: Vitória por 3 sets a 2</p>
-      <p><b>2x3</b>: Derrota por 2 sets a 3</p>
-      <p><b>0x3</b>: Derrota por 0 sets a 3</p>
-      <p><b>W.O.</b>: Vitória por W.O.</p>
+      <p v-if="mostrarColuna('pontuacao')"><b>PTS</b>: Pontos</p>
+      <p v-if="mostrarColuna('jogos')"><b>J</b>: Jogos</p>
+      <p v-if="mostrarColuna('vitorias')"><b>V</b>: Vitorias</p>
+      <p v-if="mostrarColuna('derrotas')"><b>D</b>: Derrotas</p>
+      <p v-if="mostrarColuna('setsVencidos')"><b>STV</b>: Sets vencidos</p>
+      <p v-if="mostrarColuna('vitoria3x0')"><b>3x0</b>: Vitoria por 3 sets a 0</p>
+      <p v-if="mostrarColuna('vitoria3x2')"><b>3x2</b>: Vitoria por 3 sets a 2</p>
+      <p v-if="mostrarColuna('derrota2x3')"><b>2x3</b>: Derrota por 2 sets a 3</p>
+      <p v-if="mostrarColuna('derrota0x3')"><b>0x3</b>: Derrota por 0 sets a 3</p>
+      <p v-if="mostrarColuna('derrotaWo')"><b>W.O.</b>: Derrota por W.O.</p>
     </div>
   </div>
 </template>
 
 <script>
+import {
+  getColunasClassificacaoPorModalidade,
+  resolverColunasVisiveisClassificacao
+} from '@/utils/classificacaoColunas'
+
 export default {
   name: 'TabelaClassificacao',
   props: {
@@ -149,7 +105,8 @@ export default {
     modalidade: { type: String, default: 'futebol' },
     loading: { type: Boolean, default: false },
     emptyText: { type: String, default: 'Nenhum placar encontrado para este campeonato.' },
-    showGlossary: { type: Boolean, default: true }
+    showGlossary: { type: Boolean, default: true },
+    colunasVisiveis: { type: Array, default: () => [] }
   },
   emits: ['time-click'],
   computed: {
@@ -168,9 +125,35 @@ export default {
     },
     temTabela() {
       return !this.loading && Array.isArray(this.times) && this.times.length > 0
+    },
+    colunasVisiveisResolvidas() {
+      return resolverColunasVisiveisClassificacao(this.modalidade, this.colunasVisiveis)
+    },
+    colunasVisiveisSet() {
+      return new Set(this.colunasVisiveisResolvidas)
+    },
+    colunasTabela() {
+      const mapa = new Map(
+        getColunasClassificacaoPorModalidade(this.modalidade)
+          .map(coluna => [coluna.key, coluna])
+      )
+
+      return this.colunasVisiveisResolvidas
+        .map(chave => mapa.get(chave))
+        .filter(Boolean)
     }
   },
   methods: {
+    mostrarColuna(chave) {
+      return this.colunasVisiveisSet.has(chave)
+    },
+    formatarValorColuna(time, chave) {
+      if (chave === 'aproveitamento') {
+        return `${time?.aproveitamento ?? 0}%`
+      }
+
+      return time?.[chave] ?? ''
+    },
     onTimeClick(time) {
       const payload = {
         id: Number(time?.timeId ?? time?.time?.id ?? time?.id),
@@ -515,24 +498,6 @@ export default {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .placar.grupo-futebol th:nth-child(7),
-  .placar.grupo-futebol td:nth-child(7),
-  .placar.grupo-futebol th:nth-child(8),
-  .placar.grupo-futebol td:nth-child(8) {
-    display: none;
-  }
-
-  .placar.grupo-volei th:nth-child(7),
-  .placar.grupo-volei td:nth-child(7),
-  .placar.grupo-volei th:nth-child(8),
-  .placar.grupo-volei td:nth-child(8),
-  .placar.grupo-volei th:nth-child(9),
-  .placar.grupo-volei td:nth-child(9),
-  .placar.grupo-volei th:nth-child(10),
-  .placar.grupo-volei td:nth-child(10) {
-    display: none;
   }
 
   .glossario-placar strong {
