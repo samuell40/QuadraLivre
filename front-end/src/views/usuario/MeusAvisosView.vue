@@ -3,9 +3,11 @@
     <NavBar />
 
     <div class="content-wrapper">
-      <div class="titulo">
-        <h1 class="title">Meus Avisos</h1>
-        <p class="subtitulo">Acompanhe as atualizações das quadras</p>
+      <div class="titulo-container">
+        <div class="titulo">
+          <h1 class="title">Meus Avisos</h1>
+          <p class="subtitulo">Acompanhe as atualizações das quadras</p>
+        </div>
       </div>
 
       <div v-if="loading" class="loader-container">
@@ -13,82 +15,85 @@
       </div>
 
       <div v-else>
-        <div class="accordion-aviso" v-for="tipo in ['importantes', 'naoLidos', 'lidos']" :key="tipo">
+        <div class="abas-config-container-aviso">
+          <button type="button" class="aba-config-aviso" :class="{ ativa: abaAtiva === 'naoLidos' }"
+            @click="abaAtiva = 'naoLidos'">
+            Não Lidos
+            <span class="badge-total">{{ getTodosPorTipo('naoLidos').length }}</span>
+          </button>
+          <button type="button" class="aba-config-aviso" :class="{ ativa: abaAtiva === 'importantes' }"
+            @click="abaAtiva = 'importantes'">
+            Importantes
+            <span class="badge-total">{{ getTodosPorTipo('importantes').length }}</span>
+          </button>
+          <button type="button" class="aba-config-aviso" :class="{ ativa: abaAtiva === 'lidos' }"
+            @click="abaAtiva = 'lidos'">
+            Lidos
+            <span class="badge-total">{{ getTodosPorTipo('lidos').length }}</span>
+          </button>
+        </div>
 
-          <div class="accordion-header-aviso" @click="toggleSecao(tipo)">
-            <div class="header-info">
-              <h3>{{ titulos[tipo] }}</h3>
-
-              <span class="badge-total" v-if="getTodosPorTipo(tipo).length">
-                {{ getTodosPorTipo(tipo).length }}
-              </span>
-            </div>
-            <span class="seta-accordion" :class="{ 'rotacionada': secoes[tipo] }">▼</span>
+        <div class="section-aviso">
+          <div v-if="getTodosPorTipo(abaAtiva).length === 0" class="aviso-card-vazio nenhum">
+            {{ mensagensVazias[abaAtiva] }}
           </div>
 
-          <div class="accordion-body-aviso" v-show="secoes[tipo]">
+          <div v-else>
+            <div class="avisos-grid">
+              <div v-for="aviso in getItensPagina(abaAtiva)" :key="aviso.id" class="card-aviso"
+                :class="{ 'border-importante': abaAtiva === 'importantes', 'lido-opacity': abaAtiva === 'lidos' }">
 
-            <div v-if="getTodosPorTipo(tipo).length === 0" class="mensagem-vazia">
-              {{ mensagensVazias[tipo] }}
-            </div>
-
-            <div v-else>
-              <div class="avisos-grid">
-                <div v-for="aviso in getItensPagina(tipo)" :key="aviso.id" class="card-aviso"
-                  :class="{ 'border-importante': tipo === 'importantes', 'lido-opacity': tipo === 'lidos' }">
-
-                  <div class="card-header">
-                    <span class="tag-quadra">
-                      {{ aviso.quadraNome || aviso.quadra?.nome || 'EQUIPE QUADRA LIVRE' }}
-                    </span>
-                    <div class="meta-right">
-                      <svg v-if="aviso.fixado" xmlns="http://www.w3.org/2000/svg" class="icon-pin-mini"
-                        viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M18 3v2h-2v7l2 2v2h-6v5l-1 1-1-1v-5H4v-2l2-2V5H4V3h14z" />
-                      </svg>
-                      <span class="data-aviso">{{ formatarData(aviso.data) }}</span>
-                    </div>
-                  </div>
-
-                  <div class="card-body">
-                    <div class="titulo-row">
-                      <svg v-if="tipo === 'importantes'" xmlns="http://www.w3.org/2000/svg" class="icon-pin"
-                        viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M18 3v2h-2v7l2 2v2h-6v5l-1 1-1-1v-5H4v-2l2-2V5H4V3h14z" />
-                      </svg>
-                      <h4>{{ aviso.titulo }}</h4>
-                    </div>
-                    <p class="autor">Por: {{ aviso.autor?.nome }}</p>
-                    <p class="descricao">{{ aviso.descricao }}</p>
-                  </div>
-
-                  <div class="card-footer">
-                    <button v-if="tipo !== 'lidos'" class="btn-ler" @click="marcarComoLido(aviso)">
-                      Marcar como lido
-                    </button>
-                    <span v-else class="texto-lido">Visualizado ✓</span>
+                <div class="card-header">
+                  <span class="tag-quadra">
+                    {{ aviso.quadraNome || aviso.quadra?.nome || 'EQUIPE QUADRA LIVRE' }}
+                  </span>
+                  <div class="meta-right">
+                    <svg v-if="aviso.fixado" xmlns="http://www.w3.org/2000/svg" class="icon-pin-mini"
+                      viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M18 3v2h-2v7l2 2v2h-6v5l-1 1-1-1v-5H4v-2l2-2V5H4V3h14z" />
+                    </svg>
+                    <span class="data-aviso">{{ formatarData(aviso.data) }}</span>
                   </div>
                 </div>
+
+                <div class="card-body">
+                  <div class="titulo-row">
+                    <svg v-if="abaAtiva === 'importantes'" xmlns="http://www.w3.org/2000/svg" class="icon-pin"
+                      viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M18 3v2h-2v7l2 2v2h-6v5l-1 1-1-1v-5H4v-2l2-2V5H4V3h14z" />
+                    </svg>
+                    <h4>{{ aviso.titulo }}</h4>
+                  </div>
+                  <p class="autor">Por: {{ aviso.autor?.nome }}</p>
+                  <p class="descricao">{{ aviso.descricao }}</p>
+                </div>
+
+                <div class="card-footer">
+                  <button v-if="abaAtiva !== 'lidos'" class="btn-ler" @click="marcarComoLido(aviso)">
+                    Marcar como lido
+                  </button>
+                  <span v-else class="texto-lido">Visualizado ✓</span>
+                </div>
               </div>
+            </div>
 
-              <div class="paginacao-controls" v-if="getTotalPaginas(tipo) > 1">
-                <button class="btn-paginacao" :disabled="paginasAtuais[tipo] === 1" @click="mudarPagina(tipo, -1)">
-                  &lt; Anterior
-                </button>
+            <div class="paginacao-controls" v-if="getTotalPaginas(abaAtiva) > 1">
+              <button class="btn-paginacao" :disabled="paginasAtuais[abaAtiva] === 1" @click="mudarPagina(abaAtiva, -1)">
+                &lt; Anterior
+              </button>
 
-                <span class="info-paginacao">
-                  Página <strong>{{ paginasAtuais[tipo] }}</strong> de {{ getTotalPaginas(tipo) }}
-                </span>
+              <span class="info-paginacao">
+                Página <strong>{{ paginasAtuais[abaAtiva] }}</strong> de {{ getTotalPaginas(abaAtiva) }}
+              </span>
 
-                <button class="btn-paginacao" :disabled="paginasAtuais[tipo] === getTotalPaginas(tipo)"
-                  @click="mudarPagina(tipo, 1)">
-                  Próxima &gt;
-                </button>
-              </div>
-
+              <button class="btn-paginacao" :disabled="paginasAtuais[abaAtiva] === getTotalPaginas(abaAtiva)"
+                @click="mudarPagina(abaAtiva, 1)">
+                Próxima &gt;
+              </button>
             </div>
           </div>
         </div>
+
       </div>
     </div>
   </div>
@@ -107,18 +112,8 @@ export default {
     return {
       todosAvisos: [],
       loading: true,
+      abaAtiva: 'naoLidos', // Começa na aba Não Lidos
 
-      secoes: {
-        importantes: true,
-        naoLidos: true,
-        lidos: false
-      },
-
-      titulos: {
-        importantes: 'Importantes',
-        naoLidos: 'Não Lidos',
-        lidos: 'Lidos'
-      },
       mensagensVazias: {
         importantes: 'Nenhum aviso importante pendente.',
         naoLidos: 'Você está em dia com os avisos.',
@@ -157,10 +152,6 @@ export default {
     window.removeEventListener('avisos-atualizados', this.carregarTodosAvisos)
   },
   methods: {
-    toggleSecao(secao) {
-      this.secoes[secao] = !this.secoes[secao];
-    },
-
     verificarSeLi(aviso) {
       if (!this.usuarioId || !aviso.leituras) return false;
       return aviso.leituras.some(leitura => String(leitura.usuarioId) === String(this.usuarioId));
@@ -296,120 +287,142 @@ body,
 }
 
 .content-wrapper {
-  padding: 24px 80px;
   flex: 1;
   width: 100%;
+  max-width: 1200px;
+  margin: 60px auto 0 auto;
+  padding: 32px 20px;
   box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.titulo-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
 }
 
 .titulo {
-  margin-top: 80px;
-  margin-bottom: 30px;
   text-align: left;
 }
 
 .title {
   font-size: 32px;
-  font-weight: bold;
+  font-weight: 900;
   color: #3B82F6;
-  margin-bottom: 5px;
+  margin: 0 0 5px 0;
+  letter-spacing: -0.2px;
 }
 
 .subtitulo {
-  color: #666;
+  color: #64748b;
   font-size: 14px;
+  margin: 0;
 }
 
 .loader-container {
+  height: 300px;
   display: flex;
   justify-content: center;
-  padding: 40px;
+  align-items: center;
 }
 
 .loader {
   border: 4px solid #f3f3f3;
   border-top: 4px solid #3B82F6;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-.accordion-aviso {
-  background-color: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-}
-
-.accordion-header-aviso {
-  cursor: pointer;
+.abas-config-container-aviso {
   display: flex;
-  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+  margin-bottom: 16px;
+}
+
+.aba-config-aviso {
+  flex: 1;
+  border: 1px solid transparent;
+  background: #F8FAFC;
+  color: #64748b;
+  font-size: 16px;
+  font-weight: 900;
+  padding: 12px 12px;
+  cursor: pointer;
+  border-radius: 12px;
+  display: inline-flex;
   align-items: center;
-  padding: 16px 24px;
-  background-color: #fff;
-  border-bottom: 1px solid #f1f5f9;
-  transition: background 0.2s;
+  justify-content: center;
+  gap: 10px;
+  transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   user-select: none;
 }
 
-.accordion-header-aviso:hover {
-  background-color: #f8fafc;
+.aba-config-aviso:hover {
+  background: rgba(59, 130, 246, 0.08);
+  transform: translateY(-1px);
 }
 
-.header-info {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.header-info h3 {
-  margin: 0;
-  font-size: 18px;
-  color: #4b5563;
-  font-weight: 700;
+.aba-config-aviso.ativa {
+  background: #3B82F6;
+  color: #fff;
+  box-shadow: 0 14px 26px rgba(37, 99, 235, 0.22);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .badge-total {
-  color: #3B82F6;
-  font-size: 16px;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  color: #2563eb;
+  background: #dbeafe;
+  border: 1px solid rgba(37, 99, 235, 0.18);
 }
 
-.seta-accordion {
-  color: #94a3b8;
-  font-size: 14px;
-  transition: transform 0.3s;
+.aba-config-aviso.ativa .badge-total {
+  color: #2563eb;
+  background: #ffffff;
+  border-color: rgba(255, 255, 255, 0.55);
 }
 
-.seta-accordion.rotacionada {
-  transform: rotate(180deg);
-  color: #3B82F6;
-}
-
-.accordion-body-aviso {
-  padding: 24px;
+.section-aviso {
   background-color: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
 }
 
-.mensagem-vazia {
+.aviso-card-vazio.nenhum {
+  grid-column: 1 / -1;
+  color: #64748b;
+  font-size: 15px;
+  padding: 44px 22px;
   text-align: center;
-  color: #94a3b8;
   font-style: italic;
-  padding: 10px;
+  background-color: #f8fafc;
+  border-radius: 14px;
+  border: 1px dashed rgba(100, 116, 139, 0.35);
 }
 
 .avisos-grid {
@@ -418,28 +431,19 @@ body,
   gap: 20px;
 }
 
-@media (max-width: 900px) {
-  .avisos-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .content-wrapper {
-    padding: 20px;
-  }
-}
-
 .card-aviso {
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 18px;
   background: #fff;
-  transition: all 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
   flex-direction: column;
 }
 
 .card-aviso:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
 }
 
 .border-importante {
@@ -474,6 +478,7 @@ body,
 
 .data-aviso {
   color: #94a3b8;
+  font-weight: 600;
 }
 
 .card-body {
@@ -491,7 +496,7 @@ body,
   margin: 0;
   color: #1e293b;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .icon-pin,
@@ -518,6 +523,7 @@ body,
   font-size: 12px;
   color: #64748b;
   margin-bottom: 8px;
+  font-weight: 600;
 }
 
 .descricao {
@@ -531,7 +537,7 @@ body,
   display: flex;
   justify-content: flex-end;
   border-top: 1px solid #f1f5f9;
-  padding-top: 10px;
+  padding-top: 14px;
   margin-top: auto;
 }
 
@@ -539,60 +545,129 @@ body,
   background: transparent;
   border: none;
   color: #3B82F6;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 13px;
   cursor: pointer;
-  text-decoration: underline;
   transition: color 0.2s;
 }
 
 .btn-ler:hover {
   color: #1E3A8A;
+  text-decoration: underline;
 }
 
 .texto-lido {
   font-size: 12px;
   color: #10B981;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .paginacao-controls {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 20px;
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px solid #f3f4f6;
-  width: 100%;
+  gap: 18px;
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
 }
 
 .info-paginacao {
-  color: #6b7280;
+  color: #64748b;
   font-size: 14px;
+  font-weight: 700;
+}
+
+.info-paginacao strong {
+  color: #0f172a;
+  font-weight: 900;
 }
 
 .btn-paginacao {
   background-color: #fff;
-  border: 1px solid #e5e7eb;
-  color: #374151;
-  padding: 8px 16px;
-  border-radius: 6px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  color: #334155;
+  padding: 10px 14px;
+  border-radius: 12px;
   cursor: pointer;
   font-size: 13px;
-  font-weight: 600;
-  transition: all 0.2s;
+  font-weight: 900;
+  transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .btn-paginacao:hover:not(:disabled) {
-  border-color: #3B82F6;
-  color: #3B82F6;
+  border-color: rgba(59, 130, 246, 0.55);
+  color: #2563eb;
   background-color: #eff6ff;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.10);
 }
 
 .btn-paginacao:disabled {
-  opacity: 0.5;
+  opacity: 0.55;
   cursor: not-allowed;
-  background-color: #f9fafb;
+  background-color: #f8fafc;
+  transform: none;
+  box-shadow: none;
+}
+
+@media (max-width: 900px) {
+  .avisos-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .content-wrapper {
+    padding: 24px 16px 16px;
+  }
+
+  .title {
+    font-size: 26px;
+  }
+
+  .abas-config-container-aviso {
+    overflow-x: visible;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .aba-config-aviso {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 10px 4px;
+    font-size: 12px;
+    gap: 4px;
+    flex-direction: column;
+  }
+
+  .badge-total {
+    min-width: 22px;
+    height: 20px;
+    padding: 0 6px;
+    font-size: 11px;
+  }
+
+  .section-aviso {
+    padding: 16px;
+  }
+
+  .paginacao-controls {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .btn-paginacao {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .info-paginacao {
+    text-align: center;
+  }
 }
 </style>

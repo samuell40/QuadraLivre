@@ -1439,7 +1439,7 @@ select:focus {
 
   .conteudo {
     margin-left: 0;
-    padding: 16px;
+            padding: 80px 16px 16px 16px; 
     width: 100%;
     box-sizing: border-box;
   }

@@ -1,61 +1,75 @@
 <template>
-  <div class="layout">
+  <div class="layout-agendamento-user">
     <NavBar />
 
-    <div class="conteudo">
-      <div class="topo">
-        <h1 class="title">Meus Agendamentos</h1>
-        <button class="btn-novo" @click="irParaAgendarQuadra(null)">
-          + Novo Agendamento
+    <div class="conteudo-agendamento">
+      <div class="titulo-container-agendamento">
+        <h1 class="titulo-agendamento">Meus Agendamentos</h1>
+        <button class="btn-acao-topo" @click="irParaAgendarQuadra(null)" aria-label="Novo Agendamento">
+          <svg class="btn-acao-icone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span class="btn-acao-texto">Novo Agendamento</span>
         </button>
       </div>
 
-      <div v-if="isLoading" class="loader"></div>
+      <div v-if="isLoading" class="loader-agendamento"></div>
 
       <div v-else>
-        <div class="accordion-agendamento" v-for="tipo in ['confirmados', 'pendentes', 'recusados']" :key="tipo">
+        <div class="abas-config-container-agendamento">
+          <button type="button" class="aba-config-agendamento" :class="{ ativa: abaAtiva === 'confirmados' }"
+            @click="abaAtiva = 'confirmados'">
+            Confirmados
+            <span class="badge-total">{{ getTodosPorTipo('confirmados').length }}</span>
+          </button>
+          <button type="button" class="aba-config-agendamento" :class="{ ativa: abaAtiva === 'pendentes' }"
+            @click="abaAtiva = 'pendentes'">
+            Pendentes
+            <span class="badge-total">{{ getTodosPorTipo('pendentes').length }}</span>
+          </button>
+          <button type="button" class="aba-config-agendamento" :class="{ ativa: abaAtiva === 'recusados' }"
+            @click="abaAtiva = 'recusados'">
+            Recusados
+            <span class="badge-total">{{ getTodosPorTipo('recusados').length }}</span>
+          </button>
+        </div>
 
-          <div class="accordion-header-agendamento" @click="toggleAccordion(tipo)">
-            <div class="header-info">
-              <h3>{{ tipo.charAt(0).toUpperCase() + tipo.slice(1) }}</h3>
-              <span class="badge-total">{{ getTodosPorTipo(tipo).length }}</span>
-            </div>
-            <span class="seta-accordion" :class="{ 'rotacionada': accordionsAbertos[tipo] }">▼</span>
+        <div class="section-agendamento">
+          <div v-if="getTodosPorTipo(abaAtiva).length === 0" class="agendamento-card-agendamento nenhum">
+            {{ abaAtiva === 'pendentes' ? 'Nenhuma solicitação pendente no momento.'
+              : abaAtiva === 'confirmados' ? 'Nenhum agendamento futuro confirmado.'
+                : 'Nenhum agendamento recusado ou cancelado.' }}
           </div>
 
-          <div class="accordion-body-agendamento" v-show="accordionsAbertos[tipo]">
-
-            <div v-if="getTodosPorTipo(tipo).length === 0" class="mensagem-vazia">
-              {{ tipo === 'pendentes' ? 'Nenhuma solicitação pendente.'
-                : tipo === 'confirmados' ? 'Nenhum agendamento confirmado.'
-                  : 'Nenhum agendamento recusado ou cancelado.' }}
+          <div v-else>
+            <div class="agendamentos-grid">
+              <MeusAgendamentoCard v-for="ag in getItensPagina(abaAtiva)" :key="ag.id" 
+                :agendamento="ag"
+                :mostrarBotoes="deveMostrarBotoes(ag)" 
+                @gerarPdf="gerarPdfAgendamento(ag)"
+                @cancelar="cancelarAgendamento(ag.id)" 
+                @novo="irParaAgendarQuadra(ag.quadraId)" />
             </div>
 
-            <div v-else>
-              <div class="agendamentos-grid">
-                <MeusAgendamentoCard v-for="ag in getItensPagina(tipo)" :key="ag.id" :agendamento="ag"
-                  :mostrarBotoes="deveMostrarBotoes(ag)" @gerarPdf="gerarPdfAgendamento(ag)"
-                  @cancelar="cancelarAgendamento(ag.id)" @novo="irParaAgendarQuadra(ag.quadraId)" />
-              </div>
+            <div class="paginacao-controls" v-if="getTotalPaginas(abaAtiva) > 1">
+              <button class="btn-paginacao" :disabled="paginasAtuais[abaAtiva] === 1"
+                @click="mudarPagina(abaAtiva, -1)">
+                &lt; Anterior
+              </button>
 
-              <div class="paginacao-controls" v-if="getTotalPaginas(tipo) > 1">
-                <button class="btn-paginacao" :disabled="paginasAtuais[tipo] === 1" @click="mudarPagina(tipo, -1)">
-                  &lt; Anterior
-                </button>
+              <span class="info-paginacao">
+                Página <strong>{{ paginasAtuais[abaAtiva] }}</strong> de {{ getTotalPaginas(abaAtiva) }}
+              </span>
 
-                <span class="info-paginacao">
-                  Página <strong>{{ paginasAtuais[tipo] }}</strong> de {{ getTotalPaginas(tipo) }}
-                </span>
-
-                <button class="btn-paginacao" :disabled="paginasAtuais[tipo] === getTotalPaginas(tipo)"
-                  @click="mudarPagina(tipo, 1)">
-                  Próxima &gt;
-                </button>
-              </div>
+              <button class="btn-paginacao" :disabled="paginasAtuais[abaAtiva] === getTotalPaginas(abaAtiva)"
+                @click="mudarPagina(abaAtiva, 1)">
+                Próxima &gt;
+              </button>
             </div>
-
           </div>
         </div>
+
       </div>
     </div>
   </div>
@@ -74,24 +88,15 @@ import logoImg from "@/assets/Cópia de xxxxx (2).png";
 const router = useRouter();
 const isLoading = ref(true);
 const allAgendamentos = ref([]);
+const abaAtiva = ref('confirmados');
 
 const ITENS_POR_PAGINA = 10;
-
-const accordionsAbertos = ref({
-  confirmados: true,
-  pendentes: true,
-  recusados: false
-});
 
 const paginasAtuais = ref({
   confirmados: 1,
   pendentes: 1,
   recusados: 1
 });
-
-const toggleAccordion = (tipo) => {
-  accordionsAbertos.value[tipo] = !accordionsAbertos.value[tipo];
-};
 
 const getTodosPorTipo = (tipo) => {
   if (tipo === 'pendentes') {
@@ -305,145 +310,230 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.layout {
+.layout-agendamento-user {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  font-family: 'Montserrat', sans-serif;
+  background: #F7F9FC;
 }
 
-.conteudo {
+.conteudo-agendamento {
   flex: 1;
-  padding: 32px 75px;
-  background-color: #F7F9FC;
-  margin-top: 60px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 60px auto 0 auto;
+  padding: 32px 20px;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
-.topo {
+.titulo-container-agendamento {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
 }
 
-.title {
-  color: #3b82f6;
-  font-size: 28px;
-  font-weight: bold;
+.titulo-agendamento {
+  font-size: 32px;
+  color: #3B82F6;
+  font-weight: 900;
   margin: 0;
+  letter-spacing: -0.2px;
 }
 
-.btn-novo {
-  background-color: #3B82F6;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
+.btn-acao-topo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #fff;
+  background: #3B82F6;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  padding: 11px 16px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: 0.2px;
   cursor: pointer;
-  transition: 0.2s;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.2s;
 }
 
-.btn-novo:hover {
-  background-color: #1E3A8A;
+.btn-acao-topo:hover {
+  background: #1E3A8A;
 }
 
-.loader {
-  height: 200px;
+.btn-acao-icone {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.loader-agendamento {
+  height: 300px;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.loader::after {
+.loader-agendamento::after {
   content: '';
-  width: 50px;
-  height: 50px;
-  border: 5px solid #e5e7eb;
+  width: 54px;
+  height: 54px;
+  border: 6px solid #e5e7eb;
   border-top-color: #3B82F6;
   border-radius: 50%;
   animation: girar 1s linear infinite;
 }
 
 @keyframes girar {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-.accordion-agendamento {
-  background-color: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+.abas-config-container-agendamento {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+  margin-bottom: 16px;
 }
 
-.accordion-header-agendamento {
+.aba-config-agendamento {
+  flex: 1;
+  border: 1px solid transparent;
+  background: #F8FAFC;
+  color: #64748b;
+  font-size: 16px;
+  font-weight: 900;
+  padding: 12px 12px;
   cursor: pointer;
-  display: flex;
-  justify-content: space-between;
+  border-radius: 12px;
+  display: inline-flex;
   align-items: center;
-  padding: 16px 24px;
-  background-color: #fff;
-  border-bottom: 1px solid #f1f5f9;
-  transition: background 0.2s;
+  justify-content: center;
+  gap: 10px;
+  transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  user-select: none;
 }
 
-.accordion-header-agendamento:hover {
-  background-color: #f8fafc;
+.aba-config-agendamento:hover {
+  background: rgba(59, 130, 246, 0.08);
+  transform: translateY(-1px);
 }
 
-.header-info {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-}
-
-.header-info h3 {
-  font-size: 18px;
-  font-weight: bold;
-  margin: 0;
-  color: #4b5563;
+.aba-config-agendamento.ativa {
+  background: #3B82F6;
+  color: #fff;
+  box-shadow: 0 14px 26px rgba(37, 99, 235, 0.22);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .badge-total {
-  color: #3B82F6;
-  font-size: 16px;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  color: #2563eb;
+  background: #dbeafe;
+  border: 1px solid rgba(37, 99, 235, 0.18);
 }
 
-.seta-accordion {
-  font-size: 14px;
-  color: #9ca3af;
-  transition: transform 0.3s ease;
+.aba-config-agendamento.ativa .badge-total {
+  color: #2563eb;
+  background: #ffffff;
+  border-color: rgba(255, 255, 255, 0.55);
 }
 
-.seta-accordion.rotacionada {
-  transform: rotate(180deg);
-  color: #3B82F6;
-}
-
-.accordion-body-agendamento {
-  padding: 24px;
+.section-agendamento {
   background-color: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
 }
 
-.mensagem-vazia {
+.agendamento-card-agendamento.nenhum {
+  grid-column: 1 / -1;
+  color: #64748b;
+  font-size: 15px;
+  padding: 44px 22px;
   text-align: center;
-  color: #9ca3af;
   font-style: italic;
-  padding: 20px;
+  background-color: #f8fafc;
+  border-radius: 14px;
+  border: 1px dashed rgba(100, 116, 139, 0.35);
 }
 
 .agendamentos-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  gap: 18px;
+}
+
+.paginacao-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.info-paginacao {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.info-paginacao strong {
+  color: #0f172a;
+  font-weight: 900;
+}
+
+.btn-paginacao {
+  background-color: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  color: #334155;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 900;
+  transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-paginacao:hover:not(:disabled) {
+  border-color: rgba(59, 130, 246, 0.55);
+  color: #2563eb;
+  background-color: #eff6ff;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.10);
+}
+
+.btn-paginacao:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background-color: #f8fafc;
+  transform: none;
+  box-shadow: none;
 }
 
 @media (max-width: 900px) {
@@ -451,47 +541,86 @@ onMounted(() => {
     grid-template-columns: 1fr;
   }
 
-  .conteudo {
+  .conteudo-agendamento {
     padding: 20px;
   }
 }
 
-.paginacao-controls {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px solid #f3f4f6;
-}
+@media (max-width: 768px) {
+  .conteudo-agendamento {
+    padding: 24px 16px 16px;
+  }
 
-.info-paginacao {
-  color: #6b7280;
-  font-size: 14px;
-}
+  .titulo-container-agendamento {
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
 
-.btn-paginacao {
-  background-color: #fff;
-  border: 1px solid #e5e7eb;
-  color: #374151;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  transition: all 0.2s;
-}
+  .titulo-agendamento {
+    font-size: 24px;
+    line-height: 1.2;
+    padding-right: 8px;
+  }
 
-.btn-paginacao:hover:not(:disabled) {
-  border-color: #3B82F6;
-  color: #3B82F6;
-  background-color: #eff6ff;
-}
+  .btn-acao-topo {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 10px;
+    box-shadow: 0 8px 16px rgba(37, 99, 235, 0.18);
+    flex: 0 0 38px;
+  }
 
-.btn-paginacao:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background-color: #f9fafb;
+  .btn-acao-texto {
+    display: none;
+  }
+
+  .btn-acao-icone {
+    width: 18px;
+    height: 18px;
+  }
+
+  .abas-config-container-agendamento {
+    overflow-x: visible;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .aba-config-agendamento {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 10px 6px;
+    font-size: 13px;
+    gap: 6px;
+  }
+
+  .badge-total {
+    min-width: 22px;
+    height: 20px;
+    padding: 0 6px;
+    font-size: 11px;
+  }
+
+  .section-agendamento {
+    padding: 16px;
+  }
+
+  .paginacao-controls {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .btn-paginacao {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .info-paginacao {
+    text-align: center;
+  }
 }
 </style>

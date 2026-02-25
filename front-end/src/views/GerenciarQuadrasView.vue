@@ -290,7 +290,7 @@ export default {
 
 .quadras-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 25px;
     margin-top: 25px;
 }
@@ -593,7 +593,7 @@ export default {
 @media (max-width: 900px) {
     .conteudo {
         margin-left: 0;
-        padding: 20px;
+        padding: 80px 20px 20px 20px; 
     }
 
     .quadras-grid {
