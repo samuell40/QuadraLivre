@@ -28,7 +28,8 @@
     </div>
 
     <div class="titulo">
-      <h1>Agendar Quadra</h1>
+      <h1 class="titulo-principal">Agendar Quadra</h1>
+      <p class="subtitulo">Escolha a quadra ideal e faça sua reserva em poucos passos.</p>
     </div>
 
     <div v-if="isLoadingQuadras" class="loader"></div>
@@ -464,13 +465,21 @@ body {
 
 .titulo {
   margin-top: 0;
-  margin-bottom: 32px;
+  margin-bottom: 18px;
 }
 
-.titulo h1 {
+.titulo-principal {
   font-size: 32px;
-  font-weight: bold;
+  font-weight: 900;
   color: #3B82F6;
+  margin: 0 0 5px 0;
+  letter-spacing: -0.2px;
+}
+
+.subtitulo {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
 }
 
 .quadras-grid {

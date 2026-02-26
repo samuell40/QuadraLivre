@@ -153,6 +153,7 @@ export default {
 .lista-partidas.com-scroll {
   max-height: 650px;
   overflow-y: auto;
+  overflow-x: hidden;
   padding-right: 8px;
 }
 
@@ -174,7 +175,9 @@ export default {
   background-color: #ffffff;
   border: 2px solid #e5e7eb;
   border-radius: 20px;
+  width: 100%;
   max-width: 450px;
+  box-sizing: border-box;
   margin: 25px auto 15px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
   cursor: pointer;
@@ -260,6 +263,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 8px;
   margin-bottom: 0;
 }
 
@@ -272,6 +276,7 @@ export default {
   flex: 1;
   text-align: left;
   min-width: 0;
+  overflow: hidden;
 }
 
 .time.lado img {
@@ -299,6 +304,8 @@ export default {
   padding: 0;
   cursor: pointer;
   text-align: left;
+  display: inline-block;
+  max-width: 100%;
 }
 
 .nome-time-btn:hover {
@@ -313,7 +320,7 @@ export default {
   font-weight: 900;
   color: #777;
   line-height: 1;
-  margin-top: 14px;
+  margin-top: 10px;
 }
 
 .placar-centro-agendado {
@@ -437,6 +444,10 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .lista-partidas.com-scroll {
+    padding-right: 0;
+  }
+
   .card-partida {
     margin: 18px auto 12px;
     max-width: 100%;
@@ -447,17 +458,58 @@ export default {
     padding: 4px 12px;
   }
 
+  .conteudo-partida {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+  }
+
+  .time.lado {
+    justify-content: flex-start;
+  }
+
+  .conteudo-partida .time.lado:last-child {
+    justify-content: flex-end;
+    text-align: right;
+  }
+
+  .conteudo-partida .time.lado:last-child .nome-time-btn {
+    text-align: right;
+  }
+
   .placar-centro {
     margin-top: 10px;
+    min-width: 58px;
+    justify-content: center;
+  }
+
+  .placar-centro-agendado {
+    margin-top: 10px;
+    min-width: 58px;
+    justify-content: center;
   }
 
   .gols-placar {
     font-size: 24px;
+    padding: 0 4px;
   }
 
   .nome-time {
-    font-size: 13px;
-    max-width: 90px;
+    font-size: 12px;
+    max-width: 100%;
+    margin-top: 0;
+  }
+
+  .time.lado img {
+    margin-top: 0;
+    width: 24px;
+    height: 24px;
+  }
+
+  .data-partida {
+    margin-top: 4px;
+    font-size: 12px;
   }
 }
 </style>

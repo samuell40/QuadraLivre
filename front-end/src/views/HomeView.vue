@@ -551,6 +551,11 @@
           const { token, erro, email, usuario } = event.data
 
           if (erro === 'usuario_nao_cadastrado') {
+            const queryCadastro = new URLSearchParams({
+              email: String(email || ''),
+              origem: 'login_google'
+            })
+
             Swal.fire({
               icon: 'error',
               title: 'Conta não encontrada!',
@@ -560,7 +565,7 @@
               showConfirmButton: false,
               didOpen: () => Swal.showLoading()
             }).then(() => {
-              window.location.href = `/cadastro?email=${encodeURIComponent(email)}`
+              window.location.href = `/cadastro?${queryCadastro.toString()}`
             })
             return
           }

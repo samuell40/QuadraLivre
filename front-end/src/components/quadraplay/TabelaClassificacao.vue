@@ -283,7 +283,9 @@ export default {
 .placar-table {
   margin-top: 30px;
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   background: white;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -293,6 +295,7 @@ export default {
   width: 100%;
   min-width: 860px;
   border-collapse: collapse;
+  table-layout: auto;
 }
 
 .placar thead th {
@@ -369,6 +372,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 170px;
 }
 
 .time-info.time-info-click {
@@ -463,8 +467,12 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .placar-table {
+    margin-top: 18px;
+  }
+
   .placar {
-    min-width: 100%;
+    min-width: 680px;
   }
 
   .placar thead th {
@@ -491,6 +499,10 @@ export default {
   .time-image {
     width: 28px;
     height: 28px;
+  }
+
+  .time-info {
+    min-width: 140px;
   }
 
   .nome-time {

@@ -642,8 +642,9 @@ export default {
 
 @media (max-width: 768px) {
   .modal-overlay {
-    align-items: flex-end;
+    align-items: center;
     padding: 10px;
+    overflow-y: auto;
   }
 
   .modal-partida {

@@ -1,4 +1,6 @@
 const Usuario = require('../services/usuario.service');
+const jwt = require('jsonwebtoken');
+const config = require('../config/app.config');
 
 async function cadastrarUsuarioController(req, res) {
   try {
@@ -17,7 +19,26 @@ async function cadastrarUsuarioController(req, res) {
       foto,
     });
 
-    return res.status(201).json(cadastro);
+    const tokenPayload = {
+      id: cadastro.id,
+      nome: cadastro.nome,
+      email: cadastro.email,
+      telefone: cadastro.telefone,
+      foto: cadastro.foto,
+      permissaoId: cadastro.permissaoId,
+      permissao: cadastro.permissao || null,
+      quadraId: cadastro.quadraId ?? null,
+      quadra: cadastro.quadra || null
+    };
+
+    const token = jwt.sign(tokenPayload, config.jwtSecret, {
+      expiresIn: config.JWT_EXPIRATION
+    });
+
+    return res.status(201).json({
+      usuario: tokenPayload,
+      token
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({

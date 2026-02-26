@@ -1261,8 +1261,8 @@ select:focus {
 }
 
 .avatar-wrap {
-  width: 76px;
-  height: 76px;
+  width: 118px;
+  height: 118px;
   border-radius: 999px;
   padding: 3px;
   background: linear-gradient(145deg, #90dcff 0%, #56b8ff 45%, #2e78f4 100%);
@@ -1306,6 +1306,8 @@ select:focus {
   border: 1px solid #bfdbfe;
   white-space: nowrap;
   box-shadow: none;
+  width: fit-content;
+  align-self: flex-start;
 }
 
 .badge-permissao-panel {
@@ -1520,8 +1522,8 @@ select:focus {
   }
 
   .avatar-wrap {
-    width: 94px;
-    height: 94px;
+    width: 132px;
+    height: 132px;
     box-shadow: 0 0 0 3px #ebf6ff, 0 0 0 6px rgba(86, 184, 255, 0.35), 0 8px 20px rgba(45, 116, 229, 0.22);
   }
 

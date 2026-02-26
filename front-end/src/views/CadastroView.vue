@@ -58,6 +58,7 @@
 <script>
 import Swal from 'sweetalert2';
 import api from '@/axios';
+import { useAuthStore } from '@/store';
 
 export default {
   data() {
@@ -68,10 +69,12 @@ export default {
         telefone: '',
         imagem: null,
       },
+      deveAutenticarPosCadastro: false,
     };
   },
   mounted() {
     const emailFromQuery = this.$route.query.email;
+    this.deveAutenticarPosCadastro = String(this.$route.query.origem || '') === 'login_google';
 
     if (emailFromQuery) {
       this.form.email = emailFromQuery;
@@ -84,13 +87,61 @@ export default {
     }
   },
   methods: {
+    limparFormularioCadastro() {
+      this.form = {
+        nome: '',
+        email: '',
+        telefone: '',
+        imagem: null,
+      };
+
+      if (this.$refs.inputImagem) {
+        this.$refs.inputImagem.value = null;
+      }
+
+      localStorage.removeItem('emailCadastro');
+    },
+    obterQuadraSelecionada() {
+      try {
+        const quadraStorage = localStorage.getItem('quadraSelecionada');
+        return quadraStorage ? JSON.parse(quadraStorage) : null;
+      } catch (error) {
+        return null;
+      }
+    },
+    redirecionarPosLogin(usuario) {
+      const permissaoId = Number(usuario?.permissaoId);
+      const quadraSelecionada = this.obterQuadraSelecionada();
+
+      if ([1, 2].includes(permissaoId)) {
+        this.$router.push({ name: 'Dashboard' });
+        return;
+      }
+
+      if (permissaoId === 4) {
+        this.$router.push({ name: 'gerenciar_partida' });
+        return;
+      }
+
+      if ([3, 5].includes(permissaoId)) {
+        if (quadraSelecionada?.id) {
+          this.$router.push({ name: 'agendar_quadra', query: { quadraId: quadraSelecionada.id } });
+          localStorage.removeItem('quadraSelecionada');
+        } else {
+          this.$router.push({ name: 'agendar_quadra' });
+        }
+        return;
+      }
+
+      this.$router.push('/');
+    },
     async cadastrarUsuario() {
       try {
         if (!this.form.telefone || this.form.telefone.length < 14) {
           Swal.fire({
             icon: 'warning',
-            title: 'Atenção',
-            text: 'Por favor, informe um número de telefone válido.',
+            title: 'Atencao',
+            text: 'Por favor, informe um numero de telefone valido.',
           });
           return;
         }
@@ -107,44 +158,67 @@ export default {
           urlImagem = 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/Imagem%20padrao.png';
         }
 
-        await api.post('/cadastrar/usuario', {
+        const { data } = await api.post('/cadastrar/usuario', {
           nome: this.form.nome,
           email: this.form.email,
           telefone: this.form.telefone,
           foto: urlImagem,
         });
 
-        Swal.fire({
-          icon: 'success',
-          title: 'Sucesso!',
-          text: 'Usuário cadastrado com sucesso!',
-          timer: 2000,
-          showConfirmButton: false,
-        }).then(() => {
-          this.$router.push('/');
-        });
+        const usuarioCriado = data?.usuario || null;
+        const tokenCriado = data?.token || '';
 
-        // reset form
-        this.form = {
-          nome: '',
-          email: '',
-          telefone: '',
-          imagem: null,
-        };
-        if (this.$refs.inputImagem) {
-          this.$refs.inputImagem.value = null;
+        this.limparFormularioCadastro();
+
+        if (this.deveAutenticarPosCadastro && usuarioCriado && tokenCriado) {
+          const authStore = useAuthStore();
+          authStore.setAuthData(usuarioCriado, tokenCriado);
+          localStorage.removeItem('quadraPlayLoginAtivo');
+
+          await Swal.fire({
+            icon: 'success',
+            title: 'Cadastro concluido!',
+            text: 'Entrando automaticamente...',
+            timer: 1400,
+            showConfirmButton: false,
+          });
+
+          this.redirecionarPosLogin(usuarioCriado);
+          return;
         }
-        localStorage.removeItem('emailCadastro');
 
+        if (this.deveAutenticarPosCadastro) {
+          await Swal.fire({
+            icon: 'success',
+            title: 'Cadastro concluido!',
+            text: 'Redirecionando para agendar quadra...',
+            timer: 1400,
+            showConfirmButton: false,
+          });
+          this.$router.push({ name: 'agendar_quadra' });
+          return;
+        }
       } catch (error) {
-        console.error('Erro ao cadastrar usuário:', error);
+        console.error('Erro ao cadastrar usuario:', error);
 
         Swal.fire({
           icon: 'error',
           title: 'Erro',
-          text: error.response?.data?.error,
+          text: error.response?.data?.error || 'Nao foi possivel concluir o cadastro.',
         });
+
+        return;
       }
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Sucesso!',
+        text: 'Usuario cadastrado com sucesso!',
+        timer: 2000,
+        showConfirmButton: false,
+      }).then(() => {
+        this.$router.push('/');
+      });
     },
 
     handleFileChange(event) {

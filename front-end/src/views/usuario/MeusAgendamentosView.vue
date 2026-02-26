@@ -4,7 +4,10 @@
 
     <div class="conteudo-agendamento">
       <div class="titulo-container-agendamento">
-        <h1 class="titulo-agendamento">Meus Agendamentos</h1>
+        <div class="titulo-textos-agendamento">
+          <h1 class="titulo-agendamento">Meus Agendamentos</h1>
+          <p class="subtitulo-agendamento">Acompanhe e gerencie suas reservas em um só lugar.</p>
+        </div>
         <button class="btn-acao-topo" @click="irParaAgendarQuadra(null)" aria-label="Novo Agendamento">
           <svg class="btn-acao-icone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -330,18 +333,30 @@ onMounted(() => {
 
 .titulo-container-agendamento {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
   margin-bottom: 18px;
+}
+
+.titulo-textos-agendamento {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .titulo-agendamento {
   font-size: 32px;
   color: #3B82F6;
   font-weight: 900;
-  margin: 0;
+  margin: 0 0 5px 0;
   letter-spacing: -0.2px;
+}
+
+.subtitulo-agendamento {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
 }
 
 .btn-acao-topo {
@@ -552,7 +567,7 @@ onMounted(() => {
   }
 
   .titulo-container-agendamento {
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 8px;
     margin-bottom: 14px;
@@ -561,6 +576,10 @@ onMounted(() => {
   .titulo-agendamento {
     font-size: 24px;
     line-height: 1.2;
+    padding-right: 8px;
+  }
+
+  .subtitulo-agendamento {
     padding-right: 8px;
   }
 

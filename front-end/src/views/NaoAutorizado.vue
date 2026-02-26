@@ -53,7 +53,7 @@ export default {
                         showConfirmButton: false,
                         didOpen: () => Swal.showLoading()
                     }).then(() => {
-                        window.location.href = `/cadastro?email=${encodeURIComponent(email)}`
+                        window.location.href = `/cadastro?email=${encodeURIComponent(email)}&origem=login_google`
                     })
                     return
                 }

@@ -1,9 +1,6 @@
 <template>
-  <div
-    v-if="modelValue && !mostrarModalFase && !mostrarModalCriterios && !mostrarModalColunas"
-    class="modal-overlay"
-    @click.self="fechar"
-  >
+  <div v-if="modelValue && !mostrarModalFase && !mostrarModalCriterios && !mostrarModalColunas" class="modal-overlay"
+    @click.self="fechar">
     <div class="modal-content modal-escolha-config">
       <div class="modal-header">
         <span class="title">Configurações de Classificação</span>
@@ -25,6 +22,18 @@
           <small class="btn-tipo-sub">Cria uma nova fase e seleciona os times participantes</small>
         </button>
 
+        <button class="btn-tipo btn-tipo-card" @click="grupos">
+          <span class="btn-tipo-titulo btn-tipo-titulo-com-icone">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people-fill"
+              viewBox="0 0 16 16">
+              <path
+                d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" />
+            </svg>
+            <span class="titulo-acao-modal">Grupos</span>
+          </span>
+          <small class="btn-tipo-sub">Organiza os grupos do campeonato</small>
+        </button>
+
         <button class="btn-tipo btn-tipo-card" @click="criteriosClassificacao">
           <span class="btn-tipo-titulo btn-tipo-titulo-com-icone">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list-ol"
@@ -41,25 +50,15 @@
 
         <button class="btn-tipo btn-tipo-card" @click="colunasClassificacao">
           <span class="btn-tipo-titulo btn-tipo-titulo-com-icone">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-layout-text-window-reverse" viewBox="0 0 16 16">
-              <path d="M13.5 1a1.5 1.5 0 0 1 1.5 1.5v11A1.5 1.5 0 0 1 13.5 15h-11A1.5 1.5 0 0 1 1 13.5v-11A1.5 1.5 0 0 1 2.5 1h11zm-11 1A.5.5 0 0 0 2 2.5v2h12v-2a.5.5 0 0 0-.5-.5h-11zM14 5.5H2v8a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-8z"/>
-              <path d="M3 7h2v2H3V7zm0 3h2v2H3v-2zm3-3h7v1H6V7zm0 3h7v1H6v-1z"/>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+              class="bi bi-layout-text-window-reverse" viewBox="0 0 16 16">
+              <path
+                d="M13.5 1a1.5 1.5 0 0 1 1.5 1.5v11A1.5 1.5 0 0 1 13.5 15h-11A1.5 1.5 0 0 1 1 13.5v-11A1.5 1.5 0 0 1 2.5 1h11zm-11 1A.5.5 0 0 0 2 2.5v2h12v-2a.5.5 0 0 0-.5-.5h-11zM14 5.5H2v8a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-8z" />
+              <path d="M3 7h2v2H3V7zm0 3h2v2H3v-2zm3-3h7v1H6V7zm0 3h7v1H6v-1z" />
             </svg>
             <span class="titulo-acao-modal">Colunas da Tabela</span>
           </span>
           <small class="btn-tipo-sub">Seleciona quais colunas devem aparecer no placar</small>
-        </button>
-
-        <button class="btn-tipo btn-tipo-card" @click="grupos">
-          <span class="btn-tipo-titulo btn-tipo-titulo-com-icone">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people-fill"
-              viewBox="0 0 16 16">
-              <path
-                d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" />
-            </svg>
-            <span class="titulo-acao-modal">Grupos</span>
-          </span>
-          <small class="btn-tipo-sub">Organiza os grupos do campeonato</small>
         </button>
       </div>
 
@@ -168,17 +167,10 @@
           <span class="sigla-coluna">TIME</span>
         </label>
 
-        <label
-          v-for="(coluna, indice) in colunasOrdenadas"
-          :key="coluna.key"
-          class="coluna-item"
+        <label v-for="(coluna, indice) in colunasOrdenadas" :key="coluna.key" class="coluna-item"
           :class="{ 'coluna-item-ativa': colunaSelecionada(coluna.key), dragging: indiceArrasteColuna === indice }"
-          draggable="true"
-          @dragstart="iniciarArrasteColuna($event, indice)"
-          @dragover.prevent
-          @drop="soltarColuna(indice)"
-          @dragend="finalizarArrasteColuna"
-        >
+          draggable="true" @dragstart="iniciarArrasteColuna($event, indice)" @dragover.prevent
+          @drop="soltarColuna(indice)" @dragend="finalizarArrasteColuna">
           <span class="drag-handle" aria-hidden="true">::</span>
           <input v-model="colunasSelecionadas" type="checkbox" :value="coluna.key" />
           <span class="nome">{{ coluna.label }}</span>
@@ -556,7 +548,7 @@ export default {
   margin-bottom: 10px;
 }
 
-.title{
+.title {
   color: #3b82f6;
   font-size: 34px;
   font-weight: bold;

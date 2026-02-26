@@ -597,6 +597,11 @@ export default {
   align-items: start;
 }
 
+.placar-wrapper,
+.partidas-wrapper {
+  min-width: 0;
+}
+
 .titulo-secao {
   margin: 4px 0 12px;
   color: #3b82f6;
@@ -694,6 +699,11 @@ export default {
 
   .placar-e-partidas {
     grid-template-columns: 1fr;
+  }
+
+  .filtro-item {
+    min-width: 0;
+    flex: 1 1 100%;
   }
 
   .foto-campeonato {
