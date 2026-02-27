@@ -1,28 +1,41 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-const CRITERIOS_PADRAO = {
-  futebol: [
-    { value: 'pontuacao', label: 'Pontuacao' },
-    { value: 'vitorias', label: 'Vitorias' },
-    { value: 'saldoDeGols', label: 'Saldo de gols' },
-    { value: 'golsPro', label: 'Gols pro' },
-    { value: 'golsSofridos', label: 'Gols sofridos' },
-    { value: 'empates', label: 'Empates' },
-    { value: 'derrotas', label: 'Derrotas' },
-    { value: 'confrontoDireto', label: 'Confronto direto' },
-    { value: 'sorteio', label: 'Sorteio' }
-  ],
-  volei: [
-    { value: 'pontuacao', label: 'Pontuacao' },
-    { value: 'setsVencidos', label: 'Sets vencidos' },
-    { value: 'vitoria3x0', label: 'Vitoria 3x0' },
-    { value: 'vitoria3x2', label: 'Vitoria 3x2' },
-    { value: 'derrota2x3', label: 'Derrota 2x3' },
-    { value: 'derrota0x3', label: 'Derrota 0x3' },
-    { value: 'sorteio', label: 'Sorteio' }
-  ]
-};
+const CRITERIOS_FUTEBOL = [
+  { value: 'pontuacao', label: 'Pontuacao' },
+  { value: 'vitorias', label: 'Vitorias' },
+  { value: 'saldoDeGols', label: 'Saldo de gols' },
+  { value: 'golsPro', label: 'Gols pro' },
+  { value: 'golsSofridos', label: 'Gols sofridos' },
+  { value: 'empates', label: 'Empates' },
+  { value: 'derrotas', label: 'Derrotas' },
+  { value: 'confrontoDireto', label: 'Confronto direto' },
+  { value: 'sorteio', label: 'Sorteio' }
+];
+
+const CRITERIOS_VOLEI = [
+  { value: 'pontuacao', label: 'Pontuacao' },
+  { value: 'vitorias', label: 'Vitorias' },
+  { value: 'diferencaSets', label: 'Saldo de sets' },
+  { value: 'diferencaPontos', label: 'Saldo de pontos' },
+  { value: 'setsVencidos', label: 'Sets ganhos' },
+  { value: 'pontosAverage', label: 'Pontos average (AV)' },
+  { value: 'confrontoDireto', label: 'Confronto direto' },
+  { value: 'derrotaWo', label: 'W.O. (menos)' },
+  { value: 'sorteio', label: 'Sorteio' }
+];
+
+const CRITERIOS_BEACH_TENIS = [
+  { value: 'pontuacao', label: 'Pontuacao' },
+  { value: 'vitorias', label: 'Vitorias' },
+  { value: 'diferencaSets', label: 'Saldo de sets' },
+  { value: 'diferencaGames', label: 'Saldo de games' },
+  { value: 'setsVencidos', label: 'Sets ganhos' },
+  { value: 'gamesPro', label: 'Games ganhos' },
+  { value: 'confrontoDireto', label: 'Confronto direto' },
+  { value: 'derrotaWo', label: 'W.O. (menos)' },
+  { value: 'sorteio', label: 'Sorteio' }
+];
 
 const COLUNAS_PADRAO = {
   futebol: [
@@ -43,10 +56,26 @@ const COLUNAS_PADRAO = {
     'vitorias',
     'derrotas',
     'setsVencidos',
-    'vitoria3x0',
-    'vitoria3x2',
-    'derrota2x3',
-    'derrota0x3',
+    'setsContra',
+    'diferencaSets',
+    'pontosPro',
+    'pontosContra',
+    'diferencaPontos',
+    'pontosAverage',
+    'derrotaWo',
+    'ultimosJogos'
+  ],
+  beachTenis: [
+    'pontuacao',
+    'jogos',
+    'vitorias',
+    'derrotas',
+    'setsVencidos',
+    'setsContra',
+    'diferencaSets',
+    'gamesPro',
+    'gamesContra',
+    'diferencaGames',
     'derrotaWo',
     'ultimosJogos'
   ]
@@ -65,21 +94,73 @@ function grupoModalidade(nomeModalidade) {
   if (
     nome.includes('volei') ||
     nome.includes('futevolei') ||
-    (nome.includes('beach') && nome.includes('tenis'))
+    (nome.includes('beach') && (nome.includes('tenis') || nome.includes('tennis')))
   ) {
     return 'VOLEI';
   }
   return 'FUTEBOL';
 }
 
+function grupoModalidadeColunas(nomeModalidade) {
+  const nome = normalizarTexto(nomeModalidade);
+  if (nome.includes('beach') && (nome.includes('tenis') || nome.includes('tennis'))) {
+    return 'BEACH_TENIS';
+  }
+  return grupoModalidade(nomeModalidade);
+}
+
 function criteriosPadraoPorModalidade(nomeModalidade) {
-  const grupo = grupoModalidade(nomeModalidade);
-  return grupo === 'VOLEI' ? CRITERIOS_PADRAO.volei : CRITERIOS_PADRAO.futebol;
+  const grupo = grupoModalidadeColunas(nomeModalidade);
+  if (grupo === 'BEACH_TENIS') return CRITERIOS_BEACH_TENIS;
+  return grupo === 'VOLEI' ? CRITERIOS_VOLEI : CRITERIOS_FUTEBOL;
+}
+
+function compararValoresCriterio(criterio, valorA, valorB) {
+  if (criterio === 'derrotaWo') {
+    return valorA - valorB;
+  }
+
+  return valorB - valorA;
 }
 
 function colunasPadraoPorModalidade(nomeModalidade) {
-  const grupo = grupoModalidade(nomeModalidade);
+  const grupo = grupoModalidadeColunas(nomeModalidade);
+  if (grupo === 'BEACH_TENIS') return COLUNAS_PADRAO.beachTenis;
   return grupo === 'VOLEI' ? COLUNAS_PADRAO.volei : COLUNAS_PADRAO.futebol;
+}
+
+function normalizarOrdemClassificacao(ordem, nomeModalidade) {
+  const padrao = criteriosPadraoPorModalidade(nomeModalidade);
+
+  if (!Array.isArray(ordem) || ordem.length === 0) {
+    return [...padrao];
+  }
+
+  const mapaPadrao = new Map(padrao.map(criterio => [criterio.value, criterio]));
+  const ordemNormalizada = [];
+
+  for (const criterio of ordem) {
+    const value = String(criterio?.value || '');
+    if (!mapaPadrao.has(value) || ordemNormalizada.some(item => item.value === value)) {
+      continue;
+    }
+
+    const criterioPadrao = mapaPadrao.get(value);
+    ordemNormalizada.push({
+      value,
+      label: String(criterio?.label || criterioPadrao.label || value)
+    });
+  }
+
+  for (const criterioPadrao of padrao) {
+    if (ordemNormalizada.some(item => item.value === criterioPadrao.value)) {
+      continue;
+    }
+
+    ordemNormalizada.push({ ...criterioPadrao });
+  }
+
+  return ordemNormalizada.length ? ordemNormalizada : [...padrao];
 }
 
 function normalizarColunasClassificacao(colunas, nomeModalidade) {
@@ -200,7 +281,7 @@ async function salvarOrdemClassificacao(campeonatoId, novaOrdem = null, colunasV
   const dataUpdate = {};
 
   if (atualizarOrdem) {
-    dataUpdate.ordemClassificacao = novaOrdem;
+    dataUpdate.ordemClassificacao = normalizarOrdemClassificacao(novaOrdem, campeonatoAtual.modalidade?.nome);
   }
 
   if (atualizarColunas) {
@@ -222,7 +303,10 @@ async function salvarOrdemClassificacao(campeonatoId, novaOrdem = null, colunasV
     }
   });
 
-  const ordemFinal = Array.isArray(campeonato.ordemClassificacao) ? campeonato.ordemClassificacao : [];
+  const ordemFinal = normalizarOrdemClassificacao(
+    campeonato.ordemClassificacao,
+    campeonato.modalidade?.nome
+  );
   const colunasFinal = normalizarColunasClassificacao(
     campeonato.regras?.colunasClassificacao,
     campeonato.modalidade?.nome
@@ -230,7 +314,7 @@ async function salvarOrdemClassificacao(campeonatoId, novaOrdem = null, colunasV
 
   if (!atualizarOrdem) {
     return {
-      ordem: ordemFinal.length ? ordemFinal : criteriosPadraoPorModalidade(campeonato.modalidade?.nome),
+      ordem: ordemFinal,
       colunas: colunasFinal
     };
   }
@@ -342,7 +426,7 @@ async function salvarOrdemClassificacao(campeonatoId, novaOrdem = null, colunasV
         const valorA = a[criterio.value] ?? 0;
         const valorB = b[criterio.value] ?? 0;
         if (valorB !== valorA) {
-          resultado = valorB - valorA;
+          resultado = compararValoresCriterio(criterio.value, valorA, valorB);
           break;
         }
       }
@@ -362,7 +446,7 @@ async function salvarOrdemClassificacao(campeonatoId, novaOrdem = null, colunasV
   }
 
   return {
-    ordem: ordemFinal.length ? ordemFinal : criteriosPadraoPorModalidade(campeonato.modalidade?.nome),
+    ordem: ordemFinal,
     colunas: colunasFinal,
     placares: placares.map((p, index) => ({
       id: p.id,
@@ -400,9 +484,10 @@ async function listarOrdemClassificacao(campeonatoId) {
     throw new Error('Campeonato nao encontrado');
   }
 
-  const ordem = Array.isArray(campeonato.ordemClassificacao) && campeonato.ordemClassificacao.length > 0
-    ? campeonato.ordemClassificacao
-    : criteriosPadraoPorModalidade(campeonato.modalidade?.nome);
+  const ordem = normalizarOrdemClassificacao(
+    campeonato.ordemClassificacao,
+    campeonato.modalidade?.nome
+  );
 
   const colunas = normalizarColunasClassificacao(
     campeonato.regras?.colunasClassificacao,

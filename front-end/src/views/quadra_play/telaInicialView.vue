@@ -9,7 +9,8 @@
         <div class="header-campeonatos">
           <h2 class="title">Campeonatos</h2>
           <button v-if="!isMesario" class="btn-add" @click="abrirModalAdicionarCampeonato">
-            Adicionar Campeonato
+            <span class="btn-add-label-desktop">Adicionar Campeonato</span>
+            <span class="btn-add-label-mobile">Adicionar</span>
           </button>
         </div>
         <div class="abas-container">
@@ -19,7 +20,7 @@
 
           <div class="aba" v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id"
             :class="{ ativa: modalidadeSelecionada === modalidade.id }" @click="selecionarModalidade(modalidade.id)">
-            {{ modalidade.nome }}
+            {{ formatarNomeModalidade(modalidade.nome) }}
           </div>
         </div>
 
@@ -168,6 +169,14 @@ export default {
       if (this.isMesario) {
         this.aplicarFiltroCampeonatosMesario()
       }
+    },
+    formatarNomeModalidade(nome) {
+      return String(nome || '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .map(parte => parte.charAt(0).toUpperCase() + parte.slice(1).toLowerCase())
+        .join(' ')
     },
     rotuloStatus(status) {
       if (status === 'FINALIZADO') return 'Finalizado'
@@ -342,6 +351,10 @@ export default {
   font-weight: 700;
   letter-spacing: -0.1px;
   box-shadow: 0 10px 18px rgba(59, 130, 246, 0.22);
+}
+
+.btn-add-label-mobile {
+  display: none;
 }
 
 .btn-add:hover {
@@ -645,20 +658,46 @@ export default {
   }
 
   .header-campeonatos {
-    align-items: flex-start;
-    flex-direction: column;
+    margin-top: -40px;
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
     gap: 10px;
+    flex-wrap: nowrap;
+  }
+
+  .title {
+    flex: 1;
+    min-width: 0;
+    font-size: 28px;
   }
 
   .btn-add {
-    width: 100%;
+    width: auto;
+    flex-shrink: 0;
     padding: 10px 12px;
-    font-size: 14px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .btn-add-label-desktop {
+    display: none;
+  }
+
+  .btn-add-label-mobile {
+    display: inline;
   }
 
   .abas-container {
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
+  }
+
+  .aba {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
   }
 
   .quadras-grid {

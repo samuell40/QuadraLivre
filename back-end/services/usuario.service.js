@@ -1,5 +1,6 @@
 const { enviarEmailAlteracaoPermissao, enviarEmailVinculoTime } = require('./email.service');
 const { PrismaClient } = require('@prisma/client');
+const { validarNumeroUnicoNoTime } = require('./jogador.service');
 const prisma = new PrismaClient();
 
 async function cadastrarUsuario(user) {
@@ -268,6 +269,13 @@ async function vincularUsuarioTime(usuarioId, timeId, jogadorId) {
     });
 
     const modalidadeId = time.modalidadeId;
+
+    await validarNumeroUnicoNoTime({
+      timeId,
+      numero: jogador.numero,
+      jogadorIgnorarId: jogadorId,
+      tx
+    });
 
     await tx.jogadorTime.upsert({
       where: {

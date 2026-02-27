@@ -34,7 +34,7 @@ async function adicionarJogadorController(req, res) {
     return res.status(201).json(novoJogador);
   } catch (error) {
     console.error("Erro no controller:", error);
-    return res.status(500).json({ message: error.message });
+    return res.status(400).json({ message: error.message });
   }
 }
 
@@ -214,7 +214,7 @@ async function moverJogadorTimeController(req, res) {
     return res.status(200).json(jogadorAtualizado);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: error.message });
+    return res.status(400).json({ message: error.message });
   }
 }
 

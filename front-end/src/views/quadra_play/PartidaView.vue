@@ -295,10 +295,12 @@ export default {
       const totalSets = (partida.pontosTimeA ?? 0) + (partida.pontosTimeB ?? 0)
       const setAtualNum = totalSets + 1
 
+      let gamesSet = 0
       let pontosTieBreak = 0
       if (Array.isArray(partida.sets) && partida.sets.length) {
         const setAtual = partida.sets.find(s => Number(s.numero) === Number(setAtualNum))
         if (setAtual) {
+          gamesSet = lado === 'A' ? (setAtual.gamesA ?? 0) : (setAtual.gamesB ?? 0)
           pontosTieBreak = lado === 'A' ? (setAtual.pontosA ?? 0) : (setAtual.pontosB ?? 0)
         }
       }
@@ -308,6 +310,7 @@ export default {
         nome: time?.nome,
         foto: time?.foto,
         setsVencidos,
+        gamesSet,
         pontosTieBreak,
         wo,
         placarId: lado === 'A' ? partida.placarTimeAId : partida.placarTimeBId
@@ -532,7 +535,9 @@ export default {
           ? p.sets.map(s => ({
             numero: Number(s.numero),
             pontosA: clamp0(s.pontosA ?? 0),
-            pontosB: clamp0(s.pontosB ?? 0)
+            pontosB: clamp0(s.pontosB ?? 0),
+            gamesA: clamp0(s.gamesA ?? 0),
+            gamesB: clamp0(s.gamesB ?? 0)
           }))
           : []
       }
@@ -543,11 +548,13 @@ export default {
       const getOrCreateSetAtual = () => {
         let s = payload.sets.find(x => Number(x.numero) === Number(setAtualNum))
         if (!s) {
-          s = { numero: setAtualNum, pontosA: 0, pontosB: 0 }
+          s = { numero: setAtualNum, pontosA: 0, pontosB: 0, gamesA: 0, gamesB: 0 }
           payload.sets.push(s)
         }
         s.pontosA = clamp0(s.pontosA)
         s.pontosB = clamp0(s.pontosB)
+        s.gamesA = clamp0(s.gamesA)
+        s.gamesB = clamp0(s.gamesB)
         return s
       }
 
@@ -561,6 +568,11 @@ export default {
 
         getOrCreateSetAtual()
 
+      } else if (campo === 'gamesSet') {
+        const setAtual = getOrCreateSetAtual()
+        if (isA) setAtual.gamesA = clamp0(setAtual.gamesA + d)
+        else setAtual.gamesB = clamp0(setAtual.gamesB + d)
+
       } else if (campo === 'pontosTieBreak') {
         const setAtual = getOrCreateSetAtual()
         if (d > 0) {
@@ -568,19 +580,6 @@ export default {
         }
         if (isA) setAtual.pontosA = clamp0(setAtual.pontosA + d)
         else setAtual.pontosB = clamp0(setAtual.pontosB + d)
-
-        if (d > 0) {
-          const totalSetsAtual = payload.pontosTimeA + payload.pontosTimeB
-          const limitePontosSet = this.maxPontosSet
-
-          if (totalSetsAtual < this.maxSetsPartida && limitePontosSet >= 0) {
-            const pontosDoLado = isA ? setAtual.pontosA : setAtual.pontosB
-            if (pontosDoLado >= limitePontosSet) {
-              if (isA) payload.pontosTimeA = clamp0(payload.pontosTimeA + 1)
-              else payload.pontosTimeB = clamp0(payload.pontosTimeB + 1)
-            }
-          }
-        }
       } else if (campo === 'wo') {
         if (isA) payload.woTimeA = d > 0
         else payload.woTimeB = d > 0
@@ -633,7 +632,7 @@ export default {
 
       const jaFinalizada = this.isFinalizada
       if (jaFinalizada && !this.temAlteracao) return
-      const isGrupoVolei = this.modalidadeKey === 'VOLEI'
+      const usaPayloadComSets = this.modalidadeKey === 'VOLEI' || this.modalidadeKey === 'BEACH_TENIS'
 
       const confirm = await Swal.fire({
         title: jaFinalizada ? 'Salvar alterações?' : 'Finalizar partida?',
@@ -652,7 +651,7 @@ export default {
       try {
         if (jaFinalizada) {
           const p = this.partida || {}
-          const payload = isGrupoVolei
+          const payload = usaPayloadComSets
             ? {
               pontosTimeA: p.pontosTimeA ?? 0,
               pontosTimeB: p.pontosTimeB ?? 0,
@@ -702,9 +701,9 @@ export default {
 
     criarSnapshotAtual() {
       const p = this.partida
-      const isGrupoVolei = this.modalidadeKey === 'VOLEI'
+      const usaPayloadComSets = this.modalidadeKey === 'VOLEI' || this.modalidadeKey === 'BEACH_TENIS'
 
-      if (isGrupoVolei) {
+      if (usaPayloadComSets) {
         return JSON.stringify({
           pontosTimeA: p.pontosTimeA ?? 0,
           pontosTimeB: p.pontosTimeB ?? 0,
@@ -927,21 +926,23 @@ export default {
 
   .header {
     flex-direction: row;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 10px;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
+    margin-top: -40px;
+    margin-bottom: 8px;
   }
 
   .title {
-    font-size: 22px;
+    font-size: 28px;
     margin-top: 0;
     margin-right: 10px;
     flex: 1;
     min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: initial;
   }
 
   .badge-status {

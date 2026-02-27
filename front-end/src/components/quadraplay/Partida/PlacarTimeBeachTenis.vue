@@ -1,5 +1,5 @@
 <template>
-  <div class="placar" :class="{ 'placar-finalizada': partidaEncerradaGlobal }">
+  <div class="placar" :class="{ 'placar-finalizada': partidaEncerradaGlobal, 'placar-andamento': partidaEmAndamentoGlobal }">
     <h2 class="nome-time">
       <img v-if="timeData?.foto" :src="timeData.foto" alt="Escudo do time" class="foto-time" />
       <span>{{ timeNome }}</span>
@@ -15,6 +15,21 @@
         <span class="valor">{{ timeData?.setsVencidos ?? 0 }}</span>
 
         <button @click="emitDelta('setsVencidos', +1)" :disabled="!podeAumentarSets">
+          +
+        </button>
+      </div>
+    </div>
+
+    <div class="box">
+      <p>Games do Set</p>
+      <div class="controls">
+        <button @click="emitDelta('gamesSet', -1)" :disabled="!podeDiminuirGames">
+          −
+        </button>
+
+        <span class="valor">{{ gamesSetAtual }}</span>
+
+        <button @click="emitDelta('gamesSet', +1)" :disabled="!podeAumentarGames">
           +
         </button>
       </div>
@@ -65,6 +80,7 @@ export default {
     setsAdversario: { type: Number, default: 0 },
     woAdversario: { type: Number, default: 0 },
     partidaEncerradaGlobal: { type: Boolean, default: false },
+    partidaStatus: { type: String, default: '' },
     maxSetsPartida: { type: Number, default: 5 },
     maxPontosSet: { type: Number, default: 25 },
   },
@@ -78,8 +94,16 @@ export default {
       return Number(this.timeData?.pontosTieBreak ?? 0)
     },
 
+    gamesSetAtual() {
+      return Number(this.timeData?.gamesSet ?? 0)
+    },
+
     woAtual() {
       return this.timeData?.wo ? 1 : 0
+    },
+
+    partidaEmAndamentoGlobal() {
+      return this.partidaStatus === 'EM_ANDAMENTO'
     },
 
     podeDiminuirSets() {
@@ -98,6 +122,25 @@ export default {
         this.woAtual === 0 &&
         this.woAdversario === 0 &&
         (this.setsVencidosAtual + this.setsAdversario) < this.maxSetsPartida
+      )
+    },
+
+    podeDiminuirGames() {
+      return (
+        this.podeEditar &&
+        !this.partidaEncerradaGlobal &&
+        this.gamesSetAtual > 0 &&
+        this.woAtual === 0 &&
+        this.woAdversario === 0
+      )
+    },
+
+    podeAumentarGames() {
+      return (
+        this.podeEditar &&
+        !this.partidaEncerradaGlobal &&
+        this.woAtual === 0 &&
+        this.woAdversario === 0
       )
     },
 
@@ -165,6 +208,14 @@ export default {
   margin: 0 auto;
 }
 
+.placar.placar-andamento {
+  border-color: #16a34a;
+}
+
+.placar.placar-finalizada {
+  border-color: #dc2626;
+}
+
 .nome-time {
   background: #f9f9f9;
   border-bottom: 1px solid #ddd;
@@ -177,6 +228,11 @@ export default {
   justify-content: center;
   gap: 12px;
   border: 2px solid #3b82f6;
+}
+
+.placar.placar-andamento .nome-time {
+  border-color: #16a34a;
+  color: #16a34a;
 }
 
 .placar.placar-finalizada .nome-time {
@@ -197,6 +253,14 @@ export default {
   padding: 15px;
   border-radius: 8px;
   border: 1px solid #eee;
+}
+
+.placar.placar-andamento .box {
+  border-color: #86efac;
+}
+
+.placar.placar-finalizada .box {
+  border-color: #fca5a5;
 }
 
 .controls {
@@ -228,6 +292,14 @@ export default {
 
 .controls button:last-child {
   background-color: #3b82f6;
+}
+
+.placar.placar-andamento > .box .controls button {
+  background-color: #166534;
+}
+
+.placar.placar-andamento > .box .controls button:last-child {
+  background-color: #16a34a;
 }
 
 .placar.placar-finalizada > .box .controls button {

@@ -8,7 +8,7 @@ function normalizarTexto(texto) {
 
 function grupoModalidade(nomeModalidade) {
   const nome = normalizarTexto(nomeModalidade)
-  if (nome.includes('volei') || nome.includes('futevolei') || (nome.includes('beach') && nome.includes('tenis'))) {
+  if (nome.includes('volei') || nome.includes('futevolei') || (nome.includes('beach') && (nome.includes('tenis') || nome.includes('tennis')))) {
     return 'VOLEI'
   }
   return 'FUTEBOL'

@@ -1125,12 +1125,20 @@ export default {
   .conteudo,
   .conteudo.collapsed {
     margin-left: 0;
-    padding: 16px;
+    margin-top: 70px;
+    padding: 18px;
   }
 
   .title {
-    font-size: 35px;
+    font-size: 30px;
+    line-height: 1.08;
+    margin-top: 0;
     margin-bottom: 14px;
+  }
+
+  .header {
+    margin-top: -40px;
+    margin-bottom: 8px;
   }
 
   .card-quadra {

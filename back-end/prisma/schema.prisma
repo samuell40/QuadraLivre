@@ -244,6 +244,8 @@ model SetPartida {
   numero    Int
   pontosA   Int
   pontosB   Int
+  gamesA    Int     @default(0)
+  gamesB    Int     @default(0)
   partida   Partida @relation(fields: [partidaId], references: [id], onDelete: Cascade)
 
   @@unique([partidaId, numero])
@@ -342,10 +344,15 @@ model Placar {
   saldoDeGols    Int       @default(0)
   aproveitamento Int       @default(0)
   setsVencidos   Int       @default(0)
-  vitoria3x0     Int       @default(0)
-  vitoria3x2     Int       @default(0)
-  derrota2x3     Int       @default(0)
-  derrota0x3     Int       @default(0)
+  setsContra     Int       @default(0)
+  diferencaSets  Int       @default(0)
+  gamesPro       Int       @default(0)
+  gamesContra    Int       @default(0)
+  diferencaGames Int       @default(0)
+  pontosPro      Int       @default(0)
+  pontosContra   Int       @default(0)
+  diferencaPontos Int      @default(0)
+  pontosAverage  Float     @default(0)
   derrotaWo      Int       @default(0)
   visivel        Boolean   @default(true)
   deletedAt      DateTime?

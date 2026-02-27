@@ -516,11 +516,22 @@ export default {
 @media (max-width: 768px) {
   .conteudo {
     margin-left: 0;
+    margin-top: 70px;
     padding: 18px;
   }
 
+  .conteudo.collapsed {
+    margin-left: 0;
+  }
+
+  .header-top {
+    margin-top: -40px;
+    align-items: flex-start;
+  }
+
   .title {
-    font-size: 28px;
+    font-size: 30px;
+    margin: 0;
   }
 
   .lista-times {

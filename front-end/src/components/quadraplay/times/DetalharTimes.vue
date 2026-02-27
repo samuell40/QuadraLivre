@@ -492,6 +492,15 @@ export default {
     temNumeroJogador(numero) {
       return this.normalizarNumeroJogador(numero) !== null;
     },
+    obterJogadorComNumeroNoTime(numero, ignorarJogadorId = null) {
+      const numeroNormalizado = this.normalizarNumeroJogador(numero);
+      if (!numeroNormalizado) return null;
+
+      return this.jogadores.find(jogador =>
+        this.normalizarNumeroJogador(jogador?.numero) === numeroNormalizado &&
+        Number(jogador?.id) !== Number(ignorarJogadorId)
+      ) || null;
+    },
     jogadorCombinaBusca(jogador, busca) {
       const termo = String(busca || '').trim().toLowerCase();
       if (!termo) return true;
@@ -606,6 +615,12 @@ export default {
         return;
       }
 
+      const conflitoNumero = this.obterJogadorComNumeroNoTime(numeroJogador);
+      if (conflitoNumero) {
+        Swal.fire('Atenção', `Ja existe um jogador com o numero ${numeroJogador} neste time`, 'warning');
+        return;
+      }
+
       const FOTO_PADRAO = 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/Imagem%20padrao.png';
       const urlImagem = await this.uploadImagemGerenciar();
 
@@ -621,6 +636,41 @@ export default {
     },
     async adicionarJogadorExistenteGerenciar() {
       if (this.gerenciarJogadoresSelecionadosExistentes.length === 0) return;
+
+      const conflitosNumeroNoTime = [];
+      const numerosDuplicadosNaSelecao = new Set();
+      const numerosSelecionados = new Set();
+
+      for (const jogador of this.gerenciarJogadoresSelecionadosExistentes) {
+        const numeroJogador = this.normalizarNumeroJogador(jogador?.numero);
+        if (!numeroJogador) continue;
+
+        const conflitoNumero = this.obterJogadorComNumeroNoTime(numeroJogador, jogador.id);
+        if (conflitoNumero) {
+          conflitosNumeroNoTime.push(`${numeroJogador} (${conflitoNumero.nome})`);
+          continue;
+        }
+
+        if (numerosSelecionados.has(numeroJogador)) {
+          numerosDuplicadosNaSelecao.add(numeroJogador);
+          continue;
+        }
+
+        numerosSelecionados.add(numeroJogador);
+      }
+
+      if (conflitosNumeroNoTime.length || numerosDuplicadosNaSelecao.size) {
+        let mensagem = '';
+        if (conflitosNumeroNoTime.length) {
+          mensagem += `Numeros ja usados no time:\n${conflitosNumeroNoTime.join(', ')}`;
+        }
+        if (numerosDuplicadosNaSelecao.size) {
+          mensagem += `${mensagem ? '\n\n' : ''}Numeros repetidos na selecao:\n${Array.from(numerosDuplicadosNaSelecao).join(', ')}`;
+        }
+        Swal.fire('Atenção', mensagem, 'warning');
+        return;
+      }
+
       for (const jogador of this.gerenciarJogadoresSelecionadosExistentes) {
         await api.post('/mover', {
           jogadorId: jogador.id,
@@ -668,10 +718,18 @@ export default {
       const jogadoresPorNome = new Map(
         this.gerenciarJogadores.map(j => [String(j.nome || '').toLowerCase(), j])
       );
+      const jogadoresPorNumeroTime = new Map(
+        this.jogadores
+          .map(j => [this.normalizarNumeroJogador(j?.numero), j])
+          .filter(([numero]) => numero !== null)
+      );
       const nomesExistentes = [];
+      const numerosExistentesNoTime = [];
       const jogadoresParaAdicionar = [];
       const nomesNoLote = new Set();
       const nomesDuplicadosNoLote = [];
+      const numerosNoLote = new Set();
+      const numerosDuplicadosNoLote = new Set();
 
       for (const jogador of jogadoresDigitados) {
         const nomeLower = jogador.nome.toLowerCase();
@@ -680,6 +738,18 @@ export default {
           continue;
         }
         nomesNoLote.add(nomeLower);
+
+        if (numerosNoLote.has(jogador.numero)) {
+          numerosDuplicadosNoLote.add(jogador.numero);
+          continue;
+        }
+        numerosNoLote.add(jogador.numero);
+
+        if (jogadoresPorNumeroTime.has(jogador.numero)) {
+          const jogadorConflito = jogadoresPorNumeroTime.get(jogador.numero);
+          numerosExistentesNoTime.push(`${jogador.numero} (${jogadorConflito.nome})`);
+          continue;
+        }
 
         if (jogadoresPorNome.has(nomeLower)) {
           nomesExistentes.push(jogadoresPorNome.get(nomeLower).nome);
@@ -716,6 +786,12 @@ export default {
       }
       if (nomesDuplicadosNoLote.length > 0) {
         mensagem += `\n\nDuplicados no lote:\n${nomesDuplicadosNoLote.join(', ')}`;
+      }
+      if (numerosExistentesNoTime.length > 0) {
+        mensagem += `\n\nNumeros ja usados no time:\n${numerosExistentesNoTime.join(', ')}`;
+      }
+      if (numerosDuplicadosNoLote.size > 0) {
+        mensagem += `\n\nNumeros duplicados no lote:\n${Array.from(numerosDuplicadosNoLote).join(', ')}`;
       }
       Swal.fire('Concluido', mensagem, 'success');
     },

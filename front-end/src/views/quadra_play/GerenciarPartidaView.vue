@@ -8,30 +8,36 @@
         <h1 class="title">Gerenciar Partidas</h1>
       </div>
 
-      <div class="filtros-wrapper">
-        <div class="filtros-topo">
-          <div class="filtro-item">
-            <label for="fase-select" class="filtro-titulo">Fase</label>
-            <select id="fase-select" v-model="faseSelecionada" @change="onFaseChange">
-              <option disabled value="">Selecione a Fase</option>
-              <option v-for="fase in fases" :key="fase.id" :value="fase.id">
-                {{ fase.nome }}
-              </option>
-            </select>
+        <div class="filtros-wrapper">
+          <div class="filtros-cabecalho">
+            <div class="filtros-topo">
+              <div class="filtro-item">
+                <label for="fase-select" class="filtro-titulo">Fase</label>
+                <select id="fase-select" v-model="faseSelecionada" @change="onFaseChange">
+                  <option disabled value="">Selecione a Fase</option>
+                  <option v-for="fase in fases" :key="fase.id" :value="fase.id">
+                    {{ fase.nome }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="filtro-item">
+                <label for="rodada-select" class="filtro-titulo">Rodada</label>
+                <select id="rodada-select" v-model="rodadaSelecionada" @change="onRodadaChange">
+                  <option disabled value="">Selecione a Rodada</option>
+                  <option v-for="rodada in rodadas" :key="rodada.id" :value="rodada.id">
+                    {{ rodada.nome }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="add-half-circle" @click="abrirModalTipo">
+              <span class="plus">+</span>
+            </div>
           </div>
 
-          <div class="filtro-item">
-            <label for="rodada-select" class="filtro-titulo">Rodada</label>
-            <select id="rodada-select" v-model="rodadaSelecionada" @change="onRodadaChange">
-              <option disabled value="">Selecione a Rodada</option>
-              <option v-for="rodada in rodadas" :key="rodada.id" :value="rodada.id">
-                {{ rodada.nome }}
-              </option>
-            </select>
-          </div>
-        </div>
-
-        <ModalEscolhaTipo v-model="mostrarModalTipo" :campeonato-id="campeonatoSelecionado" @faseCriada="adicionarFase"
+          <ModalEscolhaTipo v-model="mostrarModalTipo" :campeonato-id="campeonatoSelecionado" @faseCriada="adicionarFase"
           @rodadaCriada="adicionarRodada" @partidaCriada="onPartidaCriada" />
 
         <div class="partidas-wrapper">
@@ -129,10 +135,6 @@
             </button>
           </div>
         </div>
-      </div>
-
-      <div class="add-half-circle" @click="abrirModalTipo">
-        <span class="plus">+</span>
       </div>
 
       <SelecionarJogadores :aberto="mostrarModalJogadores" :jogadoresTime1="jogadoresTime1"
@@ -852,6 +854,10 @@ export default {
   background-color: #fff;
 }
 
+.filtros-cabecalho {
+  position: relative;
+}
+
 .filtros-topo {
   display: flex;
   gap: 12px;
@@ -1155,9 +1161,9 @@ export default {
 
 .add-half-circle {
   position: absolute;
-  top: 44%;
-  left: 58%;
-  transform: translate(-50%, -50%);
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
   width: 42px;
   height: 42px;
   background-color: #3b82f6;
@@ -1167,7 +1173,7 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 10;
+  z-index: 5;
   transition: background 0.2s, left 0.3s;
 }
 
@@ -1179,11 +1185,6 @@ export default {
   color: white;
   font-size: 24px;
   font-weight: bold;
-}
-
-.conteudo.collapsed .add-half-circle {
-  left: 52.5%;
-  top: 44%;
 }
 
 .modal-overlay {
@@ -1506,7 +1507,41 @@ export default {
 @media (max-width: 768px) {
   .conteudo {
     margin-left: 0;
-    padding: 16px;
+    margin-top: 70px;
+    padding: 0 18px 18px;
+  }
+
+  .conteudo.collapsed {
+    margin-left: 0;
+  }
+
+  .header {
+    margin-top: -40px;
+    margin-bottom: 8px;
+  }
+
+  .title {
+    font-size: 28px;
+    line-height: 1.08;
+    margin: 0;
+  }
+
+  .filtros-wrapper {
+    margin-bottom: 20px;
+    padding: 10px;
+  }
+
+  .filtros-topo {
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .filtro-titulo {
+    font-size: 18px;
+  }
+
+  .partidas-wrapper {
+    margin-top: 56px;
   }
 
   .lista-partidas {
@@ -1550,21 +1585,9 @@ export default {
   }
 
   .add-half-circle {
-    position: absolute;
-    top: 42%;
+    top: calc(100% + 6px);
     left: 50%;
-    transform: translate(-50%, -50%);
-    width: 42px;
-    height: 42px;
-    background-color: #3b82f6;
-    border-bottom-left-radius: 50%;
-    border-bottom-right-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 10;
-    transition: background 0.2s;
+    transform: translateX(-50%);
   }
 }
 </style>

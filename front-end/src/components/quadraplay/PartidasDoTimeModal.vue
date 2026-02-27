@@ -1,5 +1,5 @@
 <template>
-  <div v-if="modelValue" class="modal-overlay" @click.self="fechar">
+  <div v-if="modelValue && !mostrarDetalharPartida" class="modal-overlay" @click.self="fechar">
     <div class="modal-content">
       <div class="modal-header">
         <h2 class="modal-title">

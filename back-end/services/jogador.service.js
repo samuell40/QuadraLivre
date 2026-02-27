@@ -1,6 +1,43 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+async function validarNumeroUnicoNoTime({
+  timeId,
+  numero,
+  jogadorIgnorarId = null,
+  tx = prisma
+}) {
+  const numeroNormalizado = Number(numero);
+  if (!Number.isInteger(numeroNormalizado) || numeroNormalizado <= 0) {
+    return;
+  }
+
+  const where = {
+    timeId: Number(timeId),
+    ativo: true,
+    jogador: {
+      numero: numeroNormalizado,
+      ativo: true,
+      deletedAt: null
+    }
+  };
+
+  if (jogadorIgnorarId) {
+    where.jogadorId = { not: Number(jogadorIgnorarId) };
+  }
+
+  const conflito = await tx.jogadorTime.findFirst({
+    where,
+    include: {
+      jogador: true
+    }
+  });
+
+  if (conflito?.jogador) {
+    throw new Error(`O numero ${numeroNormalizado} ja esta em uso neste time pelo jogador ${conflito.jogador.nome}.`);
+  }
+}
+
 async function adicionarJogador(dados) {
   const time = await prisma.time.findUnique({
     where: { id: dados.timeId },
@@ -8,6 +45,11 @@ async function adicionarJogador(dados) {
   });
   if (!time) throw new Error("Time não encontrado");
   let funcaoIdFinal = dados.funcaoId;
+
+  await validarNumeroUnicoNoTime({
+    timeId: dados.timeId,
+    numero: dados.numero
+  });
 
   if (!funcaoIdFinal) {
     let funcaoNenhuma = await prisma.funcaoJogador.findFirst({
@@ -307,6 +349,11 @@ async function moverJogadorDeTime(jogadorId, novoTimeId) {
   if (!novoTime) throw new Error("Time de destino não encontrado");
 
   const modalidadeId = novoTime.modalidadeId;
+  await validarNumeroUnicoNoTime({
+    timeId: novoTimeId,
+    numero: jogador.numero,
+    jogadorIgnorarId: jogadorId
+  });
 
   const vinculoAntigo = jogador.times.find(
     jt => jt.time.modalidadeId === modalidadeId
@@ -344,5 +391,6 @@ module.exports = {
   removerFuncaoJogador,
   listarFuncoesJogador,
   atualizarFuncaoJogador,
-  moverJogadorDeTime
+  moverJogadorDeTime,
+  validarNumeroUnicoNoTime
 };

@@ -1,6 +1,78 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+const CRITERIOS_CLASSIFICACAO = {
+  FUTEBOL: new Set([
+    'pontuacao',
+    'vitorias',
+    'saldoDeGols',
+    'golsPro',
+    'golsSofridos',
+    'empates',
+    'derrotas',
+    'confrontoDireto',
+    'sorteio'
+  ]),
+  VOLEI: new Set([
+    'pontuacao',
+    'vitorias',
+    'diferencaSets',
+    'diferencaPontos',
+    'setsVencidos',
+    'pontosAverage',
+    'confrontoDireto',
+    'derrotaWo',
+    'sorteio'
+  ]),
+  BEACH_TENIS: new Set([
+    'pontuacao',
+    'vitorias',
+    'diferencaSets',
+    'diferencaGames',
+    'setsVencidos',
+    'gamesPro',
+    'confrontoDireto',
+    'derrotaWo',
+    'sorteio'
+  ])
+};
+
+const ORDEM_CRITERIOS_CLASSIFICACAO = {
+  FUTEBOL: [
+    'pontuacao',
+    'vitorias',
+    'saldoDeGols',
+    'golsPro',
+    'golsSofridos',
+    'empates',
+    'derrotas',
+    'confrontoDireto',
+    'sorteio'
+  ],
+  VOLEI: [
+    'pontuacao',
+    'vitorias',
+    'diferencaSets',
+    'diferencaPontos',
+    'setsVencidos',
+    'pontosAverage',
+    'confrontoDireto',
+    'derrotaWo',
+    'sorteio'
+  ],
+  BEACH_TENIS: [
+    'pontuacao',
+    'vitorias',
+    'diferencaSets',
+    'diferencaGames',
+    'setsVencidos',
+    'gamesPro',
+    'confrontoDireto',
+    'derrotaWo',
+    'sorteio'
+  ]
+};
+
 function normalizarTexto(texto) {
   return String(texto || '')
     .toLowerCase()
@@ -14,11 +86,24 @@ function grupoModalidade(nomeModalidade) {
   if (
     nome.includes('volei') ||
     nome.includes('futevolei') ||
-    (nome.includes('beach') && nome.includes('tenis'))
+    (nome.includes('beach') && (nome.includes('tenis') || nome.includes('tennis')))
   ) {
     return 'VOLEI';
   }
   return 'FUTEBOL';
+}
+
+function isBeachTenisModalidade(nomeModalidade) {
+  const nome = normalizarTexto(nomeModalidade);
+  return nome.includes('beach') && (nome.includes('tenis') || nome.includes('tennis'));
+}
+
+function grupoCriteriosModalidade(nomeModalidade) {
+  if (isBeachTenisModalidade(nomeModalidade)) {
+    return 'BEACH_TENIS';
+  }
+
+  return grupoModalidade(nomeModalidade) === 'VOLEI' ? 'VOLEI' : 'FUTEBOL';
 }
 
 function regrasPadraoPorModalidade(nomeModalidade) {
@@ -78,7 +163,65 @@ function calcularPontosVoleiParaResultado(setsVencedor, setsPerdedor, regras) {
   return { pontosVencedor, pontosPerdedor };
 }
 
-async function recalcularPosicoesDoPlacar(campeonatoId, faseId, ordemClassificacao = [], regras = {}, grupo = 'FUTEBOL') {
+function normalizarOrdemClassificacao(ordemClassificacao, nomeModalidade) {
+  const grupo = grupoCriteriosModalidade(nomeModalidade);
+  const criteriosValidos = CRITERIOS_CLASSIFICACAO[grupo] || CRITERIOS_CLASSIFICACAO.FUTEBOL;
+  const ordemPadrao = ORDEM_CRITERIOS_CLASSIFICACAO[grupo] || ORDEM_CRITERIOS_CLASSIFICACAO.FUTEBOL;
+  const ordemNormalizada = [];
+
+  if (Array.isArray(ordemClassificacao)) {
+    for (const criterio of ordemClassificacao) {
+      const value = String(criterio?.value || '');
+      if (!criteriosValidos.has(value) || ordemNormalizada.some(item => item.value === value)) {
+        continue;
+      }
+
+      ordemNormalizada.push(criterio);
+    }
+  }
+
+  for (const value of ordemPadrao) {
+    if (ordemNormalizada.some(item => item.value === value)) {
+      continue;
+    }
+
+    ordemNormalizada.push({ value });
+  }
+
+  return ordemNormalizada;
+}
+
+function compararValoresCriterio(criterio, valorA, valorB) {
+  if (criterio === 'derrotaWo') {
+    return valorA - valorB;
+  }
+
+  return valorB - valorA;
+}
+
+function somarEstatisticasSets(sets = []) {
+  return (Array.isArray(sets) ? sets : []).reduce((acc, setAtual) => {
+    acc.pontosA += Number(setAtual?.pontosA ?? 0) || 0;
+    acc.pontosB += Number(setAtual?.pontosB ?? 0) || 0;
+    acc.gamesA += Number(setAtual?.gamesA ?? 0) || 0;
+    acc.gamesB += Number(setAtual?.gamesB ?? 0) || 0;
+    return acc;
+  }, {
+    pontosA: 0,
+    pontosB: 0,
+    gamesA: 0,
+    gamesB: 0
+  });
+}
+
+async function recalcularPosicoesDoPlacar(
+  campeonatoId,
+  faseId,
+  ordemClassificacao = [],
+  regras = {},
+  grupo = 'FUTEBOL',
+  nomeModalidade = ''
+) {
   const placares = await prisma.placar.findMany({
     where: {
       campeonatoId: Number(campeonatoId),
@@ -89,7 +232,7 @@ async function recalcularPosicoesDoPlacar(campeonatoId, faseId, ordemClassificac
     include: { time: true }
   });
 
-  const ordem = Array.isArray(ordemClassificacao) ? ordemClassificacao : [];
+  const ordem = normalizarOrdemClassificacao(ordemClassificacao, nomeModalidade);
 
   async function confrontoDiretoDiff(timeAId, timeBId) {
     const partidas = await prisma.partida.findMany({
@@ -194,7 +337,7 @@ async function recalcularPosicoesDoPlacar(campeonatoId, faseId, ordemClassificac
         const valorA = a[criterio.value] ?? 0;
         const valorB = b[criterio.value] ?? 0;
         if (valorB !== valorA) {
-          resultado = valorB - valorA;
+          resultado = compararValoresCriterio(criterio.value, valorA, valorB);
           break;
         }
       }
@@ -235,6 +378,7 @@ async function recalcularPlacarCampeonatoFase(campeonatoId, faseId) {
 
   const regras = normalizarRegrasCampeonato(campeonato.regras, campeonato.modalidade?.nome);
   const grupo = grupoModalidade(campeonato.modalidade?.nome);
+  const isBeachTenis = isBeachTenisModalidade(campeonato.modalidade?.nome);
 
   const placares = await prisma.placar.findMany({
     where: {
@@ -256,10 +400,15 @@ async function recalcularPlacarCampeonatoFase(campeonatoId, faseId) {
       golsSofridos: 0,
       saldoDeGols: 0,
       setsVencidos: 0,
-      vitoria3x0: 0,
-      vitoria3x2: 0,
-      derrota2x3: 0,
-      derrota0x3: 0,
+      setsContra: 0,
+      diferencaSets: 0,
+      gamesPro: 0,
+      gamesContra: 0,
+      diferencaGames: 0,
+      pontosPro: 0,
+      pontosContra: 0,
+      diferencaPontos: 0,
+      pontosAverage: 0,
       derrotaWo: 0,
       aproveitamento: 0
     });
@@ -277,7 +426,15 @@ async function recalcularPlacarCampeonatoFase(campeonatoId, faseId) {
       pontosTimeA: true,
       pontosTimeB: true,
       woTimeA: true,
-      woTimeB: true
+      woTimeB: true,
+      sets: {
+        select: {
+          pontosA: true,
+          pontosB: true,
+          gamesA: true,
+          gamesB: true
+        }
+      }
     }
   });
 
@@ -322,9 +479,32 @@ async function recalcularPlacarCampeonatoFase(campeonatoId, faseId) {
       const setsB = Number(partida.pontosTimeB) || 0;
       const woA = !!partida.woTimeA;
       const woB = !!partida.woTimeB;
+      const totaisSets = somarEstatisticasSets(partida.sets);
 
       a.setsVencidos += setsA;
+      a.setsContra += setsB;
+      a.diferencaSets = a.setsVencidos - a.setsContra;
       b.setsVencidos += setsB;
+      b.setsContra += setsA;
+      b.diferencaSets = b.setsVencidos - b.setsContra;
+
+      if (isBeachTenis) {
+        a.gamesPro += totaisSets.gamesA;
+        a.gamesContra += totaisSets.gamesB;
+        a.diferencaGames = a.gamesPro - a.gamesContra;
+
+        b.gamesPro += totaisSets.gamesB;
+        b.gamesContra += totaisSets.gamesA;
+        b.diferencaGames = b.gamesPro - b.gamesContra;
+      } else {
+        a.pontosPro += totaisSets.pontosA;
+        a.pontosContra += totaisSets.pontosB;
+        a.diferencaPontos = a.pontosPro - a.pontosContra;
+
+        b.pontosPro += totaisSets.pontosB;
+        b.pontosContra += totaisSets.pontosA;
+        b.diferencaPontos = b.pontosPro - b.pontosContra;
+      }
 
       if (woA && !woB) {
         a.derrotas += 1;
@@ -350,11 +530,6 @@ async function recalcularPlacarCampeonatoFase(campeonatoId, faseId) {
         a.vitorias += 1;
         b.derrotas += 1;
 
-        if (setsA === 3 && setsB === 0) a.vitoria3x0 += 1;
-        if (setsA === 3 && setsB === 2) a.vitoria3x2 += 1;
-        if (setsB === 2 && setsA === 3) b.derrota2x3 += 1;
-        if (setsB === 0 && setsA === 3) b.derrota0x3 += 1;
-
         const pts = calcularPontosVoleiParaResultado(setsA, setsB, regras);
         a.pontuacao += pts.pontosVencedor;
         b.pontuacao += pts.pontosPerdedor;
@@ -362,19 +537,9 @@ async function recalcularPlacarCampeonatoFase(campeonatoId, faseId) {
         b.vitorias += 1;
         a.derrotas += 1;
 
-        if (setsB === 3 && setsA === 0) b.vitoria3x0 += 1;
-        if (setsB === 3 && setsA === 2) b.vitoria3x2 += 1;
-        if (setsA === 2 && setsB === 3) a.derrota2x3 += 1;
-        if (setsA === 0 && setsB === 3) a.derrota0x3 += 1;
-
         const pts = calcularPontosVoleiParaResultado(setsB, setsA, regras);
         b.pontuacao += pts.pontosVencedor;
         a.pontuacao += pts.pontosPerdedor;
-      } else {
-        a.empates += 1;
-        b.empates += 1;
-        a.pontuacao += Number(regras.pontosEmpate) || 0;
-        b.pontuacao += Number(regras.pontosEmpate) || 0;
       }
     }
   }
@@ -390,6 +555,12 @@ async function recalcularPlacarCampeonatoFase(campeonatoId, faseId) {
     novo.aproveitamento = novo.jogos > 0 && maxPontosPartida > 0
       ? Math.round((novo.pontuacao / (novo.jogos * maxPontosPartida)) * 100)
       : 0;
+    novo.diferencaSets = novo.setsVencidos - novo.setsContra;
+    novo.diferencaGames = novo.gamesPro - novo.gamesContra;
+    novo.diferencaPontos = novo.pontosPro - novo.pontosContra;
+    novo.pontosAverage = novo.pontosContra > 0
+      ? Number((novo.pontosPro / novo.pontosContra).toFixed(3))
+      : (novo.pontosPro > 0 ? Number(novo.pontosPro) : 0);
 
     await prisma.placar.update({
       where: { id: placar.id },
@@ -403,10 +574,15 @@ async function recalcularPlacarCampeonatoFase(campeonatoId, faseId) {
         golsSofridos: novo.golsSofridos,
         saldoDeGols: novo.saldoDeGols,
         setsVencidos: novo.setsVencidos,
-        vitoria3x0: novo.vitoria3x0,
-        vitoria3x2: novo.vitoria3x2,
-        derrota2x3: novo.derrota2x3,
-        derrota0x3: novo.derrota0x3,
+        setsContra: novo.setsContra,
+        diferencaSets: novo.diferencaSets,
+        gamesPro: novo.gamesPro,
+        gamesContra: novo.gamesContra,
+        diferencaGames: novo.diferencaGames,
+        pontosPro: novo.pontosPro,
+        pontosContra: novo.pontosContra,
+        diferencaPontos: novo.diferencaPontos,
+        pontosAverage: novo.pontosAverage,
         derrotaWo: novo.derrotaWo,
         aproveitamento: novo.aproveitamento
       }
@@ -418,7 +594,8 @@ async function recalcularPlacarCampeonatoFase(campeonatoId, faseId) {
     faseId,
     campeonato.ordemClassificacao || [],
     regras,
-    grupo
+    grupo,
+    campeonato.modalidade?.nome
   );
 }
 
@@ -1029,7 +1206,7 @@ async function atualizarParcial(
   const isVolei = modalidade.includes('volei')
   const isFutebol = modalidade.includes('futebol')
   const isFutsal = modalidade.includes('futsal')
-  const isBeachTenis = modalidade.includes('beach') && modalidade.includes('tenis')
+  const isBeachTenis = isBeachTenisModalidade(modalidade)
   let regrasCampeonato = null
 
   if (isVolei || isBeachTenis) {
@@ -1086,13 +1263,15 @@ async function atualizarParcial(
       const numeroSet = Number(set.numero)
       const pontosASet = Number(set.pontosA ?? 0)
       const pontosBSet = Number(set.pontosB ?? 0)
+      const gamesASet = Number(set.gamesA ?? 0)
+      const gamesBSet = Number(set.gamesB ?? 0)
 
       if (numeroSet < 1 || numeroSet > maxSets) {
         throw new Error(`Set invalido. O numero do set deve ficar entre 1 e ${maxSets}.`)
       }
 
-      if (pontosASet < 0 || pontosBSet < 0) {
-        throw new Error('Pontos do set nao podem ser negativos.')
+      if (pontosASet < 0 || pontosBSet < 0 || gamesASet < 0 || gamesBSet < 0) {
+        throw new Error('Pontos e games do set nao podem ser negativos.')
       }
 
       await prisma.setPartida.upsert({
@@ -1104,13 +1283,17 @@ async function atualizarParcial(
         },
         update: {
           pontosA: pontosASet,
-          pontosB: pontosBSet
+          pontosB: pontosBSet,
+          gamesA: gamesASet,
+          gamesB: gamesBSet
         },
         create: {
           partidaId,
           numero: numeroSet,
           pontosA: pontosASet,
-          pontosB: pontosBSet
+          pontosB: pontosBSet,
+          gamesA: gamesASet,
+          gamesB: gamesBSet
         }
       })
     }
@@ -1167,10 +1350,15 @@ async function incrementarPlacar(placarId, incremento) {
     golsSofridos: incremento.golsSofridos,
     saldoDeGols: incremento.saldoDeGols,
     setsVencidos: incremento.setsVencidos,
-    vitoria3x0: incremento.vitoria3x0,
-    vitoria3x2: incremento.vitoria3x2,
-    derrota2x3: incremento.derrota2x3,
-    derrota0x3: incremento.derrota0x3,
+    setsContra: incremento.setsContra,
+    diferencaSets: incremento.diferencaSets,
+    gamesPro: incremento.gamesPro,
+    gamesContra: incremento.gamesContra,
+    diferencaGames: incremento.diferencaGames,
+    pontosPro: incremento.pontosPro,
+    pontosContra: incremento.pontosContra,
+    diferencaPontos: incremento.diferencaPontos,
+    pontosAverage: incremento.pontosAverage,
     derrotaWo: incremento.derrotaWo
   };
 

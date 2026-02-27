@@ -40,7 +40,7 @@
           </div>
 
           <!-- ===== FUTEBOL / FUTSAL ===== -->
-          <table v-else-if="isGrupoFutebol || isGrupoVolei" class="placar">
+          <table v-else-if="isGrupoFutebol || isGrupoVolei || isGrupoBeachTenis" class="placar">
             <thead>
               <tr>
                 <th>Time</th>
@@ -84,6 +84,56 @@
               </tr>
             </tbody>
           </table>
+
+          <div v-if="temTabela && isGrupoFutebol" class="glossario-placar">
+            <strong>Glossario</strong>
+            <ul>
+              <li v-if="mostrarColuna('pontuacao')"><b>PTS</b>: Pontos</li>
+              <li v-if="mostrarColuna('jogos')"><b>J</b>: Jogos</li>
+              <li v-if="mostrarColuna('vitorias')"><b>V</b>: Vitorias</li>
+              <li v-if="mostrarColuna('empates')"><b>E</b>: Empates</li>
+              <li v-if="mostrarColuna('derrotas')"><b>D</b>: Derrotas</li>
+              <li v-if="mostrarColuna('golsPro')"><b>GM</b>: Gols marcados</li>
+              <li v-if="mostrarColuna('golsSofridos')"><b>GS</b>: Gols sofridos</li>
+              <li v-if="mostrarColuna('saldoDeGols')"><b>SG</b>: Saldo de gols</li>
+              <li v-if="mostrarColuna('aproveitamento')"><b>%</b>: Aproveitamento</li>
+            </ul>
+          </div>
+
+          <div v-if="temTabela && isGrupoVolei" class="glossario-placar">
+            <strong>Glossario</strong>
+            <ul>
+              <li v-if="mostrarColuna('pontuacao')"><b>PTS</b>: Pontos</li>
+              <li v-if="mostrarColuna('jogos')"><b>J</b>: Jogos</li>
+              <li v-if="mostrarColuna('vitorias')"><b>V</b>: Vitorias</li>
+              <li v-if="mostrarColuna('derrotas')"><b>D</b>: Derrotas</li>
+              <li v-if="mostrarColuna('setsVencidos')"><b>SP</b>: Sets pro</li>
+              <li v-if="mostrarColuna('setsContra')"><b>SC</b>: Sets contra</li>
+              <li v-if="mostrarColuna('diferencaSets')"><b>DS</b>: Diferenca de sets</li>
+              <li v-if="mostrarColuna('pontosPro')"><b>PP</b>: Pontos pro</li>
+              <li v-if="mostrarColuna('pontosContra')"><b>PC</b>: Pontos contra</li>
+              <li v-if="mostrarColuna('diferencaPontos')"><b>DP</b>: Diferenca de pontos</li>
+              <li v-if="mostrarColuna('pontosAverage')"><b>AVG</b>: Pontos average</li>
+              <li v-if="mostrarColuna('derrotaWo')"><b>W.O.</b>: Derrota por W.O.</li>
+            </ul>
+          </div>
+
+          <div v-if="temTabela && isGrupoBeachTenis" class="glossario-placar">
+            <strong>Glossario</strong>
+            <ul>
+              <li v-if="mostrarColuna('pontuacao')"><b>PTS</b>: Pontos</li>
+              <li v-if="mostrarColuna('jogos')"><b>J</b>: Jogos</li>
+              <li v-if="mostrarColuna('vitorias')"><b>V</b>: Vitorias</li>
+              <li v-if="mostrarColuna('derrotas')"><b>D</b>: Derrotas</li>
+              <li v-if="mostrarColuna('setsVencidos')"><b>SP</b>: Sets pro</li>
+              <li v-if="mostrarColuna('setsContra')"><b>SC</b>: Sets contra</li>
+              <li v-if="mostrarColuna('diferencaSets')"><b>DS</b>: Diferenca de sets</li>
+              <li v-if="mostrarColuna('gamesPro')"><b>GF</b>: Games a favor</li>
+              <li v-if="mostrarColuna('gamesContra')"><b>GC</b>: Games contra</li>
+              <li v-if="mostrarColuna('diferencaGames')"><b>DG</b>: Diferenca de games</li>
+              <li v-if="mostrarColuna('derrotaWo')"><b>W.O.</b>: Derrota por W.O.</li>
+            </ul>
+          </div>
 
         </div>
       </div>
@@ -168,13 +218,15 @@ export default {
     },
 
     isGrupoVolei() {
-      return [
-        'volei',
-        'volei de areia',
-        'futevolei',
-        'beach tenis',
-        'beach tennis'
-      ].includes(this.modalidadeNormalizada)
+      return ['volei', 'volei de areia', 'futevolei'].includes(this.modalidadeNormalizada)
+    },
+
+    isGrupoBeachTenis() {
+      return ['beach tenis', 'beach tennis'].includes(this.modalidadeNormalizada)
+    },
+
+    temTabela() {
+      return Array.isArray(this.timesPlacar) && this.timesPlacar.length > 0
     },
 
     colunasVisiveisClassificacao() {
@@ -334,6 +386,11 @@ export default {
     formatarValorColuna(time, chave) {
       if (chave === 'aproveitamento') {
         return `${time?.aproveitamento ?? 0}%`
+      }
+
+      if (chave === 'pontosAverage') {
+        const valor = Number(time?.pontosAverage ?? 0)
+        return Number.isFinite(valor) ? valor.toFixed(2) : '0.00'
       }
 
       return time?.[chave] ?? ''
@@ -916,7 +973,8 @@ export default {
 @media (max-width: 768px) {
   .conteudo {
     margin-left: 0;
-    padding: 16px;
+    margin-top: 70px;
+    padding: 18px;
   }
 
   .conteudo.collapsed {
@@ -924,16 +982,19 @@ export default {
   }
 
   .title {
-    font-size: 22px;
-    margin-bottom: 0;
+    font-size: 28px;
+    line-height: 1.08;
+    margin: 0;
   }
 
   .header {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 10px;
+    margin-top: -40px;
+    margin-bottom: 8px;
   }
 
   .btn-add {

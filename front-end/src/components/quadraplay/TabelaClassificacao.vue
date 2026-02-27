@@ -8,7 +8,11 @@
       {{ emptyText }}
     </div>
 
-    <table v-else-if="isGrupoFutebol || isGrupoVolei" class="placar" :class="isGrupoFutebol ? 'grupo-futebol' : 'grupo-volei'">
+    <table
+      v-else-if="isGrupoFutebol || isGrupoVolei || isGrupoBeachTenis"
+      class="placar"
+      :class="isGrupoFutebol ? 'grupo-futebol' : 'grupo-volei'"
+    >
       <thead>
         <tr>
           <th>Time</th>
@@ -82,11 +86,31 @@
       <p v-if="mostrarColuna('jogos')"><b>J</b>: Jogos</p>
       <p v-if="mostrarColuna('vitorias')"><b>V</b>: Vitorias</p>
       <p v-if="mostrarColuna('derrotas')"><b>D</b>: Derrotas</p>
-      <p v-if="mostrarColuna('setsVencidos')"><b>STV</b>: Sets vencidos</p>
-      <p v-if="mostrarColuna('vitoria3x0')"><b>3x0</b>: Vitoria por 3 sets a 0</p>
-      <p v-if="mostrarColuna('vitoria3x2')"><b>3x2</b>: Vitoria por 3 sets a 2</p>
-      <p v-if="mostrarColuna('derrota2x3')"><b>2x3</b>: Derrota por 2 sets a 3</p>
-      <p v-if="mostrarColuna('derrota0x3')"><b>0x3</b>: Derrota por 0 sets a 3</p>
+      <p v-if="mostrarColuna('setsVencidos')"><b>SP</b>: Sets pro</p>
+      <p v-if="mostrarColuna('setsContra')"><b>SC</b>: Sets contra</p>
+      <p v-if="mostrarColuna('diferencaSets')"><b>DS</b>: Diferenca de sets</p>
+      <p v-if="mostrarColuna('pontosPro')"><b>PP</b>: Pontos pro</p>
+      <p v-if="mostrarColuna('pontosContra')"><b>PC</b>: Pontos contra</p>
+      <p v-if="mostrarColuna('diferencaPontos')"><b>DP</b>: Diferenca de pontos</p>
+      <p v-if="mostrarColuna('pontosAverage')"><b>AVG</b>: Pontos average</p>
+      <p v-if="mostrarColuna('derrotaWo')"><b>W.O.</b>: Derrota por W.O.</p>
+    </div>
+  </div>
+
+  <div v-if="showGlossary && temTabela && isGrupoBeachTenis" class="glossario-placar">
+    <strong>Glossario</strong>
+
+    <div class="glossario-grid">
+      <p v-if="mostrarColuna('pontuacao')"><b>PTS</b>: Pontos</p>
+      <p v-if="mostrarColuna('jogos')"><b>J</b>: Jogos</p>
+      <p v-if="mostrarColuna('vitorias')"><b>V</b>: Vitorias</p>
+      <p v-if="mostrarColuna('derrotas')"><b>D</b>: Derrotas</p>
+      <p v-if="mostrarColuna('setsVencidos')"><b>SP</b>: Sets pro</p>
+      <p v-if="mostrarColuna('setsContra')"><b>SC</b>: Sets contra</p>
+      <p v-if="mostrarColuna('diferencaSets')"><b>DS</b>: Diferenca de sets</p>
+      <p v-if="mostrarColuna('gamesPro')"><b>GF</b>: Games a favor</p>
+      <p v-if="mostrarColuna('gamesContra')"><b>GC</b>: Games contra</p>
+      <p v-if="mostrarColuna('diferencaGames')"><b>DG</b>: Diferenca de games</p>
       <p v-if="mostrarColuna('derrotaWo')"><b>W.O.</b>: Derrota por W.O.</p>
     </div>
   </div>
@@ -121,7 +145,10 @@ export default {
       return ['futebol', 'futebol de areia', 'futsal'].includes(this.modalidadeNormalizada)
     },
     isGrupoVolei() {
-      return ['volei', 'volei de areia', 'futevolei', 'beach tenis', 'beach tennis'].includes(this.modalidadeNormalizada)
+      return ['volei', 'volei de areia', 'futevolei'].includes(this.modalidadeNormalizada)
+    },
+    isGrupoBeachTenis() {
+      return ['beach tenis', 'beach tennis'].includes(this.modalidadeNormalizada)
     },
     temTabela() {
       return !this.loading && Array.isArray(this.times) && this.times.length > 0
@@ -150,6 +177,11 @@ export default {
     formatarValorColuna(time, chave) {
       if (chave === 'aproveitamento') {
         return `${time?.aproveitamento ?? 0}%`
+      }
+
+      if (chave === 'pontosAverage') {
+        const valor = Number(time?.pontosAverage ?? 0)
+        return Number.isFinite(valor) ? valor.toFixed(2) : '0.00'
       }
 
       return time?.[chave] ?? ''

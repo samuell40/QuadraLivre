@@ -19,10 +19,6 @@ const CRITERIOS_MODALIDADE = {
   volei: [
     { value: "pontuacao", label: "Pontuação" },
     { value: "setsVencidos", label: "Sets vencidos" },
-    { value: "vitoria3x0", label: "Vitória 3x0" },
-    { value: "vitoria3x2", label: "Vitória 3x2" },
-    { value: "derrota2x3", label: "Derrota 2x3" },
-    { value: "derrota0x3", label: "Derrota 0x3" },
     { value: "sorteio", label: "Sorteio" }
   ],
   voleiDeAreia: [],
@@ -35,6 +31,51 @@ CRITERIOS_MODALIDADE.voleiDeAreia = CRITERIOS_MODALIDADE.volei;
 CRITERIOS_MODALIDADE.futevolei = CRITERIOS_MODALIDADE.volei;
 CRITERIOS_MODALIDADE.beachtenis = CRITERIOS_MODALIDADE.volei;
 CRITERIOS_MODALIDADE.beachtennis = CRITERIOS_MODALIDADE.volei;
+
+const CRITERIOS_FUTEBOL = [
+  { value: "pontuacao", label: "Pontuacao" },
+  { value: "vitorias", label: "Vitorias" },
+  { value: "saldoDeGols", label: "Saldo de gols" },
+  { value: "golsPro", label: "Gols pro" },
+  { value: "golsSofridos", label: "Gols sofridos" },
+  { value: "empates", label: "Empates" },
+  { value: "derrotas", label: "Derrotas" },
+  { value: "confrontoDireto", label: "Confronto direto" },
+  { value: "sorteio", label: "Sorteio" }
+];
+
+const CRITERIOS_VOLEI_ATUALIZADOS = [
+  { value: "pontuacao", label: "Pontuacao" },
+  { value: "vitorias", label: "Vitorias" },
+  { value: "diferencaSets", label: "Saldo de sets" },
+  { value: "diferencaPontos", label: "Saldo de pontos" },
+  { value: "setsVencidos", label: "Sets ganhos" },
+  { value: "pontosAverage", label: "Pontos average (AV)" },
+  { value: "confrontoDireto", label: "Confronto direto" },
+  { value: "derrotaWo", label: "W.O. (menos)" },
+  { value: "sorteio", label: "Sorteio" }
+];
+
+const CRITERIOS_BEACH_TENIS = [
+  { value: "pontuacao", label: "Pontuacao" },
+  { value: "vitorias", label: "Vitorias" },
+  { value: "diferencaSets", label: "Saldo de sets" },
+  { value: "diferencaGames", label: "Saldo de games" },
+  { value: "setsVencidos", label: "Sets ganhos" },
+  { value: "gamesPro", label: "Games ganhos" },
+  { value: "confrontoDireto", label: "Confronto direto" },
+  { value: "derrotaWo", label: "W.O. (menos)" },
+  { value: "sorteio", label: "Sorteio" }
+];
+
+CRITERIOS_MODALIDADE.futebol = CRITERIOS_FUTEBOL;
+CRITERIOS_MODALIDADE.futsal = CRITERIOS_FUTEBOL;
+CRITERIOS_MODALIDADE.futebolDeAreia = CRITERIOS_FUTEBOL;
+CRITERIOS_MODALIDADE.volei = CRITERIOS_VOLEI_ATUALIZADOS;
+CRITERIOS_MODALIDADE.voleiDeAreia = CRITERIOS_VOLEI_ATUALIZADOS;
+CRITERIOS_MODALIDADE.futevolei = CRITERIOS_VOLEI_ATUALIZADOS;
+CRITERIOS_MODALIDADE.beachtenis = CRITERIOS_BEACH_TENIS;
+CRITERIOS_MODALIDADE.beachtennis = CRITERIOS_BEACH_TENIS;
 
 function normalizarTexto(texto) {
   return String(texto || '')
@@ -49,11 +90,60 @@ function grupoModalidade(nomeModalidade) {
   if (
     nome.includes('volei') ||
     nome.includes('futevolei') ||
-    (nome.includes('beach') && nome.includes('tenis'))
+    (nome.includes('beach') && (nome.includes('tenis') || nome.includes('tennis')))
   ) {
     return 'VOLEI';
   }
   return 'FUTEBOL';
+}
+
+function isBeachTenisModalidade(nomeModalidade) {
+  const nome = normalizarTexto(nomeModalidade);
+  return nome.includes('beach') && (nome.includes('tenis') || nome.includes('tennis'));
+}
+
+function criteriosClassificacaoPorModalidade(nomeModalidade) {
+  if (isBeachTenisModalidade(nomeModalidade)) {
+    return CRITERIOS_BEACH_TENIS;
+  }
+
+  return grupoModalidade(nomeModalidade) === 'VOLEI'
+    ? CRITERIOS_VOLEI_ATUALIZADOS
+    : CRITERIOS_FUTEBOL;
+}
+
+function normalizarOrdemClassificacao(ordem, nomeModalidade) {
+  const padrao = criteriosClassificacaoPorModalidade(nomeModalidade);
+
+  if (!Array.isArray(ordem) || ordem.length === 0) {
+    return [...padrao];
+  }
+
+  const mapaPadrao = new Map(padrao.map(criterio => [criterio.value, criterio]));
+  const ordemNormalizada = [];
+
+  for (const criterio of ordem) {
+    const value = String(criterio?.value || '');
+    if (!mapaPadrao.has(value) || ordemNormalizada.some(item => item.value === value)) {
+      continue;
+    }
+
+    const criterioPadrao = mapaPadrao.get(value);
+    ordemNormalizada.push({
+      value,
+      label: String(criterio?.label || criterioPadrao.label || value)
+    });
+  }
+
+  for (const criterioPadrao of padrao) {
+    if (ordemNormalizada.some(item => item.value === criterioPadrao.value)) {
+      continue;
+    }
+
+    ordemNormalizada.push({ ...criterioPadrao });
+  }
+
+  return ordemNormalizada.length ? ordemNormalizada : [...padrao];
 }
 
 function regrasPadraoPorModalidade(nomeModalidade) {
@@ -126,7 +216,10 @@ async function criarCampeonato(data) {
       .replace(/\s+/g, '') 
       .replace('deareia', 'DeAreia');
 
-    const ordemClassificacao = CRITERIOS_MODALIDADE[chaveAuto];
+    const ordemClassificacao = normalizarOrdemClassificacao(
+      CRITERIOS_MODALIDADE[chaveAuto] || [],
+      modalidadeDB.nome
+    );
 
     if (listaDatasReais.length > 0) {
       const conflitos = await tx.agendamento.findMany({
@@ -290,7 +383,8 @@ async function listarCampeonatosPorModalidade(modalidadeId, ano) {
     // Ajuste: adiciona os critérios de classificação
     return campeonatos.map(c => ({
       ...c,
-      criteriosClassificacao: c.ordemClassificacao || []
+      ordemClassificacao: normalizarOrdemClassificacao(c.ordemClassificacao, c.modalidade?.nome),
+      criteriosClassificacao: normalizarOrdemClassificacao(c.ordemClassificacao, c.modalidade?.nome)
     }));
 
   } catch (error) {
@@ -325,7 +419,8 @@ async function listarCampeonatosAnoAtual() {
   // Ajuste: inclui os critérios de classificação
   return campeonatos.map(c => ({
     ...c,
-    criteriosClassificacao: c.ordemClassificacao || []
+    ordemClassificacao: normalizarOrdemClassificacao(c.ordemClassificacao, c.modalidade?.nome),
+    criteriosClassificacao: normalizarOrdemClassificacao(c.ordemClassificacao, c.modalidade?.nome)
   }));
 }
 
@@ -567,6 +662,7 @@ async function getCampeonatoById(id) {
     if (!campeonato) return null;
     return {
       ...campeonato,
+      ordemClassificacao: normalizarOrdemClassificacao(campeonato.ordemClassificacao, campeonato.modalidade?.nome),
       regras: normalizarRegrasCampeonato(campeonato.regras, campeonato.modalidade?.nome)
     };
   } catch (err) {

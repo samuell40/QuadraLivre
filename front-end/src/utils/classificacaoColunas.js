@@ -1,5 +1,6 @@
 const GRUPO_FUTEBOL = 'FUTEBOL'
 const GRUPO_VOLEI = 'VOLEI'
+const GRUPO_BEACH_TENIS = 'BEACH_TENIS'
 
 const COLUNAS_CLASSIFICACAO = {
   [GRUPO_FUTEBOL]: [
@@ -19,11 +20,27 @@ const COLUNAS_CLASSIFICACAO = {
     { key: 'jogos', label: 'Jogos', abbr: 'J' },
     { key: 'vitorias', label: 'Vitorias', abbr: 'VIT' },
     { key: 'derrotas', label: 'Derrotas', abbr: 'DER' },
-    { key: 'setsVencidos', label: 'Sets vencidos', abbr: 'STV' },
-    { key: 'vitoria3x0', label: 'Vitoria 3x0', abbr: '3x0' },
-    { key: 'vitoria3x2', label: 'Vitoria 3x2', abbr: '3x2' },
-    { key: 'derrota2x3', label: 'Derrota 2x3', abbr: '2x3' },
-    { key: 'derrota0x3', label: 'Derrota 0x3', abbr: '0x3' },
+    { key: 'setsVencidos', label: 'Sets pro', abbr: 'SP' },
+    { key: 'setsContra', label: 'Sets contra', abbr: 'SC' },
+    { key: 'diferencaSets', label: 'Diferenca de sets', abbr: 'DS' },
+    { key: 'pontosPro', label: 'Pontos pro', abbr: 'PP' },
+    { key: 'pontosContra', label: 'Pontos contra', abbr: 'PC' },
+    { key: 'diferencaPontos', label: 'Diferenca de pontos', abbr: 'DP' },
+    { key: 'pontosAverage', label: 'Pontos average', abbr: 'AVG' },
+    { key: 'derrotaWo', label: 'Derrota por W.O', abbr: 'W.O' },
+    { key: 'ultimosJogos', label: 'Ultimos jogos', abbr: 'Ultimos Jogos' }
+  ],
+  [GRUPO_BEACH_TENIS]: [
+    { key: 'pontuacao', label: 'Pontos', abbr: 'PTS' },
+    { key: 'jogos', label: 'Jogos', abbr: 'J' },
+    { key: 'vitorias', label: 'Vitorias', abbr: 'VIT' },
+    { key: 'derrotas', label: 'Derrotas', abbr: 'DER' },
+    { key: 'setsVencidos', label: 'Sets pro', abbr: 'SP' },
+    { key: 'setsContra', label: 'Sets contra', abbr: 'SC' },
+    { key: 'diferencaSets', label: 'Diferenca de sets', abbr: 'DS' },
+    { key: 'gamesPro', label: 'Games a favor', abbr: 'GF' },
+    { key: 'gamesContra', label: 'Games contra', abbr: 'GC' },
+    { key: 'diferencaGames', label: 'Diferenca de games', abbr: 'DG' },
     { key: 'derrotaWo', label: 'Derrota por W.O', abbr: 'W.O' },
     { key: 'ultimosJogos', label: 'Ultimos jogos', abbr: 'Ultimos Jogos' }
   ]
@@ -40,10 +57,13 @@ function normalizarModalidadeNome(modalidade) {
 function grupoModalidadeClassificacao(modalidade) {
   const nome = normalizarModalidadeNome(modalidade)
 
+  if (nome.includes('beach') && (nome.includes('tenis') || nome.includes('tennis'))) {
+    return GRUPO_BEACH_TENIS
+  }
+
   if (
     nome.includes('volei') ||
-    nome.includes('futevolei') ||
-    (nome.includes('beach') && nome.includes('tenis'))
+    nome.includes('futevolei')
   ) {
     return GRUPO_VOLEI
   }
@@ -83,6 +103,7 @@ function resolverColunasVisiveisClassificacao(modalidade, colunasConfiguradas) {
 export {
   GRUPO_FUTEBOL,
   GRUPO_VOLEI,
+  GRUPO_BEACH_TENIS,
   getColunasClassificacaoPorModalidade,
   getChavesPadraoColunasClassificacao,
   resolverColunasVisiveisClassificacao,
