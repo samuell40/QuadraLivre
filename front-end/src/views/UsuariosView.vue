@@ -6,7 +6,7 @@
 
       <section class="page-header">
         <div class="header-copy">
-          <h1 class="title">Gestao de usuarios</h1>
+          <h1 class="title">Gestão de usuarios</h1>
         </div>
       </section>
 
@@ -16,7 +16,7 @@
             <p class="section-kicker">BUSCA</p>
             <h2 class="section-title">{{ tituloBuscaUsuarios }}</h2>
             <p class="section-subtitle">
-              Filtre por nome e acesse rapidamente detalhes, contatos e configuracoes de acesso.
+              Filtre por nome e acesse rapidamente detalhes, contatos e configurações de acesso.
             </p>
           </div>
 
@@ -37,7 +37,7 @@
       <section class="users-panel">
         <div class="panel-head">
           <div class="panel-copy">
-            <p class="section-kicker">USUARIOS</p>
+            <p class="section-kicker">USUÁRIOS</p>
           </div>
         </div>
 
@@ -56,8 +56,8 @@
 
         <div v-if="isLoading" class="state-card state-card-loading">
           <div class="loader loader-inline"></div>
-          <p class="state-title">Carregando usuarios...</p>
-          <p class="state-copy">Buscando os perfis disponiveis para gerenciamento.</p>
+          <p class="state-title">Carregando usuários...</p>
+          <p class="state-copy">Buscando os perfis disponíveis para gerenciamento.</p>
         </div>
 
         <div v-else-if="usuariosFiltrados.length > 0" class="usuarios">
@@ -108,7 +108,7 @@
 
               <div class="botoes">
                 <button class="btn-editar" @click="editarUsuario(usuario)">
-                  {{ usuarioLogado.permissaoId === 2 ? 'Gerenciar usuario' : 'Alterar permissoes' }}
+                  {{ usuarioLogado.permissaoId === 2 ? 'Gerenciar usuário' : 'Alterar permissões' }}
                 </button>
 
                 <button class="btn-detalhar" @click="detalhesUsuario(usuario)">Detalhar</button>
@@ -118,8 +118,8 @@
         </div>
 
         <div v-else class="state-card">
-          <p class="state-title">Nenhum usuario encontrado.</p>
-          <p class="state-copy">Tente outro termo de busca para localizar um perfil desta visao.</p>
+          <p class="state-title">Nenhum usuário encontrado.</p>
+          <p class="state-copy">Tente outro termo de busca para localizar um perfil desta visão.</p>
         </div>
       </section>
     </div>
@@ -233,16 +233,16 @@
           </div>
 
           <div class="info-card stats-card">
-            <div class="card-title">Estatisticas</div>
+            <div class="card-title">Estatísticas</div>
 
             <div class="stats-inline">
               <div class="stat">
-                <span class="stat-label">Agendamentos no mes de {{ nomeMesAtual }}:</span>
+                <span class="stat-label">Agendamentos no mês de {{ nomeMesAtual }}:</span>
                 <span class="stat-value">{{ agendamentosNoMesSelecionado }}</span>
               </div>
 
               <div class="stat">
-                <span class="stat-label">Ultima atividade:</span>
+                <span class="stat-label">Última atividade:</span>
                 <span class="stat-text">{{ ultimaAtividadeSelecionado }}</span>
               </div>
             </div>
@@ -257,7 +257,7 @@
     <div v-if="mostrarEditar" class="modal-overlay">
       <div class="modal-content modal-content-edicao">
         <div class="modal-header-edicao">
-          <h2>Alterar Permissoes</h2>
+          <h2>Alterar Permissões</h2>
           <button type="button" class="btn-close-x" @click="fecharEditar" :disabled="isSalvando"
             aria-label="Fechar modal">
             x
@@ -597,10 +597,10 @@ export default {
     },
 
     formatarDataExtenso(data) {
-      if (!data) return 'Nao informado'
+      if (!data) return 'Não informado'
 
       const dataObj = new Date(data)
-      if (Number.isNaN(dataObj.getTime())) return 'Nao informado'
+      if (Number.isNaN(dataObj.getTime())) return 'Não informado'
 
       const base = dataObj.toLocaleDateString('pt-BR', {
         day: '2-digit',

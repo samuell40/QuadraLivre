@@ -17,7 +17,7 @@
     <!-- LINHA: Amarelo + Vermelho -->
     <div class="row-2">
       <div class="box">
-        <p>Cartao Amarelo</p>
+        <p>Cartão Amarelo</p>
         <div class="controls">
           <button @click="abrirModalJogadores('amarelo')">-</button>
           <span class="valor">{{ timeData?.cartaoamarelo ?? 0 }}</span>
@@ -26,7 +26,7 @@
       </div>
 
       <div class="box">
-        <p>Cartao Vermelho</p>
+        <p>Cartão Vermelho</p>
         <div class="controls">
           <button @click="abrirModalJogadores('vermelho')">-</button>
           <span class="valor">{{ timeData?.cartaovermelho ?? 0 }}</span>
@@ -47,7 +47,7 @@
       </div>
 
       <div class="box">
-        <p>Substituicoes</p>
+        <p>Substituições</p>
         <div class="controls">
           <button @click="abrirModalRemoverJogador" :disabled="partidaEncerradaGlobal">-</button>
           <span class="valor">{{ timeData?.substituicoes ?? 0 }}</span>
@@ -89,7 +89,7 @@
         </div>
 
         <div v-else class="coluna coluna-evento estado-vazio-modal">
-          <p>Nao ha jogadores cadastrados para este time.</p>
+          <p>Não há jogadores cadastrados para este time.</p>
         </div>
       </div>
     </div>
@@ -99,7 +99,7 @@
       <div class="modal-content modal-substituicao" :class="modalStatusClass">
         <div class="modal-header">
           <div class="modal-header-copy">
-            <h2 class="titulo-substituicao">Substituicao de jogadores</h2>
+            <h2 class="titulo-substituicao">Substituição de jogadores</h2>
             <p class="modal-subtitulo">Escolha quem sai, quem entra e confirme as trocas pendentes.</p>
           </div>
           <button type="button" class="btn-close-x" @click="fecharModalSubstituicao">x</button>
@@ -132,7 +132,7 @@
         </div>
 
         <div v-if="substituicoesPendentes.length" class="coluna coluna-substituicoes">
-          <h3 class="subtitulo">Substituicoes selecionadas</h3>
+          <h3 class="subtitulo">Substituições selecionadas</h3>
 
           <div v-for="(s, index) in substituicoesPendentes" :key="index" class="jogador-card substituicao-card">
             <div class="jogador-info">
@@ -147,7 +147,7 @@
 
         <div class="botoes">
           <button class="btn-save1" @click="adicionarSubstituicao">
-            Adicionar substituicao
+            Adicionar substituição
           </button>
 
           <button class="btn-save1" v-if="substituicoesPendentes.length > 0" @click="confirmarTodasSubstituicoes">
@@ -318,7 +318,7 @@ export default {
         await this.carregarJogadores()
         this.$emit('refresh')
       } catch (error) {
-        Swal.fire('Erro', error.response?.data?.message || 'Erro ao salvar atuacao', 'error')
+        Swal.fire('Erro', error.response?.data?.message || 'Erro ao salvar atuação', 'error')
         await this.carregarJogadores()
       }
     },
@@ -334,7 +334,7 @@ export default {
     async abrirModalSubstituicao() {
       if (!this.partidaIdNum) return
       if (this.partidaEncerradaGlobal) {
-        Swal.fire('Partida encerrada', 'Nao e possivel editar substituicoes.', 'info')
+        Swal.fire('Partida encerrada', 'Não é possível editar substituições.', 'info')
         return
       }
       this.substituicaoModal = true
@@ -360,8 +360,8 @@ export default {
 
         const resBanco = await api.get(`/${this.partidaIdNum}/${this.timeData.id}/jogadores-fora-partida`)
         this.jogadoresBanco = resBanco.data
-      } catch {
-        Swal.fire('Erro', 'Erro ao carregar jogadores da substituicao', 'error')
+      } catch (error) {
+        Swal.fire('Erro', 'Erro ao carregar jogadores da substituição', 'error')
       } finally {
         this.carregando = false
       }
@@ -378,7 +378,7 @@ export default {
     async confirmarTodasSubstituicoes() {
       if (!this.partidaIdNum) return
       if (this.partidaEncerradaGlobal) {
-        Swal.fire('Partida encerrada', 'Nao e possivel editar substituicoes.', 'info')
+        Swal.fire('Partida encerrada', 'Não é possível editar substituições.', 'info')
         return
       }
 
@@ -392,18 +392,18 @@ export default {
 
         this.emitDelta('substituicoes', this.substituicoesPendentes.length)
 
-        Swal.fire('Sucesso', `${this.substituicoesPendentes.length} substituicao(oes) realizadas`, 'success')
+        Swal.fire('Sucesso', `${this.substituicoesPendentes.length} substituição(ões) realizadas`, 'success')
         this.fecharModalSubstituicao()
         this.$emit('refresh')
-      } catch {
-        Swal.fire('Erro', 'Erro ao realizar substituicoes', 'error')
+      } catch (error) {
+        Swal.fire('Erro', 'Erro ao realizar substituições', 'error')
       }
     },
 
     async abrirModalRemoverJogador() {
       if (!this.partidaIdNum) return
       if (this.partidaEncerradaGlobal) {
-        Swal.fire('Partida encerrada', 'Nao e possivel editar substituicoes.', 'info')
+        Swal.fire('Partida encerrada', 'Não é possível editar substituições.', 'info')
         return
       }
       this.modalRemoverAberto = true

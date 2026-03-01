@@ -23,7 +23,7 @@
                             <div>
                                 <span class="section-kicker">Modalidades</span>
                                 <h2>Escolha a modalidade</h2>
-                                <a>Troque a visualizacao para navegar entre os times cadastrados.</a>
+                                <a>Troque a visualização para navegar entre os times cadastrados.</a>
                             </div>
                         </div>
 
@@ -78,7 +78,7 @@
 
                     <div v-else class="painel-card estado-vazio">
                         <h2>Nenhum time encontrado</h2>
-                        <a>Nao ha equipes cadastradas para a modalidade selecionada.</a>
+                        <a>Não há equipes cadastradas para a modalidade selecionada.</a>
                     </div>
                 </div>
             </div>

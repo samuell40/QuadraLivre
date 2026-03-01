@@ -17,7 +17,7 @@
             </div>
 
             <a class="page-subtitle">
-              Cadastre equipes, troque a modalidade ativa e abra os detalhes para editar elenco e informacoes do time.
+              Cadastre equipes, troque a modalidade ativa e abra os detalhes para editar elenco e informações do time.
             </a>
           </div>
         </div>
@@ -34,7 +34,7 @@
               <div>
                 <span class="section-kicker">Modalidades</span>
                 <h2>Selecione a modalidade</h2>
-                <a>Troque a visualizacao para gerenciar os times cadastrados em cada categoria.</a>
+                <a>Troque a visualização para gerenciar os times cadastrados em cada categoria.</a>
               </div>
             </div>
 

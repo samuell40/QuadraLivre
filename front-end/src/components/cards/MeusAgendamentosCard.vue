@@ -18,18 +18,18 @@
       </div>
 
       <div class="meta-item">
-        <span class="meta-label">Horario</span>
+        <span class="meta-label">Horário</span>
         <strong>{{ formatarHora(agendamento) }}</strong>
       </div>
 
       <div class="meta-item">
-        <span class="meta-label">Duracao</span>
+        <span class="meta-label">Duração</span>
         <strong>{{ agendamento.duracao }} hora(s)</strong>
       </div>
 
       <div class="meta-item">
         <span class="meta-label">Tipo</span>
-        <strong>{{ agendamento.tipo || "Nao informado" }}</strong>
+        <strong>{{ agendamento.tipo || "Não informado" }}</strong>
       </div>
     </div>
 
@@ -37,7 +37,7 @@
       v-if="agendamento.status?.toLowerCase() === 'confirmado'"
       class="info-box code-box"
     >
-      <span class="info-label">Codigo de verificacao</span>
+      <span class="info-label">Código de verificação </span>
       <strong class="codigo-texto">{{ agendamento.codigoVerificacao || "N/A" }}</strong>
     </div>
 
@@ -45,7 +45,7 @@
       v-if="(agendamento.status?.toLowerCase() === 'recusado' || agendamento.status?.toLowerCase() === 'cancelado') && agendamento.motivoRecusa"
       class="info-box reason-box"
     >
-      <span class="info-label">Motivo</span>
+      <span class="info-label">Motivo </span>
       <strong>{{ agendamento.motivoRecusa }}</strong>
     </div>
 

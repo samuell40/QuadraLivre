@@ -365,7 +365,7 @@ export default {
         this.fases = data || []
       } catch (err) {
         console.error('Erro ao listar fases:', err)
-        Swal.fire('Erro', 'Nao foi possivel carregar as fases.', 'error')
+        Swal.fire('Erro', 'Não foi possível carregar as fases.', 'error')
       }
     },
 
@@ -375,7 +375,7 @@ export default {
         this.times = data || []
       } catch (err) {
         console.error('Erro ao listar times:', err)
-        Swal.fire('Erro', 'Nao foi possivel carregar os times.', 'error')
+        Swal.fire('Erro', 'Não foi possível carregar os times.', 'error')
       }
     },
 
@@ -387,7 +387,7 @@ export default {
 
     async criarRodada() {
       if (this.isMesario) {
-        Swal.fire('Atencao', 'Mesario nao pode criar rodada.', 'info')
+        Swal.fire('Atenção', 'Mesaário não pode criar rodada.', 'info')
         return
       }
 
@@ -411,7 +411,7 @@ export default {
         this.$emit('rodadaCriada', data.rodada)
       } catch (err) {
         console.error('Erro ao criar rodada:', err)
-        Swal.fire('Erro', 'Nao foi possivel criar a rodada.', 'error')
+        Swal.fire('Erro', 'Não foi possível criar a rodada.', 'error')
       }
     },
 
@@ -435,7 +435,7 @@ export default {
       }
 
       if (timeAId === timeBId) {
-        Swal.fire('Erro', 'Os times nao podem ser iguais.', 'error')
+        Swal.fire('Erro', 'Os times não podem ser iguais.', 'error')
         return
       }
 
@@ -462,7 +462,7 @@ export default {
         this.mostrarModalJogadores = true
       } catch (err) {
         console.error('Erro ao carregar jogadores:', err)
-        Swal.fire('Erro', 'Nao foi possivel carregar os jogadores dos times.', 'error')
+        Swal.fire('Erro', 'Não foi possível carregar os jogadores dos times.', 'error')
       }
     },
 
@@ -516,7 +516,7 @@ export default {
         this.$emit('partidaCriada', partidaCriada)
       } catch (err) {
         console.error('Erro no fluxo de criar/iniciar:', err)
-        const mensagem = err.response?.data?.erro || err.response?.data?.message || 'Nao foi possivel criar/iniciar.'
+        const mensagem = err.response?.data?.erro || err.response?.data?.message || 'Não foi possível criar/iniciar.'
         Swal.fire('Erro', mensagem, 'error')
       } finally {
         this.criandoPartida = false
@@ -534,7 +534,7 @@ export default {
       }
 
       if (timeAId === timeBId) {
-        Swal.fire('Erro', 'Os times nao podem ser iguais.', 'error')
+        Swal.fire('Erro', 'Os times não podem ser iguais.', 'error')
         this.criandoPartida = false
         return
       }
@@ -559,7 +559,7 @@ export default {
         this.$emit('partidaCriada', partidaCriada)
       } catch (err) {
         console.error('Erro ao agendar partida:', err)
-        const mensagem = err.response?.data?.erro || err.response?.data?.message || 'Nao foi possivel agendar.'
+        const mensagem = err.response?.data?.erro || err.response?.data?.message || 'Não foi possível agendar.'
         Swal.fire('Erro', mensagem, 'error')
       } finally {
         this.criandoPartida = false

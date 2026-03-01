@@ -35,7 +35,7 @@
             <h1 class="titulo-principal">Agendar quadra</h1>
             <div class="resumo-chip">
               <span class="resumo-valor">{{ quadrasDisponiveis }}</span>
-              <span class="resumo-texto">Quadras Disponiveis</span>
+              <span class="resumo-texto">Quadras Disponíveis</span>
             </div>
           </div>
           <p class="subtitulo">Escolha a quadra ideal e faca sua reserva em poucos passos.</p>
@@ -48,7 +48,7 @@
 
       <div v-else>
         <div v-if="quadras.length === 0" class="mensagem-nenhuma-quadra">
-          <p>Nenhuma unidade disponivel para agendamento.</p>
+          <p>Nenhuma unidade disponível para agendamento.</p>
         </div>
 
         <section v-else class="quadras-painel">
@@ -66,7 +66,7 @@
               :class="{ 'is-interditada': quadra.interditada }"
             >
               <span class="card-status" :class="{ 'is-indisponivel': quadra.interditada }">
-                {{ quadra.interditada ? "Indisponivel" : "Disponivel" }}
+                {{ quadra.interditada ? "Indisponível" : "Disponível" }}
               </span>
 
               <img
@@ -244,7 +244,7 @@ export default {
             timer: 2000,
           });
         } catch (error) {
-          console.warn("Nao foi possivel marcar como lido", error);
+          console.warn("Não foi possível marcar como lido", error);
         }
       }
     },
@@ -277,7 +277,7 @@ export default {
 
       if (!authStore.usuario) {
         Swal.fire({
-          title: "Voce precisa estar logado",
+          title: "Você precisa estar logado",
           text: "Deseja ir para a tela de login?",
           icon: "warning",
           showCancelButton: true,
@@ -325,7 +325,7 @@ export default {
           Swal.fire({
             icon: "success",
             title: "Agenda fixa salva!",
-            text: `Os horarios fixos da quadra ${this.quadraSelecionada.nome} foram atualizados com sucesso.`,
+            text: `Os horários fixos da quadra ${this.quadraSelecionada.nome} foram atualizados com sucesso.`,
             confirmButtonColor: "#1E3A8A",
           });
 
@@ -334,7 +334,7 @@ export default {
           const msgErro =
             err.response?.data?.error ||
             err.response?.data?.message ||
-            "Nao foi possivel processar os agendamentos fixos.";
+            "Não foi possível processar os agendamentos fixos.";
           Swal.fire({
             icon: "error",
             title: "Erro ao salvar agenda fixa",
@@ -367,7 +367,7 @@ export default {
         Swal.fire({
           icon: "success",
           title: "Agendamento realizado!",
-          text: `Sua reserva na quadra ${this.quadraSelecionada.nome} foi enviada para analise.`,
+          text: `Sua reserva na quadra ${this.quadraSelecionada.nome} foi enviada para análise.`,
           confirmButtonColor: "#1E3A8A",
           timer: 5000,
           showConfirmButton: true,
@@ -382,14 +382,14 @@ export default {
         if (status === 409) {
           Swal.fire({
             icon: "warning",
-            title: "Horario indisponivel",
-            text: "Vixe! Alguem acabou de pegar esse horario. Escolha outro, macho!",
+            title: "Horário indisponível",
+            text: "O horário selecionado já está reservado. Por favor, escolha outro horário.",
             confirmButtonColor: "#1E3A8A",
           });
         } else {
           Swal.fire({
             icon: "error",
-            title: "Nao foi possivel agendar",
+            title: "Não foi possível agendar",
             text: msg,
             confirmButtonColor: "#1E3A8A",
           });

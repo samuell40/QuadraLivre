@@ -15,7 +15,7 @@
 
       <section class="section_totalAgendamentos">
         <article class="card_contagem card_contagem-usuarios">
-          <p class="card_kicker">USUARIOS</p>
+          <p class="card_kicker">USUÁRIOS</p>
           <div class="card_metric_row">
             <p class="card_valor">{{ totalUsuarios }}</p>
             <span class="card_legenda">Cadastrados em {{ anoAtual }}</span>
@@ -50,7 +50,7 @@
           <p class="card_kicker">RECUSADOS</p>
           <div class="card_metric_row">
             <p class="card_valor">{{ totalCancelados }}</p>
-            <span class="card_legenda">Nao Aceites</span>
+            <span class="card_legenda">Não Aceitos</span>
           </div>
         </article>
       </section>
@@ -61,24 +61,23 @@
             <div class="panel-copy">
               <p class="section-kicker">AVISOS</p>
               <h2 class="section-title">Mural de avisos</h2>
-              <p class="section-subtitle">Acompanhe recados recentes da administracao e gerencie o que fica em destaque.</p>
+              <p class="section-subtitle">Acompanhe recados recentes da administração e gerencie o que fica em destaque.
+              </p>
             </div>
 
             <div class="header_actions">
-              <button
-                v-if="listaPendentes.length > 1"
-                type="button"
-                @click="exibirTodosAvisos = !exibirTodosAvisos"
-                class="btn-padrao btn-secundario"
-              >
+              <button v-if="listaPendentes.length > 1" type="button" @click="exibirTodosAvisos = !exibirTodosAvisos"
+                class="btn-padrao btn-secundario">
                 {{ exibirTodosAvisos ? 'Ver menos' : 'Ver todos (' + listaPendentes.length + ')' }}
               </button>
 
               <button type="button" @click="abrirHistorico" class="btn-padrao btn-secundario">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon-mini" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon-mini" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Historico
+                Histórico
               </button>
 
               <button v-if="podePostar" type="button" @click="abrirModal" class="btn-padrao btn-primario">
@@ -89,16 +88,12 @@
 
           <div v-if="listaPendentes.length === 0" class="sem-avisos">
             <p class="sem-avisos-title">Nenhum aviso pendente.</p>
-            <p class="sem-avisos-copy">Consulte o historico para revisar as mensagens antigas quando precisar.</p>
+            <p class="sem-avisos-copy">Consulte o histórico para revisar as mensagens antigas quando precisar.</p>
           </div>
 
           <div class="lista_avisos" v-else>
-            <article
-              v-for="aviso in avisosExibidos"
-              :key="aviso.id"
-              class="card_aviso_item"
-              :class="{ 'aviso-fixado': aviso.fixado }"
-            >
+            <article v-for="aviso in avisosExibidos" :key="aviso.id" class="card_aviso_item"
+              :class="{ 'aviso-fixado': aviso.fixado }">
               <div class="aviso_topo">
                 <div class="aviso_meta">
                   <span class="aviso_origem">{{ aviso.quadra?.nome || 'Equipe Quadra Livre' }}</span>
@@ -115,35 +110,32 @@
               </div>
 
               <div class="aviso_footer">
-                <span class="aviso_autor">Autor: {{ aviso.autor?.nome}}</span>
+                <span class="aviso_autor">Autor: {{ aviso.autor?.nome }}</span>
 
                 <div class="aviso_actions_wrapper">
-                                    <button class="btn-ler" @click="marcarComoLido(aviso)">
-                    <svg class="icon-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <button class="btn-ler" @click="marcarComoLido(aviso)">
+                    <svg class="icon-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"
+                      aria-hidden="true">
                       <path d="M20 6 9 17l-5-5" />
                     </svg>
                     <span>Marcar como lido</span>
                   </button>
 
                   <div class="aviso_actions" v-if="podePostar">
-                    <button
-                      class="btn-icon btn-fixar"
-                      :class="{ 'btn-ativo': aviso.fixado }"
-                      @click="alternarFixado(aviso)"
-                      :title="aviso.fixado ? 'Desafixar aviso' : 'Fixar aviso'"
-                    >
-                      <img v-if="aviso.fixado" :src="require('@/assets/icons/pin-slash.svg')" class="icon-svg" alt="Desafixar" />
+                    <button class="btn-icon btn-fixar" :class="{ 'btn-ativo': aviso.fixado }"
+                      @click="alternarFixado(aviso)" :title="aviso.fixado ? 'Desafixar aviso' : 'Fixar aviso'">
+                      <img v-if="aviso.fixado" :src="require('@/assets/icons/pin-slash.svg')" class="icon-svg"
+                        alt="Desafixar" />
                       <img v-else :src="require('@/assets/icons/pin.svg')" class="icon-svg" alt="Fixar" />
                     </button>
 
-                    <button
-                      v-if="usuarioLogado.id === aviso.autorId || usuarioLogado.permissaoId === 1"
-                      class="btn-icon btn-excluir"
-                      @click="deletarAviso(aviso.id)"
-                      title="Excluir aviso"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <button v-if="usuarioLogado.id === aviso.autorId || usuarioLogado.permissaoId === 1"
+                      class="btn-icon btn-excluir" @click="deletarAviso(aviso.id)" title="Excluir aviso">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon-svg" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
                   </div>
@@ -156,17 +148,19 @@
 
       <div class="charts-toolbar">
         <div class="panel-copy">
-          <p class="section-kicker">RELATORIOS</p>
-          <h2 class="section-title">Graficos operacionais</h2>
+          <p class="section-kicker">RELATÓRIOS</p>
+          <h2 class="section-title">Gráficos operacionais</h2>
         </div>
 
         <button @click="gerarPDFGraficos" class="btn-pdf-side" :disabled="loading" title="Baixar PDF">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"></path>
             <path d="M14 2v6h6"></path>
-            <text x="5" y="17" font-size="7" font-family="Arial, sans-serif" font-weight="bold" fill="currentColor" stroke="none">PDF</text>
+            <text x="5" y="17" font-size="7" font-family="Arial, sans-serif" font-weight="bold" fill="currentColor"
+              stroke="none">PDF</text>
           </svg>
-          <span class="btn-pdf-label btn-pdf-label-desktop">Relatorio PDF</span>
+          <span class="btn-pdf-label btn-pdf-label-desktop">Relatório PDF</span>
           <span class="btn-pdf-label btn-pdf-label-mobile">PDF</span>
         </button>
       </div>
@@ -174,7 +168,7 @@
       <section class="section_graficos_top">
         <article class="chart-panel">
           <div class="chart-panel-head">
-            <p class="chart-kicker">Distribuicao por modalidade</p>
+            <p class="chart-kicker">Distribuição por modalidade</p>
           </div>
           <div class="chart-wrapper chart-wrapper-fixed">
             <div class="chart-container">
@@ -198,7 +192,7 @@
       <section class="section_graficos_bottom">
         <article class="chart-panel chart-panel-full">
           <div class="chart-panel-head">
-            <p class="chart-kicker">Agendamento por mes</p>
+            <p class="chart-kicker">Agendamento por mês</p>
           </div>
 
           <div v-if="loading" class="loader-container-centralizado">
@@ -221,7 +215,8 @@
                 <h3 class="modal-title">Cadastrar novo aviso</h3>
                 <p class="modal-subtitle">Preencha os dados e publique o recado no mural principal.</p>
               </div>
-              <button type="button" class="btn-close-x-modal" @click="exibirModalAviso = false" aria-label="Fechar modal">x</button>
+              <button type="button" class="btn-close-x-modal" @click="exibirModalAviso = false"
+                aria-label="Fechar modal">x</button>
             </div>
 
             <div class="modal-body-scroll">
@@ -236,12 +231,13 @@
 
               <div class="form-group">
                 <label class="label-input">Titulo</label>
-                <input v-model="novoAviso.titulo" placeholder="Digite o titulo do aviso" class="input-estilizado" />
+                <input v-model="novoAviso.titulo" placeholder="Digite o título do aviso" class="input-estilizado" />
               </div>
 
               <div class="form-group">
-                <label class="label-input">Descricao</label>
-                <textarea v-model="novoAviso.descricao" placeholder="O que voce quer avisar?" class="input-estilizado area-texto"></textarea>
+                <label class="label-input">Descrição</label>
+                <textarea v-model="novoAviso.descricao" placeholder="O que você quer avisar?"
+                  class="input-estilizado area-texto"></textarea>
               </div>
 
               <label class="form-group-checkbox" for="fixarNovo">
@@ -267,7 +263,8 @@
                 <h3 class="modal-title">Avisos lidos</h3>
                 <p class="modal-subtitle">Filtre por ano e origem para revisar comunicados antigos.</p>
               </div>
-              <button type="button" class="btn-close-x-modal" @click="exibirModalHistorico = false" aria-label="Fechar modal">x</button>
+              <button type="button" class="btn-close-x-modal" @click="exibirModalHistorico = false"
+                aria-label="Fechar modal">x</button>
             </div>
 
             <div class="filter-row filtros-full">
@@ -284,7 +281,7 @@
                 <select v-model="filtroOrigem" class="input-estilizado">
                   <option value="todos">Todos</option>
                   <option value="geral">Geral</option>
-                  <option value="quadra">Propria quadra</option>
+                  <option value="quadra">Própria quadra</option>
                 </select>
               </div>
             </div>
@@ -292,10 +289,11 @@
             <div class="lista_avisos lista_avisos_historico">
               <div v-if="listaLidosFiltrada.length === 0" class="sem-avisos sem-avisos-historico">
                 <p class="sem-avisos-title">Nenhum aviso encontrado.</p>
-                <p class="sem-avisos-copy">Nao ha avisos lidos para o filtro {{ filtroAno }}.</p>
+                <p class="sem-avisos-copy">Não há avisos lidos para o filtro {{ filtroAno }}.</p>
               </div>
 
-              <article v-else v-for="aviso in listaLidosFiltrada" :key="aviso.id" class="card_aviso_item card_aviso_item-historico">
+              <article v-else v-for="aviso in listaLidosFiltrada" :key="aviso.id"
+                class="card_aviso_item card_aviso_item-historico">
                 <div class="aviso_topo">
                   <div class="aviso_meta">
                     <span class="aviso_origem">{{ aviso.quadra?.nome || 'Aviso geral' }}</span>
@@ -514,7 +512,7 @@ export default {
       doc.text("QuadraLivre", 32, 15);
       doc.setTextColor(...corPrimaria);
       doc.setFontSize(16);
-      doc.text(`Relatorio de Agendamentos - ${this.tituloDashboard}`, 105, 45, null, null, "center");
+      doc.text(`Relatório de Agendamentos - ${this.tituloDashboard}`, 105, 45, null, null, "center");
 
       doc.setFontSize(10);
       doc.setTextColor(100);
@@ -740,7 +738,7 @@ export default {
         Swal.fire({
           icon: 'warning',
           title: 'Campos Incompletos',
-          text: 'Preencha titulo, descricao e escolha o destino.',
+          text: 'Preencha título, descrição e escolha o destino.',
           confirmButtonColor: '#1E3A8A',
         });
         return;
@@ -772,7 +770,7 @@ export default {
         console.error(error);
         Swal.fire({
           icon: 'error',
-          title: 'Erro na Operacao',
+          title: 'Erro na Operação',
           text: 'Falha ao registrar o aviso.',
           confirmButtonColor: '#1E3A8A',
         });
@@ -785,7 +783,7 @@ export default {
     async deletarAviso(id) {
       const result = await Swal.fire({
         title: 'Excluir Aviso?',
-        text: "Essa aÃ§Ã£o nao pode ser desfeita.",
+        text: "Essa ação não pode ser desfeita.",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
@@ -798,9 +796,9 @@ export default {
         try {
           await api.delete(`/avisos/${id}`);
           await this.carregarAvisos();
-          Swal.fire('Excluido!', 'O aviso foi removido.', 'success');
+          Swal.fire('Excluído!', 'O aviso foi removido.', 'success');
         } catch (error) {
-          Swal.fire('Erro', 'Nao foi possÃ­vel excluir o aviso.', 'error');
+          Swal.fire('Erro', 'Não foi possível excluir o aviso.', 'error');
         }
       }
     },
@@ -896,7 +894,7 @@ export default {
           type: 'bar',
           data: {
             labels: mesesNomes,
-            datasets: [{ label: 'Agendamentos Confirmados por Mes', data: new Array(12).fill(0), backgroundColor: '#1E3A8A' }]
+            datasets: [{ label: 'Agendamentos Confirmados por Mês', data: new Array(12).fill(0), backgroundColor: '#1E3A8A' }]
           },
           options: {
             responsive: true,
@@ -919,7 +917,7 @@ export default {
         type: 'bar',
         data: {
           labels: mesesFiltrados,
-          datasets: [{ label: 'Agendamentos Confirmados por Mes', data: quantidade, backgroundColor: '#1E3A8A' }]
+          datasets: [{ label: 'Agendamentos Confirmados por Mês', data: quantidade, backgroundColor: '#1E3A8A' }]
         },
         options: {
           responsive: true,
@@ -1006,7 +1004,7 @@ export default {
 
 .card_contagem {
   display: flex;
-  flex-direction: column;
+  flex-direction: column; 
   gap: 10px;
   padding: 16px 16px 14px;
   background: #ffffff;
@@ -1035,11 +1033,25 @@ export default {
   font-weight: 600;
 }
 
-.card_contagem-usuarios .card_valor { color: #2563eb; }
-.card_contagem-agendamentos .card_valor { color: #0f172a; }
-.card_contagem-pendentes .card_valor { color: #d97706; }
-.card_contagem-confirmados .card_valor { color: #059669; }
-.card_contagem-recusados .card_valor { color: #dc2626; }
+.card_contagem-usuarios .card_valor {
+  color: #2563eb;
+}
+
+.card_contagem-agendamentos .card_valor {
+  color: #0f172a;
+}
+
+.card_contagem-pendentes .card_valor {
+  color: #d97706;
+}
+
+.card_contagem-confirmados .card_valor {
+  color: #059669;
+}
+
+.card_contagem-recusados .card_valor {
+  color: #dc2626;
+}
 
 .section_avisos {
   margin-bottom: 22px;
@@ -1413,6 +1425,7 @@ export default {
   font-weight: 800;
   line-height: 1.15;
 }
+
 .btn-pdf-label-mobile {
   display: none;
   align-items: center;
@@ -1585,7 +1598,7 @@ export default {
 .input-estilizado {
   width: 100%;
   min-height: 46px;
-    padding: 0 10px;
+  padding: 0 10px;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.24);
   background: #f8fafc;
@@ -1646,8 +1659,13 @@ export default {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .btn-pdf-label-mobile {
@@ -1678,6 +1696,7 @@ export default {
     flex-direction: row;
     align-items: center;
   }
+
   .header_actions {
     justify-content: flex-start;
   }
@@ -1818,18 +1837,18 @@ export default {
   }
 
   .btn-pdf-side {
-    min-height: 30px;        
-    padding: 0 8px;         
-    border-radius: 10px;     
+    min-height: 30px;
+    padding: 0 8px;
+    border-radius: 10px;
     gap: 6px;
-    font-size: 14px;         
-    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.18); 
+    font-size: 14px;
+    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.18);
   }
 
   .btn-pdf-label-mobile {
     display: inline-flex;
-    font-size: 14px;         
-    font-weight: 700;        
+    font-size: 14px;
+    font-weight: 700;
     line-height: 1;
   }
 

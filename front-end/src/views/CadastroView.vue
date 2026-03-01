@@ -140,8 +140,8 @@ export default {
         if (!this.form.telefone || this.form.telefone.length < 14) {
           Swal.fire({
             icon: 'warning',
-            title: 'Atencao',
-            text: 'Por favor, informe um numero de telefone valido.',
+            title: 'Atenção',
+            text: 'Por favor, informe um número de telefone válido.',
           });
           return;
         }
@@ -190,7 +190,7 @@ export default {
         if (this.deveAutenticarPosCadastro) {
           await Swal.fire({
             icon: 'success',
-            title: 'Cadastro concluido!',
+            title: 'Cadastro concluído!',
             text: 'Redirecionando para agendar quadra...',
             timer: 1400,
             showConfirmButton: false,
@@ -199,12 +199,12 @@ export default {
           return;
         }
       } catch (error) {
-        console.error('Erro ao cadastrar usuario:', error);
+        console.error('Erro ao cadastrar usuaáio:', error);
 
         Swal.fire({
           icon: 'error',
           title: 'Erro',
-          text: error.response?.data?.error || 'Nao foi possivel concluir o cadastro.',
+          text: error.response?.data?.error || 'Não foi possível concluir o cadastro.',
         });
 
         return;
@@ -213,7 +213,7 @@ export default {
       Swal.fire({
         icon: 'success',
         title: 'Sucesso!',
-        text: 'Usuario cadastrado com sucesso!',
+        text: 'Usuário cadastrado com sucesso!',
         timer: 2000,
         showConfirmButton: false,
       }).then(() => {

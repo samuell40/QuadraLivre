@@ -31,11 +31,11 @@
         <article class="overview-card overview-card-active">
           <p class="metric-kicker">ATIVAS</p>
           <p class="metric-value">{{ quadrasAtivas }}</p>
-          <span class="metric-caption">Disponiveis para operacao normal</span>
+          <span class="metric-caption">Disponíveis para operação normal</span>
         </article>
 
         <article class="overview-card overview-card-blocked">
-          <p class="metric-kicker">INDISPONIVEIS</p>
+          <p class="metric-kicker">INDISPONÍVEIS</p>
           <p class="metric-value">{{ quadrasIndisponiveis }}</p>
           <span class="metric-caption">Temporariamente bloqueadas</span>
         </article>
@@ -71,7 +71,7 @@
             :class="{ 'is-interditada': quadra.interditada }"
           >
             <span class="card-status" :class="quadra.interditada ? 'is-indisponivel' : 'is-ativo'">
-              {{ quadra.interditada ? 'Indisponivel' : 'Ativa' }}
+              {{ quadra.interditada ? 'Indisponível' : 'Ativa' }}
             </span>
 
             <img
@@ -94,7 +94,7 @@
                 </button>
 
                 <button type="button" class="btn-card btn-card-secondary" @click="abrirModalGrade(quadra)">
-                  Horarios
+                  Horários
                 </button>
 
                 <button
@@ -116,7 +116,7 @@
           <div class="modal-header">
             <div>
               <h2 class="modal-title">Cadastrar unidade</h2>
-              <p class="modal-subtitle">Preencha os dados principais e defina as modalidades disponiveis.</p>
+              <p class="modal-subtitle">Preencha os dados principais e defina as modalidades disponíveis.</p>
             </div>
 
             <button
@@ -139,13 +139,13 @@
                     v-model="formCadastro.nome"
                     type="text"
                     class="input-estilizado"
-                    placeholder="Ex: Arena Jurua"
+                    placeholder="Ex: Arena Juruá"
                     required
                   />
                 </div>
 
                 <div class="form-group">
-                  <label for="enderecoCadastro" class="label-input">Endereco</label>
+                  <label for="enderecoCadastro" class="label-input">Endereço</label>
                   <input
                     id="enderecoCadastro"
                     v-model="formCadastro.endereco"
@@ -158,7 +158,7 @@
               </div>
 
               <div class="form-group">
-                <label class="label-input">Modalidades disponiveis</label>
+                <label class="label-input">Modalidades disponíveis</label>
                 <div class="checkbox-list">
                   <label
                     v-for="mod in todasModalidades"
@@ -232,13 +232,13 @@
                     v-model="formEdicao.nome"
                     type="text"
                     class="input-estilizado"
-                    placeholder="Ex: Arena Jurua"
+                    placeholder="Ex: Arena Juruá"
                     required
                   />
                 </div>
 
                 <div class="form-group">
-                  <label for="endereco" class="label-input">Endereco</label>
+                  <label for="endereco" class="label-input">Endereço</label>
                   <input
                     id="endereco"
                     v-model="formEdicao.endereco"
@@ -251,7 +251,7 @@
               </div>
 
               <div class="form-group">
-                <label class="label-input">Modalidades disponiveis</label>
+                <label class="label-input">Modalidades disponíveis</label>
                 <div class="checkbox-list">
                   <label
                     v-for="mod in todasModalidades"
@@ -282,7 +282,7 @@
               </div>
 
               <div class="modal-actions modal-actions-single">
-                <button type="submit" class="btn-confirmar">Confirmar alteracoes</button>
+                <button type="submit" class="btn-confirmar">Confirmar alterações</button>
               </div>
             </form>
           </div>
@@ -352,10 +352,10 @@ export default {
     },
     subtituloPainel() {
       if (this.isAdministrador) {
-        return 'Edite informacoes, atualize modalidades, configure horarios e altere a disponibilidade da unidade vinculada.'
+        return 'Edite informações, atualize modalidades, configure horários e altere a disponibilidade da unidade vinculada.'
       }
 
-      return 'Edite informacoes, atualize modalidades, configure horarios e altere a disponibilidade de cada unidade.'
+      return 'Edite informações, atualize modalidades, configure horários e altere a disponibilidade de cada unidade.'
     },
     tituloCarregamento() {
       return this.isAdministrador ? 'Carregando quadra' : 'Carregando quadras'
@@ -367,8 +367,8 @@ export default {
     },
     descricaoEstadoVazio() {
       return this.isAdministrador
-        ? 'Quando houver uma unidade disponivel para voce, ela aparecera aqui.'
-        : 'Quando houver unidades disponiveis para voce, elas aparecerao aqui.'
+        ? 'Quando houver uma unidade disponível para voce, ela aparecerá aqui.'
+        : 'Quando houver unidades disponíveis para voce, elas aparecerão aqui.'
     },
     podeCadastrar() {
       return this.isDesenvolvedor
@@ -407,8 +407,8 @@ export default {
         this.todasModalidades = resModalidades.data
       } catch (err) {
         Swal.fire('Erro de sistema', this.isAdministrador
-          ? 'Nao foi possivel carregar os dados da quadra.'
-          : 'Nao foi possivel carregar os dados das quadras.', 'error')
+          ? 'Não foi possível carregar os dados da quadra.'
+          : 'Não foi possível carregar os dados das quadras.', 'error')
       } finally {
         this.isLoading = false
       }
@@ -500,7 +500,7 @@ export default {
       } catch (error) {
         Swal.fire(
           'Erro',
-          error.response?.data?.error || 'Nao foi possivel cadastrar a quadra.',
+          error.response?.data?.error || 'Não foi possível cadastrar a quadra.',
           'error'
         )
       } finally {
@@ -543,7 +543,7 @@ export default {
         this.quadraEditando = null
         this.carregarDados()
       } catch (err) {
-        Swal.fire('Erro', 'Falha ao salvar alteracoes.', 'error')
+        Swal.fire('Erro', 'Falha ao salvar alterações.', 'error')
       }
     },
 
@@ -551,7 +551,7 @@ export default {
       const novoStatus = !quadra.interditada
       const acaoTexto = novoStatus ? 'interditar' : 'liberar'
       const result = await Swal.fire({
-        title: 'Confirmar alteracao',
+        title: 'Confirmar alteração',
         text: `Deseja ${acaoTexto} a quadra "${quadra.nome}"?`,
         icon: 'warning',
         showCancelButton: true,
@@ -567,7 +567,7 @@ export default {
           this.carregarDados()
           Swal.fire('Sucesso', 'Status alterado com sucesso.', 'success')
         } catch (error) {
-          Swal.fire('Erro', 'Nao foi possivel alterar o status.', 'error')
+          Swal.fire('Erro', 'Não foi possível alterar o status.', 'error')
         }
       }
     },

@@ -193,7 +193,7 @@ export default {
         Swal.fire({
           icon: 'warning',
           title: 'Jogador suspenso',
-          text: 'Remova os jogadores suspensos da escalacao para iniciar a partida.',
+          text: 'Remova os jogadores suspensos da escalação para iniciar a partida.',
           confirmButtonColor: '#3b82f6'
         })
         return
@@ -207,7 +207,7 @@ export default {
         ) {
           Swal.fire({
             icon: 'warning',
-            title: 'Numero invalido de jogadores',
+            title: 'Número inválido de jogadores',
             text: `Cada time deve ter pelo menos ${minPorTime} jogador(es).`,
             confirmButtonColor: '#3b82f6'
           })
@@ -220,7 +220,7 @@ export default {
         ) {
           Swal.fire({
             icon: 'warning',
-            title: 'Numero invalido de jogadores',
+            title: 'Número inválido de jogadores',
             text: `Cada time deve ter exatamente ${this.regra.porTime} jogadores.`,
             confirmButtonColor: '#3b82f6'
           })

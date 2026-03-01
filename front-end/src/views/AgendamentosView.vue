@@ -16,7 +16,7 @@
       <section class="agendamentos-panel">
         <div class="panel-head">
           <div class="panel-copy">
-            <p class="section-kicker">OPERACAO</p>
+            <p class="section-kicker">OPERAÇÃO</p>
             <h2 class="section-title">{{ tituloAbaAtiva }}</h2>
             <p class="section-subtitle">{{ subtituloAbaAtiva }}</p>
           </div>
@@ -37,8 +37,8 @@
                   d="M12 8a1 1 0 0 1 1 1v2.586l1.707 1.707a1 1 0 1 1-1.414 1.414l-2-2A1 1 0 0 1 11 12V9a1 1 0 0 1 1-1Zm0-6a10 10 0 1 1 0 20a10 10 0 0 1 0-20Zm0 2a8 8 0 1 0 0 16a8 8 0 0 0 0-16Z"
                 />
               </svg>
-              <span class="btn-top-action-label-desktop">Visualizar horarios</span>
-              <span class="btn-top-action-label-mobile">Horarios</span>
+              <span class="btn-top-action-label-desktop">Visualizar horários</span>
+              <span class="btn-top-action-label-mobile">Horários</span>
             </button>
           </div>
         </div>
@@ -94,7 +94,7 @@
               </button>
 
               <span class="info-paginacao">
-                Pagina <strong>{{ paginasAtuais[abaAtiva] }}</strong> de {{ totalPaginasAbaAtiva }}
+                Página <strong>{{ paginasAtuais[abaAtiva] }}</strong> de {{ totalPaginasAbaAtiva }}
               </span>
 
               <button
@@ -103,7 +103,7 @@
                 :disabled="paginasAtuais[abaAtiva] === totalPaginasAbaAtiva"
                 @click="mudarPagina(abaAtiva, 1)"
               >
-                <span>Proxima</span>
+                <span>Próxima</span>
                 <span>&gt;</span>
               </button>
             </div>
@@ -262,12 +262,12 @@ const tituloAbaAtiva = computed(() => {
 
 const subtituloAbaAtiva = computed(() => {
   const subtitulos = {
-    pendentes: `Revise os pedidos vinculados a ${nomeQuadraOperacao.value} e decida quais horarios seguem para confirmacao.`,
-    confirmados: 'Acompanhe os agendamentos futuros que ja estao liberados para operacao normal.',
-    recusados: 'Consulte os pedidos encerrados e mantenha o historico de justificativas sempre acessivel.',
+    pendentes: `Revise os pedidos vinculados a ${nomeQuadraOperacao.value} e decida quais horários seguem para confirmação.`,
+    confirmados: 'Acompanhe os agendamentos futuros que já estão liberados para operação normal.',
+    recusados: 'Consulte os pedidos encerrados e mantenha o histórico de justificativas sempre acessível.',
   }
 
-  return subtitulos[abaAtiva.value] || 'Acompanhe os agendamentos vinculados a operacao da sua quadra.'
+  return subtitulos[abaAtiva.value] || 'Acompanhe os agendamentos vinculados a operação da sua quadra.'
 })
 
 const resumoAbaAtiva = computed(() => {
@@ -291,12 +291,12 @@ const tituloEstadoVazio = computed(() => {
 
 const descricaoEstadoVazio = computed(() => {
   const descricoes = {
-    pendentes: 'Quando novos pedidos forem enviados para a quadra, eles aparecerao aqui para analise.',
-    confirmados: 'Os agendamentos aprovados para datas futuras ficarao organizados nesta aba.',
-    recusados: 'Os pedidos recusados aparecerao aqui com o motivo informado ao solicitante.',
+    pendentes: 'Quando novos pedidos forem enviados para a quadra, eles aparecerão aqui para análise.',
+    confirmados: 'Os agendamentos aprovados para datas futuras ficarão organizados nesta aba.',
+    recusados: 'Os pedidos recusados aparecerão aqui com o motivo informado ao solicitante.',
   }
 
-  return descricoes[abaAtiva.value] || 'Nao ha itens para exibir nesta etapa.'
+  return descricoes[abaAtiva.value] || 'Não há itens para exibir nesta etapa.'
 })
 
 const mudarPagina = (tipo, delta) => {
@@ -311,7 +311,7 @@ const mudarPagina = (tipo, delta) => {
 const normalizarAgendamento = (agendamento) => ({
   ...agendamento,
   solicitanteNome: agendamento.usuario?.nome || 'Sem usuario',
-  timeNome: agendamento.time?.nome || 'Nao especificado',
+  timeNome: agendamento.time?.nome || 'Não especificado',
   quadraNome: agendamento.quadra?.nome || authStore.usuario?.quadra?.nome || 'Quadra',
   codigoVerificacao: agendamento.codigoVerificacao || 'N/A',
   motivoRecusa: agendamento.motivoRecusa || '',
@@ -349,7 +349,7 @@ const aceitarAgendamento = async (id) => {
     Swal.fire('Sucesso', 'Agendamento aceito!', 'success')
   } catch (error) {
     console.error(error)
-    Swal.fire('Erro', 'Nao foi possivel aceitar o agendamento.', 'error')
+    Swal.fire('Erro', 'Não foi possível aceitar o agendamento.', 'error')
   } finally {
     loadingCards.value = loadingCards.value.filter((item) => item !== id)
   }
@@ -373,7 +373,7 @@ const processarRecusa = async ({ id, motivo }) => {
     )
     modalRecusaAberto.value = false
     normalizarPaginas()
-    Swal.fire('Recusado', 'O usuario sera notificado do motivo.', 'success')
+    Swal.fire('Recusado', 'O usuário será notificado do motivo.', 'success')
   } catch (error) {
     console.error(error)
     Swal.fire('Erro', 'Falha ao recusar agendamento.', 'error')

@@ -3,8 +3,8 @@
     <div class="modal-content">
       <div class="modal-header">
         <div class="modal-copy">
-          <p class="modal-kicker">HORARIOS</p>
-          <h2 class="modal-title">Editar grade de horarios</h2>
+          <p class="modal-kicker">HORÁRIOS</p>
+          <h2 class="modal-title">Editar grade de horários</h2>
           <p class="modal-subtitle">{{ quadra.nome }}</p>
         </div>
 
@@ -20,7 +20,7 @@
 
       <div v-else class="modal-body">
         <p class="info-text">
-          Configure os dias de funcionamento, gere horarios em lote, replique a grade e ajuste cada dia manualmente.
+          Configure os dias de funcionamento, gere horários em lote, replique a grade e ajuste cada dia manualmente.
         </p>
 
         <div class="tabs-header">
@@ -66,7 +66,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                   <path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z" />
                 </svg>
-                <span>Automatico</span>
+                <span>Automático</span>
               </button>
 
               <button
@@ -97,7 +97,7 @@
 
               <div class="gerador-inputs">
                 <div class="g-group">
-                  <label>Inicio</label>
+                  <label>Início</label>
                   <input v-model="gerador.inicio" type="time">
                 </div>
 
@@ -116,7 +116,7 @@
                 </button>
               </div>
 
-              <small class="hint">A nova grade substitui os horarios atuais deste dia.</small>
+              <small class="hint">A nova grade substitui os horários atuais deste dia.</small>
             </div>
 
             <div v-if="showReplicar" class="painel-ferramenta">
@@ -128,7 +128,7 @@
               </div>
 
               <p class="replicar-titulo">
-                Copiar a configuracao de <strong>{{ diasSemanaNomes[diaSelecionado] }}</strong> para:
+                Copiar a configuração de <strong>{{ diasSemanaNomes[diaSelecionado] }}</strong> para:
               </p>
 
               <div class="dias-checks">
@@ -139,15 +139,15 @@
               </div>
 
               <button type="button" class="btn-acao-painel" @click="confirmarReplicacao">
-                Aplicar copia
+                Aplicar cópia
               </button>
             </div>
 
             <div class="editor-card">
               <div class="editor-head">
                 <div>
-                  <p class="tool-kicker">HORARIOS</p>
-                  <h4 class="tool-title">Adicionar horarios manualmente</h4>
+                  <p class="tool-kicker">HORÁRIOS</p>
+                  <h4 class="tool-title">Adicionar horários manualmente</h4>
                 </div>
               </div>
 
@@ -172,7 +172,7 @@
 
               <div class="lista-horarios">
                 <div v-if="gradePorDia[diaSelecionado].length === 0" class="sem-horarios">
-                  Nenhum horario configurado para este dia.
+                  Nenhum horário configurado para este dia.
                 </div>
 
                 <div
@@ -198,7 +198,7 @@
           <div v-else class="estado-fechado">
             <div class="fechado-content">
               <div class="fechado-badge">Fechado</div>
-              <p class="fechado-title">Nao havera horarios disponiveis para agendamento.</p>
+              <p class="fechado-title">Não há horários disponíveis para agendamento.</p>
               <p class="fechado-desc">Ative o dia para criar uma nova grade de funcionamento.</p>
             </div>
           </div>

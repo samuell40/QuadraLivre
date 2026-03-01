@@ -6,9 +6,9 @@
     <div class="conteudo" :class="{ collapsed: sidebarCollapsed }">
       <div class="header">
         <div class="header-copy">
-          <h1 class="title">Classificacao {{ campeonato?.nome }}</h1>
+          <h1 class="title">Classificação {{ campeonato?.nome }}</h1>
           <a class="page-subtitle">
-            Acompanhe a tabela da fase atual, ajuste as colunas exibidas e abra o historico comaleto de cada time.
+            Acompanhe a tabela da fase atual, ajuste as colunas exibidas e abra o histórico completo de cada time.
           </a>
         </div>
 
@@ -20,9 +20,9 @@
       <div v-if="campeonato" class="painel-card filtros-card">
         <div class="section-head">
           <div>
-            <span class="section-kicker">Navegacao</span>
+            <span class="section-kicker">Navegação</span>
             <h2>Fase e rodada</h2>
-            <a>Atualize os filtros para trocar a classificacao exibida sem sair da mesma tela.</a>
+            <a>Atualize os filtros para trocar a classificação exibida sem sair da mesma tela.</a>
           </div>
         </div>
 
@@ -47,7 +47,7 @@
       <div v-if="campeonato" class="painel-card placar-wrapper">
         <div class="section-head">
           <div>
-            <span class="section-kicker">Classificacao</span>
+            <span class="section-kicker">Classificação</span>
             <h2>{{ tituloTabela }}</h2>
             <a>{{ subtituloTabela }}</a>
           </div>

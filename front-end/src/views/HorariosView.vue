@@ -47,12 +47,12 @@
                   <path d="M14 2v6h6"></path>
                   <text x="5" y="17" font-size="7" font-family="Arial, sans-serif" font-weight="bold" fill="currentColor" stroke="none">PDF</text>
                 </svg>
-                <span class="btn-pdf-label btn-pdf-label-desktop">Relatorio PDF</span>
+                <span class="btn-pdf-label btn-pdf-label-desktop">Relátorio PDF</span>
                 <span class="btn-pdf-label btn-pdf-label-mobile">PDF</span>
               </button>
             </div>
             <p class="section-subtitle">
-              Horarios livres ficam apenas para consulta. Horarios reservados podem ser abertos para ver o agendamento.
+              Horários livres ficam apenas para consulta. Horários reservados podem ser abertos para ver o agendamento.
             </p>
           </div>
         </div>
@@ -63,7 +63,7 @@
           </div>
 
           <div v-else-if="gradeMontada.length === 0" class="state-card">
-            <p class="state-title">Nenhum dia com horarios configurados para esta quadra.</p>
+            <p class="state-title">Nenhum dia com horários configurados para esta quadra.</p>
             <p class="state-copy">Ajuste a grade da unidade para exibir a semana operacional aqui.</p>
           </div>
 
@@ -160,7 +160,7 @@ export default {
     const tituloControles = computed(() => (podeTrocarQuadra.value ? 'Selecione a Quadra ' : 'Quadra vinculada'))
     const subtituloControles = computed(() => {
       if (podeTrocarQuadra.value) {
-        return 'A grade abaixo reflete a quadra selecionada. Clique em um horario reservado para abrir os detalhes.'
+        return 'A grade abaixo reflete a quadra selecionada. Clique em um horário reservado para abrir os detalhes.'
       }
 
       return 'Esta agenda exibe apenas a unidade vinculada ao seu perfil administrativo.'
@@ -221,7 +221,7 @@ export default {
           const res = await api.get(`/grade-horarios/${quadraSelecionada.value}`)
           slotsConfig = res.data
         } catch (e) {
-          console.warn('Grade nao configurada.')
+          console.warn('Grade não configurada.')
         }
 
         let diasAtivosIndices = []
@@ -273,7 +273,7 @@ export default {
               ocupado: !!agendamentoEncontrado,
               texto: agendamentoEncontrado
                 ? (agendamentoEncontrado.time?.nome || agendamentoEncontrado.usuario?.nome || 'Reservado')
-                : 'Disponivel',
+                : 'Disponível',
               dadosAgendamento: agendamentoEncontrado
             }
           })
@@ -318,7 +318,7 @@ export default {
         })
         doc.addImage(img, 'PNG', 10, 3, 12, 12)
       } catch (e) {
-        console.warn('Logo nao carregada no PDF', e)
+        console.warn('Logo não carregada no PDF', e)
       }
 
       doc.setFont('helvetica', 'bold')
@@ -380,7 +380,7 @@ export default {
           const slot = gradeMontada.value[d][i]
           if (slot) {
             row.push(slot.horario)
-            let texto = slot.texto === 'Disponivel' ? '---' : slot.texto
+            let texto = slot.texto === 'Disponível' ? '---' : slot.texto
             if (texto.length > 22 && texto !== '---') texto = texto.substring(0, 20) + '...'
             row.push(texto)
           } else {

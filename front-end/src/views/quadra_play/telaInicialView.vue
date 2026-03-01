@@ -289,7 +289,7 @@ export default {
         this.modalidadesDisponiveis = Array.from(modalidadesMap.values())
         this.aplicarFiltroCampeonatosMesario()
       } catch (err) {
-        console.error('Erro ao carregar campeonatos do mesario:', err)
+        console.error('Erro ao carregar campeonatos do mesário:', err)
         this.campeonatosMesario = []
         this.campeonatos = []
         this.modalidadesDisponiveis = []

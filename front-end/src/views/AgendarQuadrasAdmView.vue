@@ -17,17 +17,17 @@
         <article class="overview-card">
           <p class="metric-kicker">TOTAL</p>
           <p class="metric-value">{{ totalQuadras }}</p>
-          <span class="metric-caption">Quadras exibidas para operacao</span>
+          <span class="metric-caption">Quadras exibidas para operação</span>
         </article>
 
         <article class="overview-card overview-card-available">
-          <p class="metric-kicker">DISPONIVEIS</p>
+          <p class="metric-kicker">DISPONÍVEIS</p>
           <p class="metric-value">{{ quadrasDisponiveis }}</p>
           <span class="metric-caption">Prontas para reserva imediata</span>
         </article>
 
         <article class="overview-card overview-card-blocked">
-          <p class="metric-kicker">INDISPONIVEIS</p>
+          <p class="metric-kicker">INDISPONÍVEIS</p>
           <p class="metric-value">{{ quadrasIndisponiveis }}</p>
           <span class="metric-caption">Quadras que Estão Interditadas</span>
         </article>
@@ -49,7 +49,7 @@
 
         <div v-else-if="quadras.length === 0" class="state-card state-card-empty">
           <p class="state-title">Nenhuma quadra encontrada.</p>
-          <p class="state-copy">Quando houver quadras cadastradas, elas aparecerao aqui para reserva direta.</p>
+          <p class="state-copy">Quando houver quadras cadastradas, elas aparecerão aqui para reserva direta.</p>
         </div>
 
         <div v-else class="quadras-grid">
@@ -60,7 +60,7 @@
             :class="{ 'is-interditada': quadra.interditada }"
           >
             <span class="card-status" :class="{ 'is-indisponivel': quadra.interditada }">
-              {{ quadra.interditada ? "Indisponivel" : "Disponivel" }}
+              {{ quadra.interditada ? "Indisponível" : "Disponível" }}
             </span>
 
             <img
@@ -103,7 +103,7 @@
                 :disabled="quadra.interditada"
                 @click="!quadra.interditada && abrirAgendamentoDireto(quadra)"
               >
-                {{ quadra.interditada ? "Indisponivel" : "Agendar agora" }}
+                {{ quadra.interditada ? "Indisponível" : "Agendar agora" }}
               </button>
             </div>
           </article>
@@ -221,7 +221,7 @@ export default {
 
       if (!authStore.usuario) {
         Swal.fire({
-          title: 'Voce precisa estar logado',
+          title: 'Você precisa estar logado',
           text: 'Deseja ir para a tela de login?',
           icon: 'warning',
           showCancelButton: true,
@@ -264,7 +264,7 @@ export default {
             Swal.fire({
               icon: 'success',
               title: 'Agenda fixa atualizada!',
-              text: 'Os horarios foram processados e sincronizados com a grade.',
+              text: 'Os horários foram processados e sincronizados com a grade.',
               confirmButtonColor: '#1E3A8A'
             })
 
@@ -297,10 +297,10 @@ export default {
 
         Swal.fire({
           icon: 'success',
-          title: isAdministrador ? 'Horario reservado!' : 'Solicitacao enviada!',
+          title: isAdministrador ? 'Horário reservado!' : 'Solicitação enviada!',
           text: isAdministrador
             ? `Quadra ${this.quadraSelecionada.nome} reservada com sucesso.`
-            : `Aguardando aprovacao para a quadra ${this.quadraSelecionada.nome}.`,
+            : `Aguardando aprovação para a quadra ${this.quadraSelecionada.nome}.`,
           confirmButtonColor: '#1E3A8A',
           timer: 4000,
           showConfirmButton: false
@@ -313,11 +313,11 @@ export default {
 
         if (status === 400 && (msgErro?.includes('limite') || msgErro?.includes('FIXOS'))) {
           Swal.fire({
-            title: 'Restricao de limite',
-            text: `${msgErro}. Como administrador, deseja forcar este agendamento?`,
+            title: 'Restrição de limite',
+            text: `${msgErro}. Como administrador, deseja forçar este agendamento?`,
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Sim, forcar',
+            confirmButtonText: 'Sim, forçar',
             cancelButtonText: 'Cancelar',
             confirmButtonColor: '#1E3A8A',
           }).then((result) => {
@@ -330,8 +330,8 @@ export default {
 
         Swal.fire({
           icon: 'warning',
-          title: 'Nao foi possivel agendar',
-          text: msgErro || 'Verifique se o horario esta disponivel.',
+          title: 'Não foi possível agendar',
+          text: msgErro || 'Verifique se o horário   esta disponível.',
           confirmButtonColor: '#1E3A8A'
         })
       }

@@ -30,12 +30,12 @@
       </div>
 
       <div class="meta-item">
-        <span class="meta-label">Horario</span>
+        <span class="meta-label">Horário</span>
         <strong class="meta-value">{{ horaFormatada }}</strong>
       </div>
 
       <div class="meta-item">
-        <span class="meta-label">Duracao</span>
+        <span class="meta-label">Duração</span>
         <strong class="meta-value">{{ duracaoLabel }}</strong>
       </div>
 
@@ -46,7 +46,7 @@
     </div>
 
     <div class="code-strip">
-      <span class="code-label">Codigo de verificacao</span>
+      <span class="code-label">Código de verificação</span>
       <strong class="code-value">{{ codigoVerificacao }}</strong>
     </div>
 
@@ -95,10 +95,10 @@ const isPendente = computed(() => statusNormalizado.value === 'pendente')
 
 const quadraNome = computed(() => props.agendamento?.quadraNome || props.agendamento?.quadra?.nome || 'Quadra')
 const solicitanteNome = computed(() => props.agendamento?.solicitanteNome || props.agendamento?.usuario || props.agendamento?.usuario?.nome || 'Sem usuario')
-const timeNome = computed(() => props.agendamento?.timeNome || props.agendamento?.time || props.agendamento?.time?.nome || 'Nao especificado')
+const timeNome = computed(() => props.agendamento?.timeNome || props.agendamento?.time || props.agendamento?.time?.nome || 'Não especificado')
 const codigoVerificacao = computed(() => props.agendamento?.codigoVerificacao || 'N/A')
 const motivoRecusa = computed(() => props.agendamento?.motivoRecusa || '')
-const tipoLabel = computed(() => props.agendamento?.tipo || 'Nao informado')
+const tipoLabel = computed(() => props.agendamento?.tipo || 'Não informado')
 const duracaoLabel = computed(() => `${props.agendamento?.duracao || 0} hora(s)`)
 
 const formatarData = (agendamento) => {

@@ -25,7 +25,7 @@
             <thead>
               <tr>
                 <th>Nome</th>
-                <th>Posicao</th>
+                <th>Posição</th>
               </tr>
             </thead>
             <tbody>
@@ -96,11 +96,11 @@
           <input id="nomeJogadorGerenciar" v-model="gerenciarNomeJogador" type="text" placeholder="Digite o nome"
             class="dropdown-gerenciar" />
 
-          <label for="numeroJogadorGerenciar">Numero do jogador:</label>
+          <label for="numeroJogadorGerenciar">Número do jogador:</label>
           <input id="numeroJogadorGerenciar" v-model.number="gerenciarNumeroJogador" type="number" min="1" step="1"
             placeholder="Digite o numero da camisa" class="dropdown-gerenciar" />
 
-          <label>Vincular usuario</label>
+          <label>Vincular usuário</label>
           <div ref="dropdownUsuariosAnchor" class="dropdown-custom-gerenciar">
             <div class="dropdown-selected-gerenciar"
               @click.stop="toggleDropdownUsuarios">
@@ -122,7 +122,7 @@
                 </li>
 
                 <li v-if="gerenciarUsuariosFiltradosComBusca.length === 0" class="sem-jogador-gerenciar">
-                  Nenhum usuario encontrado
+                  Nenhum usuário encontrado
                 </li>
               </ul>
             </div>
@@ -155,7 +155,7 @@
 
               <ul>
                 <li v-if="gerenciarJogadoresExistentesFiltradosComBusca.length === 0" class="sem-jogador-gerenciar">
-                  Nenhum jogador disponivel
+                  Nenhum jogador disponível
                 </li>
 
                 <li v-for="j in gerenciarJogadoresExistentesFiltradosComBusca" :key="j.id"
@@ -212,7 +212,7 @@
         <textarea v-model="gerenciarNomesJogadoresMassa" class="dropdown-gerenciar" rows="4"
           placeholder="Ex:Tiago 04, Pedro 06, Joao 10"></textarea>
         <small style="color:#666">
-          Informe no formato nome numero, separado por virgula ou quebra de linha
+          Informe no formato nome, número, separado por vírgula ou quebra de linha
         </small>
       </div>
 
@@ -611,13 +611,13 @@ export default {
       }
 
       if (!numeroJogador) {
-        Swal.fire('Atenção', 'Informe um numero valido para o jogador', 'warning');
+        Swal.fire('Atenção', 'Informe um número válido para o jogador', 'warning');
         return;
       }
 
       const conflitoNumero = this.obterJogadorComNumeroNoTime(numeroJogador);
       if (conflitoNumero) {
-        Swal.fire('Atenção', `Ja existe um jogador com o numero ${numeroJogador} neste time`, 'warning');
+        Swal.fire('Atenção', `Já existe um jogador com o número ${numeroJogador} neste time`, 'warning');
         return;
       }
 
@@ -662,10 +662,10 @@ export default {
       if (conflitosNumeroNoTime.length || numerosDuplicadosNaSelecao.size) {
         let mensagem = '';
         if (conflitosNumeroNoTime.length) {
-          mensagem += `Numeros ja usados no time:\n${conflitosNumeroNoTime.join(', ')}`;
+          mensagem += `Números ja usados no time:\n${conflitosNumeroNoTime.join(', ')}`;
         }
         if (numerosDuplicadosNaSelecao.size) {
-          mensagem += `${mensagem ? '\n\n' : ''}Numeros repetidos na selecao:\n${Array.from(numerosDuplicadosNaSelecao).join(', ')}`;
+          mensagem += `${mensagem ? '\n\n' : ''}Números repetidos na seleção:\n${Array.from(numerosDuplicadosNaSelecao).join(', ')}`;
         }
         Swal.fire('Atenção', mensagem, 'warning');
         return;
@@ -691,7 +691,7 @@ export default {
         .filter(entrada => entrada.length > 0);
 
       if (entradasDigitadas.length === 0) {
-        Swal.fire('Atenção', 'Informe ao menos um jogador no formato nome numero', 'warning');
+        Swal.fire('Atenção', 'Informe ao menos um jogador no formato nome número', 'warning');
         return;
       }
 
@@ -709,7 +709,7 @@ export default {
       if (invalidas.length > 0) {
         Swal.fire(
           'Atenção',
-          `Formato inválido em ${invalidas.length} item(ns).\nUse: nome numero`,
+          `Formato inválido em ${invalidas.length} item(ns).\nUse: nome número`,
           'warning'
         );
         return;
@@ -761,7 +761,7 @@ export default {
       if (jogadoresParaAdicionar.length === 0) {
         let mensagem = 'Todos os jogadores informados já existem.';
         if (nomesExistentes.length > 0) {
-          mensagem += `\n\nJa existentes:\n${nomesExistentes.join(', ')}`;
+          mensagem += `\n\nJá existentes:\n${nomesExistentes.join(', ')}`;
         }
         if (nomesDuplicadosNoLote.length > 0) {
           mensagem += `\n\nDuplicados no lote:\n${nomesDuplicadosNoLote.join(', ')}`;
@@ -782,18 +782,18 @@ export default {
 
       let mensagem = `${jogadoresParaAdicionar.length} jogador(es) adicionados com sucesso!`;
       if (nomesExistentes.length > 0) {
-        mensagem += `\n\nJa existentes:\n${nomesExistentes.join(', ')}`;
+        mensagem += `\n\nJá existentes:\n${nomesExistentes.join(', ')}`;
       }
       if (nomesDuplicadosNoLote.length > 0) {
         mensagem += `\n\nDuplicados no lote:\n${nomesDuplicadosNoLote.join(', ')}`;
       }
       if (numerosExistentesNoTime.length > 0) {
-        mensagem += `\n\nNumeros ja usados no time:\n${numerosExistentesNoTime.join(', ')}`;
+        mensagem += `\n\nNúmeros ja usados no time:\n${numerosExistentesNoTime.join(', ')}`;
       }
       if (numerosDuplicadosNoLote.size > 0) {
-        mensagem += `\n\nNumeros duplicados no lote:\n${Array.from(numerosDuplicadosNoLote).join(', ')}`;
+        mensagem += `\n\nNúmeros duplicados no lote:\n${Array.from(numerosDuplicadosNoLote).join(', ')}`;
       }
-      Swal.fire('Concluido', mensagem, 'success');
+      Swal.fire('Concluído', mensagem, 'success');
     },
     async removerJogadorGerenciar() {
       if (this.gerenciarJogadoresSelecionadosRemover.length === 0) return;

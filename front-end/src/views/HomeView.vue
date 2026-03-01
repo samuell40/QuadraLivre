@@ -9,7 +9,7 @@
               <span class="primeira-linha">Com o Quadra Livre, <span class="destaque_sublinhado">agendar</span></span>
             </div>
             <div>
-              <span class="segunda-linha destaque">seu treino ficou ainda mais facil.</span>
+              <span class="segunda-linha destaque">seu treino ficou ainda mais fácil.</span>
             </div>
           </h1>
           <p class="hero-subtitle">Com poucos cliques, encontre e reserve a quadra ideal para o seu treino.</p>
@@ -21,8 +21,8 @@
           <div class="quadras-head">
             <div>
               <span class="section-kicker">Agendamento</span>
-              <h2 class="tit_horario">Quadras Disponiveis</h2>
-              <a class="quadras-subtitle">Escolha a melhor opcao para o seu proximo treino!</a>
+              <h2 class="tit_horario">Quadras Disponíveis</h2>
+              <a class="quadras-subtitle">Escolha a melhor opção para o seu próximo treino!</a>
             </div>
           </div>
 
@@ -67,7 +67,7 @@
         <div class="painel-card filtros-card">
           <div class="section-head">
             <div>
-              <span class="section-kicker">Navegacao</span>
+              <span class="section-kicker">Navegação</span>
               <h2>Fase e rodadas</h2>
               <a>Atualize os filtros para trocar a tabela e os resultados exibidos.</a>
             </div>
@@ -102,9 +102,9 @@
           <div class="painel-card placar-wrapper">
             <div class="section-head">
               <div>
-                <span class="section-kicker">Classificacao</span>
+                <span class="section-kicker">Classificação</span>
                 <h2>Tabela do {{ nomeCampeonato }}</h2>
-                <a>Toque em um time para abrir o histrico comaleto de partidas.</a>
+                <a>Toque em um time para abrir o histórico completo de partidas.</a>
               </div>
             </div>
 
@@ -113,7 +113,7 @@
               :colunas-visiveis="colunasClassificacaoVisiveis" @time-click="abrirModalPartidasTime" />
 
             <div v-else class="sem-dados-centralizado sem-dados-alinhado">
-              Nenhuma tabela de classificao disaonvel no momento.
+              Nenhuma tabela de classificação disponível no momento.
             </div>
           </div>
 
@@ -142,7 +142,7 @@
             </div>
 
             <ListaPartidas :partidas="partidas" :loading="isLoadingPartidas"
-              empty-title="Nenhuma partida disaonvel no momento." quadra-class="nome-quadra-home" empty-align="left"
+              empty-title="Nenhuma partida disponível no momento." quadra-class="nome-quadra-home" empty-align="left"
               @time-click="abrirModalPartidasTime" />
           </div>
         </div>
@@ -527,7 +527,7 @@ export default {
           }
         }
       } catch (err) {
-        console.error('Erro ao carregar colunas da classificacao:', err)
+        console.error('Erro ao carregar colunas da classificação:', err)
       }
     },
 
@@ -594,7 +594,7 @@ export default {
 
           Swal.fire({
             icon: 'error',
-            title: 'Conta no encontrada!',
+            title: 'Conta não encontrada!',
             text: 'Redirecionando para cadastro...',
             timer: 3000,
             timerProgressBar: true,

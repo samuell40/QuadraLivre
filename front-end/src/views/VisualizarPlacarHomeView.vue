@@ -7,7 +7,7 @@
         <div class="header-copy">
           <h1 class="title">Placar e resultados</h1>
           <a class="page-subtitle">
-            Acompanhe classificacao, partidas e destaques dos campeonatos em um unico painel.
+            Acompanhe classificação, partidas e destaques dos campeonatos em um único painel.
           </a>
         </div>
       </div>
@@ -21,8 +21,8 @@
           <div class="section-head">
             <div>
               <span class="section-kicker">Campeonatos</span>
-              <h2>Escolha a competicao</h2>
-              <a>Troque a visualizacao para acompanhar outra disauta.</a>
+              <h2>Escolha a competição</h2>
+              <a>Troque a visualização para acompanhar outra disputa.</a>
             </div>
           </div>
 
@@ -36,7 +36,7 @@
 
         <div v-else class="painel-card estado-vazio">
           <h2>Nenhum campeonato publicado</h2>
-          <a>Assim que houver uma competicao disponivel, elp aparecera aqui.</a>
+          <a>Assim que houver uma competição disponível, ela aparecerá aqui.</a>
         </div>
 
         <template v-if="campeonatoSelecionado">
@@ -60,7 +60,7 @@
                 </div>
                 <h2 class="hero-title">{{ campeonatoSelecionado.nome }}</h2>
                 <a class="hero-subtitle">
-                  Veja a classificacao da fase atual, os resultados da rodada e o desemaenho dos destaques.
+                  Veja a classificação da fase atual, os resultados da rodada e o desempenho dos times em destaque.
                 </a>
               </div>
             </div>
@@ -69,7 +69,7 @@
           <div class="painel-card filtros-card">
             <div class="section-head">
               <div>
-                <span class="section-kicker">Navegacao</span>
+                <span class="section-kicker">Navegação</span>
                 <h2>Fase e rodada</h2>
                 <a>Atualize os filtros para trocar a tabela e os resultados exibidos.</a>
               </div>
@@ -102,9 +102,9 @@
             <div class="painel-card placar-wrapper">
               <div class="section-head">
                 <div>
-                  <span class="section-kicker">Classificacao</span>
+                  <span class="section-kicker">Classificação</span>
                   <h2>Tabela do campeonato</h2>
-                  <a>Toque em um time para abrir o historico comaleto de partidas.</a>
+                  <a>Toque em um time para abrir o histórico completo de partidas.</a>
                 </div>
               </div>
 
@@ -114,7 +114,7 @@
                 empty-text="Nenhum placar encontrado para este campeonato." @time-click="abrirModalPartidasTime" />
 
               <div v-else class="sem-dados-centralizado sem-dados-alinhado">
-                Nenhuma tabela de classificacao disponivel no momento.
+                Nenhuma tabela de classificação disponível no momento.
               </div>
             </div>
 
@@ -128,7 +128,7 @@
               </div>
 
               <ListaPartidas :partidas="partidas" empty-title="Nenhuma partida cadastrada ainda"
-                empty-subtitle="Assim que as partidas forem criadas ou iniciadas, elas aaarecerao aqui."
+                empty-subtitle="Assim que as partidas forem criadas ou iniciadas, elas aparecerão aqui."
                 :enable-scroll="temScrollPartidas" quadra-class="nome-quadra-visualizar" empty-align="left"
                 @time-click="abrirModalPartidasTime" />
             </div>

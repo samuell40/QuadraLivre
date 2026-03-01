@@ -225,17 +225,17 @@ export default {
         {
           value: 'PONTOS_CORRIDOS',
           titulo: 'Pontos Corridos',
-          descricao: 'Tabela unica com classificacao geral'
+          descricao: 'Tabela única com classificação geral'
         },
         {
           value: 'PONTOS_CORRIDOS_ELIMINATORIAS',
-          titulo: 'Pontos Corridos Eliminatorias',
-          descricao: 'Pontos corridos seguido de eliminatorias'
+          titulo: 'Pontos Corridos Eliminatórias',
+          descricao: 'Pontos corridos seguido de eliminatórias'
         },
         {
           value: 'ELIMINATORIAS',
-          titulo: 'Eliminatorias',
-          descricao: 'Estilo mata-mata de competicao'
+          titulo: 'Eliminatórias',
+          descricao: 'Estilo mata-mata de competição'
         }
       ]
     }

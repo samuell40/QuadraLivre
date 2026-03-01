@@ -608,18 +608,18 @@ export default {
     async confirmarAlteracaoStatus() {
       try {
         if (this.isMesario && String(this.statusAtualModal || '').toUpperCase() === 'FINALIZADA') {
-          Swal.fire('Atencao', 'Nao e permitido alterar o status de partidas finalizadas.', 'info')
+          Swal.fire('Atenção', 'Não é permitido alterar o status de partidas finalizadas.', 'info')
           this.fecharModalStatus()
           return
         }
 
         if (!this.novoStatus) {
-          Swal.fire('Atencao', 'Selecione um status.', 'info')
+          Swal.fire('Atenção', 'Selecione um status.', 'info')
           return
         }
 
         if (this.novoStatus === this.statusAtualModal) {
-          Swal.fire('Atencao', 'Selecione um novo status na listagem.', 'info')
+          Swal.fire('Atenção', 'Selecione um novo status na listagem.', 'info')
           return
         }
 
@@ -637,7 +637,7 @@ export default {
         Swal.fire({ icon: 'success', title: 'Status atualizado', timer: 1200, showConfirmButton: false })
       } catch (error) {
         console.error(error)
-        Swal.fire('Erro', 'Nao foi possivel alterar o status.', 'error')
+        Swal.fire('Erro', 'Não foi possível alterar o status.', 'error')
       }
     },
 
@@ -708,7 +708,7 @@ export default {
         })
       } catch (error) {
         console.error(error)
-        Swal.fire('Erro', 'Nao foi possivel acessar a partida.', 'error')
+        Swal.fire('Erro', 'Não foi possível acessar a partida.', 'error')
       }
     },
 
@@ -722,12 +722,12 @@ export default {
         if (!partidaId) throw new Error('Partida invalida.')
 
         if (partidaObj?.status === 'AGENDADA') {
-          Swal.fire('Atencao', 'No dia da partida, altere o status para EM ANDAMENTO para iniciar.', 'info')
+          Swal.fire('Atenção', 'No dia da partida, altere o status para EM ANDAMENTO para iniciar.', 'info')
           return
         }
 
         if (this.isMesario && partidaObj?.status === 'FINALIZADA') {
-          Swal.fire('Atencao', 'Partidas finalizadas nao podem ser editadas.', 'info')
+          Swal.fire('Atenção', 'Partidas finalizadas não podem ser editadas.', 'info')
           return
         }
 
@@ -744,7 +744,7 @@ export default {
         await this.irParaTelaPartida(partidaId)
       } catch (error) {
         console.error(error)
-        Swal.fire('Erro', 'Nao foi possivel acessar a partida.', 'error')
+        Swal.fire('Erro', 'Não foi possível acessar a partida.', 'error')
       }
     },
 
@@ -754,13 +754,13 @@ export default {
 
       const statusAtual = String(partida?.status || '').toUpperCase()
       if (!['CANCELADA', 'EM_ANDAMENTO'].includes(statusAtual)) {
-        Swal.fire('Atencao', 'Somente partidas canceladas ou em andamento podem ser removidas.', 'info')
+        Swal.fire('Atenção', 'Somente partidas canceladas ou em andamento podem ser removidas.', 'info')
         return
       }
 
       const resultado = await Swal.fire({
         title: 'Tem certeza?',
-        text: 'A partida sera removida da listagem.',
+        text: 'A partida será removida da listagem.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
@@ -785,7 +785,7 @@ export default {
         await this.carregarPartidasPorFaseRodada()
       } catch (error) {
         console.error(error)
-        const mensagem = error.response?.data?.error || 'Nao foi possivel remover a partida.'
+        const mensagem = error.response?.data?.error || 'Não foi possível remover a partida.'
         Swal.fire({ title: 'Erro', text: mensagem, icon: 'error' })
       }
     },
@@ -797,7 +797,7 @@ export default {
         this.$router.push({ path: '/partida', query: { partidaId: partida.id } })
       } catch (error) {
         console.error(error)
-        Swal.fire('Erro', 'Nao foi possivel retomar essa partida.', 'error')
+        Swal.fire('Erro', 'Não foi possível retomar essa partida.', 'error')
       }
     },
 

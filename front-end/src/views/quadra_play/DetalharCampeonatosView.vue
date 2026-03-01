@@ -6,9 +6,9 @@
     <div class="conteudo" :class="{ collapsed: sidebarCollapsed }">
       <div class="header">
         <div class="header-copy">
-          <h1 class="title">Edicao e configuracoes</h1>
+          <h1 class="title">Edição e configurações</h1>
           <a class="page-subtitle">
-            Ajuste identidade visual, regras e criterios em um unico painel.
+            Ajuste identidade visual, regras e critérios em um único painel.
           </a>
         </div>
       </div>
@@ -33,7 +33,7 @@
             </div>
             <h2 class="hero-title">{{ campeonato.nome }}</h2>
             <a class="hero-subtitle">
-              Um esaaco central para organizar estrutura, configuracoes e oaeracao do campeonato.
+              Um espaço central para organizar estrutura, configurações e operação do campeonato.
             </a>
           </div>
         </div>
@@ -43,7 +43,7 @@
         <div class="section-head">
           <div>
             <span class="section-kicker">Cadastro</span>
-            <h2>Informacoes do campeonato</h2>
+            <h2>Informações do campeonato</h2>
             <a>Atualize nome, imagem, quadra vinculada e data de encerramento.</a>
           </div>
         </div>
@@ -75,14 +75,14 @@
           </div>
 
           <div class="regra-item">
-            <label class="regra-label">Data de finalizacao</label>
+            <label class="regra-label">Data de finalização</label>
             <input v-model="formEdicao.dataFim" class="regra-select" type="date" />
           </div>
         </div>
 
         <div class="actions">
           <button class="btn-save" :disabled="salvandoEdicao" @click="salvarEdicao">
-            {{ salvandoEdicao ? 'Salvando...' : 'Salvar informacoes' }}
+            {{ salvandoEdicao ? 'Salvando...' : 'Salvar informações' }}
           </button>
         </div>
       </div>
@@ -90,9 +90,9 @@
       <div v-if="campeonato" class="card-regras">
         <div class="section-head">
           <div>
-            <span class="section-kicker">Oaeracao</span>
-            <h2>Configuracoes do {{ formatarNomeExibicao(campeonato?.modalidade?.nome) }}</h2>
-            <a>Controle regras, ordem de classificacao e equipe de mesa da competicao.</a>
+            <span class="section-kicker">Operação</span>
+            <h2>Configurações do {{ formatarNomeExibicao(campeonato?.modalidade?.nome) }}</h2>
+            <a>Controle regras, ordem de classificação e equipe de mesa da competição.</a>
           </div>
         </div>
         <h2>Configurações do {{ String(campeonato?.modalidade?.nome).toLowerCase() }}</h2>
@@ -112,7 +112,7 @@
             :class="{ ativa: abaConfigAtiva === 'criterios' }"
             @click="abrirAbaCriterios"
           >
-            Criterios de classificacao
+            Critérios de classificação
           </button>
           <button
             v-if="podeGerenciarMesarios"
@@ -121,7 +121,7 @@
             :class="{ ativa: abaConfigAtiva === 'mesarios' }"
             @click="abrirAbaMesarios"
           >
-            Mesarios
+            Mesários
           </button>
         </div>
 
@@ -156,11 +156,11 @@
 
         <div v-else-if="abaConfigAtiva === 'criterios'" class="criterios-wrapper">
           <a class="descricao-criterios">
-            Arraste para definir a ordem de classificacao.
+            Arraste para definir a ordem de classificação.
           </a>
 
           <div v-if="!criteriosClassificacao.length" class="vazio-criterios">
-            Nenhum criterio encontrado para este campeonato.
+            Nenhum critério encontrado para este campeonato.
           </div>
 
           <div v-else class="lista-criterios">
@@ -188,7 +188,7 @@
 
         <div v-else class="mesarios-wrapper">
           <a class="descricao-criterios">
-            Vincule os mesarios que podem atuar neste campeonato.
+            Vincule os mesários que podem atuar neste campeonato.
           </a>
 
           <div class="campo-busca-mesario">
@@ -196,20 +196,20 @@
               v-model.trim="buscaMesario"
               type="text"
               class="regra-select"
-              placeholder="Buscar mesario por nome ou email"
+              placeholder="Buscar mesário por nome ou email"
             />
           </div>
 
           <div v-if="carregandoMesarios" class="vazio-criterios">
-            Carregando mesarios...
+            Carregando mesários...
           </div>
 
           <div v-else-if="!mesariosDisponiveis.length" class="vazio-criterios">
-            Nenhum mesario disponivel para vinculo.
+            Nenhum mesário disponível para vinculo.
           </div>
 
           <div v-else-if="!mesariosFiltrados.length" class="vazio-criterios">
-            Nenhum mesario encontrado para a busca informada.
+            Nenhum mesário encontrado para a busca informada.
           </div>
 
           <div v-else class="lista-mesarios">
@@ -324,27 +324,27 @@ export default {
       const comuns = [
         {
           key: 'suspensaoAmarelos',
-          label: 'Suspensao automatica por amarelos',
+          label: 'Suspensão automática por amarelos',
           options: opcoesSuspensao(2, 10)
         },
         {
           key: 'suspensaoVermelhos',
-          label: 'Suspensao automatica por vermelhos',
+          label: 'Suspensão automática por vermelhos',
           options: opcoesSuspensao(1, 10)
         },
         {
           key: 'separarCartoesPorFase',
-          label: 'Separar cartoes de cada fase',
+          label: 'Separar cartões de cada fase',
           options: [
-            { label: 'Nao', value: false },
+            { label: 'Não', value: false },
             { label: 'Sim', value: true }
           ]
         },
         {
           key: 'resetarCartoesCadaFase',
-          label: 'Resetar cartoes ao trocar de fase',
+          label: 'Resetar cartões ao trocar de fase',
           options: [
-            { label: 'Nao', value: false },
+            { label: 'Não', value: false },
             { label: 'Sim', value: true }
           ]
         }
@@ -376,7 +376,7 @@ export default {
             options: [
               { label: '2 pontos sempre', value: 'VITORIA_2_SEMPRE' },
               { label: '3 pontos sempre', value: 'VITORIA_3_SEMPRE' },
-              { label: '3 pontos para diferenca de sets maior que 1', value: 'VITORIA_3_DIF_SETS_MAIOR_1' }
+              { label: '3 pontos para diferença de sets maior que 1', value: 'VITORIA_3_DIF_SETS_MAIOR_1' }
             ]
           },
           {
@@ -385,7 +385,7 @@ export default {
             options: [
               { label: '0 pontos sempre', value: 'DERROTA_0_SEMPRE' },
               { label: '1 ponto sempre', value: 'DERROTA_1_SEMPRE' },
-              { label: '1 ponto para diferenca de sets menor que 2', value: 'DERROTA_1_DIF_SETS_MENOR_2' }
+              { label: '1 ponto para diferença de sets menor que 2', value: 'DERROTA_1_DIF_SETS_MENOR_2' }
             ]
           },
           {
@@ -399,7 +399,7 @@ export default {
       return [
         {
           key: 'pontosVitoria',
-          label: 'Pontos por vitoria',
+          label: 'Pontos por vitória',
           options: opcoesNumericas(0, 10)
         },
         {
@@ -541,7 +541,7 @@ export default {
         this.formEdicao.foto = data?.fileUrl || ''
       } catch (err) {
         console.error('Erro ao enviar imagem:', err)
-        await Swal.fire('Erro', 'Nao foi possivel enviar a imagem.', 'error')
+        await Swal.fire('Erro', 'Não foi possível enviar a imagem.', 'error')
       } finally {
         this.uploadingImagem = false
       }
@@ -567,10 +567,10 @@ export default {
         const { data } = await api.put(`/campeonato/${this.campeonato.id}`, payload)
         this.campeonato = data
         this.preencherFormularioEdicao()
-        await Swal.fire('Sucesso', 'Informacoes atualizadas com sucesso.', 'success')
+        await Swal.fire('Sucesso', 'Informações atualizadas com sucesso.', 'success')
       } catch (err) {
         console.error('Erro ao salvar edicao:', err)
-        await Swal.fire('Erro', 'Nao foi possivel salvar as informacoes.', 'error')
+        await Swal.fire('Erro', 'Não foi possível salvar as informações.', 'error')
       } finally {
         this.salvandoEdicao = false
       }
@@ -595,7 +595,7 @@ export default {
         await Swal.fire('Sucesso', 'Regras atualizadas com sucesso.', 'success')
       } catch (err) {
         console.error('Erro ao salvar regras:', err)
-        await Swal.fire('Erro', 'Nao foi possivel salvar as regras.', 'error')
+        await Swal.fire('Erro', 'Não foi possível salvar as regras.', 'error')
       } finally {
         this.salvandoRegras = false
       }
@@ -641,7 +641,7 @@ export default {
           ? data.vinculadosIds.map(id => Number(id)).filter(id => Number.isInteger(id) && id > 0)
           : []
       } catch (err) {
-        console.error('Erro ao carregar mesarios do campeonato:', err)
+        console.error('Erro ao carregar mesários do campeonato:', err)
         this.mesariosDisponiveis = []
         this.mesariosSelecionados = []
       } finally {
@@ -668,10 +668,10 @@ export default {
           mesariosVinculados: [...this.mesariosSelecionados]
         }
 
-        await Swal.fire('Sucesso', 'Mesarios atualizados com sucesso.', 'success')
+        await Swal.fire('Sucesso', 'Mesários atualizados com sucesso.', 'success')
       } catch (err) {
-        console.error('Erro ao salvar mesarios do campeonato:', err)
-        await Swal.fire('Erro', 'Nao foi possivel salvar os mesarios.', 'error')
+        console.error('Erro ao salvar mesários do campeonato:', err)
+        await Swal.fire('Erro', 'ão foi possível salvar os mesários.', 'error')
       } finally {
         this.salvandoMesarios = false
       }
@@ -689,7 +689,7 @@ export default {
           .filter(c => c && typeof c.value === 'string' && typeof c.label === 'string')
           .map(c => ({ value: c.value, label: c.label }))
       } catch (err) {
-        console.error('Erro ao carregar criterios de classificacao:', err)
+        console.error('Erro ao carregar critérios de classificação:', err)
         this.criteriosClassificacao = []
       }
     },
@@ -711,10 +711,10 @@ export default {
         const ordem = this.criteriosClassificacao.map(c => ({ value: c.value, label: c.label }))
         await api.put(`/campeonatos/${this.campeonato.id}/classificacao/ordem`, { ordem })
         this.campeonato.ordemClassificacao = ordem
-        await Swal.fire('Sucesso', 'Criterios atualizados com sucesso.', 'success')
+        await Swal.fire('Sucesso', 'Critérios atualizados com sucesso.', 'success')
       } catch (err) {
-        console.error('Erro ao salvar criterios de classificacao:', err)
-        await Swal.fire('Erro', 'Nao foi possivel salvar os criterios.', 'error')
+        console.error('Erro ao salvar critérios de classificação:', err)
+        await Swal.fire('Erro', 'Não foi possível salvar os critérios.', 'error')
       } finally {
         this.salvandoCriterios = false
       }
@@ -725,7 +725,7 @@ export default {
 
       const confirmacao = await Swal.fire({
         title: 'Remover campeonato?',
-        text: 'Essa acao remove o campeonato é ele não aparecera mais na lista.',
+        text: 'Essa ação remove o campeonato e ele não aparecerá mais na lista.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Sim, remover',
@@ -743,7 +743,7 @@ export default {
         this.$router.push({ name: 'TelaInicial' })
       } catch (err) {
         console.error('Erro ao remover campeonato:', err)
-        await Swal.fire('Erro', 'Nao foi possivel remover o campeonato.', 'error')
+        await Swal.fire('Erro', 'Não foi possível remover o campeonato.', 'error')
       } finally {
         this.removendoCampeonato = false
       }

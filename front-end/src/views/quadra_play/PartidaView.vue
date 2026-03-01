@@ -9,7 +9,7 @@
           <h1 class="title" :class="{ 'title-finalizada': isFinalizada, 'title-andamento': isEmAndamento }">Controles da
             Partida</h1>
           <p class="page-subtitle">
-            Atualize o placar, eventos e substituicoes de cada time.
+            Atualize o placar, eventos e substituições de cada time.
           </p>
         </div>
 

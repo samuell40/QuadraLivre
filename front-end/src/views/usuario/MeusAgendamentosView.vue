@@ -17,7 +17,7 @@
                 <span class="btn-acao-texto">Novo agendamento</span>
               </button>
             </div>
-            <p class="subtitulo-agendamento">Acompanhe e gerencie suas reservas em um so lugar.</p>
+            <p class="subtitulo-agendamento">Acompanhe e gerencie suas reservas em um só lugar.</p>
           </div>
         </section>
 
@@ -82,12 +82,12 @@
                 </button>
 
                 <span class="info-paginacao">
-                  Pagina <strong>{{ paginasAtuais[abaAtiva] }}</strong> de {{ getTotalPaginas(abaAtiva) }}
+                  Página <strong>{{ paginasAtuais[abaAtiva] }}</strong> de {{ getTotalPaginas(abaAtiva) }}
                 </span>
 
                 <button class="btn-paginacao" :disabled="paginasAtuais[abaAtiva] === getTotalPaginas(abaAtiva)"
                   @click="mudarPagina(abaAtiva, 1)">
-                  Proxima &gt;
+                  Próxima &gt;
                 </button>
               </div>
             </template>
@@ -125,17 +125,17 @@ const TAB_META = {
   confirmados: {
     kicker: "CONFIRMADOS",
     title: "Reservas confirmadas",
-    description: "Visualize os horarios ja aprovados e gere o comprovante quando precisar.",
+    description: "Visualize os horarios já aprovados e gere o comprovante quando precisar.",
     empty: "Nenhum agendamento futuro confirmado.",
   },
   pendentes: {
     kicker: "PENDENTES",
-    title: "Solicitacoes em analise",
-    description: "Acompanhe os pedidos que ainda aguardam confirmacao da quadra.",
-    empty: "Nenhuma solicitacao pendente no momento.",
+    title: "Solicitações em análise",
+    description: "Acompanhe os pedidos que ainda aguardam confirmação da quadra.",
+    empty: "Nenhuma solicitação pendente no momento.",
   },
   recusados: {
-    kicker: "HISTORICO",
+    kicker: "HISTÓRICO",
     title: "Recusados e cancelados",
     description: "Consulte as reservas recusadas ou canceladas anteriormente.",
     empty: "Nenhum agendamento recusado ou cancelado.",
@@ -186,7 +186,7 @@ const carregarAgendamentos = async () => {
 
         return {
           id: a.id,
-          quadra: a.quadra?.nome || "Nao informado",
+          quadra: a.quadra?.nome || "Não informado",
           quadraId: a.quadra?.id || null,
           dataObj,
           dataFormatada: dataObj.toLocaleDateString("pt-BR"),
@@ -209,7 +209,7 @@ const carregarAgendamentos = async () => {
     Swal.fire({
       icon: "error",
       title: "Erro",
-      text: "Nao foi possivel carregar seus agendamentos.",
+      text: "Não foi possível carregar seus agendamentos.",
       confirmButtonColor: "#1E3A8A",
     });
   } finally {
@@ -227,13 +227,13 @@ const deveMostrarBotoes = (ag) => {
 const cancelarAgendamento = async (id) => {
   const confirmacao = await Swal.fire({
     title: "Cancelar agendamento?",
-    text: "Essa acao nao podera ser desfeita.",
+    text: "Essa ação não poderá ser desfeita.",
     icon: "warning",
     showCancelButton: true,
     confirmButtonColor: "#1E3A8A",
     cancelButtonColor: "#d33",
     confirmButtonText: "Sim, cancelar",
-    cancelButtonText: "Nao",
+    cancelButtonText: "Não",
     customClass: {
       confirmButton: "swal-botao",
       cancelButton: "swal-botao",
@@ -258,7 +258,7 @@ const cancelarAgendamento = async (id) => {
       Swal.fire({
         icon: "error",
         title: "Erro",
-        text: "Nao foi possivel cancelar o agendamento.",
+        text: "Não foi possível cancelar o agendamento.",
         confirmButtonColor: "#1E3A8A",
       });
     }
@@ -325,7 +325,7 @@ const gerarPdfAgendamento = async (agendamento) => {
 
   doc.setFontSize(8);
   doc.setTextColor(120, 120, 120);
-  doc.text("CODIGO DE VERIFICACAO", 70, 64, { align: "center" });
+  doc.text("CÓDIGO DE VERIFICAÇÃO", 70, 64, { align: "center" });
 
   doc.setFontSize(14);
   doc.setTextColor(...corPrimaria);

@@ -13,7 +13,7 @@
                 <span class="resumo-texto">Avisos pendentes</span>
               </div>
             </div>
-            <p class="subtitulo">Acompanhe atualizacoes das quadras e visualize o historico no mesmo painel.</p>
+            <p class="subtitulo">Acompanhe atualizações das quadras e visualize o histórico no mesmo painel.</p>
           </div>
         </section>
 
@@ -31,7 +31,7 @@
             <div class="abas-config-container-aviso">
               <button type="button" class="aba-config-aviso" :class="{ ativa: abaAtiva === 'naoLidos' }"
                 @click="abaAtiva = 'naoLidos'">
-                <span>Nao lidos</span>
+                <span>Não lidos</span>
                 <span class="badge-total">{{ getTodosPorTipo('naoLidos').length }}</span>
               </button>
 
@@ -107,12 +107,12 @@
                 </button>
 
                 <span class="info-paginacao">
-                  Pagina <strong>{{ paginasAtuais[abaAtiva] }}</strong> de {{ getTotalPaginas(abaAtiva) }}
+                  Página <strong>{{ paginasAtuais[abaAtiva] }}</strong> de {{ getTotalPaginas(abaAtiva) }}
                 </span>
 
                 <button class="btn-paginacao" :disabled="paginasAtuais[abaAtiva] === getTotalPaginas(abaAtiva)"
                   @click="mudarPagina(abaAtiva, 1)">
-                  Proxima &gt;
+                  Próxima &gt;
                 </button>
               </div>
             </template>
@@ -132,18 +132,18 @@ import Swal from "sweetalert2";
 const TAB_META = {
   naoLidos: {
     kicker: "PENDENTES",
-    title: "Avisos nao lidos",
-    description: "Veja as atualizacoes recentes que ainda pedem sua atencao.",
+    title: "Avisos não lidos",
+    description: "Veja as atualizações recentes que ainda pedem sua atenção.",
   },
   importantes: {
     kicker: "DESTAQUES",
     title: "Avisos importantes",
-    description: "Priorize comunicados fixados e informacoes com maior urgencia.",
+    description: "Priorize comunicados fixados e informações com maior urgência.",
   },
   lidos: {
     kicker: "HISTORICO",
     title: "Avisos visualizados",
-    description: "Consulte o historico de comunicados ja conferidos anteriormente.",
+    description: "Consulte o histórico de comunicados já conferidos anteriormente.",
   },
 };
 
@@ -157,8 +157,8 @@ export default {
       abaAtiva: "naoLidos",
       mensagensVazias: {
         importantes: "Nenhum aviso importante pendente.",
-        naoLidos: "Voce esta em dia com os avisos.",
-        lidos: "Nenhum aviso no historico.",
+        naoLidos: "Você está em dia com os avisos.",
+        lidos: "Nenhum aviso no histórico.",
       },
       ITENS_POR_PAGINA: 8,
       paginasAtuais: {
@@ -264,7 +264,7 @@ export default {
         Swal.fire({
           icon: "error",
           title: "Erro",
-          text: "Nao foi possivel carregar os avisos.",
+          text: "Não foi possível carregar os avisos.",
         });
       } finally {
         this.loading = false;
