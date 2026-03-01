@@ -2,78 +2,126 @@
   <div class="layout">
     <SideBar />
     <div class="conteudo">
-      <h1 class="title">Usuarios</h1>
-      <NavBarUse />
-      <div class="input-busca-wrapper">
-        <svg xmlns="http://www.w3.org/2000/svg" class="input-busca-icone" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-        <input type="text" placeholder="Digite o nome do usuario..." v-model="busca" class="input-busca"
-          :disabled="isLoading" />
-      </div>
+      <NavBarUse class="page-nav" />
 
-      <div v-if="isLoading" class="loader-container-centralizado">
-        <div class="loader"></div>
-      </div>
+      <section class="page-header">
+        <div class="header-copy">
+          <h1 class="title">Gestao de usuarios</h1>
+        </div>
+      </section>
 
-      <div v-else>
-        <div class="usuarios" v-if="usuariosFiltrados.length > 0">
-          <div class="card" v-for="usuario in usuariosFiltrados" :key="usuario.id">
-            <div class="card-conteudo">
-              <div class="foto">
-                <img :src="usuario.foto" alt="Foto do usuario" />
-              </div>
+      <section class="controls-panel">
+        <div class="panel-head">
+          <div class="panel-copy">
+            <p class="section-kicker">BUSCA</p>
+            <h2 class="section-title">{{ tituloBuscaUsuarios }}</h2>
+            <p class="section-subtitle">
+              Filtre por nome e acesse rapidamente detalhes, contatos e configuracoes de acesso.
+            </p>
+          </div>
 
-              <div class="info">
-                <div class="info-header">
-                  <h2>{{ usuario.nome }}</h2>
-                  <div class="badge-permissao badge-permissao-lista">
-                    <span>{{ String(usuario.permissao?.descricao || 'Sem permissao').toUpperCase() }}</span>
-                  </div>
-                </div>
-                <p class="detalhe-contato">
-                  <span>{{ usuario.email }}</span>
-                  <svg v-if="usuario.email" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                    viewBox="0 0 48 48" class="icon" @click="contatoGmail(usuario)"
-                    style="cursor:pointer; margin-left: 8px;">
-                    <path fill="#4caf50" d="M45,16.2l-5,2.75l-5,4.75L35,40h7c1.657,0,3-1.343,3-3V16.2z" />
-                    <path fill="#1e88e5" d="M3,16.2l3.614,1.71L13,23.7V40H6c-1.657,0-3-1.343-3-3V16.2z" />
-                    <polygon fill="#e53935" points="35,11.2 24,19.45 13,11.2 12,17 13,23.7 24,31.95 35,23.7 36,17" />
-                    <path fill="#c62828"
-                      d="M3,12.298V16.2l10,7.5V11.2L9.876,8.859C9.132,8.301,8.228,8,7.298,8h0C4.924,8,3,9.924,3,12.298z" />
-                    <path fill="#fbc02d"
-                      d="M45,12.298V16.2l-10,7.5V11.2l3.124-2.341C38.868,8.301,39.772,8,40.702,8h0C43.076,8,45,9.924,45,12.298z" />
-                  </svg>
-                </p>
-                <p class="detalhe-contato">
-                  <span>{{ usuario.telefone }}</span>
-                  <svg v-if="usuario.telefone" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#25D366"
-                    class="icon" viewBox="0 0 16 16" @click="contatoWhatsApp(usuario)"
-                    style="cursor:pointer; margin-left: 8px;">
-                    <path
-                      d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232" />
-                  </svg>
-                </p>
-              </div>
-            </div>
+          <span class="panel-pill">{{ resumoPainelUsuarios }}</span>
+        </div>
 
-            <div class="botoes">
-              <button class="btn-editar" @click="editarUsuario(usuario)">
-                {{ usuarioLogado.permissaoId === 2
-                  ? 'Gerenciar Usuarios'
-                  : 'Alterar Permissoes'
-                }}
+        <label class="search-shell" for="busca-usuarios">
+          <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input id="busca-usuarios" type="text" :placeholder="placeholderBuscaUsuarios" v-model="busca"
+            class="search-input" :disabled="isLoading" />
+        </label>
+      </section>
 
-              </button>
-
-              <button class="btn-detalhar" @click="detalhesUsuario(usuario)">Detalhar</button>
-            </div>
+      <section class="users-panel">
+        <div class="panel-head">
+          <div class="panel-copy">
+            <p class="section-kicker">USUARIOS</p>
           </div>
         </div>
-        <p v-else class="sem-resultados">Nenhum usuario encontrado.</p>
-      </div>
+
+        <div class="abas-config-container user-tabs">
+          <button
+            v-for="aba in abasUsuarios"
+            :key="aba.id"
+            type="button"
+            class="aba-config"
+            :class="{ ativa: abaUsuariosAtiva === aba.id }"
+            @click="abaUsuariosAtiva = aba.id"
+          >
+            {{ aba.label }}
+          </button>
+        </div>
+
+        <div v-if="isLoading" class="state-card state-card-loading">
+          <div class="loader loader-inline"></div>
+          <p class="state-title">Carregando usuarios...</p>
+          <p class="state-copy">Buscando os perfis disponiveis para gerenciamento.</p>
+        </div>
+
+        <div v-else-if="usuariosFiltrados.length > 0" class="usuarios">
+          <article class="card" v-for="usuario in usuariosFiltrados" :key="usuario.id">
+            <div class="card-conteudo">
+              <div class="card-profile">
+                <div class="foto">
+                  <img :src="usuario.foto" alt="Foto do usuario" />
+                </div>
+
+                <div class="info">
+                  <div class="identity-block">
+                    <div class="info-header">
+                      <h2>{{ usuario.nome }}</h2>
+                    </div>
+                  </div>
+
+                  <div class="contact-list">
+                    <div class="detalhe-contato">
+                      <span>{{ usuario.email || 'E-mail nao informado' }}</span>
+                      <button v-if="usuario.email" type="button" class="contact-action contact-action-mail"
+                        @click="contatoGmail(usuario)" aria-label="Abrir e-mail do usuario">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 48 48">
+                          <path fill="#4caf50" d="M45,16.2l-5,2.75l-5,4.75L35,40h7c1.657,0,3-1.343,3-3V16.2z" />
+                          <path fill="#1e88e5" d="M3,16.2l3.614,1.71L13,23.7V40H6c-1.657,0-3-1.343-3-3V16.2z" />
+                          <polygon fill="#e53935" points="35,11.2 24,19.45 13,11.2 12,17 13,23.7 24,31.95 35,23.7 36,17" />
+                          <path fill="#c62828"
+                            d="M3,12.298V16.2l10,7.5V11.2L9.876,8.859C9.132,8.301,8.228,8,7.298,8h0C4.924,8,3,9.924,3,12.298z" />
+                          <path fill="#fbc02d"
+                            d="M45,12.298V16.2l-10,7.5V11.2l3.124-2.341C38.868,8.301,39.772,8,40.702,8h0C43.076,8,45,9.924,45,12.298z" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <div class="detalhe-contato">
+                      <span>{{ usuario.telefone || 'Telefone nao informado' }}</span>
+                      <button v-if="usuario.telefone" type="button" class="contact-action contact-action-wa"
+                        @click="contatoWhatsApp(usuario)" aria-label="Abrir WhatsApp do usuario">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#25D366" viewBox="0 0 16 16">
+                          <path
+                            d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="botoes">
+                <button class="btn-editar" @click="editarUsuario(usuario)">
+                  {{ usuarioLogado.permissaoId === 2 ? 'Gerenciar usuario' : 'Alterar permissoes' }}
+                </button>
+
+                <button class="btn-detalhar" @click="detalhesUsuario(usuario)">Detalhar</button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div v-else class="state-card">
+          <p class="state-title">Nenhum usuario encontrado.</p>
+          <p class="state-copy">Tente outro termo de busca para localizar um perfil desta visao.</p>
+        </div>
+      </section>
     </div>
 
     <!-- Modal de detalhar -->
@@ -324,6 +372,7 @@ export default {
       jogadores: [],
       mostrarContato: false,
       abrirDropdown: false,
+      abaUsuariosAtiva: 'usuarios',
       form: {
         email: '',
         permissaoId: null,
@@ -335,6 +384,23 @@ export default {
   },
 
   computed: {
+    metadadosAbasUsuarios() {
+      return {
+        desenvolvedores: { label: 'Desenvolvedores', singular: 'desenvolvedor' },
+        administradores: { label: 'Administradores', singular: 'administrador' },
+        usuarios: { label: 'Usuarios', singular: 'usuario' },
+        treinadores: { label: 'Treinadores', singular: 'treinador' },
+        mesarios: { label: 'Mesarios', singular: 'mesario' },
+      }
+    },
+
+    abaUsuariosSelecionada() {
+      const primeiraAbaVisivel = this.abasUsuarios[0]?.id
+      return this.metadadosAbasUsuarios[this.abaUsuariosAtiva]
+        || this.metadadosAbasUsuarios[primeiraAbaVisivel]
+        || this.metadadosAbasUsuarios.usuarios
+    },
+
     usuarioLogado() {
       const authStore = useAuthStore()
       return authStore.usuario || {}
@@ -348,7 +414,26 @@ export default {
       return this.usuarioLogado.email
     },
 
-    usuariosFiltrados() {
+    abasUsuarios() {
+      const ordemAbas = ['desenvolvedores', 'administradores', 'usuarios', 'treinadores', 'mesarios']
+      const permissaoLogado = Number(this.usuarioLogado.permissaoId)
+
+      let abasVisiveis = ordemAbas
+      if (permissaoLogado === 1) {
+        abasVisiveis = ordemAbas
+      } else if (permissaoLogado === 2) {
+        abasVisiveis = ordemAbas.filter(id => !['desenvolvedores', 'administradores'].includes(id))
+      } else {
+        abasVisiveis = ordemAbas.filter(id => id !== 'desenvolvedores')
+      }
+
+      return abasVisiveis.map(id => ({
+        id,
+        label: this.metadadosAbasUsuarios[id].label,
+      }))
+    },
+
+    usuariosBaseFiltrados() {
       return this.usuarios
         .filter(u =>
           u.nome.toLowerCase().includes(this.busca.toLowerCase())
@@ -360,6 +445,47 @@ export default {
           }
           return true
         })
+    },
+
+    usuariosFiltrados() {
+      const mapaAbas = {
+        usuarios: [3],
+        treinadores: [5],
+        administradores: [2],
+        desenvolvedores: [1],
+        mesarios: [4],
+      }
+
+      const permissoesDaAba = mapaAbas[this.abaUsuariosAtiva] || []
+      return this.usuariosBaseFiltrados.filter(u => permissoesDaAba.includes(Number(u.permissaoId)))
+    },
+
+    totalUsuariosVisiveis() {
+      return this.usuariosBaseFiltrados.length
+    },
+
+    totalUsuariosComContato() {
+      return this.usuariosBaseFiltrados.filter(u => Boolean(u.email || u.telefone)).length
+    },
+
+    totalPerfisOperacionais() {
+      return this.usuariosBaseFiltrados.filter(u => [2, 3, 4, 5].includes(Number(u.permissaoId))).length
+    },
+
+    tituloBuscaUsuarios() {
+      return `Encontrar ${this.abaUsuariosSelecionada.singular}`
+    },
+
+    placeholderBuscaUsuarios() {
+      return `Digite o nome do ${this.abaUsuariosSelecionada.singular}...`
+    },
+
+    resumoPainelUsuarios() {
+      if (this.busca.trim()) {
+        return `${this.usuariosFiltrados.length} resultado(s) em ${this.abaUsuariosSelecionada.label}`
+      }
+
+      return `${this.usuariosFiltrados.length} perfil(is) em ${this.abaUsuariosSelecionada.label}`
     },
 
     jogadoresDisponiveis() {
@@ -412,6 +538,19 @@ export default {
 
     ultimaAtividadeSelecionado() {
       return this.formatarDataHora(this.usuarioSelecionado?.ultimaAtividade)
+    },
+  },
+
+  watch: {
+    abasUsuarios: {
+      immediate: true,
+      handler(abas) {
+        if (!abas.length) return
+
+        if (!abas.some(aba => aba.id === this.abaUsuariosAtiva)) {
+          this.abaUsuariosAtiva = abas[0].id
+        }
+      },
     },
   },
 
@@ -679,71 +818,199 @@ export default {
 
 .conteudo {
   flex: 1;
-  padding: 22px 24px;
   margin-left: 250px;
+  padding: 20px 32px 32px;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.page-nav {
+  margin-bottom: 18px;
+}
+
+.page-header {
+  margin-bottom: 22px;
+}
+
+.header-copy,
+.panel-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.page-kicker,
+.section-kicker,
+.metric-kicker {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #2563eb;
 }
 
 .title {
+  margin: 0;
+  font-size: 42px;
+  line-height: 1.04;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+.page-subtitle,
+.section-subtitle,
+.metric-caption,
+.state-copy {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #64748b;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.overview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px 14px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.06);
+}
+
+.metric-value {
+  margin: 0;
   font-size: 30px;
-  color: #3b82f6;
-  font-weight: bold;
-  margin-top: 4px;
-  margin-bottom: 8px;
+  line-height: 1;
+  font-weight: 800;
+  color: #0f172a;
 }
 
-.SideBar {
-  width: 250px;
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  z-index: 100;
-  transition: transform 0.3s ease;
+.overview-card-contact .metric-value {
+  color: #059669;
 }
 
-.input-busca-wrapper {
+.overview-card-operational .metric-value {
+  color: #d97706;
+}
+
+.controls-panel,
+.users-panel {
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.06);
+}
+
+.controls-panel {
+  margin-bottom: 18px;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.15;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.panel-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.abas-config-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 18px;
+  background: rgba(248, 250, 252, 0.85);
+  overflow-x: auto;
+}
+
+.aba-config {
+  flex: 1 0 0;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: #64748b;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.aba-config.ativa {
+  color: #1d4ed8;
+  border-color: rgba(59, 130, 246, 0.18);
+  background: #fff;
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.06);
+}
+
+.search-shell {
   position: relative;
-  margin-top: 14px;
-  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  min-height: 50px;
+  padding: 0 14px 0 44px;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: #f8fafc;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
-.input-busca-icone {
+.search-shell:focus-within {
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  background: #ffffff;
+}
+
+.search-icon {
   position: absolute;
   left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
   width: 18px;
   height: 18px;
   color: #94a3b8;
   pointer-events: none;
 }
 
-.input-busca {
-  padding: 12px 12px 12px 42px;
-  border: 1px solid rgba(15, 23, 42, 0.14);
-  border-radius: 12px;
+.search-input {
   width: 100%;
-  margin-top: 0;
-  margin-bottom: 0;
+  border: none;
+  background: transparent;
   font-size: 14px;
-  color: #0f172a;
-  background: #fff;
+  color: #334155;
   outline: none;
-  box-sizing: border-box;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
-}
-
-.input-busca:hover {
-  border-color: rgba(59, 130, 246, 0.55);
-}
-
-.input-busca:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
-}
-
-.input-busca-wrapper:focus-within .input-busca-icone {
-  color: #3b82f6;
 }
 
 select {
@@ -768,7 +1035,6 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
 }
 
-/* Dropdown custom */
 .dropdown-selected {
   display: flex;
   align-items: center;
@@ -815,47 +1081,46 @@ select:focus {
 
 .usuarios {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
-}
-
-.sem-resultados {
-  color: #999;
-  font-style: italic;
-  text-align: center;
-  margin-top: 30px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .card {
   display: flex;
   flex-direction: column;
-  background-color: white;
-  border-radius: 12px;
+  gap: 12px;
   padding: 14px;
-  gap: 8px;
-  min-height: 0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: linear-gradient(180deg, #fbfdff 0%, #ffffff 100%);
+  box-shadow: 0 16px 28px rgba(15, 23, 42, 0.06);
 }
 
 .card-conteudo {
   display: flex;
-  flex-direction: row;
-  gap: 14px;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+}
+
+.card-profile {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
 }
 
 .foto {
-  flex: 0 0 92px;
-  width: 92px;
-  height: 92px;
+  flex: 0 0 102px;
+  width: 102px;
+  height: 102px;
   display: flex;
   justify-content: center;
   align-items: center;
   border-radius: 999px;
   padding: 4px;
   background: linear-gradient(145deg, #90dcff 0%, #56b8ff 45%, #2e78f4 100%);
-  box-shadow: 0 0 0 2px #ebf6ff, 0 0 0 4px rgba(86, 184, 255, 0.30), 0 6px 14px rgba(45, 116, 229, 0.24);
+  box-shadow: 0 0 0 2px #ebf6ff, 0 0 0 4px rgba(86, 184, 255, 0.3), 0 6px 14px rgba(45, 116, 229, 0.24);
 }
 
 .foto img {
@@ -869,70 +1134,152 @@ select:focus {
 
 .info {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   justify-content: center;
+  gap: 8px;
+}
+
+.identity-block {
+  min-width: 0;
+  width: 100%;
 }
 
 .info-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 1px;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
 }
 
 .info h2 {
   margin: 0;
-  font-size: 18px;
-  color: #333;
-  font-weight: bold;
-  text-transform: uppercase;
+  font-size: 20px;
+  line-height: 1.08;
+  color: #0f172a;
+  font-weight: 800;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.info p {
-  margin: 3px 0;
-  color: #666;
-  font-size: 13px;
+.contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  align-self: stretch;
+}
+
+.detalhe-contato {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(180deg, rgba(239, 246, 255, 0.88) 0%, rgba(248, 250, 252, 0.96) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  width: 100%;
+}
+
+.detalhe-contato span {
+  min-width: 0;
+  font-size: 12px;
+  color: #334155;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contact-action {
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.contact-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+}
+
+.contact-action-mail {
+  background: rgba(59, 130, 246, 0.06);
+}
+
+.contact-action-wa {
+  background: rgba(34, 197, 94, 0.08);
 }
 
 .botoes {
   display: flex;
   gap: 8px;
-  margin-top: 6px;
-  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.btn-editar,
+.btn-detalhar,
+.btn-salvarEdicao {
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.btn-editar:hover,
+.btn-detalhar:hover,
+.btn-salvarEdicao:hover {
+  transform: translateY(-1px);
 }
 
 .btn-editar,
 .btn-detalhar {
   flex: 1;
-  padding: 5px 0;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s ease, transform 0.2s ease;
+  min-height: 38px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
 }
 
-.btn-editar {
-  background-color: #3b82f6;
-  color: white;
+.btn-editar,
+.btn-salvarEdicao {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.22);
 }
 
 .btn-detalhar {
-  background-color: #7E7E7E;
-  color: white;
+  background: rgba(15, 23, 42, 0.06);
+  color: #334155;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.btn-detalhar:hover {
+  background: rgba(15, 23, 42, 0.1);
 }
 
 .btn-salvarEdicao {
-  background-color: #3b82f6;
-  color: white;
-  flex: 1;
-  padding: 10px 0;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  font-weight: bold;
+  width: 100%;
+  min-height: 44px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
 }
 
 .botoes-edicao {
@@ -944,37 +1291,78 @@ select:focus {
   width: 100%;
 }
 
-.detalhe-contato {
+.state-card {
+  min-height: 260px;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  padding: 24px;
+  border-radius: 22px;
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  background: #f8fafc;
 }
 
-.icon:hover {
-  opacity: 0.8;
-  transform: scale(1.1);
-  transition: 0.2s;
+.state-card-loading {
+  border-style: solid;
+}
+
+.state-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.loader {
+  border: 5px solid #e2e8f0;
+  border-top: 5px solid #3b82f6;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  animation: spin 1s linear infinite;
+}
+
+.loader-inline {
+  width: 52px;
+  height: 52px;
+}
+
+.loader-small {
+  width: 38px;
+  height: 38px;
+  border-width: 4px;
+}
+
+.loader-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 150px;
 }
 
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 16px;
   z-index: 1000;
 }
 
 .modal-content {
-  background: white;
-  padding: 30px 40px;
-  border-radius: 10px;
-  width: 900px;
-  max-width: 90%;
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2);
+  width: min(760px, 92vw);
+  max-width: 92vw;
 }
 
 .modal-content h2 {
@@ -1131,33 +1519,6 @@ select:focus {
   border-color: rgba(255, 255, 255, 0.18);
 }
 
-.loader-container-centralizado {
-  position: fixed;
-  top: 50%;
-  left: 55%;
-  transform: translate(-60%, -50%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-.loader {
-  border: 6px solid #f3f3f3;
-  border-top: 6px solid #3b82f6;
-  border-radius: 50%;
-  width: 100px;
-  height: 100px;
-  animation: spin 1s linear infinite;
-}
-
-.loader-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 150px;
-}
-
 .loader-pequeno {
   border: 3px solid #f3f3f3;
   border-top: 3px solid #fff;
@@ -1312,16 +1673,6 @@ select:focus {
 
 .badge-permissao-panel {
   margin-top: 8px;
-}
-
-.badge-permissao-lista {
-  margin: 0;
-  width: fit-content;
-  padding: 4px 9px;
-  min-height: 24px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 700;
 }
 
 .shield-icon {
@@ -1540,11 +1891,6 @@ select:focus {
     padding: 8px 12px;
   }
 
-  .badge-permissao-lista {
-    margin-left: auto;
-    margin-right: auto;
-  }
-
   .user-grid {
     grid-template-columns: 1fr;
     gap: 10px;
@@ -1659,14 +2005,6 @@ select:focus {
     gap: 6px;
   }
 
-  .info-header .badge-permissao-lista {
-    margin: 0;
-    font-size: 10px;
-    padding: 2px 7px;
-    min-height: 20px;
-    border-radius: 9px;
-  }
-
   .info {
     min-width: 0;
     width: 100%;
@@ -1695,6 +2033,332 @@ select:focus {
   .modal-content {
     width: 95%;
     padding: 20px;
+  }
+
+  .modal-header-edicao {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+  }
+
+  .abas-container {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .aba {
+    flex: 1 1 48%;
+    font-size: 13px;
+    padding: 10px 8px;
+  }
+
+  select {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .overview-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  .panel-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .usuarios {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .conteudo {
+    margin-left: 0;
+    padding: 12px 14px 18px;
+    width: auto;
+    box-sizing: border-box;
+  }
+
+  .page-nav {
+    margin-bottom: 18px;
+  }
+
+  .page-header {
+    margin-top: 50px;
+    margin-bottom: 18px;
+  }
+
+  .title {
+    font-size: 24px;
+    line-height: 1.12;
+    margin: 0;
+    padding-left: 0;
+    min-height: 0;
+    display: block;
+  }
+
+  .page-subtitle,
+  .section-subtitle,
+  .detalhe-contato span {
+    font-size: 13px;
+  }
+
+  .overview-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .overview-card {
+    padding: 10px 8px 9px;
+    border-radius: 14px;
+    gap: 5px;
+  }
+
+  .page-kicker,
+  .section-kicker,
+  .metric-kicker {
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+
+  .metric-value {
+    font-size: 20px;
+  }
+
+  .metric-caption {
+    font-size: 9px;
+    line-height: 1.25;
+  }
+
+  .controls-panel,
+  .users-panel,
+  .modal-content {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .panel-head {
+    gap: 12px;
+  }
+
+  .panel-pill {
+    min-height: 30px;
+    font-size: 11px;
+  }
+
+  .abas-config-container {
+    gap: 8px;
+    padding: 5px;
+  }
+
+  .aba-config {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 9px 6px;
+    font-size: 15px;
+    line-height: 1.15;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .search-shell {
+    min-height: 46px;
+    padding-left: 40px;
+    border-radius: 16px;
+  }
+
+  .search-icon {
+    left: 13px;
+    width: 17px;
+    height: 17px;
+  }
+
+  .usuarios {
+    gap: 12px;
+  }
+
+  .card {
+    padding: 12px;
+    border-radius: 18px;
+    gap: 12px;
+    min-height: auto;
+  }
+
+  .card-conteudo {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .card-profile {
+    display: grid;
+    grid-template-columns: 84px minmax(0, 1fr);
+    grid-template-areas:
+      "foto identity"
+      "contact contact";
+    gap: 10px;
+    align-items: center;
+  }
+
+  .foto {
+    grid-area: foto;
+    flex: 0 0 84px;
+    width: 84px;
+    height: 84px;
+    padding: 3px;
+    box-shadow: 0 0 0 2px #ebf6ff, 0 0 0 3px rgba(86, 184, 255, 0.28), 0 5px 10px rgba(45, 116, 229, 0.2);
+  }
+
+  .info {
+    display: contents;
+  }
+
+  .identity-block,
+  .contact-list {
+    max-width: none;
+  }
+
+  .identity-block {
+    grid-area: identity;
+    width: 100%;
+    align-self: center;
+  }
+
+  .info h2 {
+    font-size: 20px;
+    line-height: 1.04;
+  }
+
+  .info-header {
+    gap: 6px;
+    justify-content: flex-start;
+  }
+
+  .contact-list {
+    grid-area: contact;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .detalhe-contato {
+    padding: 8px 10px;
+    border-radius: 12px;
+    gap: 7px;
+  }
+
+  .contact-action {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+  }
+
+  .botoes {
+    gap: 8px;
+    flex-direction: row;
+    margin-top: 3px;
+    width: 100%;
+  }
+
+  .btn-editar,
+  .btn-detalhar {
+    flex: 1 1 0;
+    min-height: 40px;
+    font-size: 13px;
+    padding: 0 10px;
+  }
+
+  .modal-content.modal-detalhes-user {
+    width: calc(100% - 12px);
+    max-height: calc(100vh - 20px);
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .modal-user-header {
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+  }
+
+  .modal-title {
+    font-size: 24px;
+    line-height: 1.2;
+  }
+
+  .btn-close-x-user {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .user-profile {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .user-top-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .avatar-wrap {
+    width: 132px;
+    height: 132px;
+    box-shadow: 0 0 0 3px #ebf6ff, 0 0 0 6px rgba(86, 184, 255, 0.35), 0 8px 20px rgba(45, 116, 229, 0.22);
+  }
+
+  .user-name {
+    font-size: 24px;
+  }
+
+  .badge-permissao {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+  .user-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .info-card {
+    border-radius: 16px;
+    padding: 10px;
+  }
+
+  .info-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .info-actions {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .icon-btn {
+    width: 42px;
+    height: 42px;
+  }
+
+  .stats-inline {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .stats-card .stat {
+    flex-wrap: wrap;
+  }
+
+  .btn-fechar-premium {
+    padding: 12px;
+    border-radius: 16px;
   }
 
   .modal-header-edicao {

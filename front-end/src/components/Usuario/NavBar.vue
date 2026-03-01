@@ -36,6 +36,17 @@
           </router-link>
         </li>
 
+        <li class="quadra-play-item-mobile">
+          <button type="button" class="quadra-play-mobile-link" @click="acessarQuadraPlay">
+            QuadraPlay
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+              class="bi bi-arrow-left-right" viewBox="0 0 16 16">
+              <path fill-rule="evenodd"
+                d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5" />
+            </svg>
+          </button>
+        </li>
+
         <li class="sair-item">
           <a href="#" @click.prevent="logout" class="sair">Sair</a>
         </li>
@@ -49,6 +60,8 @@
 <script>
 import router from '@/router'
 import api from '@/axios'
+import Swal from 'sweetalert2'
+import { redirecionarMesarioPosLogin } from '@/utils/quadraPlayMesarioRedirect'
 
 export default {
   name: 'NavbarUser',
@@ -111,7 +124,45 @@ export default {
       this.isMenuOpen = !this.isMenuOpen
     },
 
+    closeMenu() {
+      this.isMenuOpen = false
+    },
+
+    async acessarQuadraPlay() {
+      this.closeMenu()
+
+      if ([1, 2].includes(this.usuarioLogado.permissaoId)) {
+        localStorage.setItem('quadraPlayLoginAtivo', '1')
+        router.push({ name: 'TelaInicial' })
+        return
+      }
+
+      if (this.usuarioLogado.permissaoId === 4) {
+        localStorage.setItem('quadraPlayLoginAtivo', '1')
+        await redirecionarMesarioPosLogin(router)
+        return
+      }
+
+      localStorage.removeItem('quadraPlayLoginAtivo')
+
+      if ([3, 5].includes(this.usuarioLogado.permissaoId)) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Acesso negado',
+          text: 'Você não tem permissão para acessar o QuadraPlay.'
+        })
+        return
+      }
+
+      Swal.fire({
+        icon: 'info',
+        title: 'Acesso não permitido',
+        text: 'Seu perfil não possui acesso ao QuadraPlay.'
+      })
+    },
+
     logout() {
+      this.closeMenu()
       localStorage.removeItem('token')
       localStorage.removeItem('usuario')
       localStorage.removeItem('quadraPlayLoginAtivo')
@@ -241,6 +292,30 @@ export default {
   display: none;
 }
 
+.quadra-play-item-mobile {
+  display: none;
+}
+
+.quadra-play-mobile-link {
+  border: 2px solid #3B82F6;
+  background: transparent;
+  color: #ffffff;
+  padding: 8px 22px;
+  border-radius: 18px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.quadra-play-mobile-link svg {
+  width: 18px;
+  height: 18px;
+}
+
 @media (max-width: 768px) {
   .nav-links {
     display: none;
@@ -258,6 +333,10 @@ export default {
     padding: 20px 0;
     gap: 20px;
     margin-left: 0;
+  }
+
+  .quadra-play-item-mobile {
+    display: block;
   }
 
   .hamburger {

@@ -6,25 +6,43 @@
       <SidebarQuadra @sidebar-toggle="sidebarCollapsed = $event" />
 
       <div class="conteudo" :class="{ collapsed: sidebarCollapsed }">
-        <div class="header-times">
-          <div class="header-top">
-            <h2 class="title">Gerenciar Times</h2>
+        <div class="header">
+          <div class="header-copy">
+            <div class="header-top">
+              <h1 class="title">Gerenciar Times</h1>
 
-            <button class="btn-add" @click="abrirModalAdicionarTime">
-              Adicionar Time
-            </button>
+              <button class="btn-add" @click="abrirModalAdicionarTime">
+                Adicionar time
+              </button>
+            </div>
+
+            <a class="page-subtitle">
+              Cadastre equipes, troque a modalidade ativa e abra os detalhes para editar elenco e informacoes do time.
+            </a>
           </div>
         </div>
 
-        <div v-if="isLoading" class="loader-container-centralizado">
-          <div class="loader"></div>
+        <div v-if="isLoading" class="painel-card estado-card">
+          <div class="loader-container-centralizado">
+            <div class="loader"></div>
+          </div>
         </div>
 
         <div v-else>
-          <div class="abas-container">
-            <div class="aba" v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id"
-              :class="{ ativa: modalidadeSelecionada === modalidade.id }" @click="selecionarModalidade(modalidade.id)">
-              {{ modalidade.nome.charAt(0).toUpperCase() + modalidade.nome.slice(1) }}
+          <div class="painel-card modalidades-card">
+            <div class="section-head">
+              <div>
+                <span class="section-kicker">Modalidades</span>
+                <h2>Selecione a modalidade</h2>
+                <a>Troque a visualizacao para gerenciar os times cadastrados em cada categoria.</a>
+              </div>
+            </div>
+
+            <div class="abas-container">
+              <div class="aba" v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id"
+                :class="{ ativa: modalidadeSelecionada === modalidade.id }" @click="selecionarModalidade(modalidade.id)">
+                {{ formatarNomeModalidade(modalidade.nome) }}
+              </div>
             </div>
           </div>
           <!-- MODAIS -->
@@ -35,25 +53,36 @@
             :modalidadeSelecionada="modalidadeSelecionada" @fechar="fecharModalDetalharTime"
             @atualizar-lista="carregarTimes" />
 
-          <div v-if="isLoadingTimes" class="loader-container-centralizado">
-            <div class="loader"></div>
-          </div>
+          <div class="painel-card times-aanel">
+            <div class="section-head">
+              <div>
+                <span class="section-kicker">Times</span>
+                <h2>{{ tituloListaTimes }}</h2>
+                <a>{{ subtituloListaTimes }}</a>
+              </div>
+            </div>
 
-          <div v-else>
-            <div v-if="times && times.length" class="lista-times">
+            <div v-if="isLoadingTimes" class="estado-card-conteudo">
+              <div class="loader-container-centralizado">
+                <div class="loader"></div>
+              </div>
+            </div>
+
+            <div v-else-if="times && times.length" class="lista-times">
               <div v-for="time in times" :key="time.id" class="card">
                 <div class="card-conteudo">
-                  <div class="foto">
-                    <img :src="time.foto" :alt="time.nome" />
+                  <div class="foto" :class="{ 'foto-sem-imagem': !time.foto }">
+                    <img v-if="time.foto" :src="time.foto" :alt="time.nome" />
+                    <span v-else>{{ obterIniciaisTime(time.nome) }}</span>
                   </div>
 
                   <div class="info">
                     <h2>{{ time.nome }}</h2>
-                    <p>
+                    <a>
                       {{ obterQtdJogadores(time) }}
                       jogador{{ obterQtdJogadores(time) === 1 ? '' : 'es' }}
-                    </p>
-                    <p>Treinador: {{ time.treinador }}</p>
+                    </a>
+                    <a>Treinador: {{ time.treinador || 'Nao informado' }}</a>
                   </div>
                 </div>
 
@@ -69,7 +98,7 @@
               </div>
             </div>
 
-            <div v-else class="mensagem-placar">
+            <div v-else class="estado-vazio">
               Nenhum time encontrado para esta modalidade.
             </div>
           </div>
@@ -115,6 +144,21 @@ export default {
   mounted() {
     this.carregarModalidades().finally(() => { this.isLoading = false; });
   },
+  computed: {
+    nomeModalidadeSelecionada() {
+      const modalidade = this.modalidadesDisponiveis.find(item => Number(item.id) === Number(this.modalidadeSelecionada));
+      return modalidade?.nome || '';
+    },
+    tituloListaTimes() {
+      const nome = this.formatarNomeModalidade(this.nomeModalidadeSelecionada || 'modalidade');
+      return `Times de ${nome}`;
+    },
+    subtituloListaTimes() {
+      const total = Array.isArray(this.times) ? this.times.length : 0;
+      const nome = this.formatarNomeModalidade(this.nomeModalidadeSelecionada || 'modalidade selecionada');
+      return `${total} ${total === 1 ? 'equipe encontrada' : 'equipes encontradas'} para ${nome}. Abra os detalhes para editar o cadastro do time.`;
+    }
+  },
   watch: {
     modalidadeSelecionada() {
       this.carregarTimes();
@@ -140,6 +184,20 @@ export default {
 
     editarTime(time) {
       Swal.fire('Editar', `Abrir modal de editar para: ${time.nome}`, 'info');
+    },
+    formatarNomeModalidade(nome) {
+      const texto = String(nome || '').trim();
+      if (!texto) return '';
+      return texto.charAt(0).toUpperCase() + texto.slice(1);
+    },
+    obterIniciaisTime(nome) {
+      const aartes = String(nome || '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2);
+
+      return aartes.map(parte => parte.charAt(0).toUpperCase()).join('') || '--';
     },
     selecionarModalidade(id) {
       if (this.modalidadeSelecionada === id) return;
@@ -220,6 +278,11 @@ export default {
 </script>
 
 <style scoped>
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
 .layout {
   display: flex;
   flex-direction: column;
@@ -247,114 +310,135 @@ export default {
   margin-left: 70px;
 }
 
-.header-times {
-  position: relative;
-  z-index: 1;
-  margin-bottom: 16px;
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.header-copy {
+  width: 100%;
 }
 
 .header-top {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: center;
-  gap: 14px;
+  gap: 16px;
 }
 
 .title {
-  margin: 0;
-  color:  #3b82f6;
-  font-size: 34px;
+  margin: 14px 0 10px;
+  color: #2563eb;
+  font-size: 40px;
+  line-height: 0.98;
   font-weight: 800;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.04em;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+.page-subtitle {
+  margin: 0;
+  max-width: 760px;
+  color: #475569;
+  font-size: 17px;
+  line-height: 1.6;
 }
 
-.botoes {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.btn-modalidade,
 .btn-add {
-  padding: 12px 18px;
-  border: 1px solid rgba(59, 130, 246, 0.35);
-  border-radius: 999px;
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid rgba(59, 130, 246, 0.32);
+  border-radius: 14px;
   cursor: pointer;
   color: #fff;
-  background-color: #3b82f6;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
   font-weight: 700;
-  letter-spacing: -0.1px;
-  box-shadow: 0 10px 18px rgba(59, 130, 246, 0.22);
+  font-size: 14px;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  box-shadow: 0 14px 26px rgba(59, 130, 246, 0.22);
   transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.btn-modalidade:hover,
 .btn-add:hover {
   background-color: #2563eb;
   transform: translateY(-1px);
-  box-shadow: 0 14px 26px rgba(59, 130, 246, 0.28);
+  box-shadow: 0 16px 28px rgba(59, 130, 246, 0.28);
 }
 
-.dropdown {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid #d1d5db;
-  font-size: 15px;
-  color: #0f172a;
-  background: #fff;
-  margin-bottom: 10px;
-  outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+.painel-card {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  padding: 24px;
 }
 
-.dropdown:hover {
-  border-color: rgba(59, 130, 246, 0.65);
-}
-
-.dropdown:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
-}
-
-.dropdown-row {
+.section-head {
   display: flex;
-  gap: 20px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-.dropdown-row .team {
-  flex: 1;
+.section-head h2 {
+  margin: 6px 0 8px;
+  color: #0f172a;
+  font-size: 28px;
+  line-height: 1.05;
+}
+
+.section-head a {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.section-kicker {
+  display: inline-flex;
+  align-items: center;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.modalidades-card {
+  margin-bottom: 20px;
+  padding: 20px 22px;
 }
 
 .abas-container {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
-  margin: 16px 0 22px;
 }
 
 .aba {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: 10px 10px;
-  border-radius: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
   cursor: pointer;
-  background: #f1f5f9;
+  background: #f8fafc;
   color: #334155;
   font-weight: 700;
   letter-spacing: -0.1px;
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .aba:hover {
-  background: #eaf2ff;
+  background: #eef4ff;
   transform: translateY(-1px);
   box-shadow: 0 10px 16px rgba(15, 23, 42, 0.06);
 }
@@ -366,11 +450,14 @@ export default {
   box-shadow: 0 14px 24px rgba(59, 130, 246, 0.22);
 }
 
+.times-aanel {
+  min-width: 0;
+}
+
 .lista-times {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  margin-top: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
 }
 
 .card {
@@ -378,44 +465,55 @@ export default {
   flex-direction: column;
   gap: 14px;
   background: #fff;
-  border-radius: 18px;
-  padding: 18px 18px 16px;
+  border-radius: 22px;
+  padding: 18px;
   border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 18px 32px rgba(15, 23, 42, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.12);
 }
 
 .card-conteudo {
   display: flex;
-  flex-direction: row;
-  gap: 18px;
+  gap: 16px;
   align-items: center;
-  justify-content: space-between;
+  min-width: 0;
 }
 
 .foto {
-  flex: 0 0 96px;
-  display: flex;
+  flex: 0 0 80px;
+  width: 80px;
+  height: 80px;
+  display: inline-flex;
   justify-content: center;
   align-items: center;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, #dbeafe, #eff6ff);
+  border: 2px solid rgba(59, 130, 246, 0.28);
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.10);
 }
 
 .foto img {
-  width: 92px;
-  height: 92px;
-  border-radius: 50%;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border: 2px solid rgba(59, 130, 246, 0.75);
-  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.12);
+}
+
+.foto-sem-imagem {
+  color: #2563eb;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
 
 .info {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -427,32 +525,33 @@ export default {
   font-size: 20px;
   color: #0f172a;
   font-weight: 800;
-  letter-spacing: -0.2px;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
 }
 
-.info p {
+.info a {
   margin: 0;
   color: #475569;
   font-size: 14px;
   font-weight: 600;
+  line-height: 1.45;
 }
 
-.card .botoes {
+.botoes {
   display: flex;
   gap: 12px;
-  margin-top: 10px;
-  justify-content: flex-end;
+  margin-top: 4px;
 }
 
 .btn-editar,
 .btn-detalhar {
   flex: 1;
-  padding: 12px 0;
+  min-height: 44px;
   border-radius: 999px;
   cursor: pointer;
-  font-weight: 900;
-  font-size: 14px;
-  letter-spacing: 0.5px;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
@@ -483,23 +582,38 @@ export default {
   transform: translateY(-1px);
 }
 
-.loader-container-centralizado {
-  position: fixed;
-  top: 50%;
-  left: 55%;
-  transform: translate(-60%, -50%);
+.estado-card {
+  min-height: 240px;
+}
+
+.estado-card-conteudo,
+.estado-vazio {
+  min-height: 220px;
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
+}
+
+.estado-vazio {
+  color: #64748b;
+  text-align: center;
+  font-size: 15px;
+}
+
+.loader-container-centralizado {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 180px;
 }
 
 .loader {
   border: 6px solid #f3f3f3;
   border-top: 6px solid #3b82f6;
   border-radius: 50%;
-  width: 100px;
-  height: 100px;
+  width: 82px;
+  height: 82px;
   animation: spin 1s linear infinite;
 }
 
@@ -516,61 +630,117 @@ export default {
 @media (max-width: 768px) {
   .conteudo {
     margin-left: 0;
-    margin-top: 70px;
-    padding: 18px;
+    margin-top: 34px;
+    padding: 14px;
   }
 
   .conteudo.collapsed {
     margin-left: 0;
   }
 
+  .header {
+    margin-bottom: 12px;
+  }
+
+  .header-copy {
+    max-width: 100%;
+  }
+
   .header-top {
-    margin-top: -40px;
-    align-items: flex-start;
+    gap: 10px;
   }
 
   .title {
+    margin: 0 0 8px;
     font-size: 30px;
-    margin: 0;
+    line-height: 1.04;
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .btn-add {
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .painel-card {
+    padding: 18px;
+    border-radius: 24px;
+  }
+
+  .section-head {
+    margin-bottom: 14px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .section-head h2 {
+    font-size: 24px;
+  }
+
+  .modalidades-card {
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+
+  .abas-container {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .aba {
+    min-height: 42px;
+    padding: 6px 4px;
+    border-radius: 12px;
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  .times-aanel {
+    padding: 16px;
   }
 
   .lista-times {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
 
   .card-conteudo {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+    align-items: flex-start;
+    text-align: left;
   }
 
-  .foto img {
-    width: 80px;
-    height: 80px;
+  .foto {
+    flex: 0 0 68px;
+    width: 68px;
+    height: 68px;
   }
 
   .info h2 {
     font-size: 18px;
   }
 
-  .info p {
+  .info a {
     font-size: 13px;
   }
 
   .card .botoes {
-    flex-direction: column;
     gap: 10px;
   }
 
   .btn-editar,
   .btn-detalhar {
-    width: 100%;
-    padding: 11px 0;
-  }
-
-  .abas-container {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
+    min-height: 42px;
+    font-size: 12px;
   }
 }
 </style>
+
+
+
+

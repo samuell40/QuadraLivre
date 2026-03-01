@@ -1,858 +1,1299 @@
 <template>
-    <div class="layout">
-        <SideBar />
+  <div class="layout">
+    <SideBar />
 
-        <div class="conteudo">
-            <div class="header-gerenciar">
-                <h1 class="title">Gerenciar Quadras</h1>
+    <div class="conteudo">
+      <section class="page-header">
+        <div class="header-copy">
+          <div class="header-topline">
+            <h1 class="title">{{ tituloPagina }}</h1>
 
-                <button v-if="authStore.usuario?.permissaoId === 1" class="btn-cadastrar-topo"
-                    @click="abrirModalCadastro">
-                    Adicionar Quadra
-                </button>
-            </div>
-
-            <div v-if="isLoading" class="loader-container-centralizado">
-                <div class="loader"></div>
-            </div>
-
-            <div v-else>
-                <div v-if="quadras.length === 0" style="text-align: center; color: #666; margin-top: 50px;">
-                    <h3>Nenhuma quadra vinculada ao seu perfil.</h3>
-                </div>
-
-                <div class="quadras-grid">
-                    <div class="card-quadra" v-for="quadra in quadras" :key="quadra.id">
-                        <div class="status-badge" :class="quadra.interditada ? 'interditada' : 'ativa'">
-                            {{ quadra.interditada ? 'INDISPONÍVEL' : 'ATIVA' }}
-                        </div>
-
-                        <img :src="quadra.foto || require('@/assets/futibinha.png')" :alt="quadra.nome"
-                            class="imagem-quadra" />
-
-                        <div class="overlay">
-                            <h3 class="nome-quadra">{{ quadra.nome }}</h3>
-                            <p class="endereco">{{ quadra.endereco }}</p>
-
-                            <div class="botoes-acao">
-                                <button class="btn-editar-card" @click="abrirModalEdicao(quadra)">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor"
-                                        viewBox="0 0 16 16" class="btn-icon">
-                                        <path
-                                            d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z" />
-                                    </svg>
-                                    Editar Quadra
-                                </button>
-
-                                <button class="btn-grade-card" @click="abrirModalGrade(quadra)">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor"
-                                        class="btn-icon" viewBox="0 0 16 16">
-                                        <path
-                                            d="M8.5 5.5a.5.5 0 0 0-1 0v3.362l-1.429 2.38a.5.5 0 1 0 .858.515l1.5-2.5A.5.5 0 0 0 8.5 9V5.5z" />
-                                        <path
-                                            d="M6.5 0a.5.5 0 0 0 0 1H7v1.07a7.001 7.001 0 0 0-3.273 12.474l-.602.602a.5.5 0 0 0 .707.708l.746-.746A6.97 6.97 0 0 0 8 16a6.97 6.97 0 0 0 3.422-.892l.746.746a.5.5 0 0 0 .707-.708l-.601-.602A7.001 7.001 0 0 0 9 2.07V1h.5a.5.5 0 0 0 0-1h-3zm1.038 3.018a6.093 6.093 0 0 1 .924 0 6 6 0 1 1-.924 0zM0 3.5a.5.5 0 0 1 .5-.5h15a.5.5 0 0 1 0 1H.5a.5.5 0 0 1-.5-.5z" />
-                                    </svg>
-                                    Horários
-                                </button>
-
-                                <button class="btn-status-card"
-                                    :class="quadra.interditada ? 'btn-liberar' : 'btn-bloquear'"
-                                    @click="alternarStatus(quadra)">
-                                    <svg v-if="quadra.interditada" xmlns="http://www.w3.org/2000/svg" width="12"
-                                        height="12" fill="currentColor" viewBox="0 0 16 16" class="btn-icon">
-                                        <path
-                                            d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z" />
-                                    </svg>
-                                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12"
-                                        fill="currentColor" viewBox="0 0 16 16" class="btn-icon">
-                                        <path
-                                            d="M15 8a6.97 6.97 0 0 0-1.71-4.584l-9.874 9.875A7 7 0 0 0 15 8M2.71 12.584l9.874-9.875a7 7 0 0 0-9.874 9.874ZM16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0" />
-                                    </svg>
-                                    {{ quadra.interditada ? 'Liberar' : 'Fechar' }}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div v-if="modalCadastroAberto" class="modal-overlay" @click.self="fecharModalCadastro">
-                <div class="modal-content modal-content-cadastro">
-                    <div class="modal-header-edicao-quadra">
-                        <h2 class="title modal-title-edicao">Cadastrar Unidade</h2>
-                        <button type="button" class="btn-close-x-modal" @click="fecharModalCadastro"
-                            aria-label="Fechar modal">
-                            x
-                        </button>
-                    </div>
-
-                    <form @submit.prevent="cadastrarQuadraModal">
-                        <div class="form-group">
-                            <label for="nomeCadastro">Nome da Quadra:</label>
-                            <input
-                                type="text"
-                                id="nomeCadastro"
-                                v-model="formCadastro.nome"
-                                placeholder="Ex: Arena Jurua"
-                                required
-                            />
-                        </div>
-
-                        <div class="form-group">
-                            <label for="enderecoCadastro">Endereço:</label>
-                            <input
-                                type="text"
-                                id="enderecoCadastro"
-                                v-model="formCadastro.endereco"
-                                placeholder="Ex: Rua das Flores, 123 - Centro"
-                                required
-                            />
-                        </div>
-
-                        <div class="form-group">
-                            <label>Modalidades Disponíveis:</label>
-                            <div class="checkbox-list">
-                                <div v-for="mod in todasModalidades" :key="'cad-' + mod.id" class="checkbox-item">
-                                    <input
-                                        type="checkbox"
-                                        :id="'modalidade-cadastro-' + mod.id"
-                                        :value="mod.id"
-                                        v-model="formCadastro.modalidadesSelecionadas"
-                                    />
-                                    <label :for="'modalidade-cadastro-' + mod.id">{{ formatarNomeModalidade(mod.nome) }}</label>
-                                </div>
-                            </div>
-                            <small v-if="erroModalidadeCadastro" class="erro-modalidade-cadastro">
-                                Selecione pelo menos uma modalidade.
-                            </small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="imagemCadastro">Imagem da Quadra:</label>
-                            <input
-                                ref="inputImagemCadastro"
-                                type="file"
-                                id="imagemCadastro"
-                                @change="handleCadastroFileChange"
-                                accept=".jpg, .jpeg, .png"
-                                required
-                            />
-                        </div>
-
-                        <div class="modal-botoes">
-                            <button type="submit" class="btn_salvar_modal" :disabled="salvandoCadastro">
-                                {{ salvandoCadastro ? 'Cadastrando...' : 'Cadastrar Unidade' }}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div v-if="quadraEditando" class="modal-overlay" @click.self="quadraEditando = null">
-                <div class="modal-content">
-                    <div class="modal-header-edicao-quadra">
-                        <h2 class="title modal-title-edicao">Editar Unidade: {{ quadraEditando.nome }}</h2>
-                        <button type="button" class="btn-close-x-modal" @click="quadraEditando = null"
-                            aria-label="Fechar modal">
-                            x
-                        </button>
-                    </div>
-                    <form @submit.prevent="salvarEdicao">
-                        <div class="form-group">
-                            <label for="nome">Nome da Quadra:</label>
-                            <input
-                                type="text"
-                                id="nome"
-                                v-model="formEdicao.nome"
-                                placeholder="Ex: Arena Jurua"
-                                required
-                            />
-                        </div>
-                        <div class="form-group">
-                            <label for="endereco">Endereço:</label>
-                            <input
-                                type="text"
-                                id="endereco"
-                                v-model="formEdicao.endereco"
-                                placeholder="Ex: Rua das Flores, 123 - Centro"
-                                required
-                            />
-                        </div>
-                        <div class="form-group">
-                            <label>Modalidades Disponíveis:</label>
-                            <div class="checkbox-list">
-                                <div v-for="mod in todasModalidades" :key="mod.id" class="checkbox-item">
-                                    <input type="checkbox" :id="'mod-' + mod.id" :value="mod.id"
-                                        v-model="formEdicao.modalidadesSelecionadas" />
-                                    <label :for="'mod-' + mod.id">{{ formatarNomeModalidade(mod.nome) }}</label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="imagem">Atualizar Imagem (Opcional):</label>
-                            <input type="file" id="imagem" @change="handleFileChange" accept=".jpg, .jpeg, .png" />
-                        </div>
-                        <div class="modal-botoes">
-                            <button type="submit" class="btn_salvar_modal">Confirmar Alterações</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <EditarGradeHorariosModal v-if="mostrarModalGrade && quadraParaGrade" :quadra="quadraParaGrade"
-                @fechar="mostrarModalGrade = false" @sucesso="mostrarModalGrade = false" />
-
+            <button
+              v-if="podeCadastrar"
+              type="button"
+              class="btn-top-action"
+              @click="abrirModalCadastro"
+            >
+              <span class="btn-label-desktop">Adicionar quadra</span>
+              <span class="btn-label-mobile">Adicionar</span>
+            </button>
+          </div>
         </div>
+      </section>
+
+      <section v-if="mostrarOverviewCards" class="overview-grid">
+        <article class="overview-card">
+          <p class="metric-kicker">TOTAL</p>
+          <p class="metric-value">{{ totalQuadras }}</p>
+          <span class="metric-caption">Quadras exibidas neste perfil</span>
+        </article>
+
+        <article class="overview-card overview-card-active">
+          <p class="metric-kicker">ATIVAS</p>
+          <p class="metric-value">{{ quadrasAtivas }}</p>
+          <span class="metric-caption">Disponiveis para operacao normal</span>
+        </article>
+
+        <article class="overview-card overview-card-blocked">
+          <p class="metric-kicker">INDISPONIVEIS</p>
+          <p class="metric-value">{{ quadrasIndisponiveis }}</p>
+          <span class="metric-caption">Temporariamente bloqueadas</span>
+        </article>
+      </section>
+
+      <section class="quadras-panel">
+        <div class="panel-head">
+          <div class="panel-copy">
+            <p class="section-kicker">{{ kickerPainel }}</p>
+            <h2 class="section-title">{{ tituloPainel }}</h2>
+            <p class="section-subtitle">
+              {{ subtituloPainel }}
+            </p>
+          </div>
+        </div>
+
+        <div v-if="isLoading" class="state-card">
+          <div class="loader"></div>
+          <p class="state-title">{{ tituloCarregamento }}</p>
+          <p class="state-copy">{{ descricaoCarregamento }}</p>
+        </div>
+
+        <div v-else-if="quadras.length === 0" class="state-card state-card-empty">
+          <p class="state-title">Nenhuma quadra vinculada ao seu perfil.</p>
+          <p class="state-copy">{{ descricaoEstadoVazio }}</p>
+        </div>
+
+        <div v-else class="quadras-grid" :class="{ 'quadras-grid-full': isAdministrador }">
+          <article
+            v-for="quadra in quadras"
+            :key="quadra.id"
+            class="card-quadra"
+            :class="{ 'is-interditada': quadra.interditada }"
+          >
+            <span class="card-status" :class="quadra.interditada ? 'is-indisponivel' : 'is-ativo'">
+              {{ quadra.interditada ? 'Indisponivel' : 'Ativa' }}
+            </span>
+
+            <img
+              :src="quadra.foto || require('@/assets/futibinha.png')"
+              :alt="quadra.nome"
+              class="imagem-quadra"
+            />
+
+            <div class="card-shade"></div>
+
+            <div class="overlay">
+              <div class="card-copy">
+                <p class="card-label">QUADRA</p>
+                <h3 class="nome-quadra">{{ quadra.nome }}</h3>
+              </div>
+
+              <div class="card-actions">
+                <button type="button" class="btn-card btn-card-primary" @click="abrirModalEdicao(quadra)">
+                  Editar
+                </button>
+
+                <button type="button" class="btn-card btn-card-secondary" @click="abrirModalGrade(quadra)">
+                  Horarios
+                </button>
+
+                <button
+                  type="button"
+                  class="btn-card btn-card-wide"
+                  :class="quadra.interditada ? 'btn-card-success' : 'btn-card-danger'"
+                  @click="alternarStatus(quadra)"
+                >
+                  {{ quadra.interditada ? 'Liberar quadra' : 'Fechar quadra' }}
+                </button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <div v-if="modalCadastroAberto" class="modal-overlay" @click.self="fecharModalCadastro">
+        <div class="modal-content modal-content-cadastro">
+          <div class="modal-header">
+            <div>
+              <h2 class="modal-title">Cadastrar unidade</h2>
+              <p class="modal-subtitle">Preencha os dados principais e defina as modalidades disponiveis.</p>
+            </div>
+
+            <button
+              type="button"
+              class="btn-close-x-modal"
+              @click="fecharModalCadastro"
+              aria-label="Fechar modal"
+            >
+              x
+            </button>
+          </div>
+
+          <div class="modal-body-scroll">
+            <form class="modal-form" @submit.prevent="cadastrarQuadraModal">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="nomeCadastro" class="label-input">Nome da quadra</label>
+                  <input
+                    id="nomeCadastro"
+                    v-model="formCadastro.nome"
+                    type="text"
+                    class="input-estilizado"
+                    placeholder="Ex: Arena Jurua"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="enderecoCadastro" class="label-input">Endereco</label>
+                  <input
+                    id="enderecoCadastro"
+                    v-model="formCadastro.endereco"
+                    type="text"
+                    class="input-estilizado"
+                    placeholder="Ex: Rua das Flores, 123 - Centro"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="label-input">Modalidades disponiveis</label>
+                <div class="checkbox-list">
+                  <label
+                    v-for="mod in todasModalidades"
+                    :key="'cad-' + mod.id"
+                    class="checkbox-item"
+                    :for="'modalidade-cadastro-' + mod.id"
+                  >
+                    <input
+                      :id="'modalidade-cadastro-' + mod.id"
+                      v-model="formCadastro.modalidadesSelecionadas"
+                      type="checkbox"
+                      :value="mod.id"
+                    />
+                    <span>{{ formatarNomeModalidade(mod.nome) }}</span>
+                  </label>
+                </div>
+
+                <small v-if="erroModalidadeCadastro" class="erro-modalidade-cadastro">
+                  Selecione pelo menos uma modalidade.
+                </small>
+              </div>
+
+              <div class="form-group">
+                <label for="imagemCadastro" class="label-input">Imagem da quadra</label>
+                <input
+                  id="imagemCadastro"
+                  ref="inputImagemCadastro"
+                  type="file"
+                  class="input-estilizado input-file"
+                  @change="handleCadastroFileChange"
+                  accept=".jpg, .jpeg, .png"
+                  required
+                />
+              </div>
+
+              <div class="modal-actions modal-actions-single">
+                <button type="submit" class="btn-confirmar" :disabled="salvandoCadastro">
+                  {{ salvandoCadastro ? 'Cadastrando...' : 'Cadastrar unidade' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="quadraEditando" class="modal-overlay" @click.self="quadraEditando = null">
+        <div class="modal-content">
+          <div class="modal-header">
+            <div>
+              <h2 class="modal-title">Editar unidade</h2>
+              <p class="modal-subtitle">{{ quadraEditando.nome }}</p>
+            </div>
+
+            <button
+              type="button"
+              class="btn-close-x-modal"
+              @click="quadraEditando = null"
+              aria-label="Fechar modal"
+            >
+              x
+            </button>
+          </div>
+
+          <div class="modal-body-scroll">
+            <form class="modal-form" @submit.prevent="salvarEdicao">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="nome" class="label-input">Nome da quadra</label>
+                  <input
+                    id="nome"
+                    v-model="formEdicao.nome"
+                    type="text"
+                    class="input-estilizado"
+                    placeholder="Ex: Arena Jurua"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="endereco" class="label-input">Endereco</label>
+                  <input
+                    id="endereco"
+                    v-model="formEdicao.endereco"
+                    type="text"
+                    class="input-estilizado"
+                    placeholder="Ex: Rua das Flores, 123 - Centro"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="label-input">Modalidades disponiveis</label>
+                <div class="checkbox-list">
+                  <label
+                    v-for="mod in todasModalidades"
+                    :key="mod.id"
+                    class="checkbox-item"
+                    :for="'mod-' + mod.id"
+                  >
+                    <input
+                      :id="'mod-' + mod.id"
+                      v-model="formEdicao.modalidadesSelecionadas"
+                      type="checkbox"
+                      :value="mod.id"
+                    />
+                    <span>{{ formatarNomeModalidade(mod.nome) }}</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="imagem" class="label-input">Atualizar imagem</label>
+                <input
+                  id="imagem"
+                  type="file"
+                  class="input-estilizado input-file"
+                  @change="handleFileChange"
+                  accept=".jpg, .jpeg, .png"
+                />
+              </div>
+
+              <div class="modal-actions modal-actions-single">
+                <button type="submit" class="btn-confirmar">Confirmar alteracoes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <EditarGradeHorariosModal
+        v-if="mostrarModalGrade && quadraParaGrade"
+        :quadra="quadraParaGrade"
+        @fechar="mostrarModalGrade = false"
+        @sucesso="mostrarModalGrade = false"
+      />
     </div>
+  </div>
 </template>
 
 <script>
-import Swal from "sweetalert2";
-import SideBar from '@/components/SideBar.vue';
-import api from "@/axios";
-import { useAuthStore } from "@/store";
-import EditarGradeHorariosModal from '@/components/modals/Horarios/EditarGradeHorariosModal.vue';
+import Swal from 'sweetalert2'
+import SideBar from '@/components/SideBar.vue'
+import api from '@/axios'
+import { useAuthStore } from '@/store'
+import EditarGradeHorariosModal from '@/components/modals/Horarios/EditarGradeHorariosModal.vue'
 
 export default {
-    name: "AdminGerenciarQuadras",
-    components: { SideBar, EditarGradeHorariosModal },
-    setup() {
-        const authStore = useAuthStore();
-        return { authStore };
-    },
-    data() {
-        return {
-            quadras: [],
-            todasModalidades: [],
-            isLoading: true,
-            quadraEditando: null,
-            formEdicao: { nome: '', endereco: '', imagem: null, modalidadesSelecionadas: [] },
-            modalCadastroAberto: false,
-            formCadastro: { nome: '', endereco: '', imagem: null, modalidadesSelecionadas: [] },
-            erroModalidadeCadastro: false,
-            salvandoCadastro: false,
-            quadraParaGrade: null,
-            mostrarModalGrade: false
-        };
-    },
-    mounted() {
-        this.carregarDados();
-    },
-    methods: {
-        async carregarDados() {
-            this.isLoading = true;
-            try {
-                const [resQuadras, resModalidades] = await Promise.all([
-                    api.get("/quadra"),
-                    api.get("/listar/modalidade")
-                ]);
-
-                const todasAsQuadras = resQuadras.data;
-                const usuario = this.authStore.usuario;
-
-                if (usuario.permissaoId === 2 && usuario.quadraId) {
-                    this.quadras = todasAsQuadras.filter(q => q.id === usuario.quadraId);
-                } else {
-                    this.quadras = todasAsQuadras;
-                }
-
-                this.todasModalidades = resModalidades.data;
-            } catch (err) {
-                Swal.fire("Erro de Sistema", "Não foi possível carregar os dados das quadras.", "error");
-            } finally {
-                this.isLoading = false;
-            }
-        },
-
-        abrirModalEdicao(quadra) {
-            this.quadraEditando = quadra;
-            this.formEdicao = {
-                nome: quadra.nome,
-                endereco: quadra.endereco,
-                imagem: null,
-                modalidadesSelecionadas: quadra.modalidades.map(m => m.id)
-            };
-        },
-
-        abrirModalCadastro() {
-            this.modalCadastroAberto = true;
-            this.erroModalidadeCadastro = false;
-            this.formCadastro = {
-                nome: '',
-                endereco: '',
-                imagem: null,
-                modalidadesSelecionadas: []
-            };
-            this.$nextTick(() => {
-                if (this.$refs.inputImagemCadastro) this.$refs.inputImagemCadastro.value = null;
-            });
-        },
-
-        fecharModalCadastro() {
-            this.modalCadastroAberto = false;
-            this.erroModalidadeCadastro = false;
-            this.formCadastro = { nome: '', endereco: '', imagem: null, modalidadesSelecionadas: [] };
-            this.$nextTick(() => {
-                if (this.$refs.inputImagemCadastro) this.$refs.inputImagemCadastro.value = null;
-            });
-        },
-
-        abrirModalGrade(quadra) {
-            this.quadraParaGrade = quadra;
-            this.mostrarModalGrade = true;
-        },
-
-        handleFileChange(event) {
-            this.formEdicao.imagem = event.target.files[0];
-        },
-
-        handleCadastroFileChange(event) {
-            this.formCadastro.imagem = event.target.files?.[0] || null;
-        },
-
-        async cadastrarQuadraModal() {
-            if (this.formCadastro.modalidadesSelecionadas.length === 0) {
-                this.erroModalidadeCadastro = true;
-                return;
-            }
-
-            this.erroModalidadeCadastro = false;
-            this.salvandoCadastro = true;
-
-            try {
-                let urlImagem = null;
-                if (this.formCadastro.imagem) {
-                    const formData = new FormData();
-                    formData.append('file', this.formCadastro.imagem);
-                    const uploadRes = await api.post('/upload', formData);
-                    urlImagem = uploadRes.data.fileUrl;
-                }
-
-                const modalidadesFormatadas = this.formCadastro.modalidadesSelecionadas.map(id => ({ id }));
-
-                await api.post('/quadra', {
-                    nome: this.formCadastro.nome,
-                    endereco: this.formCadastro.endereco,
-                    foto: urlImagem,
-                    modalidades: modalidadesFormatadas
-                });
-
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'Sucesso!',
-                    text: 'Quadra cadastrada com sucesso!',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-
-                this.fecharModalCadastro();
-                await this.carregarDados();
-            } catch (error) {
-                Swal.fire(
-                    'Erro',
-                    error.response?.data?.error || 'Não foi possível cadastrar a quadra.',
-                    'error'
-                );
-            } finally {
-                this.salvandoCadastro = false;
-            }
-        },
-
-        async salvarEdicao() {
-            if (this.formEdicao.modalidadesSelecionadas.length === 0) {
-                Swal.fire("Aviso", "É obrigatório selecionar ao menos uma modalidade para a unidade.", "warning");
-                return;
-            }
-            try {
-                let urlImagem = this.quadraEditando.foto;
-                if (this.formEdicao.imagem) {
-                    const formData = new FormData();
-                    formData.append('file', this.formEdicao.imagem);
-                    const uploadRes = await api.post('/upload', formData);
-                    urlImagem = uploadRes.data.fileUrl;
-                }
-                const modalidadesFormatadas = this.formEdicao.modalidadesSelecionadas.map(id => ({ id }));
-                await api.patch(`/quadra/${this.quadraEditando.id}`, {
-                    nome: this.formEdicao.nome,
-                    endereco: this.formEdicao.endereco,
-                    foto: urlImagem,
-                    modalidades: modalidadesFormatadas
-                });
-                Swal.fire({ icon: 'success', title: 'Sucesso', text: 'O registro atualizado.', timer: 2000, showConfirmButton: false });
-                this.quadraEditando = null;
-                this.carregarDados();
-            } catch (err) {
-                Swal.fire("Erro", "Falha ao salvar alterações.", "error");
-            }
-        },
-
-        async alternarStatus(quadra) {
-            const novoStatus = !quadra.interditada;
-            const acaoTexto = novoStatus ? 'interditar' : 'liberar';
-            const result = await Swal.fire({
-                title: `Confirmar alteração`,
-                text: `Deseja ${acaoTexto} a quadra "${quadra.nome}"?`,
-                icon: 'warning', showCancelButton: true,
-                confirmButtonColor: novoStatus ? '#1E3A8A' : '#3B82F6', cancelButtonColor: '#D9D9D9',
-                confirmButtonText: 'Confirmar', cancelButtonText: 'Cancelar'
-            });
-            if (result.isConfirmed) {
-                try {
-                    await api.patch(`/quadra/${quadra.id}`, { interditada: novoStatus });
-                    this.carregarDados();
-                    Swal.fire('Sucesso', `Status alterado com sucesso.`, 'success');
-                } catch (error) {
-                    Swal.fire("Erro", "Não foi possível alterar o status.", "error");
-                }
-            }
-        },
-
-        formatarNomeModalidade(nome) {
-            return nome.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-        }
+  name: 'AdminGerenciarQuadras',
+  components: { SideBar, EditarGradeHorariosModal },
+  setup() {
+    const authStore = useAuthStore()
+    return { authStore }
+  },
+  data() {
+    return {
+      quadras: [],
+      todasModalidades: [],
+      isLoading: true,
+      quadraEditando: null,
+      formEdicao: { nome: '', endereco: '', imagem: null, modalidadesSelecionadas: [] },
+      modalCadastroAberto: false,
+      formCadastro: { nome: '', endereco: '', imagem: null, modalidadesSelecionadas: [] },
+      erroModalidadeCadastro: false,
+      salvandoCadastro: false,
+      quadraParaGrade: null,
+      mostrarModalGrade: false
     }
-};
+  },
+  computed: {
+    permissaoUsuario() {
+      return Number(this.authStore.usuario?.permissaoId || 0)
+    },
+    isDesenvolvedor() {
+      return this.permissaoUsuario === 1
+    },
+    isAdministrador() {
+      return this.permissaoUsuario === 2
+    },
+    mostrarOverviewCards() {
+      return this.isDesenvolvedor
+    },
+    tituloPagina() {
+      return this.isAdministrador ? 'Gerenciar quadra' : 'Gerenciar quadras'
+    },
+    kickerPainel() {
+      return this.isAdministrador ? 'UNIDADE' : 'UNIDADES'
+    },
+    tituloPainel() {
+      return this.isAdministrador ? 'Controle operacional da quadra' : 'Controle operacional das quadras'
+    },
+    subtituloPainel() {
+      if (this.isAdministrador) {
+        return 'Edite informacoes, atualize modalidades, configure horarios e altere a disponibilidade da unidade vinculada.'
+      }
+
+      return 'Edite informacoes, atualize modalidades, configure horarios e altere a disponibilidade de cada unidade.'
+    },
+    tituloCarregamento() {
+      return this.isAdministrador ? 'Carregando quadra' : 'Carregando quadras'
+    },
+    descricaoCarregamento() {
+      return this.isAdministrador
+        ? 'Buscando a unidade e modalidades vinculadas ao seu acesso.'
+        : 'Buscando unidades e modalidades vinculadas ao seu acesso.'
+    },
+    descricaoEstadoVazio() {
+      return this.isAdministrador
+        ? 'Quando houver uma unidade disponivel para voce, ela aparecera aqui.'
+        : 'Quando houver unidades disponiveis para voce, elas aparecerao aqui.'
+    },
+    podeCadastrar() {
+      return this.isDesenvolvedor
+    },
+    totalQuadras() {
+      return this.quadras.length
+    },
+    quadrasAtivas() {
+      return this.quadras.filter((quadra) => !quadra.interditada).length
+    },
+    quadrasIndisponiveis() {
+      return this.quadras.filter((quadra) => quadra.interditada).length
+    }
+  },
+  mounted() {
+    this.carregarDados()
+  },
+  methods: {
+    async carregarDados() {
+      this.isLoading = true
+      try {
+        const [resQuadras, resModalidades] = await Promise.all([
+          api.get('/quadra'),
+          api.get('/listar/modalidade')
+        ])
+
+        const todasAsQuadras = resQuadras.data
+        const usuario = this.authStore.usuario
+
+        if (usuario.permissaoId === 2 && usuario.quadraId) {
+          this.quadras = todasAsQuadras.filter((q) => q.id === usuario.quadraId)
+        } else {
+          this.quadras = todasAsQuadras
+        }
+
+        this.todasModalidades = resModalidades.data
+      } catch (err) {
+        Swal.fire('Erro de sistema', this.isAdministrador
+          ? 'Nao foi possivel carregar os dados da quadra.'
+          : 'Nao foi possivel carregar os dados das quadras.', 'error')
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    abrirModalEdicao(quadra) {
+      this.quadraEditando = quadra
+      this.formEdicao = {
+        nome: quadra.nome,
+        endereco: quadra.endereco,
+        imagem: null,
+        modalidadesSelecionadas: quadra.modalidades.map((m) => m.id)
+      }
+    },
+
+    abrirModalCadastro() {
+      this.modalCadastroAberto = true
+      this.erroModalidadeCadastro = false
+      this.formCadastro = {
+        nome: '',
+        endereco: '',
+        imagem: null,
+        modalidadesSelecionadas: []
+      }
+      this.$nextTick(() => {
+        if (this.$refs.inputImagemCadastro) this.$refs.inputImagemCadastro.value = null
+      })
+    },
+
+    fecharModalCadastro() {
+      this.modalCadastroAberto = false
+      this.erroModalidadeCadastro = false
+      this.formCadastro = { nome: '', endereco: '', imagem: null, modalidadesSelecionadas: [] }
+      this.$nextTick(() => {
+        if (this.$refs.inputImagemCadastro) this.$refs.inputImagemCadastro.value = null
+      })
+    },
+
+    abrirModalGrade(quadra) {
+      this.quadraParaGrade = quadra
+      this.mostrarModalGrade = true
+    },
+
+    handleFileChange(event) {
+      this.formEdicao.imagem = event.target.files[0]
+    },
+
+    handleCadastroFileChange(event) {
+      this.formCadastro.imagem = event.target.files?.[0] || null
+    },
+
+    async cadastrarQuadraModal() {
+      if (this.formCadastro.modalidadesSelecionadas.length === 0) {
+        this.erroModalidadeCadastro = true
+        return
+      }
+
+      this.erroModalidadeCadastro = false
+      this.salvandoCadastro = true
+
+      try {
+        let urlImagem = null
+        if (this.formCadastro.imagem) {
+          const formData = new FormData()
+          formData.append('file', this.formCadastro.imagem)
+          const uploadRes = await api.post('/upload', formData)
+          urlImagem = uploadRes.data.fileUrl
+        }
+
+        const modalidadesFormatadas = this.formCadastro.modalidadesSelecionadas.map((id) => ({ id }))
+
+        await api.post('/quadra', {
+          nome: this.formCadastro.nome,
+          endereco: this.formCadastro.endereco,
+          foto: urlImagem,
+          modalidades: modalidadesFormatadas
+        })
+
+        await Swal.fire({
+          icon: 'success',
+          title: 'Sucesso!',
+          text: 'Quadra cadastrada com sucesso!',
+          timer: 2000,
+          showConfirmButton: false
+        })
+
+        this.fecharModalCadastro()
+        await this.carregarDados()
+      } catch (error) {
+        Swal.fire(
+          'Erro',
+          error.response?.data?.error || 'Nao foi possivel cadastrar a quadra.',
+          'error'
+        )
+      } finally {
+        this.salvandoCadastro = false
+      }
+    },
+
+    async salvarEdicao() {
+      if (this.formEdicao.modalidadesSelecionadas.length === 0) {
+        Swal.fire('Aviso', 'E obrigatorio selecionar ao menos uma modalidade para a unidade.', 'warning')
+        return
+      }
+
+      try {
+        let urlImagem = this.quadraEditando.foto
+        if (this.formEdicao.imagem) {
+          const formData = new FormData()
+          formData.append('file', this.formEdicao.imagem)
+          const uploadRes = await api.post('/upload', formData)
+          urlImagem = uploadRes.data.fileUrl
+        }
+
+        const modalidadesFormatadas = this.formEdicao.modalidadesSelecionadas.map((id) => ({ id }))
+
+        await api.patch(`/quadra/${this.quadraEditando.id}`, {
+          nome: this.formEdicao.nome,
+          endereco: this.formEdicao.endereco,
+          foto: urlImagem,
+          modalidades: modalidadesFormatadas
+        })
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Sucesso',
+          text: 'Registro atualizado com sucesso.',
+          timer: 2000,
+          showConfirmButton: false
+        })
+
+        this.quadraEditando = null
+        this.carregarDados()
+      } catch (err) {
+        Swal.fire('Erro', 'Falha ao salvar alteracoes.', 'error')
+      }
+    },
+
+    async alternarStatus(quadra) {
+      const novoStatus = !quadra.interditada
+      const acaoTexto = novoStatus ? 'interditar' : 'liberar'
+      const result = await Swal.fire({
+        title: 'Confirmar alteracao',
+        text: `Deseja ${acaoTexto} a quadra "${quadra.nome}"?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: novoStatus ? '#1E3A8A' : '#3B82F6',
+        cancelButtonColor: '#D9D9D9',
+        confirmButtonText: 'Confirmar',
+        cancelButtonText: 'Cancelar'
+      })
+
+      if (result.isConfirmed) {
+        try {
+          await api.patch(`/quadra/${quadra.id}`, { interditada: novoStatus })
+          this.carregarDados()
+          Swal.fire('Sucesso', 'Status alterado com sucesso.', 'success')
+        } catch (error) {
+          Swal.fire('Erro', 'Nao foi possivel alterar o status.', 'error')
+        }
+      }
+    },
+
+    formatarNomeModalidade(nome) {
+      return nome.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase())
+    }
+  }
+}
 </script>
 
 <style scoped>
 .layout {
-    display: flex;
-    min-height: 100vh;
-    font-family: 'Montserrat', sans-serif;
+  display: flex;
+  min-height: 100vh;
+  background: #f4f7fb;
 }
 
 .conteudo {
-    flex: 1;
-    padding: 32px;
-    margin-left: 250px;
-    background-color: #F7F9FC;
+  flex: 1;
+  margin-left: 250px;
+  padding: 20px 32px 32px;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
-.header-gerenciar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
+.page-nav {
+  margin-bottom: 18px;
+}
+
+.page-header {
+  margin-bottom: 22px;
+}
+
+.header-copy,
+.panel-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.header-topline,
+.panel-head,
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.panel-head {
+  margin-bottom: 16px;
 }
 
 .title {
-    font-size: 30px;
-    color: #3B82F6;
-    font-weight: bold;
-    margin: 0;
+  margin: 0;
+  font-size: 42px;
+  line-height: 1.04;
+  font-weight: 800;
+  color: #2563eb;
 }
 
-.btn-cadastrar-topo {
-    background-color: #3B82F6;
-    padding: 8px 14px;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    color: white;
+.page-subtitle,
+.section-subtitle,
+.metric-caption,
+.state-copy,
+.modal-subtitle {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #64748b;
+}
+
+.btn-top-action,
+.btn-confirmar {
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.btn-top-action:hover,
+.btn-confirmar:hover {
+  transform: translateY(-1px);
+}
+
+.btn-top-action,
+.btn-confirmar {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.22);
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.btn-label-mobile {
+  display: none;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.overview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px 14px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.06);
+}
+
+.metric-kicker,
+.section-kicker,
+.card-label {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.metric-kicker,
+.section-kicker {
+  color: #2563eb;
+}
+
+.card-label {
+  color: rgba(191, 219, 254, 0.9);
+}
+
+.metric-value {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.overview-card-active .metric-value {
+  color: #059669;
+}
+
+.overview-card-blocked .metric-value {
+  color: #dc2626;
+}
+
+.quadras-panel {
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.06);
+}
+
+.section-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.15;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.state-card {
+  min-height: 300px;
+  border-radius: 20px;
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  padding: 24px;
+}
+
+.state-card-empty {
+  min-height: 240px;
+}
+
+.state-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .quadras-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 25px;
-    margin-top: 25px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.quadras-grid-full {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .card-quadra {
-    position: relative;
-    height: 250px;
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s;
-    background-color: #FFFFFF;
+  position: relative;
+  height: 292px;
+  border-radius: 24px;
+  overflow: hidden;
+  background: #0f172a;
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.14);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-.card-quadra:hover {
-    transform: translateY(-5px);
+.card-quadra:hover:not(.is-interditada) {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 36px rgba(15, 23, 42, 0.18);
 }
 
 .imagem-quadra {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease, filter 0.3s ease;
+}
+
+.card-quadra:hover:not(.is-interditada) .imagem-quadra {
+  transform: scale(1.03);
+}
+
+.card-quadra.is-interditada .imagem-quadra {
+  filter: grayscale(100%) brightness(0.86) opacity(0.78);
+}
+
+.card-status {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 110px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+}
+
+.card-status.is-ativo {
+  background: rgba(34, 197, 94, 0.94);
+}
+
+.card-status.is-indisponivel {
+  background: rgba(239, 68, 68, 0.92);
+}
+
+.card-shade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 80%;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.94) 0%,
+    rgba(0, 0, 0, 0.62) 52%,
+    transparent 100%
+  );
+  z-index: 1;
+  pointer-events: none;
 }
 
 .overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: auto;
-    background: linear-gradient(transparent, rgba(21, 33, 71, 0.95));
-    padding: 15px 20px;
-    color: white;
-    box-sizing: border-box;
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(180deg, rgba(3, 7, 18, 0.08) 0%, rgba(3, 7, 18, 0.66) 44%, rgba(3, 7, 18, 0.96) 100%);
+  color: #ffffff;
+}
+
+.card-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
 .nome-quadra {
-    font-size: 20px;
-    font-weight: bold;
-    margin: 0;
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.12;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+  text-shadow: 0 10px 18px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.55);
 }
 
 .endereco {
-    font-size: 13px;
-    color: #e2e8f0;
-    margin: 4px 0 8px 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.35;
+  color: rgba(226, 232, 240, 0.88);
+  font-weight: 500;
 }
 
-.status-badge {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 800;
-    color: white;
-    z-index: 5;
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
 }
 
-.status-badge.ativa {
-    background: #3B82F6;
+.tag-modalidade {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
 }
 
-.status-badge.interditada {
-    background: #f73434;
+.tag-modalidade-muted {
+  background: rgba(15, 23, 42, 0.46);
 }
 
-.botoes-acao {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+.card-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 
-.botoes-acao button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    flex: 1;
-    white-space: nowrap;
-    min-width: 80px;
+.btn-card {
+  min-height: 38px;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 0 12px;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
 
-.btn-icon {
-    margin-right: 5px;
-    vertical-align: middle;
+.btn-card:hover {
+  transform: translateY(-1px);
 }
 
-.btn-editar-card {
-    background: #3B82F6;
-    color: white;
-    border: none;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.2s;
+.btn-card-wide {
+  grid-column: 1 / -1;
 }
 
-.btn-editar-card:hover {
-    background: #1E3A8A;
+.btn-card-primary {
+  background: #3b82f6;
+  color: #ffffff;
 }
 
-.btn-grade-card {
-    background: #f59e0b;
-    color: white;
-    border: none;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.2s;
+.btn-card-primary:hover {
+  background: #2563eb;
 }
 
-.btn-grade-card:hover {
-    background: #d97706;
+.btn-card-secondary {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.22);
 }
 
-.btn-status-card {
-    color: white;
-    border: none;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.2s;
+.btn-card-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
-.btn-liberar {
-    background: #32d084;
+.btn-card-success {
+  background: rgba(34, 197, 94, 0.96);
+  color: #ffffff;
 }
 
-.btn-liberar:hover {
-    background: #26a166;
+.btn-card-success:hover {
+  background: rgba(22, 163, 74, 0.98);
 }
 
-.btn-bloquear {
-    background: #f73434;
+.btn-card-danger {
+  background: rgba(239, 68, 68, 0.96);
+  color: #ffffff;
 }
 
-.btn-bloquear:hover {
-    background: #a42222;
-}
-
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background: #FFFFFF;
-    padding: 24px;
-    border-radius: 15px;
-    width: 74%;
-    max-width: 900px;
-    max-height: 90vh;
-    overflow-y: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    color: #152147;
-}
-
-.modal-content-cadastro {
-    max-width: 900px;
-}
-
-.modal-content::-webkit-scrollbar {
-    display: none;
-    width: 0;
-    height: 0;
-}
-
-.modal-header-edicao-quadra {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 12px;
-}
-
-.modal-title-edicao {
-    margin: 0;
-    font-size: 24px;
-    line-height: 1.2;
-}
-
-.btn-close-x-modal {
-    width: 32px;
-    height: 32px;
-    border: 1px solid rgba(59, 130, 246, 0.55);
-    border-radius: 999px;
-    background: #fff;
-    color: #3b82f6;
-    font-size: 16px;
-    line-height: 1;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-
-.btn-close-x-modal:hover {
-    background: rgba(239, 68, 68, 0.08);
-    border-color: rgba(239, 68, 68, 0.35);
-    color: #ef4444;
-    transform: translateY(-1px);
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 12px;
-    text-align: left;
-}
-
-.form-group label {
-    font-weight: bold;
-    margin-bottom: 6px;
-    font-size: 14px;
-}
-
-.form-group input {
-    padding: 8px 10px;
-    border: 1px solid #D9D9D9;
-    border-radius: 6px;
-    color: #152147;
-    font-size: 14px;
-}
-
-.form-group input:focus {
-    outline: 2px solid #3B82F6;
-}
-
-.checkbox-list {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 8px;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #D9D9D9;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.checkbox-list::-webkit-scrollbar {
-    display: none;
-    width: 0;
-    height: 0;
-}
-
-.checkbox-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: #FFFFFF;
-    padding: 6px;
-    border-radius: 4px;
-    border: 1px solid #D9D9D9;
-}
-
-.checkbox-item label {
-    font-size: 11px;
-    margin: 0;
-    cursor: pointer;
-    color: #152147;
-}
-
-.erro-modalidade-cadastro {
-    color: #dc2626;
-    font-size: 12px;
-    font-weight: 600;
-    margin-top: 6px;
-}
-
-.modal-botoes {
-    display: block;
-    margin-top: 14px;
-}
-
-.btn_salvar_modal {
-    background-color: #3B82F6;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-    padding: 10px;
-    font-size: 14px;
-    width: 100%;
-}
-
-.loader-container-centralizado {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 300px;
+.btn-card-danger:hover {
+  background: rgba(220, 38, 38, 0.98);
 }
 
 .loader {
-    border: 6px solid #F7F9FC;
-    border-top: 6px solid #3B82F6;
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    animation: spin 1s linear infinite;
+  border: 6px solid #e2e8f0;
+  border-top: 6px solid #3b82f6;
+  border-radius: 50%;
+  width: 72px;
+  height: 72px;
+  animation: spin 1s linear infinite;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.62);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 920px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  border-radius: 28px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2);
+  overflow: hidden;
+}
+
+.modal-content-cadastro {
+  max-width: 860px;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.1;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+.modal-body-scroll {
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label-input {
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.input-estilizado {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: #f8fafc;
+  font-size: 14px;
+  color: #334155;
+}
+
+.input-estilizado:focus {
+  outline: none;
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.input-file {
+  min-height: auto;
+  padding: 11px 12px;
+}
+
+.checkbox-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: #f8fafc;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.checkbox-item input {
+  margin: 0;
+}
+
+.erro-modalidade-cadastro {
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.modal-actions-single .btn-confirmar {
+  width: 100%;
+}
+
+.btn-close-x-modal {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(37, 99, 235, 0.24);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #2563eb;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.btn-close-x-modal:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
 }
 
 @keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
+  0% {
+    transform: rotate(0deg);
+  }
 
-    100% {
-        transform: rotate(360deg);
-    }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
-@media (max-width: 900px) {
-    .conteudo {
-        margin-left: 0;
-        padding: 80px 20px 20px 20px; 
-    }
+@media (max-width: 1200px) {
+  .overview-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 
-    .quadras-grid {
-        grid-template-columns: 1fr;
-    }
+  .checkbox-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  .header-topline,
+  .panel-head,
+  .modal-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .quadras-grid,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .checkbox-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 768px) {
-    .conteudo {
-        margin-left: 0;
-        padding: 12px 16px 16px 16px !important;
-    }
+  .conteudo {
+    margin-left: 0;
+    padding: 12px 14px 18px;
+  }
 
-    .header-gerenciar {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-        flex-wrap: nowrap;
-    }
+  .page-nav {
+    margin-bottom: 12px;
+  }
 
-    .header-gerenciar .title {
-        font-size: 20px;
-        line-height: 1.2;
-        padding-left: 52px;
-        min-height: 42px;
-        display: flex;
-        align-items: center;
-        flex: 1;
-        min-width: 0;
-    }
+  .header-topline {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: nowrap;
+  }
 
-    .btn-cadastrar-topo {
-        width: auto;
-        min-width: 126px;
-        padding: 9px 12px;
-        text-align: center;
-        font-size: 14px;
-        border-radius: 14px;
-        white-space: nowrap;
-    }
+  .title {
+    font-size: 24px;
+    line-height: 1.12;
+    min-width: 0;
+  }
 
-    .modal-content {
-        width: 95%;
-        padding: 16px;
-    }
+  .btn-top-action {
+    min-height: 40px;
+    width: auto;
+    padding: 0 12px;
+    flex: 0 0 auto;
+    border-radius: 14px;
+    font-size: 14px;
+  }
 
-    .modal-content .title {
-        font-size: 20px !important;
-    }
+  .btn-label-desktop {
+    display: none;
+  }
 
-    .checkbox-list {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        max-height: 200px;
-        overflow-y: auto;
-    }
+  .btn-label-mobile {
+    display: inline;
+  }
 
-    .modal-botoes {
-        margin-top: 20px;
-    }
+  .overview-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
 
-    .btn_salvar_modal {
-        width: 100%;
-        padding: 12px;
-        text-align: center;
-    }
+  .overview-card {
+    padding: 10px 8px 9px;
+    border-radius: 14px;
+    gap: 5px;
+  }
+
+  .metric-kicker {
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+
+  .metric-value {
+    font-size: 20px;
+  }
+
+  .metric-caption {
+    font-size: 9px;
+    line-height: 1.25;
+  }
+
+  .quadras-panel {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .state-card {
+    min-height: 220px;
+    border-radius: 18px;
+  }
+
+  .state-title {
+    font-size: 20px;
+  }
+
+  .quadras-grid {
+    gap: 16px;
+  }
+
+  .card-quadra {
+    height: 304px;
+    border-radius: 20px;
+  }
+
+  .card-status {
+    min-width: 108px;
+    height: 34px;
+    font-size: 11px;
+  }
+
+  .overlay {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .nome-quadra {
+    font-size: 20px;
+  }
+
+  .endereco {
+    font-size: 13px;
+  }
+
+  .checkbox-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .modal-overlay {
+    padding: 14px;
+  }
+
+  .modal-content {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .modal-title {
+    font-size: 22px;
+  }
 }
 </style>

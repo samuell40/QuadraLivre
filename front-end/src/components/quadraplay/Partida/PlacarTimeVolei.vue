@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="placar" :class="{ 'placar-finalizada': partidaEncerradaGlobal, 'placar-andamento': partidaEmAndamentoGlobal }">
     <h2 class="nome-time">
       <img v-if="timeData?.foto" :src="timeData.foto" alt="Escudo do time" class="foto-time" />
@@ -8,45 +8,27 @@
     <div class="box">
       <p>Sets Vencidos</p>
       <div class="controls">
-        <button @click="emitDelta('setsVencidos', -1)" :disabled="!podeDiminuirSets">
-          −
-        </button>
-
-        <span class="valor">{{ timeData?.setsVencidos ?? 0 }}</span>
-
-        <button @click="emitDelta('setsVencidos', +1)" :disabled="!podeAumentarSets">
-          +
-        </button>
+        <button @click="emitDelta('setsVencidos', -1)" :disabled="!podeDiminuirSets">-</button>
+        <span class="valor">{{ setsVencidosAtual }}</span>
+        <button @click="emitDelta('setsVencidos', 1)" :disabled="!podeAumentarSets">+</button>
       </div>
     </div>
 
     <div class="box">
       <p>Pontos do Set</p>
       <div class="controls">
-        <button @click="emitDelta('pontosSet', -1)" :disabled="!podeDiminuirPontos">
-          −
-        </button>
-
-        <span class="valor">{{ timeData?.pontosSet ?? 0 }}</span>
-
-        <button @click="emitDelta('pontosSet', +1)" :disabled="!podeAumentarPontos">
-          +
-        </button>
+        <button @click="emitDelta('pontosSet', -1)" :disabled="!podeDiminuirPontos">-</button>
+        <span class="valor">{{ pontosSetAtual }}</span>
+        <button @click="emitDelta('pontosSet', 1)" :disabled="!podeAumentarPontos">+</button>
       </div>
     </div>
 
     <div class="box">
       <p>W.O</p>
       <div class="controls">
-        <button @click="emitDelta('wo', -1)" :disabled="!podeDiminuirWo">
-          −
-        </button>
-
-        <span class="valor">{{ timeData?.wo ? 1 : 0 }}</span>
-
-        <button @click="emitDelta('wo', +1)" :disabled="!podeAumentarWo">
-          +
-        </button>
+        <button @click="emitDelta('wo', -1)" :disabled="!podeDiminuirWo">-</button>
+        <span class="valor">{{ woAtual }}</span>
+        <button @click="emitDelta('wo', 1)" :disabled="!podeAumentarWo">+</button>
       </div>
     </div>
   </div>
@@ -62,6 +44,7 @@ export default {
     partidaId: { type: [String, Number], required: true },
     lado: { type: String, required: true },
     podeEditar: { type: Boolean, default: true },
+    placarId: { type: [String, Number], default: null },
     setsAdversario: { type: Number, default: 0 },
     woAdversario: { type: Number, default: 0 },
     partidaEncerradaGlobal: { type: Boolean, default: false },
@@ -72,11 +55,11 @@ export default {
 
   computed: {
     setsVencidosAtual() {
-      return this.timeData?.setsVencidos ?? 0
+      return Number(this.timeData?.setsVencidos ?? 0)
     },
 
     pontosSetAtual() {
-      return this.timeData?.pontosSet ?? 0
+      return Number(this.timeData?.pontosSet ?? 0)
     },
 
     woAtual() {
@@ -88,12 +71,19 @@ export default {
     },
 
     podeDiminuirSets() {
-      return this.setsVencidosAtual > 0 && this.woAdversario === 0
+      return (
+        this.podeEditar &&
+        !this.partidaEncerradaGlobal &&
+        this.setsVencidosAtual > 0 &&
+        this.woAtual === 0 &&
+        this.woAdversario === 0
+      )
     },
 
     podeAumentarSets() {
       return (
         this.podeEditar &&
+        !this.partidaEncerradaGlobal &&
         this.woAtual === 0 &&
         this.woAdversario === 0 &&
         (this.setsVencidosAtual + this.setsAdversario) < this.maxSetsPartida
@@ -101,28 +91,46 @@ export default {
     },
 
     podeDiminuirPontos() {
-      return this.podeEditar && this.pontosSetAtual > 0 && this.woAtual === 0 && this.woAdversario === 0
+      return (
+        this.podeEditar &&
+        !this.partidaEncerradaGlobal &&
+        this.pontosSetAtual > 0 &&
+        this.woAtual === 0 &&
+        this.woAdversario === 0
+      )
     },
 
     podeAumentarPontos() {
       return (
         this.podeEditar &&
+        !this.partidaEncerradaGlobal &&
         this.woAtual === 0 &&
         this.woAdversario === 0
       )
     },
 
     podeAumentarWo() {
-      return this.woAtual === 0 && this.woAdversario === 0
+      return (
+        this.podeEditar &&
+        !this.partidaEncerradaGlobal &&
+        this.woAtual === 0 &&
+        this.woAdversario === 0
+      )
     },
 
     podeDiminuirWo() {
-      return this.woAtual === 1 && this.woAdversario === 0
+      return (
+        this.podeEditar &&
+        !this.partidaEncerradaGlobal &&
+        this.woAtual === 1 &&
+        this.woAdversario === 0
+      )
     }
   },
 
   methods: {
     emitDelta(campo, delta) {
+      if (!this.podeEditar || this.partidaEncerradaGlobal) return
       this.$emit('parcial-delta', { lado: this.lado, campo, delta })
     }
   }
@@ -131,163 +139,232 @@ export default {
 
 <style scoped>
 .placar {
+  --accent: #2563eb;
+  --accent-strong: #1d4ed8;
+  --accent-soft: rgba(37, 99, 235, 0.1);
+  --accent-border: rgba(59, 130, 246, 0.22);
   width: 100%;
-  max-width: 580px;
-  background: #fff;
-  border-radius: 12px;
-  padding: 30px;
-  text-align: center;
-  border: 1px solid #ddd;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
+  padding: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 24px;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.07);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  position: relative;
+}
+
+.placar::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  border-radius: 24px 24px 0 0;
+  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
 }
 
 .placar.placar-andamento {
-  border-color: #16a34a;
+  --accent: #16a34a;
+  --accent-strong: #15803d;
+  --accent-soft: rgba(34, 197, 94, 0.1);
+  --accent-border: rgba(34, 197, 94, 0.22);
 }
 
 .placar.placar-finalizada {
-  border-color: #dc2626;
+  --accent: #dc2626;
+  --accent-strong: #b91c1c;
+  --accent-soft: rgba(220, 38, 38, 0.1);
+  --accent-border: rgba(220, 38, 38, 0.22);
 }
 
 .nome-time {
-  background: #f9f9f9;
-  border-bottom: 1px solid #ddd;
-  padding: 12px;
-  color: #3b82f6;
-  font-weight: bold;
-  font-size: 30px;
+  margin: 0;
+  grid-column: 1 / -1;
+  padding: 13px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--accent-border);
+  background: linear-gradient(180deg, var(--accent-soft), rgba(255, 255, 255, 0.98));
+  color: #0f172a;
+  font-weight: 800;
+  font-size: 24px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  border: 2px solid #3b82f6;
+  justify-content: flex-start;
+  gap: 10px;
+  text-align: left;
+  letter-spacing: -0.03em;
+  overflow: hidden;
 }
 
-.placar.placar-finalizada .nome-time {
-  border-color: #dc2626;
-  color: #dc2626;
-}
-
-.placar.placar-andamento .nome-time {
-  border-color: #16a34a;
-  color: #16a34a;
+.nome-time span {
+  min-width: 0;
 }
 
 .foto-time {
-  width: 60px;
-  height: 60px;
+  display: block;
+  width: 48px;
+  min-width: 48px;
+  max-width: 48px;
+  height: 48px;
+  min-height: 48px;
+  max-height: 48px;
   object-fit: contain;
   border-radius: 50%;
   background-color: #f1f5f9;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  flex: 0 0 auto;
 }
 
 .box {
-  background: #fafafa;
+  background: #fff;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px;
   padding: 15px;
-  border-radius: 8px;
-  border: 1px solid #eee;
 }
 
-.placar.placar-andamento .box {
-  border-color: #86efac;
+.placar > .box:first-of-type {
+  grid-column: 1 / -1;
+  padding: 16px;
+  border-color: var(--accent-border);
+  background: linear-gradient(180deg, var(--accent-soft), rgba(255, 255, 255, 0.98));
 }
 
-.placar.placar-finalizada .box {
-  border-color: #fca5a5;
+.placar > .box > p {
+  margin: 0;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-.controls {
-  display: flex;
+.placar > .box:first-of-type > p {
+  color: var(--accent);
+}
+
+.placar > .box .controls {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 42px;
   align-items: center;
-  justify-content: space-between;
-  margin-top: 10px;
   gap: 10px;
+  margin-top: 12px;
 }
 
-.controls span {
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
+.placar > .box:first-of-type .controls {
+  margin-top: 14px;
 }
 
-.controls button {
-  background-color: #1e3a8a;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  font-size: 18px;
+.placar > .box .controls span {
+  display: block;
+  color: #0f172a;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.placar > .box:first-of-type .controls span {
+  font-size: 38px;
+  color: var(--accent-strong);
+}
+
+.placar > .box:not(:first-of-type) .controls span {
+  font-size: 24px;
+}
+
+.placar > .box .controls button {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--accent-border);
+  border-radius: 14px;
+  background: #eff6ff;
+  color: var(--accent);
+  font-size: 23px;
+  font-weight: 900;
+  line-height: 1;
   cursor: pointer;
-  transition: 0.2s;
+  transition: transform 0.15s ease, box-shadow 0.18s ease, opacity 0.18s ease;
   flex-shrink: 0;
 }
 
-.controls button:last-child {
-  background-color: #3b82f6;
+.placar > .box .controls button:last-child {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: #fff;
+  box-shadow: 0 8px 14px rgba(15, 23, 42, 0.1);
 }
 
-.placar.placar-finalizada > .box .controls button {
-  background-color: #991b1b;
+.placar > .box .controls button:hover:not(:disabled) {
+  transform: translateY(-1px);
 }
 
-.placar.placar-finalizada > .box .controls button:last-child {
-  background-color: #dc2626;
-}
-
-.placar.placar-andamento > .box .controls button {
-  background-color: #166534;
-}
-
-.placar.placar-andamento > .box .controls button:last-child {
-  background-color: #16a34a;
-}
-
-.controls button:hover {
-  opacity: 0.85;
+.placar > .box .controls button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 @media (max-width: 768px) {
   .placar {
-    padding: 20px;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 16px 14px;
+    border-radius: 20px;
   }
 
   .nome-time {
-    font-size: 20px;
-    padding: 10px;
-    flex-direction: column;
-    gap: 6px;
+    font-size: 21px;
+    padding: 13px;
+    gap: 9px;
   }
 
   .foto-time {
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    height: 40px;
+    min-height: 40px;
+    max-height: 40px;
   }
 
-  .controls {
-    flex-direction: column;
-    gap: 8px;
+  .box {
+    border-radius: 17px;
+    padding: 13px;
   }
 
-  .box .controls {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
+  .placar > .box:first-of-type {
+    padding: 15px;
   }
 
-  .controls span {
-    font-size: 16px;
+  .placar > .box .controls {
+    grid-template-columns: 36px minmax(0, 1fr) 36px;
+    gap: 9px;
+    margin-top: 12px;
   }
 
-  .controls button {
+  .placar > .box:first-of-type .controls {
+    margin-top: 12px;
+  }
+
+  .placar > .box .controls span {
+    font-size: 23px;
+  }
+
+  .placar > .box:first-of-type .controls span {
+    font-size: 30px;
+  }
+
+  .placar > .box .controls button {
     width: 36px;
     height: 36px;
-    font-size: 16px;
+    border-radius: 13px;
+    font-size: 18px;
   }
 }
 </style>
+

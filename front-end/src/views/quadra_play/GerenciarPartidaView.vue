@@ -5,42 +5,66 @@
 
     <div class="conteudo" :class="{ collapsed: sidebarCollapsed }">
       <div class="header">
-        <h1 class="title">Gerenciar Partidas</h1>
-      </div>
+        <div class="header-copy">
+          <div class="header-top">
+            <h1 class="title">Gerenciar Partidas</h1>
 
-        <div class="filtros-wrapper">
-          <div class="filtros-cabecalho">
-            <div class="filtros-topo">
-              <div class="filtro-item">
-                <label for="fase-select" class="filtro-titulo">Fase</label>
-                <select id="fase-select" v-model="faseSelecionada" @change="onFaseChange">
-                  <option disabled value="">Selecione a Fase</option>
-                  <option v-for="fase in fases" :key="fase.id" :value="fase.id">
-                    {{ fase.nome }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="filtro-item">
-                <label for="rodada-select" class="filtro-titulo">Rodada</label>
-                <select id="rodada-select" v-model="rodadaSelecionada" @change="onRodadaChange">
-                  <option disabled value="">Selecione a Rodada</option>
-                  <option v-for="rodada in rodadas" :key="rodada.id" :value="rodada.id">
-                    {{ rodada.nome }}
-                  </option>
-                </select>
-              </div>
-            </div>
-
-            <div class="add-half-circle" @click="abrirModalTipo">
-              <span class="plus">+</span>
-            </div>
+            <button class="btn-add-partida-topo btn-add-aartida-header" @click="abrirModalTipo">
+              <span class="btn-add-partida-desktop">Adicionar</span>
+              <span class="btn-add-partida-mobile">Adicionar</span>
+            </button>
           </div>
 
-          <ModalEscolhaTipo v-model="mostrarModalTipo" :campeonato-id="campeonatoSelecionado" @faseCriada="adicionarFase"
-          @rodadaCriada="adicionarRodada" @partidaCriada="onPartidaCriada" />
+          <a class="page-subtitle">
+            Selecione a fase e a rodada para criar partidas, atualizar status e acessar o placar.
+          </a>
+        </div>
+      </div>
 
-        <div class="partidas-wrapper">
+      <div class="painel-card filtros-wrapper">
+        <div class="section-head filtros-head">
+          <div>
+            <span class="section-kicker">Navegacao</span>
+            <h2>Fase e rodada</h2>
+            <a>Atualize os filtros para visualizar, criar e gerenciar as partidas da rodada ativa.</a>
+          </div>
+        </div>
+
+        <div class="filtros-topo">
+          <div class="filtro-item">
+            <label for="fase-select" class="filtro-titulo">Fase</label>
+            <select id="fase-select" v-model="faseSelecionada" @change="onFaseChange">
+              <option disabled value="">Selecione a Fase</option>
+              <option v-for="fase in fases" :key="fase.id" :value="fase.id">
+                {{ fase.nome }}
+              </option>
+            </select>
+          </div>
+
+          <div class="filtro-item">
+            <label for="rodada-select" class="filtro-titulo">Rodada</label>
+            <select id="rodada-select" v-model="rodadaSelecionada" @change="onRodadaChange">
+              <option disabled value="">Selecione a Rodada</option>
+              <option v-for="rodada in rodadas" :key="rodada.id" :value="rodada.id">
+                {{ rodada.nome }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <ModalEscolhaTipo v-model="mostrarModalTipo" :campeonato-id="campeonatoSelecionado" @faseCriada="adicionarFase"
+        @rodadaCriada="adicionarRodada" @partidaCriada="onPartidaCriada" />
+
+      <div class="painel-card partidas-wrapper">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Partidas</span>
+            <h2>Partidas cadastradas</h2>
+            <a>Edite status, acompanhe o placar e acesse cada partida conforme a rodada selecionada.</a>
+          </div>
+        </div>
+
           <ul class="lista-partidas">
             <li v-for="partida in partidasValidas" :key="partida.id" class="card-partida"
               :class="classeStatusPartida(partida)">
@@ -134,7 +158,6 @@
               Adicionar partida
             </button>
           </div>
-        </div>
       </div>
 
       <SelecionarJogadores :aberto="mostrarModalJogadores" :jogadoresTime1="jogadoresTime1"
@@ -220,11 +243,11 @@ export default {
       jogadoresTime2: [],
       novoStatus: '',
       statusAtualModal: '',
-      partidaEditandoStatus: null,
-      socket: null,
-      socketCampeonatoId: null,
-      onSocketAtualizacao: null,
-      socketTimerPartidas: null
+        partidaEditandoStatus: null,
+        socket: null,
+        socketCampeonatoId: null,
+        onSocketAtualizacao: null,
+        socketTimerPartidas: null
     }
   },
 
@@ -254,7 +277,7 @@ export default {
     },
 
     partidasValidas() {
-      const lista = Array.isArray(this.partidas) ? this.partidas.filter(p => p && p.id) : []
+      const lista = Array.isArray(this.partidas) ? this.partidas.filter(a => a && a.id) : []
       return lista.sort((a, b) => {
         const da = new Date(a?.data || a?.createdAt || 0).getTime()
         const db = new Date(b?.data || b?.createdAt || 0).getTime()
@@ -693,7 +716,7 @@ export default {
       try {
         const partidaObj = partida && typeof partida === 'object'
           ? partida
-          : this.partidasValidas.find(p => Number(p.id) === Number(partida))
+          : this.partidasValidas.find(a => Number(a.id) === Number(partida))
 
         const partidaId = Number(partidaObj?.id || partida)
         if (!partidaId) throw new Error('Partida invalida.')
@@ -802,6 +825,11 @@ export default {
 </script>
 
 <style scoped>
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
 .layout {
   display: flex;
   min-height: 100vh;
@@ -809,10 +837,11 @@ export default {
 
 .conteudo {
   flex: 1;
-  padding: 32px;
+  padding: 24px 28px 32px;
   margin-top: 70px;
   margin-left: 250px;
   transition: margin-left 0.3s ease;
+  background: #f8fafc;
 }
 
 .conteudo.collapsed {
@@ -820,16 +849,104 @@ export default {
 }
 
 .header {
+  margin-bottom: 18px;
+}
+
+.header-copy {
+  width: 100%;
+}
+
+.header-top {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.btn-add-partida-topo.btn-add-aartida-header {
+  flex: 0 0 auto;
+  margin-top: 14px;
 }
 
 .title {
-  font-size: 30px;
-  color: #3b82f6;
-  font-weight: bold;
+  margin: 14px 0 10px;
+  color: #2563eb;
+  font-size: 40px;
+  line-height: 0.98;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.page-subtitle {
+  margin: 0;
+  max-width: 720px;
+  color: #475569;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.painel-card {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  padding: 24px;
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.section-head h2 {
+  margin: 6px 0 8px;
+  color: #0f172a;
+  font-size: 28px;
+  line-height: 1.05;
+}
+
+.section-head a {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.section-kicker {
+  display: inline-flex;
+  align-items: center;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.btn-add-partida-topo {
+  min-height: 52px;
+  padding: 0 18px;
+  border: 1px solid rgba(59, 130, 246, 0.32);
+  border-radius: 18px;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  box-shadow: 0 14px 26px rgba(59, 130, 246, 0.22);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.btn-add-partida-topo:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 28px rgba(59, 130, 246, 0.28);
+}
+
+.btn-add-partida-mobile {
+  display: none;
 }
 
 .criarpartidas {
@@ -844,65 +961,73 @@ export default {
 }
 
 .filtros-wrapper {
-  position: relative;
-  border-radius: 12px;
-  overflow: visible;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border: 2px solid #3b82f6;
-  padding: 12px;
-  background-color: #fff;
+  margin-bottom: 18px;
+  padding: 18px 20px;
 }
 
-.filtros-cabecalho {
-  position: relative;
+.filtros-wrapper .section-head {
+  margin-bottom: 14px;
+}
+
+.filtros-wrapper .section-head h2 {
+  margin: 4px 0 6px;
+  font-size: 24px;
+}
+
+.filtros-wrapper .section-head a {
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .filtros-topo {
-  display: flex;
-  gap: 12px;
-  padding: 12px;
-  border: 2px solid #3b82f6;
-  border-radius: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .filtros-topo select {
-  flex: 1;
-  padding: 10px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-  color: #111827;
-  background-color: #fff;
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  font: inherit;
+  color: #0f172a;
+  background-color: #f8fafc;
   cursor: pointer;
-  transition: 0.2s;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
 
 .filtros-topo select:hover {
-  border-color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.36);
 }
 
 .filtros-topo select:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: rgba(37, 99, 235, 0.6);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14);
+  background-color: #fff;
 }
 
 .filtro-item {
   display: flex;
   flex-direction: column;
   flex: 1;
+  gap: 6px;
+  min-width: 0;
 }
 
 .filtro-titulo {
-  font-size: 20px;
-  font-weight: 600;
-  color: #3b82f6;
-  margin-bottom: 4px;
+  margin: 0;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .partidas-wrapper {
-  margin-top: 64px;
+  min-width: 0;
 }
 
 .titulo-secao {
@@ -915,19 +1040,20 @@ export default {
 .lista-partidas {
   list-style: none;
   padding: 0;
+  margin: 0;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  gap: 18px;
 }
 
 .card-partida {
   border: 1.6px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 35px;
+  border-radius: 22px;
+  padding: 20px;
   background: #ffffff;
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   cursor: pointer;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
 }
 
 .card-partida:hover {
@@ -954,7 +1080,7 @@ export default {
 .status-topo{
   display: flex;
   justify-content: center;
-  margin: 0 0 12px;
+  margin: 0 0 10px;
 }
 
 .status-pill{
@@ -963,13 +1089,12 @@ export default {
   justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 8px 14px;
+  padding: 8px 12px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
-  letter-spacing: 0.4px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10);
-  transform: translateY(-2px);
+  letter-spacing: 0.08em;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
   border: 1px solid rgba(148, 163, 184, 0.35);
   transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
@@ -1074,19 +1199,20 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 30px;
+  gap: 20px;
 }
 
 .time.lado {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 13px;
+  min-width: 0;
 }
 
 .time-foto {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid rgba(148, 163, 184, 0.4);
@@ -1094,7 +1220,9 @@ export default {
 }
 
 .meta-partida {
-  margin-top: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(226, 232, 240, 0.92);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1103,13 +1231,13 @@ export default {
 }
 
 .usuario-criador {
-  font-size: 13px;
+  font-size: 12px;
   color: #6b7280;
   text-align: left;
 }
 
 .usuario-editor {
-  font-size: 13px;
+  font-size: 12px;
   color: #6b7280;
   text-align: right;
 }
@@ -1119,14 +1247,14 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 800;
-  min-width: 72px;
+  min-width: 66px;
   text-align: center;
 }
 
 .placar-centro span {
-  font-size: 22px;
+  font-size: 20px;
   margin: 0;
   font-weight: 800;
   color: #334155;
@@ -1138,15 +1266,16 @@ export default {
 
 .time-nome {
   font-weight: 700;
-  font-size: 19px;
+  font-size: 17px;
+  line-height: 1.2;
 }
 
 .nome-quadra {
   text-align: center;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 13px;
   color: #3b82f6;
-  margin: 8px 0 10px 0;
+  margin: 6px 0 10px 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1157,34 +1286,6 @@ export default {
 .nome-quadra .data-info {
   color: #64748b;
   font-weight: 600;
-}
-
-.add-half-circle {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: 42px;
-  height: 42px;
-  background-color: #3b82f6;
-  border-bottom-left-radius: 50%;
-  border-bottom-right-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 5;
-  transition: background 0.2s, left 0.3s;
-}
-
-.add-half-circle:hover {
-  background-color: #2563eb;
-}
-
-.add-half-circle .plus {
-  color: white;
-  font-size: 24px;
-  font-weight: bold;
 }
 
 .modal-overlay {
@@ -1199,11 +1300,10 @@ export default {
 
 .modal-content {
   background: white;
-  padding: 30px 40px;
-  border-radius: 10px;
-  width: 900px;
-  max-width: 95%;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  padding: 24px 26px;
+  border-radius: 18px;
+  width: min(560px, 92vw);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.22);
 }
 
 .modal-content h2 {
@@ -1268,12 +1368,14 @@ export default {
 .btn-save,
 .btn-cancel {
   flex: 1;
-  padding: 10px 0;
-  border-radius: 20px;
+  min-height: 46px;
+  padding: 0 16px;
+  border-radius: 999px;
   border: none;
   cursor: pointer;
   color: white;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 800;
 }
 
 .btn-save {
@@ -1286,20 +1388,25 @@ export default {
 
 .btn-acessar {
   width: 100%;
-  background-color: #3b82f6;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
   color: white;
   border: none;
-  border-radius: 8px;
-  padding: 8px 0;
-  font-weight: 600;
-  font-size: 14px;
+  border-radius: 16px;
+  min-height: 46px;
+  padding: 0 14px;
+  font-weight: 800;
+  font-size: 13px;
   cursor: pointer;
-  transition: background 0.2s;
-  margin-top: 8px;
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  margin-top: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 10px 18px rgba(59, 130, 246, 0.18);
 }
 
 .btn-acessar:hover {
   background-color: #2563eb;
+  transform: translateY(-1px);
 }
 
 .btn-acessar.btn-acessar-disabled {
@@ -1313,22 +1420,27 @@ export default {
 }
 
 .vazio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
   color: #6b7280;
-  font-style: italic;
-  margin-top: 16px;
+  margin: 0;
   text-align: center;
 }
 
 .btn-add-partida-vazio {
-  background-color: #3b82f6;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
   color: #fff;
   border: none;
   border-radius: 999px;
-  padding: 10px 24px;
-  font-size: 16px;
+  min-height: 46px;
+  padding: 0 22px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 10px 18px rgba(59, 130, 246, 0.2);
 }
 
 .btn-add-partida-vazio:hover {
@@ -1507,8 +1619,8 @@ export default {
 @media (max-width: 768px) {
   .conteudo {
     margin-left: 0;
-    margin-top: 70px;
-    padding: 0 18px 18px;
+    margin-top: 34px;
+    padding: 14px;
   }
 
   .conteudo.collapsed {
@@ -1516,44 +1628,108 @@ export default {
   }
 
   .header {
-    margin-top: -40px;
-    margin-bottom: 8px;
+    margin-top: 0;
+    margin-bottom: 12px;
+  }
+
+  .header-copy {
+    max-width: 100%;
+  }
+
+  .header-top {
+    align-items: flex-start;
+    gap: 10px;
   }
 
   .title {
-    font-size: 28px;
-    line-height: 1.08;
-    margin: 0;
+    margin: 0 0 8px;
+    font-size: 30px;
+    line-height: 1.04;
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .painel-card {
+    padding: 18px;
+    border-radius: 24px;
+  }
+
+  .section-head {
+    margin-bottom: 16px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .section-head h2 {
+    font-size: 24px;
+  }
+
+  .btn-add-partida-topo {
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .btn-add-partida-topo.btn-add-aartida-header {
+    margin-top: 0;
+  }
+
+  .btn-add-partida-desktop {
+    display: none;
+  }
+
+  .btn-add-partida-mobile {
+    display: inline;
   }
 
   .filtros-wrapper {
-    margin-bottom: 20px;
-    padding: 10px;
+    margin-bottom: 16px;
+    padding: 14px 16px;
   }
 
   .filtros-topo {
-    gap: 10px;
-    padding: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .filtro-titulo {
-    font-size: 18px;
+    font-size: 12px;
+  }
+
+  .filtros-wrapper .section-head {
+    margin-bottom: 12px;
+  }
+
+  .filtros-wrapper .section-head h2 {
+    font-size: 22px;
+  }
+
+  .filtros-topo select {
+    min-height: 42px;
+    padding: 9px 10px;
+    border-radius: 12px;
   }
 
   .partidas-wrapper {
-    margin-top: 56px;
+    margin-top: 0;
   }
 
   .lista-partidas {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
 
   .conteudo-partida {
-    gap: 16px;
+    gap: 12px;
   }
 
   .card-partida {
-    padding: 16px;
+    padding: 14px;
+    border-radius: 18px;
   }
 
   .time-foto {
@@ -1572,22 +1748,39 @@ export default {
   }
 
   .time-nome {
-    font-size: 20px;
+    font-size: 16px;
   }
 
-  .titulo-secao {
-    font-size: 18px;
+  .meta-partida {
+    margin-top: 10px;
+    gap: 6px;
+    align-items: flex-start;
+    flex-direction: column;
   }
 
-  .mensagem-orientacao {
-    font-size: 14px;
-    padding: 16px;
+  .usuario-editor {
+    text-align: left;
   }
 
-  .add-half-circle {
-    top: calc(100% + 6px);
-    left: 50%;
-    transform: translateX(-50%);
+  .btn-acessar,
+  .btn-add-partida-vazio {
+    min-height: 42px;
+    border-radius: 14px;
+    font-size: 12px;
+  }
+
+  .vazio {
+    min-height: 140px;
+  }
+
+  .modal-content {
+    width: min(560px, 94vw);
+    padding: 22px 18px;
+    border-radius: 16px;
   }
 }
 </style>
+
+
+
+

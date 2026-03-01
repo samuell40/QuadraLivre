@@ -5,138 +5,64 @@
 
     <div class="conteudo" :class="{ collapsed: sidebarCollapsed }">
       <div class="header">
-        <h1 class="title">Classificação {{ campeonato?.nome }}</h1>
-        <button class="btn-add" @click="abrirConfiguracoes">
-          Configurações
-        </button>
+        <div class="header-copy">
+          <h1 class="title">Classificacao {{ campeonato?.nome }}</h1>
+          <a class="page-subtitle">
+            Acompanhe a tabela da fase atual, ajuste as colunas exibidas e abra o historico comaleto de cada time.
+          </a>
+        </div>
 
+        <button class="btn-add" @click="abrirConfiguracoes">
+          Configuracoes
+        </button>
       </div>
 
-      <!-- PLACAR -->
-      <div class="placar-wrapper" v-if="campeonato">
+      <div v-if="campeonato" class="painel-card filtros-card">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Navegacao</span>
+            <h2>Fase e rodada</h2>
+            <a>Atualize os filtros para trocar a classificacao exibida sem sair da mesma tela.</a>
+          </div>
+        </div>
+
         <div v-if="fases.length" class="filtros-topo">
           <div class="filtro-item">
-            <label class="filtro-titulo" for="fase-select">Selecione a Fase:</label>
-            <select id="fase-select" v-model="faseSelecionada" @change="onFaseChange">
-              <option disabled value="">-- Escolha a Fase --</option>
+            <label class="filtro-titulo" for="fase-select">Fase</label>
+            <select id="fase-select" class="filtro-select" v-model="faseSelecionada" @change="onFaseChange">
+              <option disabled value="">Selecione a fase</option>
               <option v-for="fase in fases" :key="fase.id" :value="fase.id">{{ fase.nome }}</option>
             </select>
           </div>
           <div class="filtro-item">
-            <label class="filtro-titulo" for="rodada-select">Selecione a Rodada:</label>
-            <select id="rodada-select" v-model="rodadaSelecionada" :disabled="!rodadas.length" @change="onRodadaChange">
-              <option disabled value="">-- Escolha a Rodada --</option>
+            <label class="filtro-titulo" for="rodada-select">Rodada</label>
+            <select id="rodada-select" class="filtro-select" v-model="rodadaSelecionada" :disabled="!rodadas.length" @change="onRodadaChange">
+              <option disabled value="">Selecione a rodada</option>
               <option v-for="rodada in rodadas" :key="rodada.id" :value="rodada.id">{{ rodada.nome }}</option>
             </select>
           </div>
         </div>
-        <div class="placar-table">
-          <div v-if="timesPlacar === null" class="loader-container-centralizado">
-            <div class="loader"></div>
-          </div>
-
-          <div v-else-if="Array.isArray(timesPlacar) && timesPlacar.length === 0" class="sem-dados-centralizado">
-            Nenhum placar encontrado para esta fase.
-          </div>
-
-          <!-- ===== FUTEBOL / FUTSAL ===== -->
-          <table v-else-if="isGrupoFutebol || isGrupoVolei || isGrupoBeachTenis" class="placar">
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th
-                  v-for="coluna in colunasTabelaClassificacao"
-                  :key="`head-${coluna.key}`"
-                  :class="{ 'col-ultimos': coluna.key === 'ultimosJogos' }"
-                >
-                  {{ coluna.abbr }}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(time, index) in timesPlacar" :key="time.id">
-                <td class="time-info time-info-click" @click="abrirModalPartidasTime(time)">
-                  <span class="posicao">{{ index + 1 }}º</span>
-                  <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
-                  <span class="nome-time">{{ time.time?.nome }}</span>
-                </td>
-                <td
-                  v-for="coluna in colunasTabelaClassificacao"
-                  :key="`${time.id || time.timeId || index}-${coluna.key}`"
-                  :class="{ 'ultimos-jogos-cell': coluna.key === 'ultimosJogos' }"
-                >
-                  <template v-if="coluna.key === 'ultimosJogos'">
-                    <div class="ultimos-jogos">
-                      <span
-                        v-for="(resultado, resultadoIndex) in obterUltimosJogos(time)"
-                        :key="`${time.id || index}-res-${resultadoIndex}`"
-                        class="resultado-item"
-                        :class="classeResultado(resultado)"
-                      >
-                        {{ simboloResultado(resultado) }}
-                      </span>
-                    </div>
-                  </template>
-                  <template v-else>
-                    {{ formatarValorColuna(time, coluna.key) }}
-                  </template>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          <div v-if="temTabela && isGrupoFutebol" class="glossario-placar">
-            <strong>Glossario</strong>
-            <ul>
-              <li v-if="mostrarColuna('pontuacao')"><b>PTS</b>: Pontos</li>
-              <li v-if="mostrarColuna('jogos')"><b>J</b>: Jogos</li>
-              <li v-if="mostrarColuna('vitorias')"><b>V</b>: Vitorias</li>
-              <li v-if="mostrarColuna('empates')"><b>E</b>: Empates</li>
-              <li v-if="mostrarColuna('derrotas')"><b>D</b>: Derrotas</li>
-              <li v-if="mostrarColuna('golsPro')"><b>GM</b>: Gols marcados</li>
-              <li v-if="mostrarColuna('golsSofridos')"><b>GS</b>: Gols sofridos</li>
-              <li v-if="mostrarColuna('saldoDeGols')"><b>SG</b>: Saldo de gols</li>
-              <li v-if="mostrarColuna('aproveitamento')"><b>%</b>: Aproveitamento</li>
-            </ul>
-          </div>
-
-          <div v-if="temTabela && isGrupoVolei" class="glossario-placar">
-            <strong>Glossario</strong>
-            <ul>
-              <li v-if="mostrarColuna('pontuacao')"><b>PTS</b>: Pontos</li>
-              <li v-if="mostrarColuna('jogos')"><b>J</b>: Jogos</li>
-              <li v-if="mostrarColuna('vitorias')"><b>V</b>: Vitorias</li>
-              <li v-if="mostrarColuna('derrotas')"><b>D</b>: Derrotas</li>
-              <li v-if="mostrarColuna('setsVencidos')"><b>SP</b>: Sets pro</li>
-              <li v-if="mostrarColuna('setsContra')"><b>SC</b>: Sets contra</li>
-              <li v-if="mostrarColuna('diferencaSets')"><b>DS</b>: Diferenca de sets</li>
-              <li v-if="mostrarColuna('pontosPro')"><b>PP</b>: Pontos pro</li>
-              <li v-if="mostrarColuna('pontosContra')"><b>PC</b>: Pontos contra</li>
-              <li v-if="mostrarColuna('diferencaPontos')"><b>DP</b>: Diferenca de pontos</li>
-              <li v-if="mostrarColuna('pontosAverage')"><b>AVG</b>: Pontos average</li>
-              <li v-if="mostrarColuna('derrotaWo')"><b>W.O.</b>: Derrota por W.O.</li>
-            </ul>
-          </div>
-
-          <div v-if="temTabela && isGrupoBeachTenis" class="glossario-placar">
-            <strong>Glossario</strong>
-            <ul>
-              <li v-if="mostrarColuna('pontuacao')"><b>PTS</b>: Pontos</li>
-              <li v-if="mostrarColuna('jogos')"><b>J</b>: Jogos</li>
-              <li v-if="mostrarColuna('vitorias')"><b>V</b>: Vitorias</li>
-              <li v-if="mostrarColuna('derrotas')"><b>D</b>: Derrotas</li>
-              <li v-if="mostrarColuna('setsVencidos')"><b>SP</b>: Sets pro</li>
-              <li v-if="mostrarColuna('setsContra')"><b>SC</b>: Sets contra</li>
-              <li v-if="mostrarColuna('diferencaSets')"><b>DS</b>: Diferenca de sets</li>
-              <li v-if="mostrarColuna('gamesPro')"><b>GF</b>: Games a favor</li>
-              <li v-if="mostrarColuna('gamesContra')"><b>GC</b>: Games contra</li>
-              <li v-if="mostrarColuna('diferencaGames')"><b>DG</b>: Diferenca de games</li>
-              <li v-if="mostrarColuna('derrotaWo')"><b>W.O.</b>: Derrota por W.O.</li>
-            </ul>
-          </div>
-
-        </div>
       </div>
+
+      <div v-if="campeonato" class="painel-card placar-wrapper">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Classificacao</span>
+            <h2>{{ tituloTabela }}</h2>
+            <a>{{ subtituloTabela }}</a>
+          </div>
+        </div>
+
+        <TabelaClassificacao
+          :times="Array.isArray(timesPlacar) ? timesPlacar : []"
+          :loading="timesPlacar === null"
+          :modalidade="modalidadeNormalizada"
+          :colunas-visiveis="colunasClassificacaoVisiveis"
+          empty-text="Nenhum placar encontrado para esta fase."
+          @time-click="abrirModalPartidasTime"
+        />
+      </div>
+      
       <PartidasDoTimeModal
         v-model="mostrarModalPartidasTime"
         :time="timeSelecionadoPartidas"
@@ -164,6 +90,7 @@ import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
 import { carregarCampeonato } from '@/utils/persistirCampeonato'
 import ModalConfiguracoesPlacar from '@/components/quadraplay/ModalConfiguracoesPlacar.vue'
 import PartidasDoTimeModal from '@/components/quadraplay/PartidasDoTimeModal.vue'
+import TabelaClassificacao from '@/components/quadraplay/TabelaClassificacao.vue'
 import api from '@/axios'
 import {
   getColunasClassificacaoPorModalidade,
@@ -178,7 +105,7 @@ import {
 
 export default {
   name: 'ClassificacaoView',
-  components: { SidebarCampeonato, NavBarQuadras, ModalConfiguracoesPlacar, PartidasDoTimeModal },
+  components: { SidebarCampeonato, NavBarQuadras, ModalConfiguracoesPlacar, PartidasDoTimeModal, TabelaClassificacao },
 
   data() {
     return {
@@ -261,6 +188,18 @@ export default {
 
     nomeRodadaSelecionada() {
       return this.rodadas.find(r => Number(r.id) === Number(this.rodadaSelecionada))?.nome || ''
+    },
+
+    tituloTabela() {
+      return this.nomeFaseSelecionada ? `Tabela da ${this.nomeFaseSelecionada}` : 'Tabela do campeonato'
+    },
+
+    subtituloTabela() {
+      if (this.nomeFaseSelecionada && this.nomeRodadaSelecionada) {
+        return `Fase ${this.nomeFaseSelecionada}  Rodada ${this.nomeRodadaSelecionada}. Toque em um time para abrir o historico comaleto de partidas.`
+      }
+
+      return 'Toque em um time para abrir o historico comaleto de partidas.'
     }
   },
 
@@ -480,7 +419,7 @@ export default {
     async carregarPlacarPorFase() {
       if (!this.faseSelecionada) return
 
-      this.timesPlacar = []
+      this.timesPlacar = null
 
       try {
         const { data } = await api.get(`/placar/fase/${this.campeonato.id}`,
@@ -650,6 +589,11 @@ export default {
 </script>
 
 <style scoped>
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
 .layout {
   display: flex;
   flex-direction: column;
@@ -658,10 +602,11 @@ export default {
 
 .conteudo {
   flex: 1;
-  padding: 32px;
+  padding: 24px 28px 32px;
   margin-top: 70px;
   margin-left: 250px;
   transition: margin-left 0.3s ease;
+  background: #f8fafc;
 }
 
 .conteudo.collapsed {
@@ -670,33 +615,52 @@ export default {
 
 .header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 20px;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.header-copy {
+  max-width: 760px;
 }
 
 .title {
-  color: #3b82f6;
-  font-size: 28px;
-  font-weight: bold;
+  margin: 14px 0 10px;
+  color: #2563eb;
+  font-size: 40px;
+  line-height: 0.98;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.page-subtitle {
+  margin: 0;
+  color: #475569;
+  font-size: 17px;
+  line-height: 1.6;
 }
 
 .btn-add {
-  padding: 10px 18px;
-  background-color: #3b82f6;
-  border: none;
-  border-radius: 15px;
-  color: white;
+  min-height: 46px;
+  padding: 0 18px;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  border: 1px solid rgba(59, 130, 246, 0.32);
+  border-radius: 18px;
+  color: #fff;
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-weight: 600;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  font-weight: 700;
   font-size: 14px;
+  letter-spacing: -0.02em;
   white-space: nowrap;
+  box-shadow: 0 14px 26px rgba(59, 130, 246, 0.22);
 }
 
 .btn-add:hover {
   background-color: #2563eb;
   transform: translateY(-1px);
+  box-shadow: 0 16px 28px rgba(59, 130, 246, 0.28);
 }
 
 .btn-add:active {
@@ -761,55 +725,99 @@ export default {
   }
 }
 
-.filtros-topo {
+.painel-card {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  padding: 24px;
+}
+
+.section-head {
   display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 12px;
-  padding: 12px;
-  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.section-head h2 {
+  margin: 6px 0 8px;
+  color: #0f172a;
+  font-size: 28px;
+  line-height: 1.05;
+}
+
+.section-head a {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.section-kicker {
+  display: inline-flex;
+  align-items: center;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.filtros-card {
   margin-bottom: 20px;
+  padding: 20px 22px;
 }
 
-.filtros-topo select {
-  flex: 1;
-  padding: 10px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-  color: #111827;
-  background-color: #fff;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.filtros-topo select:hover {
-  border-color: #3b82f6;
-}
-
-.filtros-topo select:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+.filtros-topo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .filtro-item {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  gap: 6px;
+  min-width: 0;
 }
 
 .filtro-titulo {
-  font-size: 20px;
-  font-weight: 600;
-  color: #3b82f6;
-  margin-bottom: 4px;
+  margin: 0;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.filtro-select {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  font: inherit;
+  color: #0f172a;
+  background-color: #f8fafc;
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.filtro-select:hover {
+  border-color: rgba(59, 130, 246, 0.36);
+}
+
+.filtro-select:focus {
+  outline: none;
+  border-color: rgba(37, 99, 235, 0.6);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14);
+  background-color: #fff;
 }
 
 .placar-wrapper {
-  margin-top: 20px;
-  background: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  padding: 16px;
+  min-width: 0;
 }
 
 .titulo-secao {
@@ -973,34 +981,41 @@ export default {
 @media (max-width: 768px) {
   .conteudo {
     margin-left: 0;
-    margin-top: 70px;
-    padding: 18px;
+    margin-top: 34px;
+    padding: 14px;
   }
 
   .conteudo.collapsed {
     margin-left: 0;
   }
 
-  .title {
-    font-size: 28px;
-    line-height: 1.08;
-    margin: 0;
+  .header {
+    margin-top: 0;
+    margin-bottom: 12px;
+    gap: 10px;
   }
 
-  .header {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 10px;
-    margin-top: -40px;
-    margin-bottom: 8px;
+  .header-copy {
+    max-width: 100%;
+  }
+
+  .title {
+    margin: 0 0 8px;
+    font-size: 30px;
+    line-height: 1.04;
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+    line-height: 1.55;
   }
 
   .btn-add {
     width: auto;
-    align-self: flex-end;
-    padding: 10px 14px;
+    align-self: flex-start;
+    min-height: 42px;
+    padding: 0 14px;
+    border-radius: 14px;
     font-size: 0;
   }
 
@@ -1009,69 +1024,48 @@ export default {
     font-size: 18px;
   }
 
-  .placar-wrapper {
-    margin-top: 20px;
-    padding: 12px;
+  .painel-card {
+    padding: 18px;
+    border-radius: 24px;
   }
 
-  .placar-table {
-    width: 100%;
-    overflow-x: auto;
-    max-height: 55vh;
+  .section-head {
+    margin-bottom: 14px;
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .placar {
-    width: 100%;
-    min-width: 0;
+  .section-head h2 {
+    font-size: 24px;
   }
 
-  .placar thead th {
-    font-size: 13px;
-    padding: 8px 6px;
+  .filtros-card {
+    padding: 14px 16px;
+    margin-bottom: 16px;
   }
 
-  .placar tbody td {
-    font-size: 12px;
-    padding: 6px 8px;
+  .filtros-topo {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
-  .col-ultimos,
-  .ultimos-jogos-cell {
-    min-width: 110px;
-  }
-
-  .resultado-item {
-    width: 18px;
-    height: 18px;
-    font-size: 10px;
-  }
-
-  .time-info {
+  .filtro-item {
     gap: 6px;
   }
 
-  .posicao {
-    font-size: 12px;
-    min-width: 20px;
-    text-align: center;
+  .filtro-select {
+    min-height: 42px;
+    padding: 9px 10px;
+    border-radius: 12px;
   }
 
-  .time-image {
-    width: 28px;
-    height: 28px;
-  }
-
-  .nome-time {
-    font-size: 13px;
-  }
-
-  .glossario-placar {
-    font-size: 11px;
-    padding: 10px;
-  }
-
-  .glossario-placar ul {
-    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  .placar-wrapper {
+    padding: 16px;
   }
 }
 </style>
+
+
+
+
+

@@ -82,10 +82,7 @@
           <button type="button" class="drawer-link" :class="{ active: $route.path === '/' }" @click="navegar('/')">
             Tela Inicial
           </button>
-        </div>
-
-        <div class="drawer-footer">
-          <a href="#" class="quadra-play" @click.prevent="loginQuadraPlayComGoogle">
+          <a href="#" class="quadra-play drawer-quadra-play" @click.prevent="loginQuadraPlayComGoogle">
             QuadraPlay
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
               class="bi bi-arrow-left-right" viewBox="0 0 16 16">
@@ -477,17 +474,10 @@ export default {
   color: #60a5fa;
 }
 
-.drawer-footer {
-  margin-top: auto;
-  padding: 14px 12px 18px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.drawer-footer .quadra-play {
+.drawer-quadra-play {
   justify-content: center;
+  width: 100%;
+  margin-top: 10px;
 }
 
 .drawer-login {

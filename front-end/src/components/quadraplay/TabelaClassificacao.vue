@@ -15,13 +15,13 @@
     >
       <thead>
         <tr>
-          <th>Time</th>
+          <th>{{ isMobileViewport ? 'Tm' : 'Time' }}</th>
           <th
             v-for="coluna in colunasTabela"
             :key="`head-${coluna.key}`"
             :class="{ 'col-ultimos': coluna.key === 'ultimosJogos' }"
           >
-            {{ coluna.abbr }}
+            {{ obterTituloColuna(coluna) }}
           </th>
         </tr>
       </thead>
@@ -132,8 +132,16 @@ export default {
     showGlossary: { type: Boolean, default: true },
     colunasVisiveis: { type: Array, default: () => [] }
   },
+  data() {
+    return {
+      viewportWidth: typeof window !== 'undefined' ? window.innerWidth : 1280
+    }
+  },
   emits: ['time-click'],
   computed: {
+    isMobileViewport() {
+      return this.viewportWidth <= 768
+    },
     modalidadeNormalizada() {
       return String(this.modalidade || '')
         .toLowerCase()
@@ -171,6 +179,12 @@ export default {
     }
   },
   methods: {
+    obterTituloColuna(coluna) {
+      if (!this.isMobileViewport) return coluna?.abbr || ''
+      if (coluna?.key === 'ultimosJogos') return 'ULT'
+      if (coluna?.key === 'derrotaWo') return 'WO'
+      return coluna?.abbr || ''
+    },
     mostrarColuna(chave) {
       return this.colunasVisiveisSet.has(chave)
     },
@@ -306,7 +320,16 @@ export default {
       if (resultado === 'V') return '\u2713'
       if (resultado === 'D') return '\u2715'
       return '-'
+    },
+    atualizarViewport() {
+      this.viewportWidth = window.innerWidth
     }
+  },
+  mounted() {
+    window.addEventListener('resize', this.atualizarViewport)
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.atualizarViewport)
   }
 }
 </script>
@@ -325,7 +348,7 @@ export default {
 
 .placar {
   width: 100%;
-  min-width: 860px;
+  min-width: 100%;
   border-collapse: collapse;
   table-layout: auto;
 }
@@ -334,10 +357,15 @@ export default {
   background-color: #3b82f6;
   color: white;
   font-weight: 600;
-  padding: 10px 8px;
+  padding: 9px 6px;
   font-size: 14px;
   text-align: left;
   white-space: nowrap;
+}
+
+.placar thead th:not(:first-child),
+.placar tbody td:not(:first-child) {
+  text-align: center;
 }
 
 .placar tbody tr:hover {
@@ -346,7 +374,7 @@ export default {
 
 .placar tbody td {
   color: #374151;
-  padding: 9px 8px;
+  padding: 8px 6px;
   font-size: 13px;
   border-bottom: 1px solid #e5e7eb;
   white-space: nowrap;
@@ -354,18 +382,18 @@ export default {
 
 .col-ultimos {
   text-align: center !important;
-  min-width: 136px;
 }
 
 .ultimos-jogos-cell {
-  min-width: 136px;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 .ultimos-jogos {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .resultado-item {
@@ -403,8 +431,8 @@ export default {
 .time-info {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 170px;
+  gap: 6px;
+  min-width: 0;
 }
 
 .time-info.time-info-click {
@@ -460,29 +488,29 @@ export default {
 }
 
 .glossario-placar {
-  margin-top: 12px;
-  padding: 12px 14px;
+  margin-top: 10px;
+  padding: 9px 12px;
   background: #f5f6fa;
-  border-radius: 6px;
-  font-size: 12px;
+  border-radius: 8px;
+  font-size: 11px;
   color: #333;
 }
 
 .glossario-placar strong {
   display: block;
-  margin-bottom: 10px;
-  font-size: 13px;
+  margin-bottom: 8px;
+  font-size: 12px;
 }
 
 .glossario-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px 18px;
+  gap: 6px 14px;
 }
 
 .glossario-grid p {
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -504,56 +532,98 @@ export default {
   }
 
   .placar {
-    min-width: 680px;
+    width: 100%;
+    min-width: 560px;
+    table-layout: auto;
   }
 
   .placar thead th {
-    padding: 8px 6px;
-    font-size: 12px;
+    padding: 6px 4px;
+    font-size: 11px;
+    text-align: center;
+  }
+
+  .placar thead th:first-child,
+  .placar tbody td:first-child {
+    text-align: left;
+    width: 104px;
+    min-width: 104px;
+    max-width: 104px;
+  }
+
+  .placar thead th:not(:first-child):not(.col-ultimos),
+  .placar tbody td:not(:first-child):not(.ultimos-jogos-cell) {
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    text-align: center;
   }
 
   .placar tbody td {
-    padding: 7px 6px;
-    font-size: 12px;
+    padding: 5px 4px;
+    font-size: 11px;
   }
 
   .col-ultimos,
   .ultimos-jogos-cell {
-    min-width: 110px;
+    width: auto;
+    min-width: 72px;
+    max-width: none;
   }
 
   .resultado-item {
-    width: 18px;
-    height: 18px;
-    font-size: 10px;
+    width: 14px;
+    height: 14px;
+    font-size: 8px;
   }
 
   .time-image {
-    width: 28px;
-    height: 28px;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
   }
 
   .time-info {
-    min-width: 140px;
+    min-width: 0;
+    gap: 5px;
+    align-items: center;
   }
 
   .nome-time {
-    max-width: 120px;
+    max-width: 70px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-size: 10px;
+  }
+
+  .posicao {
+    min-width: 14px;
+    font-size: 10px;
+  }
+
+  .ultimos-jogos {
+    gap: 2px;
+  }
+
+  .glossario-placar {
+    margin-top: 8px;
+    padding: 8px 10px;
   }
 
   .glossario-placar strong {
-    font-size: 16px;
+    margin-bottom: 6px;
+    font-size: 12px;
   }
 
   .glossario-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px 10px;
   }
 
   .glossario-grid p {
-    font-size: 13px;
+    font-size: 11px;
+    line-height: 1.25;
     white-space: normal;
   }
 }

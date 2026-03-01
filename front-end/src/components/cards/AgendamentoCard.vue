@@ -1,166 +1,420 @@
 <template>
-  <div class="card">
-    <div class="header">
-      <div class="quadra-info">
-        <h3>{{ agendamento.quadra.nome }}</h3>
-      </div>
-    </div>
-
-    <p>Realizado por: <strong>{{ agendamento.usuario }}</strong></p>
-    <p>Time: <strong>{{ agendamento.time }}</strong></p>
-
-    <p>
-      <strong>{{ formatarData(agendamento) }}</strong>, às <strong>{{ formatarHora(agendamento) }}</strong>
-    </p>
-
-    <p>Duração: <strong>{{ agendamento.duracao }} hora(s)</strong></p>
-    <p>Tipo: <strong>{{ agendamento.tipo }}</strong></p>
-    <p>
-      Código de Verificação: <strong class="codigo-texto">{{ agendamento.codigoVerificacao || 'N/A' }}</strong>
-    </p>
-
+  <article class="card" :class="statusClass">
     <div v-if="loading" class="overlay-loader">
       <div class="loader"></div>
     </div>
-    <div v-else>
-      <div v-if="!readonly && agendamento.status === 'Pendente'" class="buttons">
-        <button @click="confirmar">Aceitar</button>
-        <button @click="recusar">Recusar</button>
+
+    <div class="card-top">
+      <div class="title-block">
+        <p class="card-kicker">AGENDAMENTO</p>
+        <h3 class="card-title">{{ quadraNome }}</h3>
       </div>
-      <p v-else>Status: <strong>{{ agendamento.status }}</strong></p>
+
+      <span class="status-pill" :class="statusClass">{{ statusTexto }}</span>
     </div>
 
-    <p v-if="(agendamento.status === 'Recusado' || agendamento.status === 'recusado') && agendamento.motivoRecusa"
-      class="motivo-recusa">
-      Motivo da recusa: <strong>{{ agendamento.motivoRecusa }}</strong>
-    </p>
-  </div>
+    <div class="meta-grid">
+      <div class="meta-item">
+        <span class="meta-label">Solicitante</span>
+        <strong class="meta-value">{{ solicitanteNome }}</strong>
+      </div>
+
+      <div class="meta-item">
+        <span class="meta-label">Time</span>
+        <strong class="meta-value">{{ timeNome }}</strong>
+      </div>
+
+      <div class="meta-item">
+        <span class="meta-label">Data</span>
+        <strong class="meta-value">{{ dataFormatada }}</strong>
+      </div>
+
+      <div class="meta-item">
+        <span class="meta-label">Horario</span>
+        <strong class="meta-value">{{ horaFormatada }}</strong>
+      </div>
+
+      <div class="meta-item">
+        <span class="meta-label">Duracao</span>
+        <strong class="meta-value">{{ duracaoLabel }}</strong>
+      </div>
+
+      <div class="meta-item">
+        <span class="meta-label">Tipo</span>
+        <strong class="meta-value">{{ tipoLabel }}</strong>
+      </div>
+    </div>
+
+    <div class="code-strip">
+      <span class="code-label">Codigo de verificacao</span>
+      <strong class="code-value">{{ codigoVerificacao }}</strong>
+    </div>
+
+    <div v-if="motivoRecusa" class="motivo-recusa">
+      <span class="motivo-label">Motivo da recusa</span>
+      <strong class="motivo-value">{{ motivoRecusa }}</strong>
+    </div>
+
+    <div v-if="!readonly && isPendente" class="buttons">
+      <button type="button" class="btn-action btn-action-primary" @click="emit('confirmar')">
+        Aceitar
+      </button>
+      <button type="button" class="btn-action btn-action-secondary" @click="emit('recusar')">
+        Recusar
+      </button>
+    </div>
+  </article>
 </template>
 
-<script>
-export default {
-  props: {
-    agendamento: Object,
-    readonly: { type: Boolean, default: false },
-    loading: { type: Boolean, default: false }
-  },
-  emits: ["confirmar", "recusar"],
-  methods: {
-    formatarData(ag) {
-      if (ag.datahora) {
-        return new Date(ag.datahora).toLocaleDateString('pt-BR');
-      }
-      return `${String(ag.dia).padStart(2, '0')}/${String(ag.mes).padStart(2, '0')}/${ag.ano}`;
-    },
+<script setup>
+import { computed, defineEmits, defineProps } from 'vue'
 
-    formatarHora(ag) {
-      if (ag.datahora) {
-        return new Date(ag.datahora).toLocaleTimeString('pt-BR', {
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-      }
+const props = defineProps({
+  agendamento: { type: Object, required: true },
+  readonly: { type: Boolean, default: false },
+  loading: { type: Boolean, default: false },
+})
 
-      return `${String(ag.hora).padStart(2, '0')}:00`;
-    },
+const emit = defineEmits(['confirmar', 'recusar'])
 
-    confirmar() {
-      this.$emit("confirmar");
-    },
-    recusar() {
-      this.$emit("recusar");
-    }
+const statusNormalizado = computed(() => String(props.agendamento?.status || '').trim().toLowerCase())
+
+const statusClass = computed(() => {
+  const mapa = {
+    pendente: 'is-pendente',
+    confirmado: 'is-confirmado',
+    recusado: 'is-recusado',
+    finalizado: 'is-finalizado',
   }
-};
+
+  return mapa[statusNormalizado.value] || 'is-neutro'
+})
+
+const statusTexto = computed(() => String(props.agendamento?.status || 'Sem status').toUpperCase())
+const isPendente = computed(() => statusNormalizado.value === 'pendente')
+
+const quadraNome = computed(() => props.agendamento?.quadraNome || props.agendamento?.quadra?.nome || 'Quadra')
+const solicitanteNome = computed(() => props.agendamento?.solicitanteNome || props.agendamento?.usuario || props.agendamento?.usuario?.nome || 'Sem usuario')
+const timeNome = computed(() => props.agendamento?.timeNome || props.agendamento?.time || props.agendamento?.time?.nome || 'Nao especificado')
+const codigoVerificacao = computed(() => props.agendamento?.codigoVerificacao || 'N/A')
+const motivoRecusa = computed(() => props.agendamento?.motivoRecusa || '')
+const tipoLabel = computed(() => props.agendamento?.tipo || 'Nao informado')
+const duracaoLabel = computed(() => `${props.agendamento?.duracao || 0} hora(s)`)
+
+const formatarData = (agendamento) => {
+  if (agendamento?.datahora) {
+    return new Date(agendamento.datahora).toLocaleDateString('pt-BR')
+  }
+
+  return `${String(agendamento?.dia || 0).padStart(2, '0')}/${String(agendamento?.mes || 0).padStart(2, '0')}/${agendamento?.ano || '----'}`
+}
+
+const formatarHora = (agendamento) => {
+  if (agendamento?.datahora) {
+    return new Date(agendamento.datahora).toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
+
+  return `${String(agendamento?.hora || 0).padStart(2, '0')}:00`
+}
+
+const dataFormatada = computed(() => formatarData(props.agendamento))
+const horaFormatada = computed(() => formatarHora(props.agendamento))
 </script>
 
 <style scoped>
 .card {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 24px;
-  margin-bottom: 12px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   position: relative;
-  font-family: 'Montserrat', sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 100%;
+  padding: 15px 16px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #fbfdff 0%, #ffffff 100%);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.07);
+  overflow: hidden;
 }
 
-.header {
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: rgba(148, 163, 184, 0.24);
+}
+
+.card.is-pendente::before {
+  background: #d97706;
+}
+
+.card.is-confirmado::before {
+  background: #059669;
+}
+
+.card.is-recusado::before {
+  background: #dc2626;
+}
+
+.card.is-recusado {
+  gap: 8px;
+  padding: 12px 13px;
+}
+
+.card.is-recusado .card-top {
+  gap: 8px;
+}
+
+.card.is-recusado .title-block {
+  gap: 1px;
+}
+
+.card.is-recusado .card-title {
+  font-size: 18px;
+}
+
+.card.is-recusado .status-pill {
+  min-width: 88px;
+  min-height: 26px;
+  padding: 0 9px;
+  font-size: 8px;
+}
+
+.card.is-finalizado::before {
+  background: #2563eb;
+}
+
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.card-kicker {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #2563eb;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.05;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.status-pill.is-pendente {
+  background: rgba(217, 119, 6, 0.14);
+  color: #b45309;
+}
+
+.status-pill.is-confirmado {
+  background: rgba(5, 150, 105, 0.14);
+  color: #047857;
+}
+
+.status-pill.is-recusado {
+  background: rgba(220, 38, 38, 0.12);
+  color: #b91c1c;
+}
+
+.status-pill.is-finalizado,
+.status-pill.is-neutro {
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.card.is-recusado .meta-grid {
+  gap: 6px;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.card.is-recusado .meta-item {
+  gap: 2px;
+  padding: 8px 9px;
+  border-radius: 12px;
+}
+
+.meta-item-wide {
+  grid-column: span 2;
+}
+
+.meta-label,
+.code-label,
+.motivo-label,
+.footer-status-label {
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: #64748b;
+}
+
+.meta-value,
+.motivo-value,
+.footer-status-value {
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.25;
+  color: #0f172a;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.code-strip {
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(37, 99, 235, 0.06);
+  border: 1px solid rgba(37, 99, 235, 0.12);
 }
 
-.quadra-info h3 {
-  color: #3b82f6;
-  font-weight: bolder;
-  margin: 0;
+.card.is-recusado .code-strip {
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
 }
 
-p {
-  color: #7E7E7E;
-  margin: 4px 0;
-}
-
-.codigo-texto {
-  color: #1e3a8a;
-  letter-spacing: 1.5px;
-  font-weight: 800;
+.code-value {
+  font-size: 14px;
+  line-height: 1;
+  color: #1d4ed8;
+  font-weight: 900;
+  letter-spacing: 0.08em;
 }
 
 .motivo-recusa {
-  margin: 4px 0;
-  color: #7e7e7e;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(220, 38, 38, 0.06);
+  border: 1px solid rgba(220, 38, 38, 0.14);
+}
+
+.card.is-recusado .motivo-recusa {
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 12px;
+}
+
+.motivo-value {
+  color: #991b1b;
+}
+
+.card.is-recusado .motivo-value {
+  font-size: 13px;
+  line-height: 1.15;
 }
 
 .buttons {
-  margin-top: 12px;
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 
-button {
-  width: 49%;
-  padding: 8px 12px;
+.btn-action {
+  min-height: 38px;
   border: none;
-  border-radius: 6px;
+  border-radius: 999px;
   cursor: pointer;
-  font-weight: bold;
+  font-size: 13px;
+  font-weight: 800;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
-button:hover {
-  opacity: 0.8;
+.btn-action:hover {
+  transform: translateY(-1px);
 }
 
-button:first-child {
-  background-color: #3b82f6;
-  color: white;
-  margin-right: 12px;
+.btn-action-primary {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 14px 26px rgba(37, 99, 235, 0.2);
 }
 
-button:last-child {
-  background-color: #F3F3F3;
-  color: #7E7E7E;
+.btn-action-secondary {
+  background: rgba(15, 23, 42, 0.06);
+  color: #334155;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.footer-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 2px;
+  border-top: 1px solid rgba(226, 232, 240, 0.9);
 }
 
 .overlay-loader {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.7);
+  inset: 0;
+  background: rgba(255, 255, 255, 0.72);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 10;
-  border-radius: 8px;
+  border-radius: 20px;
+  backdrop-filter: blur(2px);
 }
 
 .overlay-loader .loader {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border: 5px solid #3b82f6;
   border-top-color: transparent;
   border-radius: 50%;
@@ -178,19 +432,79 @@ button:last-child {
 }
 
 @media (max-width: 768px) {
-  .buttons {
-    flex-direction: column;
+  .card {
+    padding: 14px;
+    border-radius: 18px;
     gap: 10px;
   }
 
-  .buttons button {
-    width: 100%;
-    margin: 0;
+  .card-title {
+    font-size: 18px;
   }
 
-  .header {
+  .status-pill {
+    min-width: 88px;
+    min-height: 26px;
+    font-size: 8px;
+  }
+
+  .card.is-recusado {
+    padding: 11px 12px;
+    gap: 7px;
+  }
+
+  .card.is-recusado .card-title {
+    font-size: 17px;
+  }
+
+  .card.is-recusado .meta-grid {
+    gap: 6px;
+  }
+
+  .card.is-recusado .meta-item,
+  .card.is-recusado .code-strip,
+  .card.is-recusado .motivo-recusa {
+    padding: 8px 9px;
+  }
+
+  .meta-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .meta-item,
+  .meta-item-wide {
+    grid-column: auto;
+  }
+
+  .meta-item {
+    padding: 9px 10px;
+  }
+
+  .meta-label {
+    font-size: 9px;
+  }
+
+  .meta-value,
+  .motivo-value,
+  .footer-status-value {
+    font-size: 13px;
+  }
+
+  .code-strip,
+  .footer-status {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .buttons {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .btn-action {
+    min-height: 36px;
+    font-size: 13px;
   }
 }
 </style>

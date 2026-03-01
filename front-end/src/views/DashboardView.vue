@@ -1,144 +1,258 @@
-<template>
+﻿<template>
   <div class="layout">
     <SideBar />
+
     <div class="conteudo">
+      <NavBarUse class="dashboard-nav" />
 
-      <div class="header-dashboard">
-        <h1 class="title">{{ tituloDashboard }}</h1>
-      </div>
-
-      <NavBarUse />
+      <section class="page-header">
+        <div class="header-copy">
+          <div class="header-topline">
+            <h1 class="title">{{ tituloDashboard }}</h1>
+          </div>
+        </div>
+      </section>
 
       <section class="section_totalAgendamentos">
-        <div class="card_contagem">
-          <h3>Usuarios</h3>
-          <p>{{ totalUsuarios }}</p>
-        </div>
-        <div class="card_contagem">
-          <h3>Agendamentos</h3>
-          <p>{{ totalAgendamentos }}</p>
-        </div>
-        <div class="card_contagem">
-          <h3>Pendentes</h3>
-          <p>{{ totalPendentes }}</p>
-        </div>
-        <div class="card_contagem">
-          <h3>Confirmados</h3>
-          <p>{{ totalConfirmados }}</p>
-        </div>
-        <div class="card_contagem">
-          <h3>Recusados</h3>
-          <p>{{ totalCancelados }}</p>
-        </div>
+        <article class="card_contagem card_contagem-usuarios">
+          <p class="card_kicker">USUARIOS</p>
+          <div class="card_metric_row">
+            <p class="card_valor">{{ totalUsuarios }}</p>
+            <span class="card_legenda">Cadastrados em {{ anoAtual }}</span>
+          </div>
+        </article>
+
+        <article class="card_contagem card_contagem-agendamentos">
+          <p class="card_kicker">AGENDAMENTOS</p>
+          <div class="card_metric_row">
+            <p class="card_valor">{{ totalAgendamentos }}</p>
+            <span class="card_legenda">Total Anual</span>
+          </div>
+        </article>
+
+        <article class="card_contagem card_contagem-pendentes">
+          <p class="card_kicker">PENDENTES</p>
+          <div class="card_metric_row">
+            <p class="card_valor">{{ totalPendentes }}</p>
+            <span class="card_legenda">Aguardando resposta</span>
+          </div>
+        </article>
+
+        <article class="card_contagem card_contagem-confirmados">
+          <p class="card_kicker">CONFIRMADOS</p>
+          <div class="card_metric_row">
+            <p class="card_valor">{{ totalConfirmados }}</p>
+            <span class="card_legenda">Reservas aprovadas</span>
+          </div>
+        </article>
+
+        <article class="card_contagem card_contagem-recusados">
+          <p class="card_kicker">RECUSADOS</p>
+          <div class="card_metric_row">
+            <p class="card_valor">{{ totalCancelados }}</p>
+            <span class="card_legenda">Nao Aceites</span>
+          </div>
+        </article>
       </section>
 
       <section class="section_avisos">
         <div class="card_avisos_container">
-          <div class="header_avisos">
-            <h3 class="avisos">Mural de Avisos</h3>
+          <div class="panel-head">
+            <div class="panel-copy">
+              <p class="section-kicker">AVISOS</p>
+              <h2 class="section-title">Mural de avisos</h2>
+              <p class="section-subtitle">Acompanhe recados recentes da administracao e gerencie o que fica em destaque.</p>
+            </div>
+
             <div class="header_actions">
-              <button v-if="listaPendentes.length > 1" type="button" @click="exibirTodosAvisos = !exibirTodosAvisos"
-                class="btn-padrao btn-ver-mais">
+              <button
+                v-if="listaPendentes.length > 1"
+                type="button"
+                @click="exibirTodosAvisos = !exibirTodosAvisos"
+                class="btn-padrao btn-secundario"
+              >
                 {{ exibirTodosAvisos ? 'Ver menos' : 'Ver todos (' + listaPendentes.length + ')' }}
               </button>
 
-              <button type="button" @click="abrirHistorico" class="btn-padrao btn-historico">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon-mini" fill="none" viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <button type="button" @click="abrirHistorico" class="btn-padrao btn-secundario">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon-mini" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Histórico
+                Historico
               </button>
 
-              <button v-if="podePostar" type="button" @click="abrirModal" class="btn-padrao btn-novo-aviso">
-                + Novo Aviso
+              <button v-if="podePostar" type="button" @click="abrirModal" class="btn-padrao btn-primario">
+                + Novo aviso
               </button>
             </div>
           </div>
 
           <div v-if="listaPendentes.length === 0" class="sem-avisos">
-            Nenhum aviso pendente. Consulte o histórico para ver mensagens antigas.
+            <p class="sem-avisos-title">Nenhum aviso pendente.</p>
+            <p class="sem-avisos-copy">Consulte o historico para revisar as mensagens antigas quando precisar.</p>
           </div>
+
           <div class="lista_avisos" v-else>
-            <div v-for="aviso in avisosExibidos" :key="aviso.id" class="card_aviso_item"
-              :class="{ 'aviso-fixado': aviso.fixado }">
-              <div class="aviso_conteudo">
+            <article
+              v-for="aviso in avisosExibidos"
+              :key="aviso.id"
+              class="card_aviso_item"
+              :class="{ 'aviso-fixado': aviso.fixado }"
+            >
+              <div class="aviso_topo">
                 <div class="aviso_meta">
-                  <span class="aviso_origem" style="font-weight: bold; color: #3B82F6; margin-right: 8px;">
-                    {{ aviso.quadra?.nome || ' EQUIPE QUADRA LIVRE ' }}
-                  </span>
-                  <span style="font-size: 11px; color: #666;">• {{ formatarData(aviso.data) }}</span>
+                  <span class="aviso_origem">{{ aviso.quadra?.nome || 'Equipe Quadra Livre' }}</span>
+                  <span class="aviso_data">{{ formatarData(aviso.data) }}</span>
                 </div>
-                <h4>{{ aviso.titulo }}</h4>
+                <span class="aviso_status" :class="{ 'aviso_status-fixado': aviso.fixado }">
+                  {{ aviso.fixado ? 'Fixado' : 'Recente' }}
+                </span>
+              </div>
+
+              <div class="aviso_conteudo">
+                <h3>{{ aviso.titulo }}</h3>
                 <p>{{ aviso.descricao }}</p>
               </div>
-              <div class="aviso_right_side">
-                <span class="aviso_autor">Autor: {{ aviso.autor?.nome }}</span>
+
+              <div class="aviso_footer">
+                <span class="aviso_autor">Autor: {{ aviso.autor?.nome}}</span>
+
                 <div class="aviso_actions_wrapper">
-                  <button class="btn-ler" @click="marcarComoLido(aviso)">
-                    Marcar como lido
+                                    <button class="btn-ler" @click="marcarComoLido(aviso)">
+                    <svg class="icon-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                    <span>Marcar como lido</span>
                   </button>
+
                   <div class="aviso_actions" v-if="podePostar">
-                    <button class="btn-icon btn-fixar" :class="{ 'btn-ativo': aviso.fixado }"
-                      @click="alternarFixado(aviso)" :title="aviso.fixado ? 'Desafixar Aviso' : 'Fixar Aviso'">
-                      <img v-if="aviso.fixado" :src="require('@/assets/icons/pin-slash.svg')" class="icon-svg"
-                        alt="Desafixar" />
+                    <button
+                      class="btn-icon btn-fixar"
+                      :class="{ 'btn-ativo': aviso.fixado }"
+                      @click="alternarFixado(aviso)"
+                      :title="aviso.fixado ? 'Desafixar aviso' : 'Fixar aviso'"
+                    >
+                      <img v-if="aviso.fixado" :src="require('@/assets/icons/pin-slash.svg')" class="icon-svg" alt="Desafixar" />
                       <img v-else :src="require('@/assets/icons/pin.svg')" class="icon-svg" alt="Fixar" />
                     </button>
-                    <button v-if="usuarioLogado.id === aviso.autorId || usuarioLogado.permissaoId === 1"
-                      class="btn-icon btn-excluir" @click="deletarAviso(aviso.id)" title="Excluir Aviso">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="icon-svg" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+
+                    <button
+                      v-if="usuarioLogado.id === aviso.autorId || usuarioLogado.permissaoId === 1"
+                      class="btn-icon btn-excluir"
+                      @click="deletarAviso(aviso.id)"
+                      title="Excluir aviso"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
                   </div>
                 </div>
               </div>
-            </div>
+            </article>
           </div>
         </div>
       </section>
 
+      <div class="charts-toolbar">
+        <div class="panel-copy">
+          <p class="section-kicker">RELATORIOS</p>
+          <h2 class="section-title">Graficos operacionais</h2>
+        </div>
+
+        <button @click="gerarPDFGraficos" class="btn-pdf-side" :disabled="loading" title="Baixar PDF">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"></path>
+            <path d="M14 2v6h6"></path>
+            <text x="5" y="17" font-size="7" font-family="Arial, sans-serif" font-weight="bold" fill="currentColor" stroke="none">PDF</text>
+          </svg>
+          <span class="btn-pdf-label btn-pdf-label-desktop">Relatorio PDF</span>
+          <span class="btn-pdf-label btn-pdf-label-mobile">PDF</span>
+        </button>
+      </div>
+
+      <section class="section_graficos_top">
+        <article class="chart-panel">
+          <div class="chart-panel-head">
+            <p class="chart-kicker">Distribuicao por modalidade</p>
+          </div>
+          <div class="chart-wrapper chart-wrapper-fixed">
+            <div class="chart-container">
+              <canvas id="agendamentosModalidadeChart"></canvas>
+            </div>
+          </div>
+        </article>
+
+        <article class="chart-panel">
+          <div class="chart-panel-head">
+            <p class="chart-kicker">Participação por Tipo</p>
+          </div>
+          <div class="chart-wrapper chart-wrapper-fixed">
+            <div class="chart-area-pie">
+              <canvas id="agendamentosTipoChart"></canvas>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="section_graficos_bottom">
+        <article class="chart-panel chart-panel-full">
+          <div class="chart-panel-head">
+            <p class="chart-kicker">Agendamento por mes</p>
+          </div>
+
+          <div v-if="loading" class="loader-container-centralizado">
+            <div class="loader"></div>
+          </div>
+
+          <div class="chart-wrapper chart-wrapper-fixed">
+            <div class="chart-container-full">
+              <canvas id="agendamentosMesChart"></canvas>
+            </div>
+          </div>
+        </article>
+      </section>
+
       <Teleport to="body">
         <div v-if="exibirModalAviso" class="modal-overlay" @click.self="exibirModalAviso = false">
-          <div class="modal-content modal-large">
-            <div class="header_avisos modal-header-aviso" style="border:none;">
-              <h3 class="avisos_lidos">Cadastrar Novo Aviso</h3>
-              <button type="button" class="btn-close-x-modal" @click="exibirModalAviso = false" aria-label="Fechar modal">
-                x
-              </button>
+          <div class="modal-content modal-form">
+            <div class="modal-header">
+              <div>
+                <h3 class="modal-title">Cadastrar novo aviso</h3>
+                <p class="modal-subtitle">Preencha os dados e publique o recado no mural principal.</p>
+              </div>
+              <button type="button" class="btn-close-x-modal" @click="exibirModalAviso = false" aria-label="Fechar modal">x</button>
             </div>
-            <div style="flex: 1; overflow-y: auto;">
+
+            <div class="modal-body-scroll">
               <div class="form-group" v-if="usuarioLogado.permissaoId === 1">
-                <label class="label-input">Quadra de Destino</label>
+                <label class="label-input">Quadra de destino</label>
                 <select v-model="novoAviso.quadraId" class="input-estilizado">
                   <option value="" disabled>Selecione uma quadra</option>
-                  <option :value="null">Aviso Geral</option>
-                  <option v-for="q in listaQuadras" :key="q.id" :value="q.id">
-                    {{ q.nome }}
-                  </option>
+                  <option :value="null">Aviso geral</option>
+                  <option v-for="q in listaQuadras" :key="q.id" :value="q.id">{{ q.nome }}</option>
                 </select>
               </div>
+
               <div class="form-group">
-                <label class="label-input">Título</label>
-                <input v-model="novoAviso.titulo" placeholder="Digite o título do aviso" class="input-estilizado" />
+                <label class="label-input">Titulo</label>
+                <input v-model="novoAviso.titulo" placeholder="Digite o titulo do aviso" class="input-estilizado" />
               </div>
+
               <div class="form-group">
-                <label class="label-input">Descrição</label>
-                <textarea v-model="novoAviso.descricao" placeholder="O que você quer avisar?"
-                  class="input-estilizado area-texto"></textarea>
+                <label class="label-input">Descricao</label>
+                <textarea v-model="novoAviso.descricao" placeholder="O que voce quer avisar?" class="input-estilizado area-texto"></textarea>
               </div>
-              <div class="form-group-checkbox">
-                <input type="checkbox" id="fixarNovo" v-model="novoAviso.fixado">
-                <label for="fixarNovo">Fixar este aviso no topo?</label>
-              </div>
+
+              <label class="form-group-checkbox" for="fixarNovo">
+                <input type="checkbox" id="fixarNovo" v-model="novoAviso.fixado" />
+                <span>Fixar este aviso no topo.</span>
+              </label>
             </div>
+
             <div class="modal-actions modal-actions-single">
               <button @click="enviarAviso" class="btn-confirmar" :disabled="enviando">
-                {{ enviando ? 'Postando...' : 'Postar Aviso' }}
+                {{ enviando ? 'Postando...' : 'Postar aviso' }}
               </button>
             </div>
           </div>
@@ -147,95 +261,61 @@
 
       <Teleport to="body">
         <div v-if="exibirModalHistorico" class="modal-overlay" @click.self="exibirModalHistorico = false">
-          <div class="modal-content modal-large">
-            <div class="header_avisos" style="margin-bottom: 10px; border:none;">
-              <h3 class="avisos_lidos">Histórico de Avisos Lidos</h3>
+          <div class="modal-content modal-historico">
+            <div class="modal-header">
+              <div>
+                <h3 class="modal-title">Avisos lidos</h3>
+                <p class="modal-subtitle">Filtre por ano e origem para revisar comunicados antigos.</p>
+              </div>
+              <button type="button" class="btn-close-x-modal" @click="exibirModalHistorico = false" aria-label="Fechar modal">x</button>
             </div>
+
             <div class="filter-row filtros-full">
-              <div class="filtro-item">
+              <div>
                 <label class="filtro-label">Filtrar por ano</label>
                 <select v-model="filtroAno" class="input-estilizado">
                   <option value="todos">Todos</option>
-                  <option v-for="ano in anosDisponiveis" :key="ano" :value="ano">
-                    {{ ano }}
-                  </option>
+                  <option v-for="ano in anosDisponiveis" :key="ano" :value="ano">{{ ano }}</option>
                 </select>
               </div>
-              <div class="filtro-item">
+
+              <div>
                 <label class="filtro-label">Origem</label>
                 <select v-model="filtroOrigem" class="input-estilizado">
                   <option value="todos">Todos</option>
                   <option value="geral">Geral</option>
-                  <option value="quadra">Própria Quadra</option>
+                  <option value="quadra">Propria quadra</option>
                 </select>
               </div>
             </div>
-            <div class="lista_avisos" style="margin-top: 20px; max-height: 400px; overflow-y: auto;">
-              <div v-if="listaLidosFiltrada.length === 0" class="sem-avisos">
-                Nenhum aviso lido encontrado em {{ filtroAno }}.
+
+            <div class="lista_avisos lista_avisos_historico">
+              <div v-if="listaLidosFiltrada.length === 0" class="sem-avisos sem-avisos-historico">
+                <p class="sem-avisos-title">Nenhum aviso encontrado.</p>
+                <p class="sem-avisos-copy">Nao ha avisos lidos para o filtro {{ filtroAno }}.</p>
               </div>
-              <div v-else v-for="aviso in listaLidosFiltrada" :key="aviso.id" class="card_aviso_item"
-                style="opacity: 0.8; background: #f9f9f9;">
-                <div class="aviso_conteudo">
+
+              <article v-else v-for="aviso in listaLidosFiltrada" :key="aviso.id" class="card_aviso_item card_aviso_item-historico">
+                <div class="aviso_topo">
                   <div class="aviso_meta">
-                    <span style="font-weight: bold; color: #3B82F6;">{{ aviso.quadra?.nome }}</span>
-                    <span> • {{ formatarData(aviso.data) }}</span>
+                    <span class="aviso_origem">{{ aviso.quadra?.nome || 'Aviso geral' }}</span>
+                    <span class="aviso_data">{{ formatarData(aviso.data) }}</span>
                   </div>
-                  <h4>{{ aviso.titulo }}</h4>
+                  <span class="aviso_status aviso_status-lido">Lido</span>
+                </div>
+
+                <div class="aviso_conteudo">
+                  <h3>{{ aviso.titulo }}</h3>
                   <p>{{ aviso.descricao }}</p>
                 </div>
-                <div class="aviso_right_side">
-                  <span style="color: #10B981; font-weight: bold; font-size: 12px;">✓ Lido</span>
-                </div>
-              </div>
+              </article>
             </div>
-            <button class="btn-fechar-historico" @click="exibirModalHistorico = false">
-              Fechar
-            </button>
           </div>
         </div>
       </Teleport>
-
-      <div class="header-graficos-acoes">
-        <button @click="gerarPDFGraficos" class="btn-pdf-side" :disabled="loading" title="Baixar PDF">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"></path>
-            <path d="M14 2v6h6"></path>
-            <text x="5" y="17" font-size="7" font-family="Arial, sans-serif" font-weight="bold" fill="currentColor" stroke="none">PDF</text>
-          </svg>
-          <span class="texto-btn-pdf">Relatório PDF</span>
-        </button>
-      </div>
-
-      <section class="section_graficos_top">
-        <div class="chart-wrapper">
-          <div class="chart-container">
-            <canvas id="agendamentosModalidadeChart"></canvas>
-          </div>
-        </div>
-
-        <div class="chart-wrapper">
-          <div class="chart-area-pie">
-            <canvas id="agendamentosTipoChart"></canvas>
-          </div>
-        </div>
-      </section>
-
-      <section class="section_graficos_bottom">
-        <div v-if="loading" class="loader-container-centralizado">
-          <div class="loader"></div>
-        </div>
-        <div class="chart-wrapper">
-          <div class="chart-container-full">
-            <canvas id="agendamentosMesChart"></canvas>
-          </div>
-        </div>
-      </section>
-
     </div>
   </div>
 </template>
-
 <script>
 import SideBar from '@/components/SideBar.vue'
 import NavBarUse from '@/components/NavBarUser.vue'
@@ -336,6 +416,9 @@ export default {
     }
   },
   computed: {
+    anoAtual() {
+      return new Date().getFullYear();
+    },
     podePostar() {
       return this.usuarioLogado?.permissaoId === 1 || this.usuarioLogado?.permissaoId === 2;
     },
@@ -431,12 +514,12 @@ export default {
       doc.text("QuadraLivre", 32, 15);
       doc.setTextColor(...corPrimaria);
       doc.setFontSize(16);
-      doc.text(`Relatório de Agendamentos - ${this.tituloDashboard}`, 105, 45, null, null, "center");
+      doc.text(`Relatorio de Agendamentos - ${this.tituloDashboard}`, 105, 45, null, null, "center");
 
       doc.setFontSize(10);
       doc.setTextColor(100);
       doc.setFont("helvetica", "normal");
-      doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 105, 51, null, null, "center");
+      doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} as ${new Date().toLocaleTimeString('pt-BR')}`, 105, 51, null, null, "center");
 
       let cursorY = 70;
 
@@ -485,7 +568,7 @@ export default {
 
       if (cursorY > 200) { doc.addPage(); cursorY = 20; }
       const img3 = capturarGraficoComNumeros('agendamentosMesChart');
-      adicionarAoPDF(img3, '3. Evolução Mensal');
+      adicionarAoPDF(img3, '3. Evolucao Mensal');
 
       doc.save(`relatorio_graficos_${new Date().toISOString().slice(0, 10)}.pdf`);
     },
@@ -521,7 +604,21 @@ export default {
     async carregarUsuarios() {
       try {
         const res = await api.get('/usuarios');
-        this.totalUsuarios = Array.isArray(res.data) ? res.data.length : 0;
+        const usuarios = Array.isArray(res.data) ? res.data : [];
+        this.totalUsuarios = usuarios.filter((usuario) => {
+          const dataCadastro =
+            usuario?.dataCadastro ||
+            usuario?.createdAt ||
+            usuario?.criadoEm ||
+            null;
+
+          if (!dataCadastro) return false;
+
+          const data = new Date(dataCadastro);
+          if (Number.isNaN(data.getTime())) return false;
+
+          return data.getFullYear() === this.anoAtual;
+        }).length;
       }
       catch (error) {
         console.error(error);
@@ -643,7 +740,7 @@ export default {
         Swal.fire({
           icon: 'warning',
           title: 'Campos Incompletos',
-          text: 'Preencha título, descrição e escolha o destino.',
+          text: 'Preencha titulo, descricao e escolha o destino.',
           confirmButtonColor: '#1E3A8A',
         });
         return;
@@ -675,7 +772,7 @@ export default {
         console.error(error);
         Swal.fire({
           icon: 'error',
-          title: 'Erro na Operação',
+          title: 'Erro na Operacao',
           text: 'Falha ao registrar o aviso.',
           confirmButtonColor: '#1E3A8A',
         });
@@ -688,7 +785,7 @@ export default {
     async deletarAviso(id) {
       const result = await Swal.fire({
         title: 'Excluir Aviso?',
-        text: "Essa ação não pode ser desfeita.",
+        text: "Essa aÃ§Ã£o nao pode ser desfeita.",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
@@ -701,9 +798,9 @@ export default {
         try {
           await api.delete(`/avisos/${id}`);
           await this.carregarAvisos();
-          Swal.fire('Excluído!', 'O aviso foi removido.', 'success');
+          Swal.fire('Excluido!', 'O aviso foi removido.', 'success');
         } catch (error) {
-          Swal.fire('Erro', 'Não foi possível excluir o aviso.', 'error');
+          Swal.fire('Erro', 'Nao foi possÃ­vel excluir o aviso.', 'error');
         }
       }
     },
@@ -730,7 +827,7 @@ export default {
       const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1)
 
       const nomesModalidades = agendamentosConfirmados.map(a => {
-        let nome = 'Não definido'
+        let nome = 'Nao definido'
         if (a.modalidade?.nome) nome = a.modalidade.nome
         else if (a.quadra?.modalidades?.length > 0) nome = a.quadra.modalidades[0].nome
         return capitalize(nome)
@@ -788,7 +885,7 @@ export default {
       const agendamentosConfirmados = this.agendamentos.filter(a => a.status === 'Confirmado')
 
       const mesesNomes = [
-        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+        'Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho',
         'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
       ]
 
@@ -799,7 +896,7 @@ export default {
           type: 'bar',
           data: {
             labels: mesesNomes,
-            datasets: [{ label: 'Agendamentos Confirmados por Mês', data: new Array(12).fill(0), backgroundColor: '#1E3A8A' }]
+            datasets: [{ label: 'Agendamentos Confirmados por Mes', data: new Array(12).fill(0), backgroundColor: '#1E3A8A' }]
           },
           options: {
             responsive: true,
@@ -822,7 +919,7 @@ export default {
         type: 'bar',
         data: {
           labels: mesesFiltrados,
-          datasets: [{ label: 'Agendamentos Confirmados por Mês', data: quantidade, backgroundColor: '#1E3A8A' }]
+          datasets: [{ label: 'Agendamentos Confirmados por Mes', data: quantidade, backgroundColor: '#1E3A8A' }]
         },
         options: {
           responsive: true,
@@ -840,777 +937,910 @@ export default {
 .layout {
   display: flex;
   min-height: 100vh;
-}
-
-.SideBar {
-  width: 250px;
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
+  background: #f4f7fb;
 }
 
 .conteudo {
   flex: 1;
-  padding: 32px;
   margin-left: 250px;
+  padding: 20px 32px 32px;
+  min-width: 0;
   overflow-x: hidden;
-  min-width: 0;
 }
 
-.header-dashboard {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 12px;
-  margin-bottom: 20px;
+.dashboard-nav {
+  margin-bottom: 18px;
 }
 
-.title {
-  font-size: 30px;
-  color: #3b82f6;
-  font-weight: bold;
-  margin: 0;
+.page-header {
+  margin-bottom: 22px;
 }
 
-.section_totalAgendamentos {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 20px;
-  margin-top: 20px;
-  margin-bottom: 40px;
-}
-
-.card_contagem {
-  background: white;
-  border-radius: 12px;
-  padding: 10px;
-  margin-bottom: 12px;
-  font-family: 'Montserrat', sans-serif;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  border: 2px solid #3b82f6;
-}
-
-.card_contagem h3 {
-  font-size: 1.2em;
-  margin-bottom: 10px;
-  color: #1E3A8A;
-  font-weight: bold;
-}
-
-.card_contagem p {
-  font-size: 32px;
-  font-weight: bold;
-  color: #3b82f6;
-}
-
-.header-graficos-acoes {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 30px;
-  margin-bottom: 15px;
-}
-
-.header-graficos-acoes .btn-pdf-side {
-  width: auto;
-  flex-direction: row;
-  padding: 10px 16px;
-}
-
-.chart-wrapper {
-  flex: 1;
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 10px;
-  -webkit-overflow-scrolling: touch;
-}
-
-.section_graficos_top,
-.section_graficos_bottom {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-}
-
-.chart-container,
-.chart-container-full {
-  min-width: 500px;
-  position: relative;
-}
-
-.chart-area-pie {
-  min-width: 500px;
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
-
-.section_graficos_top {
-  display: flex;
-  gap: 20px;
-  margin-top: 40px;
-}
-
-.chart-container {
-  flex: 1;
-  min-width: 0;
-  height: 350px;
-}
-
-.chart-with-actions-container {
-  flex: 1;
-  min-width: 0;
-  height: 350px;
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-}
-
-.chart-area-pie {
-  flex: 1;
-  height: 100%;
-}
-
-.actions-area-pie {
-  display: flex;
-  justify-content: center;
-  margin-top: 10px;
-}
-
-.btn-pdf-side {
-  background-color: #3B82F6;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background 0.2s;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 12px 10px;
-  width: 70px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.btn-pdf-side:hover {
-  background-color: #2563EB;
-}
-
-.btn-pdf-side svg {
-  width: 24px;
-  height: 24px;
-}
-
-.btn-pdf-side span {
-  font-size: 12px;
-}
-
-.section_graficos_bottom {
-  position: relative;
-  margin-top: 40px;
-}
-
-.chart-container-full {
-  width: 100%;
-  height: 350px;
-}
-
-.loader-container-centralizado {
-  position: absolute;
-  top: -70%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 10;
-}
-
-.loader {
-  border: 6px solid #f3f3f3;
-  border-top: 6px solid #3b82f6;
-  border-radius: 50%;
-  width: 100px;
-  height: 100px;
-  animation: spin 1s linear infinite;
-}
-
-.section_avisos {
-  margin-bottom: 30px;
-}
-
-.card_avisos_container {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  border: 2px solid #3b82f6;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.header_avisos {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
-}
-
-.header_actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.area-texto {
-  min-height: 100px;
-  resize: none;
-}
-
-.btn-padrao {
-  height: 38px;
-  padding: 0 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.btn-historico {
-  background: white;
-  color: #3b82f6;
-  border: 1px solid #3b82f6;
-  gap: 8px;
-}
-
-.btn-historico:hover {
-  background: #f0f7ff;
-}
-
-.btn-ver-mais {
-  background: transparent;
-  color: #3b82f6;
-  border: 1px solid #3b82f6;
-}
-
-.btn-ver-mais:hover {
-  background: #3b82f6;
-  color: white;
-}
-
-.btn-novo-aviso {
-  background: #1E3A8A;
-  color: white;
-  border: 1px solid #1E3A8A;
-}
-
-.btn-novo-aviso:hover {
-  background: #152c6e;
-  opacity: 0.9;
-}
-
-.lista_avisos {
-  overflow-y: hidden;
+.header-copy {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.sem-avisos {
-  text-align: center;
-  padding: 20px;
-  color: #999;
-  font-style: italic;
+.header-topline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
 }
 
-.card_aviso_item {
-  background: #f7f9fc;
-  padding: 15px;
-  border-radius: 8px;
-  border-left: 5px solid #3b82f6;
+.section-kicker,
+.card_kicker,
+.chart-kicker {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  font-weight: 800;
+  color: #2563eb;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  font-size: 42px;
+  line-height: 1.04;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+.section-subtitle,
+.modal-subtitle {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+.section_totalAgendamentos {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.card_contagem {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 16px 14px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.06);
+}
+
+.card_metric_row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card_valor {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.card_legenda {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.card_contagem-usuarios .card_valor { color: #2563eb; }
+.card_contagem-agendamentos .card_valor { color: #0f172a; }
+.card_contagem-pendentes .card_valor { color: #d97706; }
+.card_contagem-confirmados .card_valor { color: #059669; }
+.card_contagem-recusados .card_valor { color: #dc2626; }
+
+.section_avisos {
+  margin-bottom: 22px;
+}
+
+.card_avisos_container,
+.chart-panel {
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+
+.panel-head,
+.chart-panel-head,
+.modal-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 15px;
-  transition: all 0.3s ease;
+  gap: 18px;
+}
+
+.panel-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.15;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.1;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+.header_actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-padrao,
+.btn-pdf-side,
+.btn-confirmar {
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.btn-padrao:hover,
+.btn-pdf-side:hover,
+.btn-confirmar:hover {
+  transform: translateY(-1px);
+}
+
+.btn-padrao {
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-secundario {
+  background: #ffffff;
+  color: #1d4ed8;
+  border: 1px solid rgba(37, 99, 235, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+.btn-secundario:hover {
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.btn-primario,
+.btn-confirmar,
+.btn-pdf-side {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.22);
+}
+
+.icon-mini {
+  width: 16px;
+  height: 16px;
+}
+
+.lista_avisos {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card_aviso_item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 12px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(59, 130, 246, 0.12);
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+}
+
+.card_aviso_item-historico {
+  background: #f8fafc;
+  gap: 8px;
+  padding: 12px 12px 10px;
+  border-radius: 16px;
+}
+
+.card_aviso_item-historico .aviso_meta {
+  gap: 6px;
+}
+
+.card_aviso_item-historico .aviso_origem {
+  font-size: 10px;
+}
+
+.card_aviso_item-historico .aviso_data,
+.card_aviso_item-historico .aviso_autor {
+  font-size: 11px;
+}
+
+.card_aviso_item-historico .aviso_status {
+  min-height: 28px;
+  padding: 0 9px;
+  font-size: 10px;
+}
+
+.card_aviso_item-historico .aviso_conteudo h3 {
+  margin: 0 0 5px;
+  font-size: 18px;
+  line-height: 1.04;
+}
+
+.card_aviso_item-historico .aviso_conteudo p {
+  font-size: 13px;
+  line-height: 1.38;
 }
 
 .aviso-fixado {
-  background: #EFF6FF;
-  border-left-color: #1E3A8A;
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.08) 0%, #ffffff 100%);
+  border-color: rgba(37, 99, 235, 0.22);
 }
 
-.aviso_conteudo {
-  flex: 1;
+.aviso_topo,
+.aviso_footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .aviso_meta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #888;
-  margin-bottom: 5px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
-.label-input {
-  display: block;
-  font-size: 14px;
-  color: #333;
-  margin-bottom: 5px;
+.aviso_origem {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #2563eb;
+}
+
+.aviso_data,
+.aviso_autor {
+  font-size: 11px;
+  color: #64748b;
   font-weight: 600;
 }
 
-.icon-mini {
-  width: 18px;
-  height: 18px;
-  vertical-align: middle;
+.aviso_status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
+  color: #334155;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
-.card_aviso_item h4 {
-  color: #1E3A8A;
-  margin: 5px 0;
-  font-size: 16px;
-  font-weight: 700;
+.aviso_status-fixado {
+  background: rgba(37, 99, 235, 0.12);
+  color: #1d4ed8;
 }
 
-.aviso_right_side {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
+.aviso_status-lido {
+  background: rgba(5, 150, 105, 0.12);
+  color: #047857;
 }
 
-.aviso_autor {
-  font-size: 12px;
-  color: #666;
+.aviso_conteudo h3 {
+  margin: 0 0 5px;
+  font-size: 18px;
+  line-height: 1.04;
+  color: #0f172a;
+}
+
+.aviso_conteudo p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.38;
+  color: #475569;
 }
 
 .aviso_actions_wrapper {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-left: auto;
 }
 
 .aviso_actions {
   display: flex;
-  gap: 8px;
   align-items: center;
-  flex-shrink: 0;
+  gap: 5px;
 }
 
 .btn-ler {
-  background: transparent;
-  border: none;
-  color: #3B82F6;
-  font-size: 12px;
-  font-weight: 600;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  background: rgba(37, 99, 235, 0.06);
+  color: #1d4ed8;
+  font-size: 11px;
+  font-weight: 700;
   cursor: pointer;
-  text-decoration: underline;
-  padding: 0;
-}
-
-.btn-ler:hover {
-  color: #1E3A8A;
-}
-
-.btn-icon {
-  background: white;
-  border: 1px solid #e5e7eb;
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
-  color: #6b7280;
+  gap: 5px;
+}
+
+.icon-check {
+  width: 11px;
+  height: 11px;
   flex-shrink: 0;
 }
 
+.btn-ler:hover {
+  background: rgba(37, 99, 235, 0.12);
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: #ffffff;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
 .btn-icon:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
-  color: #374151;
+  background: #f8fafc;
 }
 
 .icon-svg {
-  width: 20px;
-  height: 20px;
+  width: 15px;
+  height: 15px;
 }
 
 .btn-fixar.btn-ativo {
-  background: #EFF6FF;
-  border-color: #1E3A8A;
-  color: #1E3A8A;
-}
-
-.btn-fixar.btn-ativo:hover {
-  background: #DBEafe;
+  background: rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.28);
 }
 
 .btn-excluir:hover {
-  background: #FEF2F2;
-  border-color: #FECACA;
-  color: #DC2626;
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.22);
+}
+
+.sem-avisos {
+  margin-top: 20px;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  padding: 24px;
+  border-radius: 24px;
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  background: #f8fafc;
+}
+
+.sem-avisos-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sem-avisos-copy {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #64748b;
+  max-width: 520px;
+}
+
+.charts-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.btn-pdf-side {
+  min-height: 46px;
+  padding: 0 16px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-pdf-label {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+
+.btn-pdf-label-desktop {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+.btn-pdf-label-mobile {
+  display: none;
+  align-items: center;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.12;
+}
+
+.btn-pdf-label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.section_graficos_top {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.section_graficos_bottom {
+  position: relative;
+}
+
+.chart-panel-full {
+  min-height: 380px;
+}
+
+.chart-wrapper {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.chart-wrapper-fixed {
+  margin-top: 16px;
+}
+
+.chart-container,
+.chart-area-pie,
+.chart-container-full {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.chart-container {
+  height: 300px;
+}
+
+.chart-area-pie {
+  height: 340px;
+}
+
+.chart-container-full {
+  height: 320px;
+}
+
+.chart-container canvas,
+.chart-area-pie canvas,
+.chart-container-full canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+}
+
+.chart-container canvas,
+.chart-area-pie canvas,
+.chart-container-full canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+}
+
+.loader-container-centralizado {
+  position: absolute;
+  inset: 82px 20px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: rgba(248, 250, 252, 0.88);
+  z-index: 2;
+}
+
+.loader {
+  border: 6px solid #e2e8f0;
+  border-top: 6px solid #3b82f6;
+  border-radius: 50%;
+  width: 72px;
+  height: 72px;
+  animation: spin 1s linear infinite;
 }
 
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  inset: 0;
+  background: rgba(2, 6, 23, 0.62);
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(2px);
+  padding: 24px;
   z-index: 1000;
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
-  background: white;
-  padding: 30px;
-  border-radius: 12px;
   width: 100%;
-  max-width: 450px;
-  max-height: 80vh;
-  overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  max-width: 900px;
+  max-height: 88vh;
   display: flex;
   flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  border-radius: 28px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2);
+  overflow: hidden;
 }
 
-.modal-large {
-  max-width: 900px;
+.modal-form {
+  max-width: 760px;
+}
+
+.modal-historico {
+  max-width: 980px;
+}
+
+.modal-body-scroll {
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.btn-close-x-modal {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid rgba(37, 99, 235, 0.24);
+  background: #ffffff;
+  color: #2563eb;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.btn-close-x-modal:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.label-input,
+.filtro-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.input-estilizado {
+  width: 100%;
+  min-height: 46px;
+    padding: 0 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: #f8fafc;
+  font-size: 14px;
+  color: #334155;
+}
+
+.area-texto {
+  min-height: 128px;
+  padding: 12px 14px;
+  resize: vertical;
+}
+
+.input-estilizado:focus {
+  outline: none;
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.form-group-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #475569;
+  font-weight: 600;
 }
 
 .modal-actions {
   display: flex;
   gap: 12px;
-  margin-top: 20px;
-}
-
-.modal-actions .btn-confirmar,
-.modal-actions .btn-cancelar {
-  flex: 1;
 }
 
 .modal-actions-single .btn-confirmar {
   width: 100%;
-}
-
-.modal-header-aviso {
-  align-items: center;
-}
-
-.btn-close-x-modal {
-  width: 36px;
-  height: 36px;
-  border: 1px solid rgba(59, 130, 246, 0.55);
+  min-height: 44px;
   border-radius: 999px;
-  background: #fff;
-  color: #3b82f6;
-  font-size: 18px;
-  line-height: 1;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-
-.btn-close-x-modal:hover {
-  background: rgba(239, 68, 68, 0.08);
-  border-color: rgba(239, 68, 68, 0.35);
-  color: #ef4444;
-  transform: translateY(-1px);
-}
-
-.form-group-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-  color: #555;
   font-size: 14px;
+  font-weight: 700;
 }
 
-.input-estilizado {
-  width: 100%;
-  margin-bottom: 15px;
-  padding: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #4b5563;
-}
-
-.input-estilizado:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-.btn-confirmar {
-  background: #3b82f6;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.btn-cancelar {
-  background: #f3f4f6;
-  color: #4b5563;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.btn-confirmar:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.filter-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.filtros-full {
+.filter-row.filtros-full {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 15px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
-.filtro-item {
-  display: flex;
-  flex-direction: column;
+.lista_avisos_historico {
+  max-height: 420px;
+  overflow-y: auto;
+  gap: 10px;
+  padding-right: 4px;
 }
 
-.filtro-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 6px;
-}
-
-.avisos {
-  font-size: 25px;
-  color: #3b82f6;
-  font-weight: bold;
-  border: 2px solid #3b82f6;
-  border-radius: 8px;
-  padding: 10px 16px;
-  margin: 12px 0 20px 0;
-}
-
-.avisos_lidos {
-  font-size: 30px;
-  color: #3b82f6;
-}
-
-.btn-fechar-historico {
-  background-color: #3b82f6;
-  color: white;
-  padding: 12px 16px;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  margin-top: 20px;
-  width: 100%;
-  font-size: 15px;
-  font-weight: 600;
-  transition: background-color 0.2s ease;
+.sem-avisos-historico {
+  margin-top: 0;
+  min-height: 140px;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 
-  100% {
-    transform: rotate(360deg);
+.btn-pdf-label-mobile {
+  display: none;
+}
+
+@media (max-width: 1200px) {
+  .section_totalAgendamentos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-/* Responsivo */
-@media (max-width: 768px) {
-  .SideBar {
-    position: fixed;
-    width: 250px;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    transform: translateX(-100%);
-    background: #fff;
-    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.2);
+@media (max-width: 960px) {
+  .section_graficos_top {
+    grid-template-columns: 1fr;
   }
 
-  .SideBar.open {
-    transform: translateX(0);
-  }
-
-  .conteudo {
-    margin-left: 0;
-    padding: 12px 16px 16px !important;
-    width: 100%;
-    max-width: 100vw;
-    box-sizing: border-box;
-  }
-
-  .header-dashboard {
+  .header-topline,
+  .panel-head,
+  .chart-panel-head,
+  .modal-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
-    margin-top: 0;
   }
 
-  .title {
-    font-size: 24px;
-    line-height: 1.2;
-    margin: 0;
-    padding-left: 52px;
-    min-height: 42px;
-    display: flex;
-    align-items: center;
-  }
 
-  .chart-with-actions-container {
-    flex-direction: column;
-    height: auto;
-  }
-
-  .header-graficos-acoes {
-    justify-content: flex-end;
-    width: 100%;
-  }
-
-  .btn-pdf-side {
-    width: 45px !important;
-    height: 45px;
-    padding: 0 !important; 
+  .charts-toolbar {
     flex-direction: row;
-    justify-content: center;
     align-items: center;
-    flex-shrink: 0;
+  }
+  .header_actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .conteudo {
+    margin-left: 0;
+    padding: 12px 14px 18px;
   }
 
-  .texto-btn-pdf {
-    display: none;
+  .dashboard-nav {
+    margin-bottom: 12px;
+  }
+
+  .title,
+  .section-title,
+  .modal-title {
+    font-size: 24px;
+    line-height: 1.12;
+  }
+
+  .section-subtitle,
+  .modal-subtitle,
+  .aviso_conteudo p {
+    font-size: 14px;
   }
 
   .section_totalAgendamentos {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
   }
 
-  .section_graficos_top {
-    flex-direction: column;
-    gap: 20px;
+  .section_graficos_top,
+  .filter-row.filtros-full {
+    grid-template-columns: 1fr;
+  }
+
+  .card_avisos_container,
+  .chart-panel,
+  .modal-content {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .card_contagem {
+    padding: 10px 8px 9px;
+    border-radius: 14px;
+    gap: 5px;
+  }
+
+  .card_kicker {
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+
+  .card_valor {
+    font-size: 20px;
+  }
+
+  .card_legenda {
+    font-size: 9px;
+    line-height: 1.2;
+  }
+
+  .aviso_topo,
+  .aviso_footer {
+    align-items: flex-start;
+  }
+
+  .aviso_actions_wrapper {
+    margin-left: 0;
+  }
+
+  .card_aviso_item-historico {
+    gap: 6px;
+    padding: 10px 10px 8px;
+    border-radius: 14px;
+  }
+
+  .card_aviso_item-historico .aviso_conteudo h3 {
+    margin-bottom: 4px;
+    font-size: 16px;
+  }
+
+  .card_aviso_item-historico .aviso_conteudo p {
+    font-size: 12px;
+    line-height: 1.34;
+  }
+
+  .card_aviso_item-historico .aviso_status {
+    min-height: 26px;
+    padding: 0 8px;
   }
 
   .chart-container,
+  .chart-area-pie,
   .chart-container-full {
-    height: 300px;
     min-width: 0;
-    width: 100%;
   }
 
-  .chart-wrapper {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
+  .chart-container {
+    height: 220px;
   }
 
   .chart-area-pie {
     height: 300px;
-    min-width: 0;
   }
 
-  .card_aviso_item {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+  .chart-container-full {
+    height: 270px;
   }
 
-  .header_avisos {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 15px;
+  .chart-panel-full {
+    height: auto;
+    min-height: 0;
   }
 
-  .modal-header-aviso {
+  .loader-container-centralizado {
+    inset: 84px 16px 16px;
+  }
+
+  .loader {
+    width: 52px;
+    height: 52px;
+    border-width: 5px;
+  }
+
+  .modal-overlay {
+    padding: 14px;
+  }
+
+  .charts-toolbar {
     flex-direction: row;
-    align-items: center;
+    align-items: flex-end;
+    justify-content: space-between;
     gap: 12px;
   }
 
-  .header_actions {
-    flex-direction: column;
-    width: 100%;
-    gap: 10px;
+  .btn-pdf-side {
+    min-height: 30px;        
+    padding: 0 8px;         
+    border-radius: 10px;     
+    gap: 6px;
+    font-size: 14px;         
+    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.18); 
   }
 
-  .header_actions button {
-    width: 100%;
-    justify-content: center;
+  .btn-pdf-label-mobile {
+    display: inline-flex;
+    font-size: 14px;         
+    font-weight: 700;        
+    line-height: 1;
   }
 
-  .avisos {
-    text-align: center;
-    margin: 0;
+  .btn-pdf-side svg {
+    width: 18px;
+    height: 18px;
   }
 
-  .avisos {
-    text-align: center;
-    margin: 0;
+  .btn-pdf-label-desktop {
+    display: none;
   }
 
-  .section_graficos_top {
-    flex-direction: column;
-    gap: 30px;
-  }
-
-  .aviso_actions {
-    margin-top: 10px;
-    width: 100%;
-    justify-content: flex-end;
-  }
-
-  .aviso_right_side {
-    align-items: flex-start;
-    flex-direction: row;
-    justify-content: space-between;
-    width: 100%;
-  }
-
-  .aviso_actions_wrapper {
-    align-items: flex-end;
-    flex-direction: row;
-    justify-content: space-between;
-    width: 100%;
-  }
 }
 </style>

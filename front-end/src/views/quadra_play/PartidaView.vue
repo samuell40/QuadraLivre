@@ -1,11 +1,17 @@
 <template>
   <div class="layout">
-    <NavBarQuadras :partida-status="partida?.status || ''" />
-    <SidebarCampeonato :partida-status="partida?.status || ''" @sidebar-toggle="sidebarCollapsed = $event" />
+    <NavBarQuadras :partida-status="partida?.status" />
+    <SidebarCampeonato :partida-status="partida?.status" @sidebar-toggle="sidebarCollapsed = $event" />
 
     <div class="conteudo" :class="{ collapsed: sidebarCollapsed }">
       <div class="header">
-        <h1 class="title" :class="{ 'title-finalizada': isFinalizada, 'title-andamento': isEmAndamento }">Controles da Partida</h1>
+        <div class="header-copy">
+          <h1 class="title" :class="{ 'title-finalizada': isFinalizada, 'title-andamento': isEmAndamento }">Controles da
+            Partida</h1>
+          <p class="page-subtitle">
+            Atualize o placar, eventos e substituicoes de cada time.
+          </p>
+        </div>
 
         <span v-if="isEmAndamento" class="badge-status badge-ao-vivo">
           <span class="live-dot" aria-hidden="true"></span>
@@ -22,7 +28,8 @@
       </div>
 
       <div v-else>
-        <div v-if="placarComponent" class="placares" :class="{ 'placares-finalizada': isFinalizada, 'placares-andamento': isEmAndamento }">
+        <div v-if="placarComponent" class="placares"
+          :class="{ 'placares-finalizada': isFinalizada, 'placares-andamento': isEmAndamento }">
           <component :is="placarComponent" v-bind="placarPropsTimeA" @parcial-delta="onParcialDelta"
             @refresh="carregarPartida" />
 
@@ -30,7 +37,8 @@
             @refresh="carregarPartida" />
         </div>
 
-        <button class="botao-finalizar" :class="{ 'botao-finalizar-finalizada': isFinalizada, 'botao-finalizar-andamento': isEmAndamento }"
+        <button class="botao-finalizar"
+          :class="{ 'botao-finalizar-finalizada': isFinalizada, 'botao-finalizar-andamento': isEmAndamento }"
           :disabled="botaoDesabilitado" @click="finalizarPartida">
           <span v-if="isFinalizando">Salvando...</span>
 
@@ -759,27 +767,50 @@ export default {
 </script>
 
 <style scoped>
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
 .layout {
   display: flex;
   min-height: 100vh;
 }
 
 .conteudo {
+  display: flex;
+  flex-direction: column;
   flex: 1;
-  padding: 32px;
+  padding: 24px;
   margin-left: 250px;
-  padding-top: 78px;
+  padding-top: 70px;
+  background: #f8fafc;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .conteudo.collapsed {
   margin-left: 70px;
 }
 
+.section-kicker {
+  display: inline-flex;
+  align-items: center;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
 .title {
-  font-size: 30px;
-  color: #3b82f6;
-  font-weight: bold;
-  margin-top: 20px;
+  margin: 4px 0 8px;
+  font-size: 34px;
+  line-height: 0.98;
+  color: #2563eb;
+  font-weight: 800;
+  letter-spacing: -0.04em;
 }
 
 .title.title-andamento {
@@ -790,32 +821,44 @@ export default {
   color: #dc2626;
 }
 
+.page-subtitle {
+  margin: 0;
+  max-width: 760px;
+  color: #475569;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
 .badge-status {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 5px 14px;
-  border-radius: 999px;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
   font-weight: 800;
-  font-size: 20px;
-   margin-top: 20px;
+  font-size: 13px;
+  margin-top: 6px;
+  flex: 0 0 auto;
 }
 
 .badge-ao-vivo {
-  color: #16a34a;
-  border: 2px solid #16a34a;
-  animation: livePulse 1.2s infinite ease-in-out;
+  color: #166534;
+  border-color: rgba(34, 197, 94, 0.24);
+  background: rgba(34, 197, 94, 0.1);
 }
 
 .badge-finalizada {
-  border: 2px solid #dc2626;
-  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.22);
+  color: #b91c1c;
+  background: rgba(220, 38, 38, 0.08);
 }
 
 .live-dot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 999px;
   background: #22c55e;
   box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
@@ -863,61 +906,74 @@ export default {
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
-.finalizar-container {
-  padding-top: 30px;
-  margin: 0;
-  width: 100%;
+.header-copy {
+  min-width: 0;
+  transform: translateY(6px);
+}
+
+.loader-container-centralizado {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
 }
 
 .botao-finalizar {
   width: 100%;
-  padding: 15px;
-  font-size: 18px;
-  background-color: #3b82f6;
+  min-height: 50px;
+  padding: 0 16px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 16px;
   cursor: pointer;
-  margin-top: 18px;
+  margin-top: 16px;
+  box-shadow: 0 12px 22px rgba(59, 130, 246, 0.18);
+  transition: transform 0.15s ease, box-shadow 0.18s ease, opacity 0.18s ease;
 }
 
 .botao-finalizar.botao-finalizar-andamento {
-  background-color: #16a34a;
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  box-shadow: 0 12px 22px rgba(34, 197, 94, 0.16);
 }
 
 .botao-finalizar.botao-finalizar-finalizada {
-  background-color: #dc2626;
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  box-shadow: 0 12px 22px rgba(239, 68, 68, 0.16);
+}
+
+.botao-finalizar:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.botao-finalizar:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .placares {
-  display: flex;
-  gap: 30px;
-  margin-top: 30px;
-  justify-content: center;
-  border: 2px solid #3b82f6;
-  border-radius: 12px;
-  padding: 5px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
   align-items: flex-start;
-}
-
-.placares.placares-andamento {
-  border-color: #16a34a;
-}
-
-.placares.placares-finalizada {
-  border-color: #dc2626;
 }
 
 @media (max-width: 768px) {
   .conteudo {
     margin-left: 0;
     padding: 16px;
-    padding-top: 76px;
+    padding-top: 38px;
   }
 
   .conteudo.collapsed {
@@ -930,13 +986,17 @@ export default {
     justify-content: space-between;
     gap: 10px;
     flex-wrap: wrap;
-    margin-top: -40px;
-    margin-bottom: 8px;
+    margin-top: 0;
+    margin-bottom: 12px;
+  }
+
+  .section-kicker {
+    font-size: 11px;
   }
 
   .title {
-    font-size: 28px;
-    margin-top: 0;
+    font-size: 30px;
+    margin: 0 0 8px;
     margin-right: 10px;
     flex: 1;
     min-width: 0;
@@ -945,12 +1005,23 @@ export default {
     text-overflow: initial;
   }
 
+  .header-copy {
+    transform: none;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
   .badge-status {
     flex-shrink: 0;
-    font-size: 14px;
-    padding: 4px 10px;
+    min-height: 34px;
+    font-size: 12px;
+    padding: 0 10px;
     gap: 8px;
-    margin-top: 5px;
+    margin-top: 2px;
+    border-radius: 12px;
   }
 
   .live-dot {
@@ -959,15 +1030,16 @@ export default {
   }
 
   .placares {
+    grid-template-columns: 1fr;
     gap: 14px;
-    margin-top: 18px;
-    padding: 10px;
-    justify-content: stretch;
+    margin-top: 14px;
   }
 
   .botao-finalizar {
-    font-size: 16px;
-    padding: 14px;
+    min-height: 48px;
+    font-size: 15px;
+    margin-top: 0;
   }
 }
 </style>
+

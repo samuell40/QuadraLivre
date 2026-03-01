@@ -1,85 +1,105 @@
-<template>
+﻿<template>
   <div class="layout-agendamento-user">
     <NavBar />
 
-    <div class="conteudo-agendamento">
-      <div class="titulo-container-agendamento">
-        <div class="titulo-textos-agendamento">
-          <h1 class="titulo-agendamento">Meus Agendamentos</h1>
-          <p class="subtitulo-agendamento">Acompanhe e gerencie suas reservas em um só lugar.</p>
-        </div>
-        <button class="btn-acao-topo" @click="irParaAgendarQuadra(null)" aria-label="Novo Agendamento">
-          <svg class="btn-acao-icone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          <span class="btn-acao-texto">Novo Agendamento</span>
-        </button>
-      </div>
-
-      <div v-if="isLoading" class="loader-agendamento"></div>
-
-      <div v-else>
-        <div class="abas-config-container-agendamento">
-          <button type="button" class="aba-config-agendamento" :class="{ ativa: abaAtiva === 'confirmados' }"
-            @click="abaAtiva = 'confirmados'">
-            Confirmados
-            <span class="badge-total">{{ getTodosPorTipo('confirmados').length }}</span>
-          </button>
-          <button type="button" class="aba-config-agendamento" :class="{ ativa: abaAtiva === 'pendentes' }"
-            @click="abaAtiva = 'pendentes'">
-            Pendentes
-            <span class="badge-total">{{ getTodosPorTipo('pendentes').length }}</span>
-          </button>
-          <button type="button" class="aba-config-agendamento" :class="{ ativa: abaAtiva === 'recusados' }"
-            @click="abaAtiva = 'recusados'">
-            Recusados
-            <span class="badge-total">{{ getTodosPorTipo('recusados').length }}</span>
-          </button>
-        </div>
-
-        <div class="section-agendamento">
-          <div v-if="getTodosPorTipo(abaAtiva).length === 0" class="agendamento-card-agendamento nenhum">
-            {{ abaAtiva === 'pendentes' ? 'Nenhuma solicitação pendente no momento.'
-              : abaAtiva === 'confirmados' ? 'Nenhum agendamento futuro confirmado.'
-                : 'Nenhum agendamento recusado ou cancelado.' }}
-          </div>
-
-          <div v-else>
-            <div class="agendamentos-grid">
-              <MeusAgendamentoCard v-for="ag in getItensPagina(abaAtiva)" :key="ag.id" 
-                :agendamento="ag"
-                :mostrarBotoes="deveMostrarBotoes(ag)" 
-                @gerarPdf="gerarPdfAgendamento(ag)"
-                @cancelar="cancelarAgendamento(ag.id)" 
-                @novo="irParaAgendarQuadra(ag.quadraId)" />
-            </div>
-
-            <div class="paginacao-controls" v-if="getTotalPaginas(abaAtiva) > 1">
-              <button class="btn-paginacao" :disabled="paginasAtuais[abaAtiva] === 1"
-                @click="mudarPagina(abaAtiva, -1)">
-                &lt; Anterior
-              </button>
-
-              <span class="info-paginacao">
-                Página <strong>{{ paginasAtuais[abaAtiva] }}</strong> de {{ getTotalPaginas(abaAtiva) }}
-              </span>
-
-              <button class="btn-paginacao" :disabled="paginasAtuais[abaAtiva] === getTotalPaginas(abaAtiva)"
-                @click="mudarPagina(abaAtiva, 1)">
-                Próxima &gt;
+    <main class="conteudo-meus-agendamentos">
+      <div class="page-shell">
+        <section class="page-header">
+          <div class="header-copy">
+            <div class="header-topline">
+              <h1 class="titulo-agendamento">Meus agendamentos</h1>
+              <button class="btn-acao-topo" @click="irParaAgendarQuadra(null)" aria-label="Novo agendamento">
+                <svg class="btn-acao-icone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span class="btn-acao-texto">Novo agendamento</span>
               </button>
             </div>
+            <p class="subtitulo-agendamento">Acompanhe e gerencie suas reservas em um so lugar.</p>
           </div>
+        </section>
+
+        <div v-if="isLoading" class="loader-card">
+          <div class="loader-agendamento"></div>
         </div>
 
+        <template v-else>
+          <section class="tabs-card">
+            <div class="tabs-head">
+              <p class="section-kicker">STATUS</p>
+              <p class="section-subtitle">Filtre seus agendamentos por etapa para acompanhar cada reserva.</p>
+            </div>
+
+            <div class="abas-config-container-agendamento">
+              <button type="button" class="aba-config-agendamento" :class="{ ativa: abaAtiva === 'confirmados' }"
+                @click="abaAtiva = 'confirmados'">
+                <span>Confirmados</span>
+                <span class="badge-total">{{ getTodosPorTipo("confirmados").length }}</span>
+              </button>
+
+              <button type="button" class="aba-config-agendamento" :class="{ ativa: abaAtiva === 'pendentes' }"
+                @click="abaAtiva = 'pendentes'">
+                <span>Pendentes</span>
+                <span class="badge-total">{{ getTodosPorTipo("pendentes").length }}</span>
+              </button>
+
+              <button type="button" class="aba-config-agendamento" :class="{ ativa: abaAtiva === 'recusados' }"
+                @click="abaAtiva = 'recusados'">
+                <span>Recusados</span>
+                <span class="badge-total">{{ getTodosPorTipo("recusados").length }}</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="section-agendamento">
+            <div class="panel-head">
+              <div class="panel-copy">
+                <p class="section-kicker">{{ getMetaAba(abaAtiva).kicker }}</p>
+                <h2 class="section-title">{{ getMetaAba(abaAtiva).title }}</h2>
+                <p class="section-subtitle">{{ getMetaAba(abaAtiva).description }}</p>
+              </div>
+
+              <span class="panel-count">{{ getTodosPorTipo(abaAtiva).length }} itens</span>
+            </div>
+
+            <div v-if="getTodosPorTipo(abaAtiva).length === 0" class="agendamento-vazio">
+              <p>{{ getMetaAba(abaAtiva).empty }}</p>
+            </div>
+
+            <template v-else>
+              <div class="agendamentos-grid">
+                <MeusAgendamentoCard v-for="ag in getItensPagina(abaAtiva)" :key="ag.id" :agendamento="ag"
+                  :mostrarBotoes="deveMostrarBotoes(ag)" @gerarPdf="gerarPdfAgendamento(ag)"
+                  @cancelar="cancelarAgendamento(ag.id)" @novo="irParaAgendarQuadra(ag.quadraId)" />
+              </div>
+
+              <div class="paginacao-controls" v-if="getTotalPaginas(abaAtiva) > 1">
+                <button class="btn-paginacao" :disabled="paginasAtuais[abaAtiva] === 1"
+                  @click="mudarPagina(abaAtiva, -1)">
+                  &lt; Anterior
+                </button>
+
+                <span class="info-paginacao">
+                  Pagina <strong>{{ paginasAtuais[abaAtiva] }}</strong> de {{ getTotalPaginas(abaAtiva) }}
+                </span>
+
+                <button class="btn-paginacao" :disabled="paginasAtuais[abaAtiva] === getTotalPaginas(abaAtiva)"
+                  @click="mudarPagina(abaAtiva, 1)">
+                  Proxima &gt;
+                </button>
+              </div>
+            </template>
+          </section>
+        </template>
       </div>
-    </div>
+    </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import NavBar from "@/components/Usuario/NavBar.vue";
 import MeusAgendamentoCard from "@/components/cards/MeusAgendamentosCard.vue";
@@ -91,25 +111,48 @@ import logoImg from "@/assets/Cópia de xxxxx (2).png";
 const router = useRouter();
 const isLoading = ref(true);
 const allAgendamentos = ref([]);
-const abaAtiva = ref('confirmados');
+const abaAtiva = ref("confirmados");
 
 const ITENS_POR_PAGINA = 10;
 
 const paginasAtuais = ref({
   confirmados: 1,
   pendentes: 1,
-  recusados: 1
+  recusados: 1,
 });
 
+const TAB_META = {
+  confirmados: {
+    kicker: "CONFIRMADOS",
+    title: "Reservas confirmadas",
+    description: "Visualize os horarios ja aprovados e gere o comprovante quando precisar.",
+    empty: "Nenhum agendamento futuro confirmado.",
+  },
+  pendentes: {
+    kicker: "PENDENTES",
+    title: "Solicitacoes em analise",
+    description: "Acompanhe os pedidos que ainda aguardam confirmacao da quadra.",
+    empty: "Nenhuma solicitacao pendente no momento.",
+  },
+  recusados: {
+    kicker: "HISTORICO",
+    title: "Recusados e cancelados",
+    description: "Consulte as reservas recusadas ou canceladas anteriormente.",
+    empty: "Nenhum agendamento recusado ou cancelado.",
+  },
+};
+
+const getMetaAba = (tipo) => TAB_META[tipo] || TAB_META.confirmados;
+
 const getTodosPorTipo = (tipo) => {
-  if (tipo === 'pendentes') {
-    return allAgendamentos.value.filter(a => a.status === 'pendente');
+  if (tipo === "pendentes") {
+    return allAgendamentos.value.filter((a) => a.status === "pendente");
   }
-  if (tipo === 'confirmados') {
-    return allAgendamentos.value.filter(a => a.status === 'confirmado');
+  if (tipo === "confirmados") {
+    return allAgendamentos.value.filter((a) => a.status === "confirmado");
   }
-  if (tipo === 'recusados') {
-    return allAgendamentos.value.filter(a => a.status === 'recusado' || a.status === 'cancelado');
+  if (tipo === "recusados") {
+    return allAgendamentos.value.filter((a) => a.status === "recusado" || a.status === "cancelado");
   }
   return [];
 };
@@ -121,9 +164,7 @@ const getItensPagina = (tipo) => {
   return todos.slice(inicio, inicio + ITENS_POR_PAGINA);
 };
 
-const getTotalPaginas = (tipo) => {
-  return Math.ceil(getTodosPorTipo(tipo).length / ITENS_POR_PAGINA) || 1;
-};
+const getTotalPaginas = (tipo) => Math.ceil(getTodosPorTipo(tipo).length / ITENS_POR_PAGINA) || 1;
 
 const mudarPagina = (tipo, delta) => {
   const novaPagina = paginasAtuais.value[tipo] + delta;
@@ -139,35 +180,36 @@ const carregarAgendamentos = async () => {
   try {
     const { data } = await api.get("/agendamentos");
 
-    allAgendamentos.value = data.map(a => {
-      const dataObj = a.datahora ? new Date(a.datahora) : new Date(a.ano, a.mes - 1, a.dia, a.hora);
+    allAgendamentos.value = data
+      .map((a) => {
+        const dataObj = a.datahora ? new Date(a.datahora) : new Date(a.ano, a.mes - 1, a.dia, a.hora);
 
-      return {
-        id: a.id,
-        quadra: a.quadra?.nome || "Não informado",
-        quadraId: a.quadra?.id || null,
-        dataObj: dataObj,
-        dataFormatada: dataObj.toLocaleDateString('pt-BR'),
-        hora: dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        duracao: a.duracao,
-        tipo: a.tipo,
-        status: a.status.toLowerCase(),
-        codigoVerificacao: a.codigoVerificacao,
-        motivoRecusa: a.motivoRecusa,
-        datahora: a.datahora
-      };
-    }).sort((a, b) => {
-      if (a.status === 'pendente' && b.status !== 'pendente') return -1;
-      if (a.status !== 'pendente' && b.status === 'pendente') return 1;
-      return b.dataObj - a.dataObj;
-    });
-
+        return {
+          id: a.id,
+          quadra: a.quadra?.nome || "Nao informado",
+          quadraId: a.quadra?.id || null,
+          dataObj,
+          dataFormatada: dataObj.toLocaleDateString("pt-BR"),
+          hora: dataObj.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+          duracao: a.duracao,
+          tipo: a.tipo,
+          status: a.status.toLowerCase(),
+          codigoVerificacao: a.codigoVerificacao,
+          motivoRecusa: a.motivoRecusa,
+          datahora: a.datahora,
+        };
+      })
+      .sort((a, b) => {
+        if (a.status === "pendente" && b.status !== "pendente") return -1;
+        if (a.status !== "pendente" && b.status === "pendente") return 1;
+        return b.dataObj - a.dataObj;
+      });
   } catch (err) {
     console.error("Erro ao carregar agendamentos:", err);
     Swal.fire({
       icon: "error",
       title: "Erro",
-      text: "Não foi possível carregar seus agendamentos.",
+      text: "Nao foi possivel carregar seus agendamentos.",
       confirmButtonColor: "#1E3A8A",
     });
   } finally {
@@ -177,32 +219,31 @@ const carregarAgendamentos = async () => {
 
 const deveMostrarBotoes = (ag) => {
   const agora = new Date();
-  if (ag.status === 'pendente') return true;
-  if (ag.status === 'confirmado' && ag.dataObj >= agora) return true;
+  if (ag.status === "pendente") return true;
+  if (ag.status === "confirmado" && ag.dataObj >= agora) return true;
   return false;
 };
 
 const cancelarAgendamento = async (id) => {
   const confirmacao = await Swal.fire({
     title: "Cancelar agendamento?",
-    text: "Essa ação não poderá ser desfeita.",
+    text: "Essa acao nao podera ser desfeita.",
     icon: "warning",
     showCancelButton: true,
     confirmButtonColor: "#1E3A8A",
     cancelButtonColor: "#d33",
     confirmButtonText: "Sim, cancelar",
-    cancelButtonText: "Não",
+    cancelButtonText: "Nao",
     customClass: {
-      confirmButton: 'swal-botao',
-      cancelButton: 'swal-botao'
-    }
+      confirmButton: "swal-botao",
+      cancelButton: "swal-botao",
+    },
   });
 
   if (confirmacao.isConfirmed) {
     try {
       await api.delete(`/agendamento/${id}`);
-
-      allAgendamentos.value = allAgendamentos.value.filter(a => a.id !== id);
+      allAgendamentos.value = allAgendamentos.value.filter((a) => a.id !== id);
 
       Swal.fire({
         icon: "success",
@@ -217,7 +258,7 @@ const cancelarAgendamento = async (id) => {
       Swal.fire({
         icon: "error",
         title: "Erro",
-        text: "Não foi possível cancelar o agendamento.",
+        text: "Nao foi possivel cancelar o agendamento.",
         confirmButtonColor: "#1E3A8A",
       });
     }
@@ -228,7 +269,7 @@ const gerarPdfAgendamento = async (agendamento) => {
   const doc = new jsPDF({
     orientation: "landscape",
     unit: "mm",
-    format: [140, 80]
+    format: [140, 80],
   });
 
   const corPrimaria = [30, 58, 138];
@@ -242,7 +283,7 @@ const gerarPdfAgendamento = async (agendamento) => {
 
   await new Promise((resolve) => {
     img.onload = () => {
-      doc.addImage(img, 'PNG', 10, 10, 12, 12);
+      doc.addImage(img, "PNG", 10, 10, 12, 12);
       resolve();
     };
   });
@@ -269,7 +310,7 @@ const gerarPdfAgendamento = async (agendamento) => {
 
   doc.setFont("helvetica", "normal");
   doc.text(agendamento.quadra, 40, 38);
-  doc.text(`${agendamento.dataFormatada} às ${agendamento.hora}`, 40, 48);
+  doc.text(`${agendamento.dataFormatada} as ${agendamento.hora}`, 40, 48);
 
   doc.setFont("helvetica", "bold");
   doc.text("Tipo:", 85, 38);
@@ -284,7 +325,7 @@ const gerarPdfAgendamento = async (agendamento) => {
 
   doc.setFontSize(8);
   doc.setTextColor(120, 120, 120);
-  doc.text("CÓDIGO DE VERIFICAÇÃO", 70, 64, { align: "center" });
+  doc.text("CODIGO DE VERIFICACAO", 70, 64, { align: "center" });
 
   doc.setFontSize(14);
   doc.setTextColor(...corPrimaria);
@@ -294,11 +335,11 @@ const gerarPdfAgendamento = async (agendamento) => {
   doc.save(`Voucher_${agendamento.quadra}_${codigoFinal}.pdf`);
 
   Swal.fire({
-    icon: 'success',
-    title: 'Comprovante pronto!',
-    text: 'O arquivo foi salvo no seu dispositivo.',
+    icon: "success",
+    title: "Comprovante pronto!",
+    text: "O arquivo foi salvo no seu dispositivo.",
     timer: 1500,
-    showConfirmButton: false
+    showConfirmButton: false,
   });
 };
 
@@ -308,55 +349,71 @@ const irParaAgendarQuadra = (quadraId) => {
 };
 
 onMounted(() => {
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   carregarAgendamentos();
 });
 </script>
 
 <style scoped>
+.conteudo-meus-agendamentos {
+  padding: 100px 0 32px 0;
+  margin-left: 0;
+  padding-left: 0;
+  transform: none;
+  overflow-x: hidden;
+}
+
 .layout-agendamento-user {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  font-family: 'Montserrat', sans-serif;
-  background: #F7F9FC;
-}
-
-.conteudo-agendamento {
-  flex: 1;
-  width: 100%;
-  max-width: none;
-  margin: 60px 0 0 0;
-  padding: 32px 40px;
-  box-sizing: border-box;
+  font-family: "Montserrat", sans-serif;
+  background: #f4f6fb;
   overflow-x: hidden;
 }
 
-.titulo-container-agendamento {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
+.page-shell {
+  width: calc(100% - 120px);
+  max-width: none;
+  min-width: 0;
+  margin: 0 auto;
+}
+
+.page-header {
   margin-bottom: 18px;
 }
 
-.titulo-textos-agendamento {
+.section-kicker {
+  margin: 0 0 8px 0;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+
+.header-topline {
   display: flex;
-  flex-direction: column;
-  gap: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
 }
 
 .titulo-agendamento {
-  font-size: 32px;
-  color: #3B82F6;
+  margin: 0;
+  color: #2563eb;
+  font-size: 42px;
   font-weight: 900;
-  margin: 0 0 5px 0;
-  letter-spacing: -0.2px;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
 }
 
-.subtitulo-agendamento {
+.subtitulo-agendamento,
+.section-subtitle {
   margin: 0;
   color: #64748b;
-  font-size: 14px;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .btn-acao-topo {
@@ -364,79 +421,94 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  color: #fff;
-  background: #3B82F6;
-  border: 1px solid rgba(59, 130, 246, 0.35);
-  padding: 11px 16px;
+  min-height: 42px;
+  padding: 0 16px;
+  border: none;
   border-radius: 999px;
-  font-weight: 900;
-  font-size: 14px;
-  letter-spacing: 0.2px;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
   cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: background 0.2s;
+  box-shadow: 0 12px 24px rgba(59, 130, 246, 0.24);
+  transition: 0.18s ease;
 }
 
 .btn-acao-topo:hover {
-  background: #1E3A8A;
+  background: #2563eb;
+  transform: translateY(-1px);
 }
 
 .btn-acao-icone {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   flex: 0 0 auto;
 }
 
-.loader-agendamento {
-  height: 300px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.loader-card,
+.tabs-card,
+.section-agendamento {
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 28px;
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
 }
 
-.loader-agendamento::after {
-  content: '';
-  width: 54px;
-  height: 54px;
+.loader-card {
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loader-agendamento {
+  width: 56px;
+  height: 56px;
   border: 6px solid #e5e7eb;
-  border-top-color: #3B82F6;
+  border-top-color: #3b82f6;
   border-radius: 50%;
   animation: girar 1s linear infinite;
 }
 
 @keyframes girar {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
-.abas-config-container-agendamento {
-  display: flex;
-  gap: 10px;
-  padding: 10px;
-  border-radius: 14px;
-  background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+.tabs-card {
+  padding: 16px 18px;
   margin-bottom: 16px;
 }
 
+.tabs-head {
+  margin-bottom: 12px;
+}
+
+.abas-config-container-agendamento {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .aba-config-agendamento {
-  flex: 1;
-  border: 1px solid transparent;
-  background: #F8FAFC;
-  color: #64748b;
-  font-size: 16px;
-  font-weight: 900;
-  padding: 12px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: #f8fafc;
+  color: #475569;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 11px 10px;
   cursor: pointer;
-  border-radius: 12px;
+  border-radius: 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  user-select: none;
 }
 
 .aba-config-agendamento:hover {
@@ -445,7 +517,7 @@ onMounted(() => {
 }
 
 .aba-config-agendamento.ativa {
-  background: #3B82F6;
+  background: #3b82f6;
   color: #fff;
   box-shadow: 0 14px 26px rgba(37, 99, 235, 0.22);
   border-color: rgba(255, 255, 255, 0.18);
@@ -455,11 +527,11 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 28px;
+  min-width: 24px;
   height: 22px;
-  padding: 0 8px;
+  padding: 0 7px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
   line-height: 1;
   color: #2563eb;
@@ -474,29 +546,63 @@ onMounted(() => {
 }
 
 .section-agendamento {
-  background-color: #fff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+  padding: 18px;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
-.agendamento-card-agendamento.nenhum {
-  grid-column: 1 / -1;
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  margin: 0 0 6px 0;
+  color: #0f172a;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.panel-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #eff6ff;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.agendamento-vazio {
+  min-height: 132px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   color: #64748b;
   font-size: 15px;
-  padding: 44px 22px;
-  text-align: center;
-  font-style: italic;
-  background-color: #f8fafc;
-  border-radius: 14px;
-  border: 1px dashed rgba(100, 116, 139, 0.35);
+  background: #f8fafc;
+  border: 1px dashed rgba(148, 163, 184, 0.45);
+  border-radius: 20px;
+  overflow-x: hidden;
+}
+
+.agendamento-vazio p {
+  margin: 0;
 }
 
 .agendamentos-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .paginacao-controls {
@@ -504,7 +610,7 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   gap: 18px;
-  margin-top: 26px;
+  margin-top: 22px;
   padding-top: 18px;
   border-top: 1px solid rgba(15, 23, 42, 0.06);
 }
@@ -516,7 +622,7 @@ onMounted(() => {
 }
 
 .info-paginacao strong {
-  color: #0f172a;
+  color: #2563eb;
   font-weight: 900;
 }
 
@@ -528,11 +634,8 @@ onMounted(() => {
   border-radius: 12px;
   cursor: pointer;
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 800;
   transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .btn-paginacao:hover:not(:disabled) {
@@ -540,7 +643,7 @@ onMounted(() => {
   color: #2563eb;
   background-color: #eff6ff;
   transform: translateY(-1px);
-  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.10);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.1);
 }
 
 .btn-paginacao:disabled {
@@ -552,79 +655,95 @@ onMounted(() => {
 }
 
 @media (max-width: 900px) {
-  .agendamentos-grid {
-    grid-template-columns: 1fr;
+  .page-shell {
+    width: calc(100% - 28px);
   }
 
-  .conteudo-agendamento {
-    padding: 20px;
+  .conteudo-meus-agendamentos {
+    padding: 96px 0 24px 0;
+  }
+
+  .titulo-agendamento {
+    font-size: 30px;
+  }
+
+  .btn-acao-topo {
+    min-height: 40px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .tabs-card,
+  .section-agendamento,
+  .loader-card {
+    border-radius: 24px;
+  }
+
+  .agendamentos-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .conteudo-agendamento {
-    padding: 12px 20px 16px !important;
-  }
-
-  .titulo-container-agendamento {
+  .header-topline {
     align-items: flex-start;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 14px;
+    gap: 10px;
   }
 
   .titulo-agendamento {
-    font-size: 24px;
-    line-height: 1.2;
-    padding-right: 8px;
+    font-size: 26px;
+    line-height: 1.04;
   }
 
-  .subtitulo-agendamento {
-    padding-right: 8px;
+  .subtitulo-agendamento,
+  .section-subtitle {
+    font-size: 14px;
+    line-height: 1.55;
   }
 
   .btn-acao-topo {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
     padding: 0;
-    justify-content: center;
-    border-radius: 10px;
-    box-shadow: 0 8px 16px rgba(37, 99, 235, 0.18);
-    flex: 0 0 38px;
+    border-radius: 12px;
   }
 
   .btn-acao-texto {
     display: none;
   }
 
-  .btn-acao-icone {
-    width: 18px;
-    height: 18px;
+  .tabs-card {
+    padding: 16px 14px;
   }
 
   .abas-config-container-agendamento {
-    overflow-x: visible;
     gap: 8px;
-    padding: 8px;
   }
 
   .aba-config-agendamento {
-    flex: 1 1 0;
-    min-width: 0;
     padding: 10px 6px;
-    font-size: 13px;
+    font-size: 12px;
     gap: 6px;
   }
 
   .badge-total {
     min-width: 22px;
     height: 20px;
-    padding: 0 6px;
-    font-size: 11px;
+    font-size: 10px;
   }
 
   .section-agendamento {
-    padding: 16px;
+    padding: 18px 14px;
+  }
+
+  .panel-head {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .panel-count {
+    min-height: 34px;
   }
 
   .paginacao-controls {
@@ -643,3 +762,9 @@ onMounted(() => {
   }
 }
 </style>
+
+
+
+
+
+

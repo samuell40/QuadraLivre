@@ -6,31 +6,36 @@
       <SidebarQuadra @sidebar-toggle="sidebarCollapsed = $event" />
 
       <div class="conteudo" :class="{ collapsed: sidebarCollapsed }">
-        <div class="header-campeonatos">
-          <h2 class="title">Campeonatos</h2>
-          <button v-if="!isMesario" class="btn-add" @click="abrirModalAdicionarCampeonato">
-            <span class="btn-add-label-desktop">Adicionar Campeonato</span>
-            <span class="btn-add-label-mobile">Adicionar</span>
-          </button>
-        </div>
-        <div class="abas-container">
-          <div class="aba" :class="{ ativa: modalidadeSelecionada === null }" @click="selecionarModalidade(null)">
-            Todas
+        <div class="painel-topo">
+          <div class="header-campeonatos">
+            <div class="header-copy">
+              <h2 class="title">Campeonatos</h2>
+              <a class="header-subtitle">Filtre por modalidade para acompanhar e gerenciar os campeonatos cadastrados.</a>
+            </div>
+            <button v-if="!isMesario" class="btn-add" @click="abrirModalAdicionarCampeonato">
+              <span class="btn-add-label-desktop">Adicionar Campeonato</span>
+              <span class="btn-add-label-mobile">Adicionar</span>
+            </button>
           </div>
+          <div class="abas-container">
+            <div class="aba" :class="{ ativa: modalidadeSelecionada === null }" @click="selecionarModalidade(null)">
+              Todas
+            </div>
 
-          <div class="aba" v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id"
-            :class="{ ativa: modalidadeSelecionada === modalidade.id }" @click="selecionarModalidade(modalidade.id)">
-            {{ formatarNomeModalidade(modalidade.nome) }}
+            <div class="aba" v-for="modalidade in modalidadesDisponiveis" :key="modalidade.id"
+              :class="{ ativa: modalidadeSelecionada === modalidade.id }" @click="selecionarModalidade(modalidade.id)">
+              {{ formatarNomeModalidade(modalidade.nome) }}
+            </div>
           </div>
         </div>
 
-        <div v-if="isLoading" class="loader">
+        <div v-if="isLoading" class="feedback-card">
           Carregando campeonatos...
         </div>
 
-        <p v-else-if="campeonatos.length === 0">
+        <a v-else-if="campeonatos.length === 0" class="feedback-card feedback-ematy">
           Nenhum campeonato encontrado.
-        </p>
+        </a>
 
         <div v-else class="quadras-grid">
           <div class="card-quadra" v-for="campeonato in campeonatos" :key="campeonato.id"
@@ -45,7 +50,7 @@
 
             <div class="overlay">
               <h3 class="campeonato">{{ campeonato.nome }}</h3>
-              <p class="modalidade">{{ campeonato.modalidade?.nome }}</p>
+              <a class="modalidade">{{ campeonato.modalidade?.nome }}</a>
               <button class="btn-acessar" @click.stop="abrirCampeonato(campeonato)">Acessar</button>
             </div>
           </div>
@@ -297,6 +302,11 @@ export default {
 </script>
 
 <style scoped>
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
 .layout {
   display: flex;
   flex-direction: column;
@@ -305,7 +315,7 @@ export default {
 
 .conteudo {
   flex: 1;
-  padding: 32px;
+  padding: 24px 28px 32px;
   margin-top: 70px;
   margin-left: 250px;
   transition: margin-left 0.3s ease;
@@ -322,35 +332,59 @@ export default {
   grid-template-columns: repeat(2, 1fr);
 }
 
+.painel-topo {
+  margin-bottom: 22px;
+  padding: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
 .header-campeonatos {
   position: relative;
   z-index: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
+}
+
+.header-copy {
+  min-width: 0;
 }
 
 .title {
   margin: 0;
-  color:  #3b82f6;
-  font-size: 34px;
+  color: #2563eb;
+  font-size: 40px;
+  line-height: 0.98;
   font-weight: 800;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.04em;
+}
+
+.header-subtitle {
+  margin: 10px 0 0;
+  max-width: 760px;
+  color: #475569;
+  font-size: 17px;
+  line-height: 1.6;
 }
 
 .btn-add {
-  padding: 12px 18px;
-  background-color: #3b82f6;
-  border: 1px solid rgba(59, 130, 246, 0.35);
-  border-radius: 999px;
+  min-height: 52px;
+  padding: 0 18px;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  border: 1px solid rgba(59, 130, 246, 0.32);
+  border-radius: 18px;
   color: #fff;
   cursor: pointer;
   transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
   font-weight: 700;
-  letter-spacing: -0.1px;
-  box-shadow: 0 10px 18px rgba(59, 130, 246, 0.22);
+  font-size: 15px;
+  letter-spacing: -0.02em;
+  box-shadow: 0 14px 26px rgba(59, 130, 246, 0.22);
 }
 
 .btn-add-label-mobile {
@@ -366,58 +400,60 @@ export default {
 .abas-container {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
-  margin-top: 16px;
-  margin-bottom: 22px;
+  gap: 12px;
+  margin: 0;
 }
 
 .aba {
   text-align: center;
-  padding: 10px 10px;
-  border-radius: 999px;
+  min-height: 54px;
+  padding: 10px 14px;
+  border-radius: 20px;
   cursor: pointer;
-  background: #f1f5f9;
+  background: rgba(248, 250, 252, 0.92);
   color: #334155;
   font-weight: 700;
-  letter-spacing: -0.1px;
+  font-size: 15px;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
   transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.26);
 }
 
 .aba:hover {
-  background: #eaf2ff;
+  background: #f8fbff;
   transform: translateY(-1px);
-  box-shadow: 0 10px 16px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 10px 16px rgba(59, 130, 246, 0.10);
 }
 
 .aba.ativa {
-  background: #3b82f6;
-  color: #fff;
-  border-color: rgba(59, 130, 246, 0.45);
-  box-shadow: 0 14px 24px rgba(59, 130, 246, 0.22);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(96, 165, 250, 0.14));
+  color: #1d4ed8;
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: 0 14px 24px rgba(59, 130, 246, 0.12);
 }
 
 .quadras-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 20px;
 }
 
 .card-quadra {
   position: relative;
   width: 100%;
-  height: 260px;
-  border-radius: 18px;
+  height: 248px;
+  border-radius: 24px;
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
-  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.14);
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.14);
+  border: 1px solid rgba(148, 163, 184, 0.16);
   background: #0b1220;
 }
 
 .card-quadra:hover {
-  transform: translateY(-6px);
+  transform: translateY(-4px);
   box-shadow: 0 18px 36px rgba(15, 23, 42, 0.22);
 }
 
@@ -437,7 +473,7 @@ export default {
   position: absolute;
   inset: auto 0 0 0;
   width: 100%;
-  padding: 18px 18px 16px;
+  padding: 16px 16px 16px;
   background: linear-gradient(to top,
       rgba(15, 23, 42, 0.92),
       rgba(15, 23, 42, 0.40),
@@ -449,36 +485,37 @@ export default {
 }
 
 .campeonato {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 800;
   margin: 0;
-  letter-spacing: -0.4px;
+  letter-spacing: -0.03em;
   line-height: 1.12;
 }
 
 .modalidade {
-  margin: 0 0 10px;
-  font-size: 12px;
+  margin: 0 0 8px;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 0.16em;
   opacity: 0.92;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.86);
 }
 
 .btn-acessar {
-  background-color: #3b82f6;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
   color: #fff;
   border: none;
-  padding: 12px 12px;
+  min-height: 46px;
+  padding: 0 12px;
   cursor: pointer;
-  border-radius: 12px;
-  font-size: 14px;
+  border-radius: 16px;
+  font-size: 13px;
   font-weight: 800;
   width: 100%;
   transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.12em;
   box-shadow: 0 10px 18px rgba(59, 130, 246, 0.25);
 }
 
@@ -490,13 +527,13 @@ export default {
 
 .status-badge {
   position: absolute;
-  top: 14px;
-  right: 14px;
-  padding: 7px 12px;
+  top: 16px;
+  right: 16px;
+  padding: 7px 11px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 900;
-  letter-spacing: 0.7px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #fff;
   z-index: 5;
@@ -649,35 +686,68 @@ export default {
   font-weight: 700;
 }
 
+.feedback-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+  color: #64748b;
+  font-weight: 700;
+}
+
+.feedback-ematy {
+  margin: 0;
+}
+
 
 @media (max-width: 768px) {
   .conteudo {
     margin-left: 0 !important;
-    margin-top: 70px;
-    padding: 18px;
+    margin-top: 34px;
+    padding: 14px;
+  }
+
+  .painel-topo {
+    padding: 14px;
+    border-radius: 24px;
+    margin-bottom: 16px;
   }
 
   .header-campeonatos {
-    margin-top: -40px;
-    align-items: center;
+    margin-top: 0;
+    align-items: flex-start;
     flex-direction: row;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: nowrap;
+    margin-bottom: 12px;
   }
 
   .title {
     flex: 1;
     min-width: 0;
-    font-size: 28px;
+    font-size: 26px;
+    line-height: 1.02;
+  }
+
+  .header-subtitle {
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 1.55;
   }
 
   .btn-add {
     width: auto;
     flex-shrink: 0;
-    padding: 10px 12px;
-    font-size: 13px;
+    min-height: 40px;
+    padding: 0 12px;
+    font-size: 12px;
     white-space: nowrap;
+    border-radius: 14px;
   }
 
   .btn-add-label-desktop {
@@ -689,7 +759,7 @@ export default {
   }
 
   .abas-container {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
   }
 
@@ -697,21 +767,44 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
+    min-height: 42px;
+    padding: 6px 4px;
+    border-radius: 12px;
+    font-size: 11px;
     line-height: 1.2;
   }
 
   .quadras-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 14px;
   }
 
   .card-quadra {
-    height: 230px;
-    border-radius: 16px;
+    height: 216px;
+    border-radius: 20px;
   }
 
   .campeonato {
-    font-size: 22px;
+    font-size: 20px;
+  }
+
+  .overlay {
+    padding: 14px;
+  }
+
+  .btn-acessar {
+    min-height: 42px;
+    border-radius: 14px;
+  }
+
+  .feedback-card {
+    min-height: 120px;
+    border-radius: 20px;
   }
 }
 </style>
+
+
+
+
+

@@ -3,42 +3,120 @@
     <SideBar />
 
     <div class="conteudo">
-      <div class="titulo">
-        <h1>Agendar Quadra</h1>
-      </div>
-      <NavBarUse />
+      <NavBarUse class="page-nav" />
 
-      <div v-if="isLoadingQuadras" class="loader"></div>
+      <section class="page-header">
+        <div class="header-copy">
+          <div class="header-topline">
+            <h1 class="title">Agendar quadras</h1>
+          </div>
+        </div>
+      </section>
 
-      <div v-else>
-        <div v-if="quadras.length === 0" class="mensagem-nenhuma-quadra">
-          <p>Nenhuma quadra encontrada.</p>
+      <section class="overview-grid">
+        <article class="overview-card">
+          <p class="metric-kicker">TOTAL</p>
+          <p class="metric-value">{{ totalQuadras }}</p>
+          <span class="metric-caption">Quadras exibidas para operacao</span>
+        </article>
+
+        <article class="overview-card overview-card-available">
+          <p class="metric-kicker">DISPONIVEIS</p>
+          <p class="metric-value">{{ quadrasDisponiveis }}</p>
+          <span class="metric-caption">Prontas para reserva imediata</span>
+        </article>
+
+        <article class="overview-card overview-card-blocked">
+          <p class="metric-kicker">INDISPONIVEIS</p>
+          <p class="metric-value">{{ quadrasIndisponiveis }}</p>
+          <span class="metric-caption">Quadras que Estão Interditadas</span>
+        </article>
+      </section>
+
+      <section class="quadras-panel">
+        <div class="panel-head">
+          <div class="panel-copy">
+            <p class="section-kicker">QUADRAS</p>
+            <h2 class="section-title">Escolha onde reservar</h2>
+          </div>
+        </div>
+
+        <div v-if="isLoadingQuadras" class="state-card">
+          <div class="loader"></div>
+          <p class="state-title">Carregando quadras</p>
+          <p class="state-copy">Buscando unidades liberadas e bloqueadas para o agendamento administrativo.</p>
+        </div>
+
+        <div v-else-if="quadras.length === 0" class="state-card state-card-empty">
+          <p class="state-title">Nenhuma quadra encontrada.</p>
+          <p class="state-copy">Quando houver quadras cadastradas, elas aparecerao aqui para reserva direta.</p>
         </div>
 
         <div v-else class="quadras-grid">
-          <div class="card-quadra" v-for="quadra in quadras" :key="quadra.id"
-            :class="{ 'is-interditada': quadra.interditada }">
-            <div v-if="quadra.interditada" class="badge-interditada-overlay">
-              INDISPONÍVEL
-            </div>
+          <article
+            v-for="quadra in quadras"
+            :key="quadra.id"
+            class="card-quadra"
+            :class="{ 'is-interditada': quadra.interditada }"
+          >
+            <span class="card-status" :class="{ 'is-indisponivel': quadra.interditada }">
+              {{ quadra.interditada ? "Indisponivel" : "Disponivel" }}
+            </span>
 
-            <img :src="quadra.foto || require('@/assets/futibinha.png')" :alt="quadra.nome" class="imagem-quadra" />
+            <img
+              :src="quadra.foto || require('@/assets/futibinha.png')"
+              :alt="quadra.nome"
+              class="imagem-quadra"
+            />
+
+            <div class="card-shade"></div>
 
             <div class="overlay">
-              <h3 class="nome-quadra">{{ quadra.nome }}</h3>
-              <h3 class="endereco">{{ quadra.endereco }}</h3>
+              <div class="card-copy">
+                <p class="card-label">QUADRA</p>
+                <h3 class="nome-quadra">{{ quadra.nome }}</h3>
 
-              <button class="btn-agendar" :disabled="quadra.interditada"
-                @click="!quadra.interditada && abrirAgendamentoDireto(quadra)">
-                {{ quadra.interditada ? 'Indisponível' : 'Agendar' }}
+                <div class="card-tags">
+                  <span
+                    v-for="mod in (quadra.modalidades || []).slice(0, 3)"
+                    :key="mod.id"
+                    class="tag-modalidade"
+                  >
+                    {{ formatarNomeModalidade(mod.nome) }}
+                  </span>
+
+                  <span
+                    v-if="(quadra.modalidades || []).length > 3"
+                    class="tag-modalidade tag-modalidade-muted"
+                  >
+                    +{{ (quadra.modalidades || []).length - 3 }}
+                  </span>
+
+                  <span v-if="!(quadra.modalidades || []).length" class="tag-modalidade tag-modalidade-muted">
+                    Sem modalidades
+                  </span>
+                </div>
+              </div>
+
+              <button
+                class="btn-agendar"
+                :disabled="quadra.interditada"
+                @click="!quadra.interditada && abrirAgendamentoDireto(quadra)"
+              >
+                {{ quadra.interditada ? "Indisponivel" : "Agendar agora" }}
               </button>
             </div>
-          </div>
+          </article>
         </div>
-      </div>
+      </section>
 
-      <AgendamentoModal v-if="mostrarModalAgendamento" :quadra="quadraSelecionada" :times="times"
-        @fechar="mostrarModalAgendamento = false" @confirmar="confirmarAgendamento" />
+      <AgendamentoModal
+        v-if="mostrarModalAgendamento"
+        :quadra="quadraSelecionada"
+        :times="times"
+        @fechar="mostrarModalAgendamento = false"
+        @confirmar="confirmarAgendamento"
+      />
     </div>
   </div>
 </template>
@@ -66,14 +144,23 @@ export default {
   },
 
   computed: {
-    ...mapState(useAuthStore, ['usuario'])
+    ...mapState(useAuthStore, ['usuario']),
+    totalQuadras() {
+      return this.quadras.length
+    },
+    quadrasDisponiveis() {
+      return this.quadras.filter((quadra) => !quadra.interditada).length
+    },
+    quadrasIndisponiveis() {
+      return this.quadras.filter((quadra) => quadra.interditada).length
+    }
   },
 
   watch: {
     usuario: {
       handler(novoUsuario) {
         if (novoUsuario?.id) {
-          this.carregarTimes(novoUsuario.id);
+          this.carregarTimes(novoUsuario.id)
         }
       },
       immediate: true
@@ -81,30 +168,29 @@ export default {
   },
 
   mounted() {
-    this.carregarQuadras();
+    this.carregarQuadras()
     if (this.usuario?.id) {
-      this.carregarTimes(this.usuario.id);
+      this.carregarTimes(this.usuario.id)
     }
   },
 
   methods: {
     async carregarTimes(userId) {
-      if (!userId) return;
+      if (!userId) return
 
       try {
-        let response;
+        let response
 
         if (this.usuario.permissaoId === 1 || this.usuario.permissaoId === 2) {
-          response = await api.get('/times');
+          response = await api.get('/times')
         } else {
-          response = await api.get(`/usuarios/${userId}/times`);
+          response = await api.get(`/usuarios/${userId}/times`)
         }
 
-        this.times = Array.isArray(response.data) ? response.data : [];
-
+        this.times = Array.isArray(response.data) ? response.data : []
       } catch (error) {
-        console.error("Erro ao carregar times:", error);
-        this.times = [];
+        console.error('Erro ao carregar times:', error)
+        this.times = []
       }
     },
 
@@ -121,81 +207,80 @@ export default {
     },
 
     async abrirAgendamentoDireto(quadra) {
-      this.quadraSelecionada = quadra;
+      this.quadraSelecionada = quadra
 
       if (this.times.length === 0 && this.usuario?.id) {
-        await this.carregarTimes(this.usuario.id);
+        await this.carregarTimes(this.usuario.id)
       }
 
-      this.mostrarModalAgendamento = true;
+      this.mostrarModalAgendamento = true
     },
 
     async confirmarAgendamento(agendamentoDoModal, forcarAgendamento = false) {
-      const authStore = useAuthStore();
+      const authStore = useAuthStore()
 
       if (!authStore.usuario) {
         Swal.fire({
-          title: 'Você precisa estar logado',
+          title: 'Voce precisa estar logado',
           text: 'Deseja ir para a tela de login?',
           icon: 'warning',
           showCancelButton: true,
           confirmButtonText: 'Ir para login',
           cancelButtonText: 'Cancelar',
           confirmButtonColor: '#1E3A8A',
-        }).then(result => {
-          if (result.isConfirmed) this.$router.push('/login');
-        });
-        return;
+        }).then((result) => {
+          if (result.isConfirmed) this.$router.push('/login')
+        })
+        return
       }
 
-      const isAdministrador = authStore.usuario.permissaoId === 2;
-      const statusAutomatico = isAdministrador ? 'Confirmado' : 'Pendente';
+      const isAdministrador = authStore.usuario.permissaoId === 2
+      const statusAutomatico = isAdministrador ? 'Confirmado' : 'Pendente'
 
       if (agendamentoDoModal.lote && Array.isArray(agendamentoDoModal.lote)) {
-
-        const loteFormatado = agendamentoDoModal.lote.map(item => ({
+        const loteFormatado = agendamentoDoModal.lote.map((item) => ({
           ...item,
           usuarioId: authStore.usuario.id,
           quadraId: this.quadraSelecionada.id,
           ignorarRegra: forcarAgendamento,
           status: statusAutomatico
-        }));
+        }))
 
         Swal.fire({
-          title: 'Processando Agenda...',
+          title: 'Processando agenda...',
           html: 'Isso pode levar alguns segundos dependendo da quantidade de semanas.',
           allowOutsideClick: false,
           didOpen: () => Swal.showLoading()
-        });
+        })
 
         if (agendamentoDoModal.fixo) {
           try {
             await api.post('/agendamentos/fixos', {
               lote: loteFormatado,
               usuarioId: authStore.usuario.id
-            });
+            })
 
-            Swal.close();
+            Swal.close()
             Swal.fire({
               icon: 'success',
-              title: 'Agenda Fixa Atualizada!',
-              text: 'Os horários foram processados e sincronizados com a grade.',
+              title: 'Agenda fixa atualizada!',
+              text: 'Os horarios foram processados e sincronizados com a grade.',
               confirmButtonColor: '#1E3A8A'
-            });
+            })
 
-            this.mostrarModalAgendamento = false;
+            this.mostrarModalAgendamento = false
           } catch (err) {
-            Swal.close();
-            const msgErro = err.response?.data?.error || err.response?.data?.message || 'Erro ao processar lote.';
+            Swal.close()
+            const msgErro = err.response?.data?.error || err.response?.data?.message || 'Erro ao processar lote.'
 
             Swal.fire({
               icon: 'error',
-              title: 'Erro no Lote',
+              title: 'Erro no lote',
               text: msgErro,
               confirmButtonColor: '#1E3A8A'
-            });
+            })
           }
-          return;
+          return
         }
       }
 
@@ -205,52 +290,55 @@ export default {
         quadraId: this.quadraSelecionada.id,
         ignorarRegra: forcarAgendamento,
         status: statusAutomatico
-      };
+      }
 
       try {
-        await api.post('/agendamento', agendamento);
+        await api.post('/agendamento', agendamento)
 
         Swal.fire({
           icon: 'success',
-          title: isAdministrador ? 'Horário Reservado!' : 'Solicitação Enviada!',
+          title: isAdministrador ? 'Horario reservado!' : 'Solicitacao enviada!',
           text: isAdministrador
             ? `Quadra ${this.quadraSelecionada.nome} reservada com sucesso.`
-            : `Aguardando aprovação para a quadra ${this.quadraSelecionada.nome}.`,
+            : `Aguardando aprovacao para a quadra ${this.quadraSelecionada.nome}.`,
           confirmButtonColor: '#1E3A8A',
           timer: 4000,
           showConfirmButton: false
-        });
+        })
 
-        this.mostrarModalAgendamento = false;
-
+        this.mostrarModalAgendamento = false
       } catch (err) {
-        const msgErro = err.response?.data?.error || err.response?.data?.message;
-        const status = err.response?.status;
+        const msgErro = err.response?.data?.error || err.response?.data?.message
+        const status = err.response?.status
 
         if (status === 400 && (msgErro?.includes('limite') || msgErro?.includes('FIXOS'))) {
           Swal.fire({
-            title: 'Restrição de Limite',
-            text: `${msgErro}. Como administrador, deseja forçar este agendamento?`,
+            title: 'Restricao de limite',
+            text: `${msgErro}. Como administrador, deseja forcar este agendamento?`,
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Sim, forçar',
+            confirmButtonText: 'Sim, forcar',
             cancelButtonText: 'Cancelar',
             confirmButtonColor: '#1E3A8A',
           }).then((result) => {
             if (result.isConfirmed) {
-              this.confirmarAgendamento(agendamentoDoModal, true);
+              this.confirmarAgendamento(agendamentoDoModal, true)
             }
-          });
-          return;
+          })
+          return
         }
 
         Swal.fire({
           icon: 'warning',
-          title: 'Não foi possível agendar',
-          text: msgErro || 'Verifique se o horário está disponível.',
+          title: 'Nao foi possivel agendar',
+          text: msgErro || 'Verifique se o horario esta disponivel.',
           confirmButtonColor: '#1E3A8A'
-        });
+        })
       }
+    },
+
+    formatarNomeModalidade(nome) {
+      return nome.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase())
     }
   }
 }
@@ -260,149 +348,346 @@ export default {
 .layout {
   display: flex;
   min-height: 100vh;
-  font-family: "Montserrat", sans-serif;
-  background-color: #F7F9FC;
-}
-
-.layout> :first-child {
-  width: 240px;
-  flex-shrink: 0;
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100vh;
-  z-index: 10;
-  background-color: #fff;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  background: #f4f7fb;
 }
 
 .conteudo {
   flex: 1;
-  padding: 24px 40px;
-  margin-left: 240px;
+  margin-left: 250px;
+  padding: 20px 32px 32px;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
-.titulo {
-  margin-top: 24px;
-  margin-bottom: 32px;
+.page-nav {
+  margin-bottom: 18px;
 }
 
-.titulo h1 {
-  font-size: 32px;
-  font-weight: bold;
-  color: #3B82F6;
+.page-header {
+  margin-bottom: 22px;
+}
+
+.header-copy,
+.panel-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.header-topline,
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.panel-head {
+  margin-bottom: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: 42px;
+  line-height: 1.04;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+.page-subtitle,
+.section-subtitle,
+.metric-caption,
+.state-copy {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #64748b;
+}
+
+.header-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  min-height: 46px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.22);
+  white-space: nowrap;
+}
+
+.header-chip-value {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.header-chip-text {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.overview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px 14px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.06);
+}
+
+.metric-kicker,
+.section-kicker,
+.card-label {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.metric-kicker,
+.section-kicker {
+  color: #2563eb;
+}
+
+.card-label {
+  color: rgba(191, 219, 254, 0.88);
+}
+
+.metric-value {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.overview-card-available .metric-value {
+  color: #059669;
+}
+
+.overview-card-blocked .metric-value {
+  color: #dc2626;
+}
+
+.quadras-panel {
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.06);
+}
+
+.section-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.15;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.state-card {
+  min-height: 300px;
+  border-radius: 20px;
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  padding: 24px;
+}
+
+.state-card-empty {
+  min-height: 240px;
+}
+
+.state-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .quadras-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
 }
 
 .card-quadra {
   position: relative;
-  max-width: 100%;
-  width: 100%;
-  height: 240px;
-  border-radius: 12px;
+  height: 248px;
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  background-color: #fff;
+  background: #0f172a;
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.14);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.card-quadra:hover:not(.is-interditada) {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 36px rgba(15, 23, 42, 0.18);
 }
 
 .imagem-quadra {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: filter 0.3s ease;
+  transition: transform 0.35s ease, filter 0.3s ease;
+}
+
+.card-quadra:hover:not(.is-interditada) .imagem-quadra {
+  transform: scale(1.03);
 }
 
 .card-quadra.is-interditada .imagem-quadra {
-  filter: grayscale(100%) brightness(1.1) opacity(0.6);
+  filter: grayscale(100%) brightness(0.9) opacity(0.76);
 }
 
-.badge-interditada-overlay {
+.card-status {
   position: absolute;
-  top: 30%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 10;
-  color: #FFFFFF;
-  font-weight: 900;
-  font-size: 32px;
-  letter-spacing: 3px;
+  top: 14px;
+  right: 14px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 102px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.94);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+}
+
+.card-status.is-indisponivel {
+  background: rgba(239, 68, 68, 0.92);
+}
+
+.card-shade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 72%;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(0, 0, 0, 0.48) 52%,
+    transparent 100%
+  );
+  z-index: 1;
   pointer-events: none;
-  text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 .overlay {
   position: absolute;
-  bottom: 0;
-  width: 100%;
-  background: linear-gradient(to top, rgba(21, 33, 71, 0.9), transparent);
-  color: white;
-  padding: 20px;
+  inset: auto 0 0 0;
+  z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  padding: 16px;
+  background: linear-gradient(180deg, rgba(3, 7, 18, 0.04) 0%, rgba(3, 7, 18, 0.56) 48%, rgba(3, 7, 18, 0.92) 100%);
+  color: #ffffff;
+}
+
+.card-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
 .nome-quadra {
-  font-size: 20px;
-  font-weight: bold;
+  font-size: 24px;
+  font-weight: 800;
   margin: 0;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  text-shadow: 0 10px 18px rgba(0, 0, 0, 0.28);
 }
 
-.endereco {
-  font-size: 14px;
-  margin: 0;
-  line-height: 1.2;
-  color: #D9D9D9;
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.tag-modalidade {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tag-modalidade-muted {
+  background: rgba(15, 23, 42, 0.46);
 }
 
 .btn-agendar {
-  background-color: #3B82F6;
-  color: white;
+  background: #3b82f6;
+  color: #ffffff;
   border: none;
-  padding: 8px 16px;
+  padding: 0 16px;
   cursor: pointer;
-  width: fit-content;
-  min-width: 100px;
-  height: 38px;
-  border-radius: 6px;
+  min-width: 118px;
+  height: 42px;
+  border-radius: 999px;
   font-size: 13px;
-  font-weight: bold;
-  transition: background-color 0.2s;
-  margin-top: 8px;
+  font-weight: 800;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  align-self: flex-start;
 }
 
 .btn-agendar:hover:not(:disabled) {
-  background-color: #1E3A8A;
+  background: #2563eb;
+  transform: translateY(-1px);
 }
 
 .btn-agendar:disabled {
-  background-color: #D9D9D9;
-  color: #7E7E7E;
+  background: rgba(148, 163, 184, 0.92);
+  color: rgba(255, 255, 255, 0.72);
   cursor: not-allowed;
-  opacity: 0.8;
 }
 
 .loader {
   border: 6px solid #f3f3f3;
-  border-top: 6px solid #3B82F6;
+  border-top: 6px solid #3b82f6;
   border-radius: 50%;
-  width: 80px;
-  height: 80px;
+  width: 72px;
+  height: 72px;
   animation: spin 1s linear infinite;
-  margin: 60px auto;
-}
-
-.mensagem-nenhuma-quadra {
-  text-align: center;
-  font-style: italic;
-  color: #7E7E7E;
-  margin-top: 40px;
 }
 
 @keyframes spin {
@@ -415,92 +700,118 @@ export default {
   }
 }
 
-
-.swal2-custom-actions {
-  display: flex !important;
-  gap: 15px !important;
-  margin-top: 25px !important;
-}
-
-.btn-confirmar-swal {
-  background-color: #152147 !important;
-  color: white !important;
-  border: none !important;
-  padding: 12px 30px !important;
-  border-radius: 6px !important;
-  font-weight: bold !important;
-  font-family: 'Montserrat', sans-serif !important;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-confirmar-swal:hover {
-  background-color: #1E3A8A !important;
-}
-
-.btn-cancelar-swal {
-  background-color: #D9D9D9 !important;
-  color: #152147 !important;
-  border: none !important;
-  padding: 12px 30px !important;
-  border-radius: 6px !important;
-  font-weight: bold !important;
-  font-family: 'Montserrat', sans-serif !important;
-  cursor: pointer;
-}
-
-.btn-cancelar-swal:hover {
-  background-color: #c0c0c0 !important;
-}
-
-.swal2-custom-title {
-  color: #152147 !important;
-  font-family: 'Montserrat', sans-serif !important;
-}
-
-@media (max-width: 768px) {
-  .layout> :first-child {
-    position: static !important;
-    width: 0 !important;
-    height: 0 !important;
-    background-color: transparent !important;
-    box-shadow: none !important;
-    overflow: visible !important;
+@media (max-width: 1200px) {
+  .overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
 
-  .conteudo {
-    margin-left: 0 !important;
-    padding: 12px 20px 20px 20px !important;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .titulo {
-    margin-top: 0;
-    margin-bottom: 20px;
-    padding-left: 52px;
-    min-height: 42px;
-    display: flex;
-    align-items: center;
-  }
-
-  .titulo h1 {
-    font-size: 24px;
-    margin: 0;
-    line-height: 1.2;
+@media (max-width: 960px) {
+  .header-topline,
+  .panel-head {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .quadras-grid {
     grid-template-columns: 1fr;
-    gap: 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .conteudo {
+    margin-left: 0;
+    padding: 12px 14px 18px;
+  }
+
+  .page-nav {
+    margin-bottom: 12px;
+  }
+
+  .title {
+    font-size: 24px;
+    line-height: 1.12;
+  }
+
+  .header-chip {
+    min-height: 40px;
+    padding: 0 14px;
+    gap: 8px;
+  }
+
+  .header-chip-value {
+    font-size: 18px;
+  }
+
+  .header-chip-text {
+    font-size: 11px;
+  }
+
+  .overview-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .overview-card {
+    padding: 10px 8px 9px;
+    border-radius: 14px;
+    gap: 5px;
+  }
+
+  .metric-kicker {
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+
+  .metric-value {
+    font-size: 20px;
+  }
+
+  .metric-caption {
+    font-size: 9px;
+    line-height: 1.25;
+  }
+
+  .quadras-panel {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .state-card {
+    min-height: 220px;
+    border-radius: 18px;
+  }
+
+  .state-title {
+    font-size: 20px;
+  }
+
+  .quadras-grid {
+    gap: 16px;
   }
 
   .card-quadra {
     height: 220px;
+    border-radius: 20px;
   }
 
-  .badge-interditada-overlay {
-    font-size: 24px;
+  .card-status {
+    min-width: 108px;
+    height: 34px;
+    font-size: 11px;
+  }
+
+  .overlay {
+    padding: 14px;
+  }
+
+  .nome-quadra {
+    font-size: 20px;
+  }
+
+  .btn-agendar {
+    width: 100%;
+    justify-content: center;
   }
 }
 </style>

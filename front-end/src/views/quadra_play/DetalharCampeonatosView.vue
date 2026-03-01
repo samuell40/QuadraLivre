@@ -5,19 +5,48 @@
 
     <div class="conteudo" :class="{ collapsed: sidebarCollapsed }">
       <div class="header">
-        <h1 class="title">Campeonato {{ campeonato?.nome }}</h1>
+        <div class="header-copy">
+          <h1 class="title">Edicao e configuracoes</h1>
+          <a class="page-subtitle">
+            Ajuste identidade visual, regras e criterios em um unico painel.
+          </a>
+        </div>
       </div>
 
       <div v-if="isLoading" class="loader-container-centralizado">
         <div class="loader"></div>
       </div>
 
-      <div v-else-if="campeonato" class="card-quadra">
-        <img :src="campeonato.foto" alt="Foto do campeonato" class="imagem-quadra">
+      <div v-else-if="campeonato" class="hero-campeonato">
+        <div class="card-quadra">
+          <img :src="campeonato.foto" alt="Foto do campeonato" class="imagem-quadra">
+          <div class="hero-overlay"></div>
+          <div class="hero-content">
+            <div class="hero-badges">
+              <span class="hero-badge">{{ formatarNomeExibicao(campeonato?.modalidade?.nome) }}</span>
+              <span v-if="campeonato?.quadra?.nome" class="hero-badge hero-badge-soft">
+                {{ campeonato.quadra.nome }}
+              </span>
+              <span v-if="campeonato?.dataFim" class="hero-badge hero-badge-soft">
+                Finaliza em {{ formatarDataResumo(campeonato.dataFim) }}
+              </span>
+            </div>
+            <h2 class="hero-title">{{ campeonato.nome }}</h2>
+            <a class="hero-subtitle">
+              Um esaaco central para organizar estrutura, configuracoes e oaeracao do campeonato.
+            </a>
+          </div>
+        </div>
       </div>
 
       <div v-if="campeonato && !isMesario" class="card-edicao">
-        <h2>Informacoes do campeonato</h2>
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Cadastro</span>
+            <h2>Informacoes do campeonato</h2>
+            <a>Atualize nome, imagem, quadra vinculada e data de encerramento.</a>
+          </div>
+        </div>
 
         <div class="regras-grid">
           <div class="regra-item">
@@ -59,6 +88,13 @@
       </div>
 
       <div v-if="campeonato" class="card-regras">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Oaeracao</span>
+            <h2>Configuracoes do {{ formatarNomeExibicao(campeonato?.modalidade?.nome) }}</h2>
+            <a>Controle regras, ordem de classificacao e equipe de mesa da competicao.</a>
+          </div>
+        </div>
         <h2>Configurações do {{ String(campeonato?.modalidade?.nome).toLowerCase() }}</h2>
 
         <div v-if="!isMesario" class="abas-config-container">
@@ -119,9 +155,9 @@
         </div>
 
         <div v-else-if="abaConfigAtiva === 'criterios'" class="criterios-wrapper">
-          <p class="descricao-criterios">
+          <a class="descricao-criterios">
             Arraste para definir a ordem de classificacao.
-          </p>
+          </a>
 
           <div v-if="!criteriosClassificacao.length" class="vazio-criterios">
             Nenhum criterio encontrado para este campeonato.
@@ -151,9 +187,9 @@
         </div>
 
         <div v-else class="mesarios-wrapper">
-          <p class="descricao-criterios">
+          <a class="descricao-criterios">
             Vincule os mesarios que podem atuar neste campeonato.
-          </p>
+          </a>
 
           <div class="campo-busca-mesario">
             <input
@@ -209,7 +245,7 @@
       </div>
 
       <div v-if="!campeonato">
-        <p>Nenhum campeonato encontrado.</p>
+        <a>Nenhum campeonato encontrado.</a>
       </div>
     </div>
 
@@ -423,6 +459,26 @@ export default {
     },
     subirPagina() {
       window.scrollTo({ top: 0, behavior: 'smooth' })
+    },
+    formatarNomeExibicao(texto) {
+      return String(texto || '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .map(parte => parte.charAt(0).toUpperCase() + parte.slice(1).toLowerCase())
+        .join(' ')
+    },
+    formatarDataResumo(data) {
+      if (!data) return ''
+
+      const dataFormatada = new Date(data)
+      if (Number.isNaN(dataFormatada.getTime())) return ''
+
+      return dataFormatada.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+      })
     },
     formatarDataParaInput(data) {
       if (!data) return ''
@@ -697,6 +753,11 @@ export default {
 </script>
 
 <style scoped>
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
 .layout {
   display: flex;
   flex-direction: column;
@@ -705,33 +766,59 @@ export default {
 
 .conteudo {
   flex: 1;
-  padding: 32px;
+  padding: 36px;
   margin-top: 70px;
   margin-left: 250px;
   transition: margin-left 0.3s ease, padding 0.3s ease;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 24%),
+    linear-gradient(180deg, #f8fbff 0%, #f3f7ff 24%, #f8fafc 100%);
 }
 
 .conteudo.collapsed {
   margin-left: 70px;
 }
 
+.header {
+  margin-bottom: 18px;
+}
+
+.header-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 720px;
+}
+
 .title {
-  color: #3b82f6;
-  font-size: 50px;
-  font-weight: bold;
-  margin-bottom: 20px;
-  line-height: 1.1;
+  color: #2563eb;
+  font-size: 38px;
+  font-weight: 800;
+  margin: 0;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.page-subtitle {
+  margin: 0;
+  color: #64748b;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.hero-campeonato {
+  margin-bottom: 24px;
 }
 
 .card-quadra {
   position: relative;
   width: 100%;
-  height: 420px;
-  border-radius: 16px;
+  height: 480px;
+  border-radius: 26px;
   overflow: hidden;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  margin-bottom: 20px;
+  box-shadow: 0 28px 56px rgba(15, 23, 42, 0.18);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  margin-bottom: 0;
 }
 
 .imagem-quadra {
@@ -744,62 +831,165 @@ export default {
   transition: transform 0.5s ease;
 }
 
+.card-quadra:hover .imagem-quadra {
+  transform: scale(1.03);
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.08) 0%, rgba(15, 23, 42, 0.18) 36%, rgba(15, 23, 42, 0.78) 100%),
+    linear-gradient(120deg, rgba(37, 99, 235, 0.26), transparent 55%);
+}
+
+.hero-content {
+  position: absolute;
+  left: 28px;
+  right: 28px;
+  bottom: 28px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: #fff;
+}
+
+.hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.52);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hero-badge-soft {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.hero-title {
+  margin: 0;
+  font-size: 42px;
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+  font-weight: 800;
+  text-shadow: 0 10px 24px rgba(15, 23, 42, 0.35);
+}
+
+.hero-subtitle {
+  margin: 0;
+  max-width: 640px;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
 .card-regras {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 20px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 22px;
+  padding: 24px;
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.09);
 }
 
 .card-edicao {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 20px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-  margin-bottom: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 22px;
+  padding: 24px;
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.09);
+  margin-bottom: 18px;
 }
 
-.card-edicao h2 {
-  color: #3b82f6;
-  margin-bottom: 14px;
-  font-size: 22px;
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
 }
 
-.card-regras h2 {
-  color: #3b82f6;
-  margin-bottom: 14px;
-  font-size: 22px;
+.section-kicker {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.10);
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.section-head h2 {
+  color: #0f172a;
+  margin: 0 0 6px;
+  font-size: 24px;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.section-head a {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.card-regras > h2 {
+  display: none;
 }
 
 .abas-config-container {
   display: flex;
-  border-bottom: 1px solid #cbd5e1;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.20);
+  border-radius: 18px;
+  background: rgba(248, 250, 252, 0.85);
+  overflow-x: auto;
 }
 
 .aba-config {
-  flex: 1;
-  border: none;
-  border-bottom: 3px solid transparent;
-  background: #fff;
+  flex: 1 0 0;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
   color: #64748b;
-  font-size: 21px;
-  font-weight: 600;
-  padding: 12px 10px;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 12px 14px;
   cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .aba-config.ativa {
-  color: #3b82f6;
-  border-bottom-color: #3b82f6;
+  color: #1d4ed8;
+  border-color: rgba(59, 130, 246, 0.18);
+  background: #fff;
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.06);
 }
 
 .regras-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 16px;
 }
 
 .criterios-wrapper {
@@ -807,24 +997,28 @@ export default {
 }
 
 .descricao-criterios {
-  margin: 0 0 10px;
+  margin: 0 0 14px;
   color: #64748b;
+  line-height: 1.6;
 }
 
 .vazio-criterios {
   color: #6b7280;
   font-style: italic;
-  border: 1px dashed #cbd5e1;
-  border-radius: 8px;
-  padding: 14px;
+  border: 1px dashed rgba(148, 163, 184, 0.45);
+  border-radius: 16px;
+  padding: 16px 18px;
+  background: rgba(248, 250, 252, 0.86);
 }
 
 .lista-criterios {
-  border: 1px solid #3b82f6;
-  border-radius: 8px;
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  border-radius: 18px;
   max-height: 360px;
   overflow-y: auto;
   margin-bottom: 4px;
+  background: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .mesarios-wrapper {
@@ -836,11 +1030,12 @@ export default {
 }
 
 .lista-mesarios {
-  border: 1px solid #93c5fd;
-  border-radius: 8px;
+  border: 1px solid rgba(59, 130, 246, 0.20);
+  border-radius: 18px;
   max-height: 320px;
   overflow-y: auto;
   margin-bottom: 12px;
+  background: #fff;
 }
 
 .mesario-item {
@@ -922,11 +1117,11 @@ export default {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 14px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
   background: #fff;
   cursor: grab;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.15s ease;
 }
 
 .criterio-item:last-child {
@@ -935,6 +1130,7 @@ export default {
 
 .criterio-item:hover {
   background: #eff6ff;
+  transform: translateY(-1px);
 }
 
 .ordem-criterio {
@@ -965,52 +1161,75 @@ export default {
 .regra-item {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 12px;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.04);
 }
 
 .regra-label {
   font-size: 14px;
   color: #0f172a;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .regra-select {
   width: 100%;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  padding: 12px 14px;
   font-size: 16px;
   background: #fff;
+  color: #0f172a;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.regra-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
 }
 
 .regra-valor {
   width: 100%;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 10px 12px;
+  border: 1px solid #dbe3ef;
+  border-radius: 14px;
+  padding: 12px 14px;
   font-size: 16px;
   color: #111827;
-  background: #f8fafc;
+  background: linear-gradient(180deg, #f8fafc, #f1f5f9);
 }
 
 .actions {
-  margin-top: 16px;
+  margin-top: 20px;
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .btn-save {
-  background-color: #3b82f6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
   color: #fff;
   border: none;
-  border-radius: 10px;
-  padding: 10px 16px;
+  border-radius: 999px;
+  padding: 12px 20px;
   font-size: 14px;
   cursor: pointer;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.22);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.btn-save:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 34px rgba(37, 99, 235, 0.28);
 }
 
 .btn-save:disabled {
@@ -1019,18 +1238,23 @@ export default {
 }
 
 .btn-finish {
-  background-color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff5f5;
   color: #dc2626;
-  border: 1.5px solid #dc2626;
-  border-radius: 10px;
-  padding: 10px 16px;
+  border: 1.5px solid rgba(220, 38, 38, 0.26);
+  border-radius: 18px;
+  padding: 14px 18px;
   font-size: 14px;
   cursor: pointer;
   width: 100%;
+  font-weight: 700;
+  box-shadow: 0 12px 24px rgba(220, 38, 38, 0.10);
 }
 
 .btn-finish:hover {
-  background-color: #fef2f2;
+  background-color: #fee2e2;
 }
 
 .btn-finish:disabled {
@@ -1046,9 +1270,9 @@ export default {
 
 .input-file {
   width: 100%;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  padding: 12px 14px;
   background: #fff;
 }
 
@@ -1059,13 +1283,14 @@ export default {
 
 .btn-cancel-file {
   width: fit-content;
-  border: 1px solid #d1d5db;
+  border: 1px solid rgba(148, 163, 184, 0.28);
   background: #fff;
-  color: #111827;
-  border-radius: 8px;
-  padding: 8px 10px;
+  color: #334155;
+  border-radius: 999px;
+  padding: 9px 12px;
   font-size: 13px;
   cursor: pointer;
+  font-weight: 600;
 }
 
 .btn-cancel-file:disabled {
@@ -1129,30 +1354,115 @@ export default {
     padding: 18px;
   }
 
+  .page-kicker {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+
   .title {
-    font-size: 30px;
-    line-height: 1.08;
+    font-size: 28px;
+    line-height: 1.04;
     margin-top: 0;
-    margin-bottom: 14px;
+    margin-bottom: 8px;
   }
 
   .header {
     margin-top: -40px;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+    line-height: 1.55;
   }
 
   .card-quadra {
-    height: 260px;
-    border-radius: 12px;
+    height: 320px;
+    border-radius: 20px;
+  }
+.abas-config-container{
+  display: flex;
+  gap: 5px;        
+  padding: 5px;  
+  overflow: hidden;
+}
+
+.aba-config{
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 9px 6px;      
+  font-size: 15px;        
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+  .hero-content {
+    left: 18px;
+    right: 18px;
+    bottom: 18px;
+    gap: 10px;
+  }
+
+  .hero-badges {
+    gap: 8px;
+  }
+
+  .hero-badge {
+    padding: 7px 11px;
+    font-size: 11px;
+  }
+
+  .hero-title {
+    font-size: 28px;
+  }
+
+  .hero-subtitle {
+    font-size: 13px;
+  }
+
+  .card-edicao,
+  .card-regras {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .section-head {
+    margin-bottom: 14px;
+  }
+
+  .section-head h2 {
+    font-size: 22px;
+  }
+
+  .section-head a {
+    font-size: 13px;
   }
 
   .regras-grid {
     grid-template-columns: 1fr;
   }
 
-  .aba-config {
+  .abas-config-container {
+    gap: 8px;
+    padding: 5px;
+  }
+
+  .regra-select,
+  .regra-valor,
+  .input-file {
     font-size: 15px;
-    padding: 10px 6px;
+    padding: 11px 12px;
+  }
+
+  .actions {
+    justify-content: stretch;
+  }
+
+  .btn-save {
+    width: 100%;
+    justify-content: center;
   }
 
   .loader-container-centralizado {
@@ -1174,4 +1484,6 @@ export default {
   }
 }
 </style>
+
+
 

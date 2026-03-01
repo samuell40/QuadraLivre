@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="placar" :class="{ 'placar-finalizada': partidaEncerradaGlobal, 'placar-andamento': partidaEmAndamentoGlobal }">
     <h2 class="nome-time">
       <img v-if="timeData?.foto" :src="timeData.foto" alt="Escudo do time" class="foto-time" />
@@ -8,7 +8,7 @@
     <div class="box">
       <p>Gols Marcados</p>
       <div class="controls">
-        <button @click="abrirModalJogadores('gol')">−</button>
+        <button @click="abrirModalJogadores('gol')">-</button>
         <span class="valor">{{ timeData?.golspro ?? 0 }}</span>
         <button @click="abrirModalJogadores('gol')">+</button>
       </div>
@@ -17,55 +17,61 @@
     <!-- LINHA: Amarelo + Vermelho -->
     <div class="row-2">
       <div class="box">
-        <p>Cartão Amarelo</p>
+        <p>Cartao Amarelo</p>
         <div class="controls">
-          <button @click="abrirModalJogadores('amarelo')">−</button>
+          <button @click="abrirModalJogadores('amarelo')">-</button>
           <span class="valor">{{ timeData?.cartaoamarelo ?? 0 }}</span>
           <button @click="abrirModalJogadores('amarelo')">+</button>
         </div>
       </div>
 
       <div class="box">
-        <p>Cartão Vermelho</p>
+        <p>Cartao Vermelho</p>
         <div class="controls">
-          <button @click="abrirModalJogadores('vermelho')">−</button>
+          <button @click="abrirModalJogadores('vermelho')">-</button>
           <span class="valor">{{ timeData?.cartaovermelho ?? 0 }}</span>
           <button @click="abrirModalJogadores('vermelho')">+</button>
         </div>
       </div>
     </div>
 
-    <!-- LINHA: Faltas + Substituições -->
+    <!-- LINHA: Faltas + Substituicoes -->
     <div class="row-2">
       <div class="box">
         <p>Faltas</p>
         <div class="controls">
-          <button @click="emitDelta('faltas', -1)">−</button>
+          <button @click="emitDelta('faltas', -1)">-</button>
           <span class="valor">{{ timeData?.faltas ?? 0 }}</span>
           <button @click="emitDelta('faltas', +1)">+</button>
         </div>
       </div>
 
       <div class="box">
-        <p>Substituições</p>
+        <p>Substituicoes</p>
         <div class="controls">
-          <button @click="abrirModalRemoverJogador" :disabled="partidaEncerradaGlobal">−</button>
+          <button @click="abrirModalRemoverJogador" :disabled="partidaEncerradaGlobal">-</button>
           <span class="valor">{{ timeData?.substituicoes ?? 0 }}</span>
           <button @click="abrirModalSubstituicao" :disabled="partidaEncerradaGlobal">+</button>
         </div>
       </div>
     </div>
 
-    <!-- Modal eventos (gols/cartões) -->
-    <div v-if="modalAberto" class="modal-overlay" @click.self="fecharModal">
+    <!-- Modal eventos (gols/cartoes) -->
+        <div v-if="modalAberto" class="modal-overlay" @click.self="fecharModal">
       <div class="modal-content modal-evento" :class="modalStatusClass">
-        <h2 class="modal-titulo" :class="{ 'modal-titulo-finalizada': partidaEncerradaGlobal, 'modal-titulo-andamento': partidaEmAndamentoGlobal }">
-          Selecione o Jogador – <span>{{ tituloEvento }}</span>
-        </h2>
+        <div class="modal-header">
+          <div class="modal-header-copy">
+            <h2 class="modal-titulo" :class="{ 'modal-titulo-finalizada': partidaEncerradaGlobal, 'modal-titulo-andamento': partidaEmAndamentoGlobal }">
+              Selecione o jogador
+            </h2>
+            <p class="modal-subtitulo">Ajuste os registros de {{ tituloEvento }} para este time.</p>
+          </div>
+          <button type="button" class="btn-close-x" @click="fecharModal">x</button>
+        </div>
 
         <div v-if="carregando" class="loader">Carregando jogadores...</div>
 
-        <div v-else class="coluna">
+        <div v-else-if="jogadores.length" class="coluna coluna-evento">
           <div v-for="jogador in jogadores" :key="jogador.id" class="jogador-card">
             <div class="jogador-info">
               <img v-if="jogador.foto" :src="jogador.foto" class="foto-jogador" />
@@ -75,23 +81,29 @@
             </div>
 
             <div class="controls">
-              <button @click="alterarEventoJogador(jogador, 'decrement')">−</button>
+              <button @click="alterarEventoJogador(jogador, 'decrement')">-</button>
               <span class="valor">{{ obterValorEvento(jogador) }}</span>
               <button @click="alterarEventoJogador(jogador, 'increment')">+</button>
             </div>
           </div>
         </div>
 
-        <div class="botoes">
-          <button class="btn-save1" @click="fecharModal">Fechar</button>
+        <div v-else class="coluna coluna-evento estado-vazio-modal">
+          <p>Nao ha jogadores cadastrados para este time.</p>
         </div>
       </div>
     </div>
 
-    <!-- Modal substituição -->
-    <div v-if="substituicaoModal" class="modal-overlay" @click.self="fecharModalSubstituicao">
-      <div class="modal-content" :class="modalStatusClass">
-        <h2 class="titulo-substituicao">Substituição de Jogadores</h2>
+    <!-- Modal substituicao -->
+        <div v-if="substituicaoModal" class="modal-overlay" @click.self="fecharModalSubstituicao">
+      <div class="modal-content modal-substituicao" :class="modalStatusClass">
+        <div class="modal-header">
+          <div class="modal-header-copy">
+            <h2 class="titulo-substituicao">Substituicao de jogadores</h2>
+            <p class="modal-subtitulo">Escolha quem sai, quem entra e confirme as trocas pendentes.</p>
+          </div>
+          <button type="button" class="btn-close-x" @click="fecharModalSubstituicao">x</button>
+        </div>
 
         <div v-if="carregando" class="loader">Carregando jogadores...</div>
 
@@ -120,13 +132,13 @@
         </div>
 
         <div v-if="substituicoesPendentes.length" class="coluna coluna-substituicoes">
-          <h3 class="subtitulo">Substituições selecionadas</h3>
+          <h3 class="subtitulo">Substituicoes selecionadas</h3>
 
           <div v-for="(s, index) in substituicoesPendentes" :key="index" class="jogador-card substituicao-card">
             <div class="jogador-info">
               <span class="nome">{{ s.sai.nome }}</span>
             </div>
-            <span class="seta">→</span>
+            <span class="seta">-></span>
             <div class="jogador-info">
               <span class="nome">{{ s.entra.nome }}</span>
             </div>
@@ -135,24 +147,26 @@
 
         <div class="botoes">
           <button class="btn-save1" @click="adicionarSubstituicao">
-            Adicionar Substituição
+            Adicionar substituicao
           </button>
 
           <button class="btn-save1" v-if="substituicoesPendentes.length > 0" @click="confirmarTodasSubstituicoes">
             Confirmar {{ substituicoesPendentes.length }}
-          </button>
-
-          <button class="btn-cancel" @click="fecharModalSubstituicao">
-            Cancelar
           </button>
         </div>
       </div>
     </div>
 
     <!-- Modal remover -->
-    <div v-if="modalRemoverAberto" class="modal-overlay" @click.self="fecharModalRemover">
+        <div v-if="modalRemoverAberto" class="modal-overlay" @click.self="fecharModalRemover">
       <div class="modal-content modal-remover" :class="modalStatusClass">
-        <h2 class="modal-titulo">Remover jogadores de campo</h2>
+        <div class="modal-header">
+          <div class="modal-header-copy">
+            <h2 class="modal-titulo">Remover jogadores de campo</h2>
+            <p class="modal-subtitulo">Selecione os jogadores que devem sair da partida.</p>
+          </div>
+          <button type="button" class="btn-close-x" @click="fecharModalRemover">x</button>
+        </div>
 
         <div v-if="carregando" class="loader">Carregando jogadores...</div>
 
@@ -169,10 +183,6 @@
         <div class="botoes">
           <button class="btn-save1" @click="confirmarRemocaoJogadores">
             Confirmar ({{ jogadoresSelecionados.length }})
-          </button>
-
-          <button class="btn-cancel" @click="fecharModalRemover">
-            Cancelar
           </button>
         </div>
       </div>
@@ -218,8 +228,8 @@ export default {
   computed: {
     tituloEvento() {
       if (this.tipoEvento === 'gol') return 'Gol'
-      if (this.tipoEvento === 'amarelo') return 'Cartão Amarelo'
-      if (this.tipoEvento === 'vermelho') return 'Cartão Vermelho'
+      if (this.tipoEvento === 'amarelo') return 'Cartao Amarelo'
+      if (this.tipoEvento === 'vermelho') return 'Cartao Vermelho'
       return ''
     },
 
@@ -302,13 +312,13 @@ export default {
         if (this.tipoEvento === 'vermelho') this.emitDelta('cartaovermelho', incremento)
 
         if (res.data?.emCampo === false) {
-          Swal.fire('Expulsão!', 'Jogador expulso automaticamente.', 'warning')
+          Swal.fire('Expulsao!', 'Jogador expulso automaticamente.', 'warning')
         }
 
         await this.carregarJogadores()
         this.$emit('refresh')
       } catch (error) {
-        Swal.fire('Erro', error.response?.data?.message || 'Erro ao salvar atuação', 'error')
+        Swal.fire('Erro', error.response?.data?.message || 'Erro ao salvar atuacao', 'error')
         await this.carregarJogadores()
       }
     },
@@ -351,7 +361,7 @@ export default {
         const resBanco = await api.get(`/${this.partidaIdNum}/${this.timeData.id}/jogadores-fora-partida`)
         this.jogadoresBanco = resBanco.data
       } catch {
-        Swal.fire('Erro', 'Erro ao carregar jogadores da substituição', 'error')
+        Swal.fire('Erro', 'Erro ao carregar jogadores da substituicao', 'error')
       } finally {
         this.carregando = false
       }
@@ -382,11 +392,11 @@ export default {
 
         this.emitDelta('substituicoes', this.substituicoesPendentes.length)
 
-        Swal.fire('Sucesso', `${this.substituicoesPendentes.length} substituição(ões) realizadas`, 'success')
+        Swal.fire('Sucesso', `${this.substituicoesPendentes.length} substituicao(oes) realizadas`, 'success')
         this.fecharModalSubstituicao()
         this.$emit('refresh')
       } catch {
-        Swal.fire('Erro', 'Erro ao realizar substituições', 'error')
+        Swal.fire('Erro', 'Erro ao realizar substituicoes', 'error')
       }
     },
 
@@ -448,111 +458,171 @@ export default {
 
 <style scoped>
 .placar {
+  --accent: #2563eb;
+  --accent-strong: #1d4ed8;
+  --accent-soft: rgba(37, 99, 235, 0.1);
+  --accent-border: rgba(59, 130, 246, 0.22);
   width: 100%;
-  max-width: 580px;
-  background: #fff;
-  border-radius: 12px;
-  padding: 30px;
-  text-align: center;
-  border: 1px solid #ddd;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
+  padding: 19px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 23px;
+  box-shadow: 0 13px 24px rgba(15, 23, 42, 0.065);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  position: relative;
 }
-
+.placar::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  border-radius: 23px 23px 0 0;
+  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+}
+.placar.placar-finalizada {
+  --accent: #dc2626;
+  --accent-strong: #b91c1c;
+  --accent-soft: rgba(220, 38, 38, 0.1);
+  --accent-border: rgba(220, 38, 38, 0.22);
+}
+.placar.placar-andamento {
+  --accent: #16a34a;
+  --accent-strong: #15803d;
+  --accent-soft: rgba(34, 197, 94, 0.1);
+  --accent-border: rgba(34, 197, 94, 0.22);
+}
 .nome-time {
-  background: #f9f9f9;
-  border-bottom: 1px solid #ddd;
-  padding: 10px;
-  color: #3b82f6;
-  font-weight: bold;
-  font-size: 24px;
+  margin: 0;
+  grid-column: 1 / -1;
+  padding: 12px 15px;
+  border-radius: 17px;
+  border: 1px solid var(--accent-border);
+  background: linear-gradient(180deg, var(--accent-soft), rgba(255, 255, 255, 0.98));
+  color: #0f172a;
+  font-weight: 800;
+  font-size: 23px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  border: 2px solid #3b82f6;
+  justify-content: flex-start;
+  gap: 9px;
+  text-align: left;
+  letter-spacing: -0.03em;
+  overflow: hidden;
 }
-
-.placar.placar-finalizada .nome-time {
-  border-color: #dc2626;
-  color: #dc2626;
+.nome-time span {
+  min-width: 0;
 }
-
-.placar.placar-andamento .nome-time {
-  border-color: #16a34a;
-  color: #16a34a;
-}
-
-.box {
-  background: #fafafa;
-  padding: 15px;
-  border-radius: 8px;
-  border: 1px solid #eee;
-}
-
-.controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 10px;
-  gap: 10px;
-}
-
-.controls span {
-  font-size: 18px;
-  font-weight: bold;
-}
-
-.controls button {
-  background-color: #1e3a8a;
-  color: white;
-  border: none;
+.foto-time {
+  display: block;
+  width: 46px;
+  min-width: 46px;
+  max-width: 46px;
+  height: 46px;
+  min-height: 46px;
+  max-height: 46px;
+  object-fit: contain;
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  font-size: 18px;
+  background-color: #f1f5f9;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  flex: 0 0 auto;
+}
+.placar > .box:first-of-type,
+.placar > .row-2 > .box {
+  background: #fff;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 17px;
+}
+.placar > .box:first-of-type {
+  grid-column: 1 / -1;
+  padding: 15px;
+  border-color: var(--accent-border);
+  background: linear-gradient(180deg, var(--accent-soft), rgba(255, 255, 255, 0.98));
+}
+.placar > .row-2 > .box {
+  padding: 13px;
+}
+.placar > .box:first-of-type > p,
+.placar > .row-2 > .box > p {
+  margin: 0;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+.placar > .box:first-of-type > p {
+  color: var(--accent);
+}
+.placar > .box:first-of-type .controls,
+.placar > .row-2 > .box .controls {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 40px;
+  align-items: center;
+  gap: 9px;
+  margin-top: 12px;
+}
+.placar > .box:first-of-type .controls {
+  margin-top: 12px;
+}
+.placar > .box:first-of-type .controls .valor,
+.placar > .row-2 > .box .controls .valor {
+  display: block;
+  color: #0f172a;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.placar > .box:first-of-type .controls .valor {
+  font-size: 36px;
+  color: var(--accent-strong);
+}
+.placar > .row-2 > .box .controls .valor {
+  font-size: 23px;
+}
+.placar > .box:first-of-type .controls button,
+.placar > .row-2 > .box .controls button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--accent-border);
+  border-radius: 13px;
+  background: #eff6ff;
+  color: var(--accent);
+  font-size: 21px;
+  font-weight: 900;
+  line-height: 1;
   cursor: pointer;
-  transition: 0.2s;
+  transition: transform 0.15s ease, box-shadow 0.18s ease, opacity 0.18s ease;
 }
-
-.controls button:last-child {
-  background-color: #3b82f6;
+.placar > .box:first-of-type .controls button:last-child,
+.placar > .row-2 > .box .controls button:last-child {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: #fff;
+  box-shadow: 0 7px 13px rgba(15, 23, 42, 0.09);
 }
-
-.controls button:disabled {
+.placar > .box:first-of-type .controls button:hover:not(:disabled),
+.placar > .row-2 > .box .controls button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.placar > .box:first-of-type .controls button:disabled,
+.placar > .row-2 > .box .controls button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+  box-shadow: none;
 }
-
-.placar.placar-finalizada > .box .controls button,
-.placar.placar-finalizada > .row-2 .box .controls button {
-  background-color: #991b1b;
-}
-
-.placar.placar-finalizada > .box .controls button:last-child,
-.placar.placar-finalizada > .row-2 .box .controls button:last-child {
-  background-color: #dc2626;
-}
-
-.placar.placar-andamento > .box .controls button,
-.placar.placar-andamento > .row-2 .box .controls button {
-  background-color: #166534;
-}
-
-.placar.placar-andamento > .box .controls button:last-child,
-.placar.placar-andamento > .row-2 .box .controls button:last-child {
-  background-color: #16a34a;
-}
-
 .row-2 {
+  grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
 }
-
 .row-2 .box {
   height: 100%;
 }
@@ -560,206 +630,313 @@ export default {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(15, 23, 42, 0.56);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
   z-index: 1000;
 }
 
 .modal-content {
-  background: white;
-  padding: 24px 32px;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 900px;
-  height: 85vh;
+  --modal-accent: #2563eb;
+  --modal-accent-strong: #1d4ed8;
+  --modal-accent-soft: rgba(37, 99, 235, 0.1);
+  width: min(960px, 100%);
+  max-height: min(88vh, 920px);
+  padding: 24px;
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
   display: flex;
   flex-direction: column;
+  gap: 18px;
+  overflow: hidden;
 }
 
-.modal-titulo {
-  border-bottom: none;
-  padding: 0 0 12px 0;
-  text-align: left;
-  color: #3b82f6;
-  font-size: 30px;
-  font-weight: bold;
+.modal-content.modal-evento {
+  width: min(760px, 100%);
 }
 
-.modal-titulo.modal-titulo-finalizada {
-  color: #dc2626;
+.modal-content.modal-remover {
+  width: min(820px, 100%);
 }
 
-.modal-titulo.modal-titulo-andamento {
-  color: #16a34a;
+.modal-content.modal-finalizada {
+  --modal-accent: #dc2626;
+  --modal-accent-strong: #b91c1c;
+  --modal-accent-soft: rgba(220, 38, 38, 0.1);
 }
 
-.modal-content.modal-finalizada .jogador-card .controls button {
-  background-color: #991b1b;
+.modal-content.modal-andamento {
+  --modal-accent: #16a34a;
+  --modal-accent-strong: #15803d;
+  --modal-accent-soft: rgba(34, 197, 94, 0.1);
 }
 
-.modal-content.modal-finalizada .jogador-card .controls button:last-child {
-  background-color: #dc2626;
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.modal-content.modal-finalizada .coluna {
-  border-color: #dc2626;
+.modal-header-copy {
+  min-width: 0;
 }
 
-.modal-content.modal-finalizada .jogador-card {
-  border-color: #dc2626;
-}
-
-.modal-content.modal-finalizada .btn-save1 {
-  background-color: #dc2626;
-}
-
-.modal-content.modal-andamento .jogador-card .controls button {
-  background-color: #166534;
-}
-
-.modal-content.modal-andamento .jogador-card .controls button:last-child {
-  background-color: #16a34a;
-}
-
-.modal-content.modal-andamento .coluna {
-  border-color: #16a34a;
-}
-
-.modal-content.modal-andamento .jogador-card {
-  border-color: #16a34a;
-}
-
-.modal-content.modal-andamento .btn-save1,
-.modal-content.modal-andamento .btn-cancel {
-  background-color: #16a34a;
-}
-
-.modal-content.modal-andamento .titulo-substituicao,
-.modal-content.modal-andamento .subtitulo {
-  color: #16a34a;
-}
-
+.modal-titulo,
 .titulo-substituicao {
-  margin-bottom: 30px;
-  color: #3b82f6;
-  text-align: left;
-  font-weight: bold;
+  margin: 0;
+  color: #0f172a;
+  font-size: 30px;
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.03em;
 }
 
-.subtitulo {
-  color: #3b82f6;
-  font-size: 20px;
-  text-align: center;
-  font-weight: bold;
+.modal-titulo.modal-titulo-finalizada,
+.modal-content.modal-finalizada .titulo-substituicao {
+  color: #b91c1c;
 }
 
-.coluna {
+.modal-titulo.modal-titulo-andamento,
+.modal-content.modal-andamento .titulo-substituicao {
+  color: #15803d;
+}
+
+.modal-subtitulo {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.btn-close-x {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 999px;
+  background: #fff;
+  color: #334155;
+  font-size: 21px;
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition: transform 0.15s ease, border-color 0.18s ease, color 0.18s ease, background-color 0.18s ease;
+}
+
+.btn-close-x:hover {
+  transform: translateY(-1px);
+  border-color: rgba(59, 130, 246, 0.28);
+  color: #2563eb;
+  background: #f8fbff;
+}
+
+.coluna,
+.lista-remover {
   flex: 1;
-  border: 1px solid #3b82f6;
-  border-radius: 8px;
-  padding: 10px 15px;
+  min-height: 0;
   overflow-y: auto;
+  padding: 15px;
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: linear-gradient(180deg, var(--modal-accent-soft), rgba(255, 255, 255, 0.98));
 }
 
-.coluna::-webkit-scrollbar {
+.coluna-evento {
+  max-height: 56vh;
+}
+
+.estado-vazio-modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  text-align: center;
+}
+
+.estado-vazio-modal p {
+  margin: 0;
+  max-width: 280px;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.coluna::-webkit-scrollbar,
+.lista-remover::-webkit-scrollbar,
+.coluna-substituicoes::-webkit-scrollbar {
   width: 6px;
 }
 
-.coluna::-webkit-scrollbar-thumb {
+.coluna::-webkit-scrollbar-thumb,
+.lista-remover::-webkit-scrollbar-thumb,
+.coluna-substituicoes::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 10px;
+}
+
+.subtitulo {
+  margin: 0 0 12px;
+  color: var(--modal-accent-strong);
+  font-size: 16px;
+  text-align: left;
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
 .jogador-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #f9fafb;
-  border-radius: 8px;
-  padding: 10px;
-  margin-bottom: 8px;
-  border: 2px solid #3b82f6;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 18px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.05);
+  transition: transform 0.15s ease, border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.jogador-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(59, 130, 246, 0.24);
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.08);
 }
 
 .jogador-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.dados-jogador {
+  min-width: 0;
 }
 
 .foto-jogador {
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid #ccc;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: #fff;
+  flex: 0 0 auto;
 }
 
 .nome {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 14px;
+  color: #0f172a;
+}
+
+.jogador-card .controls {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 40px;
+  align-items: center;
+  gap: 10px;
+  margin-top: 0;
+}
+
+.jogador-card .controls .valor {
+  display: block;
+  min-width: 22px;
+  text-align: center;
+  color: #0f172a;
+  font-size: 21px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.jogador-card .controls button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 14px;
+  background: #eff6ff;
+  color: var(--modal-accent);
+  font-size: 21px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+
+.jogador-card .controls button:last-child {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--modal-accent), var(--modal-accent-strong));
+  color: #fff;
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.1);
+}
+
+.jogador-card .controls button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.jogador-card .controls button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .botoes {
   display: flex;
   gap: 10px;
-  margin-top: 16px;
-}
-
-.btn-save1,
-.btn-cancel {
-  flex: 1;
-  padding: 12px 0;
-  border-radius: 20px;
-  border: none;
-  cursor: pointer;
-  color: white;
-  font-size: 16px;
+  justify-content: flex-end;
+  margin-top: auto;
 }
 
 .btn-save1 {
-  background-color: #3b82f6;
+  min-height: 46px;
+  padding: 0 16px;
+  border-radius: 17px;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--modal-accent), var(--modal-accent-strong));
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.12);
+  transition: transform 0.15s ease, box-shadow 0.18s ease, opacity 0.18s ease;
 }
 
-.btn-cancel {
-  background-color: #7e7e7e;
+.btn-save1:hover {
+  transform: translateY(-1px);
 }
 
 .loader {
   text-align: center;
-  padding: 20px;
-  color: #555;
-}
-
-.foto-time {
-  width: 52px;
-  height: 52px;
-  object-fit: contain;
-  border-radius: 50%;
-  background-color: #f1f5f9;
+  padding: 24px;
+  color: #64748b;
 }
 
 .selecionado {
-  background: #dbeafe;
-  border: 2px solid #2563eb;
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.12), rgba(255, 255, 255, 0.98));
+  border-color: rgba(37, 99, 235, 0.38);
+  box-shadow: 0 14px 24px rgba(59, 130, 246, 0.12);
 }
 
 .colunas {
-  display: flex;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
   flex: 1;
-  overflow: hidden;
+  min-height: 0;
 }
 
 .coluna-substituicoes {
-  margin-top: 20px;
-  max-height: 160px;
-  overflow-y: auto;
-  border: 1px solid #3b82f6;
-  border-radius: 8px;
-  padding: 10px 15px;
+  margin-top: 0;
+  max-height: 180px;
 }
 
 .substituicao-card {
@@ -769,29 +946,29 @@ export default {
 
 .substituicao-card .nome {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .seta {
-  font-size: 20px;
-  font-weight: bold;
-  color: #3b82f6;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--modal-accent);
 }
 
 .modal-remover {
-  width: 900px;
-  max-height: 80vh;
+  max-height: min(82vh, 760px);
 }
 
 .lista-remover {
-  flex: 1;
-  overflow-y: auto;
-  margin: 20px 0;
+  margin: 0;
 }
 
 @media (max-width: 768px) {
   .placar {
-    padding: 20px;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 16px 14px;
+    border-radius: 20px;
   }
 
   .modal-overlay {
@@ -800,51 +977,20 @@ export default {
     padding: 0;
   }
 
-  .nome-time {
-    font-size: 18px;
-    padding: 10px;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .foto-time {
-    width: 42px;
-    height: 42px;
-  }
-
-  .box .controls {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .box .controls button {
-    width: 36px;
-    height: 36px;
-    font-size: 20px;
-  }
-
-  .controls span {
-    font-size: 16px;
-  }
-
   .modal-content {
     width: 100vw;
     max-width: 100vw;
-    height: 100dvh;
     max-height: 100dvh;
     border-radius: 0;
     padding: 16px 12px calc(12px + env(safe-area-inset-bottom));
+    gap: 14px;
   }
 
   .modal-content.modal-evento {
     width: calc(100vw - 20px);
     max-width: 720px;
-    height: auto;
     max-height: calc(100dvh - 20px);
-    border-radius: 12px;
-    padding: 16px 12px;
+    border-radius: 18px;
     margin: 10px auto;
     align-self: flex-start;
   }
@@ -854,73 +1000,118 @@ export default {
     max-height: 100dvh;
   }
 
-  .modal-titulo {
-    font-size: 22px;
-    text-align: center;
-  }
-
-  .titulo-substituicao {
-    font-size: 18px;
-    text-align: center;
-  }
-
-  .subtitulo {
-    font-size: 16px;
-  }
-
-  .colunas {
-    flex-direction: column;
+  .modal-header {
     gap: 12px;
   }
 
-  .coluna {
-    max-height: none;
-    min-height: 0;
+  .modal-titulo,
+  .titulo-substituicao {
+    font-size: 23px;
   }
 
-  .jogador-card {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+  .modal-subtitulo {
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .btn-close-x {
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
+  }
+
+  .nome-time {
+    font-size: 23px;
+    padding: 15px;
     gap: 10px;
   }
 
-  .jogador-info {
-    min-width: 0;
-    flex: 1;
+  .foto-time {
+    width: 46px;
+    min-width: 46px;
+    max-width: 46px;
+    height: 46px;
+    min-height: 46px;
+    max-height: 46px;
   }
 
-  .jogador-card .controls {
-    margin-top: 0;
-    gap: 8px;
+  .colunas {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .coluna,
+  .lista-remover,
+  .coluna-substituicoes {
+    padding: 13px;
+    border-radius: 17px;
+  }
+
+  .coluna-evento {
+    max-height: calc(100dvh - 210px);
+  }
+
+  .estado-vazio-modal {
+    min-height: 180px;
+  }
+
+  .estado-vazio-modal p {
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .jogador-card {
+    padding: 10px 12px;
+    border-radius: 17px;
   }
 
   .foto-jogador {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+  height: 40px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  }
+
+  .jogador-card .controls {
+    grid-template-columns: 34px minmax(0, 1fr) 34px;
+    gap: 9px;
+  }
+
+  .jogador-card .controls .valor {
+    font-size: 18px;
+  }
+
+  .jogador-card .controls button {
+    width: 34px;
+    height: 34px;
+    border-radius: 13px;
+    font-size: 18px;
   }
 
   .botoes {
     flex-direction: column;
-    margin-top: 12px;
+    margin-top: 4px;
   }
 
-  .btn-save1,
-  .btn-cancel {
+  .btn-save1 {
     width: 100%;
-    font-size: 15px;
     min-height: 46px;
-  }
-
-  .coluna-substituicoes {
-    max-height: 120px;
+    font-size: 14px;
   }
 
   .lista-remover {
-    margin: 12px 0;
     min-height: 0;
   }
 }
 </style>
+
+
+
+
+
+
+
+
 
 

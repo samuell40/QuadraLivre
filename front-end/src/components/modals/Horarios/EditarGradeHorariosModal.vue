@@ -1,911 +1,1061 @@
 <template>
-    <div class="modal-overlay" @click.self="fechar">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div>
-                    <h2 class="title">Editar Grade de Horários</h2>
-                    <p class="subtitle">{{ quadra.nome }}</p>
-                </div>
-                <button type="button" class="btn-close-x" @click="fechar" aria-label="Fechar modal">
-                    x
-                </button>
-            </div>
-
-            <div v-if="isLoading" class="loader-container">
-                <div class="loader"></div>
-            </div>
-
-            <div v-else class="modal-body">
-                <p class="info-text">Configure os dias de funcionamento da quadra.</p>
-
-                <div class="tabs-header">
-                    <button v-for="(dia, index) in diasSemanaNomes" :key="index"
-                        :class="['tab-btn', { active: diaSelecionado === index }]" @click="mudarDia(index)">
-                        {{ dia }}
-                    </button>
-                </div>
-
-                <div class="tab-content">
-
-                    <div class="dia-header-row">
-                        <div class="titulo-switch-wrapper">
-                            <h3 class="dia-titulo">{{ diasSemanaExtenso[diaSelecionado] }}</h3>
-
-                            <div class="switch-container">
-                                <span class="switch-label">{{ diaEstaAberto ? 'Aberto' : 'Fechado' }}</span>
-                                <label class="switch">
-                                    <input type="checkbox" :checked="diaEstaAberto" @change="alternarFuncionamento">
-                                    <span class="slider round"></span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div v-if="diaEstaAberto" class="ferramentas-icones">
-                            <button class="btn-tool" @click="showGerador = !showGerador" title="Gerador Automático"
-                                :class="{ active: showGerador }">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                    viewBox="0 0 16 16">
-                                    <path
-                                        d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z" />
-                                </svg>
-                                <span>Automático</span>
-                            </button>
-                            <button class="btn-tool" @click="showReplicar = !showReplicar"
-                                title="Copiar para outros dias" :class="{ active: showReplicar }">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                    viewBox="0 0 16 16">
-                                    <path fill-rule="evenodd"
-                                        d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0z" />
-                                    <path
-                                        d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
-                                    <path
-                                        d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
-                                </svg>
-                                <span>Copiar</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div v-if="diaEstaAberto" class="conteudo-aberto">
-
-                        <div v-if="showGerador" class="painel-ferramenta slide-down">
-                            <div class="gerador-inputs">
-                                <div class="g-group">
-                                    <label>Início</label>
-                                    <input type="time" v-model="gerador.inicio">
-                                </div>
-                                <div class="g-group">
-                                    <label>Fim</label>
-                                    <input type="time" v-model="gerador.fim">
-                                </div>
-                                <div class="g-group">
-                                    <label>Duração (min)</label>
-                                    <input type="number" v-model="gerador.duracao" placeholder="60">
-                                </div>
-                                <button class="btn-acao-painel" @click="gerarHorariosAutomaticos">Gerar Grade</button>
-                            </div>
-                            <small class="hint">Substituirá os horários atuais deste dia.</small>
-                        </div>
-
-                        <div v-if="showReplicar" class="painel-ferramenta slide-down">
-                            <p class="replicar-titulo">Copiar grade de <strong>{{ diasSemanaNomes[diaSelecionado]
-                                    }}</strong> para:</p>
-                            <div class="dias-checks">
-                                <label v-for="(dia, idx) in diasSemanaNomes" :key="idx" class="chk-item">
-                                    <input type="checkbox" :value="idx" v-model="diasParaReplicar"
-                                        :disabled="idx === diaSelecionado">
-                                    {{ dia }}
-                                </label>
-                            </div>
-                            <button class="btn-acao-painel" @click="confirmarReplicacao">Aplicar Cópia</button>
-                        </div>
-
-                        <div class="add-horario-form">
-                            <div class="input-wrapper">
-                                <input type="time" v-model="novoHorarioInput" class="time-input"
-                                    @keyup.enter="adicionarHorario" />
-                                <span class="clock-icon">🕒</span>
-                            </div>
-                            <button @click="adicionarHorario" class="btn-add" :disabled="!novoHorarioInput">
-                                + Adicionar
-                            </button>
-                        </div>
-
-                        <div class="lista-horarios">
-                            <div v-if="gradePorDia[diaSelecionado].length === 0" class="sem-horarios">
-                                Nenhum horário configurado.
-                            </div>
-                            <div v-else v-for="(horario, hIndex) in gradePorDia[diaSelecionado]" :key="hIndex"
-                                class="horario-chip">
-                                <span>{{ horario }}</span>
-                                <button @click="removerHorario(hIndex)" class="btn-remove-chip">&times;</button>
-                            </div>
-                        </div>
-
-                        <div v-if="gradePorDia[diaSelecionado].length > 0" class="resumo-footer">
-                            <span>{{ gradePorDia[diaSelecionado].length }} horários listados</span>
-                            <button @click="limparDia" class="btn-clear">Limpar Dia</button>
-                        </div>
-                    </div>
-
-                    <div v-else class="estado-fechado slide-down">
-                        <div class="fechado-content">
-                            <span class="fechado-icon">🚫</span>
-                            <p><strong>Dia Fechado</strong></p>
-                            <p class="fechado-desc">Não haverá horários disponíveis para agendamento.</p>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn-salvar" @click="salvarGradeCompleta" :disabled="isSaving || isLoading">
-                    {{ isSaving ? 'Salvando...' : 'Salvar Alterações' }}
-                </button>
-            </div>
+  <div class="modal-overlay" @click.self="fechar">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-copy">
+          <p class="modal-kicker">HORARIOS</p>
+          <h2 class="modal-title">Editar grade de horarios</h2>
+          <p class="modal-subtitle">{{ quadra.nome }}</p>
         </div>
+
+        <button type="button" class="btn-close-x" @click="fechar" aria-label="Fechar modal">
+          x
+        </button>
+      </div>
+
+      <div v-if="isLoading" class="loader-container">
+        <div class="loader"></div>
+        <p class="loader-copy">Carregando grade da quadra.</p>
+      </div>
+
+      <div v-else class="modal-body">
+        <p class="info-text">
+          Configure os dias de funcionamento, gere horarios em lote, replique a grade e ajuste cada dia manualmente.
+        </p>
+
+        <div class="tabs-header">
+          <button
+            v-for="(dia, index) in diasSemanaNomes"
+            :key="index"
+            type="button"
+            :class="['tab-btn', { active: diaSelecionado === index }]"
+            @click="mudarDia(index)"
+          >
+            <span class="tab-day">{{ dia }}</span>
+          </button>
+        </div>
+
+        <div class="workspace-card">
+          <div class="dia-header-row">
+            <div class="titulo-switch-wrapper">
+              <div>
+                <p class="section-kicker">DIA SELECIONADO</p>
+                <h3 class="dia-titulo">{{ diasSemanaExtenso[diaSelecionado] }}</h3>
+              </div>
+
+              <div class="switch-container">
+                <span class="switch-label" :class="{ 'is-open': diaEstaAberto, 'is-closed': !diaEstaAberto }">
+                  {{ diaEstaAberto ? 'Aberto' : 'Fechado' }}
+                </span>
+
+                <label class="switch">
+                  <input type="checkbox" :checked="diaEstaAberto" @change="alternarFuncionamento">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div v-if="diaEstaAberto" class="ferramentas-icones">
+              <button
+                type="button"
+                class="btn-tool"
+                title="Gerador automatico"
+                :class="{ active: showGerador }"
+                @click="showGerador = !showGerador"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z" />
+                </svg>
+                <span>Automatico</span>
+              </button>
+
+              <button
+                type="button"
+                class="btn-tool"
+                title="Copiar para outros dias"
+                :class="{ active: showReplicar }"
+                @click="showReplicar = !showReplicar"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0z" />
+                  <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
+                  <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
+                </svg>
+                <span>Copiar</span>
+              </button>
+            </div>
+          </div>
+
+          <div v-if="diaEstaAberto" class="conteudo-aberto">
+            <div v-if="showGerador" class="painel-ferramenta">
+              <div class="painel-head">
+                <div>
+                  <p class="tool-kicker">GERADOR</p>
+                  <h4 class="tool-title">Montar grade automaticamente</h4>
+                </div>
+              </div>
+
+              <div class="gerador-inputs">
+                <div class="g-group">
+                  <label>Inicio</label>
+                  <input v-model="gerador.inicio" type="time">
+                </div>
+
+                <div class="g-group">
+                  <label>Fim</label>
+                  <input v-model="gerador.fim" type="time">
+                </div>
+
+                <div class="g-group">
+                  <label>Duracao (min)</label>
+                  <input v-model="gerador.duracao" type="number" placeholder="60">
+                </div>
+
+                <button type="button" class="btn-acao-painel" @click="gerarHorariosAutomaticos">
+                  Gerar grade
+                </button>
+              </div>
+
+              <small class="hint">A nova grade substitui os horarios atuais deste dia.</small>
+            </div>
+
+            <div v-if="showReplicar" class="painel-ferramenta">
+              <div class="painel-head">
+                <div>
+                  <p class="tool-kicker">REPLICAR</p>
+                  <h4 class="tool-title">Copiar grade para outros dias</h4>
+                </div>
+              </div>
+
+              <p class="replicar-titulo">
+                Copiar a configuracao de <strong>{{ diasSemanaNomes[diaSelecionado] }}</strong> para:
+              </p>
+
+              <div class="dias-checks">
+                <label v-for="(dia, idx) in diasSemanaNomes" :key="idx" class="chk-item">
+                  <input v-model="diasParaReplicar" type="checkbox" :value="idx" :disabled="idx === diaSelecionado">
+                  <span>{{ dia }}</span>
+                </label>
+              </div>
+
+              <button type="button" class="btn-acao-painel" @click="confirmarReplicacao">
+                Aplicar copia
+              </button>
+            </div>
+
+            <div class="editor-card">
+              <div class="editor-head">
+                <div>
+                  <p class="tool-kicker">HORARIOS</p>
+                  <h4 class="tool-title">Adicionar horarios manualmente</h4>
+                </div>
+              </div>
+
+              <div class="add-horario-form">
+                <div class="input-wrapper">
+                  <svg class="clock-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="M12 7v5l3 2"></path>
+                  </svg>
+                  <input
+                    v-model="novoHorarioInput"
+                    type="time"
+                    class="time-input"
+                    @keyup.enter="adicionarHorario"
+                  />
+                </div>
+
+                <button type="button" class="btn-add" :disabled="!novoHorarioInput" @click="adicionarHorario">
+                  Adicionar
+                </button>
+              </div>
+
+              <div class="lista-horarios">
+                <div v-if="gradePorDia[diaSelecionado].length === 0" class="sem-horarios">
+                  Nenhum horario configurado para este dia.
+                </div>
+
+                <div
+                  v-else
+                  v-for="(horario, hIndex) in gradePorDia[diaSelecionado]"
+                  :key="hIndex"
+                  class="horario-chip"
+                >
+                  <span>{{ horario }}</span>
+                  <button type="button" class="btn-remove-chip" @click="removerHorario(hIndex)">
+                    x
+                  </button>
+                </div>
+              </div>
+
+              <div v-if="gradePorDia[diaSelecionado].length > 0" class="resumo-footer">
+                <span>{{ gradePorDia[diaSelecionado].length }} horarios listados</span>
+                <button type="button" class="btn-clear" @click="limparDia">Limpar dia</button>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="estado-fechado">
+            <div class="fechado-content">
+              <div class="fechado-badge">Fechado</div>
+              <p class="fechado-title">Nao havera horarios disponiveis para agendamento.</p>
+              <p class="fechado-desc">Ative o dia para criar uma nova grade de funcionamento.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-salvar" @click="salvarGradeCompleta" :disabled="isSaving || isLoading">
+          {{ isSaving ? 'Salvando...' : 'Salvar alteracoes' }}
+        </button>
+      </div>
     </div>
+  </div>
 </template>
 
 <script>
-import api from "@/axios";
-import Swal from "sweetalert2";
+import api from '@/axios'
+import Swal from 'sweetalert2'
 
 export default {
-    name: "EditarGradeHorariosModal",
-    props: {
-        quadra: { type: Object, required: true }
-    },
-    data() {
-        return {
-            isLoading: true,
-            isSaving: false,
-            diaSelecionado: 1,
-            novoHorarioInput: "",
-            showGerador: false,
-            showReplicar: false,
-            diasParaReplicar: [],
-            gerador: { inicio: "07:00", fim: "23:00", duracao: 60 },
-            diasSemanaNomes: ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"],
-            diasSemanaExtenso: ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"],
-            gradePorDia: [[], [], [], [], [], [], []],
-            statusDias: [false, false, false, false, false, false, false]
-        };
-    },
-    computed: {
-        diaEstaAberto() {
-            return this.statusDias[this.diaSelecionado];
-        }
-    },
-    mounted() {
-        this.carregarGradeExistente();
-    },
-    methods: {
-        async carregarGradeExistente() {
-            this.isLoading = true;
-            try {
-                const response = await api.get(`/grade-horarios/${this.quadra.id}`);
-                this.gradePorDia = [[], [], [], [], [], [], []];
-                this.statusDias = [false, false, false, false, false, false, false];
-
-                response.data.forEach(item => {
-                    if (this.gradePorDia[item.diaSemana]) {
-                        this.gradePorDia[item.diaSemana].push(item.horario);
-                        this.statusDias[item.diaSemana] = true;
-                    }
-                });
-                this.gradePorDia.forEach(diaArr => diaArr.sort());
-            } catch (error) {
-                console.error("Erro ao carregar:", error);
-            } finally {
-                this.isLoading = false;
-            }
-        },
-
-        mudarDia(index) {
-            this.diaSelecionado = index;
-            this.showGerador = false;
-            this.showReplicar = false;
-        },
-
-        alternarFuncionamento() {
-            const novoStatus = !this.statusDias[this.diaSelecionado];
-            this.statusDias[this.diaSelecionado] = novoStatus;
-
-            if (!novoStatus) {
-                this.gradePorDia[this.diaSelecionado] = [];
-            }
-        },
-
-        adicionarHorario() {
-            if (!this.novoHorarioInput) return;
-            const arr = this.gradePorDia[this.diaSelecionado];
-            if (arr.includes(this.novoHorarioInput)) {
-                Swal.fire({ toast: true, position: 'top-end', icon: 'warning', title: 'Horário já existe', showConfirmButton: false, timer: 1500 });
-                return;
-            }
-            arr.push(this.novoHorarioInput);
-            arr.sort();
-            this.novoHorarioInput = "";
-        },
-
-        removerHorario(index) {
-            this.gradePorDia[this.diaSelecionado].splice(index, 1);
-        },
-
-        limparDia() {
-            this.gradePorDia[this.diaSelecionado] = [];
-        },
-
-        gerarHorariosAutomaticos() {
-            if (!this.gerador.inicio || !this.gerador.fim || !this.gerador.duracao) return;
-
-            const novos = [];
-            let atual = this.timeToMinutes(this.gerador.inicio);
-            const fim = this.timeToMinutes(this.gerador.fim);
-            const duracao = parseInt(this.gerador.duracao);
-
-            while (atual < fim) {
-                if (atual + duracao > fim && duracao > (fim - atual)) break;
-                novos.push(this.minutesToTime(atual));
-                atual += duracao;
-            }
-
-            this.gradePorDia[this.diaSelecionado] = novos;
-            this.showGerador = false;
-            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Grade gerada!', showConfirmButton: false, timer: 1500 });
-        },
-
-        confirmarReplicacao() {
-            if (this.diasParaReplicar.length === 0) return;
-            const copia = [...this.gradePorDia[this.diaSelecionado]];
-
-            this.diasParaReplicar.forEach(idx => {
-                this.gradePorDia[idx] = [...copia];
-                this.statusDias[idx] = true;
-            });
-
-            this.showReplicar = false;
-            this.diasParaReplicar = [];
-            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Copiado com sucesso!', showConfirmButton: false, timer: 1500 });
-        },
-
-        timeToMinutes(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; },
-        minutesToTime(m) { return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; },
-
-        async salvarGradeCompleta() {
-            this.isSaving = true;
-            try {
-                const promises = this.gradePorDia.map((horarios, diaIndex) => {
-                    const dadosFinais = this.statusDias[diaIndex] ? horarios : [];
-                    return api.post('/grade-horarios', { quadraId: this.quadra.id, diaSemana: diaIndex, horarios: dadosFinais });
-                });
-                await Promise.all(promises);
-                Swal.fire("Sucesso", "Grade atualizada!", "success");
-                this.$emit("sucesso");
-                this.fechar();
-            } catch (e) {
-                Swal.fire("Erro", "Falha ao salvar.", "error");
-            } finally {
-                this.isSaving = false;
-            }
-        },
-        fechar() { this.$emit("fechar"); }
+  name: 'EditarGradeHorariosModal',
+  props: {
+    quadra: { type: Object, required: true }
+  },
+  data() {
+    return {
+      isLoading: true,
+      isSaving: false,
+      diaSelecionado: 1,
+      novoHorarioInput: '',
+      showGerador: false,
+      showReplicar: false,
+      diasParaReplicar: [],
+      gerador: { inicio: '07:00', fim: '23:00', duracao: 60 },
+      diasSemanaNomes: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'],
+      diasSemanaExtenso: ['Domingo', 'Segunda-feira', 'Terca-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sabado'],
+      gradePorDia: [[], [], [], [], [], [], []],
+      statusDias: [false, false, false, false, false, false, false]
     }
-};
+  },
+  computed: {
+    diaEstaAberto() {
+      return this.statusDias[this.diaSelecionado]
+    }
+  },
+  mounted() {
+    this.carregarGradeExistente()
+  },
+  methods: {
+    async carregarGradeExistente() {
+      this.isLoading = true
+      try {
+        const response = await api.get(`/grade-horarios/${this.quadra.id}`)
+        this.gradePorDia = [[], [], [], [], [], [], []]
+        this.statusDias = [false, false, false, false, false, false, false]
+
+        response.data.forEach((item) => {
+          if (this.gradePorDia[item.diaSemana]) {
+            this.gradePorDia[item.diaSemana].push(item.horario)
+            this.statusDias[item.diaSemana] = true
+          }
+        })
+
+        this.gradePorDia.forEach((diaArr) => diaArr.sort())
+      } catch (error) {
+        console.error('Erro ao carregar:', error)
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    mudarDia(index) {
+      this.diaSelecionado = index
+      this.showGerador = false
+      this.showReplicar = false
+    },
+
+    alternarFuncionamento() {
+      const novoStatus = !this.statusDias[this.diaSelecionado]
+      this.statusDias[this.diaSelecionado] = novoStatus
+
+      if (!novoStatus) {
+        this.gradePorDia[this.diaSelecionado] = []
+      }
+    },
+
+    adicionarHorario() {
+      if (!this.novoHorarioInput) return
+
+      const arr = this.gradePorDia[this.diaSelecionado]
+      if (arr.includes(this.novoHorarioInput)) {
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'warning',
+          title: 'Horario ja existe',
+          showConfirmButton: false,
+          timer: 1500
+        })
+        return
+      }
+
+      arr.push(this.novoHorarioInput)
+      arr.sort()
+      this.novoHorarioInput = ''
+    },
+
+    removerHorario(index) {
+      this.gradePorDia[this.diaSelecionado].splice(index, 1)
+    },
+
+    limparDia() {
+      this.gradePorDia[this.diaSelecionado] = []
+    },
+
+    gerarHorariosAutomaticos() {
+      if (!this.gerador.inicio || !this.gerador.fim || !this.gerador.duracao) return
+
+      const novos = []
+      let atual = this.timeToMinutes(this.gerador.inicio)
+      const fim = this.timeToMinutes(this.gerador.fim)
+      const duracao = parseInt(this.gerador.duracao)
+
+      while (atual < fim) {
+        if (atual + duracao > fim && duracao > (fim - atual)) break
+        novos.push(this.minutesToTime(atual))
+        atual += duracao
+      }
+
+      this.gradePorDia[this.diaSelecionado] = novos
+      this.showGerador = false
+
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Grade gerada!',
+        showConfirmButton: false,
+        timer: 1500
+      })
+    },
+
+    confirmarReplicacao() {
+      if (this.diasParaReplicar.length === 0) return
+
+      const copia = [...this.gradePorDia[this.diaSelecionado]]
+
+      this.diasParaReplicar.forEach((idx) => {
+        this.gradePorDia[idx] = [...copia]
+        this.statusDias[idx] = true
+      })
+
+      this.showReplicar = false
+      this.diasParaReplicar = []
+
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Copiado com sucesso!',
+        showConfirmButton: false,
+        timer: 1500
+      })
+    },
+
+    timeToMinutes(t) {
+      const [h, m] = t.split(':').map(Number)
+      return h * 60 + m
+    },
+
+    minutesToTime(m) {
+      return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
+    },
+
+    async salvarGradeCompleta() {
+      this.isSaving = true
+      try {
+        const promises = this.gradePorDia.map((horarios, diaIndex) => {
+          const dadosFinais = this.statusDias[diaIndex] ? horarios : []
+          return api.post('/grade-horarios', {
+            quadraId: this.quadra.id,
+            diaSemana: diaIndex,
+            horarios: dadosFinais
+          })
+        })
+
+        await Promise.all(promises)
+        Swal.fire('Sucesso', 'Grade atualizada!', 'success')
+        this.$emit('sucesso')
+        this.fechar()
+      } catch (e) {
+        Swal.fire('Erro', 'Falha ao salvar.', 'error')
+      } finally {
+        this.isSaving = false
+      }
+    },
+
+    fechar() {
+      this.$emit('fechar')
+    }
+  }
+}
 </script>
 
 <style scoped>
 .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.62);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
-    background: #fff;
-    padding: 32px;
-    border-radius: 12px;
-    width: 95%;
-    max-width: 750px;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    color: #1e293b;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    font-family: 'Montserrat', sans-serif;
+  width: 95%;
+  max-width: 760px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  border-radius: 28px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2);
+  color: #1e293b;
 }
 
 .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.modal-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-kicker,
+.section-kicker,
+.tool-kicker {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #2563eb;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.1;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+.modal-subtitle,
+.info-text,
+.hint,
+.replicar-titulo,
+.loader-copy {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #64748b;
 }
 
 .btn-close-x {
-    width: 36px;
-    height: 36px;
-    border: 1px solid rgba(59, 130, 246, 0.55);
-    border-radius: 999px;
-    background: #fff;
-    color: #3b82f6;
-    font-size: 18px;
-    line-height: 1;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(37, 99, 235, 0.24);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #2563eb;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .btn-close-x:hover {
-    background: rgba(239, 68, 68, 0.08);
-    border-color: rgba(239, 68, 68, 0.35);
-    color: #ef4444;
-    transform: translateY(-1px);
-}
-
-.title {
-    font-size: 24px;
-    color: #3B82F6;
-    font-weight: 700;
-    margin: 0;
-    letter-spacing: -0.5px;
-}
-
-.subtitle {
-    font-size: 14px;
-    color: #64748b;
-    margin: 4px 0 0 0;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
 }
 
 .modal-body {
-    flex: 1;
-    overflow-y: auto;
-    padding-right: 4px;
-}
-
-.info-text {
-    font-size: 14px;
-    color: #64748b;
-    margin-bottom: 20px;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .tabs-header {
-    display: flex;
-    gap: 16px;
-    border-bottom: 1px solid #e2e8f0;
-    margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  margin: 18px 0 20px;
 }
 
 .tab-btn {
-    background: none;
-    border: none;
-    padding: 12px 4px;
-    font-size: 15px;
-    font-weight: 500;
-    color: #64748b;
-    cursor: pointer;
-    position: relative;
-    transition: color 0.2s;
-}
-
-.tab-btn::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background: #3B82F6;
-    transform: scaleX(0);
-    transition: transform 0.2s;
-    border-radius: 3px 3px 0 0;
+  min-height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .tab-btn:hover {
-    color: #3B82F6;
+  transform: translateY(-1px);
+  border-color: rgba(59, 130, 246, 0.25);
+  color: #2563eb;
 }
 
 .tab-btn.active {
-    color: #3B82F6;
-    font-weight: 700;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 14px 24px rgba(37, 99, 235, 0.18);
 }
 
-.tab-btn.active::after {
-    transform: scaleX(1);
+.workspace-card,
+.painel-ferramenta,
+.editor-card {
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 22px;
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.05);
+}
+
+.workspace-card {
+  padding: 18px;
 }
 
 .dia-header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-    gap: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .titulo-switch-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
 }
 
 .dia-titulo {
-    font-size: 18px;
-    color: #1e293b;
-    margin: 0;
-    font-weight: 600;
+  margin: 6px 0 0;
+  font-size: 22px;
+  line-height: 1.15;
+  font-weight: 800;
+  color: #0f172a;
 }
 
 .switch-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .switch-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: #64748b;
-    text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.switch-label.is-open {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+}
+
+.switch-label.is-closed {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
 }
 
 .switch {
-    position: relative;
-    display: inline-block;
-    width: 40px;
-    height: 22px;
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
 }
 
 .switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
+  opacity: 0;
+  width: 0;
+  height: 0;
 }
 
 .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #cbd5e1;
-    transition: .4s;
-    border-radius: 34px;
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  background-color: #cbd5e1;
+  transition: 0.4s;
+  border-radius: 999px;
 }
 
 .slider:before {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
+  position: absolute;
+  content: '';
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #ffffff;
+  transition: 0.4s;
+  border-radius: 50%;
 }
 
-input:checked+.slider {
-    background-color: #3B82F6;
+input:checked + .slider {
+  background-color: #3b82f6;
 }
 
-input:checked+.slider:before {
-    transform: translateX(18px);
+input:checked + .slider:before {
+  transform: translateX(20px);
 }
 
 .ferramentas-icones {
-    display: flex;
-    gap: 8px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.btn-tool {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: #f1f5f9;
-    color: #475569;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
+.btn-tool,
+.btn-acao-painel,
+.btn-add,
+.btn-salvar {
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .btn-tool:hover,
+.btn-acao-painel:hover,
+.btn-add:hover:not(:disabled),
+.btn-salvar:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .btn-tool.active {
-    background: #dbeafe;
-    color: #3B82F6;
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.22);
+  color: #2563eb;
 }
 
-.painel-ferramenta {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 20px;
-    animation: slideDown 0.3s ease-out;
+.conteudo-aberto {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 16px;
 }
 
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
+.painel-ferramenta,
+.editor-card {
+  padding: 16px;
+}
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.painel-head,
+.editor-head {
+  margin-bottom: 12px;
+}
+
+.tool-title {
+  margin: 6px 0 0;
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 800;
+  color: #0f172a;
 }
 
 .gerador-inputs {
-    display: flex;
-    gap: 12px;
-    align-items: flex-end;
-    flex-wrap: wrap;
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
 }
 
 .g-group {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .g-group label {
-    font-size: 11px;
-    font-weight: 700;
-    color: #64748b;
-    margin-bottom: 4px;
-    text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.g-group input,
+.time-input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 14px;
+  background: #f8fafc;
+  font-size: 14px;
+  color: #334155;
 }
 
 .g-group input {
-    padding: 8px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    width: 90px;
-    font-size: 14px;
-    color: #334155;
+  width: 110px;
 }
 
-.btn-acao-painel {
-    background: #3B82F6;
-    color: white;
-    border: none;
-    padding: 9px 16px;
-    border-radius: 6px;
-    font-weight: 600;
-    font-size: 13px;
-    cursor: pointer;
-    height: 38px;
-}
-
-.btn-acao-painel:hover {
-    background: #2563eb;
-}
-
-.hint {
-    font-size: 11px;
-    color: #94a3b8;
-    margin-top: 8px;
-    display: block;
-}
-
-.replicar-titulo {
-    font-size: 13px;
-    margin: 0 0 10px 0;
-    color: #475569;
+.btn-acao-painel,
+.btn-add,
+.btn-salvar {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 14px 24px rgba(37, 99, 235, 0.18);
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .dias-checks {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 14px 0 12px;
 }
 
 .chk-item {
-    font-size: 13px;
-    color: #334155;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    cursor: pointer;
-    background: #fff;
-    padding: 4px 8px;
-    border-radius: 4px;
-    border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: #f8fafc;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .add-horario-form {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    margin-bottom: 24px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
 .input-wrapper {
-    position: relative;
+  position: relative;
+  flex: 1;
 }
 
 .time-input {
-    padding: 10px 12px 10px 36px;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    font-size: 15px;
-    width: 130px;
-    color: #334155;
-    outline: none;
-    transition: border 0.2s;
+  width: 100%;
+  padding-left: 40px;
 }
 
-.time-input:focus {
-    border-color: #3B82F6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+.time-input:focus,
+.g-group input:focus {
+  outline: none;
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .clock-icon {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #94a3b8;
-    font-size: 14px;
-    pointer-events: none;
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
 }
 
-.btn-add {
-    background: #94a3b8;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.btn-add:hover:not(:disabled) {
-    background: #64748b;
-}
-
-.btn-add:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+.btn-add:disabled,
+.btn-salvar:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .lista-horarios {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    min-height: 60px;
-    align-content: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 60px;
+  align-content: flex-start;
 }
 
 .sem-horarios {
-    width: 100%;
-    text-align: center;
-    color: #94a3b8;
-    font-style: italic;
-    font-size: 13px;
-    margin-top: 10px;
+  width: 100%;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  border: 1px dashed rgba(148, 163, 184, 0.34);
+  background: #f8fafc;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
 }
 
 .horario-chip {
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    color: #1e40af;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .horario-chip:hover {
-    background: #dbeafe;
+  background: rgba(37, 99, 235, 0.12);
 }
 
 .btn-remove-chip {
-    background: none;
-    border: none;
-    color: #60a5fa;
-    font-size: 18px;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-    display: flex;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #60a5fa;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .btn-remove-chip:hover {
-    color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
 }
 
 .resumo-footer {
-    margin-top: 16px;
-    font-size: 12px;
-    color: #94a3b8;
-    display: flex;
-    justify-content: space-between;
+  margin-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: #94a3b8;
 }
 
 .btn-clear {
-    background: none;
-    border: none;
-    color: #ef4444;
-    font-size: 12px;
-    cursor: pointer;
-    text-decoration: underline;
+  border: none;
+  background: transparent;
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .estado-fechado {
-    background: #fef2f2;
-    border: 1px dashed #fca5a5;
-    border-radius: 8px;
-    padding: 40px 20px;
-    text-align: center;
-    margin-top: 20px;
-    color: #991b1b;
-    animation: slideDown 0.3s ease-out;
+  margin-top: 16px;
+  padding: 24px;
+  border-radius: 20px;
+  border: 1px dashed rgba(239, 68, 68, 0.28);
+  background: rgba(254, 242, 242, 0.94);
 }
 
-.fechado-icon {
-    font-size: 40px;
-    display: block;
-    margin-bottom: 10px;
+.fechado-content {
+  text-align: center;
+}
+
+.fechado-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.fechado-title {
+  margin: 12px 0 6px;
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 800;
+  color: #991b1b;
 }
 
 .fechado-desc {
-    font-size: 13px;
-    color: #b91c1c;
-    margin-top: 5px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #b91c1c;
 }
 
 .modal-footer {
-    margin-top: 32px;
-    padding-top: 20px;
-    border-top: 1px solid #f1f5f9;
-    display: block;
-}
-
-.btn-salvar {
-    background: #3B82F6;
-    color: white;
-    border: none;
-    padding: 12px;
-    width: 100%;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4);
-}
-
-.btn-salvar:hover:not(:disabled) {
-    background: #2563eb;
-    box-shadow: 0 6px 8px -1px rgba(59, 130, 246, 0.5);
-}
-
-.btn-salvar:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
+  padding-top: 4px;
 }
 
 .loader-container {
-    height: 250px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
 }
 
 .loader {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #f1f5f9;
-    border-top-color: #3B82F6;
-    border-radius: 50%;
-    animation: spin 1s infinite linear;
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s infinite linear;
 }
 
 @keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {
+  .modal-overlay {
+    padding: 14px;
+  }
 
-    .modal-content {
-        padding: 20px 15px;
-        width: 95%;
-    }
+  .modal-content {
+    width: 100%;
+    padding: 18px;
+    border-radius: 22px;
+  }
 
-    .tabs-header {
-        gap: 2px;
-        justify-content: space-between;
-        border-bottom: 1px solid #e2e8f0;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
+  .modal-header,
+  .dia-header-row,
+  .titulo-switch-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 
-    .tab-btn {
-        font-size: 13px;
-        padding: 10px 4px;
-        flex: 1;
-        text-align: center;
-        flex-shrink: 0;
-    }
+  .modal-title {
+    font-size: 22px;
+  }
 
-    .modal-footer {
-        display: block;
-    }
+  .tabs-header {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    margin-bottom: 16px;
+  }
 
-    .btn-salvar {
-        width: 100%;
-        padding: 12px;
-        text-align: center;
-        font-size: 14px;
-    }
+  .tab-btn {
+    min-width: 58px;
+    flex: 0 0 auto;
+  }
 
-    .dias-checks {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
-    }
+  .workspace-card,
+  .painel-ferramenta,
+  .editor-card {
+    border-radius: 18px;
+  }
 
-    .chk-item {
-        width: 100%;
-        box-sizing: border-box;
-    }
+  .workspace-card,
+  .painel-ferramenta,
+  .editor-card {
+    padding: 14px;
+  }
 
-    .lista-horarios {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
-    }
+  .dia-titulo {
+    font-size: 20px;
+  }
 
-    .horario-chip {
-        width: 100%;
-        box-sizing: border-box;
-        justify-content: space-between;
-    }
+  .ferramentas-icones {
+    width: 100%;
+  }
 
-    .add-horario-form {
-        flex-direction: column;
-        width: 100%;
-    }
+  .btn-tool {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
 
-    .input-wrapper,
-    .time-input,
-    .btn-add {
-        width: 100%;
-        box-sizing: border-box;
-    }
+  .gerador-inputs,
+  .add-horario-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-    .gerador-inputs {
-        flex-direction: column;
-        align-items: stretch;
-    }
+  .g-group,
+  .g-group input,
+  .input-wrapper,
+  .time-input,
+  .btn-acao-painel,
+  .btn-add {
+    width: 100%;
+  }
 
-    .g-group input {
-        width: 100%;
-        box-sizing: border-box;
-    }
+  .dias-checks {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lista-horarios {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .horario-chip {
+    width: 100%;
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  .resumo-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 </style>
