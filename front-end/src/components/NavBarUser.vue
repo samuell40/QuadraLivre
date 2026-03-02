@@ -164,7 +164,60 @@ export default {
 
 @media (max-width: 768px) {
   .navbar-user-root {
-    display: none;
+    position: absolute;
+    top: 10px;
+    left: 60px;
+    right: 12px;
+    z-index: 8;
+    padding: 0;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .navbar-user-shell {
+    width: 172px;
+    height: 42px;
+    min-height: 42px;
+    gap: 5px;
+    padding: 3px 8px 3px 4px;
+    border-radius: 12px;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
+    box-sizing: border-box;
+  }
+
+  .foto {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+    padding: 1px;
+    box-shadow: 0 0 0 1px #ebf6ff, 0 0 0 2px rgba(86, 184, 255, 0.2), 0 4px 8px rgba(45, 116, 229, 0.16);
+  }
+
+  .user-photo1,
+  .user-fallback {
+    width: 32px;
+    height: 32px;
+  }
+
+  .user-fallback {
+    font-size: 11px;
+  }
+
+  .user-meta {
+    gap: 1px;
+  }
+
+  .user-name {
+    font-size: 11px;
+    margin-top: 2px;
+  }
+
+  .user-role-badge {
+    min-height: 16px;
+    padding: 0 6px;
+    font-size: 7px;
+    letter-spacing: 0.04em;
+    margin-top: -3px;
   }
 }
 </style>

@@ -3,6 +3,8 @@
     <SideBar />
 
     <div class="conteudo">
+      <NavBarUse v-if="mostrarNavBarUser" class="page-nav" />
+
       <section class="page-header">
         <div class="header-copy">
           <div class="header-topline">
@@ -319,19 +321,21 @@
 <script>
 import Swal from 'sweetalert2'
 import SideBar from '@/components/SideBar.vue'
+import NavBarUse from '@/components/NavBarUser.vue'
 import api from '@/axios'
 import { useAuthStore } from '@/store'
 import EditarGradeHorariosModal from '@/components/modals/Horarios/EditarGradeHorariosModal.vue'
 
 export default {
   name: 'AdminGerenciarQuadras',
-  components: { SideBar, EditarGradeHorariosModal },
+  components: { SideBar, NavBarUse, EditarGradeHorariosModal },
   setup() {
     const authStore = useAuthStore()
     return { authStore }
   },
   data() {
     return {
+      isMobile: typeof window !== 'undefined' ? window.innerWidth <= 768 : false,
       quadras: [],
       todasModalidades: [],
       isLoading: true,
@@ -354,6 +358,9 @@ export default {
     },
     isAdministrador() {
       return this.permissaoUsuario === 2
+    },
+    mostrarNavBarUser() {
+      return this.isAdministrador || this.isMobile
     },
     mostrarOverviewCards() {
       return this.isDesenvolvedor
@@ -401,9 +408,17 @@ export default {
     }
   },
   mounted() {
+    window.addEventListener('resize', this.handleResize)
+    this.handleResize()
     this.carregarDados()
   },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.handleResize)
+  },
   methods: {
+    handleResize() {
+      this.isMobile = window.innerWidth <= 768
+    },
     async carregarDados() {
       this.isLoading = true
       try {
