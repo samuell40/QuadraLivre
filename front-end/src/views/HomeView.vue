@@ -34,24 +34,39 @@
               <button class="btn-prev" @click="prev">&lt;</button>
               <Carousel ref="carousel" :itemsToShow="1" :wrapAround="true" :mouseDrag="true" :autoplay="3000"
                 :pauseAutoplayOnHover="true" :transition="600" :breakpoints="{ 768: { itemsToShow: 3 } }" class="carousel">
-                <Slide v-for="(quadra, index) in quadras" :key="index">
+                <Slide v-for="quadra in quadras" :key="quadra.id">
                   <div class="card" :class="{ 'is-interditada': quadra.interditada }">
+                    <img :src="quadra.foto" :alt="quadra.nome" class="imagem-quadra" />
 
-                    <div v-if="quadra.interditada" class="badge-interditada-overlay">
-                      INDISPONVEL
-                    </div>
+                    <div class="overlay">
+                      <div class="card-copy">
+                        <h3 class="nome-quadra">{{ quadra.nome }}</h3>
 
-                    <img :src="quadra.foto" :alt="quadra.nome" class="imagem" />
+                        <div class="card-tags">
+                          <span
+                            v-for="mod in (quadra.modalidades || []).slice(0, 3)"
+                            :key="mod.id"
+                            class="tag-modalidade"
+                          >
+                            {{ formatarNomeModalidade(mod.nome) }}
+                          </span>
 
-                    <div class="sombra-inferior"></div>
+                          <span
+                            v-if="(quadra.modalidades || []).length > 3"
+                            class="tag-modalidade tag-modalidade-muted"
+                          >
+                            +{{ (quadra.modalidades || []).length - 3 }}
+                          </span>
 
-                    <div class="info">
-                      <h3>{{ quadra.nome }}</h3>
-                      <a class="endereco">{{ quadra.endereco }}</a>
+                          <span v-if="!(quadra.modalidades || []).length" class="tag-modalidade tag-modalidade-muted">
+                            Sem modalidades
+                          </span>
+                        </div>
+                      </div>
 
                       <button class="btn-agendar" :disabled="quadra.interditada"
                         @click="!quadra.interditada && verificarLogin(quadra)">
-                        {{ quadra.interditada ? 'Indisaonvel' : 'Agendar' }}
+                        {{ quadra.interditada ? 'Indisponivel' : 'Agendar agora' }}
                       </button>
                     </div>
                   </div>
@@ -152,7 +167,7 @@
         :fase-nome="nomeFaseSelecionada" :rodada-nome="nomeRodadaSelecionada" :campeonato-nome="nomeCampeonato"
         :loading="isLoadingPartidas" />
       <button v-if="mostrarBotaoTopo" type="button" class="btn-topo" @click="subirPagina">
-        ?
+        &uarr;
       </button>
       <Footer />
     </div>
@@ -558,9 +573,9 @@ export default {
     },
 
     verificarLogin(quadra) {
-      const usuario = JSON.parse(localStorage.getItem('usuario'))
+      const token = localStorage.getItem('token')
 
-      if (usuario?.token) {
+      if (token && token !== 'undefined' && token !== 'null') {
         router.push({ name: 'agendar_quadra', query: { quadraId: quadra.id } })
       } else {
         localStorage.setItem('quadraSelecionada', JSON.stringify(quadra))
@@ -635,6 +650,10 @@ export default {
       }
 
       window.addEventListener('message', listener, false)
+    },
+
+    formatarNomeModalidade(nome) {
+      return nome.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (letra) => letra.toUpperCase())
     }
   }
 }
@@ -977,130 +996,128 @@ a {
 .card {
   position: relative;
   overflow: hidden;
-  height: 360px;
-  background-color: #ffffff;
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  border-radius: 24px;
-  box-shadow: 0 16px 24px -20px rgba(15, 23, 42, 0.5);
-  transition: 0.18s ease;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 18px 28px -20px rgba(15, 23, 42, 0.58);
-  border-color: rgba(59, 130, 246, 0.55);
-}
-
-.card.is-interditada .imagem {
-  filter: grayscale(100%) brightness(1.1) opacity(0.6);
-  transition: filter 0.3s ease;
-}
-
-.sombra-inferior {
-  position: absolute;
-  bottom: 0;
-  left: 0;
   width: 100%;
-  height: 72%;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.9) 0%,
-    rgba(0, 0, 0, 0.48) 52%,
-    transparent 100%
-  );
+  height: 360px;
+  background: #08153d;
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  border-radius: 24px;
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.14);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.card:hover:not(.is-interditada) {
+  transform: translateY(-4px);
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: 0 20px 36px rgba(37, 99, 235, 0.22);
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+    rgba(8, 21, 61, 0.05) 0%,
+    rgba(8, 21, 61, 0.14) 26%,
+    rgba(8, 21, 61, 0.34) 54%,
+    rgba(5, 11, 44, 0.86) 100%);
   z-index: 1;
   pointer-events: none;
 }
 
-.badge-interditada-overlay {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background-color: #dc2626;
-  color: white;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 6px 10px;
-  border-radius: 8px;
-  z-index: 3;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
-  letter-spacing: 0.6px;
-}
-
-.imagem {
+.imagem-quadra {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.45s ease;
+  filter: brightness(0.92) contrast(1.04) saturate(0.82);
+  transition: transform 0.35s ease, filter 0.3s ease;
 }
 
-.card:hover .imagem {
-  transform: scale(1.04);
+.card.is-interditada .imagem-quadra {
+  filter: grayscale(100%) brightness(0.85) contrast(1.02) opacity(0.78);
 }
 
-.info {
+.card:hover:not(.is-interditada) .imagem-quadra {
+  transform: scale(1.03);
+}
+
+.overlay {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  padding: 22px;
+  inset: auto 0 0 0;
   z-index: 2;
-  text-align: left;
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-.info h3 {
+  padding: 18px 18px 18px;
   color: #ffffff;
-  font-weight: 900;
-  font-size: 24px;
-  margin: 0;
-  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
-  text-transform: none;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
 }
 
-.info .endereco {
-  color: #d1d5db;
-  font-size: 15px;
+.card-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 78%;
+}
+
+.nome-quadra {
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 900;
   margin: 0;
-  font-weight: 500;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  text-shadow: 0 10px 22px rgba(0, 0, 0, 0.5);
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.tag-modalidade {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.12);
+  border: 1px solid rgba(226, 232, 240, 0.18);
+  color: rgba(255, 255, 255, 0.96);
+  font-size: 11px;
+  font-weight: 700;
+  backdrop-filter: blur(10px);
+}
+
+.tag-modalidade-muted {
+  background: rgba(5, 11, 44, 0.44);
 }
 
 .btn-agendar {
-  width: fit-content;
-  align-self: flex-start;
-  padding: 10px 16px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  font-weight: 800;
-  font-size: 14px;
+  background-color: #3b82f6;
+  color: #ffffff;
+  border: none;
+  padding: 0 16px;
   cursor: pointer;
-  background: #3B82F6;
-  color: white;
-  transition: 0.15s ease;
-  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.25);
+  min-width: 118px;
+  height: 42px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  align-self: flex-start;
 }
 
 .btn-agendar:hover:not(:disabled) {
-  background: #2563eb;
+  background-color: #2563eb;
   transform: translateY(-1px);
 }
 
-.btn-agendar:active:not(:disabled) {
-  transform: translateY(0px) scale(0.99);
-}
-
 .btn-agendar:disabled {
-  background-color: #4b5563;
-  color: #d1d5db;
+  background-color: rgba(148, 163, 184, 0.92);
+  color: rgba(255, 255, 255, 0.72);
   cursor: not-allowed;
-  box-shadow: none;
-  border-color: transparent;
 }
 
 .painel-home {
@@ -1424,17 +1441,25 @@ a {
     border-radius: 20px;
   }
 
-  .info {
-    padding: 18px 16px;
+  .overlay {
     gap: 10px;
+    padding: 16px 14px 14px;
   }
 
-  .info h3 {
+  .nome-quadra {
     font-size: 20px;
   }
 
-  .info .endereco {
-    font-size: 14px;
+  .card-copy {
+    max-width: 100%;
+  }
+
+  .card-tags {
+    gap: 6px;
+  }
+
+  .btn-agendar {
+    width: 100%;
   }
 
   .painel-home {

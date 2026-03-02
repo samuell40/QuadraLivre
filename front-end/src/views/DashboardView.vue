@@ -211,7 +211,7 @@
         <div v-if="exibirModalAviso" class="modal-overlay" @click.self="exibirModalAviso = false">
           <div class="modal-content modal-form">
             <div class="modal-header">
-              <div>
+              <div class="modal-header-copy">
                 <h3 class="modal-title">Cadastrar novo aviso</h3>
                 <p class="modal-subtitle">Preencha os dados e publique o recado no mural principal.</p>
               </div>
@@ -259,7 +259,7 @@
         <div v-if="exibirModalHistorico" class="modal-overlay" @click.self="exibirModalHistorico = false">
           <div class="modal-content modal-historico">
             <div class="modal-header">
-              <div>
+              <div class="modal-header-copy">
                 <h3 class="modal-title">Avisos lidos</h3>
                 <p class="modal-subtitle">Filtre por ano e origem para revisar comunicados antigos.</p>
               </div>
@@ -1563,6 +1563,11 @@ export default {
   padding-right: 4px;
 }
 
+.modal-header-copy {
+  flex: 1;
+  min-width: 0;
+}
+
 .btn-close-x-modal {
   width: 38px;
   height: 38px;
@@ -1573,6 +1578,11 @@ export default {
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 38px;
+  padding: 0;
 }
 
 .btn-close-x-modal:hover {
@@ -1740,6 +1750,14 @@ export default {
   .modal-content {
     padding: 18px;
     border-radius: 22px;
+  }
+
+  .modal-content .modal-header {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: nowrap;
   }
 
   .card_contagem {

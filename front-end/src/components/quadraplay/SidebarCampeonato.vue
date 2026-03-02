@@ -1,421 +1,696 @@
 <template>
-    <div>
-        <button class="button-sidebar d-block d-md-none" :class="statusThemeClass" @click="toggleSidebar">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-list"
-                viewBox="0 0 16 16">
-                <path fill-rule="evenodd"
-                    d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5" />
-            </svg>
+  <div class="quadraplay-sidebar-shell">
+    <transition name="sidebar-fade">
+      <div
+        v-if="isMobile && sidebarVisible"
+        class="sidebar-overlay"
+        @click="closeSidebar"
+      ></div>
+    </transition>
+
+    <aside
+      class="sidebar_quadra"
+      :class="[statusThemeClass, { collapsed: isDesktopCollapsed, open: sidebarVisible || !isMobile }]"
+    >
+      <div class="sidebar-top">
+        <div class="sidebar-brand" :class="{ compact: isDesktopCollapsed }">
+          <template v-if="!isDesktopCollapsed">
+            <h2 class="brand-title">Painel do campeonato</h2>
+          </template>
+        </div>
+
+        <button
+          v-if="isMobile"
+          type="button"
+          class="icon-button close-btn"
+          aria-label="Fechar menu lateral"
+          @click="closeSidebar"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
         </button>
 
-        <div v-if="sidebarVisible" class="sidebar_quadra" :class="[statusThemeClass, { collapsed: !isMobile && collapsed }]">
-            <button v-if="!isMobile" class="collapse-btn" @click="toggleCollapse">
-                <svg v-if="!collapsed" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                    class="bi bi-caret-left" viewBox="0 0 16 16">
-                    <path
-                        d="M10 12.796V3.204L4.519 8zm-.659.753-5.48-4.796a1 1 0 0 1 0-1.506l5.48-4.796A1 1 0 0 1 11 3.204v9.592a1 1 0 0 1-1.659.753" />
-                </svg>
+        <button
+          v-else
+          type="button"
+          class="icon-button collapse-btn"
+          :aria-label="collapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'"
+          @click="toggleCollapse"
+        >
+          <svg v-if="collapsed" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+          <svg v-else viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M15 6l-6 6 6 6" />
+          </svg>
+        </button>
+      </div>
 
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                    class="bi bi-caret-right" viewBox="0 0 16 16">
-                    <path
-                        d="M6 12.796V3.204L11.481 8zm.659.753 5.48-4.796a1 1 0 0 0 0-1.506L6.66 2.451C6.011 1.885 5 2.345 5 3.204v9.592a1 1 0 0 0 1.659.753" />
-                </svg>
-            </button>
-            <div class="menu-itens">
-                <a v-if="!isPermissao4" href="/telainicial" :class="{ active: isActive('/telainicial') }">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                        class="bi bi-trophy-fill" viewBox="0 0 16 16">
-                        <path
-                            d="M2.5.5A.5.5 0 0 1 3 0h10a.5.5 0 0 1 .5.5q0 .807-.034 1.536a3 3 0 1 1-1.133 5.89c-.79 1.865-1.878 2.777-2.833 3.011v2.173l1.425.356c.194.048.377.135.537.255L13.3 15.1a.5.5 0 0 1-.3.9H3a.5.5 0 0 1-.3-.9l1.838-1.379c.16-.12.343-.207.537-.255L6.5 13.11v-2.173c-.955-.234-2.043-1.146-2.833-3.012a3 3 0 1 1-1.132-5.89A33 33 0 0 1 2.5.5m.099 2.54a2 2 0 0 0 .72 3.935c-.333-1.05-.588-2.346-.72-3.935m10.083 3.935a2 2 0 0 0 .72-3.935c-.133 1.59-.388 2.885-.72 3.935" />
-                    </svg>
-                    <span>Todos Campeonatos</span>
-                </a>
-                <router-link v-if="!isPermissao4" :to="{ name: 'Detalhar_Campeonatos', query: { id: campeonatoId } }" class="menu-link "
-                    :class="{ active: isActive('/detalharcampeonatos') }">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                        class="bi bi-grid-1x2-fill" viewBox="0 0 16 16">
-                        <path
-                            d="M0 1a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1zm9 0a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1zm0 9a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1z" />
-                    </svg>
-                    <span>Visão Geral</span>
-                </router-link>
-                <div class="menu-group">
-                    <router-link :to="{ name: 'gerenciar_partida', query: { id: campeonatoId } }" class="menu-link"
-                        :class="{ active: isPartidasAtivo }">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                            <path fill="currentColor"
-                                d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h3V2h2v2h6V2h2v2h3q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm7.25-2h1.5v-1.5h-1.5zm4.25-3H18q.425 0 .713-.288T19 14v-4q0-.425-.288-.712T18 9h-2.5q-.425 0-.712.288T14.5 10v4q0 .425.288.713T15.5 15M5 15h4.5v-1.5h-3v-1h2q.425 0 .713-.288T9.5 11.5V10q0-.425-.288-.712T8.5 9H5v1.5h3v1H6q-.425 0-.712.288T5 12.5zm6.25-.5h1.5V13h-1.5zm4.75-1v-3h1.5v3zM11.25 11h1.5V9.5h-1.5zm0-3.5h1.5V6h-1.5z" />
-                        </svg>
-                        <span>Partidas</span>
-                    </router-link>
-                    <router-link v-if="estaNaPartida" :to="{ name: 'Partida', query: { id: campeonatoId } }"
-                        class="menu-link submenu" :class="{ active: isActiveRoute('Partida') }">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                            class="bi bi-controller" viewBox="0 0 16 16">
-                            <path
-                                d="M11.5 6.027a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0m-1.5 1.5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1m2.5-.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0m-1.5 1.5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1m-6.5-3h1v1h1v1h-1v1h-1v-1h-1v-1h1z" />
-                            <path
-                                d="M3.051 3.26a.5.5 0 0 1 .354-.613l1.932-.518a.5.5 0 0 1 .62.39c.655-.079 1.35-.117 2.043-.117.72 0 1.443.041 2.12.126a.5.5 0 0 1 .622-.399l1.932.518a.5.5 0 0 1 .306.729q.211.136.373.297c.408.408.78 1.05 1.095 1.772.32.733.599 1.591.805 2.466s.34 1.78.364 2.606c.024.816-.059 1.602-.328 2.21a1.42 1.42 0 0 1-1.445.83c-.636-.067-1.115-.394-1.513-.773-.245-.232-.496-.526-.739-.808-.126-.148-.25-.292-.368-.423-.728-.804-1.597-1.527-3.224-1.527s-2.496.723-3.224 1.527c-.119.131-.242.275-.368.423-.243.282-.494.575-.739.808-.398.38-.877.706-1.513.773a1.42 1.42 0 0 1-1.445-.83c-.27-.608-.352-1.395-.329-2.21.024-.826.16-1.73.365-2.606.206-.875.486-1.733.805-2.466.315-.722.687-1.364 1.094-1.772a2.3 2.3 0 0 1 .433-.335l-.028-.079zm2.036.412c-.877.185-1.469.443-1.733.708-.276.276-.587.783-.885 1.465a14 14 0 0 0-.748 2.295 12.4 12.4 0 0 0-.339 2.406c-.022.755.062 1.368.243 1.776a.42.42 0 0 0 .426.24c.327-.034.61-.199.929-.502.212-.202.4-.423.615-.674.133-.156.276-.323.44-.504C4.861 9.969 5.978 9.027 8 9.027s3.139.942 3.965 1.855c.164.181.307.348.44.504.214.251.403.472.615.674.318.303.601.468.929.503a.42.42 0 0 0 .426-.241c.18-.408.265-1.02.243-1.776a12.4 12.4 0 0 0-.339-2.406 14 14 0 0 0-.748-2.295c-.298-.682-.61-1.19-.885-1.465-.264-.265-.856-.523-1.733-.708-.85-.179-1.877-.27-2.913-.27s-2.063.091-2.913.27" />
-                        </svg>
-                        <span>Controle Partida</span>
-                    </router-link>
-                </div>
-                <router-link v-if="!isPermissao4" :to="{ name: 'Classificacao', query: { id: campeonatoId } }" class="menu-link"
-                    :class="{ active: isActive('/classificacao') }">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                        class="bi bi-bar-chart-fill" viewBox="0 0 16 16">
-                        <path
-                            d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1z" />
-                    </svg>
-                    <span>Classificação</span>
-                </router-link>
-                <router-link v-if="!isPermissao4" :to="{ name: 'Classificacao', query: { id: campeonatoId } }" class="menu-link"
-                    :class="{ active: isActive('/classificacao') }">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                        class="bi bi-people-fill" viewBox="0 0 16 16">
-                        <path
-                            d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" />
-                    </svg>
-                    <span>Gerenciar Equipes</span>
-                </router-link>
+      <nav class="menu-itens" aria-label="Navegacao do campeonato">
+        <router-link
+          v-if="!isPermissao4"
+          :to="{ name: 'TelaInicial' }"
+          class="menu-link"
+          :class="{ active: isRouteName('TelaInicial') }"
+          @click="handleNavClick"
+        >
+          <span class="nav-icon" aria-hidden="true">
+            <svg class="filled-icon" viewBox="0 0 16 16">
+              <path
+                d="M2.5.5A.5.5 0 0 1 3 0h10a.5.5 0 0 1 .5.5q0 .807-.034 1.536a3 3 0 1 1-1.133 5.89c-.79 1.865-1.878 2.777-2.833 3.011v2.173l1.425.356c.194.048.377.135.537.255L13.3 15.1a.5.5 0 0 1-.3.9H3a.5.5 0 0 1-.3-.9l1.838-1.379c.16-.12.343-.207.537-.255L6.5 13.11v-2.173c-.955-.234-2.043-1.146-2.833-3.012a3 3 0 1 1-1.132-5.89A33 33 0 0 1 2.5.5m.099 2.54a2 2 0 0 0 .72 3.935c-.333-1.05-.588-2.346-.72-3.935m10.083 3.935a2 2 0 0 0 .72-3.935c-.133 1.59-.388 2.885-.72 3.935"
+              />
+            </svg>
+          </span>
+          <span v-if="!isDesktopCollapsed" class="nav-text">Todos campeonatos</span>
+        </router-link>
 
-            </div>
-            <div class="sidebar-user user-info">
+        <router-link
+          :to="campeonatoRoute('Detalhar_Campeonatos')"
+          class="menu-link"
+          :class="{ active: isRouteName('Detalhar_Campeonatos') }"
+          @click="handleNavClick"
+        >
+          <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M5 5h6v6H5zM13 5h6v4h-6zM13 11h6v8h-6zM5 13h6v6H5z" />
+            </svg>
+          </span>
+          <span v-if="!isDesktopCollapsed" class="nav-text">Visao geral</span>
+        </router-link>
 
-                <img class="user-photo" :src="usuario?.foto" alt="Foto do usuário" />
+        <div class="menu-group" :class="{ active: isPartidasGroupActive, compact: isDesktopCollapsed }">
+          <router-link
+            :to="campeonatoRoute('gerenciar_partida')"
+            class="menu-link"
+            :class="{ active: isPartidasGroupActive }"
+            @click="handleNavClick"
+          >
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M8 3v3M16 3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />
+                <path d="M9 13h6M9 17h4" />
+              </svg>
+            </span>
+            <span v-if="!isDesktopCollapsed" class="nav-text">Partidas</span>
+          </router-link>
 
-                <div class="user-text">
-                    <div class="user-name fw-bold">
-                        {{ usuario?.nome }}
-                    </div>
-                    <div class="user-role">
-                        {{ usuario?.permissao?.descricao }}
-                    </div>
-                </div>
-            </div>
+          <router-link
+            v-if="showPartidaSubmenu"
+            :to="campeonatoRoute('Partida')"
+            class="submenu-link"
+            :class="{ active: isRouteName('Partida') }"
+            @click="handleNavClick"
+          >
+            <span class="submenu-dot" aria-hidden="true"></span>
+            <span class="submenu-text">Controle da partida</span>
+          </router-link>
         </div>
-    </div>
+
+        <router-link
+          v-if="!isPermissao4"
+          :to="campeonatoRoute('Classificacao')"
+          class="menu-link"
+          :class="{ active: isRouteName('Classificacao') }"
+          @click="handleNavClick"
+        >
+          <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M6 20V10M12 20V4M18 20v-7" />
+            </svg>
+          </span>
+          <span v-if="!isDesktopCollapsed" class="nav-text">Classificacao</span>
+        </router-link>
+
+        <router-link
+          v-if="!isPermissao4"
+          :to="{ name: 'gerenciar_times' }"
+          class="menu-link"
+          :class="{ active: isRouteName('gerenciar_times') }"
+          @click="handleNavClick"
+        >
+          <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M16 18a4 4 0 0 1 4 4M16 14a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM8 16a4 4 0 0 0-4 4M8 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm0 3h8" />
+            </svg>
+          </span>
+          <span v-if="!isDesktopCollapsed" class="nav-text">Gerenciar equipes</span>
+        </router-link>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-user" :class="{ compact: isDesktopCollapsed }">
+          <div class="user-avatar">
+            <img v-if="usuario?.foto" :src="usuario.foto" :alt="`Foto de ${usuario?.nome || 'usuario'}`" />
+            <span v-else>{{ userInitial }}</span>
+          </div>
+
+          <div v-if="!isDesktopCollapsed" class="user-text">
+            <div class="user-name">{{ usuario?.nome || 'Usuario QuadraPlay' }}</div>
+            <div class="user-role">{{ usuario?.permissao?.descricao || 'Equipe do campeonato' }}</div>
+          </div>
+        </div>
+
+        <button type="button" class="logout-button" @click="logout">
+          <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M14 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2" />
+              <path d="M10 12h10" />
+              <path d="m17 8 4 4-4 4" />
+            </svg>
+          </span>
+          <span v-if="!isDesktopCollapsed" class="nav-text">Sair</span>
+        </button>
+      </div>
+    </aside>
+  </div>
 </template>
 
 <script>
 import router from "@/router";
-import { useCampeonatoStore } from '@/storecampeonato'
+import { useCampeonatoStore } from "@/storecampeonato";
 
 const SIDEBAR_COLLAPSED_KEY = "sidebar_collapsed";
+const SIDEBAR_TOGGLE_EVENT = "quadraplay:toggle-sidebar";
+const SIDEBAR_STATE_EVENT = "quadraplay:sidebar-state";
 
 export default {
-    name: "SideBar",
-    props: {
-        partidaStatus: { type: String, default: '' }
+  name: "SidebarCampeonato",
+  emits: ["sidebar-toggle"],
+  props: {
+    partidaStatus: {
+      type: String,
+      default: "",
     },
-    data() {
-        return {
-            usuario: null,
-            isMobile: false,
-            collapsed: false,
-            sidebarVisible: true
-        };
+  },
+  data() {
+    const isMobile = typeof window !== "undefined" ? window.innerWidth <= 768 : false;
+
+    return {
+      usuario: null,
+      isMobile,
+      collapsed: false,
+      sidebarVisible: !isMobile,
+    };
+  },
+  computed: {
+    statusThemeClass() {
+      if (this.partidaStatus === "EM_ANDAMENTO") return "status-andamento";
+      if (this.partidaStatus === "FINALIZADA") return "status-finalizada";
+      return "";
     },
-
-    mounted() {
-        window.addEventListener("resize", this.handleResize);
-        const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
-        this.collapsed = saved === "1";
-
-        this.handleResize();
-        this.usuario = JSON.parse(localStorage.getItem("usuario"));
+    isPermissao4() {
+      return this.usuario?.permissaoId === 4;
     },
-
-    beforeUnmount() {
-        window.removeEventListener("resize", this.handleResize);
+    campeonatoId() {
+      const store = useCampeonatoStore();
+      return store.campeonatoAtivo?.id || this.$route.query.id || null;
     },
-
-    computed: {
-        statusThemeClass() {
-            if (this.partidaStatus === 'EM_ANDAMENTO') return 'status-andamento'
-            if (this.partidaStatus === 'FINALIZADA') return 'status-finalizada'
-            return ''
-        },
-
-        isPermissao4() {
-            return this.usuario?.permissaoId === 4
-        },
-
-        campeonatoId() {
-            const store = useCampeonatoStore()
-            return store.campeonatoAtivo?.id
-        },
-
-        estaNaPartida() {
-            return this.$route.name === 'Partida'
-        },
-
-        isPartidasAtivo() {
-            return ['gerenciar_partida', 'Partida'].includes(this.$route.name)
-        }
+    isDesktopCollapsed() {
+      return !this.isMobile && this.collapsed;
     },
-
-    methods: {
-        isActive(path) {
-            return this.$route.path === path
-        },
-
-        isActiveRoute(name) {
-            return this.$route.name === name
-        },
-
-        logout() {
-            localStorage.removeItem("token");
-            localStorage.removeItem("usuario");
-            localStorage.removeItem("quadraPlayLoginAtivo");
-            router.push("/");
-        },
-
-        handleResize() {
-            this.isMobile = window.innerWidth <= 768
-
-            if (this.isMobile) {
-                this.sidebarVisible = false
-                this.$emit('sidebar-toggle', false)
-            } else {
-                this.sidebarVisible = true
-                const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY)
-                this.collapsed = saved === "1"
-                this.$emit('sidebar-toggle', this.collapsed)
-            }
-        },
-
-        toggleCollapse() {
-            if (this.isMobile) return
-            this.collapsed = !this.collapsed
-            localStorage.setItem(SIDEBAR_COLLAPSED_KEY, this.collapsed ? "1" : "0")
-
-            this.$emit('sidebar-toggle', this.collapsed)
-        },
-
-        toggleSidebar() {
-            if (!this.isMobile) return
-
-            this.sidebarVisible = !this.sidebarVisible
-        }
+    isPartidasGroupActive() {
+      return ["gerenciar_partida", "Partida"].includes(this.$route.name);
     },
+    showPartidaSubmenu() {
+      return !this.isDesktopCollapsed && this.$route.name === "Partida";
+    },
+    userInitial() {
+      return String(this.usuario?.nome || "Q")
+        .trim()
+        .charAt(0)
+        .toUpperCase();
+    },
+  },
+  mounted() {
+    window.addEventListener("resize", this.handleResize);
+    window.addEventListener(SIDEBAR_TOGGLE_EVENT, this.handleExternalToggle);
+    this.readCollapsedState();
+    this.loadUsuario();
+    this.handleResize();
+  },
+  beforeUnmount() {
+    window.removeEventListener("resize", this.handleResize);
+    window.removeEventListener(SIDEBAR_TOGGLE_EVENT, this.handleExternalToggle);
+  },
+  watch: {
+    "$route.fullPath"() {
+      if (this.isMobile) this.closeSidebar();
+    },
+  },
+  methods: {
+    loadUsuario() {
+      try {
+        this.usuario = JSON.parse(localStorage.getItem("usuario") || "null");
+      } catch (error) {
+        this.usuario = null;
+      }
+    },
+    readCollapsedState() {
+      this.collapsed = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1";
+    },
+    campeonatoRoute(name) {
+      const route = { name };
+      if (this.campeonatoId) {
+        route.query = { id: this.campeonatoId };
+      }
+      return route;
+    },
+    isRouteName(name) {
+      return this.$route.name === name;
+    },
+    syncNavbarTrigger() {
+      window.dispatchEvent(
+        new CustomEvent(SIDEBAR_STATE_EVENT, {
+          detail: { open: this.isMobile ? this.sidebarVisible : false },
+        })
+      );
+    },
+    handleResize() {
+      this.isMobile = window.innerWidth <= 768;
+
+      if (this.isMobile) {
+        this.sidebarVisible = false;
+        this.$emit("sidebar-toggle", false);
+        this.syncNavbarTrigger();
+        return;
+      }
+
+      this.readCollapsedState();
+      this.sidebarVisible = true;
+      this.$emit("sidebar-toggle", this.collapsed);
+      this.syncNavbarTrigger();
+    },
+    toggleCollapse() {
+      if (this.isMobile) return;
+
+      this.collapsed = !this.collapsed;
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, this.collapsed ? "1" : "0");
+      this.$emit("sidebar-toggle", this.collapsed);
+    },
+    handleExternalToggle() {
+      if (!this.isMobile) return;
+      this.toggleSidebar();
+    },
+    toggleSidebar() {
+      if (!this.isMobile) return;
+      this.sidebarVisible = !this.sidebarVisible;
+      this.syncNavbarTrigger();
+    },
+    closeSidebar() {
+      if (!this.isMobile) return;
+      this.sidebarVisible = false;
+      this.syncNavbarTrigger();
+    },
+    handleNavClick() {
+      if (this.isMobile) this.closeSidebar();
+    },
+    logout() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("usuario");
+      localStorage.removeItem("quadraPlayLoginAtivo");
+      router.push("/");
+    },
+  },
 };
 </script>
 
-<style>
-body {
-    margin: 0;
-    font-family: 'Montserrat', sans-serif;
-    background-color: white;
+<style scoped>
+.quadraplay-sidebar-shell {
+  --sidebar-bg: #0f1f4f;
+  --sidebar-bg-strong: #0a173d;
+  --sidebar-surface: rgba(255, 255, 255, 0.08);
+  --sidebar-border: rgba(148, 163, 184, 0.2);
+  --sidebar-text: rgba(226, 232, 240, 0.92);
+  --sidebar-muted: rgba(191, 219, 254, 0.72);
+  --sidebar-accent: #60a5fa;
+  --sidebar-accent-soft: rgba(59, 130, 246, 0.24);
+  --sidebar-shadow: 0 24px 48px rgba(2, 6, 23, 0.32);
 }
 
-.menu-itens {
-    margin-top: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex: 1;
+.quadraplay-sidebar-shell .status-andamento {
+  --sidebar-bg: #0f3b2a;
+  --sidebar-bg-strong: #0b291e;
+  --sidebar-accent: #4ade80;
+  --sidebar-accent-soft: rgba(34, 197, 94, 0.22);
+}
+
+.quadraplay-sidebar-shell .status-finalizada {
+  --sidebar-bg: #4a1221;
+  --sidebar-bg-strong: #2f0a12;
+  --sidebar-accent: #f87171;
+  --sidebar-accent-soft: rgba(248, 113, 113, 0.22);
+}
+
+.icon-button svg,
+.nav-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nav-icon svg.filled-icon {
+  fill: currentColor;
+  stroke: none;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 70px 0 0;
+  z-index: 1040;
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(4px);
 }
 
 .sidebar_quadra {
-    position: fixed;
-    top: 70px;
-    left: 0;
-    width: 250px;
-    height: calc(100% - 70px);
-    background-color: #152147;
-    padding-top: 10px;
-    box-shadow: 0 4px 10px -1px rgba(0, 0, 0, 0.10);
-    z-index: 10;
-    display: flex;
-    flex-direction: column;
-    transition: width 0.3s ease;
-}
-
-.sidebar_quadra.status-andamento {
-    background-color: #14532d;
-}
-
-.sidebar_quadra.status-finalizada {
-    background-color: #7f1d1d;
+  position: fixed;
+  top: 70px;
+  left: 0;
+  z-index: 1050;
+  width: 250px;
+  height: calc(100vh - 70px);
+  padding: 18px 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  color: var(--sidebar-text);
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.14), transparent 36%),
+    linear-gradient(180deg, var(--sidebar-bg) 0%, var(--sidebar-bg-strong) 100%);
+  box-shadow: var(--sidebar-shadow);
+  transition: width 0.24s ease, transform 0.24s ease;
 }
 
 .sidebar_quadra.collapsed {
-    width: 70px;
+  width: 70px;
+  padding-inline: 10px;
 }
 
-.sidebar_quadra.collapsed a span,
-.sidebar_quadra.collapsed .user-text {
-    display: none;
+.sidebar-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.sidebar_quadra a {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 20px;
-    color: white;
-    text-decoration: none;
-    font-size: 15px;
+.sidebar-brand {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
 }
 
-.collapse-btn {
-    position: absolute;
-    top: 50%;
-    right: -30px;
-    transform: translateY(-50%);
-    background-color: #152147;
-    border: none;
-    color: white;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-    transition: background-color 0.2s;
+.sidebar-brand.compact {
+  place-items: center;
+  width: 100%;
 }
 
-.collapse-btn:hover {
-    background-color: #1e3a8a;
+.sidebar-brand.compact .brand-chip {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  font-size: 0;
+  letter-spacing: 0;
 }
 
-.sidebar-user {
-    margin-top: auto;
-    margin-bottom: 20%;
-    padding: 12px 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.15);
+.sidebar-brand.compact .brand-chip::after {
+  content: "QP";
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
 }
 
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.brand-chip {
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--sidebar-accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
-.sidebar_quadra.collapsed .sidebar-user {
-    justify-content: center;
-    padding: 20px 0;
+.brand-title {
+  margin: 0;
+  font-size: 23px;
+  font-weight: 800;
+  line-height: 1.05;
+  color: #f8fafc;
 }
 
-.sidebar_quadra.collapsed .user-photo {
-    display: block;
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    object-fit: cover;
+.brand-subtitle {
+  margin: 0;
+  color: var(--sidebar-muted);
+  font-size: 13px;
+  line-height: 1.55;
 }
 
-.user-photo {
-    display: none;
+.icon-button {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--sidebar-border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #f8fafc;
 }
 
-.user-text {
-    display: flex;
-    flex-direction: column;
+.menu-itens {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
 }
 
-.user-info .user-name {
-    font-size: 15px;
-    color: #3b82f6;
-    font-weight: bold;
+.menu-link,
+.logout-button,
+.submenu-link {
+  width: 100%;
+  color: var(--sidebar-text);
+  text-decoration: none;
 }
 
-.sidebar_quadra.status-andamento .user-info .user-name {
-    color: #22c55e;
+.menu-link,
+.logout-button {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  background: transparent;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    color 0.2s ease;
 }
 
-.sidebar_quadra.status-finalizada .user-info .user-name {
-    color: #f87171;
+.menu-link:hover,
+.logout-button:hover,
+.submenu-link:hover {
+  background: var(--sidebar-surface);
+  border-color: var(--sidebar-border);
+  color: #ffffff;
 }
 
-.user-info .user-role {
-    font-size: 13px;
-    color: #cbd5e1;
+.menu-link.active,
+.submenu-link.active {
+  background: linear-gradient(180deg, var(--sidebar-accent-soft), rgba(15, 23, 42, 0.06));
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 3px 0 0 var(--sidebar-accent);
+  color: #ffffff;
 }
 
-.button-sidebar {
-    position: fixed;
-    top: 5px;
-    left: 5px;
-    z-index: 1000;
-    background: transparent;
-    border: none;
-    color: white;
+.sidebar_quadra.collapsed .menu-link,
+.sidebar_quadra.collapsed .logout-button {
+  justify-content: center;
+  padding-inline: 0;
 }
 
-.button-sidebar.status-andamento {
-    color: #22c55e;
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.button-sidebar.status-finalizada {
-    color: #f87171;
-}
-
-.sidebar_quadra.status-andamento .collapse-btn {
-    background-color: #15803d;
-}
-
-.sidebar_quadra.status-andamento .collapse-btn:hover {
-    background-color: #16a34a;
-}
-
-.sidebar_quadra.status-finalizada .collapse-btn {
-    background-color: #b91c1c;
-}
-
-.sidebar_quadra.status-finalizada .collapse-btn:hover {
-    background-color: #dc2626;
-}
-
-.sidebar_quadra.status-andamento a.active,
-.sidebar_quadra.status-andamento a.active svg {
-    color: #22c55e;
-}
-
-.sidebar_quadra.status-finalizada a.active,
-.sidebar_quadra.status-finalizada a.active svg {
-    color: #f87171;
-}
-
-.sidebar_quadra.status-andamento .menu-link.submenu {
-    background-color: rgba(34, 197, 94, 0.18);
-}
-
-.sidebar_quadra.status-finalizada .menu-link.submenu {
-    background-color: rgba(248, 113, 113, 0.18);
+.nav-text {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
 }
 
 .menu-group {
-    display: flex;
-    flex-direction: column;
+  display: grid;
+  gap: 8px;
 }
 
-.menu-link.submenu {
-    padding-left: 45px;
-    font-size: 14px;
-    background-color: rgba(255, 255, 255, 0.05);
+.menu-group.active:not(.compact) {
+  padding-left: 12px;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.menu-link.submenu svg {
-    opacity: 0.9;
+.submenu-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 10px 12px 10px 14px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.submenu-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--sidebar-accent);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.06);
+}
+
+.submenu-text {
+  line-height: 1.2;
+}
+
+.sidebar-footer {
+  display: grid;
+  gap: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--sidebar-border);
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-user.compact {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.user-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-text {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.user-name {
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.user-role {
+  color: var(--sidebar-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.logout-button {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+}
+
+.logout-button:focus-visible,
+.menu-link:focus-visible,
+.submenu-link:focus-visible,
+.icon-button:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 2px;
+}
+
+.sidebar-fade-enter-active,
+.sidebar-fade-leave-active {
+  transition: opacity 0.24s ease;
+}
+
+.sidebar-fade-enter-from,
+.sidebar-fade-leave-to {
+  opacity: 0;
+}
+
+@media (min-width: 769px) {
+  .close-btn {
+    display: none;
+  }
 }
 
 @media (max-width: 768px) {
-    .user-photo {
-        width: 45px;
-        height: 45px;
-    }
+  .sidebar_quadra {
+    width: min(292px, calc(100vw - 24px));
+    height: calc(100vh - 82px);
+    top: 82px;
+    left: 12px;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transform: translateX(-112%);
+  }
 
-    .user-info .user-name {
-        font-size: 14px;
-    }
+  .sidebar_quadra.open {
+    transform: translateX(0);
+  }
 
-    .user-info .user-role {
-        font-size: 11px;
-    }
+  .sidebar-top {
+    align-items: center;
+  }
+
+  .brand-title {
+    font-size: 21px;
+  }
+
+  .brand-subtitle {
+    font-size: 12px;
+  }
+
+  .menu-group.active:not(.compact) {
+    padding-left: 0;
+    border-left: 0;
+  }
 }
 </style>

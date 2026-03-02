@@ -124,14 +124,24 @@ const listarAgendamentosConfirmadosService = async (
   }));
 };
 
-const listarAgendamentosConfirmadosSemanaService = async (quadraId) => {
+const listarAgendamentosConfirmadosSemanaService = async (
+  quadraId,
+  inicioReferencia,
+) => {
   await recusarAgendamentosVencidos();
 
   if (!quadraId) throw { status: 400, message: "Quadra não informada." };
 
-  const hoje = new Date();
-  const inicioSemana = startOfWeek(hoje, { weekStartsOn: 1 });
-  const fimSemana = endOfWeek(hoje, { weekStartsOn: 1 });
+  const dataBase = inicioReferencia
+    ? new Date(`${inicioReferencia}T00:00:00`)
+    : new Date();
+
+  if (Number.isNaN(dataBase.getTime())) {
+    throw { status: 400, message: "Data inicial invalida." };
+  }
+
+  const inicioSemana = startOfWeek(dataBase, { weekStartsOn: 1 });
+  const fimSemana = endOfWeek(dataBase, { weekStartsOn: 1 });
 
   const agendamentos = await prisma.agendamento.findMany({
     where: {

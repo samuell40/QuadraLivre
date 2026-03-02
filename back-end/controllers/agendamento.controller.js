@@ -170,8 +170,10 @@ const listarAgendamentosConfirmadosController = async (req, res) => {
 const listarAgendamentosConfirmadosSemana = async (req, res) => {
   try {
     const { quadraId } = req.params;
+    const { inicio } = req.query;
     const agendamentos = await listarAgendamentosConfirmadosSemanaService(
       Number(quadraId),
+      inicio,
     );
     res.json(agendamentos);
   } catch (err) {

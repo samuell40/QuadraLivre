@@ -40,7 +40,28 @@
           <div class="panel-copy">
             <p class="section-kicker">SEMANA</p>
             <div class="section-topline">
-              <h2 class="section-title">Agenda de {{ nomeQuadraSelecionada }}</h2>
+              <div class="section-title-block">
+                <h2 class="section-title">Agenda de {{ nomeQuadraSelecionada }}</h2>
+                <p class="week-range">{{ faixaSemana }}</p>
+              </div>
+
+              <div class="section-actions">
+                <div class="week-toolbar">
+                  <button type="button" class="btn-week" @click="irParaSemanaAnterior" :disabled="isLoading || !quadraSelecionada">
+                    Semana anterior
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-week btn-week-current"
+                    @click="irParaSemanaAtual"
+                    :disabled="isLoading || !quadraSelecionada || semanaAtualSelecionada"
+                  >
+                    Semana atual
+                  </button>
+                  <button type="button" class="btn-week" @click="irParaProximaSemana" :disabled="isLoading || !quadraSelecionada">
+                    Proxima semana
+                  </button>
+                </div>
               <button @click="gerarPDF" class="btn-pdf" :disabled="isLoading || !quadraSelecionada" title="Gerar PDF">
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"></path>
@@ -50,6 +71,7 @@
                 <span class="btn-pdf-label btn-pdf-label-desktop">Relátorio PDF</span>
                 <span class="btn-pdf-label btn-pdf-label-mobile">PDF</span>
               </button>
+              </div>
             </div>
             <p class="section-subtitle">
               Horários livres ficam apenas para consulta. Horários reservados podem ser abertos para ver o agendamento.
@@ -124,7 +146,7 @@
 
 <script>
 import { ref, onMounted, computed } from 'vue'
-import { startOfWeek, addDays, format, isSameDay } from 'date-fns'
+import { startOfWeek, addDays, addWeeks, subWeeks, format, isSameDay } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -148,7 +170,8 @@ export default {
     const gradeMontada = ref([])
     const maxSlots = ref(0)
     const hoje = new Date()
-    const inicioSemana = startOfWeek(hoje, { weekStartsOn: 1 })
+    const inicioSemana = ref(startOfWeek(hoje, { weekStartsOn: 1 }))
+    const inicioSemanaAtual = startOfWeek(hoje, { weekStartsOn: 1 })
     const formatarHoraIntParaString = (h) => String(h).padStart(2, '0') + ':00'
 
     const podeTrocarQuadra = computed(() => Number(authStore.usuario?.permissaoId) === 1)
@@ -156,6 +179,12 @@ export default {
     const nomeQuadraSelecionada = computed(() => {
       return quadras.value.find((q) => Number(q.id) === Number(quadraSelecionada.value))?.nome || authStore.usuario?.quadra?.nome || 'Quadra'
     })
+    const faixaSemana = computed(() => {
+      const inicio = inicioSemana.value
+      const fim = addDays(inicio, 6)
+      return `${format(inicio, 'dd/MM/yyyy')} - ${format(fim, 'dd/MM/yyyy')}`
+    })
+    const semanaAtualSelecionada = computed(() => isSameDay(inicioSemana.value, inicioSemanaAtual))
     const kickerControles = computed(() => (podeTrocarQuadra.value ? 'FILTROS' : 'UNIDADE'))
     const tituloControles = computed(() => (podeTrocarQuadra.value ? 'Selecione a Quadra ' : 'Quadra vinculada'))
     const subtituloControles = computed(() => {
@@ -237,11 +266,18 @@ export default {
           diasAtivosIndices = [...diasSet].sort()
         }
 
-        const agendamentosRes = await api.get(`/agendamentos/quadra/${quadraSelecionada.value}/confirmados/semana`)
+        const agendamentosRes = await api.get(
+          `/agendamentos/quadra/${quadraSelecionada.value}/confirmados/semana`,
+          {
+            params: {
+              inicio: format(inicioSemana.value, 'yyyy-MM-dd'),
+            },
+          },
+        )
         const agendamentos = agendamentosRes.data
 
         for (let i = 0; i < 7; i++) {
-          const dataDoDia = addDays(inicioSemana, i)
+          const dataDoDia = addDays(inicioSemana.value, i)
           const diaSemanaBanco = dataDoDia.getDay()
 
           if (!diasAtivosIndices.includes(diaSemanaBanco)) continue
@@ -286,6 +322,21 @@ export default {
       } finally {
         isLoading.value = false
       }
+    }
+
+    const irParaSemanaAnterior = async () => {
+      inicioSemana.value = subWeeks(inicioSemana.value, 1)
+      await carregarTudo()
+    }
+
+    const irParaSemanaAtual = async () => {
+      inicioSemana.value = startOfWeek(new Date(), { weekStartsOn: 1 })
+      await carregarTudo()
+    }
+
+    const irParaProximaSemana = async () => {
+      inicioSemana.value = addWeeks(inicioSemana.value, 1)
+      await carregarTudo()
     }
 
     const abrirDetalhes = (celula) => {
@@ -455,6 +506,8 @@ export default {
       maxSlots,
       podeTrocarQuadra,
       nomeQuadraSelecionada,
+      faixaSemana,
+      semanaAtualSelecionada,
       kickerControles,
       tituloControles,
       subtituloControles,
@@ -463,6 +516,9 @@ export default {
       totalReservasSemana,
       buscarQuadras,
       carregarTudo,
+      irParaSemanaAnterior,
+      irParaSemanaAtual,
+      irParaProximaSemana,
       gerarPDF,
       abrirDetalhes
     }
@@ -605,9 +661,66 @@ export default {
   width: 100%;
 }
 
-.section-topline .section-title {
+.section-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   flex: 1;
   min-width: 0;
+}
+
+.week-range {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.section-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.week-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-week {
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: #ffffff;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+
+.btn-week:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(37, 99, 235, 0.28);
+  color: #2563eb;
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.08);
+}
+
+.btn-week:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-week-current {
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.18);
+  color: #2563eb;
 }
 
 .controls-row {
@@ -870,6 +983,12 @@ export default {
     flex-direction: column;
     align-items: flex-start;
   }
+
+  .section-topline,
+  .section-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 @media (max-width: 768px) {
@@ -944,7 +1063,38 @@ export default {
   }
 
   .section-topline {
-    gap: 10px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    column-gap: 10px;
+    row-gap: 12px;
+  }
+
+  .section-actions {
+    display: contents;
+  }
+
+  .section-title-block {
+    min-width: 0;
+  }
+
+  .week-toolbar {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .btn-week {
+    width: 100%;
+  }
+
+  .btn-pdf {
+    grid-column: 2;
+    grid-row: 1;
+    width: auto;
+    justify-self: end;
+    align-self: center;
   }
 
   .tabela-container,

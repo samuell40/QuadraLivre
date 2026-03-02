@@ -4,6 +4,32 @@
 
     <main class="conteudo-meus-agendamentos">
       <div class="page-shell">
+        <div v-if="avisoDestaque" class="aviso-banner">
+          <div class="aviso-body">
+            <div class="aviso-icon-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon-atencao" viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  fill-rule="evenodd"
+                  d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </div>
+
+            <div class="aviso-content-col">
+              <p class="aviso-quadra-tag">
+                {{ avisoDestaque.quadra?.nome || "Equipe Quadra Livre" }}
+              </p>
+              <h4 class="aviso-titulo">{{ avisoDestaque.titulo }}</h4>
+              <p class="aviso-descricao">{{ avisoDestaque.descricao }}</p>
+            </div>
+
+            <button class="btn-ler" type="button" @click="marcarLido">
+              Confirmar leitura
+            </button>
+          </div>
+        </div>
+
         <section class="page-header">
           <div class="header-copy">
             <div class="header-topline">
@@ -99,7 +125,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import NavBar from "@/components/Usuario/NavBar.vue";
 import MeusAgendamentoCard from "@/components/cards/MeusAgendamentosCard.vue";
@@ -107,13 +133,18 @@ import api from "@/axios";
 import Swal from "sweetalert2";
 import { jsPDF } from "jspdf";
 import logoImg from "@/assets/Cópia de xxxxx (2).png";
+import { useAuthStore } from "@/store";
 
 const router = useRouter();
+const authStore = useAuthStore();
 const isLoading = ref(true);
 const allAgendamentos = ref([]);
 const abaAtiva = ref("confirmados");
+const avisoDestaque = ref(null);
+const abaInicialDefinida = ref(false);
 
 const ITENS_POR_PAGINA = 10;
+const ORDEM_ABAS_PRIORIDADE = ["pendentes", "confirmados", "recusados"];
 
 const paginasAtuais = ref({
   confirmados: 1,
@@ -166,12 +197,32 @@ const getItensPagina = (tipo) => {
 
 const getTotalPaginas = (tipo) => Math.ceil(getTodosPorTipo(tipo).length / ITENS_POR_PAGINA) || 1;
 
+const sincronizarAbaAtiva = () => {
+  const primeiraAbaComItens = ORDEM_ABAS_PRIORIDADE.find((tipo) => getTodosPorTipo(tipo).length > 0) || "confirmados";
+
+  if (!abaInicialDefinida.value || getTodosPorTipo(abaAtiva.value).length === 0) {
+    abaAtiva.value = primeiraAbaComItens;
+    abaInicialDefinida.value = true;
+  }
+};
+
 const mudarPagina = (tipo, delta) => {
   const novaPagina = paginasAtuais.value[tipo] + delta;
   const max = getTotalPaginas(tipo);
 
   if (novaPagina >= 1 && novaPagina <= max) {
     paginasAtuais.value[tipo] = novaPagina;
+  }
+};
+
+const getUsuarioId = () => {
+  if (authStore.usuario?.id) return authStore.usuario.id;
+
+  try {
+    const usuarioLocal = JSON.parse(localStorage.getItem("usuario") || "{}");
+    return usuarioLocal.id || null;
+  } catch {
+    return null;
   }
 };
 
@@ -204,6 +255,8 @@ const carregarAgendamentos = async () => {
         if (a.status !== "pendente" && b.status === "pendente") return 1;
         return b.dataObj - a.dataObj;
       });
+
+    sincronizarAbaAtiva();
   } catch (err) {
     console.error("Erro ao carregar agendamentos:", err);
     Swal.fire({
@@ -214,6 +267,86 @@ const carregarAgendamentos = async () => {
     });
   } finally {
     isLoading.value = false;
+  }
+};
+
+const carregarAvisoDestaque = async () => {
+  try {
+    const usuarioId = getUsuarioId();
+    let todosAvisos = [];
+    const reqGerais = api.get("/quadras/geral/avisos").catch(() => ({ data: [] }));
+    const { data: quadras } = await api.get("/quadra");
+
+    const promessasQuadras = Array.isArray(quadras) && quadras.length > 0
+      ? quadras.map((quadra) => api.get(`/quadras/${quadra.id}/avisos`))
+      : [];
+
+    const [resGerais, ...respostasQuadras] = await Promise.all([reqGerais, ...promessasQuadras]);
+
+    if (Array.isArray(resGerais.data)) {
+      const geraisNaoLidos = resGerais.data.filter((aviso) => {
+        if (!aviso.leituras) return true;
+        return !aviso.leituras.some((leitura) => String(leitura.usuarioId) === String(usuarioId));
+      });
+      const geraisFormatados = geraisNaoLidos.map((aviso) => ({ ...aviso, quadra: null }));
+      todosAvisos.push(...geraisFormatados);
+    }
+
+    respostasQuadras.forEach((resposta, index) => {
+      if (!Array.isArray(resposta.data) || !resposta.data.length) return;
+
+      const naoLidos = resposta.data.filter((aviso) => {
+        if (!aviso.leituras) return true;
+        return !aviso.leituras.some((leitura) => String(leitura.usuarioId) === String(usuarioId));
+      });
+
+      const avisosComQuadra = naoLidos.map((aviso) => ({
+        ...aviso,
+        quadra: quadras[index],
+      }));
+
+      todosAvisos.push(...avisosComQuadra);
+    });
+
+    if (todosAvisos.length === 0) {
+      avisoDestaque.value = null;
+      return;
+    }
+
+    todosAvisos.sort((a, b) => {
+      if (a.fixado === b.fixado) return new Date(b.data) - new Date(a.data);
+      return a.fixado ? -1 : 1;
+    });
+
+    avisoDestaque.value = todosAvisos[0];
+  } catch (error) {
+    console.error("Erro ao carregar aviso destaque:", error);
+  }
+};
+
+const marcarLido = async () => {
+  const usuarioId = getUsuarioId();
+
+  if (!avisoDestaque.value || !usuarioId) return;
+
+  try {
+    await api.post(`/avisos/${avisoDestaque.value.id}/ler`, {
+      usuarioId,
+    });
+
+    avisoDestaque.value = null;
+    window.dispatchEvent(new Event("avisos-atualizados"));
+
+    Swal.fire({
+      toast: true,
+      position: "top-end",
+      icon: "success",
+      title: "Lido",
+      showConfirmButton: false,
+      timer: 2000,
+    });
+  } catch (error) {
+    console.warn("Nao foi possivel marcar o aviso como lido", error);
   }
 };
 
@@ -351,6 +484,12 @@ const irParaAgendarQuadra = (quadraId) => {
 onMounted(() => {
   window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   carregarAgendamentos();
+  carregarAvisoDestaque();
+  window.addEventListener("avisos-atualizados", carregarAvisoDestaque);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("avisos-atualizados", carregarAvisoDestaque);
 });
 </script>
 
@@ -381,6 +520,100 @@ onMounted(() => {
 
 .page-header {
   margin-bottom: 18px;
+}
+
+.aviso-banner {
+  background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+  border: 1px solid #dbe7ff;
+  border-radius: 24px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.07);
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.aviso-body {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.aviso-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  background: #dbeafe;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.icon-atencao {
+  width: 20px;
+  height: 20px;
+  color: #1d4ed8;
+}
+
+.aviso-content-col {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.aviso-quadra-tag {
+  margin: 0 0 6px 0;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #2563eb;
+  letter-spacing: 0.14em;
+}
+
+.aviso-titulo {
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0 0 4px 0;
+}
+
+.aviso-descricao {
+  color: #64748b;
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.btn-ler {
+  flex-shrink: 0;
+  border: none;
+  background: #3b82f6;
+  color: #ffffff;
+  padding: 0 16px;
+  min-width: 150px;
+  height: 40px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.btn-ler:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
 }
 
 .section-kicker {
@@ -677,6 +910,21 @@ onMounted(() => {
   .section-agendamento,
   .loader-card {
     border-radius: 24px;
+  }
+
+  .aviso-banner {
+    border-radius: 24px;
+    padding: 16px;
+  }
+
+  .aviso-body {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .btn-ler {
+    width: 100%;
+    min-width: 0;
   }
 
   .agendamentos-grid {

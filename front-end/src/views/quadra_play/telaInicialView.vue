@@ -329,7 +329,7 @@ a {
 }
 
 .conteudo.collapsed .quadras-grid {
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .painel-topo {
@@ -435,7 +435,7 @@ a {
 
 .quadras-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
 }
 
@@ -490,6 +490,10 @@ a {
   margin: 0;
   letter-spacing: -0.03em;
   line-height: 1.12;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .modalidade {
@@ -795,6 +799,21 @@ a {
   .btn-acessar {
     min-height: 42px;
     border-radius: 14px;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+  }
+
+  .status-badge {
+    top: 16px;
+    right: 16px;
+    padding: 7px 11px;
+    font-size: 10px;
+  }
+
+  .modalidade {
+    margin: 0 0 8px;
+    font-size: 11px;
+    letter-spacing: 0.16em;
   }
 
   .feedback-card {
@@ -802,6 +821,7 @@ a {
     border-radius: 20px;
   }
 }
+
 </style>
 
 

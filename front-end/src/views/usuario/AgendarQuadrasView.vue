@@ -17,7 +17,7 @@
 
           <div class="aviso-content-col">
             <p class="aviso-quadra-tag">
-              {{ avisoDestaque.quadra?.nome }}
+              {{ avisoDestaque.quadra?.nome || "Equipe Quadra Livre" }}
             </p>
             <h4 class="aviso-titulo">{{ avisoDestaque.titulo }}</h4>
             <p class="aviso-descricao">{{ avisoDestaque.descricao }}</p>
@@ -76,19 +76,40 @@
               />
 
               <div class="overlay">
-                <div class="card-copy">
-                  <p class="card-kicker">QUADRA</p>
-                  <h3 class="nome-quadra">{{ quadra.nome }}</h3>
-                  <p class="endereco">{{ quadra.endereco }}</p>
-                </div>
+                <div class="card-surface">
+                  <div class="card-copy">
+                    <h3 class="nome-quadra">{{ quadra.nome }}</h3>
 
-                <button
-                  class="btn-agendar"
-                  :disabled="quadra.interditada"
-                  @click="!quadra.interditada && abrirAgendamentoDireto(quadra)"
-                >
-                  {{ quadra.interditada ? "Indisponivel" : "Agendar agora" }}
-                </button>
+                    <div class="card-tags">
+                      <span
+                        v-for="mod in (quadra.modalidades || []).slice(0, 3)"
+                        :key="mod.id"
+                        class="tag-modalidade"
+                      >
+                        {{ formatarNomeModalidade(mod.nome) }}
+                      </span>
+
+                      <span
+                        v-if="(quadra.modalidades || []).length > 3"
+                        class="tag-modalidade tag-modalidade-muted"
+                      >
+                        +{{ (quadra.modalidades || []).length - 3 }}
+                      </span>
+
+                      <span v-if="!(quadra.modalidades || []).length" class="tag-modalidade tag-modalidade-muted">
+                        Sem modalidades
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    class="btn-agendar"
+                    :disabled="quadra.interditada"
+                    @click="!quadra.interditada && abrirAgendamentoDireto(quadra)"
+                  >
+                    {{ quadra.interditada ? "Indisponivel" : "Agendar agora" }}
+                  </button>
+                </div>
               </div>
             </article>
           </div>
@@ -151,9 +172,32 @@ export default {
     if (this.usuario?.id) {
       this.carregarTimes(this.usuario.id);
     }
+    window.addEventListener("avisos-atualizados", this.carregarAvisoDestaque);
+  },
+
+  beforeUnmount() {
+    window.removeEventListener("avisos-atualizados", this.carregarAvisoDestaque);
   },
 
   methods: {
+    obterUsuarioAutenticado() {
+      const authStore = useAuthStore();
+
+      if (authStore.usuario?.id) return authStore.usuario;
+
+      const token = localStorage.getItem("token");
+      if (!token || token === "undefined" || token === "null") return null;
+
+      try {
+        const usuarioLocal = JSON.parse(localStorage.getItem("usuario") || "null");
+        if (!usuarioLocal?.id) return null;
+        authStore.setAuthData(usuarioLocal, token);
+        return usuarioLocal;
+      } catch {
+        return null;
+      }
+    },
+
     async carregarTimes(userId) {
       if (!userId) return;
       try {
@@ -273,19 +317,19 @@ export default {
     },
 
     async confirmarAgendamento(agendamentoDoModal) {
-      const authStore = useAuthStore();
+      const usuarioAutenticado = this.obterUsuarioAutenticado();
 
-      if (!authStore.usuario) {
+      if (!usuarioAutenticado) {
         Swal.fire({
           title: "Você precisa estar logado",
-          text: "Deseja ir para a tela de login?",
+          text: "Volte para a tela inicial para entrar novamente.",
           icon: "warning",
           showCancelButton: true,
-          confirmButtonText: "Ir para login",
+          confirmButtonText: "Ir para inicio",
           cancelButtonText: "Cancelar",
           confirmButtonColor: "#1E3A8A",
         }).then((result) => {
-          if (result.isConfirmed) this.$router.push("/login");
+          if (result.isConfirmed) this.$router.push({ name: "Home" });
         });
         return;
       }
@@ -303,7 +347,7 @@ export default {
       if (agendamentoDoModal.fixo && Array.isArray(agendamentoDoModal.lote)) {
         const loteFormatado = agendamentoDoModal.lote.map((item) => ({
           ...item,
-          usuarioId: authStore.usuario.id,
+          usuarioId: usuarioAutenticado.id,
           quadraId: this.quadraSelecionada.id,
         }));
 
@@ -319,7 +363,7 @@ export default {
 
           await api.post("/agendamentos/fixos", {
             lote: loteFormatado,
-            usuarioId: authStore.usuario.id,
+            usuarioId: usuarioAutenticado.id,
           });
 
           Swal.fire({
@@ -348,7 +392,7 @@ export default {
 
       const agendamento = {
         ...agendamentoDoModal,
-        usuarioId: authStore.usuario.id,
+        usuarioId: usuarioAutenticado.id,
         quadraId: this.quadraSelecionada.id,
         fixo: false,
       };
@@ -395,6 +439,9 @@ export default {
           });
         }
       }
+    },
+    formatarNomeModalidade(nome) {
+      return nome.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (letra) => letra.toUpperCase());
     },
   },
 };
@@ -632,23 +679,40 @@ body {
 
 .card-quadra {
   position: relative;
-  height: 248px;
+  height: 292px;
   border-radius: 24px;
   overflow: hidden;
-  background: #0f172a;
+  background: #08153d;
+  border: 1px solid rgba(59, 130, 246, 0.18);
   box-shadow: 0 16px 30px rgba(15, 23, 42, 0.14);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.card-quadra::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+    rgba(8, 21, 61, 0.05) 0%,
+    rgba(8, 21, 61, 0.14) 26%,
+    rgba(8, 21, 61, 0.34) 54%,
+    rgba(5, 11, 44, 0.86) 100%);
+  z-index: 1;
+  pointer-events: none;
 }
 
 .card-quadra:hover:not(.is-interditada) {
   transform: translateY(-4px);
-  box-shadow: 0 20px 36px rgba(15, 23, 42, 0.18);
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: 0 20px 36px rgba(37, 99, 235, 0.22);
 }
 
 .imagem-quadra {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
+  filter: brightness(0.92) contrast(1.04) saturate(0.82);
   transition: transform 0.35s ease, filter 0.3s ease;
 }
 
@@ -657,14 +721,14 @@ body {
 }
 
 .card-quadra.is-interditada .imagem-quadra {
-  filter: grayscale(100%) brightness(0.9) opacity(0.76);
+  filter: grayscale(100%) brightness(0.85) contrast(1.02) opacity(0.78);
 }
 
 .card-status {
   position: absolute;
   top: 14px;
   right: 14px;
-  z-index: 2;
+  z-index: 3;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -688,43 +752,69 @@ body {
 .overlay {
   position: absolute;
   inset: auto 0 0 0;
+  z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   padding: 16px;
-  background: linear-gradient(180deg, rgba(3, 7, 18, 0.04) 0%, rgba(3, 7, 18, 0.56) 48%, rgba(3, 7, 18, 0.92) 100%);
   color: #ffffff;
+}
+
+.card-surface {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 78%;
 }
 
 .card-copy {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
+  max-width: 100%;
 }
 
 .card-kicker {
   margin: 0;
-  color: rgba(191, 219, 254, 0.9);
+  color: #93c5fd;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.16em;
 }
 
 .nome-quadra {
+  color: #ffffff;
   font-size: 24px;
-  font-weight: 800;
+  font-weight: 900;
   margin: 0;
   line-height: 1.12;
   letter-spacing: -0.03em;
-  text-shadow: 0 10px 18px rgba(0, 0, 0, 0.28);
+  text-shadow: 0 10px 22px rgba(0, 0, 0, 0.5);
 }
 
-.endereco {
-  font-size: 14px;
-  margin: 0 0 8px;
-  line-height: 1.35;
-  color: rgba(226, 232, 240, 0.88);
-  font-weight: 500;
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.tag-modalidade {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.12);
+  border: 1px solid rgba(226, 232, 240, 0.18);
+  color: rgba(255, 255, 255, 0.96);
+  font-size: 11px;
+  font-weight: 700;
+  backdrop-filter: blur(10px);
+}
+
+.tag-modalidade-muted {
+  background: rgba(5, 11, 44, 0.44);
 }
 
 .btn-agendar {
@@ -863,7 +953,7 @@ body {
   }
 
   .card-quadra {
-    height: 216px;
+    height: 248px;
     border-radius: 24px;
   }
 
@@ -877,16 +967,18 @@ body {
 
   .overlay {
     padding: 14px;
-    gap: 6px;
   }
 
   .nome-quadra {
     font-size: 20px;
   }
 
-  .endereco {
-    font-size: 13px;
-    margin-bottom: 8px;
+  .card-surface {
+    max-width: 100%;
+  }
+
+  .card-tags {
+    gap: 6px;
   }
 
   .btn-agendar {

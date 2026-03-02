@@ -43,6 +43,57 @@
           </div>
         </div>
 
+        <div class="filters-toolbar">
+          <label class="filter-field filter-field-quadra">
+            <span class="filter-label">Quadra</span>
+
+            <select
+              v-if="podeTrocarQuadra"
+              v-model.number="quadraId"
+              class="input-filter input-filter-select"
+              @change="carregarAgendamentos"
+            >
+              <option v-if="!quadras.length" :value="null">Nenhuma quadra disponivel</option>
+              <option v-for="quadra in quadras" :key="quadra.id" :value="quadra.id">
+                {{ quadra.nome }}
+              </option>
+            </select>
+
+            <div v-else class="input-filter input-filter-static">
+              {{ nomeQuadraOperacao }}
+            </div>
+          </label>
+
+          <label class="filter-field filter-field-wide">
+            <span class="filter-label">Buscar</span>
+            <input
+              v-model="filtroBusca"
+              type="text"
+              class="input-filter"
+              placeholder="Usuario, time, codigo ou tipo"
+            />
+          </label>
+
+          <label class="filter-field filter-field-date">
+            <span class="filter-label">Data</span>
+            <input v-model="filtroData" type="date" class="input-filter" />
+          </label>
+
+          <label class="filter-field filter-field-time">
+            <span class="filter-label">Horario</span>
+            <input v-model="filtroHorario" type="time" class="input-filter" />
+          </label>
+
+          <button
+            type="button"
+            class="btn-clear-filters"
+            :disabled="!filtrosAtivos"
+            @click="limparFiltros"
+          >
+            Limpar filtros
+          </button>
+        </div>
+
         <div v-if="isLoading" class="state-card state-card-loading">
           <div class="loader"></div>
           <p class="state-title">Carregando agendamentos</p>
@@ -113,6 +164,7 @@
         <ListaAgendModal
           v-if="modalAberto && datasModal.length && quadraId"
           :quadraId="quadraId"
+          :quadraNome="nomeQuadraOperacao"
           :datas="datasModal"
           @fechar="modalAberto = false"
           @ver-detalhes="abrirModalDetalhes"
@@ -137,7 +189,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import Swal from 'sweetalert2'
 import SideBar from '@/components/SideBar.vue'
 import NavBarUse from '@/components/NavBarUser.vue'
@@ -153,7 +205,14 @@ const resolverQuadraId = (valor) => {
   const numero = Number(valor)
   return Number.isFinite(numero) && numero > 0 ? numero : null
 }
+const normalizarTexto = (valor) => String(valor || '')
+  .toLowerCase()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .trim()
+
 const agendamentos = ref([])
+const quadras = ref([])
 const isLoading = ref(true)
 const modalAberto = ref(false)
 const datasModal = ref([])
@@ -165,8 +224,15 @@ const idParaRecusar = ref(null)
 const isRecusando = ref(false)
 const loadingCards = ref([])
 const abaAtiva = ref('pendentes')
+const filtroBusca = ref('')
+const filtroData = ref('')
+const filtroHorario = ref('')
 
 const ITENS_POR_PAGINA = 10
+const podeTrocarQuadra = computed(() => Number(authStore.usuario?.permissaoId) === 1)
+const filtrosAtivos = computed(() =>
+  Boolean(normalizarTexto(filtroBusca.value) || filtroData.value || filtroHorario.value),
+)
 
 const paginasAtuais = ref({
   pendentes: 1,
@@ -202,11 +268,69 @@ const obterDataAgendamento = (agendamento) => {
   return null
 }
 
+const formatarDataFiltro = (data) => {
+  if (!data) return ''
+
+  const ano = data.getFullYear()
+  const mes = String(data.getMonth() + 1).padStart(2, '0')
+  const dia = String(data.getDate()).padStart(2, '0')
+  return `${ano}-${mes}-${dia}`
+}
+
+const obterHoraAgendamento = (agendamento) => {
+  if (agendamento?.datahora) {
+    const data = new Date(agendamento.datahora)
+    if (Number.isNaN(data.getTime())) return ''
+    return `${String(data.getHours()).padStart(2, '0')}:${String(data.getMinutes()).padStart(2, '0')}`
+  }
+
+  if (Number.isInteger(agendamento?.hora)) {
+    return `${String(agendamento.hora).padStart(2, '0')}:00`
+  }
+
+  return ''
+}
+
+const agendamentosFiltrados = computed(() => {
+  const busca = normalizarTexto(filtroBusca.value)
+
+  return agendamentos.value.filter((agendamento) => {
+    if (quadraId.value && Number(agendamento?.quadra?.id) !== Number(quadraId.value)) {
+      return false
+    }
+
+    if (busca) {
+      const conteudoBusca = [
+        agendamento?.usuario?.nome,
+        agendamento?.time?.nome,
+        agendamento?.quadra?.nome,
+        agendamento?.codigoVerificacao,
+        agendamento?.tipo,
+      ]
+        .map(normalizarTexto)
+        .join(' ')
+
+      if (!conteudoBusca.includes(busca)) return false
+    }
+
+    if (filtroData.value) {
+      const dataAgendamento = obterDataAgendamento(agendamento)
+      if (formatarDataFiltro(dataAgendamento) !== filtroData.value) return false
+    }
+
+    if (filtroHorario.value) {
+      if (obterHoraAgendamento(agendamento) !== filtroHorario.value) return false
+    }
+
+    return true
+  })
+})
+
 const getTodosPorTipo = (tipo) => {
   const hoje = new Date()
   hoje.setHours(0, 0, 0, 0)
 
-  return agendamentos.value.filter((agendamento) => {
+  return agendamentosFiltrados.value.filter((agendamento) => {
     const status = normalizarStatus(agendamento.status)
 
     if (tipo === 'pendentes') return status === 'pendente'
@@ -229,6 +353,14 @@ const getItensPagina = (tipo) => {
 
 const getTotalPaginas = (tipo) => Math.max(1, Math.ceil(getTodosPorTipo(tipo).length / ITENS_POR_PAGINA))
 
+const resetarPaginas = () => {
+  paginasAtuais.value = {
+    pendentes: 1,
+    confirmados: 1,
+    recusados: 1,
+  }
+}
+
 const normalizarPaginas = () => {
   Object.keys(paginasAtuais.value).forEach((tipo) => {
     const maxPaginas = getTotalPaginas(tipo)
@@ -247,7 +379,8 @@ const abas = computed(() => [
 ])
 
 const nomeQuadraOperacao = computed(() => {
-  return agendamentos.value[0]?.quadra?.nome || authStore.usuario?.quadra?.nome || 'sua quadra'
+  const quadraSelecionada = quadras.value.find((quadra) => Number(quadra.id) === Number(quadraId.value))
+  return quadraSelecionada?.nome || agendamentos.value[0]?.quadra?.nome || authStore.usuario?.quadra?.nome || 'a quadra selecionada'
 })
 
 const tituloAbaAtiva = computed(() => {
@@ -280,6 +413,14 @@ const itensAbaAtiva = computed(() => getItensPagina(abaAtiva.value))
 const totalPaginasAbaAtiva = computed(() => getTotalPaginas(abaAtiva.value))
 
 const tituloEstadoVazio = computed(() => {
+  if (podeTrocarQuadra.value && !quadraId.value) {
+    return 'Selecione uma quadra para visualizar os agendamentos.'
+  }
+
+  if (filtrosAtivos.value) {
+    return 'Nenhum agendamento corresponde aos filtros aplicados.'
+  }
+
   const mensagens = {
     pendentes: 'Nenhum pedido pendente no momento.',
     confirmados: 'Nenhuma reserva futura confirmada.',
@@ -290,6 +431,14 @@ const tituloEstadoVazio = computed(() => {
 })
 
 const descricaoEstadoVazio = computed(() => {
+  if (podeTrocarQuadra.value && !quadraId.value) {
+    return 'Escolha uma unidade no filtro acima para iniciar a operacao.'
+  }
+
+  if (filtrosAtivos.value) {
+    return 'Ajuste a busca, data ou horario para ampliar o resultado desta aba.'
+  }
+
   const descricoes = {
     pendentes: 'Quando novos pedidos forem enviados para a quadra, eles aparecerão aqui para análise.',
     confirmados: 'Os agendamentos aprovados para datas futuras ficarão organizados nesta aba.',
@@ -317,23 +466,72 @@ const normalizarAgendamento = (agendamento) => ({
   motivoRecusa: agendamento.motivoRecusa || '',
 })
 
+const carregarQuadrasDisponiveis = async () => {
+  try {
+    const { data } = await api.get('/quadra')
+    const listaQuadras = Array.isArray(data) ? data : []
+    const quadraUsuarioId = resolverQuadraId(authStore.usuario?.quadraId)
+
+    if (podeTrocarQuadra.value) {
+      quadras.value = listaQuadras
+      const quadraPadrao =
+        listaQuadras.find((quadra) => Number(quadra.id) === quadraUsuarioId)?.id ??
+        listaQuadras[0]?.id ??
+        null
+      quadraId.value = resolverQuadraId(quadraId.value) ?? resolverQuadraId(quadraPadrao)
+      return
+    }
+
+    const quadraDoUsuario = listaQuadras.find((quadra) => Number(quadra.id) === quadraUsuarioId)
+    quadras.value = quadraDoUsuario ? [quadraDoUsuario] : []
+    quadraId.value = resolverQuadraId(quadraDoUsuario?.id ?? quadraId.value)
+  } catch (error) {
+    console.error('Erro ao carregar quadras disponiveis:', error)
+    quadras.value = []
+    quadraId.value = resolverQuadraId(authStore.usuario?.quadraId)
+  }
+}
+
 const carregarAgendamentos = async () => {
+  if (podeTrocarQuadra.value && !quadraId.value) {
+    agendamentos.value = []
+    resetarPaginas()
+    normalizarPaginas()
+    isLoading.value = false
+    return
+  }
+
   isLoading.value = true
   try {
-    const { data } = await api.get('/agendamentos/minha-quadra')
+    const endpoint = podeTrocarQuadra.value
+      ? `/agendamentos/quadra/${quadraId.value}`
+      : '/agendamentos/minha-quadra'
+    const { data } = await api.get(endpoint)
     agendamentos.value = Array.isArray(data) ? data : []
-    quadraId.value = resolverQuadraId(agendamentos.value[0]?.quadra?.id || authStore.usuario?.quadraId)
+    quadraId.value =
+      resolverQuadraId(quadraId.value) ??
+      resolverQuadraId(agendamentos.value[0]?.quadra?.id || authStore.usuario?.quadraId)
     normalizarPaginas()
   } catch (error) {
     console.error('Erro ao carregar agendamentos:', error)
     Swal.fire({
       icon: 'error',
       title: 'Erro',
-      text: 'Falha ao carregar agendamentos da quadra.',
+      text: podeTrocarQuadra.value
+        ? 'Falha ao carregar agendamentos da quadra selecionada.'
+        : 'Falha ao carregar agendamentos da quadra.',
     })
   } finally {
     isLoading.value = false
   }
+}
+
+const limparFiltros = () => {
+  filtroBusca.value = ''
+  filtroData.value = ''
+  filtroHorario.value = ''
+  resetarPaginas()
+  normalizarPaginas()
 }
 
 const aceitarAgendamento = async (id) => {
@@ -403,8 +601,22 @@ const abrirModalDetalhes = (agendamento) => {
   detalheAberto.value = true
 }
 
-onMounted(() => {
-  carregarAgendamentos()
+watch([filtroBusca, filtroData, filtroHorario], () => {
+  resetarPaginas()
+  normalizarPaginas()
+})
+
+watch(
+  agendamentosFiltrados,
+  () => {
+    normalizarPaginas()
+  },
+  { deep: true },
+)
+
+onMounted(async () => {
+  await carregarQuadrasDisponiveis()
+  await carregarAgendamentos()
 })
 </script>
 
@@ -595,6 +807,93 @@ onMounted(() => {
   display: none;
 }
 
+.filters-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.2fr) minmax(240px, 1.5fr) repeat(2, minmax(150px, 0.8fr)) auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 18px;
+  padding: 16px;
+  border-radius: 20px;
+  background: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.filter-field-wide {
+  min-width: 0;
+}
+
+.filter-label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+.input-filter {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: #ffffff;
+  font-size: 14px;
+  color: #0f172a;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.input-filter:focus {
+  outline: none;
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.input-filter-select {
+  appearance: none;
+}
+
+.input-filter-static {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  background: rgba(37, 99, 235, 0.08);
+  color: #1d4ed8;
+}
+
+.btn-clear-filters {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  background: #ffffff;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.btn-clear-filters:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(37, 99, 235, 0.32);
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.08);
+}
+
+.btn-clear-filters:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .abas-config-container {
   display: flex;
   gap: 10px;
@@ -764,6 +1063,10 @@ onMounted(() => {
   .overview-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+
+  .filters-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 960px) {
@@ -779,6 +1082,14 @@ onMounted(() => {
   .panel-actions {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .filters-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .btn-clear-filters {
+    width: 100%;
   }
 
   .agendamentos-grid {
@@ -836,6 +1147,32 @@ onMounted(() => {
   .agendamentos-panel {
     padding: 18px;
     border-radius: 22px;
+  }
+
+  .filters-toolbar {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .filter-field-quadra {
+    grid-column: span 3;
+  }
+
+  .filter-field-wide {
+    grid-column: span 3;
+  }
+
+  .filter-field-date {
+    grid-column: span 2;
+  }
+
+  .filter-field-time {
+    grid-column: span 2;
+  }
+
+  .btn-clear-filters {
+    grid-column: span 2;
   }
 
   .panel-head {

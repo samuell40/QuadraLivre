@@ -69,8 +69,6 @@
               class="imagem-quadra"
             />
 
-            <div class="card-shade"></div>
-
             <div class="overlay">
               <div class="card-copy">
                 <p class="card-label">QUADRA</p>
@@ -175,6 +173,24 @@ export default {
   },
 
   methods: {
+    obterUsuarioAutenticado() {
+      const authStore = useAuthStore()
+
+      if (authStore.usuario?.id) return authStore.usuario
+
+      const token = localStorage.getItem('token')
+      if (!token || token === 'undefined' || token === 'null') return null
+
+      try {
+        const usuarioLocal = JSON.parse(localStorage.getItem('usuario') || 'null')
+        if (!usuarioLocal?.id) return null
+        authStore.setAuthData(usuarioLocal, token)
+        return usuarioLocal
+      } catch {
+        return null
+      }
+    },
+
     async carregarTimes(userId) {
       if (!userId) return
 
@@ -217,30 +233,30 @@ export default {
     },
 
     async confirmarAgendamento(agendamentoDoModal, forcarAgendamento = false) {
-      const authStore = useAuthStore()
+      const usuarioAutenticado = this.obterUsuarioAutenticado()
 
-      if (!authStore.usuario) {
+      if (!usuarioAutenticado) {
         Swal.fire({
           title: 'Você precisa estar logado',
-          text: 'Deseja ir para a tela de login?',
+          text: 'Volte para a tela inicial para entrar novamente.',
           icon: 'warning',
           showCancelButton: true,
-          confirmButtonText: 'Ir para login',
+          confirmButtonText: 'Ir para inicio',
           cancelButtonText: 'Cancelar',
           confirmButtonColor: '#1E3A8A',
         }).then((result) => {
-          if (result.isConfirmed) this.$router.push('/login')
+          if (result.isConfirmed) this.$router.push({ name: 'Home' })
         })
         return
       }
 
-      const isAdministrador = authStore.usuario.permissaoId === 2
+      const isAdministrador = usuarioAutenticado.permissaoId === 2
       const statusAutomatico = isAdministrador ? 'Confirmado' : 'Pendente'
 
       if (agendamentoDoModal.lote && Array.isArray(agendamentoDoModal.lote)) {
         const loteFormatado = agendamentoDoModal.lote.map((item) => ({
           ...item,
-          usuarioId: authStore.usuario.id,
+          usuarioId: usuarioAutenticado.id,
           quadraId: this.quadraSelecionada.id,
           ignorarRegra: forcarAgendamento,
           status: statusAutomatico
@@ -257,7 +273,7 @@ export default {
           try {
             await api.post('/agendamentos/fixos', {
               lote: loteFormatado,
-              usuarioId: authStore.usuario.id
+              usuarioId: usuarioAutenticado.id
             })
 
             Swal.close()
@@ -286,7 +302,7 @@ export default {
 
       const agendamento = {
         ...agendamentoDoModal,
-        usuarioId: authStore.usuario.id,
+        usuarioId: usuarioAutenticado.id,
         quadraId: this.quadraSelecionada.id,
         ignorarRegra: forcarAgendamento,
         status: statusAutomatico
@@ -537,20 +553,37 @@ export default {
   height: 248px;
   border-radius: 24px;
   overflow: hidden;
-  background: #0f172a;
+  background: #08153d;
+  border: 1px solid rgba(59, 130, 246, 0.18);
   box-shadow: 0 16px 30px rgba(15, 23, 42, 0.14);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.card-quadra::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+    rgba(8, 21, 61, 0.05) 0%,
+    rgba(8, 21, 61, 0.14) 26%,
+    rgba(8, 21, 61, 0.34) 54%,
+    rgba(5, 11, 44, 0.86) 100%);
+  z-index: 1;
+  pointer-events: none;
 }
 
 .card-quadra:hover:not(.is-interditada) {
   transform: translateY(-4px);
-  box-shadow: 0 20px 36px rgba(15, 23, 42, 0.18);
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: 0 20px 36px rgba(37, 99, 235, 0.22);
 }
 
 .imagem-quadra {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
+  filter: brightness(0.92) contrast(1.04) saturate(0.82);
   transition: transform 0.35s ease, filter 0.3s ease;
 }
 
@@ -559,7 +592,7 @@ export default {
 }
 
 .card-quadra.is-interditada .imagem-quadra {
-  filter: grayscale(100%) brightness(0.9) opacity(0.76);
+  filter: grayscale(100%) brightness(0.85) contrast(1.02) opacity(0.78);
 }
 
 .card-status {
@@ -587,22 +620,6 @@ export default {
   background: rgba(239, 68, 68, 0.92);
 }
 
-.card-shade {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 72%;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.9) 0%,
-    rgba(0, 0, 0, 0.48) 52%,
-    transparent 100%
-  );
-  z-index: 1;
-  pointer-events: none;
-}
-
 .overlay {
   position: absolute;
   inset: auto 0 0 0;
@@ -611,7 +628,6 @@ export default {
   flex-direction: column;
   gap: 8px;
   padding: 16px;
-  background: linear-gradient(180deg, rgba(3, 7, 18, 0.04) 0%, rgba(3, 7, 18, 0.56) 48%, rgba(3, 7, 18, 0.92) 100%);
   color: #ffffff;
 }
 
@@ -620,6 +636,7 @@ export default {
   flex-direction: column;
   gap: 4px;
   min-width: 0;
+  max-width: 78%;
 }
 
 .nome-quadra {
@@ -635,24 +652,26 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 4px;
+  margin-top: 2px;
+  margin-bottom: 6px;
 }
 
 .tag-modalidade {
   display: inline-flex;
   align-items: center;
-  min-height: 26px;
-  padding: 0 10px;
+  min-height: 24px;
+  padding: 0 9px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #ffffff;
+  background: rgba(248, 250, 252, 0.12);
+  border: 1px solid rgba(226, 232, 240, 0.18);
+  color: rgba(255, 255, 255, 0.96);
   font-size: 11px;
   font-weight: 700;
+  backdrop-filter: blur(10px);
 }
 
 .tag-modalidade-muted {
-  background: rgba(15, 23, 42, 0.46);
+  background: rgba(5, 11, 44, 0.44);
 }
 
 .btn-agendar {
@@ -803,6 +822,10 @@ export default {
 
   .overlay {
     padding: 14px;
+  }
+
+  .card-copy {
+    max-width: 100%;
   }
 
   .nome-quadra {

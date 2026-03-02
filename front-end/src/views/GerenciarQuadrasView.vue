@@ -80,12 +80,29 @@
               class="imagem-quadra"
             />
 
-            <div class="card-shade"></div>
-
             <div class="overlay">
               <div class="card-copy">
                 <p class="card-label">QUADRA</p>
                 <h3 class="nome-quadra">{{ quadra.nome }}</h3>
+                <p class="endereco">{{ quadra.endereco || 'Endereco nao informado' }}</p>
+
+                <div class="card-tags">
+                  <span
+                    v-for="modalidade in (quadra.modalidades || []).slice(0, 3)"
+                    :key="`${quadra.id}-${modalidade.id}`"
+                    class="tag-modalidade"
+                  >
+                    {{ formatarNomeModalidade(modalidade.nome) }}
+                  </span>
+
+                  <span v-if="(quadra.modalidades || []).length > 3" class="tag-modalidade tag-modalidade-muted">
+                    +{{ (quadra.modalidades || []).length - 3 }}
+                  </span>
+
+                  <span v-if="!(quadra.modalidades || []).length" class="tag-modalidade tag-modalidade-muted">
+                    Sem modalidades
+                  </span>
+                </div>
               </div>
 
               <div class="card-actions">
@@ -114,7 +131,7 @@
       <div v-if="modalCadastroAberto" class="modal-overlay" @click.self="fecharModalCadastro">
         <div class="modal-content modal-content-cadastro">
           <div class="modal-header">
-            <div>
+            <div class="modal-header-copy">
               <h2 class="modal-title">Cadastrar unidade</h2>
               <p class="modal-subtitle">Preencha os dados principais e defina as modalidades disponíveis.</p>
             </div>
@@ -207,7 +224,7 @@
       <div v-if="quadraEditando" class="modal-overlay" @click.self="quadraEditando = null">
         <div class="modal-content">
           <div class="modal-header">
-            <div>
+            <div class="modal-header-copy">
               <h2 class="modal-title">Editar unidade</h2>
               <p class="modal-subtitle">{{ quadraEditando.nome }}</p>
             </div>
@@ -420,7 +437,7 @@ export default {
         nome: quadra.nome,
         endereco: quadra.endereco,
         imagem: null,
-        modalidadesSelecionadas: quadra.modalidades.map((m) => m.id)
+        modalidadesSelecionadas: (quadra.modalidades || []).map((m) => m.id)
       }
     },
 
@@ -780,20 +797,38 @@ export default {
   height: 292px;
   border-radius: 24px;
   overflow: hidden;
-  background: #0f172a;
+  background: #08153d;
+  border: 1px solid rgba(59, 130, 246, 0.18);
   box-shadow: 0 16px 30px rgba(15, 23, 42, 0.14);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.card-quadra::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(5, 11, 44, 0.86) 0%,
+    rgba(8, 21, 61, 0.44) 48%,
+    rgba(8, 21, 61, 0.05) 100%
+  );
+  z-index: 1;
+  pointer-events: none;
 }
 
 .card-quadra:hover:not(.is-interditada) {
   transform: translateY(-4px);
-  box-shadow: 0 20px 36px rgba(15, 23, 42, 0.18);
+  border-color: rgba(96, 165, 250, 0.34);
+  box-shadow: 0 20px 36px rgba(15, 23, 42, 0.18), 0 14px 28px rgba(37, 99, 235, 0.18);
 }
 
 .imagem-quadra {
   width: 100%;
   height: 100%;
+  display: block;
   object-fit: cover;
+  filter: brightness(0.92) contrast(1.04) saturate(0.82);
   transition: transform 0.35s ease, filter 0.3s ease;
 }
 
@@ -802,7 +837,7 @@ export default {
 }
 
 .card-quadra.is-interditada .imagem-quadra {
-  filter: grayscale(100%) brightness(0.86) opacity(0.78);
+  filter: grayscale(100%) brightness(0.85) contrast(1.02) opacity(0.78);
 }
 
 .card-status {
@@ -833,22 +868,6 @@ export default {
   background: rgba(239, 68, 68, 0.92);
 }
 
-.card-shade {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 80%;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.94) 0%,
-    rgba(0, 0, 0, 0.62) 52%,
-    transparent 100%
-  );
-  z-index: 1;
-  pointer-events: none;
-}
-
 .overlay {
   position: absolute;
   inset: auto 0 0 0;
@@ -857,15 +876,15 @@ export default {
   flex-direction: column;
   gap: 12px;
   padding: 16px;
-  background: linear-gradient(180deg, rgba(3, 7, 18, 0.08) 0%, rgba(3, 7, 18, 0.66) 44%, rgba(3, 7, 18, 0.96) 100%);
   color: #ffffff;
 }
 
 .card-copy {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
+  max-width: 100%;
 }
 
 .nome-quadra {
@@ -884,6 +903,10 @@ export default {
   line-height: 1.35;
   color: rgba(226, 232, 240, 0.88);
   font-weight: 500;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .card-tags {
@@ -1025,6 +1048,11 @@ export default {
   padding-right: 4px;
 }
 
+.modal-header-copy {
+  flex: 1;
+  min-width: 0;
+}
+
 .modal-form {
   display: flex;
   flex-direction: column;
@@ -1125,6 +1153,11 @@ export default {
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 38px;
+  padding: 0;
 }
 
 .btn-close-x-modal:hover {
@@ -1271,6 +1304,10 @@ export default {
     gap: 10px;
   }
 
+  .card-copy {
+    max-width: 100%;
+  }
+
   .nome-quadra {
     font-size: 20px;
   }
@@ -1294,6 +1331,14 @@ export default {
 
   .modal-title {
     font-size: 22px;
+  }
+
+  .modal-content .modal-header {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: nowrap;
   }
 }
 </style>

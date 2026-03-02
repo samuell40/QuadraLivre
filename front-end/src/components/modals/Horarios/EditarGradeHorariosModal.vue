@@ -442,6 +442,8 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .modal-kicker,
@@ -485,6 +487,11 @@ export default {
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 38px;
+  padding: 0;
 }
 
 .btn-close-x:hover {
@@ -973,7 +980,14 @@ input:checked + .slider:before {
     border-radius: 22px;
   }
 
-  .modal-header,
+  .modal-header {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: nowrap;
+  }
+
   .dia-header-row,
   .titulo-switch-wrapper {
     flex-direction: column;

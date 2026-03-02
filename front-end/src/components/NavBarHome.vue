@@ -8,7 +8,6 @@
           <span :class="{ open: isMenuOpen }"></span>
         </div>
 
-        <div class="logo"></div>
         <a href="#" class="login-btn-mobile" @click.prevent="loginComGoogle">
           Login
         </a>
@@ -290,7 +289,9 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 30px;
+  width: calc(100% - 120px);
+  margin: 0 auto;
+  padding: 0;
   height: 100%;
   position: relative;
 }
@@ -299,14 +300,28 @@ export default {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-left: -12%;
 }
 
-.logo {
+.logo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.logo-img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.logo-text {
   color: #ffffff;
-  font-size: 20px;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
   white-space: nowrap;
-  margin-left: 80px;
 }
 
 .nav-links {
@@ -316,7 +331,7 @@ export default {
   margin: 0;
   padding: 0;
   align-items: center;
-  margin-right: 80px;
+  margin-right: 0;
 }
 
 .nav-links li a {
@@ -492,6 +507,8 @@ export default {
 
 @media (max-width: 768px) {
   .navbar-container {
+    width: 100%;
+    margin: 0;
     padding: 0 16px;
   }
 
@@ -502,6 +519,15 @@ export default {
 
   .esquerda-section {
     margin-left: 0;
+  }
+
+  .logo-img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .logo-text {
+    font-size: 20px;
   }
 
   .desktop-only {

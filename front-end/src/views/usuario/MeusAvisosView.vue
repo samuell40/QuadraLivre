@@ -96,7 +96,7 @@
                       </svg>
                       <span>Marcar como lido</span>
                     </button>
-                    <span v-else class="texto-lido">Visualizado</span>
+                    <span v-else class="texto-lido">Lido</span>
                   </div>
                 </article>
               </div>
