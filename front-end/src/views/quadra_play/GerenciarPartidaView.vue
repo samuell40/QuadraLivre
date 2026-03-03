@@ -697,6 +697,9 @@ export default {
 
     async confirmarAlteracaoStatus() {
       try {
+        const partidaSelecionada = this.partidaSelecionada
+        const statusAnterior = String(this.statusAtualModal || partidaSelecionada?.status || '').toUpperCase()
+
         if (this.isMesario && String(this.statusAtualModal || '').toUpperCase() === 'FINALIZADA') {
           Swal.fire('Atenção', 'Não é permitido alterar o status de partidas finalizadas.', 'info')
           this.fecharModalStatus()
@@ -738,12 +741,33 @@ export default {
           payload.data = dataAdiamento
         }
 
-        const { data } = await api.put(`/partidas/${this.partidaSelecionada.id}/status`, payload)
+        const { data } = await api.put(`/partidas/${partidaSelecionada.id}/status`, payload)
+        const partidaResposta = data?.partida && typeof data.partida === 'object' ? data.partida : data
+        let partidaAtualizada = partidaSelecionada
 
-        if (this.partidaSelecionada && data && typeof data === 'object') {
-          Object.assign(this.partidaSelecionada, data)
+        if (partidaSelecionada && partidaResposta && typeof partidaResposta === 'object') {
+          Object.assign(partidaSelecionada, partidaResposta)
+          partidaAtualizada = partidaSelecionada
+        } else if (partidaResposta && typeof partidaResposta === 'object') {
+          partidaAtualizada = partidaResposta
         }
+
+        const deveAbrirEscalacaoInicial =
+          this.novoStatus === 'EM_ANDAMENTO' &&
+          this.isStatusPartidaPendente(statusAnterior)
+
         this.fecharModalStatus()
+
+        if (deveAbrirEscalacaoInicial) {
+          try {
+            await this.abrirEscalacaoInicial(partidaAtualizada)
+          } catch (error) {
+            console.error(error)
+            const mensagem = error?.response?.data?.error || 'O status foi atualizado, mas não foi possível carregar a seleção de jogadores.'
+            Swal.fire('Erro', mensagem, 'error')
+          }
+          return
+        }
 
         Swal.fire({ icon: 'success', title: 'Status atualizado', timer: 1200, showConfirmButton: false })
       } catch (error) {

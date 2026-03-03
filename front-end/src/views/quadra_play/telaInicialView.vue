@@ -46,7 +46,7 @@
               {{ rotuloStatus(campeonato.status) }}
             </div>
 
-            <img :src="campeonato.foto" alt="Foto do campeonato" class="imagem-quadra">
+            <img :src="obterFotoCard(campeonato.foto)" alt="Foto do campeonato" class="imagem-quadra">
 
             <div class="overlay">
               <h3 class="campeonato">{{ campeonato.nome }}</h3>
@@ -90,6 +90,7 @@ import SidebarQuadra from '@/components/quadraplay/SidebarQuadra.vue'
 import AdicionarCampeonatoModal from '@/components/quadraplay/Campeonatos/AdicionarCampeonatoModal.vue';
 import router from '@/router';
 import api from '@/axios'
+import { obterFotoCardCampeonato } from '@/utils/campeonatoImagem'
 
 export default {
   name: 'CampeonatosView',
@@ -182,6 +183,9 @@ export default {
         .filter(Boolean)
         .map(parte => parte.charAt(0).toUpperCase() + parte.slice(1).toLowerCase())
         .join(' ')
+    },
+    obterFotoCard(foto) {
+      return obterFotoCardCampeonato(foto)
     },
     rotuloStatus(status) {
       if (status === 'FINALIZADO') return 'Finalizado'

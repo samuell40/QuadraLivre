@@ -17,28 +17,6 @@
         <div class="loader"></div>
       </div>
 
-      <div v-else-if="campeonato" class="hero-campeonato">
-        <div class="card-quadra">
-          <img :src="campeonato.foto" alt="Foto do campeonato" class="imagem-quadra">
-          <div class="hero-overlay"></div>
-          <div class="hero-content">
-            <div class="hero-badges">
-              <span class="hero-badge">{{ formatarNomeExibicao(campeonato?.modalidade?.nome) }}</span>
-              <span v-if="campeonato?.quadra?.nome" class="hero-badge hero-badge-soft">
-                {{ campeonato.quadra.nome }}
-              </span>
-              <span v-if="campeonato?.dataFim" class="hero-badge hero-badge-soft">
-                Finaliza em {{ formatarDataResumo(campeonato.dataFim) }}
-              </span>
-            </div>
-            <h2 class="hero-title">{{ campeonato.nome }}</h2>
-            <a class="hero-subtitle">
-              Um espaço central para organizar estrutura, configurações e operação do campeonato.
-            </a>
-          </div>
-        </div>
-      </div>
-
       <div v-if="campeonato && !isMesario" class="card-edicao">
         <div class="section-head">
           <div>

@@ -276,28 +276,28 @@ a {
 }
 
 .header {
-    margin-bottom: 18px;
+    margin-bottom: 12px;
 }
 
 .header-copy {
-    max-width: 720px;
+    max-width: 660px;
 }
 
 .title {
-    margin: 14px 0 10px;
+    margin: 8px 0 6px;
     color: #2563eb;
-    font-size: 40px;
-    line-height: 0.98;
+    font-size: 34px;
+    line-height: 1;
     letter-spacing: -0.04em;
 }
 
 .page-subtitle {
     margin: 0;
     color: #475569;
-    font-size: 17px;
-    line-height: 1.6;
+    font-size: 15px;
+    line-height: 1.45;
     max-width: none;
-    white-space: nowrap;
+    white-space: normal;
 }
 
 .aainel-times {
@@ -397,6 +397,29 @@ a {
     gap: 12px;
 }
 
+.modalidades-card {
+    padding: 18px 20px;
+    border-radius: 24px;
+}
+
+.modalidades-card .section-head {
+    margin-bottom: 14px;
+}
+
+.modalidades-card .section-head h2 {
+    margin: 4px 0 6px;
+    font-size: 24px;
+}
+
+.modalidades-card .section-head a {
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.modalidades-card .abas-container {
+    gap: 10px;
+}
+
 .aba {
     min-height: 54px;
     padding: 14px 18px;
@@ -410,6 +433,13 @@ a {
     color: #334155;
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, color 0.18s ease;
     user-select: none;
+}
+
+.modalidades-card .aba {
+    min-height: 48px;
+    padding: 10px 16px;
+    border-radius: 18px;
+    font-size: 14px;
 }
 
 .aba:hover {

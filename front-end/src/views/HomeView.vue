@@ -9,7 +9,7 @@
               <span class="primeira-linha">Agende sua Quadra em <span class="destaque_sublinhado">São Vicente</span></span>
             </div>
             <div>
-              <span class="segunda-linha destaque">De forna Rápida e olline.</span>
+              <span class="segunda-linha destaque">De forma Rápida e olline.</span>
             </div>
           </h1>
           <p class="hero-subtitle">Com o Quadra Play SV, você reserva em poucos cliques.</p>

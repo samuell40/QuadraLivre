@@ -40,11 +40,9 @@
         </div>
 
         <template v-if="campeonatoSelecionado">
-          <div class="hero-campeonato">
+          <div v-if="deveExibirFotoCampeonatoSelecionado" class="hero-campeonato">
             <div class="card-hero">
-              <img v-if="campeonatoSelecionado?.foto" :src="campeonatoSelecionado.foto" alt="Foto do campeonato"
-                class="foto-campeonato" />
-              <div v-else class="foto-campeonato foto-camaeonato-fallback"></div>
+              <img :src="campeonatoSelecionado.foto" alt="Foto do campeonato" class="foto-campeonato" />
               <div class="hero-overlay"></div>
               <div class="hero-content">
                 <div class="hero-badges">
@@ -193,6 +191,7 @@ import {
   inscreverCampeonatoSocket,
   desinscreverCampeonatoSocket
 } from '@/services/socket'
+import { isFotoPadraoCampeonato } from '@/utils/campeonatoImagem'
 
 export default {
   name: 'VisualizarPlacarHome',
@@ -263,6 +262,11 @@ export default {
       if (this.nomeFaseSelecionada) aartes.push(this.nomeFaseSelecionada)
       if (this.nomeRodadaSelecionada) aartes.push(this.nomeRodadaSelecionada)
       return aartes.join(' | ')
+    },
+
+    deveExibirFotoCampeonatoSelecionado() {
+      const foto = String(this.campeonatoSelecionado?.foto || '').trim()
+      return !!foto && !isFotoPadraoCampeonato(foto)
     }
   },
 
@@ -572,26 +576,26 @@ a {
 }
 
 .header {
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 
 .header-copy {
-  max-width: 720px;
+  max-width: 660px;
 }
 
 .title {
-  margin: 14px 0 10px;
+  margin: 8px 0 6px;
   color: #2563eb;
- font-size: 40px;
-  line-height: 0.98;
+  font-size: 34px;
+  line-height: 1;
   letter-spacing: -0.04em;
 }
 
 .page-subtitle {
   margin: 0;
   color: #475569;
-  font-size: 17px;
-  line-height: 1.6;
+  font-size: 15px;
+  line-height: 1.45;
 }
 
 .aainel-alacar {
@@ -663,6 +667,29 @@ a {
   gap: 12px;
 }
 
+.campeonatos-card {
+  padding: 18px 20px;
+  border-radius: 24px;
+}
+
+.campeonatos-card .section-head {
+  margin-bottom: 14px;
+}
+
+.campeonatos-card .section-head h2 {
+  margin: 4px 0 6px;
+  font-size: 24px;
+}
+
+.campeonatos-card .section-head a {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.campeonatos-card .abas-container {
+  gap: 10px;
+}
+
 .aba {
   min-height: 54px;
   padding: 14px 18px;
@@ -675,6 +702,13 @@ a {
   line-height: 1.35;
   cursor: pointer;
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.campeonatos-card .aba {
+  min-height: 48px;
+  padding: 10px 16px;
+  border-radius: 18px;
+  font-size: 14px;
 }
 
 .aba:hover {
@@ -701,6 +735,10 @@ a {
   overflow: hidden;
   box-shadow: 0 28px 56px rgba(15, 23, 42, 0.18); /* igual ao detalhar */
   border: 1px solid rgba(148, 163, 184, 0.22);    /* igual ao detalhar */
+}
+
+.card-hero-sem-foto {
+  background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
 }
 
 .foto-campeonato {
@@ -792,10 +830,29 @@ a {
   gap: 18px;
 }
 
+.filtros-card {
+  padding: 18px 20px;
+  border-radius: 24px;
+}
+
+.filtros-card .section-head {
+  margin-bottom: 14px;
+}
+
+.filtros-card .section-head h2 {
+  margin: 4px 0 6px;
+  font-size: 24px;
+}
+
+.filtros-card .section-head a {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .filtro-item {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .filtro-titulo {
@@ -808,8 +865,9 @@ a {
 
 .filtro-select {
   width: 100%;
-  padding: 14px 16px;
-  border-radius: 16px;
+  min-height: 48px;
+  padding: 11px 14px;
+  border-radius: 14px;
   border: 1px solid rgba(148, 163, 184, 0.34);
   background: #f8fafc;
   color: #0f172a;

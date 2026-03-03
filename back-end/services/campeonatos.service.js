@@ -2,6 +2,8 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { enviarEmailVinculoMesarioCampeonato } = require('./email.service');
 
+const FOTO_PADRAO_CAMPEONATO = 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/imagem_campeonatos.png';
+
 const CRITERIOS_MODALIDADE = {
   futebol: [
     { value: "pontuacao", label: "Pontuação" },
@@ -203,6 +205,7 @@ async function criarCampeonato(data) {
 
   let listaDatasReais = Array.isArray(datasJogos) ? datasJogos.map(d => new Date(d)) : [];
   const timesArray = Array.isArray(times) ? times : [];
+  const fotoNormalizada = String(foto || '').trim() || FOTO_PADRAO_CAMPEONATO;
 
   return await prisma.$transaction(async (tx) => {
     const modalidadeDB = await tx.modalidade.findUnique({
@@ -254,7 +257,7 @@ async function criarCampeonato(data) {
       data: {
         nome,
         tipo,
-        foto,
+        foto: fotoNormalizada,
         regras: normalizarRegrasCampeonato(regras, modalidadeDB.nome),
         dataInicio: new Date(dataInicio),
         dataFim: new Date(dataFim),
