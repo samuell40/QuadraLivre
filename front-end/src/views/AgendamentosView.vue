@@ -43,12 +43,11 @@
           </div>
         </div>
 
-        <div class="filters-toolbar">
+        <div v-if="podeTrocarQuadra" class="filters-toolbar">
           <label class="filter-field filter-field-quadra">
             <span class="filter-label">Quadra</span>
 
             <select
-              v-if="podeTrocarQuadra"
               v-model.number="quadraId"
               class="input-filter input-filter-select"
               @change="carregarAgendamentos"
@@ -58,40 +57,7 @@
                 {{ quadra.nome }}
               </option>
             </select>
-
-            <div v-else class="input-filter input-filter-static">
-              {{ nomeQuadraOperacao }}
-            </div>
           </label>
-
-          <label class="filter-field filter-field-wide">
-            <span class="filter-label">Buscar</span>
-            <input
-              v-model="filtroBusca"
-              type="text"
-              class="input-filter"
-              placeholder="Usuario, time, codigo ou tipo"
-            />
-          </label>
-
-          <label class="filter-field filter-field-date">
-            <span class="filter-label">Data</span>
-            <input v-model="filtroData" type="date" class="input-filter" />
-          </label>
-
-          <label class="filter-field filter-field-time">
-            <span class="filter-label">Horario</span>
-            <input v-model="filtroHorario" type="time" class="input-filter" />
-          </label>
-
-          <button
-            type="button"
-            class="btn-clear-filters"
-            :disabled="!filtrosAtivos"
-            @click="limparFiltros"
-          >
-            Limpar filtros
-          </button>
         </div>
 
         <div v-if="isLoading" class="state-card state-card-loading">
@@ -205,12 +171,6 @@ const resolverQuadraId = (valor) => {
   const numero = Number(valor)
   return Number.isFinite(numero) && numero > 0 ? numero : null
 }
-const normalizarTexto = (valor) => String(valor || '')
-  .toLowerCase()
-  .normalize('NFD')
-  .replace(/[\u0300-\u036f]/g, '')
-  .trim()
-
 const agendamentos = ref([])
 const quadras = ref([])
 const isLoading = ref(true)
@@ -224,15 +184,9 @@ const idParaRecusar = ref(null)
 const isRecusando = ref(false)
 const loadingCards = ref([])
 const abaAtiva = ref('pendentes')
-const filtroBusca = ref('')
-const filtroData = ref('')
-const filtroHorario = ref('')
 
 const ITENS_POR_PAGINA = 10
 const podeTrocarQuadra = computed(() => Number(authStore.usuario?.permissaoId) === 1)
-const filtrosAtivos = computed(() =>
-  Boolean(normalizarTexto(filtroBusca.value) || filtroData.value || filtroHorario.value),
-)
 
 const paginasAtuais = ref({
   pendentes: 1,
@@ -268,58 +222,10 @@ const obterDataAgendamento = (agendamento) => {
   return null
 }
 
-const formatarDataFiltro = (data) => {
-  if (!data) return ''
-
-  const ano = data.getFullYear()
-  const mes = String(data.getMonth() + 1).padStart(2, '0')
-  const dia = String(data.getDate()).padStart(2, '0')
-  return `${ano}-${mes}-${dia}`
-}
-
-const obterHoraAgendamento = (agendamento) => {
-  if (agendamento?.datahora) {
-    const data = new Date(agendamento.datahora)
-    if (Number.isNaN(data.getTime())) return ''
-    return `${String(data.getHours()).padStart(2, '0')}:${String(data.getMinutes()).padStart(2, '0')}`
-  }
-
-  if (Number.isInteger(agendamento?.hora)) {
-    return `${String(agendamento.hora).padStart(2, '0')}:00`
-  }
-
-  return ''
-}
-
 const agendamentosFiltrados = computed(() => {
-  const busca = normalizarTexto(filtroBusca.value)
-
   return agendamentos.value.filter((agendamento) => {
     if (quadraId.value && Number(agendamento?.quadra?.id) !== Number(quadraId.value)) {
       return false
-    }
-
-    if (busca) {
-      const conteudoBusca = [
-        agendamento?.usuario?.nome,
-        agendamento?.time?.nome,
-        agendamento?.quadra?.nome,
-        agendamento?.codigoVerificacao,
-        agendamento?.tipo,
-      ]
-        .map(normalizarTexto)
-        .join(' ')
-
-      if (!conteudoBusca.includes(busca)) return false
-    }
-
-    if (filtroData.value) {
-      const dataAgendamento = obterDataAgendamento(agendamento)
-      if (formatarDataFiltro(dataAgendamento) !== filtroData.value) return false
-    }
-
-    if (filtroHorario.value) {
-      if (obterHoraAgendamento(agendamento) !== filtroHorario.value) return false
     }
 
     return true
@@ -417,10 +323,6 @@ const tituloEstadoVazio = computed(() => {
     return 'Selecione uma quadra para visualizar os agendamentos.'
   }
 
-  if (filtrosAtivos.value) {
-    return 'Nenhum agendamento corresponde aos filtros aplicados.'
-  }
-
   const mensagens = {
     pendentes: 'Nenhum pedido pendente no momento.',
     confirmados: 'Nenhuma reserva futura confirmada.',
@@ -432,11 +334,7 @@ const tituloEstadoVazio = computed(() => {
 
 const descricaoEstadoVazio = computed(() => {
   if (podeTrocarQuadra.value && !quadraId.value) {
-    return 'Escolha uma unidade no filtro acima para iniciar a operacao.'
-  }
-
-  if (filtrosAtivos.value) {
-    return 'Ajuste a busca, data ou horario para ampliar o resultado desta aba.'
+    return 'Escolha uma unidade no seletor acima para iniciar a operacao.'
   }
 
   const descricoes = {
@@ -526,14 +424,6 @@ const carregarAgendamentos = async () => {
   }
 }
 
-const limparFiltros = () => {
-  filtroBusca.value = ''
-  filtroData.value = ''
-  filtroHorario.value = ''
-  resetarPaginas()
-  normalizarPaginas()
-}
-
 const aceitarAgendamento = async (id) => {
   if (loadingCards.value.includes(id)) return
 
@@ -601,11 +491,6 @@ const abrirModalDetalhes = (agendamento) => {
   detalheAberto.value = true
 }
 
-watch([filtroBusca, filtroData, filtroHorario], () => {
-  resetarPaginas()
-  normalizarPaginas()
-})
-
 watch(
   agendamentosFiltrados,
   () => {
@@ -631,24 +516,26 @@ onMounted(async () => {
 .conteudo {
   flex: 1;
   margin-left: 250px;
-  padding: 20px 32px 32px;
+  padding: 16px 28px 24px;
   min-width: 0;
   overflow-x: hidden;
 }
 
 .page-nav {
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 
 .page-header {
-  margin-bottom: 22px;
+  margin-bottom: 18px;
+  padding-top: 12px;
+  padding-right: min(280px, 24vw);
 }
 
 .header-copy,
 .panel-copy {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -657,12 +544,12 @@ onMounted(async () => {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 18px;
+  gap: 14px;
 }
 
 .title {
   margin: 0;
-  font-size: 42px;
+  font-size: 36px;
   line-height: 1.04;
   font-weight: 800;
   color: #2563eb;
@@ -709,8 +596,8 @@ onMounted(async () => {
 .section-subtitle,
 .state-copy {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 13px;
+  line-height: 1.45;
   color: #64748b;
 }
 
@@ -729,18 +616,18 @@ onMounted(async () => {
 .agendamentos-panel {
   background: #ffffff;
   border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 24px;
-  padding: 20px;
-  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.06);
+  border-radius: 22px;
+  padding: 16px;
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.06);
 }
 
 .panel-head {
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
 .section-title {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1.15;
   font-weight: 800;
   color: #0f172a;
@@ -750,7 +637,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
@@ -758,12 +645,12 @@ onMounted(async () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: 32px;
+  padding: 0 12px;
   border-radius: 999px;
   background: rgba(37, 99, 235, 0.08);
   color: #2563eb;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -775,14 +662,14 @@ onMounted(async () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  min-height: 44px;
-  padding: 0 16px;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
   border-radius: 999px;
   background: linear-gradient(135deg, #3b82f6, #2563eb);
   color: #ffffff;
   box-shadow: 0 14px 30px rgba(37, 99, 235, 0.22);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -798,8 +685,8 @@ onMounted(async () => {
 }
 
 .btn-top-action-icon {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   flex: 0 0 auto;
 }
 
@@ -808,13 +695,13 @@ onMounted(async () => {
 }
 
 .filters-toolbar {
-  display: grid;
-  grid-template-columns: minmax(220px, 1.2fr) minmax(240px, 1.5fr) repeat(2, minmax(150px, 0.8fr)) auto;
-  gap: 12px;
+  display: flex;
   align-items: end;
-  margin-bottom: 18px;
-  padding: 16px;
-  border-radius: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border-radius: 18px;
   background: #f8fafc;
   border: 1px solid rgba(148, 163, 184, 0.18);
 }
@@ -822,31 +709,31 @@ onMounted(async () => {
 .filter-field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 }
 
-.filter-field-wide {
-  min-width: 0;
+.filter-field-quadra {
+  width: 100%;
 }
 
 .filter-label {
   margin: 0;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #475569;
 }
 
 .input-filter {
   width: 100%;
-  min-height: 44px;
-  padding: 0 14px;
+  min-height: 40px;
+  padding: 0 12px;
   border-radius: 14px;
   border: 1px solid rgba(148, 163, 184, 0.24);
   background: #ffffff;
-  font-size: 14px;
+  font-size: 13px;
   color: #0f172a;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
@@ -861,47 +748,14 @@ onMounted(async () => {
   appearance: none;
 }
 
-.input-filter-static {
-  display: flex;
-  align-items: center;
-  font-weight: 700;
-  background: rgba(37, 99, 235, 0.08);
-  color: #1d4ed8;
-}
-
-.btn-clear-filters {
-  min-height: 44px;
-  padding: 0 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(37, 99, 235, 0.18);
-  background: #ffffff;
-  color: #2563eb;
-  font-size: 13px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
-}
-
-.btn-clear-filters:hover:not(:disabled) {
-  transform: translateY(-1px);
-  border-color: rgba(37, 99, 235, 0.32);
-  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.08);
-}
-
-.btn-clear-filters:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
 .abas-config-container {
   display: flex;
-  gap: 10px;
-  padding: 10px;
-  border-radius: 18px;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 16px;
   background: #f8fafc;
   border: 1px solid rgba(148, 163, 184, 0.18);
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
 .aba-config {
@@ -911,13 +765,13 @@ onMounted(async () => {
   border-radius: 14px;
   background: transparent;
   color: #64748b;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
-  padding: 12px 14px;
+  padding: 10px 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   cursor: pointer;
   transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
@@ -938,13 +792,13 @@ onMounted(async () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 26px;
-  height: 22px;
-  padding: 0 7px;
+  min-width: 24px;
+  height: 20px;
+  padding: 0 6px;
   border-radius: 999px;
   background: rgba(37, 99, 235, 0.12);
   color: #2563eb;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
 }
 
@@ -954,34 +808,34 @@ onMounted(async () => {
 }
 
 .state-card {
-  min-height: 300px;
-  border-radius: 20px;
+  min-height: 240px;
+  border-radius: 18px;
   border: 1px dashed rgba(148, 163, 184, 0.35);
   background: #f8fafc;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   text-align: center;
-  padding: 24px;
+  padding: 20px;
 }
 
 .state-title {
   margin: 0;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   color: #0f172a;
 }
 
 .state-card-loading {
-  min-height: 320px;
+  min-height: 250px;
 }
 
 .loader {
-  width: 68px;
-  height: 68px;
-  border: 6px solid #dbe5f1;
+  width: 58px;
+  height: 58px;
+  border: 5px solid #dbe5f1;
   border-top-color: #2563eb;
   border-radius: 999px;
   animation: spin 1s linear infinite;
@@ -990,27 +844,27 @@ onMounted(async () => {
 .content-stack {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .agendamentos-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
 }
 
 .paginacao-controls {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding-top: 18px;
+  gap: 10px;
+  padding-top: 14px;
   border-top: 1px solid rgba(148, 163, 184, 0.18);
 }
 
 .info-paginacao {
   color: #64748b;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -1020,13 +874,13 @@ onMounted(async () => {
 }
 
 .btn-paginacao {
-  min-height: 42px;
-  padding: 0 14px;
+  min-height: 38px;
+  padding: 0 12px;
   border-radius: 14px;
   border: 1px solid rgba(148, 163, 184, 0.24);
   background: #ffffff;
   color: #334155;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   display: inline-flex;
   align-items: center;
@@ -1063,13 +917,14 @@ onMounted(async () => {
   .overview-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
-
-  .filters-toolbar {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 960px) {
+  .page-header {
+    padding-top: 6px;
+    padding-right: 0;
+  }
+
   .overview-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1084,14 +939,6 @@ onMounted(async () => {
     justify-content: flex-start;
   }
 
-  .filters-toolbar {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .btn-clear-filters {
-    width: 100%;
-  }
-
   .agendamentos-grid {
     grid-template-columns: 1fr;
   }
@@ -1100,17 +947,17 @@ onMounted(async () => {
 @media (max-width: 768px) {
   .conteudo {
     margin-left: 0;
-    padding: 12px 14px 18px;
+    padding: 10px 12px 14px;
   }
 
   .page-nav {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
 
   .title {
-    font-size: 24px;
+    font-size: 22px;
     line-height: 1.12;
-    margin: 0 0 8px 0;
+    margin: 0 0 4px 0;
     padding-left: 0;
     min-height: auto;
     display: flex;
@@ -1145,38 +992,21 @@ onMounted(async () => {
   }
 
   .agendamentos-panel {
-    padding: 18px;
-    border-radius: 22px;
+    padding: 14px;
+    border-radius: 20px;
   }
 
   .filters-toolbar {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    padding: 14px;
-    border-radius: 18px;
+    padding: 10px;
+    border-radius: 16px;
   }
 
   .filter-field-quadra {
-    grid-column: span 3;
-  }
-
-  .filter-field-wide {
-    grid-column: span 3;
-  }
-
-  .filter-field-date {
-    grid-column: span 2;
-  }
-
-  .filter-field-time {
-    grid-column: span 2;
-  }
-
-  .btn-clear-filters {
-    grid-column: span 2;
+    width: 100%;
   }
 
   .panel-head {
-    gap: 12px;
+    gap: 10px;
   }
 
   .panel-pill {
@@ -1240,11 +1070,11 @@ onMounted(async () => {
   }
 
   .content-stack {
-    gap: 16px;
+    gap: 12px;
   }
 
   .agendamentos-grid {
-    gap: 14px;
+    gap: 12px;
   }
 
   .paginacao-controls {

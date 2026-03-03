@@ -129,13 +129,13 @@ const horaFormatada = computed(() => formatarHora(props.agendamento))
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   min-height: 100%;
-  padding: 15px 16px;
-  border-radius: 20px;
+  padding: 13px 14px;
+  border-radius: 18px;
   background: linear-gradient(180deg, #fbfdff 0%, #ffffff 100%);
   border: 1px solid rgba(148, 163, 184, 0.18);
-  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.07);
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.07);
   overflow: hidden;
 }
 
@@ -143,7 +143,7 @@ const horaFormatada = computed(() => formatarHora(props.agendamento))
   content: '';
   position: absolute;
   inset: 0 auto 0 0;
-  width: 4px;
+  width: 3px;
   background: rgba(148, 163, 184, 0.24);
 }
 
@@ -160,8 +160,8 @@ const horaFormatada = computed(() => formatarHora(props.agendamento))
 }
 
 .card.is-recusado {
-  gap: 8px;
-  padding: 12px 13px;
+  gap: 6px;
+  padding: 10px 11px;
 }
 
 .card.is-recusado .card-top {
@@ -191,19 +191,19 @@ const horaFormatada = computed(() => formatarHora(props.agendamento))
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
 }
 
 .title-block {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
 }
 
 .card-kicker {
   margin: 0;
-  font-size: 10px;
+  font-size: 9px;
   line-height: 1;
   letter-spacing: 0.14em;
   font-weight: 800;
@@ -213,7 +213,7 @@ const horaFormatada = computed(() => formatarHora(props.agendamento))
 
 .card-title {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1.05;
   font-weight: 800;
   color: #0f172a;
@@ -223,11 +223,11 @@ const horaFormatada = computed(() => formatarHora(props.agendamento))
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 96px;
-  min-height: 28px;
-  padding: 0 10px;
+  min-width: 88px;
+  min-height: 26px;
+  padding: 0 9px;
   border-radius: 999px;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -258,7 +258,7 @@ const horaFormatada = computed(() => formatarHora(props.agendamento))
 .meta-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
 }
 
 .card.is-recusado .meta-grid {
@@ -268,10 +268,10 @@ const horaFormatada = computed(() => formatarHora(props.agendamento))
 .meta-item {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
-  padding: 10px 11px;
-  border-radius: 14px;
+  padding: 8px 9px;
+  border-radius: 12px;
   background: #f8fafc;
   border: 1px solid rgba(226, 232, 240, 0.9);
 }
@@ -290,7 +290,7 @@ const horaFormatada = computed(() => formatarHora(props.agendamento))
 .code-label,
 .motivo-label,
 .footer-status-label {
-  font-size: 10px;
+  font-size: 9px;
   line-height: 1;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -302,8 +302,8 @@ const horaFormatada = computed(() => formatarHora(props.agendamento))
 .motivo-value,
 .footer-status-value {
   min-width: 0;
-  font-size: 14px;
-  line-height: 1.25;
+  font-size: 13px;
+  line-height: 1.2;
   color: #0f172a;
   font-weight: 700;
   word-break: break-word;
@@ -313,9 +313,9 @@ const horaFormatada = computed(() => formatarHora(props.agendamento))
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 14px;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
   background: rgba(37, 99, 235, 0.06);
   border: 1px solid rgba(37, 99, 235, 0.12);
 }
@@ -327,7 +327,7 @@ const horaFormatada = computed(() => formatarHora(props.agendamento))
 }
 
 .code-value {
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1;
   color: #1d4ed8;
   font-weight: 900;
@@ -337,9 +337,9 @@ const horaFormatada = computed(() => formatarHora(props.agendamento))
 .motivo-recusa {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 10px 12px;
-  border-radius: 14px;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: 12px;
   background: rgba(220, 38, 38, 0.06);
   border: 1px solid rgba(220, 38, 38, 0.14);
 }
@@ -362,15 +362,15 @@ const horaFormatada = computed(() => formatarHora(props.agendamento))
 .buttons {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
 }
 
 .btn-action {
-  min-height: 38px;
+  min-height: 36px;
   border: none;
   border-radius: 999px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }

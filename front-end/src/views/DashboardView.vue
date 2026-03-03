@@ -492,34 +492,163 @@ export default {
   methods: {
     async gerarPDFGraficos() {
       const doc = new jsPDF('p', 'mm', 'a4');
-      const corPrimaria = [30, 58, 138];
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margemX = 12;
+      const limiteInferior = pageHeight - 15;
+      const dataGeracao = new Date();
+      const dataGeracaoLabel = `${dataGeracao.toLocaleDateString('pt-BR')} às ${dataGeracao.toLocaleTimeString('pt-BR')}`;
+      const anoAnalise = dataGeracao.getFullYear();
+      const nomeQuadra = this.usuarioLogado?.quadra?.nome || 'Todas as quadras';
+      const escopoRelatorio = this.usuarioLogado?.permissaoId === 2 ? `Quadra: ${nomeQuadra}` : 'Visão geral da operação';
+      const resumoPeriodo = `Ano analisado: ${anoAnalise}`;
 
-      doc.setFillColor(...corPrimaria);
-      doc.rect(0, 0, 210, 25, 'F');
+      const cores = {
+        header: [15, 23, 42],
+        headerAccent: [56, 189, 248],
+        primary: [29, 78, 216],
+        primarySoft: [219, 234, 254],
+        primarySoftAlt: [239, 246, 255],
+        success: [22, 163, 74],
+        successSoft: [240, 253, 244],
+        warning: [234, 88, 12],
+        warningSoft: [255, 247, 237],
+        danger: [185, 28, 28],
+        dangerSoft: [254, 242, 242],
+        text: [15, 23, 42],
+        muted: [100, 116, 139],
+        border: [203, 213, 225],
+        white: [255, 255, 255],
+        panel: [248, 250, 252],
+      };
 
-      const img = new Image();
-      img.src = logoImg;
-      await new Promise((resolve) => {
-        img.onload = () => {
-          doc.addImage(img, 'PNG', 15, 6, 13, 13);
-          resolve();
-        };
-      });
+      const normalizarNomeArquivo = (texto) => {
+        return String(texto || 'dashboard')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-zA-Z0-9]+/g, '_')
+          .replace(/^_+|_+$/g, '')
+          .toLowerCase();
+      };
 
-      doc.setFontSize(16);
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.text("QuadraLivre", 32, 15);
-      doc.setTextColor(...corPrimaria);
-      doc.setFontSize(16);
-      doc.text(`Relatório de Agendamentos - ${this.tituloDashboard}`, 105, 45, null, null, "center");
+      const carregarLogo = async () => {
+        const img = new Image();
 
-      doc.setFontSize(10);
-      doc.setTextColor(100);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} as ${new Date().toLocaleTimeString('pt-BR')}`, 105, 51, null, null, "center");
+        return new Promise((resolve) => {
+          img.onload = () => resolve(img);
+          img.onerror = () => resolve(null);
+          img.src = logoImg;
+        });
+      };
 
-      let cursorY = 70;
+      const logo = await carregarLogo();
+      let cursorY = 0;
+
+      const desenharCabecalho = (continuacao = false) => {
+        const altura = continuacao ? 15 : 22;
+
+        doc.setFillColor(...cores.header);
+        doc.rect(0, 0, pageWidth, altura, 'F');
+        doc.setFillColor(...cores.headerAccent);
+        doc.rect(0, 0, pageWidth, 2.5, 'F');
+
+        if (logo) {
+          doc.addImage(logo, 'PNG', margemX, continuacao ? 3.5 : 4.5, continuacao ? 8 : 10, continuacao ? 8 : 10);
+        }
+
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...cores.white);
+        doc.setFontSize(continuacao ? 11 : 15);
+        doc.text('QuadraPlay', logo ? margemX + (continuacao ? 11 : 13) : margemX, continuacao ? 8.8 : 11.8);
+
+        if (continuacao) {
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7.5);
+          doc.setTextColor(191, 219, 254);
+          doc.text('Relatório de gráficos operacionais', pageWidth - margemX, 8.8, { align: 'right' });
+          cursorY = 20;
+          return;
+        }
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(191, 219, 254);
+        doc.text('Relatório de gráficos operacionais', logo ? margemX + 13 : margemX, 16);
+
+        doc.setTextColor(...cores.white);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.text(this.tituloDashboard, margemX, 31);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.2);
+        doc.setTextColor(...cores.muted);
+        doc.text(`${escopoRelatorio}  •  ${resumoPeriodo}`, margemX, 36);
+        doc.text(`Gerado em ${dataGeracaoLabel}`, margemX, 40.5);
+
+        cursorY = 46;
+      };
+
+      const desenharRodape = (paginaAtual, totalPaginas) => {
+        doc.setDrawColor(...cores.border);
+        doc.line(margemX, pageHeight - 9, pageWidth - margemX, pageHeight - 9);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(...cores.muted);
+        doc.text('Relatório gerado a partir dos gráficos exibidos no dashboard.', margemX, pageHeight - 4.5);
+        doc.text(`Página ${paginaAtual}/${totalPaginas}`, pageWidth - margemX, pageHeight - 4.5, { align: 'right' });
+      };
+
+      const desenharCardResumo = ({ x, y, w, titulo, valor, detalhe, fillColor, accentColor, valueColor }) => {
+        doc.setFillColor(...fillColor);
+        doc.setDrawColor(...cores.border);
+        doc.roundedRect(x, y, w, 15, 4, 4, 'FD');
+
+        doc.setFillColor(...accentColor);
+        doc.roundedRect(x, y, 4, 15, 4, 4, 'F');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.setTextColor(...cores.muted);
+        doc.text(titulo.toUpperCase(), x + 7, y + 4.8);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.setTextColor(...valueColor);
+        doc.text(String(valor), x + 7, y + 9.5);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.7);
+        doc.setTextColor(...cores.muted);
+        doc.text(detalhe, x + 7, y + 13);
+      };
+
+      const desenharBlocoContexto = (y) => {
+        doc.setFillColor(...cores.primarySoftAlt);
+        doc.setDrawColor(...cores.border);
+        doc.roundedRect(margemX, y, pageWidth - margemX * 2, 11, 4, 4, 'FD');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(...cores.primary);
+        doc.text('Leitura do relatório', margemX + 6, y + 4.6);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.2);
+        doc.setTextColor(...cores.muted);
+        doc.text(
+          'Os gráficos consideram os agendamentos carregados no dashboard e ajudam a comparar volume, distribuição e evolução mensal.',
+          margemX + 6,
+          y + 8.4
+        );
+      };
+
+      const garantirEspaco = (alturaNecessaria) => {
+        if (cursorY + alturaNecessaria <= limiteInferior) return;
+        doc.addPage();
+        desenharCabecalho(true);
+      };
 
       const capturarGraficoComNumeros = (chartId) => {
         const chartInstance = Chart.getChart(chartId);
@@ -527,48 +656,152 @@ export default {
 
         Chart.register(pdfExportPlugin);
         chartInstance.update('none');
-        const imgData = chartInstance.canvas.toDataURL("image/png", 1.0);
-        Chart.unregister(pdfExportPlugin);
-        chartInstance.update('none');
 
-        return imgData;
+        try {
+          return chartInstance.canvas.toDataURL('image/png', 1.0);
+        } finally {
+          Chart.unregister(pdfExportPlugin);
+          chartInstance.update('none');
+        }
       };
 
-      const adicionarAoPDF = (imgData, titulo, isPie = false) => {
-        if (!imgData) return;
+      const adicionarSecaoGrafico = ({ chartId, titulo, descricao, isPie = false }) => {
+        const imgData = capturarGraficoComNumeros(chartId);
+        const larguraPainel = pageWidth - margemX * 2;
 
-        doc.setFontSize(12);
-        doc.setTextColor(...corPrimaria);
-        doc.setFont("helvetica", "bold");
-        doc.text(titulo, 15, cursorY);
+        if (!imgData) {
+          garantirEspaco(28);
+          doc.setFillColor(...cores.panel);
+          doc.setDrawColor(...cores.border);
+          doc.roundedRect(margemX, cursorY, larguraPainel, 22, 5, 5, 'FD');
 
-        const imgProps = doc.getImageProperties(imgData);
-        let pdfWidth = 180;
-        let pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(10);
+          doc.setTextColor(...cores.primary);
+          doc.text(titulo, margemX + 6, cursorY + 7);
 
-        if (isPie) {
-          pdfWidth = 100;
-          pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-          doc.addImage(imgData, 'PNG', 55, cursorY + 5, pdfWidth, pdfHeight);
-        } else {
-          doc.addImage(imgData, 'PNG', 15, cursorY + 5, pdfWidth, pdfHeight);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          doc.setTextColor(...cores.muted);
+          doc.text('Não foi possível capturar este gráfico no momento da exportação.', margemX + 6, cursorY + 13);
+
+          cursorY += 27;
+          return;
         }
 
-        cursorY += pdfHeight + 20;
+        const imgProps = doc.getImageProperties(imgData);
+        let pdfWidth = isPie ? 110 : 166;
+        let pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        const alturaMaxima = isPie ? 82 : 90;
+
+        if (pdfHeight > alturaMaxima) {
+          pdfWidth = (pdfWidth * alturaMaxima) / pdfHeight;
+          pdfHeight = alturaMaxima;
+        }
+
+        const alturaPainel = pdfHeight + 22;
+        garantirEspaco(alturaPainel + 5);
+
+        doc.setFillColor(...cores.white);
+        doc.setDrawColor(...cores.border);
+        doc.roundedRect(margemX, cursorY, larguraPainel, alturaPainel, 5, 5, 'FD');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(...cores.primary);
+        doc.text(titulo, margemX + 6, cursorY + 7);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.8);
+        doc.setTextColor(...cores.muted);
+        doc.text(descricao, margemX + 6, cursorY + 12);
+
+        const imagemX = margemX + (larguraPainel - pdfWidth) / 2;
+        doc.addImage(imgData, 'PNG', imagemX, cursorY + 15, pdfWidth, pdfHeight);
+
+        cursorY += alturaPainel + 5;
       };
 
-      const img1 = capturarGraficoComNumeros('agendamentosModalidadeChart');
-      adicionarAoPDF(img1, '1. Agendamentos por Modalidade');
+      desenharCabecalho(false);
 
-      if (cursorY > 200) { doc.addPage(); cursorY = 20; }
-      const img2 = capturarGraficoComNumeros('agendamentosTipoChart');
-      adicionarAoPDF(img2, '2. Agendamentos por Tipo', true);
+      const cardGap = 4;
+      const cardWidth = (pageWidth - margemX * 2 - cardGap * 3) / 4;
 
-      if (cursorY > 200) { doc.addPage(); cursorY = 20; }
-      const img3 = capturarGraficoComNumeros('agendamentosMesChart');
-      adicionarAoPDF(img3, '3. Evolucao Mensal');
+      desenharCardResumo({
+        x: margemX,
+        y: cursorY,
+        w: cardWidth,
+        titulo: 'Total',
+        valor: this.totalAgendamentos,
+        detalhe: 'Agendamentos no período',
+        fillColor: cores.primarySoftAlt,
+        accentColor: cores.primary,
+        valueColor: cores.text,
+      });
+      desenharCardResumo({
+        x: margemX + cardWidth + cardGap,
+        y: cursorY,
+        w: cardWidth,
+        titulo: 'Confirmados',
+        valor: this.totalConfirmados,
+        detalhe: 'Agendamentos aprovados',
+        fillColor: cores.successSoft,
+        accentColor: cores.success,
+        valueColor: cores.success,
+      });
+      desenharCardResumo({
+        x: margemX + (cardWidth + cardGap) * 2,
+        y: cursorY,
+        w: cardWidth,
+        titulo: 'Pendentes',
+        valor: this.totalPendentes,
+        detalhe: 'Aguardando análise',
+        fillColor: cores.warningSoft,
+        accentColor: cores.warning,
+        valueColor: cores.warning,
+      });
+      desenharCardResumo({
+        x: margemX + (cardWidth + cardGap) * 3,
+        y: cursorY,
+        w: cardWidth,
+        titulo: 'Recusados',
+        valor: this.totalCancelados,
+        detalhe: 'Agendamentos não aprovados',
+        fillColor: cores.dangerSoft,
+        accentColor: cores.danger,
+        valueColor: cores.danger,
+      });
 
-      doc.save(`relatorio_graficos_${new Date().toISOString().slice(0, 10)}.pdf`);
+      cursorY += 19;
+      desenharBlocoContexto(cursorY);
+      cursorY += 16;
+
+      adicionarSecaoGrafico({
+        chartId: 'agendamentosModalidadeChart',
+        titulo: '1. Distribuição por modalidade',
+        descricao: 'Mostra como os agendamentos confirmados se distribuem entre as modalidades registradas no dashboard.',
+      });
+
+      adicionarSecaoGrafico({
+        chartId: 'agendamentosTipoChart',
+        titulo: '2. Distribuição por tipo de agendamento',
+        descricao: 'Resume a participação de amistosos, treinos, eventos e outros tipos no volume confirmado.',
+        isPie: true,
+      });
+
+      adicionarSecaoGrafico({
+        chartId: 'agendamentosMesChart',
+        titulo: '3. Evolução mensal',
+        descricao: 'Apresenta o comportamento dos agendamentos confirmados ao longo dos meses disponíveis no período.',
+      });
+
+      const totalPaginas = doc.getNumberOfPages();
+      for (let pagina = 1; pagina <= totalPaginas; pagina++) {
+        doc.setPage(pagina);
+        desenharRodape(pagina, totalPaginas);
+      }
+
+      doc.save(`relatorio_dashboard_${normalizarNomeArquivo(nomeQuadra)}_${dataGeracao.toISOString().slice(0, 10)}.pdf`);
     },
 
     verificarSeLi(aviso) {

@@ -6,13 +6,13 @@
         <div class="conteudo-centralizado">
           <h1 class="texto">
             <div>
-              <span class="primeira-linha">Com o Quadra Play, <span class="destaque_sublinhado">agendar</span></span>
+              <span class="primeira-linha">Agende sua Quadra em <span class="destaque_sublinhado">São Vicente</span></span>
             </div>
             <div>
-              <span class="segunda-linha destaque">seu treino ficou ainda mais fácil.</span>
+              <span class="segunda-linha destaque">De forna Rápida e olline.</span>
             </div>
           </h1>
-          <p class="hero-subtitle">Com poucos cliques, encontre e reserve a quadra ideal para o seu treino.</p>
+          <p class="hero-subtitle">Com o Quadra Play SV, você reserva em poucos cliques.</p>
         </div>
       </section>
 

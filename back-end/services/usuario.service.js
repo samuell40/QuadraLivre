@@ -22,7 +22,7 @@ async function cadastrarUsuario(user) {
 }
 
 async function atualizarUsuario(user) {
-  return prisma.$transaction(async (tx) => {
+  const usuarioAtualizado = await prisma.$transaction(async (tx) => {
     const agora = new Date();
 
     const usuarioDb = await tx.usuario.findUnique({
@@ -81,10 +81,16 @@ async function atualizarUsuario(user) {
       },
     });
 
-    await enviarEmailAlteracaoPermissao(usuarioAtualizado);
-
     return usuarioAtualizado;
   });
+
+  try {
+    await enviarEmailAlteracaoPermissao(usuarioAtualizado);
+  } catch (erroEmail) {
+    console.error('Erro ao enviar email de alteracao de permissao:', erroEmail);
+  }
+
+  return usuarioAtualizado;
 }
 
 async function getUsuarios() {
@@ -227,7 +233,7 @@ async function listarPermissoes() {
 }
 
 async function vincularUsuarioTime(usuarioId, timeId, jogadorId) {
-  return prisma.$transaction(async (tx) => {
+  const resultado = await prisma.$transaction(async (tx) => {
     const usuarioIdNum = Number(usuarioId);
     const timeIdNum = Number(timeId);
     const jogadorIdNum = jogadorId ? Number(jogadorId) : null;
@@ -256,6 +262,7 @@ async function vincularUsuarioTime(usuarioId, timeId, jogadorId) {
       return {
         vinculo: { usuarioId: usuarioIdNum, timeId: timeIdNum },
         jogador: null,
+        notificacaoEmail: null,
       };
     }
 
@@ -315,13 +322,33 @@ async function vincularUsuarioTime(usuarioId, timeId, jogadorId) {
       },
     });
 
-    await enviarEmailVinculoTime(usuario, time, jogadorAtualizado);
-
     return {
       vinculo: { usuarioId: usuarioIdNum, timeId: timeIdNum },
       jogador: jogadorAtualizado,
+      notificacaoEmail: {
+        usuario,
+        time,
+        jogador: jogadorAtualizado,
+      },
     };
   });
+
+  if (resultado.notificacaoEmail) {
+    try {
+      await enviarEmailVinculoTime(
+        resultado.notificacaoEmail.usuario,
+        resultado.notificacaoEmail.time,
+        resultado.notificacaoEmail.jogador
+      );
+    } catch (erroEmail) {
+      console.error('Erro ao enviar email de vinculo com time:', erroEmail);
+    }
+  }
+
+  return {
+    vinculo: resultado.vinculo,
+    jogador: resultado.jogador,
+  };
 }
 
 async function getUsuarioTimesService(usuarioId) {

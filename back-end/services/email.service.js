@@ -1,46 +1,382 @@
 const nodemailer = require('nodemailer');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
+const BRAND_NAME = 'QuadraPlay';
+const SUPPORT_EMAIL = 'quadraplaysv@gmail.com';
+const SUPPORT_FROM = `"Suporte - ${BRAND_NAME}" <${SUPPORT_EMAIL}>`;
+const NOTICE_FROM = `"Avisos - ${BRAND_NAME}" <${SUPPORT_EMAIL}>`;
+const SITE_URL =
+  process.env.FRONTEND_URL ||
+  process.env.APP_URL ||
+  process.env.QUADRAPLAY_URL ||
+  'https://quadraplaysv.com.br';
+const BRAND_LOGO_URL =
+  'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/C%C3%B3pia%20de%20xxxxx%20(2).png';
+
+const TONE_MAP = {
+  brand: {
+    background: '#eff6ff',
+    border: '#93c5fd',
+    title: '#1d4ed8',
+    text: '#1e3a8a',
+  },
+  success: {
+    background: '#ecfdf5',
+    border: '#86efac',
+    title: '#166534',
+    text: '#166534',
+  },
+  danger: {
+    background: '#fef2f2',
+    border: '#fca5a5',
+    title: '#b91c1c',
+    text: '#7f1d1d',
+  },
+  warning: {
+    background: '#fff7ed',
+    border: '#fdba74',
+    title: '#c2410c',
+    text: '#9a3412',
+  },
+};
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'quadraplaysv@gmail.com',
-    pass: 'peqt dfif ftsa lsgu'
-  }
+    user: SUPPORT_EMAIL,
+    pass: 'peqt dfif ftsa lsgu',
+  },
 });
 
-async function enviarEmail({ to, subject, html }) {
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function toHtmlLines(value) {
+  return escapeHtml(value).replace(/\r?\n/g, '<br />');
+}
+
+function strong(value) {
+  return `<strong style="color: #0f172a;">${escapeHtml(value)}</strong>`;
+}
+
+function renderParagraph(content, options = {}) {
+  const {
+    size = 16,
+    color = '#334155',
+    marginBottom = 16,
+  } = options;
+
+  return `
+    <p style="margin: 0 0 ${marginBottom}px; font-size: ${size}px; line-height: 1.7; color: ${color};">
+      ${content}
+    </p>
+  `;
+}
+
+function renderDetailCard(title, items = []) {
+  const validItems = items.filter(
+    item => item && item.value !== undefined && item.value !== null && item.value !== ''
+  );
+
+  if (validItems.length === 0) return '';
+
+  const rows = validItems
+    .map((item, index) => {
+      const borderTop = index === 0 ? '' : 'border-top: 1px solid #dbe7f5;';
+
+      return `
+        <tr>
+          <td style="padding: 14px 0; ${borderTop}">
+            <p style="margin: 0 0 4px; font-size: 11px; line-height: 1.4; letter-spacing: 0.12em; text-transform: uppercase; color: #64748b; font-weight: 700;">
+              ${escapeHtml(item.label)}
+            </p>
+            <p style="margin: 0; font-size: 16px; line-height: 1.5; color: #0f172a; font-weight: 700;">
+              ${escapeHtml(item.value)}
+            </p>
+          </td>
+        </tr>
+      `;
+    })
+    .join('');
+
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0 0; border: 1px solid #dbe7f5; border-radius: 20px; background-color: #f8fbff;">
+      <tr>
+        <td style="padding: 20px 22px;">
+          <p style="margin: 0 0 8px; font-size: 12px; line-height: 1.4; letter-spacing: 0.12em; text-transform: uppercase; color: #2563eb; font-weight: 800;">
+            ${escapeHtml(title)}
+          </p>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            ${rows}
+          </table>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+function renderCallout({ title, content, tone = 'brand' }) {
+  const palette = TONE_MAP[tone] || TONE_MAP.brand;
+
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0 0;">
+      <tr>
+        <td style="padding: 18px 20px; border-left: 4px solid ${palette.border}; border-radius: 18px; background-color: ${palette.background};">
+          <p style="margin: 0 0 8px; font-size: 16px; line-height: 1.5; color: ${palette.title}; font-weight: 800;">
+            ${escapeHtml(title)}
+          </p>
+          <p style="margin: 0; font-size: 15px; line-height: 1.7; color: ${palette.text};">
+            ${content}
+          </p>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+function renderButton(label, url) {
+  if (!label || !url) return '';
+
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 28px 0 0;">
+      <tr>
+        <td align="center" bgcolor="#2563eb" style="border-radius: 999px;">
+          <a
+            href="${escapeHtml(url)}"
+            style="display: inline-block; padding: 14px 22px; font-size: 15px; line-height: 1; font-weight: 800; color: #ffffff; text-decoration: none;"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            ${escapeHtml(label)}
+          </a>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+function createEmailLayout({
+  preheader,
+  eyebrow,
+  title,
+  recipientName,
+  introHtml,
+  sectionsHtml = '',
+  ctaLabel,
+  ctaUrl,
+  footerNote,
+}) {
+  const safePreheader = escapeHtml(preheader || title || BRAND_NAME);
+  const safeEyebrow = escapeHtml(eyebrow || 'Atualização da plataforma');
+  const greetingHtml = recipientName
+    ? renderParagraph(
+        `Olá, ${strong(recipientName)}.`,
+        { size: 16, color: '#334155', marginBottom: 18 }
+      )
+    : '';
+
+  return `
+    <!doctype html>
+    <html lang="pt-BR">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="x-ua-compatible" content="ie=edge" />
+        <title>${escapeHtml(title)}</title>
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #eef4fb;">
+        <div style="display: none; max-height: 0; overflow: hidden; opacity: 0; mso-hide: all;">
+          ${safePreheader}
+        </div>
+
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width: 100%; background-color: #eef4fb; margin: 0; padding: 24px 12px;">
+          <tr>
+            <td align="center">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 620px; background-color: #0d1736; border-radius: 28px; overflow: hidden;">
+                <tr>
+                  <td style="height: 6px; background: linear-gradient(90deg, #60a5fa 0%, #38bdf8 100%); font-size: 0; line-height: 0;">&nbsp;</td>
+                </tr>
+                <tr>
+                  <td style="padding: 28px 32px 22px; background-color: #0d1736;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td width="64" valign="middle">
+                          <img
+                            src="${escapeHtml(BRAND_LOGO_URL)}"
+                            width="48"
+                            height="48"
+                            alt="${BRAND_NAME}"
+                            style="display: block; width: 48px; height: 48px; border: 0; border-radius: 14px;"
+                          />
+                        </td>
+                        <td valign="middle" style="padding-left: 12px;">
+                          <p style="margin: 0 0 4px; font-size: 11px; line-height: 1.4; letter-spacing: 0.16em; text-transform: uppercase; color: #93c5fd; font-weight: 800;">
+                            Plataforma esportiva
+                          </p>
+                          <p style="margin: 0; font-size: 28px; line-height: 1; color: #ffffff; font-weight: 800;">
+                            ${BRAND_NAME}
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 0 16px 16px; background-color: #0d1736;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 24px;">
+                      <tr>
+                        <td style="padding: 34px 32px 32px;">
+                          <p style="margin: 0 0 12px; font-size: 12px; line-height: 1.4; letter-spacing: 0.12em; text-transform: uppercase; color: #2563eb; font-weight: 800;">
+                            ${safeEyebrow}
+                          </p>
+                          <h1 style="margin: 0 0 18px; font-size: 30px; line-height: 1.15; color: #0f172a; font-weight: 800;">
+                            ${escapeHtml(title)}
+                          </h1>
+                          ${greetingHtml}
+                          ${introHtml}
+                          ${sectionsHtml}
+                          ${renderButton(ctaLabel, ctaUrl)}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 0 32px 30px; background-color: #0d1736;">
+                    <p style="margin: 0 0 12px; font-size: 13px; line-height: 1.6; color: #cbd5e1;">
+                      ${escapeHtml(
+                        footerNote ||
+                          `Este é um email automático enviado pela equipe ${BRAND_NAME}.`
+                      )}
+                    </p>
+                    <p style="margin: 0; font-size: 12px; line-height: 1.6; color: #94a3b8;">
+                      ${BRAND_NAME} •
+                      <a href="${escapeHtml(SITE_URL)}" style="color: #bfdbfe; text-decoration: none;" target="_blank" rel="noopener noreferrer">
+                        ${escapeHtml(SITE_URL)}
+                      </a>
+                      •
+                      <a href="mailto:${escapeHtml(SUPPORT_EMAIL)}" style="color: #bfdbfe; text-decoration: none;">
+                        ${escapeHtml(SUPPORT_EMAIL)}
+                      </a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+    </html>
+  `;
+}
+
+function htmlToText(html) {
+  return String(html || '')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<\/(p|div|tr|table|h1|h2|h3|h4|h5|h6|li|td)>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
+}
+
+function buildSubject(subject) {
+  return `${subject} | ${BRAND_NAME}`;
+}
+
+function buildAppUrl(path = '/') {
+  try {
+    return new URL(path, SITE_URL).toString();
+  } catch (error) {
+    return SITE_URL;
+  }
+}
+
+function formatarPermissao(descricao) {
+  return String(descricao || '')
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, letra => letra.toUpperCase());
+}
+
+function formatarDataCurta(data) {
+  if (!data) return '';
+
+  const date = new Date(data);
+  if (Number.isNaN(date.getTime())) return '';
+
+  try {
+    return date.toLocaleDateString('pt-BR', { timeZone: 'America/Fortaleza' });
+  } catch (error) {
+    return date.toLocaleDateString('pt-BR');
+  }
+}
+
+function formatarDataAgendamento(agendamento) {
+  return `${String(agendamento.dia).padStart(2, '0')}/${String(agendamento.mes).padStart(2, '0')}/${agendamento.ano}`;
+}
+
+function formatarHoraAgendamento(hora) {
+  return `${String(hora).padStart(2, '0')}:00`;
+}
+
+async function enviarEmail({ from = SUPPORT_FROM, to, bcc, subject, html, text }) {
   return transporter.sendMail({
-    from: '"Suporte - Quadra Play" <quadraplaysv@gmail.com>',
-    to,
+    from,
+    to: to || (bcc ? SUPPORT_EMAIL : undefined),
+    bcc,
+    replyTo: SUPPORT_EMAIL,
     subject,
-    html
+    html,
+    text: text || htmlToText(html),
   });
 }
 
 async function enviarEmailNovaModalidade(dev, modalidadeNome) {
   const nomeModalidadeFormatado =
-    modalidadeNome.charAt(0).toUpperCase() + modalidadeNome.slice(1);
+    String(modalidadeNome || '').charAt(0).toUpperCase() + String(modalidadeNome || '').slice(1);
 
-  const html = `
-  <div style="font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px;">
-    <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 10px; color: #333; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
-      <h2 style="color: #3b82f6; margin-top: 0; font-size: 24px;">Olá, ${dev.nome}!</h2>
-      <p style="margin: 12px 0; font-size: 18px; line-height: 1.5;">
-        Informamos que a modalidade <strong>${nomeModalidadeFormatado}</strong> foi cadastrada no sistema.
-      </p>
-      <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
-        Atenciosamente,<br/>Equipe Quadra Play
-      </p>
-    </div>
-  </div>
-  `;
+  const html = createEmailLayout({
+    preheader: `Nova modalidade cadastrada: ${nomeModalidadeFormatado}`,
+    eyebrow: 'Atualização administrativa',
+    title: 'Nova modalidade cadastrada',
+    recipientName: dev.nome,
+    introHtml:
+      renderParagraph(
+        `A modalidade ${strong(nomeModalidadeFormatado)} foi cadastrada com sucesso na plataforma.`
+      ) +
+      renderParagraph(
+        'Esse comunicado mantém a equipe alinhada com as mudanças no catálogo do sistema.',
+        { size: 15, color: '#475569', marginBottom: 0 }
+      ),
+    sectionsHtml: renderDetailCard('Resumo da atualização', [
+      { label: 'Modalidade', value: nomeModalidadeFormatado },
+      { label: 'Origem', value: 'Cadastro interno no QuadraPlay' },
+    ]),
+    ctaLabel: 'Ver modalidades',
+    ctaUrl: buildAppUrl('/modalidades'),
+    footerNote:
+      'Aviso enviado para a equipe responsável por acompanhar as modalidades disponíveis na plataforma.',
+  });
 
   return enviarEmail({
     to: dev.email,
-    subject: `Nova modalidade cadastrada`,
-    html
+    subject: buildSubject('Nova modalidade cadastrada'),
+    html,
   });
 }
 
@@ -48,225 +384,246 @@ async function enviarEmailAlteracaoPermissao(usuario) {
   if (![1, 2, 4].includes(usuario.permissaoId)) return;
 
   const descricaoFormatada = formatarPermissao(usuario.permissao.descricao);
+  const quadraNome = usuario.quadra?.nome || '';
 
-  let mensagem;
-  if (usuario.permissaoId === 2 && usuario.quadra) {
-    mensagem = `Informamos que você foi promovido para <strong>${descricaoFormatada}</strong> 
-  e vinculado à quadra: <strong>${usuario.quadra.nome}</strong>.`;
-  } else {
-    mensagem = `Informamos que sua função foi atualizada para <strong>${descricaoFormatada}</strong>.`;
-  }
+  const introHtml =
+    usuario.permissaoId === 2 && quadraNome
+      ? renderParagraph(
+          `Seu perfil foi atualizado para ${strong(descricaoFormatada)} e vinculado à quadra ${strong(quadraNome)}.`
+        )
+      : renderParagraph(
+          `Sua função na plataforma foi atualizada para ${strong(descricaoFormatada)}.`
+        );
 
-  const html = `
-  <div style="font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px;">
-    <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 10px; color: #333; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
-      <h2 style="color: #3b82f6; margin-top: 0; font-size: 24px;">Olá, ${usuario.nome}!</h2>
-      <p style="margin: 12px 0; font-size: 18px; line-height: 1.5;">
-        ${mensagem}
-      </p>
-      <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
-        Atenciosamente,<br/>Equipe QuadraPlay
-      </p>
-    </div>
-  </div>
-  `;
+  const html = createEmailLayout({
+    preheader: `Seu perfil agora possui acesso como ${descricaoFormatada}`,
+    eyebrow: 'Atualização de acesso',
+    title: 'Seu perfil foi atualizado',
+    recipientName: usuario.nome,
+    introHtml,
+    sectionsHtml:
+      renderDetailCard('Seu novo acesso', [
+        { label: 'Permissão', value: descricaoFormatada },
+        { label: 'Quadra', value: quadraNome },
+      ]) +
+      renderCallout({
+        tone: 'brand',
+        title: 'Mudança confirmada',
+        content:
+          'Se você perceber qualquer inconsistência no acesso, entre em contato com a administração da sua quadra.',
+      }),
+    ctaLabel: 'Acessar plataforma',
+    ctaUrl: buildAppUrl('/'),
+    footerNote:
+      'Sempre que houver uma mudança relevante de acesso ou responsabilidade, você será avisado por aqui.',
+  });
 
   return enviarEmail({
     to: usuario.email,
-    subject: `Alteração de permissão`,
-    html
+    subject: buildSubject('Seu perfil foi atualizado'),
+    html,
   });
 }
 
-function formatarPermissao(descricao) {
-  return descricao
-    .toLowerCase()
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, l => l.toUpperCase());
-}
-
-
 async function enviarEmailVinculoTime(usuario, time, jogador) {
-  const html = `
-  <div style="font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px;">
-    <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 10px; color: #333; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
-      <h2 style="color: #3b82f6; margin-top: 0; font-size: 24px;">
-        Olá, ${usuario.nome}!
-      </h2>
+  const nomeTime = time?.nome || 'Time';
+  const nomeModalidade = time?.modalidade?.nome || 'Modalidade';
+  const nomeJogador = jogador?.nome || usuario?.nome || 'Jogador';
 
-      <p style="margin: 12px 0; font-size: 18px; line-height: 1.5;">
-        Você foi vinculado ao time <strong>${time.nome}</strong>
-        da modalidade <strong>${time.modalidade.nome}</strong>.
-      </p>
-
-      <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
-        Seu registro como jogador foi criado com o nome:
-        <strong>${jogador.nome}</strong>.
-      </p>
-
-      <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
-        Atenciosamente,<br/>
-        <strong>Equipe QuadraPlay</strong>
-      </p>
-    </div>
-  </div>
-  `
+  const html = createEmailLayout({
+    preheader: `Você agora faz parte do time ${nomeTime}`,
+    eyebrow: 'Novo vínculo esportivo',
+    title: 'Você entrou em um novo time',
+    recipientName: usuario.nome,
+    introHtml:
+      renderParagraph(
+        `Seu perfil foi vinculado ao time ${strong(nomeTime)} da modalidade ${strong(nomeModalidade)}.`
+      ) +
+      renderParagraph(
+        'O cadastro foi registrado com sucesso e já está disponível na plataforma.',
+        { size: 15, color: '#475569', marginBottom: 0 }
+      ),
+    sectionsHtml: renderDetailCard('Dados do vínculo', [
+      { label: 'Time', value: nomeTime },
+      { label: 'Modalidade', value: nomeModalidade },
+      { label: 'Registro do jogador', value: nomeJogador },
+    ]),
+    ctaLabel: 'Ver times',
+    ctaUrl: buildAppUrl('/times'),
+    footerNote:
+      'Se alguma informação do seu vínculo estiver incorreta, fale com a equipe responsável pelo time ou pela quadra.',
+  });
 
   return enviarEmail({
     to: usuario.email,
-    subject: 'Vinculação a novo time',
+    subject: buildSubject('Novo vínculo com time'),
     html,
-  })
+  });
 }
 
 async function enviarEmailVinculoMesarioCampeonato(mesario, campeonato) {
   if (!mesario?.email) return;
 
-  const nomeMesario = mesario?.nome || 'Mesario';
+  const nomeMesario = mesario?.nome || 'Mesário';
   const nomeCampeonato = campeonato?.nome || 'Campeonato';
   const nomeModalidade = campeonato?.modalidade?.nome || '';
   const nomeQuadra = campeonato?.quadra?.nome || '';
 
-  const blocoModalidade = nomeModalidade
-    ? `<p style="margin: 8px 0; font-size: 16px; line-height: 1.5;">
-         Modalidade: <strong>${nomeModalidade}</strong>
-       </p>`
-    : '';
-
-  const blocoQuadra = nomeQuadra
-    ? `<p style="margin: 8px 0; font-size: 16px; line-height: 1.5;">
-         Quadra: <strong>${nomeQuadra}</strong>
-       </p>`
-    : '';
-
-  const html = `
-  <div style="font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px;">
-    <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 10px; color: #333; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
-      <h2 style="color: #3b82f6; margin-top: 0; font-size: 24px;">Ola, ${nomeMesario}!</h2>
-      <p style="margin: 12px 0; font-size: 18px; line-height: 1.5;">
-        Voce foi vinculado como <strong>Mesario</strong> ao campeonato <strong>${nomeCampeonato}</strong>.
-      </p>
-
-      ${blocoModalidade}
-      ${blocoQuadra}
-
-      <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
-        Atenciosamente,<br/>Equipe QuadraPlay
-      </p>
-    </div>
-  </div>
-  `;
+  const html = createEmailLayout({
+    preheader: `Vínculo confirmado no campeonato ${nomeCampeonato}`,
+    eyebrow: 'Campeonatos',
+    title: 'Vínculo confirmado em campeonato',
+    recipientName: nomeMesario,
+    introHtml:
+      renderParagraph(
+        `Seu vínculo como ${strong('Mesário')} no campeonato ${strong(nomeCampeonato)} foi confirmado.`
+      ) +
+      renderParagraph(
+        'A partir de agora, você pode acompanhar as atividades relacionadas a essa competição dentro da plataforma.',
+        { size: 15, color: '#475569', marginBottom: 0 }
+      ),
+    sectionsHtml: renderDetailCard('Resumo do campeonato', [
+      { label: 'Função', value: 'Mesário' },
+      { label: 'Campeonato', value: nomeCampeonato },
+      { label: 'Modalidade', value: nomeModalidade },
+      { label: 'Quadra', value: nomeQuadra },
+    ]),
+    ctaLabel: 'Abrir plataforma',
+    ctaUrl: buildAppUrl('/'),
+    footerNote:
+      'Este email confirma o seu vínculo operacional para o campeonato informado.',
+  });
 
   return enviarEmail({
     to: mesario.email,
-    subject: 'Vinculacao de mesario em campeonato',
-    html
+    subject: buildSubject('Vínculo confirmado em campeonato'),
+    html,
   });
 }
 
 async function enviarEmailVinculoTreinador(usuario, time) {
   if (!usuario?.email) return;
 
-  const nomeUsuario = usuario?.nome || 'Usuario';
+  const nomeUsuario = usuario?.nome || 'Usuário';
   const nomeTime = time?.nome || 'Time';
   const nomeModalidade = time?.modalidade?.nome || '';
 
-  const blocoModalidade = nomeModalidade
-    ? `<p style="margin: 8px 0; font-size: 16px; line-height: 1.5;">
-         Modalidade: <strong>${nomeModalidade}</strong>
-       </p>`
-    : '';
-
-  const html = `
-  <div style="font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px;">
-    <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 10px; color: #333; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
-      <h2 style="color: #3b82f6; margin-top: 0; font-size: 24px;">Ola, ${nomeUsuario}!</h2>
-      <p style="margin: 12px 0; font-size: 18px; line-height: 1.5;">
-        Sua permissao foi atualizada para <strong>Treinador</strong> e voce foi vinculado ao time
-        <strong>${nomeTime}</strong>.
-      </p>
-
-      ${blocoModalidade}
-
-      <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
-        Atenciosamente,<br/>Equipe QuadraPlay
-      </p>
-    </div>
-  </div>
-  `;
+  const html = createEmailLayout({
+    preheader: `Seu perfil agora está vinculado como treinador do time ${nomeTime}`,
+    eyebrow: 'Atualização de perfil',
+    title: 'Perfil atualizado para treinador',
+    recipientName: nomeUsuario,
+    introHtml:
+      renderParagraph(
+        `Sua permissão foi atualizada para ${strong('Treinador')} e seu perfil foi conectado ao time ${strong(nomeTime)}.`
+      ) +
+      renderParagraph(
+        'Esse novo vínculo já pode ser consultado na plataforma.',
+        { size: 15, color: '#475569', marginBottom: 0 }
+      ),
+    sectionsHtml: renderDetailCard('Resumo do vínculo', [
+      { label: 'Permissão', value: 'Treinador' },
+      { label: 'Time', value: nomeTime },
+      { label: 'Modalidade', value: nomeModalidade },
+    ]),
+    ctaLabel: 'Ver times',
+    ctaUrl: buildAppUrl('/times'),
+    footerNote:
+      'Em caso de divergência nos dados do seu time ou da modalidade, procure a administração responsável.',
+  });
 
   return enviarEmail({
     to: usuario.email,
-    subject: 'Vinculacao como treinador',
-    html
+    subject: buildSubject('Perfil atualizado para treinador'),
+    html,
   });
 }
 
 async function enviarEmailStatusAgendamento(agendamento) {
-  const statusFormatado = agendamento.status === 'Confirmado' ? 'confirmado' : 'recusado';
+  const confirmado = agendamento.status === 'Confirmado';
+  const statusFormatado = confirmado ? 'confirmado' : 'recusado';
+  const blocoStatus = confirmado
+    ? renderCallout({
+        tone: 'success',
+        title: 'Horário reservado',
+        content:
+          'Seu pedido foi aprovado. Recomendamos chegar com antecedência para aproveitar o horário reservado.',
+      })
+    : renderCallout({
+        tone: agendamento.motivoRecusa ? 'danger' : 'warning',
+        title: agendamento.motivoRecusa ? 'Motivo da recusa' : 'Solicitação recusada',
+        content: agendamento.motivoRecusa
+          ? toHtmlLines(agendamento.motivoRecusa)
+          : 'A solicitação não foi aprovada. Consulte outros horários disponíveis na plataforma.',
+      });
 
-  let blocoMotivo = '';
-  if (agendamento.status === 'Recusado' && agendamento.motivoRecusa) {
-    blocoMotivo = `
-      <div style="background-color: #fee2e2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0; border-radius: 4px;">
-        <p style="color: #991b1b; font-weight: bold; margin: 0 0 5px 0; font-size: 16px;">Motivo da Recusa:</p>
-        <p style="color: #7f1d1d; margin: 0; font-size: 15px;">${agendamento.motivoRecusa}</p>
-      </div>
-    `;
-  }
-
-  const html = `
-  <div style="font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px;">
-    <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 10px; color: #333; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
-      <h2 style="color: #3b82f6; margin-top: 0; font-size: 24px;">Olá, ${agendamento.usuario.nome}!</h2>
-      <p style="margin: 12px 0; font-size: 18px; line-height: 1.5;">
-        Seu agendamento na quadra <strong>${agendamento.quadra.nome}</strong> para a modalidade 
-        <strong>${agendamento.modalidade.nome}</strong> no dia <strong>${agendamento.dia}/${agendamento.mes}/${agendamento.ano}</strong> 
-        às <strong>${agendamento.hora.toString().padStart(2, '0')}:00</strong> foi <strong>${statusFormatado}</strong>.
-      </p>
-      
-      ${blocoMotivo}
-
-      <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
-        Atenciosamente,<br/>Equipe QuadraPlay
-      </p>
-    </div>
-  </div>
-  `;
+  const html = createEmailLayout({
+    preheader: `Seu agendamento foi ${statusFormatado}`,
+    eyebrow: 'Atualização de agendamento',
+    title: confirmado ? 'Seu agendamento foi confirmado' : 'Seu agendamento foi recusado',
+    recipientName: agendamento.usuario.nome,
+    introHtml: renderParagraph(
+      `Analisamos sua solicitação e o agendamento na quadra ${strong(agendamento.quadra.nome)} para a modalidade ${strong(agendamento.modalidade.nome)} foi ${strong(statusFormatado)}.`
+    ),
+    sectionsHtml:
+      renderDetailCard('Dados do agendamento', [
+        { label: 'Quadra', value: agendamento.quadra.nome },
+        { label: 'Modalidade', value: agendamento.modalidade.nome },
+        { label: 'Data', value: formatarDataAgendamento(agendamento) },
+        { label: 'Horário', value: formatarHoraAgendamento(agendamento.hora) },
+        { label: 'Status', value: confirmado ? 'Confirmado' : 'Recusado' },
+      ]) + blocoStatus,
+    ctaLabel: 'Ver meus agendamentos',
+    ctaUrl: buildAppUrl('/meusagendamentos'),
+    footerNote:
+      'Se precisar reagendar ou consultar outros horários, acesse a plataforma e acompanhe a disponibilidade da quadra.',
+  });
 
   return enviarEmail({
     to: agendamento.usuario.email,
-    subject: `Agendamento ${statusFormatado} - QuadraPlay`,
-    html
+    subject: buildSubject(
+      confirmado ? 'Agendamento confirmado' : 'Agendamento recusado'
+    ),
+    html,
   });
 }
 
 async function enviarEmailNovoAviso(emailsDestinatarios, aviso) {
   if (!emailsDestinatarios || emailsDestinatarios.length === 0) return;
 
-  const html = `
-  <div style="font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px;">
-    <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 10px; color: #333; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
-      <h2 style="color: #1E3A8A; margin-top: 0; font-size: 24px;">Novo Aviso no Mural!</h2>
-      <h3 style="color: #3b82f6;">${aviso.titulo}</h3>
-      <p style="margin: 12px 0; font-size: 16px; line-height: 1.5; white-space: pre-line;">
-        ${aviso.descricao}
-      </p>
-      <p style="font-size: 14px; color: #666; margin-top: 20px;">
-        Acesse a plataforma para conferir mais detalhes.
-      </p>
-      <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
-        Atenciosamente,<br/>Equipe QuadraPlay
-      </p>
-    </div>
-  </div>
-  `;
+  const tituloAviso = aviso?.titulo || 'Novo aviso';
+  const descricaoAviso = aviso?.descricao || '';
+  const origemAviso = aviso?.quadra?.nome || 'Comunicado geral';
+  const dataAviso = formatarDataCurta(aviso?.data);
 
-  return transporter.sendMail({
-    from: '"Avisos - Quadra Play" <quadraplaysv@gmail.com>',
-    bcc: emailsDestinatarios, 
-    subject: `📢 Novo Aviso: ${aviso.titulo}`,
-    html
+  const html = createEmailLayout({
+    preheader: `Novo aviso publicado: ${tituloAviso}`,
+    eyebrow: 'Mural da plataforma',
+    title: 'Novo aviso no mural',
+    introHtml:
+      renderParagraph(
+        'Um novo comunicado foi publicado para manter você atualizado sobre a plataforma e as atividades da quadra.'
+      ) +
+      renderCallout({
+        tone: 'brand',
+        title: tituloAviso,
+        content: toHtmlLines(descricaoAviso),
+      }),
+    sectionsHtml: renderDetailCard('Detalhes do aviso', [
+      { label: 'Origem', value: origemAviso },
+      { label: 'Publicado em', value: dataAviso },
+    ]),
+    ctaLabel: 'Ler avisos',
+    ctaUrl: buildAppUrl('/meusavisos'),
+    footerNote:
+      'Consulte o mural com frequência para acompanhar novidades importantes da plataforma, da quadra e dos campeonatos.',
+  });
+
+  return enviarEmail({
+    from: NOTICE_FROM,
+    bcc: emailsDestinatarios,
+    subject: buildSubject(`Novo aviso: ${tituloAviso}`),
+    html,
   });
 }
 
@@ -278,5 +635,5 @@ module.exports = {
   enviarEmailVinculoMesarioCampeonato,
   enviarEmailVinculoTreinador,
   enviarEmailStatusAgendamento,
-  enviarEmailNovoAviso
+  enviarEmailNovoAviso,
 };

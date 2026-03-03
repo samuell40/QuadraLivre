@@ -345,20 +345,162 @@ export default {
       }
     }
 
+    const truncarTextoPdf = (texto, limite = 28) => {
+      const valor = String(texto || '').trim()
+      if (!valor) return ''
+      return valor.length > limite ? `${valor.slice(0, limite - 3)}...` : valor
+    }
+
+    const normalizarNomeArquivo = (texto) => {
+      return String(texto || 'grade')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .toLowerCase()
+    }
+
     const gerarPDF = async () => {
       const doc = new jsPDF('l', 'mm', 'a4')
       const nomeQuadra = nomeQuadraSelecionada.value
+      const totalDias = totalDiasAtivos.value
+      const pageWidth = doc.internal.pageSize.getWidth()
+      const pageHeight = doc.internal.pageSize.getHeight()
+      const margemX = 8
+      const dataGeracao = format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })
+      const nomeArquivoQuadra = normalizarNomeArquivo(nomeQuadra)
 
-      const corHeaderDia = [30, 58, 138]
-      const corSubHeaderBg = [226, 232, 240]
-      const corSubHeaderTxt = [30, 41, 59]
-      const corReservadoBg = [255, 255, 255]
-      const corReservadoTxt = [30, 58, 138]
-      const corLivreTxt = [148, 163, 184]
-      const corTraco = [203, 213, 225]
+      const cores = {
+        header: [15, 23, 42],
+        headerAccent: [56, 189, 248],
+        primary: [29, 78, 216],
+        primarySoft: [219, 234, 254],
+        primarySoftAlt: [239, 246, 255],
+        success: [22, 163, 74],
+        successSoft: [240, 253, 244],
+        muted: [100, 116, 139],
+        surface: [248, 250, 252],
+        border: [203, 213, 225],
+        text: [15, 23, 42],
+        white: [255, 255, 255],
+        emptyBg: [241, 245, 249],
+        emptyText: [148, 163, 184],
+      }
 
-      doc.setFillColor(...corHeaderDia)
-      doc.rect(0, 0, 297, 18, 'F')
+      const PDF_STATUS_DISPONIVEL = 'Disponível'
+      const PDF_STATUS_SEM_GRADE = 'Sem grade'
+
+      const desenharLegenda = (x, y, corFundo, corTexto, texto) => {
+        doc.setFillColor(...corFundo)
+        doc.setDrawColor(...cores.border)
+        doc.roundedRect(x, y - 3.7, 7, 5.2, 1.6, 1.6, 'FD')
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(7.5)
+        doc.setTextColor(...corTexto)
+        doc.text(texto, x + 10, y)
+      }
+
+      const desenharCampoInformativo = (x, y, largura, titulo, texto, opcoes = {}) => {
+        const {
+          altura = 12,
+          fillColor = cores.surface,
+          borderColor = cores.border,
+          titleColor = cores.text,
+          bodyColor = cores.muted,
+          accentColor = null,
+        } = opcoes
+
+        doc.setFillColor(...fillColor)
+        doc.setDrawColor(...borderColor)
+        doc.roundedRect(x, y, largura, altura, 3, 3, 'FD')
+
+        let textoX = x + 4
+        if (accentColor) {
+          doc.setFillColor(...accentColor)
+          doc.roundedRect(x, y, 4, altura, 3, 3, 'F')
+          textoX = x + 7
+        }
+
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(7.8)
+        doc.setTextColor(...titleColor)
+        doc.text(titulo, textoX, y + 4.4)
+
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(...bodyColor)
+        doc.text(texto, textoX, y + 9)
+      }
+
+      const desenharInformacoesExtras = (y) => {
+        const gap = 4
+        const larguraTotal = pageWidth - margemX * 2
+        const larguraObservacao = 176
+        const larguraInternet = larguraTotal - larguraObservacao - gap
+
+        desenharCampoInformativo(
+          margemX,
+          y,
+          larguraObservacao,
+          'Observação',
+          'Horários sujeitos a alterações com aviso prévio.',
+          {
+            altura: 13,
+            fillColor: [255, 247, 237],
+            borderColor: [253, 186, 116],
+            titleColor: [194, 65, 12],
+            bodyColor: [154, 52, 18],
+            accentColor: [234, 88, 12],
+          }
+        )
+
+        desenharCampoInformativo(
+          margemX + larguraObservacao + gap,
+          y,
+          larguraInternet,
+          'Internet',
+          'LOGIN: METODÃO  |  SENHA: desafio2022',
+          {
+            altura: 13,
+          }
+        )
+      }
+
+      const desenharLegendaAbaixoDaGrade = (y) => {
+        desenharLegenda(margemX, y, cores.primarySoft, cores.primary, 'Reservado')
+        desenharLegenda(margemX + 54, y, cores.successSoft, cores.success, 'Disponível')
+        desenharLegenda(margemX + 108, y, cores.emptyBg, cores.emptyText, 'Sem grade')
+      }
+
+      const desenharRodape = (paginaAtual, totalPaginas) => {
+        doc.setDrawColor(...cores.border)
+        doc.line(margemX, pageHeight - 8.5, pageWidth - margemX, pageHeight - 8.5)
+
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(7.5)
+        doc.setTextColor(...cores.muted)
+        doc.text(`Agenda semanal • ${nomeQuadra}`, margemX, pageHeight - 4.6)
+        doc.text(`Página ${paginaAtual}/${totalPaginas}`, pageWidth - margemX, pageHeight - 4.6, { align: 'right' })
+      }
+
+      const desenharCabecalhoContinuidade = () => {
+        doc.setFillColor(...cores.header)
+        doc.rect(0, 0, pageWidth, 14, 'F')
+
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(10)
+        doc.setTextColor(...cores.white)
+        doc.text('QuadraPlay', margemX, 8.8)
+
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(8)
+        doc.setTextColor(191, 219, 254)
+        doc.text(`${nomeQuadra} • ${faixaSemana.value}`, pageWidth - margemX, 8.8, { align: 'right' })
+      }
+
+      doc.setFillColor(...cores.header)
+      doc.rect(0, 0, pageWidth, 18, 'F')
+      doc.setFillColor(...cores.headerAccent)
+      doc.rect(0, 0, pageWidth, 2.2, 'F')
 
       const img = new Image()
       img.src = logoImg
@@ -367,60 +509,69 @@ export default {
           img.onload = r
           img.onerror = r
         })
-        doc.addImage(img, 'PNG', 10, 3, 12, 12)
+        doc.addImage(img, 'PNG', margemX, 4, 10, 10)
       } catch (e) {
         console.warn('Logo não carregada no PDF', e)
       }
 
       doc.setFont('helvetica', 'bold')
-      doc.setFontSize(16)
-      doc.setTextColor(255, 255, 255)
-      doc.text('QuadraLivre', 26, 11)
+      doc.setFontSize(15)
+      doc.setTextColor(...cores.white)
+      doc.text('QuadraPlay', 21, 9.5)
+
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8)
+      doc.setTextColor(191, 219, 254)
+      doc.text('Agenda operacional da semana', 21, 14.2)
+
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8.5)
+      doc.setTextColor(191, 219, 254)
+      doc.text(`Gerado em ${dataGeracao}`, pageWidth - margemX, 9.8, { align: 'right' })
+      doc.text(faixaSemana.value, pageWidth - margemX, 14.2, { align: 'right' })
 
       doc.setFont('helvetica', 'bold')
-      doc.setFontSize(11)
-      doc.setTextColor(...corHeaderDia)
-      doc.text(`Horarios: ${nomeQuadra}`, 10, 24)
+      doc.setFontSize(18)
+      doc.setTextColor(...cores.text)
+      doc.text(`Agenda de ${nomeQuadra}`, margemX, 28)
 
       doc.setFont('helvetica', 'normal')
       doc.setFontSize(9)
-      doc.setTextColor(100)
-      const dataGeracao = format(new Date(), 'dd/MM HH:mm', { locale: ptBR })
-      doc.text(`| Gerado em: ${dataGeracao}`, 80, 24)
+      doc.setTextColor(...cores.muted)
+      doc.text(
+        `Grade semanal com ${totalDias} ${totalDias === 1 ? 'dia ativo' : 'dias ativos'} e visão consolidada das reservas confirmadas.`,
+        margemX,
+        33
+      )
 
       const diasAtivos = gradeMontada.value.length
-      const margemTotal = 10
-      const larguraUtilPagina = 297 - margemTotal
+      const larguraUtilPagina = pageWidth - margemX * 2
       const larguraColunaHora = 12
       const larguraTotalHoras = diasAtivos * larguraColunaHora
-      const espacoParaTimes = larguraUtilPagina - larguraTotalHoras
-      const larguraColunaTime = espacoParaTimes / diasAtivos
+      const espacoParaTimes = Math.max(larguraUtilPagina - larguraTotalHoras, diasAtivos * 18)
+      const larguraColunaTime = diasAtivos > 0 ? espacoParaTimes / diasAtivos : 0
       const estilosColunas = {}
       const totalColunasTabela = diasAtivos * 2
 
       for (let i = 0; i < totalColunasTabela; i++) {
-        if (i % 2 === 0) {
-          estilosColunas[i] = { cellWidth: larguraColunaHora }
-        } else {
-          estilosColunas[i] = { cellWidth: larguraColunaTime }
-        }
+        estilosColunas[i] = { cellWidth: i % 2 === 0 ? larguraColunaHora : larguraColunaTime }
       }
 
       const head1 = diasSemanaHeader.value.map((dia) => ({
         content: dia,
         colSpan: 2,
-        styles: { halign: 'center', fillColor: corHeaderDia, textColor: 255, fontStyle: 'bold' }
+        styles: { halign: 'center', fillColor: cores.primary, textColor: 255, fontStyle: 'bold' }
       }))
 
       const head2 = []
       for (let i = 0; i < diasAtivos; i++) {
         head2.push({
-          content: 'Hr',
-          styles: { halign: 'center', fillColor: corSubHeaderBg, textColor: corSubHeaderTxt, fontStyle: 'bold' }
+          content: 'Hora',
+          styles: { halign: 'center', fillColor: cores.surface, textColor: cores.muted, fontStyle: 'bold' }
         })
         head2.push({
-          content: 'Time',
-          styles: { halign: 'center', fillColor: corSubHeaderBg, textColor: corSubHeaderTxt, fontStyle: 'bold' }
+          content: 'Reserva',
+          styles: { halign: 'center', fillColor: cores.surface, textColor: cores.muted, fontStyle: 'bold' }
         })
       }
 
@@ -431,65 +582,120 @@ export default {
           const slot = gradeMontada.value[d][i]
           if (slot) {
             row.push(slot.horario)
-            let texto = slot.texto === 'Disponível' ? '---' : slot.texto
-            if (texto.length > 22 && texto !== '---') texto = texto.substring(0, 20) + '...'
-            row.push(texto)
+            row.push(slot.ocupado ? truncarTextoPdf(slot.texto, 26) : PDF_STATUS_DISPONIVEL)
           } else {
-            row.push('-')
-            row.push('---')
+            row.push('--')
+            row.push(PDF_STATUS_SEM_GRADE)
           }
         }
         body.push(row)
       }
 
-      autoTable(doc, {
-        head: [head1, head2],
-        body,
-        startY: 28,
-        theme: 'grid',
-        margin: { left: 5, right: 5, bottom: 5 },
-        columnStyles: estilosColunas,
-        styles: {
-          fontSize: 7,
-          cellPadding: 1,
-          valign: 'middle',
-          halign: 'center',
-          lineColor: [226, 232, 240],
-          lineWidth: 0.1,
-          overflow: 'hidden'
-        },
-        didParseCell: (data) => {
-          const colIndex = data.column.index
-          const text = data.cell.raw
-          const diaIndex = Math.floor(colIndex / 2)
+      let paginaLegenda = 1
+      let posicaoLegendaY = 0
+      let posicaoInformacoesY = 0
 
-          if (diaIndex % 2 !== 0 && data.section === 'body') {
-            data.cell.styles.fillColor = [248, 250, 252]
-          }
+      if (diasAtivos === 0) {
+        doc.setFillColor(...cores.surface)
+        doc.setDrawColor(...cores.border)
+        doc.roundedRect(margemX, 50, pageWidth - margemX * 2, 30, 5, 5, 'FD')
 
-          if (data.section === 'body') {
-            if (colIndex % 2 === 0) {
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(12)
+        doc.setTextColor(...cores.text)
+        doc.text('Nenhum horário configurado para esta semana.', margemX + 8, 62)
+
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(9)
+        doc.setTextColor(...cores.muted)
+        doc.text(
+          'Ajuste a grade da quadra ou selecione outro período antes de exportar a agenda operacional.',
+          margemX + 8,
+          69
+        )
+
+        posicaoLegendaY = 89
+        posicaoInformacoesY = 95
+      } else {
+        autoTable(doc, {
+          head: [head1, head2],
+          body,
+          startY: 45,
+          theme: 'grid',
+          margin: { left: margemX, right: margemX, top: 18, bottom: 38 },
+          columnStyles: estilosColunas,
+          styles: {
+            fontSize: 7.2,
+            cellPadding: 1.4,
+            valign: 'middle',
+            halign: 'center',
+            lineColor: cores.border,
+            lineWidth: 0.15,
+            overflow: 'linebreak',
+            textColor: cores.text,
+          },
+          didParseCell: (data) => {
+            const colIndex = data.column.index
+            const text = String(data.cell.raw || '')
+
+            if (data.section === 'head' && data.row.index === 0) {
+              data.cell.styles.fillColor = cores.primary
+              data.cell.styles.textColor = cores.white
               data.cell.styles.fontStyle = 'bold'
-              data.cell.styles.fillColor = [255, 255, 255]
-              if (text === '-' || text === '---') data.cell.styles.textColor = corLivreTxt
-              else data.cell.styles.textColor = [71, 85, 105]
-            } else if (text && text !== '-' && text !== '---') {
-              data.cell.styles.fillColor = corReservadoBg
-              data.cell.styles.textColor = corReservadoTxt
+              data.cell.styles.minCellHeight = 8
+            }
+
+            if (data.section === 'head' && data.row.index === 1) {
+              data.cell.styles.fillColor = cores.surface
+              data.cell.styles.textColor = cores.muted
               data.cell.styles.fontStyle = 'bold'
-            } else {
-              data.cell.styles.fillColor = [255, 255, 255]
-              data.cell.styles.textColor = corLivreTxt
-              if (text === '---') {
-                data.cell.styles.textColor = corTraco
+              data.cell.styles.minCellHeight = 6
+            }
+
+            if (data.section === 'body') {
+              if (colIndex % 2 === 0) {
+                data.cell.styles.fillColor = [255, 255, 255]
+                data.cell.styles.textColor = text === '--' ? cores.emptyText : [51, 65, 85]
+                data.cell.styles.fontStyle = 'bold'
+              } else if (text === PDF_STATUS_DISPONIVEL) {
+                data.cell.styles.fillColor = cores.successSoft
+                data.cell.styles.textColor = cores.success
+                data.cell.styles.fontStyle = 'bold'
+              } else if (text === PDF_STATUS_SEM_GRADE) {
+                data.cell.styles.fillColor = cores.emptyBg
+                data.cell.styles.textColor = cores.emptyText
+                data.cell.styles.fontStyle = 'bold'
+              } else {
+                data.cell.styles.fillColor = cores.primarySoft
+                data.cell.styles.textColor = cores.primary
                 data.cell.styles.fontStyle = 'bold'
               }
             }
+          },
+          didDrawPage: (data) => {
+            if (data.pageNumber > 1) {
+              desenharCabecalhoContinuidade()
+            }
           }
-        }
-      })
+        })
 
-      doc.save(`grade_${nomeQuadra}.pdf`)
+        paginaLegenda = doc.getNumberOfPages()
+        doc.setPage(paginaLegenda)
+        posicaoLegendaY = Math.min((doc.lastAutoTable?.finalY || 45) + 7, pageHeight - 32)
+        posicaoInformacoesY = posicaoLegendaY + 9
+      }
+
+      doc.setPage(paginaLegenda)
+      desenharLegendaAbaixoDaGrade(posicaoLegendaY)
+      desenharInformacoesExtras(posicaoInformacoesY)
+
+      const totalPaginas = doc.getNumberOfPages()
+      for (let pagina = 1; pagina <= totalPaginas; pagina++) {
+        doc.setPage(pagina)
+        desenharRodape(pagina, totalPaginas)
+      }
+
+      doc.save(`grade_semanal_${nomeArquivoQuadra}_${format(inicioSemana.value, 'yyyy-MM-dd')}.pdf`)
     }
 
     onMounted(() => {
