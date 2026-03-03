@@ -2,7 +2,10 @@
   <div v-if="aberto" class="modal-overlay" @click.self="$emit('fechar')">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Selecione os Jogadores</h2>
+        <div class="modal-title-group">
+          <h2>Selecione os Jogadores</h2>
+          <span v-if="regraOpcional" class="title-optional-badge">Opcional</span>
+        </div>
         <button type="button" class="btn-close-x" @click="$emit('fechar')">x</button>
       </div>
 
@@ -137,6 +140,9 @@ export default {
     regraLivre() {
       return !!this.regra?.livre
     },
+    regraOpcional() {
+      return !!this.regra?.opcional || (this.regraLivre && Number(this.regra?.minPorTime ?? 1) === 0)
+    },
     jogadoresPorFuncaoTime1() {
       return this.agruparPorFuncao(this.jogadoresTime1)
     },
@@ -200,7 +206,7 @@ export default {
       }
 
       if (this.regraLivre) {
-        const minPorTime = Number(this.regra?.minPorTime || 1)
+        const minPorTime = Number(this.regra?.minPorTime ?? 1)
         if (
           this.selecionadosTime1.length < minPorTime ||
           this.selecionadosTime2.length < minPorTime
@@ -286,8 +292,26 @@ export default {
   gap: 12px;
 }
 
+.modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .modal-header h2 {
   margin-bottom: 0;
+}
+
+.title-optional-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .btn-close-x {

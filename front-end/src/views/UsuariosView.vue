@@ -117,7 +117,7 @@
           </article>
         </div>
 
-        <div v-else class="state-card">
+        <div v-else class="state-card state-card-empty">
           <p class="state-title">Nenhum usuário encontrado.</p>
           <p class="state-copy">Tente outro termo de busca para localizar um perfil desta visão.</p>
         </div>
@@ -1326,6 +1326,10 @@ select:focus {
 
 .state-card-loading {
   border-style: solid;
+}
+
+.state-card-empty {
+  min-height: 180px;
 }
 
 .state-title {

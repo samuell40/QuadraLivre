@@ -8,9 +8,9 @@
     <div class="box">
       <p>Gols Marcados</p>
       <div class="controls">
-        <button @click="abrirModalJogadores('gol')">-</button>
+        <button @click="acionarEvento('gol', -1)">-</button>
         <span class="valor">{{ timeData?.golspro ?? 0 }}</span>
-        <button @click="abrirModalJogadores('gol')">+</button>
+        <button @click="acionarEvento('gol', 1)">+</button>
       </div>
     </div>
 
@@ -19,18 +19,18 @@
       <div class="box">
         <p>Cartão Amarelo</p>
         <div class="controls">
-          <button @click="abrirModalJogadores('amarelo')">-</button>
+          <button @click="acionarEvento('amarelo', -1)">-</button>
           <span class="valor">{{ timeData?.cartaoamarelo ?? 0 }}</span>
-          <button @click="abrirModalJogadores('amarelo')">+</button>
+          <button @click="acionarEvento('amarelo', 1)">+</button>
         </div>
       </div>
 
       <div class="box">
         <p>Cartão Vermelho</p>
         <div class="controls">
-          <button @click="abrirModalJogadores('vermelho')">-</button>
+          <button @click="acionarEvento('vermelho', -1)">-</button>
           <span class="valor">{{ timeData?.cartaovermelho ?? 0 }}</span>
-          <button @click="abrirModalJogadores('vermelho')">+</button>
+          <button @click="acionarEvento('vermelho', 1)">+</button>
         </div>
       </div>
     </div>
@@ -49,9 +49,9 @@
       <div class="box">
         <p>Substituições</p>
         <div class="controls">
-          <button @click="abrirModalRemoverJogador" :disabled="partidaEncerradaGlobal">-</button>
+          <button @click="acionarSubstituicao(-1)" :disabled="partidaEncerradaGlobal">-</button>
           <span class="valor">{{ timeData?.substituicoes ?? 0 }}</span>
-          <button @click="abrirModalSubstituicao" :disabled="partidaEncerradaGlobal">+</button>
+          <button @click="acionarSubstituicao(1)" :disabled="partidaEncerradaGlobal">+</button>
         </div>
       </div>
     </div>
@@ -242,6 +242,10 @@ export default {
       return this.partidaStatus === 'EM_ANDAMENTO'
     },
 
+    temJogadoresEmCampo() {
+      return Number(this.timeData?.quantidadeJogadoresEmCampo || 0) > 0
+    },
+
     modalStatusClass() {
       return {
         'modal-finalizada': this.partidaEncerradaGlobal,
@@ -253,6 +257,38 @@ export default {
   methods: {
     emitDelta(campo, delta) {
       this.$emit('parcial-delta', { lado: this.lado, campo, delta })
+    },
+
+    campoPorTipoEvento(tipo) {
+      if (tipo === 'gol') return 'golspro'
+      if (tipo === 'amarelo') return 'cartaoamarelo'
+      if (tipo === 'vermelho') return 'cartaovermelho'
+      return null
+    },
+
+    acionarEvento(tipo, delta) {
+      if (!this.temJogadoresEmCampo) {
+        const campo = this.campoPorTipoEvento(tipo)
+        if (!campo) return
+        this.emitDelta(campo, delta)
+        return
+      }
+
+      this.abrirModalJogadores(tipo)
+    },
+
+    acionarSubstituicao(delta) {
+      if (!this.temJogadoresEmCampo) {
+        this.emitDelta('substituicoes', delta)
+        return
+      }
+
+      if (delta > 0) {
+        this.abrirModalSubstituicao()
+        return
+      }
+
+      this.abrirModalRemoverJogador()
     },
 
     obterValorEvento(jogador) {

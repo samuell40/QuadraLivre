@@ -466,9 +466,10 @@ export default {
 
     obterRegraJogadoresPorPartida(partida) {
       const nome = this.normalizarNomeModalidade(partida?.modalidade?.nome)
+      const MODALIDADES_GRUPO_FUTEBOL = new Set(['futebol', 'futsal', 'futebol de areia'])
 
-      if (nome.includes('futsal') || (nome.includes('futebol') && nome.includes('areia'))) {
-        return { livre: true, minPorTime: 1 }
+      if (MODALIDADES_GRUPO_FUTEBOL.has(nome)) {
+        return { livre: true, minPorTime: 0, opcional: true }
       }
 
       if (
@@ -845,8 +846,9 @@ export default {
         if (partidaObj?.status === 'EM_ANDAMENTO') {
           const { data } = await api.get(`/partida/${partidaId}`)
           const jogadoresSelecionados = Array.isArray(data) ? data : []
+          const regraJogadores = this.obterRegraJogadoresPorPartida(partidaObj)
 
-          if (!jogadoresSelecionados.length) {
+          if (!jogadoresSelecionados.length && !regraJogadores?.opcional) {
             await this.abrirEscalacaoInicial(partidaObj)
             return
           }

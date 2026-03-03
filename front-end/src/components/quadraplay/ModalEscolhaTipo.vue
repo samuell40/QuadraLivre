@@ -312,19 +312,23 @@ export default {
     obterRegraJogadores() {
       const id = Number(this.modalidadeId)
       const nomeNormalizado = this.normalizarNomeModalidade(this.modalidadeNome)
+      const MODALIDADES_GRUPO_FUTEBOL = new Set(['futebol', 'futsal', 'futebol de areia'])
+      const MODALIDADES_GRUPO_VOLEI = new Set(['volei', 'volei de areia', 'futevolei', 'beach tenis', 'beach tennis'])
 
-      if (nomeNormalizado.includes('futsal') || (nomeNormalizado.includes('futebol') && nomeNormalizado.includes('areia'))) {
+      if (MODALIDADES_GRUPO_FUTEBOL.has(nomeNormalizado)) {
+        return { livre: true, minPorTime: 0, opcional: true }
+      }
+
+      if (MODALIDADES_GRUPO_VOLEI.has(nomeNormalizado)) {
         return { livre: true, minPorTime: 1 }
       }
 
-      const FUTEBOL_11 = new Set([1])
-      const FUTSAL_E_AREIA = new Set([2, 7])
+      const GRUPO_FUTEBOL = new Set([1, 2, 7])
       const VOLEI = new Set([3, 5, 6])
       const BEACH_TENIS = new Set([4])
 
-      if (FUTSAL_E_AREIA.has(id)) return { livre: true, minPorTime: 1 }
+      if (GRUPO_FUTEBOL.has(id)) return { livre: true, minPorTime: 0, opcional: true }
       if (VOLEI.has(id) || BEACH_TENIS.has(id)) return { livre: true, minPorTime: 1 }
-      if (FUTEBOL_11.has(id)) return { porTime: 11, total: 22 }
 
       return { porTime: 11, total: 22 }
     },
@@ -497,7 +501,7 @@ export default {
         const idsTimeB = selecao?.time2 || []
 
         if (regra.livre) {
-          const min = Number(regra.minPorTime || 1)
+          const min = Number(regra.minPorTime ?? 1)
           if (idsTimeA.length < min || idsTimeB.length < min) {
             Swal.fire('Erro', `Selecione pelo menos ${min} jogador(es) por time.`, 'error')
             return

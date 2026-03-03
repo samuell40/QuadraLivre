@@ -247,6 +247,12 @@ export default {
     },
 
     mapTimeFutebol(time, lado, partida) {
+      const quantidadeJogadoresEmCampo = Array.isArray(partida?.jogadoresPartida)
+        ? partida.jogadoresPartida.filter(jp =>
+          Number(jp?.timeId) === Number(time?.id) && jp?.emCampo
+        ).length
+        : 0
+
       return {
         id: time?.id,
         nome: time?.nome,
@@ -257,6 +263,7 @@ export default {
         cartaoamarelo: lado === 'A' ? (partida.cartoesAmarelosTimeA ?? 0) : (partida.cartoesAmarelosTimeB ?? 0),
         cartaovermelho: lado === 'A' ? (partida.cartoesVermelhosTimeA ?? 0) : (partida.cartoesVermelhosTimeB ?? 0),
         wo: lado === 'A' ? !!partida.woTimeA : !!partida.woTimeB,
+        quantidadeJogadoresEmCampo,
         placarId: lado === 'A' ? (partida.placarTimeAId) : (partida.placarTimeBId)
       }
     },
