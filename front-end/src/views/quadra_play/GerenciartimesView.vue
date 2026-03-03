@@ -58,7 +58,6 @@
               <div>
                 <span class="section-kicker">Times</span>
                 <h2>{{ tituloListaTimes }}</h2>
-                <a>{{ subtituloListaTimes }}</a>
               </div>
             </div>
 
@@ -153,11 +152,6 @@ export default {
       const nome = this.formatarNomeModalidade(this.nomeModalidadeSelecionada || 'modalidade');
       return `Times de ${nome}`;
     },
-    subtituloListaTimes() {
-      const total = Array.isArray(this.times) ? this.times.length : 0;
-      const nome = this.formatarNomeModalidade(this.nomeModalidadeSelecionada || 'modalidade selecionada');
-      return `${total} ${total === 1 ? 'equipe encontrada' : 'equipes encontradas'} para ${nome}. Abra os detalhes para editar o cadastro do time.`;
-    }
   },
   watch: {
     modalidadeSelecionada() {

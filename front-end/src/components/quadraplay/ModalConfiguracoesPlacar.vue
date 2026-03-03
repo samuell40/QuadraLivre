@@ -74,40 +74,64 @@
   <div v-if="mostrarModalFase" class="modal-overlay" @click.self="fecharModalFase">
     <div class="modal-content modal-times">
       <div class="modal-header">
-        <h2>Criar Nova Fase</h2>
+        <div class="modal-header-copy">
+          <span class="title">Criar nova fase</span>
+        </div>
         <button type="button" class="btn-close-x" @click="fecharModalFase">x</button>
       </div>
 
-      <div class="filtros-topo">
-        <label>Digite o nome da fase:</label>
+      <section class="fase-form-card">
+        <div class="campo-fase">
+          <span class="campo-fase-label">Nome da fase</span>
         <input v-model="nomeFase" type="text" placeholder="Ex: Eliminatórias" />
       </div>
 
-      <label>
-        Selecione os times:
-        {{ timesSelecionados.length }} selecionado(s)
-      </label>
+      </section>
 
-      <div class="lista-times">
-        <div v-for="time in times" :key="time.id" class="time-card"
-          :class="{ selecionado: timesSelecionados.includes(time.id) }" @click="toggleTime(time.id)">
+      <section class="fase-times-card">
+        <div class="fase-times-head">
+          <div>
+            <h3>Selecionar times</h3>
+          </div>
+          <span class="fase-total">{{ timesSelecionados.length }} selecionado(s)</span>
+        </div>
+
+      <div v-if="times.length" class="lista-times">
+        <div
+          v-for="time in times"
+          :key="time.id"
+          class="time-card"
+          :class="{ selecionado: timesSelecionados.includes(time.id) }"
+          @click="toggleTime(time.id)"
+        >
           <div class="time-card-top">
             <div v-if="time.foto" class="time-foto">
               <img :src="time.foto" :alt="time.nome" />
             </div>
 
-            <h3 class="time-nome">
-              {{ time.nome }}
-            </h3>
-          </div>
+            <div class="time-card-copy">
+              <h3 class="time-nome">
+                {{ time.nome }}
+              </h3>
+              <span class="time-card-meta">
+                {{ time._count?.jogadores || 0 }} jogadores
+              </span>
+            </div>
 
-          <span>
-            {{ time._count?.jogadores || 0 }} jogadores
-          </span>
+            <span v-if="timesSelecionados.includes(time.id)" class="time-card-badge">
+              Selecionado
+            </span>
+          </div>
         </div>
       </div>
 
-      <div class="botoes">
+      <div v-else class="estado-vazio-times">
+        Nenhum time disponivel para esta fase.
+      </div>
+
+      </section>
+
+      <div class="botoes botoes-modal-times">
         <button class="btn-save" @click="criarFase">
           Criar Fase
         </button>
@@ -656,40 +680,163 @@ export default {
   border: 1px solid rgba(59, 130, 246, 0.35);
 }
 
+.modal-header-copy {
+  min-width: 0;
+}
+
+.section-kicker {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.modal-times {
+  width: min(720px, 92vw);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: 24px 28px;
+  border-radius: 18px;
+  text-align: left;
+}
+
+.modal-times .modal-header {
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.modal-times .title {
+  display: block;
+  line-height: 1.08;
+}
+
+.modal-times-descricao {
+  margin: 10px 0 0;
+  line-height: 1.55;
+}
+
+.fase-form-card,
+.fase-times-card {
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.06);
+}
+
+.fase-form-card {
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.campo-fase {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.campo-fase-label {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.campo-fase input {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+}
+
+.campo-fase input:focus {
+  outline: none;
+  border-color: rgba(37, 99, 235, 0.58);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14);
+}
+
+.fase-times-card {
+  padding: 18px;
+}
+
+.fase-times-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.fase-times-head h3 {
+  margin: 8px 0 0;
+  color: #0f172a;
+  font-size: 23px;
+}
+
+.fase-total {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .modal-times .lista-times {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
-  max-height: 300px;
+  max-height: 320px;
   overflow-y: auto;
-  border: 1px solid #3b82f6;
-  border-radius: 8px;
-  padding: 12px;
+  padding-right: 4px;
 }
 
 .time-card {
-  border: 1px solid #3b82f6;
-  border-radius: 8px;
-  padding: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 18px;
+  padding: 14px;
+  background: #fff;
   cursor: pointer;
-  transition: 0.2s;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.time-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(59, 130, 246, 0.34);
+  box-shadow: 0 18px 36px rgba(59, 130, 246, 0.1);
 }
 
 .time-card.selecionado {
-  background-color: #3b82f6;
-  color: white;
-
+  border-color: rgba(37, 99, 235, 0.42);
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  box-shadow: 0 20px 40px rgba(37, 99, 235, 0.14);
 }
 
 .time-card-top {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+}
+
+.time-card-copy {
+  flex: 1;
+  min-width: 0;
 }
 
 .time-foto {
-  width: 50px;
-  height: 50px;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
 }
 
 .time-foto img {
@@ -700,18 +847,147 @@ export default {
 }
 
 .time-nome {
-  font-weight: bold;
+  margin: 0;
+  font-weight: 800;
+  color: #0f172a;
+  font-size: 17px;
 }
 
-.filtros-topo {
-  margin-bottom: 15px;
+.time-card-meta {
+  display: block;
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
 }
 
-.filtros-topo input {
-  width: 100%;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+.time-card-badge {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(37, 99, 235, 0.14);
+  color: #1d4ed8;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.estado-vazio-times {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  border: 1px dashed rgba(148, 163, 184, 0.45);
+  border-radius: 18px;
+  color: #64748b;
+  text-align: center;
+  padding: 18px;
+}
+
+.botoes-modal-times {
+  margin-top: 18px;
+}
+
+@media (max-width: 768px) {
+  .modal-times {
+    width: min(100%, 92vw);
+    max-height: calc(100vh - 24px);
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .modal-times .modal-header {
+    position: relative;
+    padding-right: 46px;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .modal-times .title {
+    font-size: 26px;
+  }
+
+  .modal-times .btn-close-x {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
+  .modal-times-descricao {
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .fase-form-card,
+  .fase-times-card {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .campo-fase input {
+    min-height: 44px;
+    padding: 10px 12px;
+  }
+
+  .fase-times-head {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .fase-times-head h3 {
+    font-size: 19px;
+  }
+
+  .fase-total {
+    align-self: auto;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .modal-times .lista-times {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    max-height: 300px;
+  }
+
+  .time-card {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .time-card-top {
+    gap: 10px;
+  }
+
+  .time-foto {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+
+  .time-nome {
+    font-size: 15px;
+  }
+
+  .time-card-meta {
+    font-size: 12px;
+  }
+
+  .time-card-badge {
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+
+  .estado-vazio-times {
+    min-height: 110px;
+    border-radius: 16px;
+    padding: 14px;
+    font-size: 13px;
+  }
 }
 
 .modal-criterios {
@@ -721,6 +997,10 @@ export default {
 .descricao {
   margin-bottom: 15px;
   color: #6b7280;
+}
+
+.modal-times .modal-times-descricao {
+  margin: 10px 0 0;
 }
 
 .lista-criterios {

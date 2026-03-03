@@ -9,14 +9,12 @@
     </div>
 
     <div v-else-if="isGrupoFutebol || isGrupoVolei || isGrupoBeachTenis">
-      <div v-if="temGruposConfigurados" class="grupos-wrapper">
+      <div v-if="mostrarGrupos" class="grupos-wrapper">
         <section v-for="grupo in gruposParaExibicao" :key="grupo.id" class="grupo-section">
           <div class="grupo-header">
             <div>
-              <span class="grupo-kicker">Grupo</span>
               <h3>{{ grupo.nome }}</h3>
             </div>
-            <span class="grupo-total">{{ grupo.times.length }} time(s)</span>
           </div>
 
           <table class="placar" :class="classeTabela">
@@ -186,7 +184,8 @@ export default {
     emptyText: { type: String, default: 'Nenhum placar encontrado para este campeonato.' },
     showGlossary: { type: Boolean, default: true },
     colunasVisiveis: { type: Array, default: () => [] },
-    gruposConfig: { type: Object, default: null }
+    gruposConfig: { type: Object, default: null },
+    exibirPorGrupos: { type: Boolean, default: true }
   },
   data() {
     return {
@@ -274,6 +273,9 @@ export default {
     },
     temGruposConfigurados() {
       return this.gruposParaExibicao.length > 0
+    },
+    mostrarGrupos() {
+      return this.exibirPorGrupos && this.temGruposConfigurados
     }
   },
   methods: {

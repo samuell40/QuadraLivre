@@ -19,11 +19,12 @@
 
       <div v-if="campeonato" class="painel-card filtros-card">
         <div class="section-head">
-          <div>
+          <div class="section-head-copy">
             <span class="section-kicker">Navegação</span>
             <h2>Fase e rodada</h2>
             <a>Atualize os filtros para trocar a classificação exibida sem sair da mesma tela.</a>
           </div>
+
         </div>
 
         <div v-if="fases.length" class="filtros-topo">
@@ -46,11 +47,42 @@
 
       <div v-if="campeonato" class="painel-card placar-wrapper">
         <div class="section-head">
-          <div>
+          <div class="section-head-copy">
             <span class="section-kicker">Classificação</span>
-            <h2>{{ tituloTabela }}</h2>
+            <div class="section-title-row">
+              <h2>{{ tituloTabela }}</h2>
+
+              <button
+                v-if="temGruposDefinidos"
+                type="button"
+                class="grupo-toggle grupo-toggle-mobile-only"
+                :class="{ ativo: exibirClassificacaoPorGrupo }"
+                :aria-pressed="exibirClassificacaoPorGrupo ? 'true' : 'false'"
+                @click="alternarExibicaoGrupos"
+              >
+                <span class="grupo-toggle-label grupo-toggle-label-desktop">Classificacao por Grupo</span>
+                <span class="grupo-toggle-label grupo-toggle-label-mobile">Grupos</span>
+                <span class="grupo-toggle-track">
+                  <span class="grupo-toggle-thumb"></span>
+                </span>
+              </button>
+            </div>
             <a>{{ subtituloTabela }}</a>
           </div>
+
+          <button
+            v-if="temGruposDefinidos"
+            type="button"
+            class="grupo-toggle grupo-toggle-desktop-only"
+            :class="{ ativo: exibirClassificacaoPorGrupo }"
+            :aria-pressed="exibirClassificacaoPorGrupo ? 'true' : 'false'"
+            @click="alternarExibicaoGrupos"
+          >
+            <span class="grupo-toggle-label grupo-toggle-label-desktop">Classificacao por Grupo</span>
+            <span class="grupo-toggle-track">
+              <span class="grupo-toggle-thumb"></span>
+            </span>
+          </button>
         </div>
 
         <TabelaClassificacao
@@ -59,6 +91,7 @@
           :modalidade="modalidadeNormalizada"
           :colunas-visiveis="colunasClassificacaoVisiveis"
           :grupos-config="gruposClassificacao"
+          :exibir-por-grupos="exibirClassificacaoPorGrupo"
           empty-text="Nenhum placar encontrado para esta fase."
           @time-click="abrirModalPartidasTime"
         />
@@ -142,6 +175,7 @@ export default {
       modalGrupos: false,
       colunasClassificacaoVisiveis: [],
       gruposClassificacao: null,
+      exibirClassificacaoPorGrupo: true,
       socket: null,
       socketCampeonatoId: null,
       onSocketAtualizacao: null,
@@ -173,6 +207,10 @@ export default {
 
     temTabela() {
       return Array.isArray(this.timesPlacar) && this.timesPlacar.length > 0
+    },
+
+    temGruposDefinidos() {
+      return Array.isArray(this.gruposClassificacao?.grupos) && this.gruposClassificacao.grupos.length > 0
     },
 
     colunasVisiveisClassificacao() {
@@ -341,6 +379,11 @@ export default {
       this.modalGrupos = true
     },
 
+    alternarExibicaoGrupos() {
+      if (!this.temGruposDefinidos) return
+      this.exibirClassificacaoPorGrupo = !this.exibirClassificacaoPorGrupo
+    },
+
     mostrarColuna(chave) {
       return this.colunasVisiveisSet.has(chave)
     },
@@ -375,7 +418,19 @@ export default {
     },
 
     atualizarGruposClassificacao(grupos) {
+      const tinhaGruposDefinidos = Array.isArray(this.gruposClassificacao?.grupos)
+        && this.gruposClassificacao.grupos.length > 0
+
       this.gruposClassificacao = grupos && typeof grupos === 'object' ? grupos : null
+      const temGruposDefinidos = Array.isArray(this.gruposClassificacao?.grupos)
+        && this.gruposClassificacao.grupos.length > 0
+
+      if (!temGruposDefinidos) {
+        this.exibirClassificacaoPorGrupo = false
+      } else if (!tinhaGruposDefinidos) {
+        this.exibirClassificacaoPorGrupo = true
+      }
+
       this.campeonato = {
         ...(this.campeonato || {}),
         regras: {
@@ -793,8 +848,26 @@ a {
   margin-bottom: 16px;
 }
 
-.section-head h2 {
+.section-head-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.section-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
   margin: 6px 0 8px;
+}
+
+.section-title-row h2 {
+  flex: 1;
+  min-width: 0;
+}
+
+.section-head h2 {
+  margin: 0;
   color: #0f172a;
   font-size: 28px;
   line-height: 1.05;
@@ -817,15 +890,114 @@ a {
   text-transform: uppercase;
 }
 
+.grupo-toggle {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 220px;
+  padding: 8px 10px 8px 14px;
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.08);
+  color: #1e3a8a;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.grupo-toggle:hover {
+  border-color: rgba(59, 130, 246, 0.34);
+  box-shadow: 0 14px 30px rgba(59, 130, 246, 0.12);
+}
+
+.grupo-toggle:focus-visible {
+  outline: none;
+  border-color: rgba(37, 99, 235, 0.52);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14);
+}
+
+.grupo-toggle-label {
+  min-width: 0;
+  text-align: left;
+}
+
+.grupo-toggle-label-mobile {
+  display: none;
+}
+
+.grupo-toggle-mobile-only {
+  display: none;
+}
+
+.grupo-toggle-desktop-only {
+  display: inline-flex;
+  align-self: flex-start;
+  margin-top: 34px;
+}
+
+.grupo-toggle-track {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 48px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.42);
+  transition: background-color 0.18s ease;
+}
+
+.grupo-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+  transition: transform 0.18s ease;
+}
+
+.grupo-toggle.ativo {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.32);
+}
+
+.grupo-toggle.ativo .grupo-toggle-track {
+  background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
+}
+
+.grupo-toggle.ativo .grupo-toggle-thumb {
+  transform: translateX(20px);
+}
+
 .filtros-card {
-  margin-bottom: 20px;
-  padding: 20px 22px;
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  border-radius: 24px;
+}
+
+.filtros-card .section-head {
+  margin-bottom: 10px;
+}
+
+.filtros-card .section-head h2 {
+  font-size: 22px;
+}
+
+.filtros-card .section-head a {
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .filtros-topo {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
 }
 
 .filtro-item {
@@ -846,8 +1018,8 @@ a {
 
 .filtro-select {
   width: 100%;
-  min-height: 46px;
-  padding: 10px 14px;
+  min-height: 42px;
+  padding: 8px 12px;
   border-radius: 14px;
   border: 1px solid rgba(148, 163, 184, 0.34);
   font: inherit;
@@ -1083,12 +1255,55 @@ a {
 
   .section-head {
     margin-bottom: 14px;
-    flex-direction: column;
-    align-items: stretch;
+  }
+
+  .grupo-toggle-desktop-only {
+    display: none;
+  }
+
+  .grupo-toggle-mobile-only {
+    display: inline-flex;
+  }
+
+  .grupo-toggle {
+    gap: 6px;
+    min-width: 0;
+    padding: 4px 6px 4px 10px;
+    font-size: 12px;
   }
 
   .section-head h2 {
     font-size: 24px;
+  }
+
+  .section-title-row {
+    align-items: center;
+    gap: 10px;
+    margin: 6px 0 10px;
+  }
+
+  .grupo-toggle-label-desktop {
+    display: none;
+  }
+
+  .grupo-toggle-label-mobile {
+    display: inline;
+  }
+
+  .grupo-toggle-track {
+    width: 38px;
+    height: 22px;
+  }
+
+  .grupo-toggle-thumb {
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+  }
+
+  .grupo-toggle.ativo .grupo-toggle-thumb {
+    transform: translateX(16px);
   }
 
   .filtros-card {

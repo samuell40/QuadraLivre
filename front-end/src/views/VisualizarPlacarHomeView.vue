@@ -162,7 +162,7 @@
               <tbody>
                 <tr v-for="(jogador, index) in artilharia" :key="jogador.jogadorId">
                   <td class="jogador-info">
-                    <span class="posicao">{{ index + 1 }}Âº</span>
+                    <span class="posicao">{{ index + 1 }}º</span>
                     <img v-if="jogador.foto" :src="jogador.foto" class="foto-jogador" />
                     <span class="nome-jogador">{{ jogador.nome }}</span>
                   </td>
