@@ -70,7 +70,7 @@
                   :class="{ 'is-importante': aviso.fixado, 'is-lido': abaAtiva === 'lidos' }">
                   <div class="card-header">
                     <div class="card-header-copy">
-                      <span class="tag-quadra">{{ aviso.quadraNome || aviso.quadra?.nome || 'Equipe Quadra Livre' }}</span>
+                      <span class="tag-quadra">{{ aviso.quadraNome || aviso.quadra?.nome || 'Equipe Quadra Play' }}</span>
                       <h3 class="card-title">{{ aviso.titulo }}</h3>
                     </div>
 
@@ -83,7 +83,7 @@
 
                   <div class="card-meta">
                     <span>{{ formatarData(aviso.data) }}</span>
-                    <span>{{ aviso.autor?.nome || 'Sistema Quadra Livre' }}</span>
+                    <span>{{ aviso.autor?.nome || 'Sistema Quadra Play' }}</span>
                   </div>
 
                   <p class="descricao">{{ aviso.descricao }}</p>
@@ -233,7 +233,7 @@ export default {
           if (Array.isArray(resGerais.data)) {
             const geraisFormatados = resGerais.data.map((a) => ({
               ...a,
-              quadraNome: "Equipe Quadra Livre",
+              quadraNome: "Equipe Quadra Play",
             }));
             tempAvisos.push(...geraisFormatados);
           }

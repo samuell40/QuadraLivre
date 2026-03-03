@@ -15,12 +15,11 @@ const app = createApp(App);
 const pinia = createPinia();
 app.use(pinia);
 
+const authStore = useAuthStore(pinia);
+authStore.carregarDados();
+
 // 🔹 Usa o Vue Router
 app.use(router);
 
 // 🔹 Monta o app
 app.mount('#app');
-
-// 🔹 Carrega dados da store de autenticação
-const authStore = useAuthStore();
-authStore.carregarDados();

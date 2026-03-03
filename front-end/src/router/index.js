@@ -48,7 +48,7 @@ const routes = [
     path: '/agendarquadra',
     name: 'agendar_quadra',
     component: AgendarQuadrasView,
-    meta: { requiresAuth: true, roles: [3, 5] },
+    meta: { requiresAuth: true, roles: [3, 4, 5] },
   },
   {
     path: '/agendarquadrasadm',
@@ -60,13 +60,13 @@ const routes = [
     path: '/meusagendamentos',
     name: 'meus_agendamentos',
     component: MeusAgendamentosView,
-    meta: { requiresAuth: true, roles: [3, 5] },
+    meta: { requiresAuth: true, roles: [3, 4, 5] },
   },
   {
     path: '/meusavisos',
     name: 'meus_avisos',
     component: MeusAvisosView,
-    meta: { requiresAuth: true, roles: [3, 5] },
+    meta: { requiresAuth: true, roles: [3, 4, 5] },
   },
   {
     path: '/gerenciarquadras',

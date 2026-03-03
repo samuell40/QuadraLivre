@@ -346,7 +346,7 @@ function listarStatusPartidaController(req, res) {
 async function alterarStatusPartidaController(req, res) {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, data } = req.body;
 
     if (!status) {
       return res.status(400).json({
@@ -354,7 +354,7 @@ async function alterarStatusPartidaController(req, res) {
       });
     }
 
-    const partida = await partidas.alterarStatusPartida(id, status, req.user?.id);
+    const partida = await partidas.alterarStatusPartida(id, status, req.user?.id, data);
 
     emitirAtualizacaoCampeonato({
       tipo: status === 'FINALIZADA' ? 'PARTIDA_FINALIZADA' : 'STATUS_PARTIDA_ATUALIZADO',

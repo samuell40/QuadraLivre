@@ -80,7 +80,7 @@ async function removerTime(id) {
 }
 
 async function listarTimesPorModalidade(modalidadeId) {
-  return prisma.time.findMany({
+  const times = await prisma.time.findMany({
     where: { 
       modalidadeId: Number(modalidadeId),
       deletedAt: null 
@@ -99,6 +99,14 @@ async function listarTimesPorModalidade(modalidadeId) {
     },
     orderBy: { nome: 'asc' }
   });
+
+  return times.map((time) => ({
+    ...time,
+    treinador:
+      time.treinador && time.treinador.ativo && !time.treinador.deletedAt
+        ? time.treinador
+        : null,
+  }));
 }
 
 async function listarTodosTimes() {

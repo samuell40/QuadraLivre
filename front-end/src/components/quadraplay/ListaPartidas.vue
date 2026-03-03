@@ -15,7 +15,7 @@
       @click="abrirModalPartida(partida)">
       <div class="match-ribbon" :class="statusClass(partida, 'text')">
         <span v-if="partida.status === 'EM_ANDAMENTO'" class="status-live-dot"></span>
-        {{ statusLabel(partida.status) }}
+        {{ statusLabel(partida) }}
       </div>
 
       <div class="conteudo-card-interno">
@@ -63,11 +63,14 @@
 
 <script>
 import DetalharPartidaModal from '@/components/quadraplay/DetalharPartidaModal.vue'
+import { obterRotuloStatusPartida, obterStatusExibicaoPartida } from '@/utils/partidaStatus'
 
 const STATUS_CONFIG = {
   FINALIZADA: { label: 'ENCERRADA', card: 'partida-finalizada', text: 'status-finalizada' },
   EM_ANDAMENTO: { label: 'EM ANDAMENTO', card: 'partida-andamento', text: 'status-andamento' },
   AGENDADA: { label: 'AGENDADA', card: 'partida-agendada', text: 'status-agendada' },
+  AGENDADA_HOJE: { label: 'AGENDADA PARA HOJE', card: 'partida-agendada', text: 'status-agendada' },
+  ADIADA: { label: 'ADIADA', card: 'partida-agendada', text: 'status-agendada' },
   CANCELADA: { label: 'CANCELADA', card: 'partida-cancelada', text: 'status-cancelada' }
 }
 
@@ -113,11 +116,11 @@ export default {
       this.mostrarModalPartida = true
     },
     statusClass(partida, tipo) {
-      const status = partida?.status
-      return STATUS_CONFIG[status]?.[tipo] || ''
+      const statusExibicao = obterStatusExibicaoPartida(partida)
+      return STATUS_CONFIG[statusExibicao]?.[tipo] || ''
     },
-    statusLabel(status) {
-      return STATUS_CONFIG[status]?.label || ''
+    statusLabel(partida) {
+      return obterRotuloStatusPartida(partida)
     },
     formatarDiaSemanaData(data) {
       const dt = new Date(data)

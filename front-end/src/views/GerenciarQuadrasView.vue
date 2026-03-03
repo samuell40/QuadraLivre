@@ -350,8 +350,11 @@ export default {
     }
   },
   computed: {
+    usuarioAutenticado() {
+      return this.authStore.usuario || JSON.parse(localStorage.getItem('usuario') || 'null')
+    },
     permissaoUsuario() {
-      return Number(this.authStore.usuario?.permissaoId || 0)
+      return Number(this.usuarioAutenticado?.permissaoId || 0)
     },
     isDesenvolvedor() {
       return this.permissaoUsuario === 1
@@ -422,16 +425,24 @@ export default {
     async carregarDados() {
       this.isLoading = true
       try {
+        if (!this.authStore.usuario) {
+          this.authStore.carregarDados()
+        }
+
         const [resQuadras, resModalidades] = await Promise.all([
           api.get('/quadra'),
           api.get('/listar/modalidade')
         ])
 
         const todasAsQuadras = resQuadras.data
-        const usuario = this.authStore.usuario
+        const usuario = this.usuarioAutenticado
 
-        if (usuario.permissaoId === 2 && usuario.quadraId) {
-          this.quadras = todasAsQuadras.filter((q) => q.id === usuario.quadraId)
+        if (!usuario) {
+          throw new Error('Usuario autenticado nao encontrado.')
+        }
+
+        if (Number(usuario.permissaoId) === 2 && Number(usuario.quadraId)) {
+          this.quadras = todasAsQuadras.filter((q) => Number(q.id) === Number(usuario.quadraId))
         } else {
           this.quadras = todasAsQuadras
         }

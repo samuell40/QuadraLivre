@@ -1,6 +1,7 @@
 const { enviarEmailAlteracaoPermissao, enviarEmailVinculoTime } = require('./email.service');
 const { PrismaClient } = require('@prisma/client');
 const { validarNumeroUnicoNoTime } = require('./jogador.service');
+
 const prisma = new PrismaClient();
 
 async function cadastrarUsuario(user) {
@@ -12,6 +13,7 @@ async function cadastrarUsuario(user) {
       foto: user.foto,
       permissaoId: 3,
       quadraId: null,
+      createdAt: new Date(),
     },
     include: {
       permissao: true,
@@ -20,7 +22,9 @@ async function cadastrarUsuario(user) {
 }
 
 async function atualizarUsuario(user) {
-  return prisma.$transaction(async tx => {
+  return prisma.$transaction(async (tx) => {
+    const agora = new Date();
+
     const usuarioDb = await tx.usuario.findUnique({
       where: { email: user.email },
       include: {
@@ -30,7 +34,7 @@ async function atualizarUsuario(user) {
     });
 
     if (!usuarioDb || usuarioDb.deletedAt) {
-      throw new Error('Usuário não encontrado');
+      throw new Error('Usuario nao encontrado');
     }
 
     const dadosAtualizados = {
@@ -46,14 +50,25 @@ async function atualizarUsuario(user) {
       dadosAtualizados.quadraId = quadra ? quadra.id : null;
     }
 
-    // Se NÃO for Jogador
     if (user.permissaoId !== 3) {
       await tx.usuarioTime.updateMany({
         where: {
           usuarioId: usuarioDb.id,
           ativo: true,
+          deletedAt: null,
         },
-        data: { ativo: false },
+        data: {
+          ativo: false,
+          deletedAt: agora,
+        },
+      });
+    }
+
+    if (user.permissaoId !== 5) {
+      await tx.treinadorTime.deleteMany({
+        where: {
+          usuarioId: usuarioDb.id,
+        },
       });
     }
 
@@ -73,22 +88,6 @@ async function atualizarUsuario(user) {
 }
 
 async function getUsuarios() {
-  let cadastroPorUsuarioId = new Map();
-
-  try {
-    const linhasCadastro = await prisma.$queryRawUnsafe(
-      'SELECT "id", "createdAt" FROM "Usuario"'
-    );
-
-    if (Array.isArray(linhasCadastro)) {
-      cadastroPorUsuarioId = new Map(
-        linhasCadastro.map(item => [Number(item.id), item.createdAt || null])
-      );
-    }
-  } catch (error) {
-    cadastroPorUsuarioId = new Map();
-  }
-
   const usuarios = await prisma.usuario.findMany({
     where: {
       ativo: true,
@@ -98,7 +97,6 @@ async function getUsuarios() {
       agendamentos: true,
       quadra: true,
       permissao: true,
-
       jogador: {
         include: {
           times: {
@@ -109,14 +107,20 @@ async function getUsuarios() {
           },
         },
       },
-
       times: {
+        where: {
+          ativo: true,
+          deletedAt: null,
+        },
         include: {
           time: true,
         },
       },
-
       treinadorTimes: {
+        where: {
+          ativo: true,
+          deletedAt: null,
+        },
         include: {
           time: true,
         },
@@ -124,13 +128,13 @@ async function getUsuarios() {
     },
   });
 
-  return usuarios.map(user => {
+  return usuarios.map((user) => {
     let jogador = null;
     let timesJogador = [];
-    const agendamentosAtivos = (user.agendamentos || []).filter(ag => !ag.deletedAt);
+    const agendamentosAtivos = (user.agendamentos || []).filter((ag) => !ag.deletedAt);
     const agora = new Date();
 
-    const obterDataAgendamento = agendamento => {
+    const obterDataAgendamento = (agendamento) => {
       if (agendamento?.datahora) {
         return new Date(agendamento.datahora);
       }
@@ -155,21 +159,19 @@ async function getUsuarios() {
 
     const datasAgendamentos = agendamentosAtivos
       .map(obterDataAgendamento)
-      .filter(data => data instanceof Date && !Number.isNaN(data.getTime()));
+      .filter((data) => data instanceof Date && !Number.isNaN(data.getTime()));
 
-    const agendamentosNoMes = datasAgendamentos.filter(data =>
-      data.getMonth() === agora.getMonth() &&
-      data.getFullYear() === agora.getFullYear()
+    const agendamentosNoMes = datasAgendamentos.filter(
+      (data) =>
+        data.getMonth() === agora.getMonth() &&
+        data.getFullYear() === agora.getFullYear()
     ).length;
 
     const ultimaAtividade = datasAgendamentos.length
-      ? new Date(Math.max(...datasAgendamentos.map(data => data.getTime())))
+      ? new Date(Math.max(...datasAgendamentos.map((data) => data.getTime())))
       : null;
 
-    const dataCadastro =
-      cadastroPorUsuarioId.get(Number(user.id)) ||
-      user.createdAt ||
-      null;
+    const dataCadastro = user.createdAt || null;
 
     if (user.jogador) {
       jogador = {
@@ -179,8 +181,8 @@ async function getUsuarios() {
       };
 
       timesJogador = user.jogador.times
-        .filter(jt => jt.ativo)
-        .map(jt => ({
+        .filter((jt) => jt.ativo)
+        .map((jt) => ({
           id: jt.time.id,
           nome: jt.time.nome,
           modalidade: jt.modalidade.nome,
@@ -200,18 +202,17 @@ async function getUsuarios() {
       jogador,
       timesJogador,
       times: user.times
-        .filter(ut => ut.ativo)
-        .map(ut => ({
+        .filter((ut) => ut.ativo && !ut.deletedAt && ut.time?.ativo && !ut.time?.deletedAt)
+        .map((ut) => ({
           id: ut.time.id,
           nome: ut.time.nome,
         })),
       timesComoTreinador: user.treinadorTimes
-        .filter(tt => tt.time?.ativo)
-        .map(tt => ({
+        .filter((tt) => tt.ativo && !tt.deletedAt && tt.time?.ativo && !tt.time?.deletedAt)
+        .map((tt) => ({
           id: tt.time.id,
           nome: tt.time.nome,
         })),
-
       totalAgendamentos: agendamentosAtivos.length,
       agendamentosNoMes,
       ultimaAtividade,
@@ -226,21 +227,40 @@ async function listarPermissoes() {
 }
 
 async function vincularUsuarioTime(usuarioId, timeId, jogadorId) {
-  return prisma.$transaction(async tx => {
+  return prisma.$transaction(async (tx) => {
+    const usuarioIdNum = Number(usuarioId);
+    const timeIdNum = Number(timeId);
+    const jogadorIdNum = jogadorId ? Number(jogadorId) : null;
+
     const usuario = await tx.usuario.findUnique({
-      where: { id: usuarioId },
+      where: { id: usuarioIdNum },
       include: { permissao: true },
     });
-    if (!usuario || usuario.deletedAt) throw new Error('Usuário não encontrado');
+    if (!usuario || usuario.deletedAt) throw new Error('Usuario nao encontrado');
 
     const time = await tx.time.findUnique({
-      where: { id: timeId },
+      where: { id: timeIdNum },
       include: { modalidade: true },
     });
-    if (!time || time.deletedAt) throw new Error('Time não encontrado');
+    if (!time || time.deletedAt) throw new Error('Time nao encontrado');
+
+    await tx.usuarioTime.upsert({
+      where: {
+        usuarioId_timeId: { usuarioId: usuarioIdNum, timeId: timeIdNum },
+      },
+      update: { ativo: true, deletedAt: null },
+      create: { usuarioId: usuarioIdNum, timeId: timeIdNum },
+    });
+
+    if (!jogadorIdNum) {
+      return {
+        vinculo: { usuarioId: usuarioIdNum, timeId: timeIdNum },
+        jogador: null,
+      };
+    }
 
     const jogador = await tx.jogador.findUnique({
-      where: { id: jogadorId },
+      where: { id: jogadorIdNum },
       include: {
         times: {
           where: { ativo: true },
@@ -251,49 +271,39 @@ async function vincularUsuarioTime(usuarioId, timeId, jogadorId) {
         },
       },
     });
-    if (!jogador || jogador.deletedAt) throw new Error('Jogador não encontrado');
+    if (!jogador || jogador.deletedAt) throw new Error('Jogador nao encontrado');
 
-    if (usuario.jogadorId !== jogadorId) {
+    if (Number(usuario.jogadorId) !== jogadorIdNum) {
       await tx.usuario.update({
-        where: { id: usuarioId },
-        data: { jogadorId },
+        where: { id: usuarioIdNum },
+        data: { jogadorId: jogadorIdNum },
       });
     }
 
-    await tx.usuarioTime.upsert({
-      where: {
-        usuarioId_timeId: { usuarioId, timeId },
-      },
-      update: { ativo: true },
-      create: { usuarioId, timeId },
-    });
-
-    const modalidadeId = time.modalidadeId;
-
     await validarNumeroUnicoNoTime({
-      timeId,
+      timeId: timeIdNum,
       numero: jogador.numero,
-      jogadorIgnorarId: jogadorId,
-      tx
+      jogadorIgnorarId: jogadorIdNum,
+      tx,
     });
 
     await tx.jogadorTime.upsert({
       where: {
-        jogadorId_modalidadeId: { jogadorId, modalidadeId },
+        jogadorId_modalidadeId: { jogadorId: jogadorIdNum, modalidadeId: time.modalidadeId },
       },
       update: {
-        timeId,
+        timeId: timeIdNum,
         ativo: true,
       },
       create: {
-        jogadorId,
-        timeId,
-        modalidadeId,
+        jogadorId: jogadorIdNum,
+        timeId: timeIdNum,
+        modalidadeId: time.modalidadeId,
       },
     });
 
     const jogadorAtualizado = await tx.jogador.findUnique({
-      where: { id: jogadorId },
+      where: { id: jogadorIdNum },
       include: {
         times: {
           where: { ativo: true },
@@ -307,7 +317,10 @@ async function vincularUsuarioTime(usuarioId, timeId, jogadorId) {
 
     await enviarEmailVinculoTime(usuario, time, jogadorAtualizado);
 
-    return { jogador: jogadorAtualizado };
+    return {
+      vinculo: { usuarioId: usuarioIdNum, timeId: timeIdNum },
+      jogador: jogadorAtualizado,
+    };
   });
 }
 

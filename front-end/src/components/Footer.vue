@@ -5,7 +5,7 @@
                 <h3>Redes Sociais</h3>
 
                 <div class="social-icons">
-                    <a href="https://instagram.com/quadralivreofc" target="_blank" rel="noopener noreferrer"
+                    <a href="https://instagram.com/quadraplayofc" target="_blank" rel="noopener noreferrer"
                         aria-label="Instagram">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                             class="bi bi-instagram" viewBox="0 0 16 16">
@@ -47,7 +47,7 @@
                 <ul class="suporte-list">
                     <li class="suporte-item">
                         <span class="footer-link email-link" @click="abrirGmail">
-                            quadralivre3@gmail.com
+                            quadraplaysv@gmail.com
                         </span>
                     </li>
                 </ul>
@@ -65,7 +65,7 @@
         </div>
 
         <div class="footer-bottom">
-            © {{ year }} Quadra Livre. Todos os direitos reservados.
+            © {{ year }} Quadra Play. Todos os direitos reservados.
         </div>
     </footer>
 </template>
@@ -82,7 +82,7 @@ export default {
 
     methods: {
         abrirGmail() {
-            const email = 'quadralivre3@gmail.com'
+            const email = 'quadraplaysvgmail.com'
 
             window.open(
                 `https://mail.google.com/mail/?view=cm&fs=1&to=${email}`,
@@ -102,7 +102,6 @@ export default {
   overflow: hidden;
 }
 
-/* brilho sutil no topo (bem leve) */
 .footer::before {
   content: "";
   position: absolute;
@@ -116,7 +115,7 @@ export default {
 }
 
 .footer-container {
-  position: relative; /* pra ficar acima do ::before */
+  position: relative; 
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 60px;
@@ -149,7 +148,6 @@ export default {
   transform: translateX(2px);
 }
 
-/* ÍCONES - maiores + hover mais “premium” */
 .social-icons {
   display: flex;
   gap: 14px;
@@ -178,7 +176,6 @@ export default {
   color: rgba(209, 213, 219, 0.95);
 }
 
-/* Logo do parceiro com “badge” suave pra não ficar colado no branco */
 .parceiro-img {
   width: 100%;
   max-width: 220px;
@@ -189,7 +186,6 @@ export default {
   box-sizing: border-box;
 }
 
-/* linha inferior mais suave + tipografia */
 .footer-bottom {
   position: absolute;
   bottom: 0;
@@ -219,7 +215,6 @@ export default {
   align-items: center;
 }
 
-/* Responsivo */
 @media (max-width: 768px) {
   .footer {
     padding: 40px 20px 140px;

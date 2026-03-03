@@ -41,13 +41,13 @@ async function criarPermissoes() {
 
 async function criarQuadraPadrao() {
   let quadra = await prisma.quadra.findFirst({
-    where: { nome: 'Quadra Livre' }
+    where: { nome: 'Quadra Play' }
   })
 
   if (!quadra) {
     quadra = await prisma.quadra.create({
       data: {
-        nome: 'Quadra Livre',
+        nome: 'Quadra Play',
         endereco: 'Rua das Quadras, 123',
         foto: 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/C%C3%B3pia%20de%20xxxxx%20(2).png'
       }
@@ -68,15 +68,16 @@ async function criarUsuarioDesenvolvedor(quadraId) {
   }
 
  await prisma.usuario.upsert({
-  where: { email: "quadralivre3@gmail.com" },
+  where: { email: "quadraplaysv@gmail.com" },
   update: {},
   create: {
-    nome: "Quadra Livre",
-    email: "quadralivre3@gmail.com",
+    nome: "Quadra Play",
+    email: "quadraplaysv@gmail.com",
     telefone: "84999999999",
     foto: "https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/1768604796354_C%C3%83%C2%B3pia%20de%20xxxxx%20(2).png",
     permissaoId: 1,
     quadraId: 1,
+    createdAt: new Date(),
   }
 });
   console.log('✔ Usuário desenvolvedor verificado/criado')

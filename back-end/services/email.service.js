@@ -5,14 +5,14 @@ const prisma = new PrismaClient();
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'quadralivre3@gmail.com',
-    pass: 'tgvg ugil mpjm owhj'
+    user: 'quadraplaysv@gmail.com',
+    pass: 'peqt dfif ftsa lsgu'
   }
 });
 
 async function enviarEmail({ to, subject, html }) {
   return transporter.sendMail({
-    from: '"Suporte - Quadra Livre" <quadralivre3@gmail.com>',
+    from: '"Suporte - Quadra Play" <quadraplaysv@gmail.com>',
     to,
     subject,
     html
@@ -31,7 +31,7 @@ async function enviarEmailNovaModalidade(dev, modalidadeNome) {
         Informamos que a modalidade <strong>${nomeModalidadeFormatado}</strong> foi cadastrada no sistema.
       </p>
       <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
-        Atenciosamente,<br/>Equipe Quadra Livre
+        Atenciosamente,<br/>Equipe Quadra Play
       </p>
     </div>
   </div>
@@ -65,7 +65,7 @@ async function enviarEmailAlteracaoPermissao(usuario) {
         ${mensagem}
       </p>
       <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
-        Atenciosamente,<br/>Equipe QuadraLivre
+        Atenciosamente,<br/>Equipe QuadraPlay
       </p>
     </div>
   </div>
@@ -106,7 +106,7 @@ async function enviarEmailVinculoTime(usuario, time, jogador) {
 
       <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
         Atenciosamente,<br/>
-        <strong>Equipe QuadraLivre</strong>
+        <strong>Equipe QuadraPlay</strong>
       </p>
     </div>
   </div>
@@ -151,7 +151,7 @@ async function enviarEmailVinculoMesarioCampeonato(mesario, campeonato) {
       ${blocoQuadra}
 
       <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
-        Atenciosamente,<br/>Equipe QuadraLivre
+        Atenciosamente,<br/>Equipe QuadraPlay
       </p>
     </div>
   </div>
@@ -189,7 +189,7 @@ async function enviarEmailVinculoTreinador(usuario, time) {
       ${blocoModalidade}
 
       <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
-        Atenciosamente,<br/>Equipe QuadraLivre
+        Atenciosamente,<br/>Equipe QuadraPlay
       </p>
     </div>
   </div>
@@ -228,7 +228,7 @@ async function enviarEmailStatusAgendamento(agendamento) {
       ${blocoMotivo}
 
       <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
-        Atenciosamente,<br/>Equipe QuadraLivre
+        Atenciosamente,<br/>Equipe QuadraPlay
       </p>
     </div>
   </div>
@@ -236,7 +236,7 @@ async function enviarEmailStatusAgendamento(agendamento) {
 
   return enviarEmail({
     to: agendamento.usuario.email,
-    subject: `Agendamento ${statusFormatado} - QuadraLivre`,
+    subject: `Agendamento ${statusFormatado} - QuadraPlay`,
     html
   });
 }
@@ -256,14 +256,14 @@ async function enviarEmailNovoAviso(emailsDestinatarios, aviso) {
         Acesse a plataforma para conferir mais detalhes.
       </p>
       <p style="margin: 12px 0; font-size: 16px; line-height: 1.5;">
-        Atenciosamente,<br/>Equipe Quadra Livre
+        Atenciosamente,<br/>Equipe QuadraPlay
       </p>
     </div>
   </div>
   `;
 
   return transporter.sendMail({
-    from: '"Avisos - Quadra Livre" <quadralivre3@gmail.com>',
+    from: '"Avisos - Quadra Play" <quadraplaysv@gmail.com>',
     bcc: emailsDestinatarios, 
     subject: `📢 Novo Aviso: ${aviso.titulo}`,
     html

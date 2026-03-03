@@ -6,7 +6,7 @@
         <div class="conteudo-centralizado">
           <h1 class="texto">
             <div>
-              <span class="primeira-linha">Com o Quadra Livre, <span class="destaque_sublinhado">agendar</span></span>
+              <span class="primeira-linha">Com o Quadra Play, <span class="destaque_sublinhado">agendar</span></span>
             </div>
             <div>
               <span class="segunda-linha destaque">seu treino ficou ainda mais fácil.</span>
@@ -125,7 +125,9 @@
 
             <TabelaClassificacao v-if="isLoadingPlacar || (Array.isArray(placar) && placar.length > 0)" :times="placar"
               :loading="isLoadingPlacar" :modalidade="modalidadeNormalizada"
-              :colunas-visiveis="colunasClassificacaoVisiveis" @time-click="abrirModalPartidasTime" />
+              :colunas-visiveis="colunasClassificacaoVisiveis"
+              :grupos-config="gruposClassificacao"
+              @time-click="abrirModalPartidasTime" />
 
             <div v-else class="sem-dados-centralizado sem-dados-alinhado">
               Nenhuma tabela de classificação disponível no momento.
@@ -180,6 +182,7 @@ import router from '@/router'
 import { Carousel, Slide } from 'vue3-carousel'
 import Swal from 'sweetalert2'
 import api from '@/axios'
+import { useAuthStore } from '@/store'
 import TabelaClassificacao from '@/components/quadraplay/TabelaClassificacao.vue'
 import ListaPartidas from '@/components/quadraplay/ListaPartidas.vue'
 import PartidasDoTimeModal from '@/components/quadraplay/PartidasDoTimeModal.vue'
@@ -217,7 +220,8 @@ export default {
       socketCampeonatoId: null,
       onSocketAtualizacao: null,
       socketTimerPartidas: null,
-      socketTimerPlacar: null
+      socketTimerPlacar: null,
+      gruposClassificacao: null
     }
   },
 
@@ -395,6 +399,7 @@ export default {
           this.partidas = []
           this.isLoadingPlacar = false
           this.isLoadingPartidas = false
+          this.gruposClassificacao = null
           return
         }
 
@@ -406,6 +411,7 @@ export default {
         this.partidas = []
         this.isLoadingPlacar = false
         this.isLoadingPartidas = false
+        this.gruposClassificacao = null
       }
     },
 
@@ -438,6 +444,7 @@ export default {
           this.partidas = []
           this.isLoadingPlacar = false
           this.isLoadingPartidas = false
+          this.gruposClassificacao = null
           return
         }
 
@@ -451,6 +458,7 @@ export default {
           this.partidas = []
           this.isLoadingPlacar = false
           this.isLoadingPartidas = false
+          this.gruposClassificacao = null
           return
         }
 
@@ -533,12 +541,16 @@ export default {
       try {
         const { data } = await api.get(`/ordem/classificacao/${campeonatoId}`)
         const colunas = Array.isArray(data?.colunas) ? data.colunas : []
+        const grupos = data?.grupos && typeof data.grupos === 'object' ? data.grupos : null
+
+        this.gruposClassificacao = grupos
 
         this.campeonatoAtual = {
           ...(this.campeonatoAtual || {}),
           regras: {
             ...(this.campeonatoAtual?.regras || {}),
-            colunasClassificacao: colunas
+            colunasClassificacao: colunas,
+            grupos
           }
         }
       } catch (err) {
@@ -622,8 +634,8 @@ export default {
         }
 
         if (token && usuario) {
-          localStorage.setItem('token', token)
-          localStorage.setItem('usuario', JSON.stringify(usuario))
+          const authStore = useAuthStore()
+          authStore.setAuthData(usuario, token)
           localStorage.removeItem('quadraPlayLoginAtivo')
 
           const quadraStorage = localStorage.getItem('quadraSelecionada')
@@ -631,9 +643,7 @@ export default {
 
           if ([1, 2].includes(usuario.permissaoId)) {
             router.push({ name: 'Dashboard' })
-          } else if (usuario.permissaoId === 4) {
-            router.push({ name: 'gerenciar_partida' })
-          } else if ([3, 5].includes(usuario.permissaoId)) {
+          } else if ([3, 4, 5].includes(usuario.permissaoId)) {
             if (quadraSelecionada?.id) {
               router.push({ name: 'agendar_quadra', query: { quadraId: quadraSelecionada.id } })
               localStorage.removeItem('quadraSelecionada')

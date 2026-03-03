@@ -78,7 +78,7 @@
                   <template v-if="partidaEditandoStatus !== partida.id">
                     <span class="texto-status">
                       <span v-if="partida.status === 'EM_ANDAMENTO'" class="status-live-dot" aria-hidden="true"></span>
-                      {{ statusLabel(partida.status) }}
+                      {{ statusLabel(partida) }}
                     </span>
 
                     <svg v-if="podeAlterarStatus(partida)" xmlns="http://www.w3.org/2000/svg" width="14"
@@ -107,7 +107,7 @@
                 </div>
 
                 <div class="placar-centro">
-                  <template v-if="partida.status === 'AGENDADA'">
+                  <template v-if="isStatusPartidaPendente(partida)">
                     <span>x</span>
                   </template>
                   <template v-else>
@@ -176,12 +176,37 @@
 
           <select v-model="novoStatus" class="select-status-modal" :class="classeVisualStatusModal">
             <option v-if="statusAtualModal" :value="statusAtualModal" hidden>
-              {{ statusLabel(statusAtualModal) || statusAtualModal.replace('_', ' ') }}
+              {{ statusLabel(partidaSelecionada || statusAtualModal) || statusAtualModal.replace('_', ' ') }}
             </option>
             <option v-for="status in statusDisponiveisModal" :key="status" :value="status">
               {{ statusLabel(status) || status.replace('_', ' ') }}
             </option>
           </select>
+
+          <div v-if="novoStatus === 'ADIADA'" class="campos-adiamento">
+            <div class="campo-adiamento">
+              <label class="label-status" for="data-adiamento">Nova data</label>
+              <input
+                id="data-adiamento"
+                v-model="dataAdiamento"
+                type="date"
+                :min="dataMinimaAdiamento"
+                class="input-status-modal"
+                :class="classeVisualStatusModal"
+              />
+            </div>
+
+            <div class="campo-adiamento">
+              <label class="label-status" for="hora-adiamento">Nova hora</label>
+              <input
+                id="hora-adiamento"
+                v-model="horaAdiamento"
+                type="time"
+                class="input-status-modal"
+                :class="classeVisualStatusModal"
+              />
+            </div>
+          </div>
 
           <div class="botoes">
             <button class="btn-save" @click="confirmarAlteracaoStatus">Salvar</button>
@@ -198,6 +223,11 @@ import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
 import ModalEscolhaTipo from '@/components/quadraplay/ModalEscolhaTipo.vue'
 import SelecionarJogadores from '@/components/quadraplay/Partida/SelecionarJogadores.vue'
 import { carregarCampeonato } from '@/utils/persistirCampeonato'
+import {
+  isStatusPartidaPendente,
+  obterRotuloStatusPartida,
+  obterStatusExibicaoPartida
+} from '@/utils/partidaStatus'
 import api from '@/axios'
 import Swal from 'sweetalert2'
 import {
@@ -211,6 +241,8 @@ const STATUS_CONFIG = {
   FINALIZADA: { label: 'ENCERRADA', card: 'card-finalizada', text: 'status-finalizada' },
   EM_ANDAMENTO: { label: 'EM ANDAMENTO', card: 'card-andamento', text: 'status-andamento' },
   AGENDADA: { label: 'AGENDADA', card: 'card-agendada', text: 'status-agendada' },
+  AGENDADA_HOJE: { label: 'AGENDADA PARA HOJE', card: 'card-agendada', text: 'status-agendada' },
+  ADIADA: { label: 'ADIADA', card: 'card-agendada', text: 'status-agendada' },
   CANCELADA: { label: 'CANCELADA', card: 'card-cancelada', text: 'status-cancelada' },
   DELETADA: { label: 'DELETAR', card: 'card-cancelada', text: 'status-cancelada' }
 }
@@ -243,11 +275,13 @@ export default {
       jogadoresTime2: [],
       novoStatus: '',
       statusAtualModal: '',
-        partidaEditandoStatus: null,
-        socket: null,
-        socketCampeonatoId: null,
-        onSocketAtualizacao: null,
-        socketTimerPartidas: null
+      dataAdiamento: '',
+      horaAdiamento: '',
+      partidaEditandoStatus: null,
+      socket: null,
+      socketCampeonatoId: null,
+      onSocketAtualizacao: null,
+      socketTimerPartidas: null
     }
   },
 
@@ -300,6 +334,17 @@ export default {
       if (status === 'FINALIZADA') return 'status-visual-finalizada'
       if (status === 'CANCELADA' || status === 'DELETADA') return 'status-visual-cancelada'
       return 'status-visual-agendada'
+    },
+
+    dataMinimaAdiamento() {
+      const data = new Date()
+      data.setHours(0, 0, 0, 0)
+      data.setDate(data.getDate() + 1)
+
+      const ano = data.getFullYear()
+      const mes = String(data.getMonth() + 1).padStart(2, '0')
+      const dia = String(data.getDate()).padStart(2, '0')
+      return `${ano}-${mes}-${dia}`
     }
   },
 
@@ -392,15 +437,17 @@ export default {
     },
 
     statusLabel(status) {
-      return STATUS_CONFIG[status]?.label
+      return obterRotuloStatusPartida(status)
     },
 
     classeStatusPartida(partida) {
-      return STATUS_CONFIG[partida?.status]?.card
+      const statusExibicao = obterStatusExibicaoPartida(partida)
+      return STATUS_CONFIG[statusExibicao]?.card
     },
 
     classeStatusTexto(partida) {
-      return STATUS_CONFIG[partida?.status]?.text
+      const statusExibicao = obterStatusExibicaoPartida(partida)
+      return STATUS_CONFIG[statusExibicao]?.text
     },
 
     podeAlterarStatus(partida) {
@@ -575,17 +622,56 @@ export default {
       let opcoes = [...lista]
 
       if (statusAtual === 'EM_ANDAMENTO') {
-        opcoes = opcoes.filter(status => status !== 'AGENDADA')
+        opcoes = opcoes.filter(status => status !== 'AGENDADA' && status !== 'ADIADA')
         if (!opcoes.includes('DELETADA')) opcoes.push('DELETADA')
       } else if (statusAtual === 'FINALIZADA') {
         if (this.isMesario) return []
-        opcoes = opcoes.filter(status => status !== 'AGENDADA' && status !== 'FINALIZADA')
+        opcoes = opcoes.filter(status => !['AGENDADA', 'ADIADA', 'FINALIZADA'].includes(status))
       } else if (statusAtual === 'CANCELADA') {
-        opcoes = opcoes.filter(status => status !== 'AGENDADA' && status !== 'FINALIZADA')
+        opcoes = opcoes.filter(status => !['AGENDADA', 'ADIADA', 'FINALIZADA'].includes(status))
         if (!opcoes.includes('DELETADA')) opcoes.push('DELETADA')
       }
 
       return opcoes.filter(status => status !== statusAtual)
+    },
+
+    isStatusPartidaPendente(partida) {
+      return isStatusPartidaPendente(partida)
+    },
+
+    formatarDataInputLocal(dataReferencia) {
+      const data = new Date(dataReferencia)
+      if (Number.isNaN(data.getTime())) return ''
+
+      const ano = data.getFullYear()
+      const mes = String(data.getMonth() + 1).padStart(2, '0')
+      const dia = String(data.getDate()).padStart(2, '0')
+      return `${ano}-${mes}-${dia}`
+    },
+
+    formatarHoraInputLocal(dataReferencia) {
+      const data = new Date(dataReferencia)
+      if (Number.isNaN(data.getTime())) return ''
+
+      const hora = String(data.getHours()).padStart(2, '0')
+      const minuto = String(data.getMinutes()).padStart(2, '0')
+      return `${hora}:${minuto}`
+    },
+
+    preencherCamposAdiamento(dataReferencia) {
+      const dataFormatada = this.formatarDataInputLocal(dataReferencia)
+      this.dataAdiamento = dataFormatada && dataFormatada >= this.dataMinimaAdiamento
+        ? dataFormatada
+        : this.dataMinimaAdiamento
+      this.horaAdiamento = this.formatarHoraInputLocal(dataReferencia)
+    },
+
+    montarDataHoraAdiamento() {
+      if (!this.dataAdiamento || !this.horaAdiamento) return ''
+
+      const dataHora = `${this.dataAdiamento}T${this.horaAdiamento}`
+      const data = new Date(dataHora)
+      return Number.isNaN(data.getTime()) ? '' : data.toISOString()
     },
 
     editarStatus(partida) {
@@ -595,6 +681,7 @@ export default {
       this.partidaSelecionada = partida
       this.statusAtualModal = statusAtual
       this.novoStatus = statusAtual
+      this.preencherCamposAdiamento(partida?.data || partida?.createdAt)
       this.mostrarModalStatus = true
     },
 
@@ -603,6 +690,8 @@ export default {
       this.partidaSelecionada = null
       this.novoStatus = ''
       this.statusAtualModal = ''
+      this.dataAdiamento = ''
+      this.horaAdiamento = ''
     },
 
     async confirmarAlteracaoStatus() {
@@ -630,14 +719,36 @@ export default {
           return
         }
 
-        await api.put(`/partidas/${this.partidaSelecionada.id}/status`, { status: this.novoStatus })
-        this.partidaSelecionada.status = this.novoStatus
+        const payload = { status: this.novoStatus }
+
+        if (this.novoStatus === 'ADIADA') {
+          if (this.dataAdiamento < this.dataMinimaAdiamento) {
+            Swal.fire('Atenção', 'Escolha uma data a partir de amanhã para adiar a partida.', 'info')
+            return
+          }
+
+          const dataAdiamento = this.montarDataHoraAdiamento()
+
+          if (!dataAdiamento) {
+            Swal.fire('Atenção', 'Selecione a nova data e a nova hora da partida.', 'info')
+            return
+          }
+
+          payload.data = dataAdiamento
+        }
+
+        const { data } = await api.put(`/partidas/${this.partidaSelecionada.id}/status`, payload)
+
+        if (this.partidaSelecionada && data && typeof data === 'object') {
+          Object.assign(this.partidaSelecionada, data)
+        }
         this.fecharModalStatus()
 
         Swal.fire({ icon: 'success', title: 'Status atualizado', timer: 1200, showConfirmButton: false })
       } catch (error) {
         console.error(error)
-        Swal.fire('Erro', 'Não foi possível alterar o status.', 'error')
+        const mensagem = error?.response?.data?.error || 'Não foi possível alterar o status.'
+        return Swal.fire('Erro', mensagem, 'error')
       }
     },
 
@@ -721,7 +832,7 @@ export default {
         const partidaId = Number(partidaObj?.id || partida)
         if (!partidaId) throw new Error('Partida invalida.')
 
-        if (partidaObj?.status === 'AGENDADA') {
+        if (this.isStatusPartidaPendente(partidaObj)) {
           Swal.fire('Atenção', 'No dia da partida, altere o status para EM ANDAMENTO para iniciar.', 'info')
           return
         }
@@ -1492,6 +1603,40 @@ a {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
+.campos-adiamento {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.campo-adiamento {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-status-modal {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  color: #111827;
+  background-color: #fff;
+  transition: 0.2s;
+}
+
+.input-status-modal:hover {
+  border-color: #3b82f6;
+}
+
+.input-status-modal:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
 .modal-status.status-visual-agendada {
   border-top-color: #2563eb;
 }
@@ -1601,7 +1746,17 @@ a {
   background-color: rgba(37, 99, 235, 0.08);
 }
 
+.input-status-modal.status-visual-agendada {
+  border-color: #2563eb;
+  background-color: rgba(37, 99, 235, 0.08);
+}
+
 .select-status-modal.status-visual-andamento {
+  border-color: #16a34a;
+  background-color: rgba(22, 163, 74, 0.08);
+}
+
+.input-status-modal.status-visual-andamento {
   border-color: #16a34a;
   background-color: rgba(22, 163, 74, 0.08);
 }
@@ -1611,7 +1766,17 @@ a {
   background-color: rgba(189, 28, 28, 0.08);
 }
 
+.input-status-modal.status-visual-finalizada {
+  border-color: #bd1c1c;
+  background-color: rgba(189, 28, 28, 0.08);
+}
+
 .select-status-modal.status-visual-cancelada {
+  border-color: #dc2626;
+  background-color: rgba(220, 38, 38, 0.08);
+}
+
+.input-status-modal.status-visual-cancelada {
   border-color: #dc2626;
   background-color: rgba(220, 38, 38, 0.08);
 }
@@ -1621,6 +1786,10 @@ a {
     margin-left: 0;
     margin-top: 34px;
     padding: 14px;
+  }
+
+  .campos-adiamento {
+    grid-template-columns: 1fr;
   }
 
   .conteudo.collapsed {

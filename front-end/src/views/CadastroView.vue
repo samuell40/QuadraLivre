@@ -3,7 +3,7 @@
     <div class="form-container">
       <form class="form-menu" @submit.prevent="cadastrarUsuario">
         <div class="form-header">
-          <label class="header-title">Quadra Livre</label>
+          <label class="header-title">Quadra Play</label>
         </div>
 
         <div class="title-container">
@@ -118,12 +118,7 @@ export default {
         return;
       }
 
-      if (permissaoId === 4) {
-        this.$router.push({ name: 'gerenciar_partida' });
-        return;
-      }
-
-      if ([3, 5].includes(permissaoId)) {
+      if ([3, 4, 5].includes(permissaoId)) {
         if (quadraSelecionada?.id) {
           this.$router.push({ name: 'agendar_quadra', query: { quadraId: quadraSelecionada.id } });
           localStorage.removeItem('quadraSelecionada');

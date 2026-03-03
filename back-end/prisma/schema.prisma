@@ -17,6 +17,7 @@ model Usuario {
   quadraId    Int?
   ativo       Boolean   @default(true)
   deletedAt   DateTime?
+  createdAt   DateTime? @default(now())
   quadra               Quadra?          @relation(fields: [quadraId], references: [id])
   permissao            Permissao        @relation(fields: [permissaoId], references: [id])
   jogadorId            Int?             @unique
@@ -188,6 +189,7 @@ model Time {
 
 enum StatusPartida {
   AGENDADA
+  ADIADA
   EM_ANDAMENTO
   FINALIZADA
   CANCELADA

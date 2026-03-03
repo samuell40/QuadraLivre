@@ -840,7 +840,8 @@ a {
   border: 1px solid rgba(148, 163, 184, 0.22);
   font-weight: 800;
   font-size: 13px;
-  margin-top: 6px;
+  margin-top: 0;
+  transform: translateY(14px);
   flex: 0 0 auto;
 }
 
@@ -913,7 +914,7 @@ a {
 
 .header-copy {
   min-width: 0;
-  transform: translateY(6px);
+  transform: translateY(14px);
 }
 
 .loader-container-centralizado {

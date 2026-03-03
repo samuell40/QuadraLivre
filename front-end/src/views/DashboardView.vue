@@ -96,7 +96,7 @@
               :class="{ 'aviso-fixado': aviso.fixado }">
               <div class="aviso_topo">
                 <div class="aviso_meta">
-                  <span class="aviso_origem">{{ aviso.quadra?.nome || 'Equipe Quadra Livre' }}</span>
+                  <span class="aviso_origem">{{ aviso.quadra?.nome || 'Equipe Quadra Play' }}</span>
                   <span class="aviso_data">{{ formatarData(aviso.data) }}</span>
                 </div>
                 <span class="aviso_status" :class="{ 'aviso_status-fixado': aviso.fixado }">

@@ -81,6 +81,13 @@ function normalizarTexto(texto) {
     .trim();
 }
 
+function obterInicioDoProximoDia(dataBase = new Date()) {
+  const data = new Date(dataBase);
+  data.setHours(0, 0, 0, 0);
+  data.setDate(data.getDate() + 1);
+  return data;
+}
+
 function grupoModalidade(nomeModalidade) {
   const nome = normalizarTexto(nomeModalidade);
   if (
@@ -96,6 +103,10 @@ function grupoModalidade(nomeModalidade) {
 function isBeachTenisModalidade(nomeModalidade) {
   const nome = normalizarTexto(nomeModalidade);
   return nome.includes('beach') && (nome.includes('tenis') || nome.includes('tennis'));
+}
+
+function isFutebolModalidadeExclusiva(nomeModalidade) {
+  return normalizarTexto(nomeModalidade) === 'futebol';
 }
 
 function grupoCriteriosModalidade(nomeModalidade) {
@@ -832,18 +843,22 @@ async function criarPartida(data, usuarioId) {
   const quadraId = Number(data.quadraId);
   const dataPartida = data?.data ? new Date(data.data) : null;
   const statusPartida = String(data?.status || 'AGENDADA').toUpperCase();
-  const statusPermitidos = new Set(['AGENDADA', 'EM_ANDAMENTO', 'FINALIZADA', 'CANCELADA']);
+  const statusPermitidos = new Set(['AGENDADA', 'ADIADA', 'EM_ANDAMENTO', 'FINALIZADA', 'CANCELADA']);
 
   if (!statusPermitidos.has(statusPartida)) {
     throw new Error('Status de partida inválido.');
   }
 
-  if (statusPartida === 'AGENDADA' && (!dataPartida || Number.isNaN(dataPartida.getTime()))) {
+  if (['AGENDADA', 'ADIADA'].includes(statusPartida) && (!dataPartida || Number.isNaN(dataPartida.getTime()))) {
     throw new Error('Data da partida é obrigatória para agendamento.');
   }
 
   if (dataPartida && Number.isNaN(dataPartida.getTime())) {
     throw new Error('Data da partida inválida.');
+  }
+
+  if (['AGENDADA', 'ADIADA'].includes(statusPartida) && dataPartida < obterInicioDoProximoDia()) {
+    throw new Error('A data da partida deve ser a partir de amanha.');
   }
 
   const dataCreate = {
@@ -995,7 +1010,7 @@ async function retornarPartida(partidaId) {
     where: {
       id: Number(partidaId),
       status: {
-        in: ['AGENDADA', 'EM_ANDAMENTO', 'FINALIZADA']
+        in: ['AGENDADA', 'ADIADA', 'EM_ANDAMENTO', 'FINALIZADA']
       }
     },
     select: {
@@ -1499,7 +1514,14 @@ async function atualizarAtuacaoJogadorPartida({
   cartoesVermelhos = 0
 }) {
   const partida = await prisma.partida.findUnique({
-    where: { id: Number(partidaId) }
+    where: { id: Number(partidaId) },
+    include: {
+      modalidade: {
+        select: {
+          nome: true
+        }
+      }
+    }
   });
 
   const jogador = await prisma.jogador.findUnique({
@@ -1516,6 +1538,9 @@ async function atualizarAtuacaoJogadorPartida({
   const amarelos = Number(cartoesAmarelos) || 0;
   const vermelhos = Number(cartoesVermelhos) || 0;
   const golsInc = Number(gols) || 0;
+  const expulsarPorVermelho =
+    isFutebolModalidadeExclusiva(partida?.modalidade?.nome) &&
+    vermelhos > 0;
 
   if (!atuacao) {
     atuacao = await prisma.jogadorPartida.create({
@@ -1526,7 +1551,7 @@ async function atualizarAtuacaoJogadorPartida({
         gols: golsInc,
         cartoesAmarelos: amarelos,
         cartoesVermelhos: vermelhos,
-        emCampo: true
+        emCampo: !expulsarPorVermelho
       }
     });
 
@@ -1560,7 +1585,7 @@ async function atualizarAtuacaoJogadorPartida({
       gols: (Number(atuacao.gols) || 0) + golsInc,
       cartoesAmarelos: novosAmarelos,
       cartoesVermelhos: novosVermelhos,
-      emCampo: true
+      emCampo: expulsarPorVermelho ? false : atuacao.emCampo
     }
   });
 
@@ -1908,20 +1933,23 @@ async function listarPartidasDaRodadaDaFase(campeonatoId, faseId, rodadaId) {
 function listarStatusPartida() {
   return [
     'AGENDADA',
+    'ADIADA',
     'EM_ANDAMENTO',
     'FINALIZADA',
     'CANCELADA'
   ];
 }
 
-async function alterarStatusPartida(partidaId, novoStatus, usuarioEditorId = null) {
+async function alterarStatusPartida(partidaId, novoStatus, usuarioEditorId = null, novaData = null) {
   const partida = await prisma.partida.findUnique({
     where: { id: Number(partidaId) },
     select: {
       id: true,
       status: true,
       campeonatoId: true,
-      faseId: true
+      faseId: true,
+      rodadaId: true,
+      data: true
     }
   });
 
@@ -1933,12 +1961,46 @@ async function alterarStatusPartida(partidaId, novoStatus, usuarioEditorId = nul
     throw new Error('Nao e permitido alterar o status de partidas finalizadas.');
   }
 
+  const statusNormalizado = String(novoStatus || '').toUpperCase();
+  if (!listarStatusPartida().includes(statusNormalizado)) {
+    throw new Error('Status de partida invalido.');
+  }
+
+  if (String(partida.status || '').toUpperCase() === 'EM_ANDAMENTO' && statusNormalizado === 'ADIADA') {
+    throw new Error('Nao e permitido adiar uma partida em andamento.');
+  }
+
   const dadosAtualizacao = {
-    status: novoStatus
+    status: statusNormalizado
   };
 
-  if (novoStatus === 'EM_ANDAMENTO') {
+  if (statusNormalizado === 'EM_ANDAMENTO') {
     dadosAtualizacao.inicioPartida = new Date();
+  }
+
+  if (statusNormalizado === 'ADIADA') {
+    const dataAdiamento = new Date(novaData);
+
+    if (!novaData || Number.isNaN(dataAdiamento.getTime())) {
+      throw new Error('Data do adiamento invalida.');
+    }
+
+    if (dataAdiamento.getTime() <= Date.now()) {
+      throw new Error('A nova data da partida precisa ser futura.');
+    }
+
+    if (dataAdiamento < obterInicioDoProximoDia()) {
+      throw new Error('A nova data da partida deve ser a partir de amanha.');
+    }
+
+    dadosAtualizacao.data = dataAdiamento;
+    dadosAtualizacao.inicioPartida = null;
+  }
+
+  const editorIdNum = Number(usuarioEditorId);
+  if (Number.isFinite(editorIdNum) && editorIdNum > 0) {
+    dadosAtualizacao.usuarioUltimaEdicaoId = editorIdNum;
+    dadosAtualizacao.ultimaEdicaoEm = new Date();
   }
 
   const partidaAtualizada = await prisma.partida.update({
@@ -1946,7 +2008,7 @@ async function alterarStatusPartida(partidaId, novoStatus, usuarioEditorId = nul
     data: dadosAtualizacao
   });
 
-  if (novoStatus === 'FINALIZADA' || novoStatus === 'CANCELADA') {
+  if (statusNormalizado === 'FINALIZADA' || statusNormalizado === 'CANCELADA') {
     await recalcularPlacarCampeonatoFase(partida.campeonatoId, partida.faseId)
   }
 

@@ -13,7 +13,7 @@
         </a>
 
         <a href="#" class="quadra-play desktop-only" @click.prevent="loginQuadraPlayComGoogle">
-          QuadraPlay
+          Campeonatos
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
             class="bi bi-arrow-left-right" viewBox="0 0 16 16">
             <path fill-rule="evenodd"
@@ -49,7 +49,7 @@
 
         <li class="quadra-play-mobile">
           <a href="#" class="quadra-play" @click.prevent="loginQuadraPlayComGoogle">
-            QuadraPlay
+            Campeonatos
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
               class="bi bi-arrow-left-right" viewBox="0 0 16 16">
               <path fill-rule="evenodd"
@@ -82,7 +82,7 @@
             Tela Inicial
           </button>
           <a href="#" class="quadra-play drawer-quadra-play" @click.prevent="loginQuadraPlayComGoogle">
-            QuadraPlay
+            Campeonatos
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
               class="bi bi-arrow-left-right" viewBox="0 0 16 16">
               <path fill-rule="evenodd"
@@ -98,6 +98,7 @@
 <script>
 import router from '@/router'
 import Swal from 'sweetalert2'
+import { useAuthStore } from '@/store'
 import { redirecionarMesarioPosLogin } from '@/utils/quadraPlayMesarioRedirect'
 
 const QUADRA_PLAY_LOGIN_KEY = 'quadraPlayLoginAtivo'
@@ -164,8 +165,8 @@ export default {
         }
 
         if (token && usuario) {
-          localStorage.setItem('token', token)
-          localStorage.setItem('usuario', JSON.stringify(usuario))
+          const authStore = useAuthStore()
+          authStore.setAuthData(usuario, token)
           localStorage.removeItem(QUADRA_PLAY_LOGIN_KEY)
 
           const quadraSelecionada = JSON.parse(
@@ -174,10 +175,7 @@ export default {
 
           if ([1, 2].includes(usuario.permissaoId)) {
             router.push({ name: 'Dashboard' })
-          } else if (usuario.permissaoId === 4) {
-            localStorage.setItem(QUADRA_PLAY_LOGIN_KEY, '1')
-            await redirecionarMesarioPosLogin(router)
-          } else if ([3, 5].includes(usuario.permissaoId)) {
+          } else if ([3, 4, 5].includes(usuario.permissaoId)) {
             if (quadraSelecionada) {
               router.push({
                 name: 'agendar_quadra',
@@ -230,8 +228,8 @@ export default {
         }
 
         if (token && usuario) {
-          localStorage.setItem('token', token)
-          localStorage.setItem('usuario', JSON.stringify(usuario))
+          const authStore = useAuthStore()
+          authStore.setAuthData(usuario, token)
 
           if ([1, 2].includes(usuario.permissaoId)) {
             localStorage.setItem(QUADRA_PLAY_LOGIN_KEY, '1')

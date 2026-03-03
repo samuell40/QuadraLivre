@@ -9,7 +9,7 @@
         </div>
 
         <div class="logo-container">
-          <img src="@/assets/Cópia de xxxxx (2).png" alt="Quadra Livre" class="logo-img" />
+          <img src="@/assets/Cópia de xxxxx (2).png" alt="Quadra Play" class="logo-img" />
         </div>
       </div>
 

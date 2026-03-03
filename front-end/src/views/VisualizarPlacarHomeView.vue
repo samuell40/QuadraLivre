@@ -111,6 +111,7 @@
               <TabelaClassificacao v-if="campeonatoAtivo" :times="Array.isArray(timesPlacar) ? timesPlacar : []"
                 :loading="timesPlacar === null" :modalidade="modalidadeNormalizada"
                 :colunas-visiveis="colunasClassificacaoVisiveis"
+                :grupos-config="gruposClassificacao"
                 empty-text="Nenhum placar encontrado para este campeonato." @time-click="abrirModalPartidasTime" />
 
               <div v-else class="sem-dados-centralizado sem-dados-alinhado">
@@ -217,7 +218,8 @@ export default {
       socketCampeonatoId: null,
       onSocketAtualizacao: null,
       socketTimerPartidas: null,
-      socketTimerPlacar: null
+      socketTimerPlacar: null,
+      gruposClassificacao: null
     }
   },
 
@@ -405,6 +407,7 @@ export default {
           this.rodadaSelecionada = ''
           this.partidas = []
           this.timesPlacar = []
+          this.gruposClassificacao = null
           return
         }
 
@@ -493,6 +496,9 @@ export default {
       try {
         const { data } = await api.get(`/ordem/classificacao/${campeonatoId}`)
         const colunas = Array.isArray(data?.colunas) ? data.colunas : []
+        const grupos = data?.grupos && typeof data.grupos === 'object' ? data.grupos : null
+
+        this.gruposClassificacao = grupos
 
         this.campeonatos = this.campeonatos.map(campeonato => {
           if (Number(campeonato.id) !== Number(campeonatoId)) return campeonato
@@ -500,7 +506,8 @@ export default {
             ...campeonato,
             regras: {
               ...(campeonato.regras || {}),
-              colunasClassificacao: colunas
+              colunasClassificacao: colunas,
+              grupos
             }
           }
         })

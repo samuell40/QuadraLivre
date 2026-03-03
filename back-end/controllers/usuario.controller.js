@@ -8,7 +8,7 @@ async function cadastrarUsuarioController(req, res) {
 
     if (!nome || !email) {
       return res.status(400).json({
-        error: 'Nome e email são obrigatórios.',
+        error: 'Nome e email sao obrigatorios.',
       });
     }
 
@@ -28,21 +28,21 @@ async function cadastrarUsuarioController(req, res) {
       permissaoId: cadastro.permissaoId,
       permissao: cadastro.permissao || null,
       quadraId: cadastro.quadraId ?? null,
-      quadra: cadastro.quadra || null
+      quadra: cadastro.quadra || null,
     };
 
     const token = jwt.sign(tokenPayload, config.jwtSecret, {
-      expiresIn: config.JWT_EXPIRATION
+      expiresIn: config.JWT_EXPIRATION,
     });
 
     return res.status(201).json({
       usuario: tokenPayload,
-      token
+      token,
     });
   } catch (err) {
     console.error(err);
     return res.status(500).json({
-      error: 'Erro ao cadastrar usuário.',
+      error: 'Erro ao cadastrar usuario.',
     });
   }
 }
@@ -53,7 +53,7 @@ async function atualizarUsuarioController(req, res) {
 
     if (!email || !permissaoId) {
       return res.status(400).json({
-        error: 'Email e permissão são obrigatórios.',
+        error: 'Email e permissao sao obrigatorios.',
       });
     }
 
@@ -68,7 +68,7 @@ async function atualizarUsuarioController(req, res) {
     console.error(err);
 
     return res.status(400).json({
-      error: err.message || 'Erro ao atualizar usuário.',
+      error: err.message || 'Erro ao atualizar usuario.',
     });
   }
 }
@@ -80,7 +80,7 @@ async function listarUsuariosController(req, res) {
   } catch (err) {
     console.error(err);
     return res.status(500).json({
-      error: 'Erro ao buscar usuários.',
+      error: 'Erro ao buscar usuarios.',
     });
   }
 }
@@ -92,7 +92,7 @@ async function listarPermissoesController(req, res) {
   } catch (err) {
     console.error(err);
     return res.status(500).json({
-      error: 'Erro ao buscar permissões.',
+      error: 'Erro ao buscar permissoes.',
     });
   }
 }
@@ -101,9 +101,9 @@ async function vincularUsuarioTimeController(req, res) {
   try {
     const { usuarioId, timeId, jogadorId } = req.body;
 
-    if (!usuarioId || !timeId || !jogadorId) {
+    if (!usuarioId || !timeId) {
       return res.status(400).json({
-        error: 'Usuário, time e jogador são obrigatórios.',
+        error: 'Usuario e time sao obrigatorios.',
       });
     }
 
@@ -114,14 +114,14 @@ async function vincularUsuarioTimeController(req, res) {
     );
 
     return res.status(201).json({
-      message: 'Vínculo realizado com sucesso',
+      message: 'Vinculo realizado com sucesso',
       vinculo: resultado.vinculo,
       jogador: resultado.jogador,
     });
   } catch (error) {
-    console.error('Erro ao vincular usuário ao time:', error);
+    console.error('Erro ao vincular usuario ao time:', error);
     return res.status(400).json({
-      error: error.message || 'Erro ao vincular usuário ao time.',
+      error: error.message || 'Erro ao vincular usuario ao time.',
     });
   }
 }
@@ -134,16 +134,16 @@ async function listarUsuarioTimesController(req, res) {
 
     if (!usuario) {
       return res.status(404).json({
-        error: 'Usuário não encontrado',
+        error: 'Usuario nao encontrado',
       });
     }
 
-    const times = usuario.times.map(tu => tu.time);
+    const times = usuario.times.map((tu) => tu.time);
     return res.status(200).json(times);
   } catch (err) {
-    console.error('Erro ao buscar times do usuário:', err);
+    console.error('Erro ao buscar times do usuario:', err);
     return res.status(500).json({
-      error: 'Erro interno ao buscar times do usuário',
+      error: 'Erro interno ao buscar times do usuario',
     });
   }
 }
@@ -154,5 +154,5 @@ module.exports = {
   listarUsuariosController,
   listarPermissoesController,
   vincularUsuarioTimeController,
-  listarUsuarioTimesController
+  listarUsuarioTimesController,
 };

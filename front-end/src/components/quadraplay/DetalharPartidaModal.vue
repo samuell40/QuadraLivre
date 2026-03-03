@@ -11,7 +11,7 @@
             <span class="status-badge" :class="statusClass(partidaDetalhada, 'text')">
               <span v-if="partidaDetalhada?.status === 'EM_ANDAMENTO'" class="status-live-dot"
                 aria-hidden="true"></span>
-              {{ statusLabel(partidaDetalhada.status) }}
+              {{ statusLabel(partidaDetalhada) }}
             </span>
           </p>
           <p v-if="!isPartidaEmAndamento">
@@ -134,11 +134,18 @@
 <script>
 import Swal from 'sweetalert2'
 import api from '@/axios'
+import {
+  isStatusPartidaPendente,
+  obterRotuloStatusPartida,
+  obterStatusExibicaoPartida
+} from '@/utils/partidaStatus'
 
 const STATUS_CONFIG = {
   FINALIZADA: { label: 'ENCERRADA', card: 'partida-finalizada', text: 'status-finalizada' },
   EM_ANDAMENTO: { label: 'EM ANDAMENTO', card: 'partida-andamento', text: 'status-andamento' },
   AGENDADA: { label: 'AGENDADA', card: 'partida-agendada', text: 'status-agendada' },
+  AGENDADA_HOJE: { label: 'AGENDADA PARA HOJE', card: 'partida-agendada', text: 'status-agendada' },
+  ADIADA: { label: 'ADIADA', card: 'partida-agendada', text: 'status-agendada' },
   CANCELADA: { label: 'CANCELADA', card: 'partida-cancelada', text: 'status-cancelada' }
 }
 
@@ -171,7 +178,7 @@ export default {
       return ['volei', 'volei de areia', 'futevolei', 'beach tenis', 'beach tennis'].includes(this.modalidadeDetalheNormalizada)
     },
     isPartidaAgendada() {
-      return String(this.partidaDetalhada?.status || '') === 'AGENDADA'
+      return isStatusPartidaPendente(this.partidaDetalhada)
     },
     isPartidaEmAndamento() {
       return String(this.partidaDetalhada?.status || '') === 'EM_ANDAMENTO'
@@ -247,11 +254,11 @@ export default {
       this.loadingDetalhePartida = false
     },
     statusClass(partida, tipo) {
-      const status = partida?.status
-      return STATUS_CONFIG[status]?.[tipo] || ''
+      const statusExibicao = obterStatusExibicaoPartida(partida)
+      return STATUS_CONFIG[statusExibicao]?.[tipo] || ''
     },
-    statusLabel(status) {
-      return STATUS_CONFIG[status]?.label || ''
+    statusLabel(partida) {
+      return obterRotuloStatusPartida(partida)
     },
     formatarDataPartida(data) {
       const dt = new Date(data)

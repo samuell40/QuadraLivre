@@ -43,22 +43,32 @@ async function listarPlacarPorCampeonatoController(req, res) {
 async function salvarOrdemController(req, res) {
   try {
     const { campeonatoId } = req.params
-    const { ordem, colunas } = req.body
+    const { ordem, colunas, grupos } = req.body
+    const corpoTemGrupos = Object.prototype.hasOwnProperty.call(req.body || {}, 'grupos')
 
     const temOrdem = Array.isArray(ordem)
     const temColunas = Array.isArray(colunas)
+    const gruposValidos = grupos === null || (!!grupos && typeof grupos === 'object' && !Array.isArray(grupos))
 
-    if (!temOrdem && !temColunas) {
+    if (!temOrdem && !temColunas && !corpoTemGrupos) {
 
       return res.status(400).json({
-        erro: "ordem e/ou colunas devem ser arrays"
+        erro: "ordem, colunas e/ou grupos devem ser enviados em formato valido"
       })
 
     }
+
+    if (corpoTemGrupos && !gruposValidos) {
+      return res.status(400).json({
+        erro: "grupos deve ser um objeto ou null"
+      })
+    }
+
     const resultado = await placarService.salvarOrdemClassificacao(
       campeonatoId,
       temOrdem ? ordem : null,
-      temColunas ? colunas : null
+      temColunas ? colunas : null,
+      corpoTemGrupos ? grupos : undefined
     )
 
     emitirAtualizacaoCampeonato({
@@ -86,7 +96,8 @@ async function listarOrdemClassificacaoController(req, res) {
     res.json({
       campeonatoId,
       ordem: configuracao?.ordem || [],
-      colunas: configuracao?.colunas || []
+      colunas: configuracao?.colunas || [],
+      grupos: configuracao?.grupos || null
     });
   } catch (error) {
     console.error(error);

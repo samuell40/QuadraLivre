@@ -178,11 +178,22 @@ async function listarJogadoresPorTime(timeId) {
     where: { id: Number(timeId) },
     include: {
       jogadores: {
+        where: {
+          ativo: true,
+          deletedAt: null,
+        },
         include: {
           jogador: {
             include: {
               funcao: true,
               atuacoes: true,
+              usuario: {
+                select: {
+                  id: true,
+                  ativo: true,
+                  deletedAt: true,
+                },
+              },
             },
           },
         },
@@ -199,6 +210,11 @@ async function listarJogadoresPorTime(timeId) {
     foto: jt.jogador.foto,
     funcao: jt.jogador.funcao,
     atuacoes: jt.jogador.atuacoes,
+    vinculado: Boolean(
+      jt.jogador.usuario &&
+      jt.jogador.usuario.ativo &&
+      !jt.jogador.usuario.deletedAt
+    ),
   }));
 }
 

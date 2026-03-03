@@ -19,7 +19,7 @@
 <script>
 import router from '@/router';
 import Swal from 'sweetalert2';
-import { redirecionarMesarioPosLogin } from '@/utils/quadraPlayMesarioRedirect';
+import { useAuthStore } from '@/store';
 
 const QUADRA_PLAY_LOGIN_KEY = 'quadraPlayLoginAtivo'
 
@@ -59,8 +59,8 @@ export default {
                 }
 
                 if (token && usuario) {
-                    localStorage.setItem('token', token)
-                    localStorage.setItem('usuario', JSON.stringify(usuario))
+                    const authStore = useAuthStore()
+                    authStore.setAuthData(usuario, token)
                     localStorage.removeItem(QUADRA_PLAY_LOGIN_KEY)
 
                     const quadraStorage = localStorage.getItem('quadraSelecionada')
@@ -76,10 +76,7 @@ export default {
 
                     if ([1, 2].includes(usuario.permissaoId)) {
                         router.push({ name: 'Dashboard' })
-                    } else if (usuario.permissaoId === 4) {
-                        localStorage.setItem(QUADRA_PLAY_LOGIN_KEY, '1')
-                        await redirecionarMesarioPosLogin(router)
-                    } else if (usuario.permissaoId === 3) {
+                    } else if ([3, 4, 5].includes(usuario.permissaoId)) {
                         if (quadraSelecionada?.id) {
                             router.push({ name: 'agendar_quadra', query: { quadraId: quadraSelecionada.id } })
                             localStorage.removeItem('quadraSelecionada')

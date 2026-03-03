@@ -8,54 +8,109 @@
       {{ emptyText }}
     </div>
 
-    <table
-      v-else-if="isGrupoFutebol || isGrupoVolei || isGrupoBeachTenis"
-      class="placar"
-      :class="isGrupoFutebol ? 'grupo-futebol' : 'grupo-volei'"
-    >
-      <thead>
-        <tr>
-          <th>{{ isMobileViewport ? 'Tm' : 'Time' }}</th>
-          <th
-            v-for="coluna in colunasTabela"
-            :key="`head-${coluna.key}`"
-            :class="{ 'col-ultimos': coluna.key === 'ultimosJogos' }"
-          >
-            {{ obterTituloColuna(coluna) }}
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(time, index) in times" :key="time.id || time.timeId || index">
-          <td class="time-info time-info-click" @click="onTimeClick(time)">
-            <span class="posicao">{{ index + 1 }}º</span>
-            <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
-            <span class="nome-time">{{ time.time?.nome }}</span>
-          </td>
-          <td
-            v-for="coluna in colunasTabela"
-            :key="`${time.id || time.timeId || index}-${coluna.key}`"
-            :class="{ 'ultimos-jogos-cell': coluna.key === 'ultimosJogos' }"
-          >
-            <template v-if="coluna.key === 'ultimosJogos'">
-              <div class="ultimos-jogos">
-                <span
-                  v-for="(resultado, resultadoIndex) in obterUltimosJogos(time)"
-                  :key="`${time.id || index}-res-${resultadoIndex}`"
-                  class="resultado-item"
-                  :class="classeResultado(resultado)"
+    <div v-else-if="isGrupoFutebol || isGrupoVolei || isGrupoBeachTenis">
+      <div v-if="temGruposConfigurados" class="grupos-wrapper">
+        <section v-for="grupo in gruposParaExibicao" :key="grupo.id" class="grupo-section">
+          <div class="grupo-header">
+            <div>
+              <span class="grupo-kicker">Grupo</span>
+              <h3>{{ grupo.nome }}</h3>
+            </div>
+            <span class="grupo-total">{{ grupo.times.length }} time(s)</span>
+          </div>
+
+          <table class="placar" :class="classeTabela">
+            <thead>
+              <tr>
+                <th>{{ isMobileViewport ? 'Tm' : 'Time' }}</th>
+                <th
+                  v-for="coluna in colunasTabela"
+                  :key="`${grupo.id}-head-${coluna.key}`"
+                  :class="{ 'col-ultimos': coluna.key === 'ultimosJogos' }"
                 >
-                  {{ simboloResultado(resultado) }}
-                </span>
-              </div>
-            </template>
-            <template v-else>
-              {{ formatarValorColuna(time, coluna.key) }}
-            </template>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+                  {{ obterTituloColuna(coluna) }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(time, index) in grupo.times" :key="`${grupo.id}-${obterIdTime(time)}-${index}`">
+                <td class="time-info time-info-click" @click="onTimeClick(time)">
+                  <span class="posicao">{{ index + 1 }}</span>
+                  <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
+                  <span class="nome-time">{{ time.time?.nome }}</span>
+                </td>
+                <td
+                  v-for="coluna in colunasTabela"
+                  :key="`${grupo.id}-${obterIdTime(time)}-${coluna.key}`"
+                  :class="{ 'ultimos-jogos-cell': coluna.key === 'ultimosJogos' }"
+                >
+                  <template v-if="coluna.key === 'ultimosJogos'">
+                    <div class="ultimos-jogos">
+                      <span
+                        v-for="(resultado, resultadoIndex) in obterUltimosJogos(time)"
+                        :key="`${grupo.id}-${obterIdTime(time)}-res-${resultadoIndex}`"
+                        class="resultado-item"
+                        :class="classeResultado(resultado)"
+                      >
+                        {{ simboloResultado(resultado) }}
+                      </span>
+                    </div>
+                  </template>
+                  <template v-else>
+                    {{ formatarValorColuna(time, coluna.key) }}
+                  </template>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      <table v-else class="placar" :class="classeTabela">
+        <thead>
+          <tr>
+            <th>{{ isMobileViewport ? 'Tm' : 'Time' }}</th>
+            <th
+              v-for="coluna in colunasTabela"
+              :key="`head-${coluna.key}`"
+              :class="{ 'col-ultimos': coluna.key === 'ultimosJogos' }"
+            >
+              {{ obterTituloColuna(coluna) }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(time, index) in times" :key="`${obterIdTime(time)}-${index}`">
+            <td class="time-info time-info-click" @click="onTimeClick(time)">
+              <span class="posicao">{{ index + 1 }}</span>
+              <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
+              <span class="nome-time">{{ time.time?.nome }}</span>
+            </td>
+            <td
+              v-for="coluna in colunasTabela"
+              :key="`${obterIdTime(time)}-${coluna.key}`"
+              :class="{ 'ultimos-jogos-cell': coluna.key === 'ultimosJogos' }"
+            >
+              <template v-if="coluna.key === 'ultimosJogos'">
+                <div class="ultimos-jogos">
+                  <span
+                    v-for="(resultado, resultadoIndex) in obterUltimosJogos(time)"
+                    :key="`${obterIdTime(time)}-res-${resultadoIndex}`"
+                    class="resultado-item"
+                    :class="classeResultado(resultado)"
+                  >
+                    {{ simboloResultado(resultado) }}
+                  </span>
+                </div>
+              </template>
+              <template v-else>
+                {{ formatarValorColuna(time, coluna.key) }}
+              </template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <div v-else class="sem-dados-centralizado">
       {{ emptyText }}
@@ -130,7 +185,8 @@ export default {
     loading: { type: Boolean, default: false },
     emptyText: { type: String, default: 'Nenhum placar encontrado para este campeonato.' },
     showGlossary: { type: Boolean, default: true },
-    colunasVisiveis: { type: Array, default: () => [] }
+    colunasVisiveis: { type: Array, default: () => [] },
+    gruposConfig: { type: Object, default: null }
   },
   data() {
     return {
@@ -158,6 +214,9 @@ export default {
     isGrupoBeachTenis() {
       return ['beach tenis', 'beach tennis'].includes(this.modalidadeNormalizada)
     },
+    classeTabela() {
+      return this.isGrupoFutebol ? 'grupo-futebol' : 'grupo-volei'
+    },
     temTabela() {
       return !this.loading && Array.isArray(this.times) && this.times.length > 0
     },
@@ -176,9 +235,51 @@ export default {
       return this.colunasVisiveisResolvidas
         .map(chave => mapa.get(chave))
         .filter(Boolean)
+    },
+    gruposParaExibicao() {
+      if (!this.temTabela || !this.gruposConfig || !Array.isArray(this.gruposConfig.grupos)) {
+        return []
+      }
+
+      const idsUsados = new Set()
+      const grupos = this.gruposConfig.grupos
+        .map((grupo, indice) => {
+          const idsGrupo = new Set(
+            (Array.isArray(grupo?.timeIds) ? grupo.timeIds : [])
+              .map(id => Number(id))
+              .filter(id => Number.isInteger(id) && id > 0)
+          )
+
+          const timesGrupo = this.times.filter(time => idsGrupo.has(this.obterIdTime(time)))
+          timesGrupo.forEach(time => idsUsados.add(this.obterIdTime(time)))
+
+          return {
+            id: String(grupo?.id || `grupo-${indice + 1}`),
+            nome: String(grupo?.nome || '').trim() || `Grupo ${indice + 1}`,
+            times: timesGrupo
+          }
+        })
+        .filter(grupo => grupo.times.length)
+
+      const timesSemGrupo = this.times.filter(time => !idsUsados.has(this.obterIdTime(time)))
+      if (timesSemGrupo.length) {
+        grupos.push({
+          id: 'sem-grupo',
+          nome: 'Sem grupo',
+          times: timesSemGrupo
+        })
+      }
+
+      return grupos
+    },
+    temGruposConfigurados() {
+      return this.gruposParaExibicao.length > 0
     }
   },
   methods: {
+    obterIdTime(time) {
+      return Number(time?.timeId ?? time?.time?.id ?? time?.id ?? 0)
+    },
     obterTituloColuna(coluna) {
       if (!this.isMobileViewport) return coluna?.abbr || ''
       if (coluna?.key === 'ultimosJogos') return 'ULT'
@@ -202,7 +303,7 @@ export default {
     },
     onTimeClick(time) {
       const payload = {
-        id: Number(time?.timeId ?? time?.time?.id ?? time?.id),
+        id: this.obterIdTime(time),
         nome: time?.time?.nome ?? time?.nome ?? '',
         foto: time?.time?.foto ?? time?.foto ?? ''
       }
@@ -281,7 +382,7 @@ export default {
       if (item.empatou === true || item.empate === true) return 'E'
       if (item.perdeu === true || item.derrota === true) return 'D'
 
-      const timeId = time?.timeId ?? time?.time?.id ?? time?.id
+      const timeId = this.obterIdTime(time)
       const vencedorId = item.vencedorId ?? item.timeVencedorId ?? item.ganhadorId
       if (timeId != null && vencedorId != null) {
         return String(vencedorId) === String(timeId) ? 'V' : 'D'
@@ -344,6 +445,54 @@ export default {
   background: white;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.grupos-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.grupo-section {
+  padding: 14px 14px 0;
+}
+
+.grupo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.grupo-kicker {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.grupo-header h3 {
+  margin: 8px 0 0;
+  color: #0f172a;
+  font-size: 24px;
+  line-height: 1.05;
+}
+
+.grupo-total {
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .placar {
@@ -529,6 +678,19 @@ export default {
 @media (max-width: 768px) {
   .placar-table {
     margin-top: 18px;
+  }
+
+  .grupo-section {
+    padding: 12px 12px 0;
+  }
+
+  .grupo-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .grupo-header h3 {
+    font-size: 20px;
   }
 
   .placar {

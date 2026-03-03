@@ -18,7 +18,7 @@
 
             <div class="aviso-content-col">
               <p class="aviso-quadra-tag">
-                {{ avisoDestaque.quadra?.nome || "Equipe Quadra Livre" }}
+                {{ avisoDestaque.quadra?.nome || "Equipe Quadra Play" }}
               </p>
               <h4 class="aviso-titulo">{{ avisoDestaque.titulo }}</h4>
               <p class="aviso-descricao">{{ avisoDestaque.descricao }}</p>

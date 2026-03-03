@@ -29,10 +29,10 @@
 
       <ul v-else class="lista-partidas">
         <li v-for="partida in partidasDoTime" :key="partida.id" class="card-partida"
-          :class="statusClassCard(partida.status)" @click="abrirDetalharPartida(partida)">
-          <div class="match-ribbon" :class="statusClassRibbon(partida.status)">
+          :class="statusClassCard(partida)" @click="abrirDetalharPartida(partida)">
+          <div class="match-ribbon" :class="statusClassRibbon(partida)">
             <span v-if="partida.status === 'EM_ANDAMENTO'" class="status-live-dot" aria-hidden="true"></span>
-            {{ statusLabel(partida.status) }}
+            {{ statusLabel(partida) }}
           </div>
 
           <div class="placar-linha">
@@ -77,11 +77,14 @@
 
 <script>
 import DetalharPartidaModal from '@/components/quadraplay/DetalharPartidaModal.vue'
+import { obterRotuloStatusPartida, obterStatusExibicaoPartida } from '@/utils/partidaStatus'
 
 const STATUS_CONFIG = {
   FINALIZADA: { label: 'ENCERRADA', cls: 'status-finalizada' },
   EM_ANDAMENTO: { label: 'EM ANDAMENTO', cls: 'status-andamento' },
   AGENDADA: { label: 'AGENDADA', cls: 'status-agendada' },
+  AGENDADA_HOJE: { label: 'AGENDADA PARA HOJE', cls: 'status-agendada' },
+  ADIADA: { label: 'ADIADA', cls: 'status-agendada' },
   CANCELADA: { label: 'CANCELADA', cls: 'status-cancelada' }
 }
 
@@ -149,16 +152,18 @@ export default {
       this.partidaSelecionadaId = id
       this.mostrarDetalharPartida = true
     },
-    statusLabel(status) {
-      return STATUS_CONFIG[status]?.label || status || '-'
+    statusLabel(partida) {
+      return obterRotuloStatusPartida(partida)
     },
-    statusClassRibbon(status) {
-      return STATUS_CONFIG[status]?.cls || 'status-agendada'
+    statusClassRibbon(partida) {
+      const statusExibicao = obterStatusExibicaoPartida(partida)
+      return STATUS_CONFIG[statusExibicao]?.cls || 'status-agendada'
     },
-    statusClassCard(status) {
-      if (status === 'EM_ANDAMENTO') return 'partida-andamento'
-      if (status === 'FINALIZADA') return 'partida-finalizada'
-      if (status === 'CANCELADA') return 'partida-cancelada'
+    statusClassCard(partida) {
+      const statusExibicao = obterStatusExibicaoPartida(partida)
+      if (statusExibicao === 'EM_ANDAMENTO') return 'partida-andamento'
+      if (statusExibicao === 'FINALIZADA') return 'partida-finalizada'
+      if (statusExibicao === 'CANCELADA') return 'partida-cancelada'
       return 'partida-agendada'
     },
     formatarDiaSemanaData(data) {

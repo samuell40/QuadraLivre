@@ -58,6 +58,7 @@
           :loading="timesPlacar === null"
           :modalidade="modalidadeNormalizada"
           :colunas-visiveis="colunasClassificacaoVisiveis"
+          :grupos-config="gruposClassificacao"
           empty-text="Nenhum placar encontrado para esta fase."
           @time-click="abrirModalPartidasTime"
         />
@@ -78,6 +79,14 @@
         :campeonato="campeonato"
         @faseCriada="carregarFases"
         @colunas="atualizarColunasClassificacao"
+        @grupos="abrirModalGrupos"
+      />
+
+      <ModalConfigurarGrupos
+        v-if="campeonato"
+        v-model="modalGrupos"
+        :campeonato-id="campeonato.id"
+        @salvo="atualizarGruposClassificacao"
       />
 
     </div>
@@ -89,6 +98,7 @@ import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
 import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
 import { carregarCampeonato } from '@/utils/persistirCampeonato'
 import ModalConfiguracoesPlacar from '@/components/quadraplay/ModalConfiguracoesPlacar.vue'
+import ModalConfigurarGrupos from '@/components/quadraplay/ModalConfigurarGrupos.vue'
 import PartidasDoTimeModal from '@/components/quadraplay/PartidasDoTimeModal.vue'
 import TabelaClassificacao from '@/components/quadraplay/TabelaClassificacao.vue'
 import api from '@/axios'
@@ -105,7 +115,14 @@ import {
 
 export default {
   name: 'ClassificacaoView',
-  components: { SidebarCampeonato, NavBarQuadras, ModalConfiguracoesPlacar, PartidasDoTimeModal, TabelaClassificacao },
+  components: {
+    SidebarCampeonato,
+    NavBarQuadras,
+    ModalConfiguracoesPlacar,
+    ModalConfigurarGrupos,
+    PartidasDoTimeModal,
+    TabelaClassificacao
+  },
 
   data() {
     return {
@@ -122,7 +139,9 @@ export default {
       timeSelecionadoPartidas: null,
       isLoading: true,
       modalConfiguracoes: false,
+      modalGrupos: false,
       colunasClassificacaoVisiveis: [],
+      gruposClassificacao: null,
       socket: null,
       socketCampeonatoId: null,
       onSocketAtualizacao: null,
@@ -318,6 +337,10 @@ export default {
       this.modalConfiguracoes = true
     },
 
+    abrirModalGrupos() {
+      this.modalGrupos = true
+    },
+
     mostrarColuna(chave) {
       return this.colunasVisiveisSet.has(chave)
     },
@@ -348,6 +371,32 @@ export default {
           ...(this.campeonato?.regras || {}),
           colunasClassificacao: colunasResolvidas
         }
+      }
+    },
+
+    atualizarGruposClassificacao(grupos) {
+      this.gruposClassificacao = grupos && typeof grupos === 'object' ? grupos : null
+      this.campeonato = {
+        ...(this.campeonato || {}),
+        regras: {
+          ...(this.campeonato?.regras || {}),
+          grupos: this.gruposClassificacao
+        }
+      }
+    },
+
+    async carregarConfiguracoesClassificacao() {
+      if (!this.campeonato?.id) return
+
+      try {
+        const { data } = await api.get(`/ordem/classificacao/${this.campeonato.id}`)
+        const colunas = Array.isArray(data?.colunas) ? data.colunas : []
+        const grupos = data?.grupos && typeof data.grupos === 'object' ? data.grupos : null
+
+        this.atualizarColunasClassificacao(colunas)
+        this.atualizarGruposClassificacao(grupos)
+      } catch (err) {
+        console.error('Erro ao carregar configuracoes da classificacao:', err)
       }
     },
 
@@ -397,6 +446,7 @@ export default {
           this.rodadaSelecionada = ''
           this.partidas = []
           this.timesPlacar = []
+          this.gruposClassificacao = null
           return
         }
 
@@ -432,12 +482,14 @@ export default {
 
         if (data?.placares) {
           this.timesPlacar = data.placares
+          await this.carregarConfiguracoesClassificacao()
           return
         }
 
         if (Array.isArray(data)) {
           const fase = data.find(f => f.faseId == this.faseSelecionada)
           this.timesPlacar = fase?.placares || []
+          await this.carregarConfiguracoesClassificacao()
           return
         }
 

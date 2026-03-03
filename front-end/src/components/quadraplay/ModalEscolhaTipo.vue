@@ -149,7 +149,7 @@
 
       <div v-if="modoCriacaoPartida === 'AGENDAR'" class="filtros-topo">
         <label>Data e hora da partida:</label>
-        <input v-model="partida.data" type="datetime-local" />
+        <input v-model="partida.data" type="datetime-local" :min="dataHoraMinimaAgendamento" />
       </div>
 
       <div class="botoes" v-if="modoCriacaoPartida === 'AGENDAR'">
@@ -284,6 +284,17 @@ export default {
       return baseOk
     },
 
+    dataHoraMinimaAgendamento() {
+      const data = new Date()
+      data.setHours(0, 0, 0, 0)
+      data.setDate(data.getDate() + 1)
+
+      const ano = data.getFullYear()
+      const mes = String(data.getMonth() + 1).padStart(2, '0')
+      const dia = String(data.getDate()).padStart(2, '0')
+      return `${ano}-${mes}-${dia}T00:00`
+    },
+
     regraJogadores() {
       return this.obterRegraJogadores()
     }
@@ -360,6 +371,14 @@ export default {
     },
 
     async listarFases() {
+      /*
+      if (false) {
+        Swal.fire('Erro', 'Selecione uma data a partir de amanhã para agendar a partida.', 'error')
+        this.criandoPartida = false
+        return
+      }
+
+      */
       try {
         const { data } = await api.get(`/fases/${this.campeonatoId}/`)
         this.fases = data || []
@@ -539,6 +558,12 @@ export default {
         return
       }
 
+      if (data < this.dataHoraMinimaAgendamento) {
+        Swal.fire('Erro', 'Selecione uma data a partir de amanhã para agendar a partida.', 'error')
+        this.criandoPartida = false
+        return
+      }
+
       try {
         const payload = {
           campeonatoId: Number(this.campeonatoId),
@@ -637,6 +662,16 @@ export default {
   padding: 26px 28px;
   border-radius: 18px;
   text-align: left;
+}
+
+.modal-escolha .modal-header {
+  margin-bottom: 10px;
+}
+
+.title {
+  color: #3b82f6;
+  font-size: 34px;
+  font-weight: bold;
 }
 
 .tipo-campeonato-lista {

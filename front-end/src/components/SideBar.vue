@@ -12,7 +12,7 @@
     <aside v-if="sidebarVisible" class="sidebar">
       <div class="sidebar-top">
         <div class="brand-shell">
-          <img src="../assets/Cópia de xxxxx (2).png" class="logo" alt="Quadra Livre" />
+          <img src="../assets/Cópia de xxxxx (2).png" class="logo" alt="Quadra Play" />
 
           <button v-if="isMobile" type="button" class="sidebar-close" @click="closeSidebar" aria-label="Fechar menu">
             <svg viewBox="0 0 24 24" aria-hidden="true">

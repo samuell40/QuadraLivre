@@ -108,7 +108,7 @@
 
               <div class="botoes">
                 <button class="btn-editar" @click="editarUsuario(usuario)">
-                  {{ usuarioLogado.permissaoId === 2 ? 'Gerenciar usuário' : 'Alterar permissões' }}
+                  {{ permissaoLogadoId === 2 ? 'Gerenciar usuário' : 'Alterar permissões' }}
                 </button>
 
                 <button class="btn-detalhar" @click="detalhesUsuario(usuario)">Detalhar</button>
@@ -277,7 +277,7 @@
           </div>
 
           <!-- DESENVOLVEDOR -> ADMIN -->
-          <div class="campo" v-if="form.permissaoId === 2 && usuarioLogado.permissaoId === 1">
+          <div class="campo" v-if="form.permissaoId === 2 && permissaoLogadoId === 1">
             <strong>Quadra:</strong>
             <select v-model.number="form.quadra">
               <option disabled value="">Selecione uma quadra</option>
@@ -299,7 +299,7 @@
           </div>
 
           <div class="campo" v-if="form.permissaoId === 3">
-            <strong>Jogador:</strong>
+            <strong>Jogador (opcional):</strong>
 
             <div class="dropdown-custom" ref="dropdownJogador">
               <div class="dropdown-selected" @click="abrirDropdown = !abrirDropdown">
@@ -325,11 +325,6 @@
                 </ul>
               </div>
             </div>
-            <!-- MESARIO -->
-            <div class="campo" v-if="form.permissaoId === 4">
-              <strong>Mesário:</strong>
-            </div>
-
           </div>
 
           <div class="botoes-edicao">
@@ -406,6 +401,10 @@ export default {
       return authStore.usuario || {}
     },
 
+    permissaoLogadoId() {
+      return Number(this.usuarioLogado?.permissaoId || 0)
+    },
+
     jogadorSelecionadoObj() {
       return this.jogadores.find(j => j.id === this.form.jogadorId)
     },
@@ -416,7 +415,7 @@ export default {
 
     abasUsuarios() {
       const ordemAbas = ['desenvolvedores', 'administradores', 'usuarios', 'treinadores', 'mesarios']
-      const permissaoLogado = Number(this.usuarioLogado.permissaoId)
+      const permissaoLogado = this.permissaoLogadoId
 
       let abasVisiveis = ordemAbas
       if (permissaoLogado === 1) {
@@ -440,8 +439,8 @@ export default {
         )
         .filter(u => u.email !== this.usuarioLogadoEmail)
         .filter(u => {
-          if (this.usuarioLogado.permissaoId === 2) {
-            return [3, 4, 5].includes(u.permissaoId)
+          if (this.permissaoLogadoId === 2) {
+            return [3, 4, 5].includes(Number(u.permissaoId))
           }
           return true
         })
@@ -495,13 +494,13 @@ export default {
     },
 
     permissoesFiltradas() {
-      if (this.usuarioLogado.permissaoId === 1) {
+      if (this.permissaoLogadoId === 1) {
         return this.permissoes
       }
 
-      if (this.usuarioLogado.permissaoId === 2) {
+      if (this.permissaoLogadoId === 2) {
         return this.permissoes.filter(p =>
-          [3, 4, 5].includes(p.id)
+          [3, 4, 5].includes(Number(p.id))
         )
       }
 
@@ -651,14 +650,18 @@ export default {
           this.listarTimes(),
         ])
 
+        this.jogadores = []
+        this.buscaJogador = ''
+        this.abrirDropdown = false
         this.form.email = usuario.email
         this.form.permissaoId = Number(usuario.permissaoId)
         this.form.quadra = usuario.quadra?.id ?? ''
         this.form.timeId = usuario.times?.[0]?.id || ''
+        this.form.jogadorId = null
+
         if (this.form.permissaoId === 5) {
           this.form.timeId = usuario.timesComoTreinador?.[0]?.id || ''
         }
-        this.form.jogadorId
 
         if (this.form.permissaoId === 3 && this.form.timeId) {
           await this.carregarJogadoresTime()
@@ -675,8 +678,13 @@ export default {
 
     async carregarJogadoresTime() {
       this.jogadores = []
+      this.buscaJogador = ''
+      this.abrirDropdown = false
 
-      if (!this.form.timeId) return
+      if (!this.form.timeId) {
+        this.form.jogadorId = null
+        return
+      }
 
       try {
         const { data } = await api.get(`/time/${this.form.timeId}`)
@@ -689,6 +697,8 @@ export default {
             jogadoresTime.unshift(this.usuarioSelecionado.jogador)
           }
           this.form.jogadorId = this.usuarioSelecionado.jogador.id
+        } else if (!jogadoresTime.some(j => Number(j.id) === Number(this.form.jogadorId))) {
+          this.form.jogadorId = null
         }
 
         this.jogadores = jogadoresTime
@@ -720,6 +730,15 @@ export default {
           return
         }
 
+        if (this.form.permissaoId === 3 && !this.form.timeId) {
+          await Swal.fire({
+            icon: 'warning',
+            title: 'Atenção',
+            text: 'Selecione um time para vincular o usuário.',
+          })
+          return
+        }
+
         if (this.form.permissaoId === 5 && !this.form.timeId) {
           await Swal.fire({
             icon: 'warning',
@@ -735,11 +754,11 @@ export default {
           quadraId: this.form.quadra,
         })
 
-        if (this.form.permissaoId === 3 && this.form.jogadorId) {
+        if (this.form.permissaoId === 3 && this.form.timeId) {
           await api.post('/vincular', {
             usuarioId: this.usuarioSelecionado.id,
             timeId: this.form.timeId,
-            jogadorId: this.form.jogadorId,
+            jogadorId: this.form.jogadorId || null,
           })
         }
 
@@ -1372,6 +1391,8 @@ select:focus {
 
 .modal-content.modal-content-edicao {
   border-radius: 16px;
+  width: min(1024px, 94vw);
+  max-width: 94vw;
 }
 
 .modal-header-edicao {
@@ -1484,23 +1505,26 @@ select:focus {
 
 .abas-container {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 10px;
   padding: 10px;
   border-radius: 14px;
   background: #f8fafc;
   border: 1px solid rgba(15, 23, 42, 0.08);
   margin-bottom: 14px;
+  overflow-x: auto;
 }
 
 .aba {
-  flex: 1 1 140px;
+  flex: 1 1 0;
+  min-width: 0;
   text-align: center;
   padding: 10px 12px;
   border-radius: 12px;
   cursor: pointer;
   background: transparent;
   font-weight: 800;
+  line-height: 1.25;
   color: #334155;
   transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease, color 0.2s ease;
   user-select: none;
@@ -2035,12 +2059,18 @@ select:focus {
     padding: 20px;
   }
 
+  .modal-content.modal-content-edicao {
+    width: 95%;
+    max-width: 95%;
+  }
+
   .modal-header-edicao {
     margin-bottom: 12px;
     padding-bottom: 12px;
   }
 
   .abas-container {
+    flex-wrap: wrap;
     gap: 8px;
     padding: 8px;
   }
@@ -2367,6 +2397,7 @@ select:focus {
   }
 
   .abas-container {
+    flex-wrap: wrap;
     gap: 8px;
     padding: 8px;
   }
