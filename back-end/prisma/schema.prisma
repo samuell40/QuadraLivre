@@ -58,6 +58,7 @@ model Quadra {
 enum TipoAgendamento {
   AMISTOSO
   TREINO
+  CAMPEONATO
   EVENTO
   OUTRO
 }

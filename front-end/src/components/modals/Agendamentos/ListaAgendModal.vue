@@ -223,11 +223,13 @@ export default {
     normalizarAgendamento(agendamento) {
       const usuarioNome = agendamento.usuario?.nome || agendamento.usuario || 'Usuario';
       const timeNome = agendamento.time?.nome || '';
+      const resumoEvento = agendamento.resumoEvento || '';
 
       return {
         ...agendamento,
         usuarioNome,
         timeNome,
+        resumoEvento,
       };
     },
     obterInicioAgendamentoMinutos(agendamento) {
@@ -264,6 +266,10 @@ export default {
       }) || null;
     },
     obterResumoPrincipal(agendamento) {
+      if (agendamento.resumoEvento) {
+        return agendamento.resumoEvento;
+      }
+
       if (agendamento.timeNome) {
         return agendamento.timeNome;
       }
@@ -271,6 +277,10 @@ export default {
       return agendamento.usuarioNome || 'Reserva confirmada';
     },
     obterResumoSecundario(agendamento) {
+      if (agendamento.resumoEvento && agendamento.campeonato?.nome) {
+        return agendamento.campeonato.nome;
+      }
+
       if (agendamento.timeNome && agendamento.usuarioNome) {
         return agendamento.usuarioNome;
       }

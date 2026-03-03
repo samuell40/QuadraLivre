@@ -56,6 +56,10 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
+function escapeRegExp(value) {
+  return String(value ?? '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function toHtmlLines(value) {
   return escapeHtml(value).replace(/\r?\n/g, '<br />');
 }
@@ -104,7 +108,7 @@ function renderDetailCard(title, items = []) {
     })
     .join('');
 
-  return `
+  const html = `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0 0; border: 1px solid #dbe7f5; border-radius: 20px; background-color: #f8fbff;">
       <tr>
         <td style="padding: 20px 22px;">
@@ -118,6 +122,13 @@ function renderDetailCard(title, items = []) {
       </tr>
     </table>
   `;
+
+  return html.replace(
+    new RegExp(
+      `${escapeRegExp(SITE_URL)}\\s*(?:[^\\w<]{1,6}\\s*)+${escapeRegExp(SUPPORT_EMAIL)}`
+    ),
+    SUPPORT_EMAIL
+  );
 }
 
 function renderCallout({ title, content, tone = 'brand' }) {
@@ -256,13 +267,9 @@ function createEmailLayout({
                     </p>
                     <p style="margin: 0; font-size: 12px; line-height: 1.6; color: #94a3b8;">
                       ${BRAND_NAME} •
-                      <a href="${escapeHtml(SITE_URL)}" style="color: #bfdbfe; text-decoration: none;" target="_blank" rel="noopener noreferrer">
-                        ${escapeHtml(SITE_URL)}
-                      </a>
+                      ${escapeHtml(SITE_URL)}
                       •
-                      <a href="mailto:${escapeHtml(SUPPORT_EMAIL)}" style="color: #bfdbfe; text-decoration: none;">
-                        ${escapeHtml(SUPPORT_EMAIL)}
-                      </a>
+                      ${escapeHtml(SUPPORT_EMAIL)}
                     </p>
                   </td>
                 </tr>
@@ -272,7 +279,12 @@ function createEmailLayout({
         </table>
       </body>
     </html>
-  `;
+  `.replace(
+    new RegExp(
+      `${escapeRegExp(SITE_URL)}\\s*(?:[^\\w<]{1,6}\\s*)+${escapeRegExp(SUPPORT_EMAIL)}`
+    ),
+    SUPPORT_EMAIL
+  );
 }
 
 function htmlToText(html) {
@@ -360,7 +372,7 @@ async function enviarEmailNovaModalidade(dev, modalidadeNome) {
         `A modalidade ${strong(nomeModalidadeFormatado)} foi cadastrada com sucesso na plataforma.`
       ) +
       renderParagraph(
-        'Esse comunicado mantém a equipe alinhada com as mudanças no catálogo do sistema.',
+        'Esse comunicado mantém a equipe alinhada com as mudanças do sistema.',
         { size: 15, color: '#475569', marginBottom: 0 }
       ),
     sectionsHtml: renderDetailCard('Resumo da atualização', [
@@ -410,7 +422,7 @@ async function enviarEmailAlteracaoPermissao(usuario) {
         tone: 'brand',
         title: 'Mudança confirmada',
         content:
-          'Se você perceber qualquer inconsistência no acesso, entre em contato com a administração da sua quadra.',
+          'Se você perceber qualquer inconsistência no acesso, entre em contato com nosso suporte',
       }),
     ctaLabel: 'Acessar plataforma',
     ctaUrl: buildAppUrl('/'),
@@ -451,7 +463,7 @@ async function enviarEmailVinculoTime(usuario, time, jogador) {
     ctaLabel: 'Ver times',
     ctaUrl: buildAppUrl('/times'),
     footerNote:
-      'Se alguma informação do seu vínculo estiver incorreta, fale com a equipe responsável pelo time ou pela quadra.',
+      'Se alguma informação do seu vínculo estiver incorreta, fale com o nosso suporte',
   });
 
   return enviarEmail({

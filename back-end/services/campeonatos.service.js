@@ -1,6 +1,9 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const { enviarEmailVinculoMesarioCampeonato } = require('./email.service');
+const {
+  enviarEmailVinculoMesarioCampeonato,
+  enviarEmailStatusAgendamento
+} = require('./email.service');
 
 const FOTO_PADRAO_CAMPEONATO = 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/imagem_campeonatos.png';
 
@@ -85,6 +88,71 @@ function normalizarTexto(texto) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .trim();
+}
+
+function paraDataValida(valor) {
+  if (!valor) return null;
+  const data = valor instanceof Date ? new Date(valor.getTime()) : new Date(valor);
+  if (Number.isNaN(data.getTime())) return null;
+  data.setSeconds(0, 0);
+  return data;
+}
+
+function obterChaveDataHora(data) {
+  const dataValida = paraDataValida(data);
+  if (!dataValida) return '';
+
+  const ano = dataValida.getFullYear();
+  const mes = String(dataValida.getMonth() + 1).padStart(2, '0');
+  const dia = String(dataValida.getDate()).padStart(2, '0');
+  const hora = String(dataValida.getHours()).padStart(2, '0');
+  const minuto = String(dataValida.getMinutes()).padStart(2, '0');
+  return `${ano}-${mes}-${dia} ${hora}:${minuto}`;
+}
+
+function ordenarDatasAsc(lista = []) {
+  return [...lista].sort((a, b) => a.getTime() - b.getTime());
+}
+
+function duracaoAgendamentoEmMinutos(agendamento) {
+  const duracaoHoras = Number(agendamento?.duracao || 1);
+  return Number.isFinite(duracaoHoras) && duracaoHoras > 0 ? duracaoHoras * 60 : 60;
+}
+
+function intervalosConflitam(inicioA, duracaoA, inicioB, duracaoB) {
+  const inicioAData = paraDataValida(inicioA);
+  const inicioBData = paraDataValida(inicioB);
+  if (!inicioAData || !inicioBData) return false;
+
+  const fimA = new Date(inicioAData.getTime() + duracaoA);
+  const fimB = new Date(inicioBData.getTime() + duracaoB);
+  return inicioAData < fimB && inicioBData < fimA;
+}
+
+function formatarDataHoraCurta(data) {
+  const dataValida = paraDataValida(data);
+  if (!dataValida) return '';
+
+  try {
+    return dataValida.toLocaleString('pt-BR', {
+      timeZone: 'America/Fortaleza',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (error) {
+    return dataValida.toLocaleString('pt-BR');
+  }
+}
+
+function montarMotivoRecusaPorPrioridadeCampeonato({ nomeCampeonato, nomeQuadra, datahora }) {
+  const dataHoraFormatada = formatarDataHoraCurta(datahora);
+  const nomeQuadraSeguro = nomeQuadra || 'a quadra selecionada';
+  const nomeCampeonatoSeguro = nomeCampeonato || 'o campeonato';
+
+  return `Seu agendamento foi cancelado porque a quadra ${nomeQuadraSeguro} foi reservada para ${nomeCampeonatoSeguro} em ${dataHoraFormatada}. Campeonatos possuem prioridade sobre reservas comuns.`;
 }
 
 function grupoModalidade(nomeModalidade) {
@@ -203,11 +271,71 @@ async function criarCampeonato(data) {
     regras
   } = data;
 
-  let listaDatasReais = Array.isArray(datasJogos) ? datasJogos.map(d => new Date(d)) : [];
+  const listaDatasReais = ordenarDatasAsc(
+    [...new Map(
+      (Array.isArray(datasJogos) ? datasJogos : [])
+        .map(paraDataValida)
+        .filter(Boolean)
+        .map(dataItem => [obterChaveDataHora(dataItem), dataItem])
+    ).values()]
+  );
   const timesArray = Array.isArray(times) ? times : [];
   const fotoNormalizada = String(foto || '').trim() || FOTO_PADRAO_CAMPEONATO;
+  const usuarioIdNum = Number(usuarioId);
+  const usuarioAgendamentoId = Number.isFinite(usuarioIdNum) && usuarioIdNum > 0 ? usuarioIdNum : null;
+  const dataInicioInformada = dataInicio ? paraDataValida(dataInicio) : null;
+  const dataFimInformada = dataFim ? paraDataValida(dataFim) : null;
 
-  return await prisma.$transaction(async (tx) => {
+  if (!nome || !String(nome).trim()) {
+    throw new Error('Nome do campeonato e obrigatorio.');
+  }
+
+  if (!tipo) {
+    throw new Error('Tipo do campeonato e obrigatorio.');
+  }
+
+  if (!modalidadeId) {
+    throw new Error('Modalidade e obrigatoria.');
+  }
+
+  if (!quadraId) {
+    throw new Error('Quadra e obrigatoria.');
+  }
+
+  if (timesArray.length < 2) {
+    throw new Error('Selecione ao menos 2 times para o campeonato.');
+  }
+
+  if (!listaDatasReais.length) {
+    throw new Error('Selecione ao menos uma data e horario para o campeonato.');
+  }
+
+  const dataMinimaAgenda = new Date();
+  dataMinimaAgenda.setHours(0, 0, 0, 0);
+  dataMinimaAgenda.setDate(dataMinimaAgenda.getDate() + 1);
+
+  if (listaDatasReais.some(dataItem => dataItem < dataMinimaAgenda)) {
+    throw new Error('Os horarios do campeonato devem ser cadastrados a partir de amanha.');
+  }
+
+  if (dataInicio && !dataInicioInformada) {
+    throw new Error('Data inicial do campeonato invalida.');
+  }
+
+  if (dataFim && !dataFimInformada) {
+    throw new Error('Data final do campeonato invalida.');
+  }
+
+  const dataInicioCampeonato = dataInicioInformada || listaDatasReais[0];
+  const dataFimCampeonato = dataFimInformada || listaDatasReais[listaDatasReais.length - 1];
+
+  if (dataFimCampeonato < dataInicioCampeonato) {
+    throw new Error('A data final do campeonato nao pode ser menor que a data inicial.');
+  }
+
+  const agendamentosRecusadosParaNotificar = [];
+
+  const campeonatoCriado = await prisma.$transaction(async (tx) => {
     const modalidadeDB = await tx.modalidade.findUnique({
       where: { id: Number(modalidadeId) }
     });
@@ -225,31 +353,94 @@ async function criarCampeonato(data) {
     );
 
     if (listaDatasReais.length > 0) {
-      const conflitos = await tx.agendamento.findMany({
+      const filtrosDias = [...new Map(
+        listaDatasReais.map(dataItem => {
+          const chave = `${dataItem.getFullYear()}-${dataItem.getMonth() + 1}-${dataItem.getDate()}`;
+          return [chave, {
+            ano: dataItem.getFullYear(),
+            mes: dataItem.getMonth() + 1,
+            dia: dataItem.getDate()
+          }];
+        })
+      ).values()];
+
+      const conflitosCandidatos = await tx.agendamento.findMany({
         where: {
           quadraId: Number(quadraId),
-          datahora: { in: listaDatasReais }
+          campeonatoId: null,
+          deletedAt: null,
+          status: { in: ['Confirmado', 'Pendente'] },
+          OR: filtrosDias
+        },
+        include: {
+          usuario: true,
+          quadra: true,
+          modalidade: true,
+          time: true
         }
       });
 
-      if (conflitos.length > 0) {
-        await tx.agendamento.deleteMany({
-          where: { id: { in: conflitos.map(c => c.id) } }
+      const conflitos = conflitosCandidatos.filter((agendamentoExistente) => {
+        const inicioAgendamento = paraDataValida(
+          agendamentoExistente.datahora || new Date(
+            agendamentoExistente.ano,
+            agendamentoExistente.mes - 1,
+            agendamentoExistente.dia,
+            agendamentoExistente.hora,
+            0,
+            0
+          )
+        );
+
+        return listaDatasReais.some((dataEvento) =>
+          intervalosConflitam(
+            inicioAgendamento,
+            duracaoAgendamentoEmMinutos(agendamentoExistente),
+            dataEvento,
+            60
+          )
+        );
+      });
+
+      for (const conflito of conflitos) {
+        const dataConflito = paraDataValida(
+          conflito.datahora || new Date(conflito.ano, conflito.mes - 1, conflito.dia, conflito.hora, 0, 0)
+        );
+        const motivoRecusa = montarMotivoRecusaPorPrioridadeCampeonato({
+          nomeCampeonato: nome,
+          nomeQuadra: conflito.quadra?.nome,
+          datahora: dataConflito
         });
+
+        const conflitoAtualizado = await tx.agendamento.update({
+          where: { id: conflito.id },
+          data: {
+            status: 'Recusado',
+            motivoRecusa
+          },
+          include: {
+            usuario: true,
+            quadra: true,
+            modalidade: true,
+            time: true
+          }
+        });
+
+        agendamentosRecusadosParaNotificar.push(conflitoAtualizado);
       }
     }
 
     const agendamentosParaCriar = listaDatasReais.map(dataObj => ({
       datahora: dataObj,
-      dia: dataObj.getUTCDate(),
-      mes: dataObj.getUTCMonth() + 1,
-      ano: dataObj.getUTCFullYear(),
-      hora: dataObj.getUTCHours(),
+      dia: dataObj.getDate(),
+      mes: dataObj.getMonth() + 1,
+      ano: dataObj.getFullYear(),
+      hora: dataObj.getHours(),
       quadraId: Number(quadraId),
-      usuarioId: Number(usuarioId),
+      usuarioId: usuarioAgendamentoId,
       modalidadeId: modalidadeDB.id,
       status: "Confirmado",
-      tipo: "EVENTO",
+      tipo: "CAMPEONATO",
       duracao: 1
     }));
 
@@ -259,9 +450,9 @@ async function criarCampeonato(data) {
         tipo,
         foto: fotoNormalizada,
         regras: normalizarRegrasCampeonato(regras, modalidadeDB.nome),
-        dataInicio: new Date(dataInicio),
-        dataFim: new Date(dataFim),
-        status,
+        dataInicio: dataInicioCampeonato,
+        dataFim: dataFimCampeonato,
+        status: status || 'EM_ANDAMENTO',
         modalidadeId: modalidadeDB.id,
         quadraId: Number(quadraId),
         ordemClassificacao, 
@@ -306,6 +497,21 @@ async function criarCampeonato(data) {
 
     return campeonato;
   });
+
+  if (agendamentosRecusadosParaNotificar.length > 0) {
+    const envios = agendamentosRecusadosParaNotificar
+      .filter(item => item?.usuario?.email)
+      .map(item => enviarEmailStatusAgendamento(item));
+
+    const resultados = await Promise.allSettled(envios);
+    resultados.forEach((resultado) => {
+      if (resultado.status === 'rejected') {
+        console.error('Erro ao enviar email de recusa por prioridade de campeonato:', resultado.reason);
+      }
+    });
+  }
+
+  return campeonatoCriado;
 }
 
 async function removerCampeonato(campeonatoId) {
@@ -656,9 +862,16 @@ async function getCampeonatoById(id) {
       include: {
         modalidade: true,
         quadra: true,
-        times: true,
+        times: {
+          where: { ativo: true, deletedAt: null },
+          include: { time: true }
+        },
         partidas: true,
-        placares: true
+        placares: true,
+        agendamentos: {
+          where: { deletedAt: null, status: 'Confirmado' },
+          orderBy: { datahora: 'asc' }
+        }
       }
     });
 

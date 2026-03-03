@@ -88,6 +88,26 @@ function obterInicioDoProximoDia(dataBase = new Date()) {
   return data;
 }
 
+function obterDataValidaPartida(valor) {
+  if (!valor) return null;
+  const data = valor instanceof Date ? new Date(valor.getTime()) : new Date(valor);
+  if (Number.isNaN(data.getTime())) return null;
+  data.setSeconds(0, 0);
+  return data;
+}
+
+function obterChaveDataHoraPartida(valor) {
+  const data = obterDataValidaPartida(valor);
+  if (!data) return '';
+
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, '0');
+  const dia = String(data.getDate()).padStart(2, '0');
+  const hora = String(data.getHours()).padStart(2, '0');
+  const minuto = String(data.getMinutes()).padStart(2, '0');
+  return `${ano}-${mes}-${dia} ${hora}:${minuto}`;
+}
+
 function grupoModalidade(nomeModalidade) {
   const nome = normalizarTexto(nomeModalidade);
   if (
@@ -861,6 +881,54 @@ async function criarPartida(data, usuarioId) {
     throw new Error('A data da partida deve ser a partir de amanha.');
   }
 
+  const quadraIdFinal = quadraId || null;
+
+  if (statusPartida === 'AGENDADA') {
+    const campeonato = await prisma.campeonato.findUnique({
+      where: { id: campeonatoId },
+      select: {
+        id: true,
+        quadraId: true,
+        agendamentos: {
+          where: {
+            deletedAt: null,
+            status: 'Confirmado'
+          },
+          select: {
+            datahora: true
+          }
+        }
+      }
+    });
+
+    if (!campeonato) {
+      throw new Error('Campeonato nao encontrado.');
+    }
+
+    const chavePartida = obterChaveDataHoraPartida(dataPartida);
+    const slotValido = (campeonato.agendamentos || []).some((agendamento) =>
+      obterChaveDataHoraPartida(agendamento?.datahora) === chavePartida
+    );
+
+    if (!slotValido) {
+      throw new Error('A data da partida deve usar um horario cadastrado na agenda do campeonato.');
+    }
+
+    const conflitoPartida = await prisma.partida.findFirst({
+      where: {
+        campeonatoId,
+        quadraId: quadraIdFinal || campeonato.quadraId || undefined,
+        data: dataPartida,
+        status: { notIn: ['CANCELADA', 'DELETADA'] }
+      },
+      select: { id: true }
+    });
+
+    if (conflitoPartida) {
+      throw new Error('Ja existe uma partida agendada para esse horario.');
+    }
+  }
+
   const dataCreate = {
     status: statusPartida,
     data: dataPartida || new Date(),
@@ -898,9 +966,9 @@ async function criarPartida(data, usuarioId) {
     dataCreate.inicioPartida = new Date();
   }
 
-  if (quadraId) {
+  if (quadraIdFinal) {
     dataCreate.quadra = {
-      connect: { id: quadraId }
+      connect: { id: quadraIdFinal }
     };
   }
 

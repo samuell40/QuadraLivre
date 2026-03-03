@@ -147,9 +147,37 @@
         </div>
       </div>
 
-      <div v-if="modoCriacaoPartida === 'AGENDAR'" class="filtros-topo">
-        <label>Data e hora da partida:</label>
-        <input v-model="partida.data" type="datetime-local" :min="dataHoraMinimaAgendamento" />
+      <div v-if="modoCriacaoPartida === 'AGENDAR'" class="agenda-partida-wrapper">
+        <div class="filtros-linha">
+          <div class="filtros-topo">
+            <label>Data da partida:</label>
+            <select v-model="partida.dataAgenda" @change="onDataAgendaChange">
+              <option disabled value="">Escolha uma data</option>
+              <option v-for="opcao in datasAgendaDisponiveis" :key="opcao.value" :value="opcao.value">
+                {{ opcao.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="filtros-topo">
+            <label>Horario da partida:</label>
+            <select v-model="partida.data" :disabled="!partida.dataAgenda">
+              <option disabled value="">
+                {{ partida.dataAgenda ? 'Escolha um horario' : 'Selecione uma data primeiro' }}
+              </option>
+              <option v-for="opcao in horariosAgendaDisponiveis" :key="opcao.value" :value="opcao.value">
+                {{ opcao.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <p v-if="modoCriacaoPartida === 'AGENDAR' && !agendaCampeonatoDisponivel.length" class="agenda-helper-text">
+          Nenhum horario do campeonato esta disponivel para novas partidas.
+        </p>
+        <p v-else-if="modoCriacaoPartida === 'AGENDAR' && partida.dataAgenda && !horariosAgendaDisponiveis.length" class="agenda-helper-text">
+          Todos os horarios desta data ja foram usados em partidas.
+        </p>
       </div>
 
       <div class="botoes" v-if="modoCriacaoPartida === 'AGENDAR'">
@@ -226,6 +254,8 @@ export default {
       modalidadeId: null,
       modalidadeNome: '',
       quadraId: null,
+      agendaCampeonato: [],
+      partidasCampeonato: [],
       rodadas: [],
       times: [],
       partida: {
@@ -233,6 +263,7 @@ export default {
         rodadaId: '',
         timeAId: '',
         timeBId: '',
+        dataAgenda: '',
         data: ''
       },
       abrirDropdownTimeA: false,
@@ -297,10 +328,107 @@ export default {
 
     regraJogadores() {
       return this.obterRegraJogadores()
+    },
+
+    agendaCampeonatoDisponivel() {
+      const chavesPartidasUsadas = new Set(
+        (Array.isArray(this.partidasCampeonato) ? this.partidasCampeonato : [])
+          .filter((partida) => !['CANCELADA', 'DELETADA'].includes(String(partida?.status || '').toUpperCase()))
+          .map((partida) => this.obterChaveDataHora(partida?.data))
+          .filter(Boolean)
+      )
+
+      return (Array.isArray(this.agendaCampeonato) ? this.agendaCampeonato : [])
+        .filter((slot) => {
+          const chave = this.obterChaveDataHora(slot?.datahora)
+          return chave && !chavesPartidasUsadas.has(chave)
+        })
+        .sort((a, b) => {
+          const dataA = this.obterDataValida(a?.datahora)
+          const dataB = this.obterDataValida(b?.datahora)
+          return (dataA?.getTime() || 0) - (dataB?.getTime() || 0)
+        })
+    },
+
+    datasAgendaDisponiveis() {
+      const mapa = new Map()
+
+      this.agendaCampeonatoDisponivel.forEach((slot) => {
+        const chaveData = this.obterChaveData(slot?.datahora)
+        if (!chaveData || mapa.has(chaveData)) return
+
+        mapa.set(chaveData, {
+          value: chaveData,
+          label: this.formatarDataAgendada(slot.datahora)
+        })
+      })
+
+      return Array.from(mapa.values())
+    },
+
+    horariosAgendaDisponiveis() {
+      if (!this.partida.dataAgenda) return []
+
+      return this.agendaCampeonatoDisponivel
+        .filter((slot) => this.obterChaveData(slot?.datahora) === this.partida.dataAgenda)
+        .map((slot) => ({
+          value: slot.datahora,
+          label: this.formatarHoraAgendada(slot.datahora)
+        }))
     }
   },
 
   methods: {
+    obterDataValida(valor) {
+      if (!valor) return null
+      const data = valor instanceof Date ? new Date(valor.getTime()) : new Date(valor)
+      return Number.isNaN(data.getTime()) ? null : data
+    },
+
+    obterChaveData(valor) {
+      const data = this.obterDataValida(valor)
+      if (!data) return ''
+
+      const ano = data.getFullYear()
+      const mes = String(data.getMonth() + 1).padStart(2, '0')
+      const dia = String(data.getDate()).padStart(2, '0')
+      return `${ano}-${mes}-${dia}`
+    },
+
+    obterChaveDataHora(valor) {
+      const data = this.obterDataValida(valor)
+      if (!data) return ''
+
+      const ano = data.getFullYear()
+      const mes = String(data.getMonth() + 1).padStart(2, '0')
+      const dia = String(data.getDate()).padStart(2, '0')
+      const hora = String(data.getHours()).padStart(2, '0')
+      const minuto = String(data.getMinutes()).padStart(2, '0')
+      return `${ano}-${mes}-${dia} ${hora}:${minuto}`
+    },
+
+    formatarDataAgendada(valor) {
+      const data = this.obterDataValida(valor)
+      if (!data) return 'Data invalida'
+
+      return data.toLocaleDateString('pt-BR', {
+        weekday: 'long',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      })
+    },
+
+    formatarHoraAgendada(valor) {
+      const data = this.obterDataValida(valor)
+      if (!data) return '--:--'
+
+      return data.toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    },
+
     normalizarNomeModalidade(nome) {
       return String(nome || '')
         .toLowerCase()
@@ -360,7 +488,7 @@ export default {
       await this.listarTimes()
       this.modoCriacaoPartida = modo
       this.rodadas = []
-      this.partida = { faseId: '', rodadaId: '', timeAId: '', timeBId: '', data: '' }
+      this.partida = { faseId: '', rodadaId: '', timeAId: '', timeBId: '', dataAgenda: '', data: '' }
       this.mostrarModalPartida = true
       this.mostrarModalJogadores = false
       this.jogadoresTime1 = []
@@ -444,9 +572,15 @@ export default {
         this.modalidadeId = data.modalidadeId
         this.modalidadeNome = data?.modalidade?.nome || ''
         this.quadraId = data.quadraId
+        this.agendaCampeonato = Array.isArray(data?.agendamentos) ? data.agendamentos : []
+        this.partidasCampeonato = Array.isArray(data?.partidas) ? data.partidas : []
       } catch (err) {
         console.error('Erro ao carregar campeonato:', err)
       }
+    },
+
+    onDataAgendaChange() {
+      this.partida.data = ''
     },
 
     async continuarSelecionarJogadores() {
@@ -562,8 +696,12 @@ export default {
         return
       }
 
-      if (data < this.dataHoraMinimaAgendamento) {
-        Swal.fire('Erro', 'Selecione uma data a partir de amanhã para agendar a partida.', 'error')
+      const horarioValido = this.agendaCampeonatoDisponivel.some(
+        (slot) => this.obterChaveDataHora(slot?.datahora) === this.obterChaveDataHora(data)
+      )
+
+      if (!horarioValido) {
+        Swal.fire('Erro', 'Selecione um horario disponivel cadastrado na agenda do campeonato.', 'error')
         this.criandoPartida = false
         return
       }
@@ -912,6 +1050,18 @@ export default {
 .filtros-linha .filtros-topo {
   flex: 1;
   min-width: 150px;
+}
+
+.agenda-partida-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.agenda-helper-text {
+  margin: -4px 0 18px;
+  font-size: 13px;
+  color: var(--text-2);
 }
 
 .dropdown-custom {

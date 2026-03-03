@@ -12,6 +12,119 @@ const gerarCodigoVerificacao = () => {
   return codigo;
 };
 
+const obterDataHoraAgendamento = (agendamento) => {
+  if (agendamento?.datahora) {
+    const data = new Date(agendamento.datahora);
+    if (!Number.isNaN(data.getTime())) return data;
+  }
+
+  if (
+    Number.isFinite(Number(agendamento?.ano)) &&
+    Number.isFinite(Number(agendamento?.mes)) &&
+    Number.isFinite(Number(agendamento?.dia)) &&
+    Number.isFinite(Number(agendamento?.hora))
+  ) {
+    return new Date(
+      Number(agendamento.ano),
+      Number(agendamento.mes) - 1,
+      Number(agendamento.dia),
+      Number(agendamento.hora),
+      0,
+      0
+    );
+  }
+
+  return null;
+};
+
+const obterChaveDataHora = (data) => {
+  if (!(data instanceof Date) || Number.isNaN(data.getTime())) return "";
+
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, "0");
+  const dia = String(data.getDate()).padStart(2, "0");
+  const hora = String(data.getHours()).padStart(2, "0");
+  const minuto = String(data.getMinutes()).padStart(2, "0");
+  return `${ano}-${mes}-${dia} ${hora}:${minuto}`;
+};
+
+const enriquecerAgendamentosComResumoEvento = async (agendamentos = []) => {
+  const base = (Array.isArray(agendamentos) ? agendamentos : []).map((agendamento) => ({
+    ...agendamento,
+    duracao: agendamento.duracao ?? 1,
+  }));
+
+  const relacionadosCampeonato = base.filter(
+    (agendamento) => Number(agendamento?.campeonatoId) > 0
+  );
+
+  if (!relacionadosCampeonato.length) {
+    return base;
+  }
+
+  const campeonatoIds = [...new Set(
+    relacionadosCampeonato
+      .map((agendamento) => Number(agendamento.campeonatoId))
+      .filter((id) => Number.isFinite(id) && id > 0)
+  )];
+
+  const quadraIds = [...new Set(
+    relacionadosCampeonato
+      .map((agendamento) => Number(agendamento.quadraId))
+      .filter((id) => Number.isFinite(id) && id > 0)
+  )];
+
+  if (!campeonatoIds.length || !quadraIds.length) {
+    return base;
+  }
+
+  const partidas = await prisma.partida.findMany({
+    where: {
+      campeonatoId: { in: campeonatoIds },
+      quadraId: { in: quadraIds },
+      status: { notIn: ["CANCELADA", "DELETADA"] },
+    },
+    select: {
+      campeonatoId: true,
+      quadraId: true,
+      data: true,
+      timeA: { select: { nome: true } },
+      timeB: { select: { nome: true } },
+    },
+  });
+
+  const resumoPorChave = new Map();
+  partidas.forEach((partida) => {
+    const dataPartida = partida?.data ? new Date(partida.data) : null;
+    const chaveDataHora = obterChaveDataHora(dataPartida);
+    if (!chaveDataHora) return;
+
+    const chave = `${partida.campeonatoId}|${partida.quadraId}|${chaveDataHora}`;
+    if (!resumoPorChave.has(chave)) {
+      resumoPorChave.set(
+        chave,
+        `${partida.timeA?.nome || "Time A"} x ${partida.timeB?.nome || "Time B"}`
+      );
+    }
+  });
+
+  return base.map((agendamento) => {
+    const dataAgendamento = obterDataHoraAgendamento(agendamento);
+    const chaveDataHora = obterChaveDataHora(dataAgendamento);
+    const chaveResumo = chaveDataHora
+      ? `${agendamento.campeonatoId}|${agendamento.quadraId}|${chaveDataHora}`
+      : "";
+
+    return {
+      ...agendamento,
+      resumoEvento:
+        (chaveResumo ? resumoPorChave.get(chaveResumo) : "") ||
+        agendamento?.campeonato?.nome ||
+        "",
+    };
+  });
+};
+
 const listarAgendamentosService = async (usuarioId) => {
   await recusarAgendamentosVencidos();
   if (!usuarioId) throw { status: 400, message: "Usuário não informado." };
@@ -22,11 +135,12 @@ const listarAgendamentosService = async (usuarioId) => {
       quadra: true,
       modalidade: true,
       time: true,
+      campeonato: { select: { id: true, nome: true } },
       usuario: { include: { times: { include: { time: true } } } },
     },
     orderBy: { datahora: "asc" },
   });
-  return agendamentos.map((a) => ({ ...a, duracao: a.duracao ?? 1 }));
+  return enriquecerAgendamentosComResumoEvento(agendamentos);
 };
 
 const listarTodosAgendamentosService = async () => {
@@ -37,6 +151,7 @@ const listarTodosAgendamentosService = async () => {
       quadra: true,
       modalidade: true,
       time: true,
+      campeonato: { select: { id: true, nome: true } },
       usuario: {
         include: {
           times: {
@@ -48,10 +163,7 @@ const listarTodosAgendamentosService = async () => {
     orderBy: { datahora: "asc" },
   });
 
-  return agendamentos.map((a) => ({
-    ...a,
-    duracao: a.duracao ?? 1,
-  }));
+  return enriquecerAgendamentosComResumoEvento(agendamentos);
 };
 
 const listarAgendamentosPorQuadraService = async (quadraId) => {
@@ -67,6 +179,7 @@ const listarAgendamentosPorQuadraService = async (quadraId) => {
       quadra: true,
       modalidade: true,
       time: true,
+      campeonato: { select: { id: true, nome: true } },
       usuario: {
         include: {
           times: {
@@ -78,10 +191,7 @@ const listarAgendamentosPorQuadraService = async (quadraId) => {
     orderBy: { datahora: "asc" },
   });
 
-  return agendamentos.map((a) => ({
-    ...a,
-    duracao: a.duracao ?? 1,
-  }));
+  return enriquecerAgendamentosComResumoEvento(agendamentos);
 };
 
 const listarAgendamentosConfirmadosService = async (
@@ -107,6 +217,7 @@ const listarAgendamentosConfirmadosService = async (
     include: {
       modalidade: true,
       time: true,
+      campeonato: { select: { id: true, nome: true } },
       usuario: {
         include: {
           times: {
@@ -118,10 +229,7 @@ const listarAgendamentosConfirmadosService = async (
     orderBy: { datahora: "asc" },
   });
 
-  return agendamentos.map((a) => ({
-    ...a,
-    duracao: a.duracao ?? 1,
-  }));
+  return enriquecerAgendamentosComResumoEvento(agendamentos);
 };
 
 const listarAgendamentosConfirmadosSemanaService = async (
@@ -183,6 +291,7 @@ const listarAgendamentosConfirmadosSemanaService = async (
     include: {
       modalidade: true,
       time: true,
+      campeonato: { select: { id: true, nome: true } },
       usuario: {
         include: {
           times: { include: { time: true } },
@@ -192,10 +301,7 @@ const listarAgendamentosConfirmadosSemanaService = async (
     orderBy: { datahora: "asc" },
   });
 
-  return agendamentos.map((a) => ({
-    ...a,
-    duracao: a.duracao ?? 1,
-  }));
+  return enriquecerAgendamentosComResumoEvento(agendamentos);
 };
 
 const criarAgendamentoService = async ({

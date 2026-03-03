@@ -213,6 +213,46 @@ export default {
       return String(ag.hora).padStart(2, '0') + ':00'
     }
 
+    const abreviarNomeTime = (nome) => {
+      const nomeNormalizado = String(nome || '')
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9]/g, '')
+
+      return nomeNormalizado.slice(0, 3).toLowerCase()
+    }
+
+    const formatarResumoPartidaGrade = (agendamento) => {
+      const resumoEvento = String(agendamento?.resumoEvento || '').trim()
+      if (!resumoEvento) return ''
+
+      const nomeCampeonato = String(agendamento?.campeonato?.nome || '').trim()
+      if (!agendamento?.campeonatoId || !nomeCampeonato || resumoEvento === nomeCampeonato) {
+        return resumoEvento
+      }
+
+      const partes = resumoEvento.split(/\s+x\s+/i).map((parte) => parte.trim()).filter(Boolean)
+      if (partes.length !== 2) return resumoEvento
+
+      const [timeA, timeB] = partes
+      const nomeCurtoA = abreviarNomeTime(timeA)
+      const nomeCurtoB = abreviarNomeTime(timeB)
+
+      if (!nomeCurtoA || !nomeCurtoB) {
+        return resumoEvento
+      }
+
+      return `${nomeCurtoA} x ${nomeCurtoB}`
+    }
+
+    const obterTextoAgendamento = (agendamento) => {
+      return formatarResumoPartidaGrade(agendamento) ||
+        agendamento?.time?.nome ||
+        agendamento?.usuario?.nome ||
+        'Reservado'
+    }
+
     const buscarQuadras = async () => {
       try {
         const { data } = await api.get('/quadra')
@@ -308,7 +348,7 @@ export default {
               horario: slot.horario,
               ocupado: !!agendamentoEncontrado,
               texto: agendamentoEncontrado
-                ? (agendamentoEncontrado.time?.nome || agendamentoEncontrado.usuario?.nome || 'Reservado')
+                ? obterTextoAgendamento(agendamentoEncontrado)
                 : 'Disponível',
               dadosAgendamento: agendamentoEncontrado
             }

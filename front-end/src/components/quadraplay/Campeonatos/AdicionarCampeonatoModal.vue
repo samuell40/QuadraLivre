@@ -72,19 +72,23 @@
     </div>
   </div>
 
-  <!--MODAL DE CADASTRO -->
-  <div v-if="aberto && !mostrarModalTipo" class="modal-overlay" @click.self="cancelarCadastro">
+  <div v-if="aberto && !mostrarModalTipo && !mostrarModalTimes && !mostrarModalAgenda" class="modal-overlay" @click.self="cancelarCadastro">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Adicionar Campeonato</h2>
+        <h2>Adicionar campeonato</h2>
         <button type="button" class="btn-close-x" @click="cancelarCadastro">x</button>
       </div>
 
       <form @submit.prevent="abrirModalTimes">
         <div class="form-group">
-          <label for="nomeCampeonato">Nome do Campeonato</label>
-          <input type="text" id="nomeCampeonato" v-model="nomeCampeonato" placeholder="Ex: Campeonato de Futebol"
-            required />
+          <label for="nomeCampeonato">Nome do campeonato</label>
+          <input
+            id="nomeCampeonato"
+            v-model="nomeCampeonato"
+            type="text"
+            placeholder="Ex: Campeonato de Futebol"
+            required
+          />
         </div>
 
         <div class="form-row">
@@ -92,8 +96,8 @@
             <label for="modalidade">Modalidade</label>
             <select id="modalidade" v-model="modalidadeSelecionada" required>
               <option value="" disabled>Selecione a modalidade</option>
-              <option v-for="m in modalidades" :key="m.id" :value="m.id">
-                {{ m.nome }}
+              <option v-for="modalidade in modalidades" :key="modalidade.id" :value="modalidade.id">
+                {{ modalidade.nome }}
               </option>
             </select>
           </div>
@@ -101,37 +105,21 @@
           <div class="form-group">
             <label for="quadra">Quadra</label>
             <select id="quadra" v-model="quadraSelecionada" :disabled="!modalidadeSelecionada" required>
-              <option value="" disabled v-if="!modalidadeSelecionada">
-                Selecione uma modalidade primeiro
-              </option>
-              <option value="" disabled v-else>
-                Selecione a quadra
-              </option>
-              <option v-for="q in quadras" :key="q.id" :value="q.id">
-                {{ q.nome }}
+              <option value="" disabled v-if="!modalidadeSelecionada">Selecione uma modalidade primeiro</option>
+              <option value="" disabled v-else>Selecione a quadra</option>
+              <option v-for="quadra in quadras" :key="quadra.id" :value="quadra.id">
+                {{ quadra.nome }}
               </option>
             </select>
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="dataInicio">Data de Início</label>
-            <input type="date" id="dataInicio" v-model="dataInicio" required />
-          </div>
-
-          <div class="form-group">
-            <label for="dataFim">Data de Fim</label>
-            <input type="date" id="dataFim" v-model="dataFim" required />
-          </div>
-        </div>
-
         <div class="form-group">
           <label for="fotoCampeonato">Foto (opcional)</label>
-          <input type="file" id="fotoCampeonato" accept=".jpg,.jpeg,.png" @change="handleImagemUpload" />
+          <input id="fotoCampeonato" type="file" accept=".jpg,.jpeg,.png" @change="handleImagemUpload" />
           <small class="texto-ajuda">
-            Recomendado: imagem horizontal (1920 × 600 px). <br />
-            Tamanho mínimo: 1280 × 400 px.
+            Recomendado: imagem horizontal (1920 x 600 px).<br>
+            Tamanho minimo: 1280 x 400 px.
           </small>
         </div>
 
@@ -142,23 +130,26 @@
     </div>
   </div>
 
-  <!--MODAL DE TIMES -->
   <div v-if="mostrarModalTimes" class="modal-overlay" @click.self="mostrarModalTimes = false">
     <div class="modal-content modal-times">
       <div class="modal-header">
-        <h2>Selecione os Times</h2>
+        <h2>Selecione os times</h2>
         <button type="button" class="btn-close-x" @click="mostrarModalTimes = false">x</button>
       </div>
 
       <div class="contador">{{ timesSelecionados.length }} selecionado(s)</div>
 
       <div class="lista-times">
-        <div v-for="time in times" :key="time.id" class="time-card"
-          :class="{ selecionado: timesSelecionados.includes(time.id) }" @click="toggleTime(time.id)">
-
+        <div
+          v-for="time in times"
+          :key="time.id"
+          class="time-card"
+          :class="{ selecionado: timesSelecionados.includes(time.id) }"
+          @click="toggleTime(time.id)"
+        >
           <div class="time-card-top">
             <div class="time-foto" v-if="time.foto">
-              <img :src="time.foto" :alt="time.nome" />
+              <img :src="time.foto" :alt="time.nome">
             </div>
             <h3 class="time-nome">{{ time.nome }}</h3>
           </div>
@@ -167,8 +158,179 @@
         </div>
       </div>
 
-      <div class="botoes">
-        <button class="btn-save" @click="finalizarCadastro">Criar Campeonato</button>
+      <div class="botoes botoes-acao-dupla">
+        <button type="button" class="btn-cancelar-escolha-tipo" @click="voltarParaDados">Voltar</button>
+        <button class="btn-save" @click="abrirModalAgenda">Continuar</button>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="mostrarModalAgenda" class="modal-overlay" @click.self="mostrarModalAgenda = false">
+    <div class="modal-content modal-agenda-campeonato">
+      <div class="modal-header">
+        <div class="agenda-header-copy">
+          <h2>Datas e horarios do campeonato</h2>
+          <p class="agenda-subtitle">Configure os horarios base da quadra para esta competicao.</p>
+        </div>
+        <button type="button" class="btn-close-x" @click="mostrarModalAgenda = false">x</button>
+      </div>
+
+      <div class="agenda-add-row">
+        <div class="form-group form-group-agenda-date">
+          <label for="novaDataAgenda">Adicionar data</label>
+          <input id="novaDataAgenda" v-model="novaDataAgenda" type="date" :min="dataMinimaAgenda">
+        </div>
+
+        <button type="button" class="btn-save btn-save-secondary" @click="adicionarDataAgenda">
+          Adicionar data
+        </button>
+      </div>
+
+      <div v-if="datasAgendaOrdenadas.length" class="tabs-header tabs-header-agenda">
+        <button
+          v-for="item in datasAgendaOrdenadas"
+          :key="item.data"
+          type="button"
+          class="tab-btn"
+          :class="{ active: dataAgendaSelecionada === item.data }"
+          @click="selecionarDataAgenda(item.data)"
+        >
+          <span>{{ formatarDataAgenda(item.data) }}</span>
+        </button>
+      </div>
+
+      <div v-if="agendaSelecionada" class="workspace-card agenda-workspace-card">
+        <div class="dia-header-row">
+          <div>
+            <p class="section-kicker">DATA SELECIONADA</p>
+            <h3 class="dia-titulo">{{ formatarDataAgenda(dataAgendaSelecionada) }}</h3>
+          </div>
+
+          <div class="ferramentas-icones">
+            <button type="button" class="btn-tool" :class="{ active: showGeradorAgenda }" @click="showGeradorAgenda = !showGeradorAgenda">
+              <span>Automatico</span>
+            </button>
+
+            <button type="button" class="btn-tool" :class="{ active: showReplicarAgenda }" @click="showReplicarAgenda = !showReplicarAgenda">
+              <span>Copiar</span>
+            </button>
+          </div>
+        </div>
+
+        <div v-if="showGeradorAgenda" class="painel-ferramenta">
+          <div class="painel-head">
+            <div>
+              <p class="tool-kicker">GERADOR</p>
+              <h4 class="tool-title">Montar horarios automaticamente</h4>
+            </div>
+          </div>
+
+          <div class="gerador-inputs">
+            <div class="g-group">
+              <label>Inicio</label>
+              <input v-model="geradorAgenda.inicio" type="time">
+            </div>
+
+            <div class="g-group">
+              <label>Fim</label>
+              <input v-model="geradorAgenda.fim" type="time">
+            </div>
+
+            <div class="g-group">
+              <label>Duracao (min)</label>
+              <input v-model="geradorAgenda.duracao" type="number" placeholder="60">
+            </div>
+
+            <button type="button" class="btn-acao-painel" @click="gerarHorariosAutomaticosAgenda">
+              Gerar grade
+            </button>
+          </div>
+        </div>
+
+        <div v-if="showReplicarAgenda" class="painel-ferramenta">
+          <div class="painel-head">
+            <div>
+              <p class="tool-kicker">REPLICAR</p>
+              <h4 class="tool-title">Copiar horarios para outras datas</h4>
+            </div>
+          </div>
+
+          <div class="dias-checks datas-checks-agenda">
+            <label v-for="item in datasAgendaOrdenadas" :key="`replicar-${item.data}`" class="chk-item">
+              <input
+                v-model="datasParaReplicarAgenda"
+                type="checkbox"
+                :value="item.data"
+                :disabled="item.data === dataAgendaSelecionada"
+              >
+              <span>{{ formatarDataAgenda(item.data) }}</span>
+            </label>
+          </div>
+
+          <button type="button" class="btn-acao-painel" @click="confirmarReplicacaoAgenda">
+            Aplicar copia
+          </button>
+        </div>
+
+        <div class="editor-card">
+          <div class="editor-head">
+            <div>
+              <p class="tool-kicker">HORARIOS</p>
+              <h4 class="tool-title">Adicionar horarios manualmente</h4>
+            </div>
+
+            <button type="button" class="btn-remove-date" @click="removerDataAgenda(dataAgendaSelecionada)">
+              Remover data
+            </button>
+          </div>
+
+          <div class="add-horario-form">
+            <input
+              v-model="novoHorarioInputAgenda"
+              type="time"
+              class="time-input"
+              @keyup.enter="adicionarHorarioAgenda"
+            >
+
+            <button type="button" class="btn-add" :disabled="!novoHorarioInputAgenda" @click="adicionarHorarioAgenda">
+              Adicionar
+            </button>
+          </div>
+
+          <div class="lista-horarios">
+            <div v-if="agendaSelecionada.horarios.length === 0" class="sem-horarios">
+              Nenhum horario configurado para esta data.
+            </div>
+
+            <div
+              v-else
+              v-for="(horario, index) in agendaSelecionada.horarios"
+              :key="`${dataAgendaSelecionada}-${horario}`"
+              class="horario-chip"
+            >
+              <span>{{ horario }}</span>
+              <button type="button" class="btn-remove-chip" @click="removerHorarioAgenda(index)">
+                x
+              </button>
+            </div>
+          </div>
+
+          <div v-if="agendaSelecionada.horarios.length > 0" class="resumo-footer">
+            <span>{{ agendaSelecionada.horarios.length }} horarios listados</span>
+            <button type="button" class="btn-clear" @click="limparHorariosAgenda">Limpar data</button>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="estado-agenda-vazio">
+        <p>Adicione ao menos uma data para configurar a agenda do campeonato.</p>
+      </div>
+
+      <div class="botoes botoes-acao-dupla">
+        <button type="button" class="btn-cancelar-escolha-tipo" @click="voltarParaTimes">Voltar</button>
+        <button class="btn-save" :disabled="salvandoCadastro" @click="finalizarCadastro">
+          {{ salvandoCadastro ? 'Salvando...' : 'Criar campeonato' }}
+        </button>
       </div>
     </div>
   </div>
@@ -188,19 +350,30 @@ export default {
     return {
       mostrarModalTipo: false,
       tipoSelecionado: '',
-
       modalidades: [],
       quadras: [],
       modalidadeSelecionada: '',
       quadraSelecionada: '',
       nomeCampeonato: '',
-      dataInicio: '',
-      dataFim: '',
       arquivoFoto: null,
       mostrarModalTimes: false,
+      mostrarModalAgenda: false,
       times: [],
       timesSelecionados: [],
-      campeonatoTemp: null
+      usuarioLogado: null,
+      novaDataAgenda: '',
+      dataAgendaSelecionada: '',
+      agendaPorData: [],
+      showGeradorAgenda: false,
+      showReplicarAgenda: false,
+      datasParaReplicarAgenda: [],
+      novoHorarioInputAgenda: '',
+      geradorAgenda: {
+        inicio: '07:00',
+        fim: '23:00',
+        duracao: 60
+      },
+      salvandoCadastro: false
     }
   },
 
@@ -208,14 +381,23 @@ export default {
     aberto(valor) {
       if (valor) {
         this.limparCampos()
+        this.carregarUsuarioLogado()
         this.mostrarModalTipo = true
         this.carregarModalidades()
+      } else {
+        this.limparCampos()
       }
     },
     modalidadeSelecionada(valor) {
       this.quadraSelecionada = ''
-      if (valor) this.carregarQuadras(valor)
-      else this.quadras = []
+      this.times = []
+      this.timesSelecionados = []
+
+      if (valor) {
+        this.carregarQuadras(valor)
+      } else {
+        this.quadras = []
+      }
     }
   },
 
@@ -225,33 +407,68 @@ export default {
         {
           value: 'PONTOS_CORRIDOS',
           titulo: 'Pontos Corridos',
-          descricao: 'Tabela única com classificação geral'
+          descricao: 'Tabela unica com classificacao geral'
         },
         {
           value: 'PONTOS_CORRIDOS_ELIMINATORIAS',
-          titulo: 'Pontos Corridos Eliminatórias',
-          descricao: 'Pontos corridos seguido de eliminatórias'
+          titulo: 'Pontos Corridos + Eliminatorias',
+          descricao: 'Primeira fase em liga e depois mata-mata'
         },
         {
           value: 'ELIMINATORIAS',
-          titulo: 'Eliminatórias',
-          descricao: 'Estilo mata-mata de competição'
+          titulo: 'Eliminatorias',
+          descricao: 'Competicao no formato mata-mata'
         }
       ]
+    },
+    dataMinimaAgenda() {
+      const data = new Date()
+      data.setHours(0, 0, 0, 0)
+      data.setDate(data.getDate() + 1)
+
+      const ano = data.getFullYear()
+      const mes = String(data.getMonth() + 1).padStart(2, '0')
+      const dia = String(data.getDate()).padStart(2, '0')
+      return `${ano}-${mes}-${dia}`
+    },
+    datasAgendaOrdenadas() {
+      return [...this.agendaPorData].sort((a, b) => a.data.localeCompare(b.data))
+    },
+    agendaSelecionada() {
+      return this.agendaPorData.find((item) => item.data === this.dataAgendaSelecionada) || null
     }
   },
 
   methods: {
+    carregarUsuarioLogado() {
+      try {
+        this.usuarioLogado = JSON.parse(localStorage.getItem('usuario') || 'null')
+      } catch (error) {
+        this.usuarioLogado = null
+      }
+    },
+
     limparCampos() {
+      this.mostrarModalTipo = false
+      this.tipoSelecionado = ''
       this.modalidadeSelecionada = ''
       this.quadraSelecionada = ''
       this.nomeCampeonato = ''
-      this.dataInicio = ''
-      this.dataFim = ''
       this.arquivoFoto = null
+      this.mostrarModalTimes = false
+      this.mostrarModalAgenda = false
+      this.times = []
+      this.timesSelecionados = []
+      this.novaDataAgenda = ''
+      this.dataAgendaSelecionada = ''
+      this.agendaPorData = []
+      this.showGeradorAgenda = false
+      this.showReplicarAgenda = false
+      this.datasParaReplicarAgenda = []
+      this.novoHorarioInputAgenda = ''
+      this.geradorAgenda = { inicio: '07:00', fim: '23:00', duracao: 60 }
+      this.salvandoCadastro = false
       this.quadras = []
-      this.campeonatoTemp = null
-      this.tipoSelecionado = ''
     },
 
     selecionarTipo(tipo) {
@@ -262,112 +479,286 @@ export default {
     async carregarModalidades() {
       try {
         const { data } = await api.get('/listar/modalidade')
-        this.modalidades = data
-      } catch {
+        this.modalidades = Array.isArray(data) ? data : []
+      } catch (error) {
         Swal.fire('Erro', 'Erro ao carregar modalidades.', 'error')
       }
     },
 
     async carregarQuadras(modalidadeId) {
       try {
-        const res = await api.get(`/listar/quadras/${modalidadeId}`)
-        this.quadras = res.data
-      } catch {
+        const { data } = await api.get(`/listar/quadras/${modalidadeId}`)
+        this.quadras = Array.isArray(data) ? data : []
+      } catch (error) {
+        this.quadras = []
         Swal.fire('Erro', 'Erro ao carregar quadras.', 'error')
       }
     },
 
     handleImagemUpload(event) {
-      const file = event.target.files[0]
-      if (file) this.arquivoFoto = file
+      const [file] = event.target.files || []
+      this.arquivoFoto = file || null
     },
 
     async abrirModalTimes() {
-      if (!this.modalidadeSelecionada || !this.quadraSelecionada || !this.nomeCampeonato.trim() || !this.dataInicio || !this.dataFim) {
-        Swal.fire('Atenção', 'Preencha todos os campos obrigatórios.', 'warning')
+      if (!this.tipoSelecionado) {
+        Swal.fire('Atencao', 'Selecione o tipo do campeonato.', 'warning')
+        return
+      }
+
+      if (!this.modalidadeSelecionada || !this.quadraSelecionada || !this.nomeCampeonato.trim()) {
+        Swal.fire('Atencao', 'Preencha nome, modalidade e quadra.', 'warning')
         return
       }
 
       try {
-        let urlImagem = null
-        if (this.arquivoFoto) {
-          const formData = new FormData()
-          formData.append('file', this.arquivoFoto)
-          const upload = await api.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-          urlImagem = upload.data.fileUrl || upload.data.url || null
-        }
-
-        this.campeonatoTemp = {
-          tipo: this.tipoSelecionado,
-          nome: this.nomeCampeonato.trim(),
-          modalidadeId: this.modalidadeSelecionada,
-          quadraId: this.quadraSelecionada,
-          dataInicio: this.dataInicio,
-          dataFim: this.dataFim,
-          status: 'EM_ANDAMENTO',
-          foto: urlImagem
-        }
-
-        const res = await api.get(`/times/modalidade/${this.modalidadeSelecionada}`)
-        this.times = res.data
+        const { data } = await api.get(`/times/modalidade/${this.modalidadeSelecionada}`)
+        this.times = Array.isArray(data) ? data : []
         this.timesSelecionados = []
-
-        this.$emit('fechar')
         this.mostrarModalTimes = true
-      } catch {
+      } catch (error) {
         Swal.fire('Erro', 'Erro ao carregar os times.', 'error')
       }
     },
 
+    voltarParaDados() {
+      this.mostrarModalTimes = false
+    },
+
     toggleTime(id) {
       const index = this.timesSelecionados.indexOf(id)
-      if (index >= 0) this.timesSelecionados.splice(index, 1)
-      else this.timesSelecionados.push(id)
+      if (index >= 0) {
+        this.timesSelecionados.splice(index, 1)
+      } else {
+        this.timesSelecionados.push(id)
+      }
+    },
+
+    abrirModalAgenda() {
+      if (this.timesSelecionados.length < 2) {
+        Swal.fire('Atencao', 'Selecione pelo menos 2 times.', 'warning')
+        return
+      }
+
+      this.mostrarModalTimes = false
+      this.mostrarModalAgenda = true
+
+      if (!this.dataAgendaSelecionada && this.datasAgendaOrdenadas.length) {
+        this.dataAgendaSelecionada = this.datasAgendaOrdenadas[0].data
+      }
+    },
+
+    voltarParaTimes() {
+      this.mostrarModalAgenda = false
+      this.mostrarModalTimes = true
+    },
+
+    selecionarDataAgenda(data) {
+      this.dataAgendaSelecionada = data
+      this.showGeradorAgenda = false
+      this.showReplicarAgenda = false
+      this.datasParaReplicarAgenda = []
+      this.novoHorarioInputAgenda = ''
+    },
+
+    adicionarDataAgenda() {
+      if (!this.novaDataAgenda) {
+        Swal.fire('Atencao', 'Selecione uma data.', 'warning')
+        return
+      }
+
+      if (this.novaDataAgenda < this.dataMinimaAgenda) {
+        Swal.fire('Atencao', 'Selecione uma data a partir de amanha.', 'warning')
+        return
+      }
+
+      const existe = this.agendaPorData.find((item) => item.data === this.novaDataAgenda)
+      if (existe) {
+        this.selecionarDataAgenda(existe.data)
+        this.novaDataAgenda = ''
+        return
+      }
+
+      this.agendaPorData.push({
+        data: this.novaDataAgenda,
+        horarios: []
+      })
+
+      this.selecionarDataAgenda(this.novaDataAgenda)
+      this.novaDataAgenda = ''
+    },
+
+    removerDataAgenda(data) {
+      this.agendaPorData = this.agendaPorData.filter((item) => item.data !== data)
+      this.datasParaReplicarAgenda = this.datasParaReplicarAgenda.filter((item) => item !== data)
+
+      if (!this.agendaPorData.length) {
+        this.dataAgendaSelecionada = ''
+        return
+      }
+
+      if (this.dataAgendaSelecionada === data) {
+        this.dataAgendaSelecionada = this.datasAgendaOrdenadas[0]?.data || ''
+      }
+    },
+
+    timeToMinutes(time) {
+      const [hora, minuto] = String(time || '').split(':').map(Number)
+      return (hora * 60) + minuto
+    },
+
+    minutesToTime(totalMinutos) {
+      return `${String(Math.floor(totalMinutos / 60)).padStart(2, '0')}:${String(totalMinutos % 60).padStart(2, '0')}`
+    },
+
+    adicionarHorarioAgenda() {
+      if (!this.agendaSelecionada || !this.novoHorarioInputAgenda) return
+
+      if (this.agendaSelecionada.horarios.includes(this.novoHorarioInputAgenda)) {
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'warning',
+          title: 'Horario ja existe',
+          showConfirmButton: false,
+          timer: 1600
+        })
+        return
+      }
+
+      this.agendaSelecionada.horarios.push(this.novoHorarioInputAgenda)
+      this.agendaSelecionada.horarios.sort((a, b) => this.timeToMinutes(a) - this.timeToMinutes(b))
+      this.novoHorarioInputAgenda = ''
+    },
+
+    removerHorarioAgenda(index) {
+      if (!this.agendaSelecionada) return
+      this.agendaSelecionada.horarios.splice(index, 1)
+    },
+
+    limparHorariosAgenda() {
+      if (!this.agendaSelecionada) return
+      this.agendaSelecionada.horarios = []
+    },
+
+    gerarHorariosAutomaticosAgenda() {
+      if (!this.agendaSelecionada) return
+      if (!this.geradorAgenda.inicio || !this.geradorAgenda.fim || !this.geradorAgenda.duracao) return
+
+      const inicio = this.timeToMinutes(this.geradorAgenda.inicio)
+      const fim = this.timeToMinutes(this.geradorAgenda.fim)
+      const duracao = Number(this.geradorAgenda.duracao)
+
+      if (!Number.isFinite(duracao) || duracao <= 0 || inicio >= fim) {
+        Swal.fire('Atencao', 'Preencha um intervalo valido para gerar os horarios.', 'warning')
+        return
+      }
+
+      const novosHorarios = []
+      let atual = inicio
+
+      while (atual < fim) {
+        if (atual + duracao > fim) break
+        novosHorarios.push(this.minutesToTime(atual))
+        atual += duracao
+      }
+
+      this.agendaSelecionada.horarios = novosHorarios
+      this.showGeradorAgenda = false
+    },
+
+    confirmarReplicacaoAgenda() {
+      if (!this.agendaSelecionada || !this.datasParaReplicarAgenda.length) return
+
+      const copia = [...this.agendaSelecionada.horarios]
+      this.agendaPorData = this.agendaPorData.map((item) => {
+        if (!this.datasParaReplicarAgenda.includes(item.data)) return item
+        return {
+          ...item,
+          horarios: [...copia]
+        }
+      })
+
+      this.showReplicarAgenda = false
+      this.datasParaReplicarAgenda = []
+    },
+
+    formatarDataAgenda(dataStr) {
+      if (!dataStr) return ''
+      const data = new Date(`${dataStr}T12:00:00`)
+      if (Number.isNaN(data.getTime())) return dataStr
+
+      return data.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      })
+    },
+
+    montarDatasJogos() {
+      return this.datasAgendaOrdenadas.flatMap((item) =>
+        (Array.isArray(item.horarios) ? item.horarios : [])
+          .filter(Boolean)
+          .map((horario) => {
+            const [hora, minuto] = String(horario).split(':').map(Number)
+            const [ano, mes, dia] = item.data.split('-').map(Number)
+            return new Date(ano, mes - 1, dia, hora, minuto || 0, 0).toISOString()
+          })
+      )
+    },
+
+    async uploadImagem() {
+      if (!this.arquivoFoto) return null
+
+      const formData = new FormData()
+      formData.append('file', this.arquivoFoto)
+
+      const { data } = await api.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+
+      return data?.fileUrl || data?.url || null
     },
 
     async finalizarCadastro() {
-      if (this.timesSelecionados.length < 2) {
-        Swal.fire('Atenção', 'Selecione pelo menos 2 times.', 'warning')
+      const datasJogos = this.montarDatasJogos()
+
+      if (!datasJogos.length) {
+        Swal.fire('Atencao', 'Adicione ao menos um horario para o campeonato.', 'warning')
         return
       }
 
-      if (this.dataFim < this.dataInicio) {
-        Swal.fire('Atenção', 'Data de fim não pode ser menor que a de início.', 'warning')
-        return
-      }
+      this.salvandoCadastro = true
 
       try {
+        const foto = await this.uploadImagem()
+
         await api.post('/criar/campeonato', {
-          tipo: this.campeonatoTemp.tipo,
-          nome: this.campeonatoTemp.nome,
-          modalidadeId: this.campeonatoTemp.modalidadeId,
-          quadraId: this.campeonatoTemp.quadraId,
-          dataInicio: this.campeonatoTemp.dataInicio,
-          dataFim: this.campeonatoTemp.dataFim,
-          status: this.campeonatoTemp.status,
-          foto: this.campeonatoTemp.foto,
+          tipo: this.tipoSelecionado,
+          nome: this.nomeCampeonato.trim(),
+          modalidadeId: this.modalidadeSelecionada,
+          quadraId: this.quadraSelecionada,
+          status: 'EM_ANDAMENTO',
+          foto,
           times: this.timesSelecionados,
-          datasJogos: []
+          datasJogos,
+          usuarioId: Number(this.usuarioLogado?.id || 0) || null
         })
 
         Swal.fire('Sucesso', 'Campeonato cadastrado com sucesso!', 'success')
         this.$emit('atualizar')
         this.$emit('fechar')
-        this.mostrarModalTimes = false
         this.limparCampos()
       } catch (error) {
-        Swal.fire('Erro', error.response?.data?.erro || 'Erro ao criar campeonato', 'error')
+        Swal.fire('Erro', error.response?.data?.detalhes || error.response?.data?.erro || 'Erro ao criar campeonato', 'error')
+      } finally {
+        this.salvandoCadastro = false
       }
     },
 
     cancelarCadastro() {
       this.limparCampos()
-      if (this.mostrarModalTipo) {
-        this.mostrarModalTipo = false
-      }
-      if (this.aberto && !this.mostrarModalTipo) {
-        this.$emit('fechar')
-      }
+      this.$emit('fechar')
     }
   }
 }
@@ -377,51 +768,23 @@ export default {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(15, 23, 42, 0.62);
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 24px;
   z-index: 1000;
 }
 
 .modal-content {
-  background: white;
-  padding: 30px 40px;
-  border-radius: 10px;
-  width: 900px;
-  max-width: 95%;
+  width: min(920px, 96vw);
   max-height: 90vh;
   overflow-y: auto;
-}
-
-.modal-content h2 {
-  margin-bottom: 20px;
-  color: #3b82f6;
-  font-weight: bold;
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.modal-header h2 {
-  margin-bottom: 0;
-}
-
-.btn-close-x {
-  width: 34px;
-  height: 34px;
-  border: 1px solid #3b82f6;
-  border-radius: 999px;
-  background: #fff;
-  color: #3b82f6;
-  font-size: 20px;
-  line-height: 1;
-  cursor: pointer;
-  flex: 0 0 auto;
+  background: #ffffff;
+  padding: 28px 32px;
+  border-radius: 20px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2);
+  color: #0f172a;
 }
 
 .modal-escolha-tipo-campeonato {
@@ -429,6 +792,18 @@ export default {
   border-radius: 18px;
   padding: 26px 28px;
   overflow: visible;
+}
+
+.modal-agenda-campeonato {
+  width: 95%;
+  max-width: 760px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  border-radius: 28px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
 }
 
 .header-escolha-tipo {
@@ -443,36 +818,159 @@ export default {
   line-height: 1.1;
 }
 
-.modal-escolha-tipo-campeonato .btn-close-x {
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #2563eb;
+  font-size: 30px;
+  line-height: 1.1;
+}
+
+.agenda-header-copy {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: 6px;
+}
+
+.agenda-subtitle {
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.btn-close-x {
   width: 34px;
   height: 34px;
-  border-color: #3b82f6;
+  border: 1px solid #3b82f6;
+  border-radius: 999px;
+  background: #fff;
+  color: #3b82f6;
   font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .modal-escolha-tipo-campeonato .btn-close-x:hover {
   background: rgba(59, 130, 246, 0.08);
 }
 
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  font-size: 15px;
+  color: #0f172a;
+}
+
+.texto-ajuda {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.botoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.botoes-acao-dupla {
+  justify-content: space-between;
+}
+
+.btn-save,
+.btn-cancelar-escolha-tipo,
+.btn-acao-painel,
+.btn-add,
+.btn-tool,
+.tab-btn,
+.btn-remove-date {
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.btn-save {
+  min-width: 160px;
+  padding: 12px 18px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 700;
+}
+
+.btn-save:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-save-secondary {
+  align-self: flex-end;
+}
+
+.btn-cancelar-escolha-tipo {
+  width: 100%;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 999px;
+  padding: 12px 0;
+  color: #3b82f6;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 800;
+  background: transparent;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
 .tipo-campeonato-lista {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  margin: 10px 0 18px;
+  margin: 12px 0 18px;
 }
 
 .btn-tipo {
   width: 100%;
-  border: none;
-  background: transparent;
   padding: 0;
-  cursor: pointer;
+  background: transparent;
 }
 
 .btn-tipo-card {
-  border: 1px solid rgba(59, 130, 246, 0.65);
-  border-radius: 12px;
-  padding: 14px 16px;
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  border-radius: 14px;
+  padding: 16px 18px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -481,8 +979,8 @@ export default {
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.btn-tipo-card.tipo-card-principal {
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.14) 0%, rgba(59, 130, 246, 0.08) 100%);
+.tipo-card-principal {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.14) 0%, rgba(59, 130, 246, 0.06) 100%);
 }
 
 .btn-tipo-card:hover {
@@ -513,244 +1011,333 @@ export default {
 }
 
 .btn-tipo-titulo {
-  color: #111827;
   font-size: 18px;
   font-weight: 500;
+  color: #0f172a;
   line-height: 1.2;
 }
 
 .btn-tipo-sub {
   color: #475569;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.3;
+  font-size: 14px;
 }
 
 .botoes-escolha-tipo {
-  margin-top: 12px;
+  justify-content: flex-end;
 }
 
-.btn-cancelar-escolha-tipo {
-  width: 100%;
-  border: 1px solid rgba(59, 130, 246, 0.35);
-  border-radius: 999px;
-  padding: 12px 0;
-  color: #3b82f6;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 800;
-  background: transparent;
-  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
-}
-
-.btn-cancelar-escolha-tipo:hover {
+.botoes-escolha-tipo .btn-cancelar-escolha-tipo:hover {
   background: rgba(59, 130, 246, 0.06);
   border-color: rgba(59, 130, 246, 0.55);
   transform: translateY(-1px);
 }
 
-.botoes {
-  display: flex;
-  gap: 10px;
-  margin-top: 1rem;
+.botoes-acao-dupla .btn-cancelar-escolha-tipo {
+  width: auto;
+  min-width: 140px;
+  padding: 12px 18px;
 }
 
-.btn-save,
-.btn-cancel {
-  flex: 1;
-  padding: 10px 0;
-  border-radius: 20px;
-  border: none;
-  cursor: pointer;
-  color: white;
-  font-size: 16px;
-}
-
-.btn-save {
-  background-color: #3b82f6;
-}
-
-.btn-cancel {
-  background-color: #7e7e7e;
-}
-
-.form-group {
-  margin-bottom: 16px;
-}
-
-input,
-select {
-  width: 100%;
-  padding: 10px;
-  font-size: 16px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-.form-row {
-  display: flex;
-  gap: 16px;
-}
-
-.form-row .form-group {
-  flex: 1;
-}
-
-.texto-ajuda {
-  display: block;
-  margin-top: 6px;
-  font-size: 13px;
-  color: #6b7280;
-}
-
-.modal-times {
-  display: flex;
-  flex-direction: column;
-  padding: 24px 32px;
-  border-radius: 12px;
-  width: 900px;
-  max-width: 95%;
-  max-height: 90vh;
-  background-color: #fff;
-  overflow-y: hidden;
-}
-
-.modal-times h2 {
-  margin-bottom: 12px;
-  color: #3b82f6;
-  font-weight: bold;
+.botoes-acao-dupla .btn-cancelar-escolha-tipo:hover {
+  background: rgba(59, 130, 246, 0.06);
+  border-color: rgba(59, 130, 246, 0.55);
+  transform: translateY(-1px);
 }
 
 .contador {
-  font-size: 16px;
-  font-weight: 600;
-  color: #374151;
-  text-align: center;
-  padding: 8px 0;
-  background: #fff;
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 16px;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .lista-times {
-  flex: 1;
-  overflow-y: auto;
-  margin: 16px 0;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 14px;
 }
 
-.lista-times::-webkit-scrollbar {
-  width: 6px;
-}
-
-.lista-times::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 10px;
-}
-
 .time-card {
-  border: 1px solid #3b82f6;
-  border-radius: 8px;
-  padding: 12px 16px;
+  border: 1px solid #dbe3ef;
+  border-radius: 16px;
+  padding: 14px;
   cursor: pointer;
-  transition: 0.2s;
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .time-card:hover {
-  background: #eff6ff;
+  transform: translateY(-1px);
+  border-color: #60a5fa;
+  box-shadow: 0 16px 28px rgba(59, 130, 246, 0.12);
 }
 
 .time-card.selecionado {
-  background: #3b82f6;
-  color: white;
-  border-color: #1e40af;
+  border-color: #2563eb;
+  background: rgba(37, 99, 235, 0.06);
 }
 
 .time-card-top {
   display: flex;
   align-items: center;
   gap: 12px;
+  margin-bottom: 10px;
 }
 
 .time-foto {
-  width: 50px;
-  height: 50px;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #e2e8f0;
 }
 
 .time-foto img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 50%;
-  border: 1px solid #3b82f6;
 }
 
 .time-nome {
-  font-size: 16px;
-  font-weight: bold;
+  margin: 0;
+  font-size: 18px;
+  color: #0f172a;
 }
 
-.time-info span {
+.agenda-add-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 0;
+}
+
+.form-group-agenda-date {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.tabs-header-agenda {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  margin-bottom: 0;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.tab-btn {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 9px 14px;
+  background: #e2e8f0;
+  color: #0f172a;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tab-btn.active {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.workspace-card {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 20px;
+  padding: 18px;
+  background: #f8fafc;
+}
+
+.agenda-workspace-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dia-header-row,
+.editor-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-kicker,
+.tool-kicker {
+  margin: 0 0 6px;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #2563eb;
+}
+
+.dia-titulo,
+.tool-title {
+  margin: 0;
+  font-size: 20px;
+  color: #0f172a;
+}
+
+.ferramentas-icones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.btn-tool,
+.btn-remove-date {
+  padding: 9px 13px;
+  background: #e2e8f0;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.btn-tool.active {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.painel-ferramenta,
+.editor-card {
+  border: 1px solid #dbe3ef;
+  border-radius: 16px;
+  padding: 14px;
+  background: #fff;
+}
+
+.painel-head {
+  margin-bottom: 12px;
+}
+
+.gerador-inputs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.g-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.g-group input {
+  min-height: 40px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+}
+
+.btn-acao-painel,
+.btn-add {
+  min-height: 40px;
+  padding: 9px 14px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 700;
+}
+
+.dias-checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.chk-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.add-horario-form {
+  display: flex;
+  gap: 10px;
+  margin: 12px 0 14px;
+}
+
+.time-input {
+  flex: 1;
+  min-height: 40px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+}
+
+.lista-horarios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sem-horarios,
+.estado-agenda-vazio {
+  padding: 24px;
+  border-radius: 16px;
+  background: #f8fafc;
+  text-align: center;
+  color: #64748b;
+}
+
+.horario-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 700;
   font-size: 13px;
-  opacity: 0.9;
+}
+
+.btn-remove-chip,
+.btn-clear {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.resumo-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  color: #475569;
+  font-size: 14px;
 }
 
 @media (max-width: 768px) {
-  .modal-escolha-tipo-campeonato {
-    width: 96vw;
-    padding: 20px 16px;
-    border-radius: 16px;
+  .modal-content {
+    padding: 22px 18px;
   }
 
-  .titulo-escolha-tipo {
-    font-size: 34px;
-  }
-
-  .modal-escolha-tipo-campeonato .btn-close-x {
-    width: 44px;
-    height: 44px;
-    font-size: 30px;
-  }
-
-  .btn-tipo-card {
-    padding: 14px;
-    gap: 12px;
-    border-radius: 14px;
-  }
-
-  .btn-tipo-icone {
-    width: 36px;
-    flex-basis: 36px;
-  }
-
-  .btn-tipo-icone svg {
-    width: 30px;
-    height: 30px;
-  }
-
-  .btn-tipo-titulo {
-    font-size: 17px;
-  }
-
-  .btn-tipo-sub {
-    font-size: 12px;
-  }
-
-  .btn-cancelar-escolha-tipo {
-    font-size: 18px;
-    padding: 14px 0;
-  }
-
-  .lista-times {
+  .form-row,
+  .gerador-inputs {
     grid-template-columns: 1fr;
+  }
+
+  .agenda-add-row,
+  .add-horario-form,
+  .dia-header-row,
+  .editor-head,
+  .botoes-acao-dupla {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-save,
+  .btn-cancelar-escolha-tipo {
+    width: 100%;
   }
 }
 </style>
