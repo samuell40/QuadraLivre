@@ -8,7 +8,7 @@
       </div>
 
       <div class="tipo-campeonato-lista">
-        <button class="btn-tipo btn-tipo-card" @click="abrirModalFase">
+        <button class="btn-tipo btn-tipo-card" :disabled="carregandoAcaoEscolha" @click="onEscolherConfiguracao('FASE')">
           <span class="btn-tipo-titulo btn-tipo-titulo-com-icone">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stack"
               viewBox="0 0 16 16">
@@ -18,11 +18,14 @@
                 d="m14.12 6.576 1.715.858c.22.11.22.424 0 .534l-7.568 3.784a.6.6 0 0 1-.534 0L.165 7.968a.299.299 0 0 1 0-.534l1.716-.858 5.317 2.659c.505.252 1.1.252 1.604 0z" />
             </svg>
             <span class="titulo-acao-modal">Adicionar fase</span>
+            <span v-if="carregandoAcaoEscolha && acaoSelecionada === 'FASE'" class="acao-loading-spinner"
+              aria-hidden="true"></span>
           </span>
           <small class="btn-tipo-sub">Cria uma nova fase e seleciona os times participantes</small>
         </button>
 
-        <button class="btn-tipo btn-tipo-card" @click="grupos">
+        <button class="btn-tipo btn-tipo-card" :disabled="carregandoAcaoEscolha"
+          @click="onEscolherConfiguracao('GRUPOS')">
           <span class="btn-tipo-titulo btn-tipo-titulo-com-icone">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people-fill"
               viewBox="0 0 16 16">
@@ -30,11 +33,14 @@
                 d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" />
             </svg>
             <span class="titulo-acao-modal">Grupos</span>
+            <span v-if="carregandoAcaoEscolha && acaoSelecionada === 'GRUPOS'" class="acao-loading-spinner"
+              aria-hidden="true"></span>
           </span>
           <small class="btn-tipo-sub">Organiza os grupos do campeonato</small>
         </button>
 
-        <button class="btn-tipo btn-tipo-card" @click="criteriosClassificacao">
+        <button class="btn-tipo btn-tipo-card" :disabled="carregandoAcaoEscolha"
+          @click="onEscolherConfiguracao('CRITERIOS')">
           <span class="btn-tipo-titulo btn-tipo-titulo-com-icone">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list-ol"
               viewBox="0 0 16 16">
@@ -44,11 +50,14 @@
                 d="M1.713 11.865v-.474H2c.217 0 .363-.137.363-.317 0-.185-.158-.31-.361-.31-.223 0-.367.152-.373.31h-.59c.016-.467.373-.787.986-.787.588-.002.954.291.957.703a.595.595 0 0 1-.492.594v.033a.615.615 0 0 1 .569.631c.003.533-.502.8-1.051.8-.656 0-1-.37-1.008-.794h.582c.008.178.186.306.422.309.254 0 .424-.145.422-.35-.002-.195-.155-.348-.414-.348h-.3zm-.004-4.699h-.604v-.035c0-.408.295-.844.958-.844.583 0 .96.326.96.756 0 .389-.257.617-.476.848l-.537.572v.03h1.054V9H1.143v-.395l.957-.99c.138-.142.293-.304.293-.508 0-.18-.147-.32-.342-.32a.33.33 0 0 0-.342.338zM2.564 5h-.635V2.924h-.031l-.598.42v-.567l.629-.443h.635z" />
             </svg>
             <span class="titulo-acao-modal">Critérios de Classificação</span>
+            <span v-if="carregandoAcaoEscolha && acaoSelecionada === 'CRITERIOS'" class="acao-loading-spinner"
+              aria-hidden="true"></span>
           </span>
           <small class="btn-tipo-sub">Define a ordem dos critérios usados na classificação</small>
         </button>
 
-        <button class="btn-tipo btn-tipo-card" @click="colunasClassificacao">
+        <button class="btn-tipo btn-tipo-card" :disabled="carregandoAcaoEscolha"
+          @click="onEscolherConfiguracao('COLUNAS')">
           <span class="btn-tipo-titulo btn-tipo-titulo-com-icone">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
               class="bi bi-layout-text-window-reverse" viewBox="0 0 16 16">
@@ -57,6 +66,8 @@
               <path d="M3 7h2v2H3V7zm0 3h2v2H3v-2zm3-3h7v1H6V7zm0 3h7v1H6v-1z" />
             </svg>
             <span class="titulo-acao-modal">Colunas da Tabela</span>
+            <span v-if="carregandoAcaoEscolha && acaoSelecionada === 'COLUNAS'" class="acao-loading-spinner"
+              aria-hidden="true"></span>
           </span>
           <small class="btn-tipo-sub">Seleciona quais colunas devem aparecer no placar</small>
         </button>
@@ -243,7 +254,9 @@ export default {
       ordemColunas: [],
       classificacao: [],
       indiceArraste: null,
-      indiceArrasteColuna: null
+      indiceArrasteColuna: null,
+      carregandoAcaoEscolha: false,
+      acaoSelecionada: ''
     }
   },
 
@@ -261,9 +274,39 @@ export default {
       this.$emit("update:modelValue", false)
     },
 
-    abrirModalFase() {
+    async onEscolherConfiguracao(acao) {
+      if (this.carregandoAcaoEscolha) return
+      this.carregandoAcaoEscolha = true
+      this.acaoSelecionada = acao
+
+      try {
+        if (acao === 'FASE') {
+          await this.abrirModalFase()
+          return
+        }
+
+        if (acao === 'GRUPOS') {
+          this.grupos()
+          return
+        }
+
+        if (acao === 'CRITERIOS') {
+          await this.criteriosClassificacao()
+          return
+        }
+
+        if (acao === 'COLUNAS') {
+          await this.colunasClassificacao()
+        }
+      } finally {
+        this.carregandoAcaoEscolha = false
+        this.acaoSelecionada = ''
+      }
+    },
+
+    async abrirModalFase() {
+      await this.listarTimes()
       this.mostrarModalFase = true
-      this.listarTimes()
     },
 
     fecharModalFase() {
@@ -528,6 +571,8 @@ export default {
   border-radius: 10px;
   width: 900px;
   max-width: 95%;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
@@ -594,6 +639,10 @@ export default {
   padding: 0;
 }
 
+.btn-tipo:disabled {
+  cursor: wait;
+}
+
 .btn-tipo-card {
   border: 1px solid rgba(59, 130, 246, 0.25);
   border-radius: 12px;
@@ -613,6 +662,11 @@ export default {
   transform: translateY(-1px);
 }
 
+.btn-tipo-card:disabled {
+  opacity: 0.78;
+  transform: none;
+}
+
 .btn-tipo-card:active {
   transform: translateY(0);
 }
@@ -630,6 +684,27 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.titulo-acao-modal {
+  min-width: 0;
+}
+
+.acao-loading-spinner {
+  width: 16px;
+  height: 16px;
+  margin-left: auto;
+  border-radius: 999px;
+  border: 2px solid rgba(59, 130, 246, 0.24);
+  border-top-color: #3b82f6;
+  animation: acaoSpin 0.75s linear infinite;
+  flex: 0 0 16px;
+}
+
+@keyframes acaoSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .btn-tipo-titulo-com-icone svg {
@@ -889,11 +964,58 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .modal-overlay {
+    align-items: flex-start;
+    padding: 10px;
+  }
+
+  .modal-content {
+    width: min(100%, 100vw - 20px);
+    max-height: calc(100dvh - 20px);
+    padding: 16px 14px;
+    border-radius: 14px;
+  }
+
+  .modal-escolha-config {
+    width: min(100%, 100vw - 20px);
+    padding: 16px 14px;
+    border-radius: 14px;
+  }
+
+  .modal-escolha-config .modal-header {
+    margin-bottom: 8px;
+  }
+
+  .modal-escolha-config .title {
+    font-size: 22px;
+    line-height: 1.12;
+  }
+
+  .modal-escolha-config .tipo-campeonato-lista {
+    gap: 10px;
+    margin: 8px 0 14px;
+  }
+
+  .modal-escolha-config .btn-tipo-card {
+    padding: 11px 12px;
+    border-radius: 10px;
+    gap: 4px;
+  }
+
+  .modal-escolha-config .btn-tipo-titulo {
+    font-size: 15px;
+  }
+
+  .modal-escolha-config .btn-tipo-sub {
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
   .modal-times {
-    width: min(100%, 92vw);
-    max-height: calc(100vh - 24px);
-    padding: 18px;
-    border-radius: 18px;
+    width: min(100%, 100vw - 20px);
+    max-height: calc(100dvh - 20px);
+    padding: 16px 14px;
+    border-radius: 14px;
   }
 
   .modal-times .modal-header {
@@ -1139,5 +1261,17 @@ export default {
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .modal-criterios,
+  .modal-colunas {
+    width: min(100%, 100vw - 20px);
+  }
+
+  .modal-criterios .lista-criterios,
+  .modal-colunas .lista-criterios {
+    max-height: calc(100dvh - 260px);
+  }
 }
 </style>

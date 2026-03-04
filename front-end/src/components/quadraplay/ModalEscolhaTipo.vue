@@ -8,7 +8,7 @@
       </div>
 
       <div class="tipo-campeonato-lista">
-        <button class="btn-tipo btn-tipo-card" @click="abrirModalPartida('ADICIONAR')">
+        <button class="btn-tipo btn-tipo-card" :disabled="carregandoAcaoEscolha" @click="onEscolherAcao('ADICIONAR')">
           <span class="btn-tipo-titulo btn-tipo-titulo-com-icone">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg"
               viewBox="0 0 16 16">
@@ -16,11 +16,13 @@
                 d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2" />
             </svg>
             <span class="titulo-acao-modal">Adicionar Partida</span>
+            <span v-if="carregandoAcaoEscolha && acaoSelecionada === 'ADICIONAR'" class="acao-loading-spinner"
+              aria-hidden="true"></span>
           </span>
           <small class="btn-tipo-sub">Cria uma partida para iniciar agora</small>
         </button>
 
-        <button class="btn-tipo btn-tipo-card" @click="abrirModalPartida('AGENDAR')">
+        <button class="btn-tipo btn-tipo-card" :disabled="carregandoAcaoEscolha" @click="onEscolherAcao('AGENDAR')">
           <span class="btn-tipo-titulo btn-tipo-titulo-com-icone">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar3"
               viewBox="0 0 16 16">
@@ -30,11 +32,14 @@
                 d="M6.5 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2" />
             </svg>
             <span class="titulo-acao-modal">Agendar Partida</span>
+            <span v-if="carregandoAcaoEscolha && acaoSelecionada === 'AGENDAR'" class="acao-loading-spinner"
+              aria-hidden="true"></span>
           </span>
           <small class="btn-tipo-sub">Define data e horário para jogar depois</small>
         </button>
 
-        <button v-if="!isMesario" class="btn-tipo btn-tipo-card" @click="abrirModalRodada">
+        <button v-if="!isMesario" class="btn-tipo btn-tipo-card" :disabled="carregandoAcaoEscolha"
+          @click="onEscolherAcao('RODADA')">
           <span class="btn-tipo-titulo btn-tipo-titulo-com-icone">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-repeat"
               viewBox="0 0 16 16">
@@ -44,6 +49,8 @@
                 d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5 5 0 0 0 8 3M3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9z" />
             </svg>
             <span class="titulo-acao-modal">Adicionar Rodada</span>
+            <span v-if="carregandoAcaoEscolha && acaoSelecionada === 'RODADA'" class="acao-loading-spinner"
+              aria-hidden="true"></span>
           </span>
           <small class="btn-tipo-sub">Cria uma nova rodada na fase atual</small>
         </button>
@@ -273,7 +280,9 @@ export default {
       mostrarModalJogadores: false,
       jogadoresTime1: [],
       jogadoresTime2: [],
-      criandoPartida: false
+      criandoPartida: false,
+      carregandoAcaoEscolha: false,
+      acaoSelecionada: ''
     }
   },
 
@@ -468,6 +477,26 @@ export default {
     selecionar(tipo) {
       this.$emit('selecionar', tipo)
       this.fechar()
+    },
+
+    async onEscolherAcao(acao) {
+      if (this.carregandoAcaoEscolha) return
+      this.carregandoAcaoEscolha = true
+      this.acaoSelecionada = acao
+
+      try {
+        if (acao === 'ADICIONAR' || acao === 'AGENDAR') {
+          await this.abrirModalPartida(acao)
+          return
+        }
+
+        if (acao === 'RODADA') {
+          await this.abrirModalRodada()
+        }
+      } finally {
+        this.carregandoAcaoEscolha = false
+        this.acaoSelecionada = ''
+      }
     },
 
     selecionarTimeA(time) {
@@ -752,6 +781,8 @@ export default {
   padding: 30px 40px;
   border-radius: 16px;
   width: min(900px, 95vw);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.22);
   font-family: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   color: var(--text);
@@ -832,6 +863,10 @@ export default {
   padding: 0;
 }
 
+.btn-tipo:disabled {
+  cursor: wait;
+}
+
 .btn-tipo-card {
   border: 1px solid rgba(59, 130, 246, 0.25);
   border-radius: 12px;
@@ -851,6 +886,11 @@ export default {
   transform: translateY(-1px);
 }
 
+.btn-tipo-card:disabled {
+  opacity: 0.78;
+  transform: none;
+}
+
 .btn-tipo-card:active {
   transform: translateY(0);
 }
@@ -868,6 +908,27 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.titulo-acao-modal {
+  min-width: 0;
+}
+
+.acao-loading-spinner {
+  width: 16px;
+  height: 16px;
+  margin-left: auto;
+  border-radius: 999px;
+  border: 2px solid rgba(59, 130, 246, 0.24);
+  border-top-color: #3b82f6;
+  animation: acaoSpin 0.75s linear infinite;
+  flex: 0 0 16px;
+}
+
+@keyframes acaoSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .btn-tipo-titulo-com-icone svg {
@@ -1149,22 +1210,89 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .modal-overlay {
+    align-items: flex-start;
+    padding: 10px;
+  }
+
   .modal-content {
-    padding: 20px 18px;
+    width: min(100%, 100vw - 20px);
+    max-height: calc(100dvh - 20px);
+    padding: 16px 14px;
     border-radius: 14px;
   }
 
-  .modal-escolha h2 {
-    font-size: 26px;
+  .modal-escolha {
+    width: min(100%, 100vw - 20px);
+    padding: 16px 14px;
+    border-radius: 14px;
+  }
+
+  .modal-escolha .modal-header {
+    margin-bottom: 8px;
+  }
+
+  .modal-times {
+    width: min(100%, 100vw - 20px);
+    max-height: calc(100dvh - 20px);
+    padding: 16px 14px;
+    border-radius: 14px;
+  }
+
+  .title {
+    font-size: 22px;
+    line-height: 1.1;
   }
 
   .btn-tipo-titulo {
-    font-size: 16px;
+    font-size: 15px;
+  }
+
+  .tipo-campeonato-lista {
+    gap: 10px;
+    margin: 8px 0 14px;
+  }
+
+  .btn-tipo-card {
+    padding: 11px 12px;
+    border-radius: 10px;
+    gap: 4px;
+  }
+
+  .btn-tipo-sub {
+    font-size: 12px;
+    line-height: 1.3;
   }
 
   .filtros-linha {
     flex-direction: column;
     gap: 12px;
+  }
+
+  .filtros-topo {
+    margin-bottom: 14px;
+  }
+
+  .filtros-topo label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .filtros-topo select,
+  .filtros-topo input,
+  .dropdown-selected {
+    min-height: 42px;
+    font-size: 14px;
+    padding: 9px 11px;
+  }
+
+  .dropdown-custom {
+    margin-top: 2px;
+  }
+
+  .agenda-helper-text {
+    margin: -2px 0 12px;
+    font-size: 12px;
   }
 
   .btn-save,

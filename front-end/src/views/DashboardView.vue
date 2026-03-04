@@ -417,7 +417,7 @@ export default {
       agendamentosMesChart: null,
       agendamentosModalidadeChart: null,
       agendamentosTipoChart: null,
-      loading: false,
+      loading: true,
 
       exibirTodosAvisos: false,
       todosAvisos: [],
@@ -497,6 +497,7 @@ export default {
   async mounted() {
     this.usuarioLogado = JSON.parse(localStorage.getItem("usuario") || "{}");
     window.scrollTo(0, 0)
+    this.loading = true
 
     if (this.usuarioLogado.quadraId) {
       this.novoAviso.quadraId = this.usuarioLogado.quadraId;

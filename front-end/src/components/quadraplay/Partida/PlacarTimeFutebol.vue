@@ -197,6 +197,8 @@ import Swal from 'sweetalert2'
 export default {
   name: 'PlacarTimeFutebol',
 
+  emits: ['parcial-delta', 'refresh', 'action-feedback-start', 'action-feedback-end'],
+
   props: {
     timeNome: String,
     timeData: Object,
@@ -264,6 +266,15 @@ export default {
       if (tipo === 'amarelo') return 'cartaoamarelo'
       if (tipo === 'vermelho') return 'cartaovermelho'
       return null
+    },
+
+    mensagemEventoJogador(acao) {
+      const removendo = acao !== 'increment'
+
+      if (this.tipoEvento === 'gol') return removendo ? 'Removendo gol...' : 'Registrando gol...'
+      if (this.tipoEvento === 'amarelo') return removendo ? 'Removendo cartao amarelo...' : 'Registrando cartao amarelo...'
+      if (this.tipoEvento === 'vermelho') return removendo ? 'Removendo cartao vermelho...' : 'Registrando cartao vermelho...'
+      return 'Registrando alteracao...'
     },
 
     acionarEvento(tipo, delta) {
@@ -341,6 +352,7 @@ export default {
       if (this.tipoEvento === 'vermelho') payload.cartoesVermelhos = incremento
 
       try {
+        this.$emit('action-feedback-start', this.mensagemEventoJogador(acao))
         const res = await api.post('/atuacao', payload)
 
         if (this.tipoEvento === 'gol') this.emitDelta('golspro', incremento)
@@ -356,6 +368,8 @@ export default {
       } catch (error) {
         Swal.fire('Erro', error.response?.data?.message || 'Erro ao salvar atuação', 'error')
         await this.carregarJogadores()
+      } finally {
+        this.$emit('action-feedback-end')
       }
     },
 
@@ -419,6 +433,7 @@ export default {
       }
 
       try {
+        this.$emit('action-feedback-start', 'Registrando substituicoes...')
         for (const sub of this.substituicoesPendentes) {
           await api.put(`/partidas/${this.partidaIdNum}/substituir`, {
             jogadorSaiId: sub.sai.id,
@@ -433,6 +448,8 @@ export default {
         this.$emit('refresh')
       } catch (error) {
         Swal.fire('Erro', 'Erro ao realizar substituições', 'error')
+      } finally {
+        this.$emit('action-feedback-end')
       }
     },
 
@@ -477,6 +494,7 @@ export default {
       if (!this.partidaIdNum) return
 
       try {
+        this.$emit('action-feedback-start', 'Removendo jogadores...')
         for (const jogadorId of this.jogadoresSelecionados) {
           await api.put(`/${this.partidaIdNum}/${jogadorId}/remover`)
         }
@@ -486,6 +504,8 @@ export default {
         this.$emit('refresh')
       } catch {
         Swal.fire('Erro', 'Erro ao remover jogadores', 'error')
+      } finally {
+        this.$emit('action-feedback-end')
       }
     }
   }

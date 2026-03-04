@@ -112,7 +112,7 @@ export default {
       usuarioLogado: null,
       campeonatos: [],
       campeonatosMesario: [],
-      isLoading: false,
+        isLoading: true,
       modalidadesDisponiveis: [],
       modalidadeSelecionada: null,
       anoSelecionado: new Date().getFullYear(),

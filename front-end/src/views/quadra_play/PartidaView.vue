@@ -23,6 +23,13 @@
         </span>
       </div>
 
+      <transition name="feedback-fade">
+        <div v-if="mostrarFeedbackRegistro" class="registro-feedback" role="status" aria-live="polite">
+          <span class="registro-feedback-spinner" aria-hidden="true"></span>
+          <span>{{ textoFeedbackRegistro }}</span>
+        </div>
+      </transition>
+
       <div v-if="isLoading" class="loader-container-centralizado">
         <LoadingState
           title="Carregando partida"
@@ -34,10 +41,14 @@
         <div v-if="placarComponent" class="placares"
           :class="{ 'placares-finalizada': isFinalizada, 'placares-andamento': isEmAndamento }">
           <component :is="placarComponent" v-bind="placarPropsTimeA" @parcial-delta="onParcialDelta"
-            @refresh="carregarPartida" />
+            @parcial-feedback="sinalizarFeedbackRegistro"
+            @refresh="carregarPartida" @action-feedback-start="iniciarFeedbackRegistro"
+            @action-feedback-end="finalizarFeedbackRegistro" />
 
           <component :is="placarComponent" v-bind="placarPropsTimeB" @parcial-delta="onParcialDelta"
-            @refresh="carregarPartida" />
+            @parcial-feedback="sinalizarFeedbackRegistro"
+            @refresh="carregarPartida" @action-feedback-start="iniciarFeedbackRegistro"
+            @action-feedback-end="finalizarFeedbackRegistro" />
         </div>
 
         <button class="botao-finalizar"
@@ -99,7 +110,10 @@ export default {
       snapshotInicial: null,
       temAlteracao: false,
       acabouDeSalvar: false,
-      modalidadesById: {}
+      modalidadesById: {},
+      registroMensagemAtual: '',
+      registroOperacoesAtivas: 0,
+      feedbackAguardandoSalvar: false
     }
   },
 
@@ -208,6 +222,31 @@ export default {
 
     isEmAndamento() {
       return this.partida?.status === 'EM_ANDAMENTO'
+    },
+
+    mostrarFeedbackRegistro() {
+      return !this.isLoading && (
+        this.isFinalizando ||
+        this.isSalvandoParcial ||
+        this.registroOperacoesAtivas > 0 ||
+        this.feedbackAguardandoSalvar
+      )
+    },
+
+    textoFeedbackRegistro() {
+      if (this.isFinalizando) {
+        return this.isFinalizada ? 'Salvando alteracoes da partida...' : 'Finalizando partida...'
+      }
+
+      if (this.registroMensagemAtual) {
+        return this.registroMensagemAtual
+      }
+
+      if (this.isSalvandoParcial || this.registroOperacoesAtivas > 0) {
+        return 'Registrando alteracao...'
+      }
+
+      return ''
     },
 
     botaoDesabilitado() {
@@ -372,6 +411,42 @@ export default {
       this.aplicarDadosPartida(res.data)
     },
 
+    iniciarFeedbackRegistro(mensagem = 'Registrando alteracao...') {
+      this.registroOperacoesAtivas += 1
+      this.registroMensagemAtual = mensagem
+    },
+
+    sinalizarFeedbackRegistro(mensagem = 'Registrando alteracao...') {
+      this.registroMensagemAtual = mensagem
+      this.feedbackAguardandoSalvar = true
+    },
+
+    finalizarFeedbackRegistro() {
+      this.registroOperacoesAtivas = Math.max(0, this.registroOperacoesAtivas - 1)
+      this.limparFeedbackRegistro()
+    },
+
+    limparFeedbackRegistro() {
+      if (this.isFinalizando || this.isSalvandoParcial || this.registroOperacoesAtivas > 0 || this.feedbackAguardandoSalvar) return
+      this.registroMensagemAtual = ''
+    },
+
+    descreverAcaoRegistro(campo, delta) {
+      const removendo = Number(delta) < 0
+
+      if (campo === 'golspro') return removendo ? 'Removendo gol...' : 'Registrando gol...'
+      if (campo === 'faltas') return removendo ? 'Removendo falta...' : 'Registrando falta...'
+      if (campo === 'substituicoes') return removendo ? 'Removendo substituicao...' : 'Registrando substituicao...'
+      if (campo === 'cartaoamarelo') return removendo ? 'Removendo cartao amarelo...' : 'Registrando cartao amarelo...'
+      if (campo === 'cartaovermelho') return removendo ? 'Removendo cartao vermelho...' : 'Registrando cartao vermelho...'
+      if (campo === 'setsVencidos') return removendo ? 'Ajustando sets vencidos...' : 'Registrando set vencido...'
+      if (campo === 'pontosSet') return removendo ? 'Ajustando pontos do set...' : 'Registrando ponto do set...'
+      if (campo === 'gamesSet') return removendo ? 'Ajustando games do set...' : 'Registrando game do set...'
+      if (campo === 'pontosTieBreak') return removendo ? 'Ajustando tie-break...' : 'Registrando ponto no tie-break...'
+      if (campo === 'wo') return removendo ? 'Removendo W.O...' : 'Registrando W.O...'
+      return 'Registrando alteracao...'
+    },
+
     async atualizarParcial(payload) {
       if (!this.partidaId) return
 
@@ -386,12 +461,16 @@ export default {
         Swal.fire('Erro', msg, 'error')
       } finally {
         this.isSalvandoParcial = false
+        this.feedbackAguardandoSalvar = false
+        this.limparFeedbackRegistro()
       }
     },
 
     async onParcialDelta({ lado, campo, delta }) {
       if (!this.partidaId) return
       if (!this.partida) return
+
+      this.sinalizarFeedbackRegistro(this.descreverAcaoRegistro(campo, delta))
 
       if (this.isGrupoFutebol) {
         await this.aplicarDeltaFutebol(lado, campo, delta)
@@ -672,6 +751,7 @@ export default {
       if (!confirm.isConfirmed) return
 
       this.isFinalizando = true
+      this.registroMensagemAtual = this.isFinalizada ? 'Salvando alteracoes da partida...' : 'Finalizando partida...'
       try {
         if (jaFinalizada) {
           const p = this.partida || {}
@@ -720,6 +800,8 @@ export default {
         Swal.fire('Erro', msg, 'error')
       } finally {
         this.isFinalizando = false
+        this.feedbackAguardandoSalvar = false
+        this.limparFeedbackRegistro()
       }
     },
 
@@ -947,6 +1029,51 @@ a {
   justify-content: center;
 }
 
+.registro-feedback {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 4px 0 10px;
+  padding: 11px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  background: linear-gradient(180deg, rgba(239, 246, 255, 0.96), rgba(219, 234, 254, 0.92));
+  color: #1d4ed8;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.08);
+}
+
+.registro-feedback-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(59, 130, 246, 0.18);
+  border-top-color: #3b82f6;
+  animation: feedbackSpin 0.8s linear infinite;
+  flex: 0 0 auto;
+}
+
+@keyframes feedbackSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.feedback-fade-enter-active,
+.feedback-fade-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.feedback-fade-enter-from,
+.feedback-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
 .botao-finalizar {
   width: 100%;
   min-height: 50px;
@@ -997,7 +1124,7 @@ a {
   .conteudo {
     margin-left: 0;
     padding: 16px;
-    padding-top: calc(68px + env(safe-area-inset-top));
+    padding-top: calc(82px + env(safe-area-inset-top));
   }
 
   .conteudo.collapsed {
@@ -1005,12 +1132,12 @@ a {
   }
 
   .header {
-    flex-direction: row;
-    align-items: flex-start;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    justify-content: initial;
     gap: 10px;
-    flex-wrap: wrap;
-    margin-top: 6px;
+    margin-top: 8px;
     margin-bottom: 12px;
   }
 
@@ -1019,19 +1146,21 @@ a {
   }
 
   .title {
-    font-size: 30px;
+    font-size: 29px;
     margin: 0 0 8px;
-    margin-right: 10px;
-    flex: 1;
-    min-width: 0;
+    margin-right: 0;
     line-height: 1.05;
     white-space: normal;
     overflow: visible;
     text-overflow: initial;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .header-copy {
     transform: none;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .page-subtitle {
@@ -1039,14 +1168,23 @@ a {
     line-height: 1.55;
   }
 
+  .registro-feedback {
+    width: 100%;
+    margin: 0 0 12px;
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+
   .badge-status {
+    align-self: start;
     flex-shrink: 0;
     min-height: 34px;
     font-size: 12px;
     padding: 0 10px;
     gap: 8px;
-    margin-top: 2px;
+    margin-top: 0;
     border-radius: 12px;
+    transform: none;
   }
 
   .live-dot {

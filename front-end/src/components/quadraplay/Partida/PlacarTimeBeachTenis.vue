@@ -41,6 +41,8 @@
 <script>
 export default {
   name: 'PlacarTimeBeachTenis',
+
+  emits: ['parcial-delta', 'parcial-feedback'],
   props: {
     timeNome: { type: String, default: 'Time' },
     timeData: { type: Object, required: true },
@@ -141,8 +143,19 @@ export default {
     }
   },
   methods: {
+    mensagemParcial(campo, delta) {
+      const removendo = Number(delta) < 0
+
+      if (campo === 'setsVencidos') return removendo ? 'Ajustando sets vencidos...' : 'Registrando set vencido...'
+      if (campo === 'gamesSet') return removendo ? 'Ajustando games do set...' : 'Registrando game do set...'
+      if (campo === 'pontosTieBreak') return removendo ? 'Ajustando tie-break...' : 'Registrando ponto no tie-break...'
+      if (campo === 'wo') return removendo ? 'Removendo W.O...' : 'Registrando W.O...'
+      return 'Registrando alteracao...'
+    },
+
     emitDelta(campo, delta) {
       if (!this.podeEditar || this.partidaEncerradaGlobal) return
+      this.$emit('parcial-feedback', this.mensagemParcial(campo, delta))
       this.$emit('parcial-delta', { lado: this.lado, campo, delta })
     }
   }

@@ -38,6 +38,8 @@
 export default {
   name: 'PlacarTimeVolei',
 
+  emits: ['parcial-delta', 'parcial-feedback'],
+
   props: {
     timeNome: { type: String, default: 'Time' },
     timeData: { type: Object, required: true },
@@ -129,8 +131,18 @@ export default {
   },
 
   methods: {
+    mensagemParcial(campo, delta) {
+      const removendo = Number(delta) < 0
+
+      if (campo === 'setsVencidos') return removendo ? 'Ajustando sets vencidos...' : 'Registrando set vencido...'
+      if (campo === 'pontosSet') return removendo ? 'Ajustando pontos do set...' : 'Registrando ponto do set...'
+      if (campo === 'wo') return removendo ? 'Removendo W.O...' : 'Registrando W.O...'
+      return 'Registrando alteracao...'
+    },
+
     emitDelta(campo, delta) {
       if (!this.podeEditar || this.partidaEncerradaGlobal) return
+      this.$emit('parcial-feedback', this.mensagemParcial(campo, delta))
       this.$emit('parcial-delta', { lado: this.lado, campo, delta })
     }
   }
