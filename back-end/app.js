@@ -6,7 +6,6 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const multer = require("multer");
 const dotenv = require("dotenv");
 dotenv.config();
-const session = require("express-session");
 const passport = require("./auth/passport");
 const { iniciarSocket } = require('./socket');
 
@@ -38,6 +37,7 @@ iniciarSocket(server);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ✅ CORS (whitelist do seu domínio + dev)
 const allowedOrigins = [
   'https://www.quadraplaysv.com.br',
   'https://quadraplaysv.com.br',
@@ -47,30 +47,23 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, cb) => {
+    // permite Postman/Server-to-server (sem Origin)
     if (!origin) return cb(null, true);
 
     if (allowedOrigins.includes(origin)) return cb(null, true);
 
     return cb(new Error(`Not allowed by CORS: ${origin}`));
   },
+  // ✅ deixe true se você usa cookies em algum ponto.
+  // Se você usa só JWT no Authorization, pode virar false.
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Authorization', 'Content-Type'],
 }));
 
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  proxy: true,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',              
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', 
-  },
-}));
-
+// ✅ Passport (sem session / sem MemoryStore)
 app.use(passport.initialize());
-app.use(passport.session());
+// ❌ removido: app.use(passport.session());
 
 // Rotas
 app.use("/auth", authRoutes);
