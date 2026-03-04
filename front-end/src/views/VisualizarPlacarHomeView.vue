@@ -13,7 +13,10 @@
       </div>
 
       <div v-if="isLoading" class="loader-container-centralizado">
-        <div class="loader"></div>
+        <LoadingState
+          title="Carregando placar e resultados"
+          description="Buscando campeonatos, fases e destaques públicos para montar o painel."
+        />
       </div>
 
       <div v-else class="aainel-alacar">
@@ -143,7 +146,11 @@
             </div>
 
             <div v-if="loadingArtilharia" class="loader-container-centralizado">
-              <div class="loader"></div>
+              <LoadingState
+                size="compact"
+                title="Carregando artilharia"
+                description="Somando gols e organizando o ranking dos jogadores em destaque."
+              />
             </div>
 
             <div v-else-if="!artilharia || artilharia.length === 0" class="sem-dados-centralizado">
@@ -182,6 +189,7 @@
 <script>
 import api from '@/axios'
 import NavBarHome from '@/components/NavBarHome.vue'
+import LoadingState from '@/components/feedback/LoadingState.vue'
 import TabelaClassificacao from '@/components/quadraplay/TabelaClassificacao.vue'
 import ListaPartidas from '@/components/quadraplay/ListaPartidas.vue'
 import PartidasDoTimeModal from '@/components/quadraplay/PartidasDoTimeModal.vue'
@@ -195,7 +203,7 @@ import { isFotoPadraoCampeonato } from '@/utils/campeonatoImagem'
 
 export default {
   name: 'VisualizarPlacarHome',
-  components: { NavBarHome, TabelaClassificacao, ListaPartidas, PartidasDoTimeModal },
+  components: { NavBarHome, LoadingState, TabelaClassificacao, ListaPartidas, PartidasDoTimeModal },
 
   data() {
     return {

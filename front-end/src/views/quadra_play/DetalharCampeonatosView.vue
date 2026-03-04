@@ -14,7 +14,11 @@
       </div>
 
       <div v-if="isLoading" class="loader-container-centralizado">
-        <div class="loader"></div>
+        <LoadingState
+          title="Carregando campeonato"
+          description="Buscando regras, critérios, identidade visual e dados gerais da competição."
+        />
+        <span class="loader-copy">Carregando informações do campeonato.</span>
       </div>
 
       <div v-if="campeonato && !isMesario" class="card-edicao">
@@ -261,6 +265,7 @@
 import Swal from 'sweetalert2'
 import api from '@/axios'
 import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
+import LoadingState from '@/components/feedback/LoadingState.vue'
 import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
 import AgendaCampeonatoEditor from '@/components/quadraplay/Campeonatos/AgendaCampeonatoEditor.vue'
 import { carregarCampeonato } from '@/utils/persistirCampeonato'
@@ -269,7 +274,7 @@ import { grupoModalidade, opcoesNumericas, opcoesSuspensao, regrasPadrao} from '
 
 export default {
   name: 'GerenciarCampeonatosView',
-  components: { SidebarCampeonato, NavBarQuadras, AgendaCampeonatoEditor },
+  components: { SidebarCampeonato, NavBarQuadras, LoadingState, AgendaCampeonatoEditor },
 
   data() {
     return {
@@ -1426,7 +1431,10 @@ a {
 
 .loader-container-centralizado {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  gap: 16px;
   margin-top: 140px;
 }
 
@@ -1437,6 +1445,10 @@ a {
   width: 90px;
   height: 90px;
   animation: spin 1s linear infinite;
+}
+
+.loader-copy {
+  display: none;
 }
 
 @keyframes spin {

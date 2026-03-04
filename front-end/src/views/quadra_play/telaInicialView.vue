@@ -30,8 +30,10 @@
         </div>
 
         <div v-if="isLoading" class="feedback-card feedback-card-loading">
-          <div class="loader" aria-hidden="true"></div>
-          <span class="loader-copy">Carregando campeonatos...</span>
+          <LoadingState
+            title="Carregando campeonatos"
+            description="Buscando competições, modalidades e permissões liberadas para o seu painel."
+          />
         </div>
 
         <a v-else-if="campeonatos.length === 0" class="feedback-card feedback-ematy">
@@ -88,6 +90,7 @@
 import { useCampeonatoStore } from '@/storecampeonato';
 import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
 import SidebarQuadra from '@/components/quadraplay/SidebarQuadra.vue'
+import LoadingState from '@/components/feedback/LoadingState.vue'
 import AdicionarCampeonatoModal from '@/components/quadraplay/Campeonatos/AdicionarCampeonatoModal.vue';
 import router from '@/router';
 import api from '@/axios'
@@ -99,6 +102,7 @@ export default {
   components: {
     NavBarQuadras,
     SidebarQuadra,
+    LoadingState,
     AdicionarCampeonatoModal
   },
 

@@ -14,8 +14,11 @@
       </div>
 
       <div v-if="isLoading" class="loader-container">
-        <div class="loader"></div>
-        <p class="loader-copy">Carregando grade da quadra.</p>
+        <LoadingState
+          size="compact"
+          title="Carregando grade"
+          description="Buscando dias de funcionamento e horários já configurados para a quadra."
+        />
       </div>
 
       <div v-else class="modal-body">
@@ -216,10 +219,12 @@
 
 <script>
 import api from '@/axios'
+import LoadingState from '@/components/feedback/LoadingState.vue'
 import Swal from 'sweetalert2'
 
 export default {
   name: 'EditarGradeHorariosModal',
+  components: { LoadingState },
   props: {
     quadra: { type: Object, required: true }
   },

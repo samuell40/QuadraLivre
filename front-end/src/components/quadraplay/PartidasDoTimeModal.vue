@@ -20,7 +20,11 @@
       </p>
 
       <div v-if="loading" class="loader-container-centralizado">
-        <div class="loader"></div>
+        <LoadingState
+          size="compact"
+          title="Carregando partidas do time"
+          description="Buscando os confrontos relacionados ao time selecionado nesta navegação."
+        />
       </div>
 
       <div v-else-if="partidasDoTime.length === 0" class="sem-dados">
@@ -77,6 +81,7 @@
 
 <script>
 import DetalharPartidaModal from '@/components/quadraplay/DetalharPartidaModal.vue'
+import LoadingState from '@/components/feedback/LoadingState.vue'
 import { obterRotuloStatusPartida, obterStatusExibicaoPartida } from '@/utils/partidaStatus'
 
 const STATUS_CONFIG = {
@@ -91,7 +96,8 @@ const STATUS_CONFIG = {
 export default {
   name: 'PartidasDoTimeModal',
   components: {
-    DetalharPartidaModal
+    DetalharPartidaModal,
+    LoadingState
   },
   props: {
     modelValue: { type: Boolean, default: false },

@@ -23,9 +23,10 @@
         </div>
 
         <div v-if="isLoading" class="painel-card estado-card">
-          <div class="loader-container-centralizado">
-            <div class="loader"></div>
-          </div>
+          <LoadingState
+            title="Carregando modalidades"
+            description="Buscando categorias ativas para liberar o gerenciamento de equipes."
+          />
         </div>
 
         <div v-else>
@@ -62,9 +63,11 @@
             </div>
 
             <div v-if="isLoadingTimes" class="estado-card-conteudo">
-              <div class="loader-container-centralizado">
-                <div class="loader"></div>
-              </div>
+              <LoadingState
+                size="compact"
+                title="Carregando times"
+                description="Buscando elenco, treinador e dados da modalidade selecionada."
+              />
             </div>
 
             <div v-else-if="times && times.length" class="lista-times">
@@ -109,6 +112,7 @@
 
 <script>
 import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue';
+import LoadingState from '@/components/feedback/LoadingState.vue';
 import SidebarQuadra from '@/components/quadraplay/SidebarQuadra.vue';
 import AdicionarTimeModal from '@/components/quadraplay/times/AdicionarTimesModal.vue';
 import DetalharTimes from '@/components/quadraplay/times/DetalharTimes.vue';
@@ -119,6 +123,7 @@ export default {
   name: 'GerenciartimesView',
   components: {
     NavBarQuadras,
+    LoadingState,
     SidebarQuadra,
     AdicionarTimeModal,
     DetalharTimes

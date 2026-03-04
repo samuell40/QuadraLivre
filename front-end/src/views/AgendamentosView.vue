@@ -61,9 +61,10 @@
         </div>
 
         <div v-if="isLoading" class="state-card state-card-loading">
-          <div class="loader"></div>
-          <p class="state-title">Carregando agendamentos</p>
-          <p class="state-copy">Buscando as reservas vinculadas a {{ nomeQuadraOperacao }}.</p>
+          <LoadingState
+            title="Carregando agendamentos"
+            :description="`Buscando as reservas vinculadas a ${nomeQuadraOperacao}.`"
+          />
         </div>
 
         <template v-else>
@@ -159,6 +160,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import Swal from 'sweetalert2'
 import SideBar from '@/components/SideBar.vue'
 import NavBarUse from '@/components/NavBarUser.vue'
+import LoadingState from '@/components/feedback/LoadingState.vue'
 import AgendamentoCard from '@/components/cards/AgendamentoCard.vue'
 import ListaAgendModal from '@/components/modals/Agendamentos/ListaAgendModal.vue'
 import DetalheAgendModal from '@/components/modals/Agendamentos/DetalharAgendModal.vue'

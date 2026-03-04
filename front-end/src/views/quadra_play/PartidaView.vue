@@ -24,7 +24,10 @@
       </div>
 
       <div v-if="isLoading" class="loader-container-centralizado">
-        <div class="loader"></div>
+        <LoadingState
+          title="Carregando partida"
+          description="Buscando placar, jogadores e eventos para liberar os controles da partida."
+        />
       </div>
 
       <div v-else>
@@ -59,6 +62,7 @@
 import api from '@/axios'
 import Swal from 'sweetalert2'
 import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
+import LoadingState from '@/components/feedback/LoadingState.vue'
 import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
 import { carregarCampeonato } from '@/utils/persistirCampeonato'
 import PlacarTimeFutebol from '@/components/quadraplay/Partida/PlacarTimeFutebol.vue'
@@ -70,6 +74,7 @@ export default {
 
   components: {
     NavBarQuadras,
+    LoadingState,
     SidebarCampeonato,
     PlacarTimeFutebol,
     PlacarTimeVolei,

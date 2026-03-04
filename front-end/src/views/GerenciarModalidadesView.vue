@@ -18,7 +18,10 @@
       </div>
 
       <div v-if="isLoading" class="loader-container-centralizado">
-        <div class="loader"></div>
+        <LoadingState
+          title="Carregando modalidades"
+          description="Buscando categorias, vínculos com quadras e totais de times cadastrados."
+        />
       </div>
 
       <div v-else>
@@ -59,6 +62,7 @@
 
 <script>
 import SideBar from '@/components/SideBar.vue'
+import LoadingState from '@/components/feedback/LoadingState.vue'
 import AdicionarModalidadeModal from '@/components/modals/modalidades/AdicionarModalidadeModal.vue'
 import DetalharModalidadeModal from '@/components/modals/modalidades/DetalharModalidadeModal.vue'
 import api from '@/axios'
@@ -67,7 +71,7 @@ import Swal from 'sweetalert2'
 export default {
   name: 'GerenciarModalidadesView',
 
-  components: { SideBar, AdicionarModalidadeModal, DetalharModalidadeModal },
+  components: { SideBar, LoadingState, AdicionarModalidadeModal, DetalharModalidadeModal },
 
   data() {
     return {

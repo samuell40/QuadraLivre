@@ -1812,6 +1812,7 @@ a {
     margin-left: 0;
     margin-top: 34px;
     padding: 14px;
+    overflow-x: hidden;
   }
 
   .campos-adiamento {
@@ -1829,17 +1830,21 @@ a {
 
   .header-copy {
     max-width: 100%;
+    min-width: 0;
   }
 
   .header-top {
     align-items: flex-start;
     gap: 10px;
+    flex-wrap: wrap;
   }
 
   .title {
     margin: 0 0 8px;
     font-size: 30px;
     line-height: 1.04;
+    flex: 1 1 220px;
+    min-width: 0;
   }
 
   .page-subtitle {
@@ -1871,6 +1876,7 @@ a {
 
   .btn-add-partida-topo.btn-add-aartida-header {
     margin-top: 0;
+    margin-left: auto;
   }
 
   .btn-add-partida-desktop {

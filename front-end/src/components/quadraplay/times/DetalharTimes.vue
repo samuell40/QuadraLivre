@@ -16,7 +16,11 @@
       </div>
 
       <div v-if="isLoading" class="loader-container-centralizado">
-        <div class="loader"></div>
+        <LoadingState
+          size="compact"
+          title="Carregando jogadores"
+          description="Buscando o elenco, as funções e os vínculos do time selecionado."
+        />
       </div>
 
       <div v-else>
@@ -230,9 +234,11 @@
 
 <script>
 import api from '@/axios';
+import LoadingState from '@/components/feedback/LoadingState.vue';
 import Swal from 'sweetalert2';
 
 export default {
+  components: { LoadingState },
   emits: ['fechar', 'atualizar-lista'],
   props: {
     aberto: Boolean,

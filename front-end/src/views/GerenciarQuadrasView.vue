@@ -55,9 +55,7 @@
         </div>
 
         <div v-if="isLoading" class="state-card">
-          <div class="loader"></div>
-          <p class="state-title">{{ tituloCarregamento }}</p>
-          <p class="state-copy">{{ descricaoCarregamento }}</p>
+          <LoadingState :title="tituloCarregamento" :description="descricaoCarregamento" />
         </div>
 
         <div v-else-if="quadras.length === 0" class="state-card state-card-empty">
@@ -322,13 +320,14 @@
 import Swal from 'sweetalert2'
 import SideBar from '@/components/SideBar.vue'
 import NavBarUse from '@/components/NavBarUser.vue'
+import LoadingState from '@/components/feedback/LoadingState.vue'
 import api from '@/axios'
 import { useAuthStore } from '@/store'
 import EditarGradeHorariosModal from '@/components/modals/Horarios/EditarGradeHorariosModal.vue'
 
 export default {
   name: 'AdminGerenciarQuadras',
-  components: { SideBar, NavBarUse, EditarGradeHorariosModal },
+  components: { SideBar, NavBarUse, LoadingState, EditarGradeHorariosModal },
   setup() {
     const authStore = useAuthStore()
     return { authStore }

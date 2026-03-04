@@ -170,6 +170,15 @@
           <div class="chart-panel-head">
             <p class="chart-kicker">Distribuição por modalidade</p>
           </div>
+
+          <div v-if="loading" class="loader-container-centralizado">
+            <LoadingState
+              size="compact"
+              title="Carregando modalidades"
+              description="Organizando os agendamentos por modalidade para montar o gráfico."
+            />
+          </div>
+
           <div class="chart-wrapper chart-wrapper-fixed">
             <div class="chart-container">
               <canvas id="agendamentosModalidadeChart"></canvas>
@@ -181,6 +190,15 @@
           <div class="chart-panel-head">
             <p class="chart-kicker">Participação por Tipo</p>
           </div>
+
+          <div v-if="loading" class="loader-container-centralizado">
+            <LoadingState
+              size="compact"
+              title="Carregando tipos"
+              description="Separando os agendamentos por categoria para gerar a participação."
+            />
+          </div>
+
           <div class="chart-wrapper chart-wrapper-fixed">
             <div class="chart-area-pie">
               <canvas id="agendamentosTipoChart"></canvas>
@@ -196,7 +214,11 @@
           </div>
 
           <div v-if="loading" class="loader-container-centralizado">
-            <div class="loader"></div>
+            <LoadingState
+              size="compact"
+              title="Carregando agendamentos"
+              description="Montando a evolução mensal das reservas da sua operação."
+            />
           </div>
 
           <div class="chart-wrapper chart-wrapper-fixed">
@@ -317,6 +339,7 @@
 <script>
 import SideBar from '@/components/SideBar.vue'
 import NavBarUse from '@/components/NavBarUser.vue'
+import LoadingState from '@/components/feedback/LoadingState.vue'
 import { Chart, registerables } from 'chart.js'
 import { nextTick } from 'vue'
 import api from '@/axios'
@@ -380,7 +403,7 @@ const pdfExportPlugin = {
 
 export default {
   name: 'DashboardView',
-  components: { SideBar, NavBarUse },
+  components: { SideBar, NavBarUse, LoadingState },
   data() {
     return {
       agendamentos: [],
@@ -1300,6 +1323,7 @@ export default {
 
 .card_avisos_container,
 .chart-panel {
+  position: relative;
   background: #ffffff;
   border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 24px;
@@ -1748,8 +1772,10 @@ export default {
   position: absolute;
   inset: 82px 20px 20px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 14px;
   border-radius: 18px;
   background: rgba(248, 250, 252, 0.88);
   z-index: 2;
@@ -1762,6 +1788,13 @@ export default {
   width: 72px;
   height: 72px;
   animation: spin 1s linear infinite;
+}
+
+.loader-copy {
+  color: #475569;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
 }
 
 .modal-overlay {

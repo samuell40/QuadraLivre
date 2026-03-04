@@ -1,7 +1,11 @@
 <template>
   <div class="placar-table">
     <div v-if="loading" class="loader-container-centralizado">
-      <div class="loader"></div>
+      <LoadingState
+        size="compact"
+        :title="loadingTitle"
+        :description="loadingDescription"
+      />
     </div>
 
     <div v-else-if="!times.length" class="sem-dados-centralizado">
@@ -170,6 +174,7 @@
 </template>
 
 <script>
+import LoadingState from '@/components/feedback/LoadingState.vue'
 import {
   getColunasClassificacaoPorModalidade,
   resolverColunasVisiveisClassificacao
@@ -177,10 +182,13 @@ import {
 
 export default {
   name: 'TabelaClassificacao',
+  components: { LoadingState },
   props: {
     times: { type: Array, default: () => [] },
     modalidade: { type: String, default: 'futebol' },
     loading: { type: Boolean, default: false },
+    loadingTitle: { type: String, default: 'Carregando classificação' },
+    loadingDescription: { type: String, default: 'Organizando posições, saldo e critérios da fase atual.' },
     emptyText: { type: String, default: 'Nenhum placar encontrado para este campeonato.' },
     showGlossary: { type: Boolean, default: true },
     colunasVisiveis: { type: Array, default: () => [] },

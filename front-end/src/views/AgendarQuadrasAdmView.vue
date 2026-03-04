@@ -42,9 +42,10 @@
         </div>
 
         <div v-if="isLoadingQuadras" class="state-card">
-          <div class="loader"></div>
-          <p class="state-title">Carregando quadras</p>
-          <p class="state-copy">Buscando unidades liberadas e bloqueadas para o agendamento administrativo.</p>
+          <LoadingState
+            title="Carregando quadras"
+            description="Buscando unidades liberadas e bloqueadas para o agendamento administrativo."
+          />
         </div>
 
         <div v-else-if="quadras.length === 0" class="state-card state-card-empty">
@@ -123,6 +124,7 @@
 import Swal from 'sweetalert2'
 import SideBar from '@/components/SideBar.vue'
 import NavBarUse from '@/components/NavBarUser.vue'
+import LoadingState from '@/components/feedback/LoadingState.vue'
 import AgendamentoModal from '@/components/modals/Agendamentos/AgendModal.vue'
 import api from '@/axios'
 import { useAuthStore } from '@/store'
@@ -130,7 +132,7 @@ import { mapState } from 'pinia'
 
 export default {
   name: 'AgendarQuadrasAdm',
-  components: { SideBar, NavBarUse, AgendamentoModal },
+  components: { SideBar, NavBarUse, LoadingState, AgendamentoModal },
   data() {
     return {
       quadras: [],

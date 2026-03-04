@@ -28,7 +28,11 @@
 
           <section class="agendamento">
             <template v-if="isLoadingQuadras">
-              <div class="loader"></div>
+              <LoadingState
+                size="compact"
+                title="Carregando quadras"
+                description="Buscando unidades e modalidades disponíveis para o agendamento público."
+              />
             </template>
             <template v-else>
               <button class="btn-prev" @click="prev">&lt;</button>
@@ -178,6 +182,7 @@
 <script>
 import NavBarHome from '@/components/NavBarHome.vue'
 import Footer from '@/components/Footer.vue'
+import LoadingState from '@/components/feedback/LoadingState.vue'
 import router from '@/router'
 import { Carousel, Slide } from 'vue3-carousel'
 import Swal from 'sweetalert2'
@@ -196,7 +201,7 @@ import 'vue3-carousel/dist/carousel.css'
 
 export default {
   name: 'HomeView',
-  components: { NavBarHome, Footer, Carousel, Slide, TabelaClassificacao, ListaPartidas, PartidasDoTimeModal },
+  components: { NavBarHome, Footer, LoadingState, Carousel, Slide, TabelaClassificacao, ListaPartidas, PartidasDoTimeModal },
 
   data() {
     return {

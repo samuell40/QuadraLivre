@@ -55,9 +55,10 @@
         </div>
 
         <div v-if="isLoading" class="state-card state-card-loading">
-          <div class="loader loader-inline"></div>
-          <p class="state-title">Carregando usuários...</p>
-          <p class="state-copy">Buscando os perfis disponíveis para gerenciamento.</p>
+          <LoadingState
+            title="Carregando usuários"
+            description="Buscando os perfis disponíveis para gerenciamento e filtragem."
+          />
         </div>
 
         <div v-else-if="usuariosFiltrados.length > 0" class="usuarios">
@@ -265,7 +266,11 @@
         </div>
 
         <div v-if="isCarregandoModal" class="loader-wrapper">
-          <div class="loader loader-small"></div>
+          <LoadingState
+            size="compact"
+            title="Carregando permissões"
+            description="Preparando os dados do usuário para edição de acesso."
+          />
         </div>
 
         <div v-else>
@@ -342,13 +347,14 @@
 <script>
 import SideBar from '@/components/SideBar.vue'
 import NavBarUse from '@/components/NavBarUser.vue'
+import LoadingState from '@/components/feedback/LoadingState.vue'
 import api from '@/axios'
 import Swal from 'sweetalert2'
 import { useAuthStore } from '@/store'
 
 export default {
   name: 'UsuariosView',
-  components: { SideBar, NavBarUse },
+  components: { SideBar, NavBarUse, LoadingState },
 
   data() {
     return {

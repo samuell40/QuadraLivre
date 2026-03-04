@@ -1,6 +1,10 @@
 <template>
   <div v-if="loading" class="loader-container-centralizado">
-    <div class="loader"></div>
+    <LoadingState
+      size="compact"
+      :title="loadingTitle"
+      :description="loadingDescription"
+    />
   </div>
 
   <div v-else-if="!partidas.length" class="sem-dados-centralizado" :class="{ 'sem-dados-alinhado': emptyAlign === 'left' }">
@@ -63,6 +67,7 @@
 
 <script>
 import DetalharPartidaModal from '@/components/quadraplay/DetalharPartidaModal.vue'
+import LoadingState from '@/components/feedback/LoadingState.vue'
 import { obterRotuloStatusPartida, obterStatusExibicaoPartida } from '@/utils/partidaStatus'
 
 const STATUS_CONFIG = {
@@ -77,11 +82,14 @@ const STATUS_CONFIG = {
 export default {
   name: 'ListaPartidas',
   components: {
-    DetalharPartidaModal
+    DetalharPartidaModal,
+    LoadingState
   },
   props: {
     partidas: { type: Array, default: () => [] },
     loading: { type: Boolean, default: false },
+    loadingTitle: { type: String, default: 'Carregando partidas' },
+    loadingDescription: { type: String, default: 'Buscando confrontos, horários e status da rodada selecionada.' },
     emptyTitle: { type: String, default: 'Nenhuma partida cadastrada ainda' },
     emptySubtitle: { type: String, default: '' },
     enableScroll: { type: Boolean, default: false },

@@ -43,7 +43,10 @@
       </section>
 
       <div v-if="isLoadingQuadras" class="loader-wrap">
-        <div class="loader"></div>
+        <LoadingState
+          title="Carregando quadras"
+          description="Buscando unidades e modalidades vinculadas ao seu acesso."
+        />
       </div>
 
       <div v-else>
@@ -130,6 +133,7 @@
 <script>
 import Swal from "sweetalert2";
 import NavBar from "@/components/Usuario/NavBar.vue";
+import LoadingState from "@/components/feedback/LoadingState.vue";
 import AgendamentoModal from "@/components/modals/Agendamentos/AgendModal.vue";
 import api from "@/axios";
 import { useAuthStore } from "@/store";
@@ -137,7 +141,7 @@ import { mapState } from "pinia";
 
 export default {
   name: "AgendarQuadras",
-  components: { NavBar, AgendamentoModal },
+  components: { NavBar, LoadingState, AgendamentoModal },
   data() {
     return {
       quadras: [],

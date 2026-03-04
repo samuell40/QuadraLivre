@@ -48,7 +48,10 @@
         </section>
 
         <div v-if="isLoading" class="loader-card">
-          <div class="loader-agendamento"></div>
+          <LoadingState
+            title="Carregando agendamentos"
+            description="Buscando suas reservas, status e atalhos de acompanhamento."
+          />
         </div>
 
         <template v-else>
@@ -128,6 +131,7 @@
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import NavBar from "@/components/Usuario/NavBar.vue";
+import LoadingState from "@/components/feedback/LoadingState.vue";
 import MeusAgendamentoCard from "@/components/cards/MeusAgendamentosCard.vue";
 import api from "@/axios";
 import Swal from "sweetalert2";

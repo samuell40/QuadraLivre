@@ -311,14 +311,24 @@ export default {
 @media (max-width: 768px) {
   .navbar-container {
     padding: 0 12px 0 10px;
+    gap: 8px;
   }
 
   .esquerda-section {
     gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .direita-nav {
+    flex: 0 0 auto;
+    margin-left: 6px;
   }
 
   .logo-container {
+    flex: 1 1 auto;
     gap: 10px;
+    min-width: 0;
     padding: 4px 10px 4px 5px;
   }
 
@@ -339,7 +349,9 @@ export default {
   }
 
   .logo-text {
-    font-size: 22px;
+    font-size: 20px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .hamburger {
@@ -349,8 +361,9 @@ export default {
 
   .login {
     min-height: 38px;
-    padding: 0 16px;
+    padding: 0 14px;
     font-size: 13px;
+    flex: 0 0 auto;
   }
 }
 </style>

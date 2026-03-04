@@ -13,9 +13,10 @@
             </div>
 
             <div v-if="isLoading" class="painel-card aainel-loading">
-                <div class="loader-container-centralizado">
-                    <div class="loader"></div>
-                </div>
+                <LoadingState
+                    title="Carregando modalidades"
+                    description="Buscando as categorias disponíveis para montar a vitrine de times."
+                />
             </div>
 
             <div v-else>
@@ -38,9 +39,10 @@
                     </div>
 
                     <div v-if="isLoadingTimes" class="painel-card aainel-loading">
-                        <div class="loader-container-centralizado">
-                            <div class="loader"></div>
-                        </div>
+                        <LoadingState
+                            title="Carregando times"
+                            description="Organizando os elencos cadastrados para a modalidade selecionada."
+                        />
                     </div>
 
                     <div v-else-if="times && times.length" class="painel-card times-card">
@@ -94,7 +96,11 @@
                     </div>
 
                     <div v-if="isLoadingJogadores" class="loader-container-centralizado">
-                        <div class="loader"></div>
+                        <LoadingState
+                            size="compact"
+                            title="Carregando jogadores"
+                            description="Buscando o elenco completo e as funções do time selecionado."
+                        />
                     </div>
 
                     <!-- Lista de jogadores -->
@@ -131,11 +137,12 @@
 
 <script>
 import NavBarHome from '@/components/NavBarHome.vue'
+import LoadingState from '@/components/feedback/LoadingState.vue'
 import api from '@/axios'
 
 export default {
     name: 'TimesHomeView',
-    components: { NavBarHome },
+    components: { NavBarHome, LoadingState },
 
     data() {
         return {

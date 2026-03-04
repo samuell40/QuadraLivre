@@ -18,7 +18,10 @@
         </section>
 
         <div v-if="loading" class="loader-card">
-          <div class="loader"></div>
+          <LoadingState
+            title="Carregando avisos"
+            description="Buscando comunicados pendentes, importantes e já visualizados."
+          />
         </div>
 
         <template v-else>
@@ -125,6 +128,7 @@
 
 <script>
 import NavBar from "@/components/Usuario/NavBar.vue";
+import LoadingState from "@/components/feedback/LoadingState.vue";
 import api from "@/axios";
 import { useAuthStore } from "@/store";
 import Swal from "sweetalert2";
@@ -149,7 +153,7 @@ const TAB_META = {
 
 export default {
   name: "MeusAvisosView",
-  components: { NavBar },
+  components: { NavBar, LoadingState },
   data() {
     return {
       todosAvisos: [],

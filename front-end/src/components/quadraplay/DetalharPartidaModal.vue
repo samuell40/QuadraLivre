@@ -1,7 +1,13 @@
 <template>
   <div v-if="modelValue" class="modal-overlay" @click.self="fecharModalPartida">
     <div class="modal-partida">
-      <div v-if="loadingDetalhePartida" class="loader"></div>
+      <div v-if="loadingDetalhePartida" class="modal-loader-shell">
+        <LoadingState
+          size="compact"
+          title="Carregando detalhes da partida"
+          description="Buscando placar, escalação e estatísticas do confronto selecionado."
+        />
+      </div>
 
       <div v-else-if="partidaDetalhada">
         <h2>Detalhes da Partida (Campeonato {{ partidaDetalhada.campeonato?.nome }})</h2>
@@ -134,6 +140,7 @@
 <script>
 import Swal from 'sweetalert2'
 import api from '@/axios'
+import LoadingState from '@/components/feedback/LoadingState.vue'
 import {
   isStatusPartidaPendente,
   obterRotuloStatusPartida,
@@ -151,6 +158,7 @@ const STATUS_CONFIG = {
 
 export default {
   name: 'DetalharPartidaModal',
+  components: { LoadingState },
   props: {
     modelValue: { type: Boolean, default: false },
     partidaId: { type: [Number, String], default: null }
