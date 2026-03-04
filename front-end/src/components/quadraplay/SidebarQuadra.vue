@@ -307,6 +307,7 @@ export default {
     radial-gradient(circle at top right, rgba(255, 255, 255, 0.14), transparent 36%),
     linear-gradient(180deg, var(--sidebar-bg) 0%, var(--sidebar-bg-strong) 100%);
   box-shadow: var(--sidebar-shadow);
+  overflow: hidden;
   transition: width 0.24s ease, transform 0.24s ease;
 }
 
@@ -396,7 +397,10 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .menu-link,
@@ -457,6 +461,8 @@ export default {
 .sidebar-footer {
   display: grid;
   gap: 14px;
+  margin-top: auto;
+  flex: 0 0 auto;
   padding-top: 14px;
   border-top: 1px solid var(--sidebar-border);
 }
@@ -546,8 +552,9 @@ export default {
 @media (max-width: 768px) {
   .sidebar_quadra {
     width: min(292px, calc(100vw - 24px));
-    height: calc(100vh - 82px);
     top: 82px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    height: auto;
     left: 12px;
     border-radius: 24px;
     border: 1px solid rgba(255, 255, 255, 0.08);
