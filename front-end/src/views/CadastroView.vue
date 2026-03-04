@@ -250,7 +250,13 @@ export default {
 .cadastro {
   display: flex;
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: auto;
+  padding: 16px;
+  box-sizing: border-box;
+  justify-content: center;
+  align-items: center;
   background-color: #0B132B;
   font-family: 'Montserrat', sans-serif;
   color: white;
@@ -258,16 +264,22 @@ export default {
 
 .form-container {
   width: 100%;
-  height: 100vh;
-  margin: 0;
+  max-width: 560px;
+  margin: 0 auto;
+  min-height: 100%;
   background-color: #0B132B;
-  align-content: center;
-  justify-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .form-menu {
-  width: 90%;
-  height: 95vh;
+  width: 100%;
+  min-height: 620px;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  height: auto;
+  overflow-y: auto;
   background-color: #0F1835;
   border-radius: 15px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
@@ -299,7 +311,9 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  padding: 0 5% 20px;
+  box-sizing: border-box;
 }
 
 .title-container {
@@ -320,7 +334,7 @@ export default {
 .input-group {
   display: flex;
   flex-direction: column;
-  width: 90%;
+  width: 100%;
   margin-bottom: 2rem;
 }
 
@@ -358,7 +372,7 @@ export default {
 .cadastro-button {
   background-color: #1E3A8A;
   padding: 10px;
-  width: 90%;
+  width: 100%;
   color: white;
   font-weight: bold;
   border: 0;
@@ -368,5 +382,58 @@ export default {
 
 .cadastro-button:hover {
   background-color: #2C4FAA;
+}
+
+@media (max-width: 768px) {
+  .cadastro {
+    padding: 10px;
+    align-items: flex-start;
+  }
+
+  .form-container {
+    max-width: none;
+    min-height: auto;
+  }
+
+  .form-menu {
+    min-height: calc(100vh - 20px);
+    min-height: calc(100dvh - 20px);
+    max-height: none;
+    border-radius: 12px;
+  }
+
+  .form-header {
+    height: 58px;
+    margin-bottom: 1.2rem;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .header-title {
+    font-size: 22px;
+  }
+
+  .title-container {
+    width: 100%;
+    padding-left: 0;
+    padding-inline: 5%;
+    margin-top: 0;
+    margin-bottom: 0.8rem;
+  }
+
+  .form-title {
+    font-size: 24px;
+  }
+
+  .form-body {
+    padding: 0 5% 16px;
+  }
+
+  .input-group {
+    margin-bottom: 1rem;
+  }
+
+  .input-group input {
+    font-size: 16px;
+  }
 }
 </style>
