@@ -23,7 +23,7 @@ const modalidade = require('./routes/modalidade.router');
 const campeonato = require('./routes/campeonatos.router');
 const avisos = require('./routes/aviso.router');
 const horarioQuadra = require('./routes/horario_quadra.router');
-const { FirstRun } = require('./firstRun');
+//const { FirstRun } = require('./firstRun');
 
 // Inicialização
 const app = express();
@@ -37,7 +37,6 @@ iniciarSocket(server);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ CORS (whitelist do seu domínio + dev)
 const allowedOrigins = [
   'https://www.quadraplaysv.com.br',
   'https://quadraplaysv.com.br',
@@ -47,23 +46,18 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, cb) => {
-    // permite Postman/Server-to-server (sem Origin)
     if (!origin) return cb(null, true);
 
     if (allowedOrigins.includes(origin)) return cb(null, true);
 
     return cb(new Error(`Not allowed by CORS: ${origin}`));
   },
-  // ✅ deixe true se você usa cookies em algum ponto.
-  // Se você usa só JWT no Authorization, pode virar false.
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Authorization', 'Content-Type'],
 }));
 
-// ✅ Passport (sem session / sem MemoryStore)
 app.use(passport.initialize());
-// ❌ removido: app.use(passport.session());
 
 // Rotas
 app.use("/auth", authRoutes);
@@ -79,7 +73,7 @@ app.use(modalidade);
 app.use(campeonato);
 app.use(avisos);
 app.use(horarioQuadra);
-FirstRun();
+//FirstRun();
 
 // Rota base
 app.get('/', (req, res) => {
