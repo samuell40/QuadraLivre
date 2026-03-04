@@ -16,8 +16,9 @@ function resolverUrlSocket() {
 export function obterSocket() {
   if (!socket) {
     socket = io(resolverUrlSocket(), {
-      transports: ['websocket', 'polling'],
-      autoConnect: true
+      transports: ['polling', 'websocket'],
+      autoConnect: true,
+      rememberUpgrade: true
     })
   }
 

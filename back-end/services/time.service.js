@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 async function criarTime({ nome, foto, modalidadeId, treinadorId }) {
   const time = await prisma.time.create({

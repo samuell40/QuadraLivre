@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 const CRITERIOS_FUTEBOL = [
   { value: 'pontuacao', label: 'Pontuacao' },
@@ -243,7 +242,9 @@ function normalizarConfiguracaoGrupos(gruposConfig, timeIdsCampeonato = []) {
     ? Math.min(quantidadeBase, 16)
     : (gruposEntrada.length ? Math.min(gruposEntrada.length, 16) : 2);
 
-  const timeIdsValidos = new Set(normalizarIdsNumericos(timeIdsCampeonato));
+  const timeIdsReferencia = normalizarIdsNumericos(timeIdsCampeonato);
+  const possuiReferenciaTimes = timeIdsReferencia.length > 0;
+  const timeIdsValidos = new Set(timeIdsReferencia);
   const timeIdsUsados = new Set();
   const grupos = [];
 
@@ -254,7 +255,7 @@ function normalizarConfiguracaoGrupos(gruposConfig, timeIdsCampeonato = []) {
     const timeIds = [];
 
     for (const timeId of timeIdsEntrada) {
-      if (!timeIdsValidos.has(timeId) || timeIdsUsados.has(timeId)) continue;
+      if ((possuiReferenciaTimes && !timeIdsValidos.has(timeId)) || timeIdsUsados.has(timeId)) continue;
       timeIds.push(timeId);
       timeIdsUsados.add(timeId);
     }
@@ -274,14 +275,45 @@ function hidratarConfiguracaoGrupos(gruposConfig, timeIdsCampeonato = []) {
   if (!gruposNormalizados) return null;
 
   const timeIdsValidos = normalizarIdsNumericos(timeIdsCampeonato);
+  const possuiReferenciaTimes = timeIdsValidos.length > 0;
   const timeIdsUsados = new Set(
     gruposNormalizados.grupos.flatMap(grupo => normalizarIdsNumericos(grupo.timeIds))
   );
 
   return {
     ...gruposNormalizados,
-    semGrupo: timeIdsValidos.filter(timeId => !timeIdsUsados.has(timeId))
+    semGrupo: possuiReferenciaTimes
+      ? timeIdsValidos.filter(timeId => !timeIdsUsados.has(timeId))
+      : []
   };
+}
+
+function montarConfiguracaoClassificacao(campeonato, timeIdsCampeonato = []) {
+  return {
+    ordem: normalizarOrdemClassificacao(
+      campeonato?.ordemClassificacao,
+      campeonato?.modalidade?.nome
+    ),
+    colunas: normalizarColunasClassificacao(
+      campeonato?.regras?.colunasClassificacao,
+      campeonato?.modalidade?.nome
+    ),
+    grupos: hidratarConfiguracaoGrupos(campeonato?.regras?.grupos, timeIdsCampeonato)
+  };
+}
+
+function deveUsarFallbackConfiguracaoClassificacao(error) {
+  const mensagem = String(error?.message || '').toLowerCase();
+
+  return [
+    'ordemclassificacao',
+    'deletedat',
+    'unknown field',
+    'unknown argument',
+    'does not exist',
+    'column',
+    'coluna'
+  ].some(fragmento => mensagem.includes(fragmento));
 }
 
 function calcularPontosVoleiParaResultado(setsVencedor, setsPerdedor, regras) {
@@ -574,41 +606,60 @@ async function salvarOrdemClassificacao(campeonatoId, novaOrdem = null, colunasV
 }
 
 async function listarOrdemClassificacao(campeonatoId) {
-  const campeonato = await prisma.campeonato.findUnique({
-    where: { id: campeonatoId },
-    select: {
-      id: true,
-      nome: true,
-      modalidadeId: true,
-      modalidade: { select: { nome: true } },
-      ordemClassificacao: true,
-      regras: true,
-      times: {
-        where: { ativo: true, time: { deletedAt: null } },
-        select: { timeId: true }
-      }
-    }
-  });
+  const campeonatoIdNumerico = Number(campeonatoId);
 
-  if (!campeonato) {
-    throw new Error('Campeonato nao encontrado');
+  if (!Number.isInteger(campeonatoIdNumerico) || campeonatoIdNumerico <= 0) {
+    throw new Error('campeonatoId invalido');
   }
 
-  const ordem = normalizarOrdemClassificacao(
-    campeonato.ordemClassificacao,
-    campeonato.modalidade?.nome
-  );
+  try {
+    const campeonato = await prisma.campeonato.findUnique({
+      where: { id: campeonatoIdNumerico },
+      select: {
+        id: true,
+        nome: true,
+        modalidadeId: true,
+        modalidade: { select: { nome: true } },
+        ordemClassificacao: true,
+        regras: true,
+        times: {
+          where: { ativo: true, time: { deletedAt: null } },
+          select: { timeId: true }
+        }
+      }
+    });
 
-  const colunas = normalizarColunasClassificacao(
-    campeonato.regras?.colunasClassificacao,
-    campeonato.modalidade?.nome
-  );
-  const timeIdsCampeonato = Array.isArray(campeonato.times)
-    ? campeonato.times.map(item => Number(item.timeId))
-    : [];
-  const grupos = hidratarConfiguracaoGrupos(campeonato.regras?.grupos, timeIdsCampeonato);
+    if (!campeonato) {
+      throw new Error('Campeonato nao encontrado');
+    }
 
-  return { ordem, colunas, grupos };
+    const timeIdsCampeonato = Array.isArray(campeonato.times)
+      ? campeonato.times.map(item => Number(item.timeId))
+      : [];
+
+    return montarConfiguracaoClassificacao(campeonato, timeIdsCampeonato);
+  } catch (error) {
+    if (!deveUsarFallbackConfiguracaoClassificacao(error)) {
+      throw error;
+    }
+
+    const campeonato = await prisma.campeonato.findUnique({
+      where: { id: campeonatoIdNumerico },
+      select: {
+        id: true,
+        nome: true,
+        modalidadeId: true,
+        modalidade: { select: { nome: true } },
+        regras: true
+      }
+    });
+
+    if (!campeonato) {
+      throw new Error('Campeonato nao encontrado');
+    }
+
+    return montarConfiguracaoClassificacao(campeonato);
+  }
 }
 
 module.exports = {

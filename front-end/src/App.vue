@@ -9,6 +9,8 @@ import {
   obterSocket
 } from '@/services/socket'
 
+const SOCKET_DEBUG = import.meta.env.DEV
+
 export default {
   name: 'App',
 
@@ -42,23 +44,34 @@ export default {
 
       if (!this.onSocketConnect) {
         this.onSocketConnect = () => {
-          console.log('[socket] conectado para notificações:', this.socket?.id)
+          if (SOCKET_DEBUG) {
+            console.log('[socket] conectado para notificacoes:', this.socket?.id)
+          }
         }
       }
+
       if (!this.onSocketConnectError) {
         this.onSocketConnectError = (error) => {
-          console.error('[socket] erro de conexão:', error?.message || error)
+          if (SOCKET_DEBUG) {
+            console.error('[socket] erro de conexao:', error?.message || error)
+          }
         }
       }
+
       if (!this.onSocketDisconnect) {
         this.onSocketDisconnect = (reason) => {
-          console.warn('[socket] desconectado:', reason)
+          if (SOCKET_DEBUG) {
+            console.warn('[socket] desconectado:', reason)
+          }
         }
       }
+
       if (!this.onSocketAny) {
         this.onSocketAny = (evento, payload) => {
           if (evento === 'ping' || evento === 'pong') return
-          console.log('[socket] evento recebido:', evento, payload || '')
+          if (SOCKET_DEBUG) {
+            console.log('[socket] evento recebido:', evento, payload || '')
+          }
         }
       }
 
@@ -110,7 +123,7 @@ export default {
       try {
         await Notification.requestPermission()
       } catch (error) {
-        console.warn('Não foi possível solicitar permissão de notificação:', error)
+        console.warn('Nao foi possivel solicitar permissao de notificacao:', error)
       }
     },
 
@@ -126,7 +139,9 @@ export default {
         ? `Nova partida criada (${campeonatoNome})`
         : 'Nova partida criada'
 
-      console.log('[socket] notificação de partida criada recebida:', payload)
+      if (SOCKET_DEBUG) {
+        console.log('[socket] notificacao de partida criada recebida:', payload)
+      }
 
       if (document.visibilityState === 'visible') {
         Swal.fire({
@@ -158,7 +173,7 @@ export default {
           notificacao.close()
         }
       } catch (error) {
-        console.warn('Falha ao mostrar notificação nativa:', error)
+        console.warn('Falha ao mostrar notificacao nativa:', error)
       }
     }
   }
@@ -167,7 +182,7 @@ export default {
 
 <style>
 #app {
-  font-family: 'Montserrat', sans-serif; 
+  font-family: 'Montserrat', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
@@ -177,10 +192,8 @@ img:focus {
   outline: none;
 }
 
-body{
+body {
   margin: 0;
-  font-family: 'Montserrat', sans-serif; 
+  font-family: 'Montserrat', sans-serif;
 }
-
 </style>
-

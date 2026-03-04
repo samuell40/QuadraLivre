@@ -1,12 +1,12 @@
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
-const { PrismaClient } = require('@prisma/client');
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const multer = require("multer");
 const dotenv = require("dotenv");
 dotenv.config();
 const passport = require("./auth/passport");
+const prisma = require('./lib/prisma');
 const { iniciarSocket } = require('./socket');
 
 // Rotas
@@ -30,7 +30,6 @@ const app = express();
 app.set('trust proxy', 1);
 
 const server = http.createServer(app);
-const prisma = new PrismaClient();
 
 iniciarSocket(server);
 
@@ -119,4 +118,27 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
+});
+
+async function encerrarServidor(signal) {
+  console.log(`${signal} recebido. Encerrando servidor...`);
+
+  server.close(async () => {
+    await prisma.$disconnect();
+    process.exit(0);
+  });
+}
+
+process.on('SIGINT', () => {
+  encerrarServidor('SIGINT').catch((error) => {
+    console.error('Erro ao encerrar servidor:', error);
+    process.exit(1);
+  });
+});
+
+process.on('SIGTERM', () => {
+  encerrarServidor('SIGTERM').catch((error) => {
+    console.error('Erro ao encerrar servidor:', error);
+    process.exit(1);
+  });
 });

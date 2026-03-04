@@ -101,7 +101,8 @@ async function listarOrdemClassificacaoController(req, res) {
     });
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error: error.message });
+    const status = /nao encontrado/i.test(String(error?.message || '')) ? 404 : 500;
+    res.status(status).json({ erro: error.message });
   }
 }
 

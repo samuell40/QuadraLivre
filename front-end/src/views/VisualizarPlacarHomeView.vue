@@ -402,7 +402,7 @@ export default {
 
     async carregarFases(campeonatoId) {
       try {
-        const { data } = await api.get(`/fases/${campeonatoId}/`)
+        const { data } = await api.get(`/fases/${campeonatoId}/`, { silent: true })
         this.fases = Array.isArray(data) ? data : []
 
         if (!this.fases.length) {
@@ -455,7 +455,10 @@ export default {
       }
 
       try {
-        const { data } = await api.get(`/partidas/${this.campeonatoAtivo}/${this.faseSelecionada}/${this.rodadaSelecionada}`)
+        const { data } = await api.get(
+          `/partidas/${this.campeonatoAtivo}/${this.faseSelecionada}/${this.rodadaSelecionada}`,
+          { silent: true }
+        )
 
         const lista = Array.isArray(data) ? data : []
         this.partidas = lista.sort((a, b) => {
@@ -477,7 +480,8 @@ export default {
 
       try {
         const { data } = await api.get(`/placar/fase/${campeonatoId}`, {
-          params: { faseId: this.faseSelecionada }
+          params: { faseId: this.faseSelecionada },
+          silent: true
         })
 
         if (!Array.isArray(data)) {
@@ -498,7 +502,7 @@ export default {
       if (!campeonatoId) return
 
       try {
-        const { data } = await api.get(`/ordem/classificacao/${campeonatoId}`)
+        const { data } = await api.get(`/ordem/classificacao/${campeonatoId}`, { silent: true })
         const colunas = Array.isArray(data?.colunas) ? data.colunas : []
         const grupos = data?.grupos && typeof data.grupos === 'object' ? data.grupos : null
 

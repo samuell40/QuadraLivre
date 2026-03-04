@@ -377,7 +377,7 @@ export default {
 
     async carregarCampeonatoMaisRecente() {
       try {
-        const { data } = await api.get('/todos/campeonatos')
+        const { data } = await api.get('/todos/campeonatos', { silent: true })
         const campeonatos = Array.isArray(data) ? data : []
         const maisRecente = campeonatos
           .slice()
@@ -418,7 +418,7 @@ export default {
     async carregarQuadras() {
       this.isLoadingQuadras = true
       try {
-        const res = await api.get('/quadra')
+        const res = await api.get('/quadra', { silent: true })
         this.quadras = Array.isArray(res.data) ? res.data : []
       } catch (err) {
         console.error('Erro ao carregar quadras:', err)
@@ -433,7 +433,7 @@ export default {
       this.isLoadingPartidas = true
 
       try {
-        const { data } = await api.get(`/fases/${campeonatoId}/`)
+        const { data } = await api.get(`/fases/${campeonatoId}/`, { silent: true })
 
         if (!Array.isArray(data)) {
           this.fases = []
@@ -516,7 +516,8 @@ export default {
 
       try {
         const res = await api.get(`/placar/fase/${campeonatoId}`, {
-          params: { faseId: this.faseSelecionada }
+          params: { faseId: this.faseSelecionada },
+          silent: true
         })
 
         if (!Array.isArray(res.data)) {
@@ -539,7 +540,7 @@ export default {
       if (!campeonatoId) return
 
       try {
-        const { data } = await api.get(`/ordem/classificacao/${campeonatoId}`)
+        const { data } = await api.get(`/ordem/classificacao/${campeonatoId}`, { silent: true })
         const colunas = Array.isArray(data?.colunas) ? data.colunas : []
         const grupos = data?.grupos && typeof data.grupos === 'object' ? data.grupos : null
 
@@ -567,7 +568,10 @@ export default {
           return
         }
 
-        const { data } = await api.get(`/partidas/${this.campeonatoId}/${this.faseSelecionada}/${this.rodadaSelecionada}`)
+        const { data } = await api.get(
+          `/partidas/${this.campeonatoId}/${this.faseSelecionada}/${this.rodadaSelecionada}`,
+          { silent: true }
+        )
 
         const lista = Array.isArray(data) ? data : []
 

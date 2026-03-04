@@ -1,5 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = require("../lib/prisma");
 
 const criarGradeHorariosService = async (quadraId, diaSemana, horarios) => {
   if (!quadraId || diaSemana === undefined || !horarios) {

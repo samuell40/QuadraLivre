@@ -1,8 +1,6 @@
 const { enviarEmailAlteracaoPermissao, enviarEmailVinculoTime } = require('./email.service');
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { validarNumeroUnicoNoTime } = require('./jogador.service');
-
-const prisma = new PrismaClient();
 
 async function cadastrarUsuario(user) {
   return prisma.usuario.create({

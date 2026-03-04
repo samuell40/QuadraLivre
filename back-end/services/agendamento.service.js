@@ -1,5 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = require("../lib/prisma");
 const { enviarEmailStatusAgendamento } = require("./email.service");
 const { startOfWeek, endOfWeek, addMinutes } = require("date-fns");
 
