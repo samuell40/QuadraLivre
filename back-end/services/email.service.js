@@ -10,7 +10,7 @@ const SITE_URL =
   process.env.QUADRAPLAY_URL ||
   'https://quadraplaysv.com.br';
 const BRAND_LOGO_URL =
-  'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/C%C3%B3pia%20de%20xxxxx%20(2).png';
+  'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/logo.png';
 
 const TONE_MAP = {
   brand: {

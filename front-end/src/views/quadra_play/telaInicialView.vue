@@ -29,8 +29,9 @@
           </div>
         </div>
 
-        <div v-if="isLoading" class="feedback-card">
-          Carregando campeonatos...
+        <div v-if="isLoading" class="feedback-card feedback-card-loading">
+          <div class="loader" aria-hidden="true"></div>
+          <span class="loader-copy">Carregando campeonatos...</span>
         </div>
 
         <a v-else-if="campeonatos.length === 0" class="feedback-card feedback-ematy">
@@ -689,9 +690,23 @@ a {
 }
 
 .loader {
-  margin-top: 20px;
-  color: #334155;
+  width: 42px;
+  height: 42px;
+  border: 4px solid rgba(59, 130, 246, 0.18);
+  border-top-color: #2563eb;
+  border-radius: 999px;
+  animation: spin 0.9s linear infinite;
+}
+
+.loader-copy {
+  color: #64748b;
   font-weight: 700;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .feedback-card {
@@ -705,6 +720,11 @@ a {
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
   color: #64748b;
   font-weight: 700;
+}
+
+.feedback-card-loading {
+  flex-direction: column;
+  gap: 14px;
 }
 
 .feedback-ematy {

@@ -981,7 +981,7 @@ a {
   .conteudo {
     margin-left: 0;
     padding: 16px;
-    padding-top: 38px;
+    padding-top: 50px;
   }
 
   .conteudo.collapsed {

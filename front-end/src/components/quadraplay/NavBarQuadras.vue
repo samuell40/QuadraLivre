@@ -17,7 +17,7 @@
 
         <div class="logo-container">
           <div class="logo-badge">
-            <img src="../../assets/Cópia de xxxxx (2).png" alt="QuadraPlay" class="logo-img" />
+            <img src="@/assets/logo.png" alt="QuadraPlay" class="logo-img" />
           </div>
           <div class="logo-copy">
             <span class="logo-text">QuadraPlay</span>

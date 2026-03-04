@@ -3,20 +3,22 @@
         <NavBarHome />
 
         <div class="conteudo">
-            <div v-if="isLoading" class="loader-container-centralizado">
-                <div class="loader"></div>
+            <div class="header">
+                <div class="header-copy">
+                    <h1 class="title">Times</h1>
+                    <a class="page-subtitle">
+                        Explore os elencos cadastrados por modalidade e abra cada time para ver os jogadores.
+                    </a>
+                </div>
+            </div>
+
+            <div v-if="isLoading" class="painel-card aainel-loading">
+                <div class="loader-container-centralizado">
+                    <div class="loader"></div>
+                </div>
             </div>
 
             <div v-else>
-                <div class="header">
-                    <div class="header-copy">
-                        <h1 class="title">Times</h1>
-                        <a class="page-subtitle">
-                            Explore os elencos cadastrados por modalidade e abra cada time para ver os jogadores.
-                        </a>
-                    </div>
-                </div>
-
                 <div class="aainel-times">
                     <div class="painel-card modalidades-card">
                         <div class="section-head">

@@ -155,7 +155,7 @@ import { useAuthStore } from '@/store'
 import SideBar from '@/components/SideBar.vue'
 import NavBarUse from '@/components/NavBarUser.vue'
 import DetalheAgendModal from '@/components/modals/Agendamentos/DetalharAgendModal.vue'
-import logoImg from '@/assets/Cópia de xxxxx (2).png'
+import logoImg from '@/assets/logo.png'
 
 export default {
   name: 'HorariosView',

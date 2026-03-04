@@ -12,7 +12,7 @@
     <aside v-if="sidebarVisible" class="sidebar">
       <div class="sidebar-top">
         <div class="brand-shell">
-          <img src="../assets/Cópia de xxxxx (2).png" class="logo" alt="Quadra Play" />
+          <img src="@/assets/logo.png" class="logo" alt="Quadra Play" />
 
           <button v-if="isMobile" type="button" class="sidebar-close" @click="closeSidebar" aria-label="Fechar menu">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -255,6 +255,7 @@ body {
   box-shadow: 0 24px 44px rgba(15, 23, 42, 0.24);
   z-index: 10;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .sidebar-admin-shell .sidebar-top {
@@ -315,11 +316,13 @@ body {
 }
 
 .sidebar-admin-shell .sidebar-nav {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding-right: 2px;
 }
 
@@ -453,7 +456,8 @@ body {
 }
 
 .sidebar-admin-shell .sidebar-footer {
-  margin-top: 10px;
+  margin-top: auto;
+  flex: 0 0 auto;
   padding: 12px 6px 0;
   border-top: 1px solid rgba(148, 163, 184, 0.14);
 }
@@ -569,9 +573,10 @@ body {
 
   .sidebar-admin-shell .sidebar {
     top: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
     left: 10px;
     width: min(284px, calc(100vw - 20px));
-    height: calc(100vh - 20px);
+    height: auto;
     padding: 16px 14px 14px;
     border-radius: 24px;
   }

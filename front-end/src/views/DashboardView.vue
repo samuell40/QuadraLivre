@@ -322,7 +322,7 @@ import { nextTick } from 'vue'
 import api from '@/axios'
 import Swal from 'sweetalert2'
 import jsPDF from "jspdf";
-import logoImg from "@/assets/Cópia de xxxxx (2).png";
+import logoImg from "@/assets/logo.png";
 
 Chart.register(...registerables)
 
