@@ -62,7 +62,7 @@
 
 <script>
 import SideBar from '@/components/SideBar.vue'
-import LoadingState from '@/components/feedback/LoadingState.vue'
+import LoadingState from '@/components/loading/LoadingState.vue'
 import AdicionarModalidadeModal from '@/components/modals/modalidades/AdicionarModalidadeModal.vue'
 import DetalharModalidadeModal from '@/components/modals/modalidades/DetalharModalidadeModal.vue'
 import api from '@/axios'

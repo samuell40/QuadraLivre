@@ -182,7 +182,7 @@
 <script>
 import NavBarHome from '@/components/NavBarHome.vue'
 import Footer from '@/components/Footer.vue'
-import LoadingState from '@/components/feedback/LoadingState.vue'
+import LoadingState from '@/components/loading/LoadingState.vue'
 import router from '@/router'
 import { Carousel, Slide } from 'vue3-carousel'
 import Swal from 'sweetalert2'

@@ -174,7 +174,7 @@
 </template>
 
 <script>
-import LoadingState from '@/components/feedback/LoadingState.vue'
+import LoadingState from '@/components/loading/LoadingState.vue'
 import {
   getColunasClassificacaoPorModalidade,
   resolverColunasVisiveisClassificacao

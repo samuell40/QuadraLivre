@@ -234,7 +234,7 @@
 
 <script>
 import api from '@/axios';
-import LoadingState from '@/components/feedback/LoadingState.vue';
+import LoadingState from '@/components/loading/LoadingState.vue';
 import Swal from 'sweetalert2';
 
 export default {

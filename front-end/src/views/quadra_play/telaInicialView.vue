@@ -90,7 +90,7 @@
 import { useCampeonatoStore } from '@/storecampeonato';
 import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
 import SidebarQuadra from '@/components/quadraplay/SidebarQuadra.vue'
-import LoadingState from '@/components/feedback/LoadingState.vue'
+import LoadingState from '@/components/loading/LoadingState.vue'
 import AdicionarCampeonatoModal from '@/components/quadraplay/Campeonatos/AdicionarCampeonatoModal.vue';
 import router from '@/router';
 import api from '@/axios'

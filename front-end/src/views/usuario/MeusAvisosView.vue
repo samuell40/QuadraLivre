@@ -128,7 +128,7 @@
 
 <script>
 import NavBar from "@/components/Usuario/NavBar.vue";
-import LoadingState from "@/components/feedback/LoadingState.vue";
+import LoadingState from "@/components/loading/LoadingState.vue";
 import api from "@/axios";
 import { useAuthStore } from "@/store";
 import Swal from "sweetalert2";

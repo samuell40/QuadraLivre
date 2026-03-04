@@ -81,7 +81,7 @@
 
 <script>
 import DetalharPartidaModal from '@/components/quadraplay/DetalharPartidaModal.vue'
-import LoadingState from '@/components/feedback/LoadingState.vue'
+import LoadingState from '@/components/loading/LoadingState.vue'
 import { obterRotuloStatusPartida, obterStatusExibicaoPartida } from '@/utils/partidaStatus'
 
 const STATUS_CONFIG = {

@@ -339,7 +339,7 @@
 <script>
 import SideBar from '@/components/SideBar.vue'
 import NavBarUse from '@/components/NavBarUser.vue'
-import LoadingState from '@/components/feedback/LoadingState.vue'
+import LoadingState from '@/components/loading/LoadingState.vue'
 import { Chart, registerables } from 'chart.js'
 import { nextTick } from 'vue'
 import api from '@/axios'

@@ -112,7 +112,7 @@
 
 <script>
 import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue';
-import LoadingState from '@/components/feedback/LoadingState.vue';
+import LoadingState from '@/components/loading/LoadingState.vue';
 import SidebarQuadra from '@/components/quadraplay/SidebarQuadra.vue';
 import AdicionarTimeModal from '@/components/quadraplay/times/AdicionarTimesModal.vue';
 import DetalharTimes from '@/components/quadraplay/times/DetalharTimes.vue';

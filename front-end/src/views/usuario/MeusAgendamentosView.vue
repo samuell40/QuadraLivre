@@ -131,7 +131,7 @@
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import NavBar from "@/components/Usuario/NavBar.vue";
-import LoadingState from "@/components/feedback/LoadingState.vue";
+import LoadingState from "@/components/loading/LoadingState.vue";
 import MeusAgendamentoCard from "@/components/cards/MeusAgendamentosCard.vue";
 import api from "@/axios";
 import Swal from "sweetalert2";

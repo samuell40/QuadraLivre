@@ -140,7 +140,7 @@
 <script>
 import Swal from 'sweetalert2'
 import api from '@/axios'
-import LoadingState from '@/components/feedback/LoadingState.vue'
+import LoadingState from '@/components/loading/LoadingState.vue'
 import {
   isStatusPartidaPendente,
   obterRotuloStatusPartida,

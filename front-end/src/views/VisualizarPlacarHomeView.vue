@@ -189,7 +189,7 @@
 <script>
 import api from '@/axios'
 import NavBarHome from '@/components/NavBarHome.vue'
-import LoadingState from '@/components/feedback/LoadingState.vue'
+import LoadingState from '@/components/loading/LoadingState.vue'
 import TabelaClassificacao from '@/components/quadraplay/TabelaClassificacao.vue'
 import ListaPartidas from '@/components/quadraplay/ListaPartidas.vue'
 import PartidasDoTimeModal from '@/components/quadraplay/PartidasDoTimeModal.vue'

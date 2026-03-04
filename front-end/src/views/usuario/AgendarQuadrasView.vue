@@ -133,7 +133,7 @@
 <script>
 import Swal from "sweetalert2";
 import NavBar from "@/components/Usuario/NavBar.vue";
-import LoadingState from "@/components/feedback/LoadingState.vue";
+import LoadingState from "@/components/loading/LoadingState.vue";
 import AgendamentoModal from "@/components/modals/Agendamentos/AgendModal.vue";
 import api from "@/axios";
 import { useAuthStore } from "@/store";

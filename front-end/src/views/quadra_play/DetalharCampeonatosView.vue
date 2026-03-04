@@ -265,7 +265,7 @@
 import Swal from 'sweetalert2'
 import api from '@/axios'
 import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
-import LoadingState from '@/components/feedback/LoadingState.vue'
+import LoadingState from '@/components/loading/LoadingState.vue'
 import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
 import AgendaCampeonatoEditor from '@/components/quadraplay/Campeonatos/AgendaCampeonatoEditor.vue'
 import { carregarCampeonato } from '@/utils/persistirCampeonato'

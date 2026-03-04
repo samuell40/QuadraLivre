@@ -137,7 +137,7 @@
 
 <script>
 import NavBarHome from '@/components/NavBarHome.vue'
-import LoadingState from '@/components/feedback/LoadingState.vue'
+import LoadingState from '@/components/loading/LoadingState.vue'
 import api from '@/axios'
 
 export default {
