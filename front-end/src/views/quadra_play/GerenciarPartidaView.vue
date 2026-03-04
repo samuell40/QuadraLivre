@@ -149,11 +149,20 @@
               <button
                 v-if="partida.status !== 'CANCELADA'"
                 class="btn-acessar"
-                :class="{ 'btn-acessar-disabled': isMesario && partida.status === 'FINALIZADA' }"
-                :disabled="isMesario && partida.status === 'FINALIZADA'"
+                :class="{
+                  'btn-acessar-disabled': isMesario && partida.status === 'FINALIZADA',
+                  'btn-acessar-loading': partidaAcessandoId === partida.id
+                }"
+                :disabled="(isMesario && partida.status === 'FINALIZADA') || partidaAcessandoId === partida.id"
                 @click="acessarPartida(partida)"
               >
-                {{ partida.status === 'FINALIZADA' ? (isMesario ? 'Finalizada' : 'Editar') : 'Acessar' }}
+                {{
+                  partidaAcessandoId === partida.id
+                    ? 'Acessando...'
+                    : partida.status === 'FINALIZADA'
+                      ? (isMesario ? 'Finalizada' : 'Editar')
+                      : 'Acessar'
+                }}
               </button>
               <button v-else class="btn-acessar" @click="removerPartidaCancelada(partida)">
                 Remover
@@ -232,6 +241,7 @@ import ModalEscolhaTipo from '@/components/quadraplay/ModalEscolhaTipo.vue'
 import SelecionarJogadores from '@/components/quadraplay/Partida/SelecionarJogadores.vue'
 import LoadingState from '@/components/loading/LoadingState.vue'
 import { carregarCampeonato } from '@/utils/persistirCampeonato'
+import { salvarPrefetchPartida } from '@/utils/partidaPrefetch'
 import {
   isStatusPartidaPendente,
   obterRotuloStatusPartida,
@@ -275,6 +285,7 @@ export default {
       campeonato: null,
       isLoading: true,
       isLoadingPartidas: true,
+      partidaAcessandoId: null,
       mostrarModalTipo: false,
       mostrarModalStatus: false,
       mostrarModalJogadores: false,
@@ -794,6 +805,7 @@ export default {
 
         Swal.fire({ icon: 'success', title: 'Status atualizado', timer: 1200, showConfirmButton: false })
       } catch (error) {
+        this.partidaAcessandoId = null
         console.error(error)
         const mensagem = error?.response?.data?.error || 'Não foi possível alterar o status.'
         return Swal.fire('Erro', mensagem, 'error')
@@ -849,10 +861,21 @@ export default {
         await this.carregarPartidasPorFaseRodada()
         await this.irParaTelaPartida(partida.id)
       } catch (error) {
+        this.partidaAcessandoId = null
         console.error(error)
         const mensagem = error.response?.data?.erro || error.response?.data?.message || 'Nao foi possivel iniciar a partida.'
         Swal.fire('Erro', mensagem, 'error')
       }
+    },
+
+    async prepararPrefetchPartida(partidaId) {
+      const { data } = await api.get(`/partidas/${partidaId}/retornar`)
+      salvarPrefetchPartida({
+        partidaId,
+        campeonatoId: this.campeonato?.id,
+        campeonato: this.campeonato,
+        partida: data
+      })
     },
 
     async irParaTelaPartida(partidaId) {
@@ -861,11 +884,14 @@ export default {
 
         localStorage.setItem('campeonatoSelecionado', JSON.stringify(this.campeonato))
 
-        this.$router.push({
+        await this.prepararPrefetchPartida(partidaId)
+
+        await this.$router.push({
           path: '/partida',
           query: { partidaId, id: this.campeonato.id }
         })
       } catch (error) {
+        this.partidaAcessandoId = null
         console.error(error)
         Swal.fire('Erro', 'Não foi possível acessar a partida.', 'error')
       }
@@ -873,19 +899,24 @@ export default {
 
     async acessarPartida(partida) {
       try {
+        if (this.partidaAcessandoId) return
+
         const partidaObj = partida && typeof partida === 'object'
           ? partida
           : this.partidasValidas.find(a => Number(a.id) === Number(partida))
 
         const partidaId = Number(partidaObj?.id || partida)
         if (!partidaId) throw new Error('Partida invalida.')
+        this.partidaAcessandoId = partidaId
 
         if (this.isStatusPartidaPendente(partidaObj)) {
+          this.partidaAcessandoId = null
           Swal.fire('Atenção', 'No dia da partida, altere o status para EM ANDAMENTO para iniciar.', 'info')
           return
         }
 
         if (this.isMesario && partidaObj?.status === 'FINALIZADA') {
+          this.partidaAcessandoId = null
           Swal.fire('Atenção', 'Partidas finalizadas não podem ser editadas.', 'info')
           return
         }
@@ -896,6 +927,7 @@ export default {
           const regraJogadores = this.obterRegraJogadoresPorPartida(partidaObj)
 
           if (!jogadoresSelecionados.length && !regraJogadores?.opcional) {
+            this.partidaAcessandoId = null
             await this.abrirEscalacaoInicial(partidaObj)
             return
           }
@@ -903,6 +935,7 @@ export default {
 
         await this.irParaTelaPartida(partidaId)
       } catch (error) {
+        this.partidaAcessandoId = null
         console.error(error)
         Swal.fire('Erro', 'Não foi possível acessar a partida.', 'error')
       }
@@ -1188,6 +1221,7 @@ a {
 
 .partidas-wrapper {
   min-width: 0;
+  overflow-x: hidden;
 }
 
 .partidas-loading {
@@ -1208,9 +1242,14 @@ a {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 18px;
+  min-width: 0;
 }
 
 .card-partida {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   border: 1.6px solid #e5e7eb;
   border-radius: 22px;
   padding: 20px;
@@ -1218,6 +1257,7 @@ a {
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   cursor: pointer;
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
 }
 
 .card-partida:hover {
@@ -1253,6 +1293,8 @@ a {
   justify-content: center;
   gap: 8px;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 8px 12px;
   border-radius: 999px;
   font-size: 11px;
@@ -1364,6 +1406,7 @@ a {
   justify-content: space-between;
   align-items: center;
   gap: 20px;
+  min-width: 0;
 }
 
 .time.lado {
@@ -1371,6 +1414,7 @@ a {
   align-items: center;
   gap: 8px;
   font-size: 13px;
+  flex: 1 1 0;
   min-width: 0;
 }
 
@@ -1429,9 +1473,12 @@ a {
 }
 
 .time-nome {
+  min-width: 0;
   font-weight: 700;
   font-size: 17px;
   line-height: 1.2;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .nome-quadra {
@@ -1552,6 +1599,8 @@ a {
 
 .btn-acessar {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   background: linear-gradient(135deg, #2563eb, #3b82f6);
   color: white;
   border: none;
@@ -1581,6 +1630,13 @@ a {
 
 .btn-acessar.btn-acessar-disabled:hover {
   background-color: #cbd5e1;
+}
+
+.btn-acessar.btn-acessar-loading,
+.btn-acessar:disabled:not(.btn-acessar-disabled) {
+  opacity: 0.82;
+  cursor: progress;
+  transform: none;
 }
 
 .vazio {
@@ -1952,12 +2008,19 @@ a {
   }
 
   .conteudo-partida {
-    gap: 12px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
   }
 
   .card-partida {
     padding: 14px;
     border-radius: 18px;
+  }
+
+  .time.lado:last-child {
+    justify-content: flex-end;
   }
 
   .time-foto {
@@ -1976,7 +2039,11 @@ a {
   }
 
   .time-nome {
-    font-size: 16px;
+    font-size: 15px;
+  }
+
+  .time.lado:last-child .time-nome {
+    text-align: right;
   }
 
   .meta-partida {

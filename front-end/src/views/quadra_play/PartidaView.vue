@@ -65,6 +65,7 @@ import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
 import LoadingState from '@/components/loading/LoadingState.vue'
 import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
 import { carregarCampeonato } from '@/utils/persistirCampeonato'
+import { consumirPrefetchPartida } from '@/utils/partidaPrefetch'
 import PlacarTimeFutebol from '@/components/quadraplay/Partida/PlacarTimeFutebol.vue'
 import PlacarTimeVolei from '@/components/quadraplay/Partida/PlacarTimeVolei.vue'
 import PlacarTimeBeachTenis from '@/components/quadraplay/Partida/PlacarTimeBeachTenis.vue'
@@ -337,12 +338,9 @@ export default {
       }
     },
 
-    async carregarPartida() {
-      if (!this.partidaId) return
-      const res = await api.get(`/partidas/${this.partidaId}/retornar`)
-      const partida = res.data
-
+    aplicarDadosPartida(partida) {
       this.partida = partida
+
       if (this.modalidadeKey === 'VOLEI') {
         this.time1 = this.mapTimeVolei(partida.timeA, 'A', partida)
         this.time2 = this.mapTimeVolei(partida.timeB, 'B', partida)
@@ -366,6 +364,12 @@ export default {
         this.temAlteracao = false
         this.acabouDeSalvar = false
       }
+    },
+
+    async carregarPartida() {
+      if (!this.partidaId) return
+      const res = await api.get(`/partidas/${this.partidaId}/retornar`)
+      this.aplicarDadosPartida(res.data)
     },
 
     async atualizarParcial(payload) {
@@ -764,10 +768,17 @@ export default {
   async mounted() {
     try {
       this.partidaId = this.$route.query.partidaId
-      this.campeonato = await carregarCampeonato(this.$route)
+      const campeonatoId = Number(this.$route.query.id || 0)
+      const cache = consumirPrefetchPartida(this.partidaId, campeonatoId)
 
-      await this.carregarModalidades()
-      await this.carregarPartida()
+      this.campeonato = cache?.campeonato || await carregarCampeonato(this.$route)
+
+      if (cache?.partida) {
+        this.aplicarDadosPartida(cache.partida)
+      } else {
+        await this.carregarModalidades()
+        await this.carregarPartida()
+      }
     } catch (err) {
       console.error('Erro ao carregar:', err)
       this.campeonato = null
@@ -986,7 +997,7 @@ a {
   .conteudo {
     margin-left: 0;
     padding: 16px;
-    padding-top: 50px;
+    padding-top: calc(68px + env(safe-area-inset-top));
   }
 
   .conteudo.collapsed {
@@ -999,7 +1010,7 @@ a {
     justify-content: space-between;
     gap: 10px;
     flex-wrap: wrap;
-    margin-top: 0;
+    margin-top: 6px;
     margin-bottom: 12px;
   }
 
@@ -1013,6 +1024,7 @@ a {
     margin-right: 10px;
     flex: 1;
     min-width: 0;
+    line-height: 1.05;
     white-space: normal;
     overflow: visible;
     text-overflow: initial;
