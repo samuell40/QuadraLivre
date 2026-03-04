@@ -21,6 +21,7 @@
         <span class="loader-copy">Carregando informações do campeonato.</span>
       </div>
 
+      <template v-else>
       <div v-if="campeonato && !isMesario" class="card-edicao">
         <div class="section-head">
           <div>
@@ -253,6 +254,7 @@
       <div v-if="!campeonato">
         <a>Nenhum campeonato encontrado.</a>
       </div>
+      </template>
     </div>
 
     <button v-if="mostrarBotaoTopo" type="button" class="btn-topo" @click="subirPagina">

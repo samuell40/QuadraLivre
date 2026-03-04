@@ -65,7 +65,15 @@
           </div>
         </div>
 
-          <ul class="lista-partidas">
+          <div v-if="isLoading || isLoadingPartidas" class="partidas-loading">
+            <LoadingState
+              size="compact"
+              title="Carregando partidas"
+              description="Buscando confrontos, status e placares da rodada selecionada."
+            />
+          </div>
+
+          <ul v-else-if="partidasValidas.length" class="lista-partidas">
             <li v-for="partida in partidasValidas" :key="partida.id" class="card-partida"
               :class="classeStatusPartida(partida)">
               <div
@@ -153,7 +161,7 @@
             </li>
           </ul>
 
-          <div v-if="partidasValidas.length === 0" class="vazio">
+          <div v-else class="vazio">
             <button class="btn-add-partida-vazio" @click="abrirModalTipo">
               Adicionar partida
             </button>
@@ -222,6 +230,7 @@ import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
 import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
 import ModalEscolhaTipo from '@/components/quadraplay/ModalEscolhaTipo.vue'
 import SelecionarJogadores from '@/components/quadraplay/Partida/SelecionarJogadores.vue'
+import LoadingState from '@/components/loading/LoadingState.vue'
 import { carregarCampeonato } from '@/utils/persistirCampeonato'
 import {
   isStatusPartidaPendente,
@@ -249,7 +258,7 @@ const STATUS_CONFIG = {
 
 export default {
   name: 'GerenciarPartidaView',
-  components: { SidebarCampeonato, NavBarQuadras, ModalEscolhaTipo, SelecionarJogadores },
+  components: { SidebarCampeonato, NavBarQuadras, ModalEscolhaTipo, SelecionarJogadores, LoadingState },
 
   data() {
     return {
@@ -265,6 +274,7 @@ export default {
       campeonatoSelecionado: '',
       campeonato: null,
       isLoading: true,
+      isLoadingPartidas: true,
       mostrarModalTipo: false,
       mostrarModalStatus: false,
       mostrarModalJogadores: false,
@@ -495,12 +505,18 @@ export default {
       } catch (err) {
         console.error('Erro ao carregar campeonato:', err)
       } finally {
+        if (!this.campeonato?.id) {
+          this.isLoadingPartidas = false
+        }
         this.isLoading = false
       }
     },
 
     async carregarFases() {
-      if (!this.campeonatoSelecionado) return
+      if (!this.campeonatoSelecionado) {
+        this.isLoadingPartidas = false
+        return
+      }
 
       try {
         const { data } = await api.get(`/fases/${this.campeonatoSelecionado}`)
@@ -511,6 +527,7 @@ export default {
           this.rodadas = []
           this.rodadaSelecionada = ''
           this.partidas = []
+          this.isLoadingPartidas = false
           return
         }
 
@@ -535,6 +552,7 @@ export default {
         this.faseSelecionada = ''
         this.rodadaSelecionada = ''
         this.partidas = []
+        this.isLoadingPartidas = false
       }
     },
 
@@ -594,8 +612,11 @@ export default {
     async carregarPartidasPorFaseRodada() {
       if (!this.campeonatoSelecionado || !this.faseSelecionada || !this.rodadaSelecionada) {
         this.partidas = []
+        this.isLoadingPartidas = false
         return
       }
+
+      this.isLoadingPartidas = true
 
       try {
         const { data } = await api.get(`/partidas/${this.campeonatoSelecionado}/${this.faseSelecionada}/${this.rodadaSelecionada}`)
@@ -603,6 +624,8 @@ export default {
       } catch (error) {
         console.error('Erro ao buscar partidas por fase/rodada:', error)
         this.partidas = []
+      } finally {
+        this.isLoadingPartidas = false
       }
     },
 
@@ -1165,6 +1188,10 @@ a {
 
 .partidas-wrapper {
   min-width: 0;
+}
+
+.partidas-loading {
+  margin-top: 18px;
 }
 
 .titulo-secao {
