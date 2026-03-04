@@ -98,15 +98,44 @@ async function getUsuarios() {
       deletedAt: null,
     },
     include: {
-      agendamentos: true,
-      quadra: true,
-      permissao: true,
+      agendamentos: {
+        where: { deletedAt: null },
+        select: {
+          datahora: true,
+          ano: true,
+          mes: true,
+          dia: true,
+          hora: true,
+        },
+      },
+      quadra: {
+        select: {
+          id: true,
+          nome: true,
+        },
+      },
+      permissao: {
+        select: {
+          id: true,
+          descricao: true,
+        },
+      },
       jogador: {
         include: {
           times: {
-            include: {
-              time: true,
-              modalidade: true,
+            select: {
+              ativo: true,
+              time: {
+                select: {
+                  id: true,
+                  nome: true,
+                },
+              },
+              modalidade: {
+                select: {
+                  nome: true,
+                },
+              },
             },
           },
         },
@@ -116,8 +145,17 @@ async function getUsuarios() {
           ativo: true,
           deletedAt: null,
         },
-        include: {
-          time: true,
+        select: {
+          ativo: true,
+          deletedAt: true,
+          time: {
+            select: {
+              id: true,
+              nome: true,
+              ativo: true,
+              deletedAt: true,
+            },
+          },
         },
       },
       treinadorTimes: {
@@ -125,8 +163,17 @@ async function getUsuarios() {
           ativo: true,
           deletedAt: null,
         },
-        include: {
-          time: true,
+        select: {
+          ativo: true,
+          deletedAt: true,
+          time: {
+            select: {
+              id: true,
+              nome: true,
+              ativo: true,
+              deletedAt: true,
+            },
+          },
         },
       },
     },
@@ -135,7 +182,7 @@ async function getUsuarios() {
   return usuarios.map((user) => {
     let jogador = null;
     let timesJogador = [];
-    const agendamentosAtivos = (user.agendamentos || []).filter((ag) => !ag.deletedAt);
+    const agendamentosAtivos = Array.isArray(user.agendamentos) ? user.agendamentos : [];
     const agora = new Date();
 
     const obterDataAgendamento = (agendamento) => {

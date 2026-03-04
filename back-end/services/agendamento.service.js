@@ -2,6 +2,17 @@ const prisma = require("../lib/prisma");
 const { enviarEmailStatusAgendamento } = require("./email.service");
 const { startOfWeek, endOfWeek, addMinutes } = require("date-fns");
 
+const INCLUDE_AGENDAMENTO_LISTAGEM = {
+  quadra: true,
+  modalidade: true,
+  time: true,
+  campeonato: { select: { id: true, nome: true } },
+  usuario: { select: { id: true, nome: true, email: true } },
+};
+
+const INTERVALO_RECUSA_VENCIDOS_MS = 60 * 1000;
+let ultimoProcessamentoRecusaVencidos = 0;
+
 const gerarCodigoVerificacao = () => {
   const caracteres = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let codigo = "";
@@ -129,14 +140,8 @@ const listarAgendamentosService = async (usuarioId) => {
   if (!usuarioId) throw { status: 400, message: "Usuário não informado." };
 
   const agendamentos = await prisma.agendamento.findMany({
-    where: { usuarioId },
-    include: {
-      quadra: true,
-      modalidade: true,
-      time: true,
-      campeonato: { select: { id: true, nome: true } },
-      usuario: { include: { times: { include: { time: true } } } },
-    },
+    where: { usuarioId, deletedAt: null },
+    include: INCLUDE_AGENDAMENTO_LISTAGEM,
     orderBy: { datahora: "asc" },
   });
   return enriquecerAgendamentosComResumoEvento(agendamentos);
@@ -146,19 +151,8 @@ const listarTodosAgendamentosService = async () => {
   await recusarAgendamentosVencidos();
 
   const agendamentos = await prisma.agendamento.findMany({
-    include: {
-      quadra: true,
-      modalidade: true,
-      time: true,
-      campeonato: { select: { id: true, nome: true } },
-      usuario: {
-        include: {
-          times: {
-            include: { time: true },
-          },
-        },
-      },
-    },
+    where: { deletedAt: null },
+    include: INCLUDE_AGENDAMENTO_LISTAGEM,
     orderBy: { datahora: "asc" },
   });
 
@@ -173,20 +167,8 @@ const listarAgendamentosPorQuadraService = async (quadraId) => {
   }
 
   const agendamentos = await prisma.agendamento.findMany({
-    where: { quadraId: Number(quadraId) },
-    include: {
-      quadra: true,
-      modalidade: true,
-      time: true,
-      campeonato: { select: { id: true, nome: true } },
-      usuario: {
-        include: {
-          times: {
-            include: { time: true },
-          },
-        },
-      },
-    },
+    where: { quadraId: Number(quadraId), deletedAt: null },
+    include: INCLUDE_AGENDAMENTO_LISTAGEM,
     orderBy: { datahora: "asc" },
   });
 
@@ -208,23 +190,13 @@ const listarAgendamentosConfirmadosService = async (
   const agendamentos = await prisma.agendamento.findMany({
     where: {
       quadraId,
+      deletedAt: null,
       status: "Confirmado",
       ano,
       mes,
       dia,
     },
-    include: {
-      modalidade: true,
-      time: true,
-      campeonato: { select: { id: true, nome: true } },
-      usuario: {
-        include: {
-          times: {
-            include: { time: true },
-          },
-        },
-      },
-    },
+    include: INCLUDE_AGENDAMENTO_LISTAGEM,
     orderBy: { datahora: "asc" },
   });
 
@@ -253,6 +225,7 @@ const listarAgendamentosConfirmadosSemanaService = async (
   const agendamentos = await prisma.agendamento.findMany({
     where: {
       quadraId: Number(quadraId),
+      deletedAt: null,
       status: "Confirmado",
       AND: [
         {
@@ -287,16 +260,7 @@ const listarAgendamentosConfirmadosSemanaService = async (
         },
       ],
     },
-    include: {
-      modalidade: true,
-      time: true,
-      campeonato: { select: { id: true, nome: true } },
-      usuario: {
-        include: {
-          times: { include: { time: true } },
-        },
-      },
-    },
+    include: INCLUDE_AGENDAMENTO_LISTAGEM,
     orderBy: { datahora: "asc" },
   });
 
@@ -600,6 +564,7 @@ const listarAgendamentosPorTimeService = async (timeId, inicio, fim) => {
   const agendamentos = await prisma.agendamento.findMany({
     where: {
       timeId: Number(timeId),
+      deletedAt: null,
       AND: [
         {
           OR: [
@@ -650,28 +615,39 @@ const listarAgendamentosPorTimeService = async (timeId, inicio, fim) => {
 
 const recusarAgendamentosVencidos = async () => {
   const agora = new Date();
-
-  const pendentes = await prisma.agendamento.findMany({
-    where: { status: "Pendente" },
-  });
-
-  const vencidos = pendentes.filter((ag) => {
-    const dataDoJogo = ag.datahora
-      ? new Date(ag.datahora)
-      : new Date(ag.ano, ag.mes - 1, ag.dia, ag.hora);
-
-    return dataDoJogo < agora;
-  });
-
-  for (const ag of vencidos) {
-    await prisma.agendamento.update({
-      where: { id: ag.id },
-      data: {
-        status: "Recusado",
-        motivoRecusa: "Prazo de confirmação expirado (Data passada)",
-      },
-    });
+  if (agora.getTime() - ultimoProcessamentoRecusaVencidos < INTERVALO_RECUSA_VENCIDOS_MS) {
+    return;
   }
+
+  const ano = agora.getFullYear();
+  const mes = agora.getMonth() + 1;
+  const dia = agora.getDate();
+  const hora = agora.getHours();
+
+  await prisma.agendamento.updateMany({
+    where: {
+      status: "Pendente",
+      deletedAt: null,
+      OR: [
+        { datahora: { lt: agora } },
+        {
+          datahora: null,
+          OR: [
+            { ano: { lt: ano } },
+            { ano, mes: { lt: mes } },
+            { ano, mes, dia: { lt: dia } },
+            { ano, mes, dia, hora: { lt: hora } },
+          ],
+        },
+      ],
+    },
+    data: {
+      status: "Recusado",
+      motivoRecusa: "Prazo de confirmacao expirado (Data passada)",
+    },
+  });
+
+  ultimoProcessamentoRecusaVencidos = agora.getTime();
 };
 
 const atualizarAgendamentosFixosService = async (agendamentos, usuarioId) => {
