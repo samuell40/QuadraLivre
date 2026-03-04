@@ -266,21 +266,19 @@ async function cancelarConflitosAgendamentoCampeonato(tx, {
       datahora: dataConflito
     });
 
-    const conflitoAtualizado = await tx.agendamento.update({
+    await tx.agendamento.update({
       where: { id: conflito.id },
       data: {
         status: 'Recusado',
         motivoRecusa
-      },
-      include: {
-        usuario: true,
-        quadra: true,
-        modalidade: true,
-        time: true
       }
     });
 
-    conflitosAtualizados.push(conflitoAtualizado);
+    conflitosAtualizados.push({
+      ...conflito,
+      status: 'Recusado',
+      motivoRecusa
+    });
   }
 
   return conflitosAtualizados;
@@ -459,7 +457,7 @@ async function criarCampeonato(data) {
 
   const agendamentosRecusadosParaNotificar = [];
 
-  const campeonatoCriado = await prisma.$transaction(async (tx) => {
+  const campeonatoId = await prisma.$transaction(async (tx) => {
     const modalidadeDB = await tx.modalidade.findUnique({
       where: { id: Number(modalidadeId) }
     });
@@ -511,13 +509,6 @@ async function criarCampeonato(data) {
         },
         agendamentos: { create: agendamentosParaCriar },
         placares: { create: timesArray.map(timeId => ({ timeId: Number(timeId) })) }
-      },
-      include: {
-        modalidade: true,
-        quadra: true,
-        times: { include: { time: true } },
-        agendamentos: true,
-        placares: true
       }
     });
 
@@ -545,8 +536,25 @@ async function criarCampeonato(data) {
       }
     }
 
-    return campeonato;
+    return campeonato.id;
+  }, {
+    timeout: 20000
   });
+
+  const campeonatoCriado = await prisma.campeonato.findUnique({
+    where: { id: campeonatoId },
+    include: {
+      modalidade: true,
+      quadra: true,
+      times: { include: { time: true } },
+      agendamentos: true,
+      placares: true
+    }
+  });
+
+  if (!campeonatoCriado) {
+    throw new Error('Falha ao carregar campeonato criado.');
+  }
 
   if (agendamentosRecusadosParaNotificar.length > 0) {
     const envios = agendamentosRecusadosParaNotificar
