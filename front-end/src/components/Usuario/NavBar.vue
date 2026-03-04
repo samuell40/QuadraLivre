@@ -72,13 +72,8 @@
       <div class="drawer-header">
         <div class="drawer-brand">
           <div class="drawer-brand-top">
-            <div class="drawer-logo">
-              <img src="@/assets/logo.png" alt="Quadra Play" class="drawer-logo-img" />
-            </div>
-
             <div class="drawer-brand-copy">
               <span class="drawer-kicker">Area do usuario</span>
-              <strong class="drawer-title">{{ usuarioLogado.nome || 'Minha conta' }}</strong>
             </div>
           </div>
 
