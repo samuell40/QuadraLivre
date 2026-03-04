@@ -80,7 +80,7 @@
         <tbody>
           <tr v-for="(time, index) in times" :key="`${obterIdTime(time)}-${index}`">
             <td class="time-info time-info-click" @click="onTimeClick(time)">
-              <span class="posicao">{{ index + 1 }}</span>
+              <span class="posicao">{{ index + 1 }}º</span>
               <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
               <span class="nome-time">{{ time.time?.nome }}</span>
             </td>

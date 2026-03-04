@@ -785,7 +785,7 @@ export default {
       adicionarSecaoGrafico({
         chartId: 'agendamentosTipoChart',
         titulo: '2. Distribuição por tipo de agendamento',
-        descricao: 'Resume a participação de amistosos, treinos, eventos e outros tipos no volume confirmado.',
+        descricao: 'Resume a participação de amistosos, treinos, campeonatos, eventos e outros tipos no volume confirmado.',
         isPie: true,
       });
 
@@ -1095,15 +1095,23 @@ export default {
 
       const agendamentosConfirmados = this.agendamentos.filter(a => a.status === 'Confirmado')
 
-      const tipos = ['AMISTOSO', 'TREINO', 'EVENTO', 'OUTRO']
+      const tipos = [
+        { value: 'AMISTOSO', label: 'Amistoso', color: '#152147' },
+        { value: 'TREINO', label: 'Treino', color: '#1E3A8A' },
+        { value: 'CAMPEONATO', label: 'Campeonato', color: '#2563EB' },
+        { value: 'EVENTO', label: 'Evento', color: '#60A5FA' },
+        { value: 'OUTRO', label: 'Outro', color: '#D9D9D9' }
+      ]
 
-      const quantidade = tipos.map(t => agendamentosConfirmados.filter(a => a.tipo === t).length)
+      const quantidade = tipos.map(({ value }) =>
+        agendamentosConfirmados.filter(a => a.tipo === value).length
+      )
 
       this.agendamentosTipoChart = new Chart(ctx, {
         type: 'pie',
         data: {
-          labels: tipos,
-          datasets: [{ data: quantidade, backgroundColor: ['#152147', '#1E3A8A', '#3B82F6', '#D9D9D9', '#F7F9FC'] }]
+          labels: tipos.map(({ label }) => label),
+          datasets: [{ data: quantidade, backgroundColor: tipos.map(({ color }) => color) }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
       })

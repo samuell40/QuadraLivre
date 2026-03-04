@@ -175,156 +175,7 @@
         <button type="button" class="btn-close-x" @click="mostrarModalAgenda = false">x</button>
       </div>
 
-      <div class="agenda-add-row">
-        <div class="form-group form-group-agenda-date">
-          <label for="novaDataAgenda">Adicionar data</label>
-          <input id="novaDataAgenda" v-model="novaDataAgenda" type="date" :min="dataMinimaAgenda">
-        </div>
-
-        <button type="button" class="btn-save btn-save-secondary" @click="adicionarDataAgenda">
-          Adicionar data
-        </button>
-      </div>
-
-      <div v-if="datasAgendaOrdenadas.length" class="tabs-header tabs-header-agenda">
-        <button
-          v-for="item in datasAgendaOrdenadas"
-          :key="item.data"
-          type="button"
-          class="tab-btn"
-          :class="{ active: dataAgendaSelecionada === item.data }"
-          @click="selecionarDataAgenda(item.data)"
-        >
-          <span>{{ formatarDataAgenda(item.data) }}</span>
-        </button>
-      </div>
-
-      <div v-if="agendaSelecionada" class="workspace-card agenda-workspace-card">
-        <div class="dia-header-row">
-          <div>
-            <p class="section-kicker">DATA SELECIONADA</p>
-            <h3 class="dia-titulo">{{ formatarDataAgenda(dataAgendaSelecionada) }}</h3>
-          </div>
-
-          <div class="ferramentas-icones">
-            <button type="button" class="btn-tool" :class="{ active: showGeradorAgenda }" @click="showGeradorAgenda = !showGeradorAgenda">
-              <span>Automatico</span>
-            </button>
-
-            <button type="button" class="btn-tool" :class="{ active: showReplicarAgenda }" @click="showReplicarAgenda = !showReplicarAgenda">
-              <span>Copiar</span>
-            </button>
-          </div>
-        </div>
-
-        <div v-if="showGeradorAgenda" class="painel-ferramenta">
-          <div class="painel-head">
-            <div>
-              <p class="tool-kicker">GERADOR</p>
-              <h4 class="tool-title">Montar horarios automaticamente</h4>
-            </div>
-          </div>
-
-          <div class="gerador-inputs">
-            <div class="g-group">
-              <label>Inicio</label>
-              <input v-model="geradorAgenda.inicio" type="time">
-            </div>
-
-            <div class="g-group">
-              <label>Fim</label>
-              <input v-model="geradorAgenda.fim" type="time">
-            </div>
-
-            <div class="g-group">
-              <label>Duracao (min)</label>
-              <input v-model="geradorAgenda.duracao" type="number" placeholder="60">
-            </div>
-
-            <button type="button" class="btn-acao-painel" @click="gerarHorariosAutomaticosAgenda">
-              Gerar grade
-            </button>
-          </div>
-        </div>
-
-        <div v-if="showReplicarAgenda" class="painel-ferramenta">
-          <div class="painel-head">
-            <div>
-              <p class="tool-kicker">REPLICAR</p>
-              <h4 class="tool-title">Copiar horarios para outras datas</h4>
-            </div>
-          </div>
-
-          <div class="dias-checks datas-checks-agenda">
-            <label v-for="item in datasAgendaOrdenadas" :key="`replicar-${item.data}`" class="chk-item">
-              <input
-                v-model="datasParaReplicarAgenda"
-                type="checkbox"
-                :value="item.data"
-                :disabled="item.data === dataAgendaSelecionada"
-              >
-              <span>{{ formatarDataAgenda(item.data) }}</span>
-            </label>
-          </div>
-
-          <button type="button" class="btn-acao-painel" @click="confirmarReplicacaoAgenda">
-            Aplicar copia
-          </button>
-        </div>
-
-        <div class="editor-card">
-          <div class="editor-head">
-            <div>
-              <p class="tool-kicker">HORARIOS</p>
-              <h4 class="tool-title">Adicionar horarios manualmente</h4>
-            </div>
-
-            <button type="button" class="btn-remove-date" @click="removerDataAgenda(dataAgendaSelecionada)">
-              Remover data
-            </button>
-          </div>
-
-          <div class="add-horario-form">
-            <input
-              v-model="novoHorarioInputAgenda"
-              type="time"
-              class="time-input"
-              @keyup.enter="adicionarHorarioAgenda"
-            >
-
-            <button type="button" class="btn-add" :disabled="!novoHorarioInputAgenda" @click="adicionarHorarioAgenda">
-              Adicionar
-            </button>
-          </div>
-
-          <div class="lista-horarios">
-            <div v-if="agendaSelecionada.horarios.length === 0" class="sem-horarios">
-              Nenhum horario configurado para esta data.
-            </div>
-
-            <div
-              v-else
-              v-for="(horario, index) in agendaSelecionada.horarios"
-              :key="`${dataAgendaSelecionada}-${horario}`"
-              class="horario-chip"
-            >
-              <span>{{ horario }}</span>
-              <button type="button" class="btn-remove-chip" @click="removerHorarioAgenda(index)">
-                x
-              </button>
-            </div>
-          </div>
-
-          <div v-if="agendaSelecionada.horarios.length > 0" class="resumo-footer">
-            <span>{{ agendaSelecionada.horarios.length }} horarios listados</span>
-            <button type="button" class="btn-clear" @click="limparHorariosAgenda">Limpar data</button>
-          </div>
-        </div>
-      </div>
-
-      <div v-else class="estado-agenda-vazio">
-        <p>Adicione ao menos uma data para configurar a agenda do campeonato.</p>
-      </div>
+      <AgendaCampeonatoEditor v-model="agendaPorData" :min-date="dataMinimaAgenda" />
 
       <div class="botoes botoes-acao-dupla">
         <button type="button" class="btn-cancelar-escolha-tipo" @click="voltarParaTimes">Voltar</button>
@@ -339,9 +190,11 @@
 <script>
 import Swal from 'sweetalert2'
 import api from '@/axios'
+import AgendaCampeonatoEditor from './AgendaCampeonatoEditor.vue'
 
-export default {
+  export default {
   name: 'AdicionarCampeonatoModal',
+  components: { AgendaCampeonatoEditor },
   props: {
     aberto: { type: Boolean, default: false }
   },

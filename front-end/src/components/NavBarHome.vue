@@ -139,13 +139,13 @@ export default {
       const top = window.screenY + (window.outerHeight - height) / 2.5
 
       const popup = window.open(
-        'http://localhost:3000/auth/google',
+        'https://quadra-livre-backend.onrender.com/auth/google',
         'Login com Google',
         `width=${width},height=${height},left=${left},top=${top}`
       )
 
       const listener = async event => {
-        if (event.origin !== 'https://quadra-livre.vercel.app') return
+        if (event.origin !== 'https://www.quadraplaysv.com.br') return
 
         const { token, erro, email, usuario } = event.data
 
@@ -204,13 +204,13 @@ export default {
       const top = window.screenY + (window.outerHeight - height) / 2.5
 
       const popup = window.open(
-        'http://localhost:3000/auth/google',
+        'https://quadra-livre-backend.onrender.com/auth/google',
         'Login QuadraPlay',
         `width=${width},height=${height},left=${left},top=${top}`
       )
 
       const listener = async event => {
-        if (event.origin !== 'https://quadra-livre.vercel.app') return
+        if (event.origin !== 'https://www.quadraplaysv.com.br') return
 
         const { token, erro, email, usuario } = event.data
 

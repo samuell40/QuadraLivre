@@ -32,13 +32,13 @@ export default {
             const top = window.screenY + (window.outerHeight - height) / 2.5
 
             const popup = window.open(
-                'http://localhost:3000/auth/google',
+                'https://quadra-livre-backend.onrender.com/auth/google',
                 'Login com Google',
                 `width=${width},height=${height},left=${left},top=${top}`
             )
 
             const listener = async event => {
-                const origensPermitidas = ['https://quadra-livre.vercel.app', 'http://localhost:8080']
+                const origensPermitidas = ['https://www.quadraplaysv.com.br']
                 if (!origensPermitidas.includes(event.origin) && event.origin !== window.location.origin) return
 
                 const { token, erro, email, usuario } = event.data

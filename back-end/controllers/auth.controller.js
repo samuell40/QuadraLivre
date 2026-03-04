@@ -3,6 +3,16 @@ const jwt = require('jsonwebtoken');
 const config = require('../config/app.config');
 const { findUserByEmail } = require('../services/auth.service');
 
+const FRONTEND_CALLBACK_BASE =
+  process.env.FRONTEND_URL ||
+  process.env.APP_URL ||
+  process.env.QUADRAPLAY_URL ||
+  'https://www.quadraplaysv.com.br';
+
+function montarRedirectGoogleCallback(query = '') {
+  return `${String(FRONTEND_CALLBACK_BASE).replace(/\/+$/, '')}/google-callback${query}`;
+}
+
 async function verificarUsuario(req, accessToken, refreshToken, profile, done) {
   try {
     const email = profile?.emails?.[0]?.value;
@@ -43,7 +53,7 @@ function callbackLoginGoogle(req, res, next) {
 
       if (!user) {
         const email = info?.email || '';
-        const redirectUrl = `https://quadra-livre.vercel.app/google-callback?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`;
+        const redirectUrl = montarRedirectGoogleCallback(`?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`);
         return res.redirect(redirectUrl);
       }
 
@@ -65,7 +75,7 @@ function callbackLoginGoogle(req, res, next) {
 
       const token = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: config.JWT_EXPIRATION });
       const payload = encodeURIComponent(JSON.stringify({ token, usuario: tokenPayload }));
-      const redirectUrl = `https://quadra-livre.vercel.app/google-callback?data=${payload}`;
+      const redirectUrl = montarRedirectGoogleCallback(`?data=${payload}`);
       return res.redirect(redirectUrl);
 
     } catch (error) {

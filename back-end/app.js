@@ -12,7 +12,7 @@ const { iniciarSocket } = require('./socket');
 
 // Rotas
 const authRoutes = require("./routes/auth.router");
-const partida = require('./routes/partida.router')
+const partida = require('./routes/partida.router');
 const usuario = require('./routes/usuario.router');
 const jogador = require('./routes/jogador.router');
 const treinador = require('./routes/treinador.router');
@@ -24,30 +24,51 @@ const modalidade = require('./routes/modalidade.router');
 const campeonato = require('./routes/campeonatos.router');
 const avisos = require('./routes/aviso.router');
 const horarioQuadra = require('./routes/horario_quadra.router');
-//const { FirstRun } = require('./firstRun');
+const { FirstRun } = require('./firstRun');
 
 // Inicialização
 const app = express();
+app.set('trust proxy', 1);
+
 const server = http.createServer(app);
 const prisma = new PrismaClient();
+
 iniciarSocket(server);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CORS
+const allowedOrigins = [
+  'https://www.quadraplaysv.com.br',
+  'https://quadraplaysv.com.br',
+  'http://localhost:5173',
+  'http://localhost:3000',
+];
+
 app.use(cors({
-  origin: '*',
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true);
+
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+
+    return cb(new Error(`Not allowed by CORS: ${origin}`));
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Authorization', 'Content-Type'],
 }));
 
-// Session + Passport
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
+  proxy: true,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',              
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', 
+  },
 }));
+
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -58,14 +79,14 @@ app.use(jogador);
 app.use(treinador);
 app.use(quadra);
 app.use(placar);
-app.use(partida)
+app.use(partida);
 app.use(agendamento);
-app.use(time)
-app.use(modalidade)
-app.use(campeonato)
-app.use(avisos)
-app.use(horarioQuadra)
-//FirstRun();
+app.use(time);
+app.use(modalidade);
+app.use(campeonato);
+app.use(avisos);
+app.use(horarioQuadra);
+FirstRun();
 
 // Rota base
 app.get('/', (req, res) => {
@@ -110,5 +131,5 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 // Inicializa o servidor
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
+  console.log(`Servidor rodando na porta ${PORT}`);
 });

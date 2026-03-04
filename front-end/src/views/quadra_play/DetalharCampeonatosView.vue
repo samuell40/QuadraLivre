@@ -65,6 +65,30 @@
         </div>
       </div>
 
+      <div v-if="campeonato && !isMesario" class="card-edicao card-horarios">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Horarios</span>
+            <h2>Agenda base do campeonato</h2>
+            <a>Veja, edite e acrescente novos horarios da competicao na quadra vinculada.</a>
+          </div>
+        </div>
+
+        <div v-if="!formEdicao.quadraId" class="vazio-criterios">
+          Selecione uma quadra no cadastro e salve as informacoes antes de ajustar os horarios.
+        </div>
+
+        <template v-else>
+          <AgendaCampeonatoEditor v-model="agendaPorData" :min-date="dataMinimaAgendaEdicao" />
+
+          <div class="actions">
+            <button class="btn-save" :disabled="salvandoAgenda" @click="salvarAgendaCampeonato">
+              {{ salvandoAgenda ? 'Salvando...' : 'Salvar horarios' }}
+            </button>
+          </div>
+        </template>
+      </div>
+
       <div v-if="campeonato" class="card-regras">
         <div class="section-head">
           <div>
@@ -238,13 +262,14 @@ import Swal from 'sweetalert2'
 import api from '@/axios'
 import NavBarQuadras from '@/components/quadraplay/NavBarQuadras.vue'
 import SidebarCampeonato from '@/components/quadraplay/SidebarCampeonato.vue'
+import AgendaCampeonatoEditor from '@/components/quadraplay/Campeonatos/AgendaCampeonatoEditor.vue'
 import { carregarCampeonato } from '@/utils/persistirCampeonato'
 import { useCampeonatoStore } from '@/storecampeonato'
 import { grupoModalidade, opcoesNumericas, opcoesSuspensao, regrasPadrao} from '@/utils/campeonatoRegras'
 
 export default {
   name: 'GerenciarCampeonatosView',
-  components: { SidebarCampeonato, NavBarQuadras },
+  components: { SidebarCampeonato, NavBarQuadras, AgendaCampeonatoEditor },
 
   data() {
     return {
@@ -263,6 +288,8 @@ export default {
       mostrarBotaoTopo: false,
       imagemOriginal: '',
       quadras: [],
+      agendaPorData: [],
+      salvandoAgenda: false,
       formEdicao: {
         nome: '',
         foto: '',
@@ -296,6 +323,16 @@ export default {
 
     grupoAtual() {
       return grupoModalidade(this.campeonato?.modalidade?.nome)
+    },
+
+    dataMinimaAgendaEdicao() {
+      const data = new Date()
+      data.setHours(0, 0, 0, 0)
+
+      const ano = data.getFullYear()
+      const mes = String(data.getMonth() + 1).padStart(2, '0')
+      const dia = String(data.getDate()).padStart(2, '0')
+      return `${ano}-${mes}-${dia}`
     },
 
     camposRegras() {
@@ -419,6 +456,7 @@ export default {
         await this.carregarQuadras()
         await this.carregarCriteriosClassificacao()
         this.preencherFormularioEdicao()
+        this.preencherAgendaEdicao()
       }
     } catch (err) {
       console.error('Erro ao carregar campeonato:', err)
@@ -486,6 +524,58 @@ export default {
       })
     },
 
+    preencherAgendaEdicao() {
+      const agendaMap = new Map()
+
+      ;(Array.isArray(this.campeonato?.agendamentos) ? this.campeonato.agendamentos : []).forEach((agendamento) => {
+        const dataHora = agendamento?.datahora ? new Date(agendamento.datahora) : null
+        if (!(dataHora instanceof Date) || Number.isNaN(dataHora.getTime())) return
+
+        const data = `${dataHora.getFullYear()}-${String(dataHora.getMonth() + 1).padStart(2, '0')}-${String(dataHora.getDate()).padStart(2, '0')}`
+        const horario = `${String(dataHora.getHours()).padStart(2, '0')}:${String(dataHora.getMinutes()).padStart(2, '0')}`
+
+        if (!agendaMap.has(data)) {
+          agendaMap.set(data, { data, horarios: [] })
+        }
+
+        const agendaDia = agendaMap.get(data)
+        if (!agendaDia.horarios.includes(horario)) {
+          agendaDia.horarios.push(horario)
+          agendaDia.horarios.sort((a, b) => this.timeToMinutes(a) - this.timeToMinutes(b))
+        }
+      })
+
+      this.agendaPorData = [...agendaMap.values()].sort((a, b) => a.data.localeCompare(b.data))
+    },
+
+    timeToMinutes(time) {
+      const [hora, minuto] = String(time || '').split(':').map(Number)
+      return (hora * 60) + minuto
+    },
+
+    montarDatasJogosAgenda() {
+      return [...this.agendaPorData]
+        .sort((a, b) => a.data.localeCompare(b.data))
+        .flatMap((item) =>
+          (Array.isArray(item?.horarios) ? item.horarios : [])
+            .filter(Boolean)
+            .map((horario) => {
+              const [hora, minuto] = String(horario).split(':').map(Number)
+              const [ano, mes, dia] = String(item.data || '').split('-').map(Number)
+              return new Date(ano, mes - 1, dia, hora, minuto || 0, 0).toISOString()
+            })
+        )
+    },
+
+    aplicarCampeonatoAtualizado(campeonatoAtualizado) {
+      this.campeonato = campeonatoAtualizado
+      this.preencherFormularioEdicao()
+      this.preencherAgendaEdicao()
+
+      const store = useCampeonatoStore()
+      store.setCampeonato(campeonatoAtualizado)
+    },
+
     async carregarQuadras() {
       if (!this.campeonato?.modalidadeId) {
         this.quadras = []
@@ -543,14 +633,50 @@ export default {
         }
 
         const { data } = await api.put(`/campeonato/${this.campeonato.id}`, payload)
-        this.campeonato = data
-        this.preencherFormularioEdicao()
+        this.aplicarCampeonatoAtualizado(data)
         await Swal.fire('Sucesso', 'Informações atualizadas com sucesso.', 'success')
       } catch (err) {
         console.error('Erro ao salvar edicao:', err)
         await Swal.fire('Erro', 'Não foi possível salvar as informações.', 'error')
       } finally {
         this.salvandoEdicao = false
+      }
+    },
+
+    async salvarAgendaCampeonato() {
+      if (!this.campeonato?.id) return
+
+      if (!this.formEdicao.quadraId) {
+        await Swal.fire('Atencao', 'Selecione uma quadra antes de salvar os horarios.', 'warning')
+        return
+      }
+
+      const datasJogos = this.montarDatasJogosAgenda()
+      if (!datasJogos.length) {
+        await Swal.fire('Atencao', 'Adicione ao menos um horario para o campeonato.', 'warning')
+        return
+      }
+
+      this.salvandoAgenda = true
+      try {
+        const payload = {
+          quadraId: this.formEdicao.quadraId,
+          usuarioId: Number(this.usuarioLogado?.id || 0) || null,
+          datasJogos
+        }
+
+        const { data } = await api.put(`/campeonato/${this.campeonato.id}`, payload)
+        this.aplicarCampeonatoAtualizado(data)
+        await Swal.fire('Sucesso', 'Horarios atualizados com sucesso.', 'success')
+      } catch (err) {
+        console.error('Erro ao salvar horarios do campeonato:', err)
+        await Swal.fire(
+          'Erro',
+          err?.response?.data?.erro || 'Nao foi possivel salvar os horarios.',
+          'error'
+        )
+      } finally {
+        this.salvandoAgenda = false
       }
     },
 

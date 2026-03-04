@@ -155,6 +155,138 @@ function montarMotivoRecusaPorPrioridadeCampeonato({ nomeCampeonato, nomeQuadra,
   return `Seu agendamento foi cancelado porque a quadra ${nomeQuadraSeguro} foi reservada para ${nomeCampeonatoSeguro} em ${dataHoraFormatada}. Campeonatos possuem prioridade sobre reservas comuns.`;
 }
 
+function normalizarDatasJogos(datasJogos = []) {
+  return ordenarDatasAsc(
+    [...new Map(
+      (Array.isArray(datasJogos) ? datasJogos : [])
+        .map(paraDataValida)
+        .filter(Boolean)
+        .map(dataItem => [obterChaveDataHora(dataItem), dataItem])
+    ).values()]
+  );
+}
+
+function montarFiltrosDiasAgendamento(datas = []) {
+  return [...new Map(
+    normalizarDatasJogos(datas).map(dataItem => {
+      const chave = `${dataItem.getFullYear()}-${dataItem.getMonth() + 1}-${dataItem.getDate()}`;
+      return [chave, {
+        ano: dataItem.getFullYear(),
+        mes: dataItem.getMonth() + 1,
+        dia: dataItem.getDate()
+      }];
+    })
+  ).values()];
+}
+
+function montarPayloadAgendamentoCampeonato(dataObj, {
+  quadraId,
+  usuarioId,
+  modalidadeId,
+  campeonatoId
+}) {
+  return {
+    datahora: dataObj,
+    dia: dataObj.getDate(),
+    mes: dataObj.getMonth() + 1,
+    ano: dataObj.getFullYear(),
+    hora: dataObj.getHours(),
+    quadraId: Number(quadraId),
+    usuarioId: usuarioId || null,
+    modalidadeId: Number(modalidadeId),
+    campeonatoId: campeonatoId ? Number(campeonatoId) : undefined,
+    status: 'Confirmado',
+    tipo: 'CAMPEONATO',
+    duracao: 1
+  };
+}
+
+async function cancelarConflitosAgendamentoCampeonato(tx, {
+  quadraId,
+  datasJogos,
+  nomeCampeonato
+}) {
+  const datasParaConflito = normalizarDatasJogos(datasJogos)
+    .filter(dataItem => dataItem.getTime() >= Date.now());
+
+  if (!quadraId || !datasParaConflito.length) {
+    return [];
+  }
+
+  const filtrosDias = montarFiltrosDiasAgendamento(datasParaConflito);
+  if (!filtrosDias.length) {
+    return [];
+  }
+
+  const conflitosCandidatos = await tx.agendamento.findMany({
+    where: {
+      quadraId: Number(quadraId),
+      campeonatoId: null,
+      deletedAt: null,
+      status: { in: ['Confirmado', 'Pendente'] },
+      OR: filtrosDias
+    },
+    include: {
+      usuario: true,
+      quadra: true,
+      modalidade: true,
+      time: true
+    }
+  });
+
+  const conflitos = conflitosCandidatos.filter((agendamentoExistente) => {
+    const inicioAgendamento = paraDataValida(
+      agendamentoExistente.datahora || new Date(
+        agendamentoExistente.ano,
+        agendamentoExistente.mes - 1,
+        agendamentoExistente.dia,
+        agendamentoExistente.hora,
+        0,
+        0
+      )
+    );
+
+    return datasParaConflito.some((dataEvento) =>
+      intervalosConflitam(
+        inicioAgendamento,
+        duracaoAgendamentoEmMinutos(agendamentoExistente),
+        dataEvento,
+        60
+      )
+    );
+  });
+
+  const conflitosAtualizados = [];
+  for (const conflito of conflitos) {
+    const dataConflito = paraDataValida(
+      conflito.datahora || new Date(conflito.ano, conflito.mes - 1, conflito.dia, conflito.hora, 0, 0)
+    );
+    const motivoRecusa = montarMotivoRecusaPorPrioridadeCampeonato({
+      nomeCampeonato,
+      nomeQuadra: conflito.quadra?.nome,
+      datahora: dataConflito
+    });
+
+    const conflitoAtualizado = await tx.agendamento.update({
+      where: { id: conflito.id },
+      data: {
+        status: 'Recusado',
+        motivoRecusa
+      },
+      include: {
+        usuario: true,
+        quadra: true,
+        modalidade: true,
+        time: true
+      }
+    });
+
+    conflitosAtualizados.push(conflitoAtualizado);
+  }
+
+  return conflitosAtualizados;
+}
+
 function grupoModalidade(nomeModalidade) {
   const nome = normalizarTexto(nomeModalidade);
   if (
@@ -271,14 +403,7 @@ async function criarCampeonato(data) {
     regras
   } = data;
 
-  const listaDatasReais = ordenarDatasAsc(
-    [...new Map(
-      (Array.isArray(datasJogos) ? datasJogos : [])
-        .map(paraDataValida)
-        .filter(Boolean)
-        .map(dataItem => [obterChaveDataHora(dataItem), dataItem])
-    ).values()]
-  );
+  const listaDatasReais = normalizarDatasJogos(datasJogos);
   const timesArray = Array.isArray(times) ? times : [];
   const fotoNormalizada = String(foto || '').trim() || FOTO_PADRAO_CAMPEONATO;
   const usuarioIdNum = Number(usuarioId);
@@ -352,97 +477,23 @@ async function criarCampeonato(data) {
       modalidadeDB.nome
     );
 
-    if (listaDatasReais.length > 0) {
-      const filtrosDias = [...new Map(
-        listaDatasReais.map(dataItem => {
-          const chave = `${dataItem.getFullYear()}-${dataItem.getMonth() + 1}-${dataItem.getDate()}`;
-          return [chave, {
-            ano: dataItem.getFullYear(),
-            mes: dataItem.getMonth() + 1,
-            dia: dataItem.getDate()
-          }];
-        })
-      ).values()];
+    const conflitosAtualizados = await cancelarConflitosAgendamentoCampeonato(tx, {
+      quadraId,
+      datasJogos: listaDatasReais,
+      nomeCampeonato: nome
+    });
+    agendamentosRecusadosParaNotificar.push(...conflitosAtualizados);
 
-      const conflitosCandidatos = await tx.agendamento.findMany({
-        where: {
-          quadraId: Number(quadraId),
-          campeonatoId: null,
-          deletedAt: null,
-          status: { in: ['Confirmado', 'Pendente'] },
-          OR: filtrosDias
-        },
-        include: {
-          usuario: true,
-          quadra: true,
-          modalidade: true,
-          time: true
-        }
+    const agendamentosParaCriar = listaDatasReais.map(dataObj => {
+      const payloadAgendamento = montarPayloadAgendamentoCampeonato(dataObj, {
+        quadraId,
+        usuarioId: usuarioAgendamentoId,
+        modalidadeId: modalidadeDB.id
       });
 
-      const conflitos = conflitosCandidatos.filter((agendamentoExistente) => {
-        const inicioAgendamento = paraDataValida(
-          agendamentoExistente.datahora || new Date(
-            agendamentoExistente.ano,
-            agendamentoExistente.mes - 1,
-            agendamentoExistente.dia,
-            agendamentoExistente.hora,
-            0,
-            0
-          )
-        );
-
-        return listaDatasReais.some((dataEvento) =>
-          intervalosConflitam(
-            inicioAgendamento,
-            duracaoAgendamentoEmMinutos(agendamentoExistente),
-            dataEvento,
-            60
-          )
-        );
-      });
-
-      for (const conflito of conflitos) {
-        const dataConflito = paraDataValida(
-          conflito.datahora || new Date(conflito.ano, conflito.mes - 1, conflito.dia, conflito.hora, 0, 0)
-        );
-        const motivoRecusa = montarMotivoRecusaPorPrioridadeCampeonato({
-          nomeCampeonato: nome,
-          nomeQuadra: conflito.quadra?.nome,
-          datahora: dataConflito
-        });
-
-        const conflitoAtualizado = await tx.agendamento.update({
-          where: { id: conflito.id },
-          data: {
-            status: 'Recusado',
-            motivoRecusa
-          },
-          include: {
-            usuario: true,
-            quadra: true,
-            modalidade: true,
-            time: true
-          }
-        });
-
-        agendamentosRecusadosParaNotificar.push(conflitoAtualizado);
-      }
-    }
-
-    const agendamentosParaCriar = listaDatasReais.map(dataObj => ({
-      datahora: dataObj,
-      dia: dataObj.getDate(),
-      mes: dataObj.getMonth() + 1,
-      ano: dataObj.getFullYear(),
-      hora: dataObj.getHours(),
-      quadraId: Number(quadraId),
-      usuarioId: usuarioAgendamentoId,
-      modalidadeId: modalidadeDB.id,
-      status: "Confirmado",
-      tipo: "CAMPEONATO",
-      duracao: 1
-    }));
+      delete payloadAgendamento.campeonatoId;
+      return payloadAgendamento;
+    });
 
     const campeonato = await tx.campeonato.create({
       data: {
@@ -932,12 +983,46 @@ async function atualizarDadosCampeonato(campeonatoId, dados) {
 
   const existente = await prisma.campeonato.findUnique({
     where: { id },
-    select: { id: true }
+    include: {
+      modalidade: true,
+      quadra: true,
+      times: {
+        where: { ativo: true, deletedAt: null },
+        include: { time: true }
+      },
+      partidas: {
+        where: { status: { notIn: ['CANCELADA', 'DELETADA'] } }
+      },
+      placares: true,
+      agendamentos: {
+        where: { deletedAt: null, status: 'Confirmado' },
+        orderBy: { datahora: 'asc' }
+      }
+    }
   });
 
   if (!existente) throw new Error('Campeonato nao encontrado');
 
   const payload = {};
+  const datasJogosInformadas = Array.isArray(dados?.datasJogos)
+    ? normalizarDatasJogos(dados.datasJogos)
+    : null;
+  const agendaAtual = normalizarDatasJogos(
+    (Array.isArray(existente.agendamentos) ? existente.agendamentos : []).map((agendamento) =>
+      agendamento?.datahora || new Date(
+        agendamento.ano,
+        agendamento.mes - 1,
+        agendamento.dia,
+        agendamento.hora,
+        0,
+        0
+      )
+    )
+  );
+  const usuarioIdInformado = Number(dados?.usuarioId);
+  const usuarioAgendamentoId = Number.isFinite(usuarioIdInformado) && usuarioIdInformado > 0
+    ? usuarioIdInformado
+    : (Array.isArray(existente.agendamentos) ? existente.agendamentos.find(item => item?.usuarioId)?.usuarioId : null) || null;
 
   if (typeof dados.nome === 'string' && dados.nome.trim()) {
     payload.nome = dados.nome.trim();
@@ -952,7 +1037,10 @@ async function atualizarDadosCampeonato(campeonatoId, dados) {
   }
 
   if (dados.dataFim !== undefined) {
-    payload.dataFim = dados.dataFim ? new Date(dados.dataFim) : null;
+    payload.dataFim = dados.dataFim ? paraDataValida(dados.dataFim) : null;
+    if (dados.dataFim && !payload.dataFim) {
+      throw new Error('Data final do campeonato invalida');
+    }
   }
 
   if (typeof dados.status === 'string' && dados.status.trim()) {
@@ -964,20 +1052,181 @@ async function atualizarDadosCampeonato(campeonatoId, dados) {
     payload.status = statusNormalizado;
   }
 
-  const atualizado = await prisma.campeonato.update({
-    where: { id },
-    data: payload,
-    include: {
-      modalidade: true,
-      quadra: true,
-      times: true,
-      partidas: true,
-      placares: true
+  if (datasJogosInformadas && !datasJogosInformadas.length) {
+    throw new Error('Adicione ao menos um horario para o campeonato.');
+  }
+
+  const quadraIdFinal = payload.quadraId !== undefined ? payload.quadraId : existente.quadraId;
+  const quadraAlterada = payload.quadraId !== undefined && Number(payload.quadraId || 0) !== Number(existente.quadraId || 0);
+  const agendaFinal = datasJogosInformadas || agendaAtual;
+  const houveAtualizacaoAgenda = Array.isArray(dados?.datasJogos) || quadraAlterada;
+  const nomeCampeonatoFinal = payload.nome || existente.nome;
+
+  if (dados.quadraId !== undefined && !quadraIdFinal && (agendaAtual.length || existente.partidas.length)) {
+    throw new Error('Nao e possivel remover a quadra de um campeonato com horarios ou partidas.');
+  }
+
+  if (houveAtualizacaoAgenda && !quadraIdFinal) {
+    throw new Error('Selecione uma quadra para configurar os horarios do campeonato.');
+  }
+
+  if (datasJogosInformadas) {
+    const mapaAgendaAtual = new Map(agendaAtual.map(dataItem => [obterChaveDataHora(dataItem), dataItem]));
+    const mapaAgendaFinal = new Map(agendaFinal.map(dataItem => [obterChaveDataHora(dataItem), dataItem]));
+    const datasAdicionadas = agendaFinal.filter(dataItem => !mapaAgendaAtual.has(obterChaveDataHora(dataItem)));
+
+    if (datasAdicionadas.some(dataItem => dataItem.getTime() < Date.now())) {
+      throw new Error('Novos horarios do campeonato devem ser cadastrados a partir do momento atual.');
     }
+
+    const chavesRemovidas = [...mapaAgendaAtual.keys()].filter(chave => !mapaAgendaFinal.has(chave));
+    if (chavesRemovidas.length) {
+      const partidasForaDaAgenda = existente.partidas.filter((partida) =>
+        chavesRemovidas.includes(obterChaveDataHora(partida?.data))
+      );
+
+      if (partidasForaDaAgenda.length > 0) {
+        throw new Error('Existem partidas vinculadas a horarios removidos da agenda. Ajuste ou remova essas partidas antes de salvar.');
+      }
+    }
+
+    payload.dataInicio = agendaFinal[0];
+    if (payload.dataFim && payload.dataFim.getTime() < agendaFinal[agendaFinal.length - 1].getTime()) {
+      throw new Error('A data de finalizacao nao pode ser menor que o ultimo horario da agenda.');
+    }
+    if (dados.dataFim === undefined) {
+      payload.dataFim = agendaFinal[agendaFinal.length - 1];
+    }
+  }
+
+  const dataInicioComparacao = payload.dataInicio || existente.dataInicio;
+  if (payload.dataFim && dataInicioComparacao && payload.dataFim.getTime() < new Date(dataInicioComparacao).getTime()) {
+    throw new Error('A data final do campeonato nao pode ser menor que a data inicial.');
+  }
+
+  const agendamentosRecusadosParaNotificar = [];
+
+  const atualizado = await prisma.$transaction(async (tx) => {
+    if (houveAtualizacaoAgenda) {
+      const mapaAgendamentosExistentes = new Map(
+        existente.agendamentos.map((agendamento) => {
+          const dataAgendamento = paraDataValida(
+            agendamento?.datahora || new Date(
+              agendamento.ano,
+              agendamento.mes - 1,
+              agendamento.dia,
+              agendamento.hora,
+              0,
+              0
+            )
+          );
+
+          return [obterChaveDataHora(dataAgendamento), agendamento];
+        })
+      );
+      const mapaAgendaFinal = new Map(agendaFinal.map(dataItem => [obterChaveDataHora(dataItem), dataItem]));
+
+      const idsParaCancelar = [...mapaAgendamentosExistentes.entries()]
+        .filter(([chave]) => !mapaAgendaFinal.has(chave))
+        .map(([, agendamento]) => agendamento.id);
+      const datasParaCriar = [...mapaAgendaFinal.entries()]
+        .filter(([chave]) => !mapaAgendamentosExistentes.has(chave))
+        .map(([, dataItem]) => dataItem);
+
+      const conflitosAtualizados = await cancelarConflitosAgendamentoCampeonato(tx, {
+        quadraId: quadraIdFinal,
+        datasJogos: quadraAlterada ? agendaFinal : datasParaCriar,
+        nomeCampeonato: nomeCampeonatoFinal
+      });
+      agendamentosRecusadosParaNotificar.push(...conflitosAtualizados);
+
+      if (idsParaCancelar.length > 0) {
+        await tx.agendamento.updateMany({
+          where: { id: { in: idsParaCancelar } },
+          data: {
+            status: 'Cancelado',
+            deletedAt: new Date()
+          }
+        });
+      }
+
+      if (existente.agendamentos.length > 0) {
+        await tx.agendamento.updateMany({
+          where: {
+            campeonatoId: id,
+            deletedAt: null,
+            status: 'Confirmado'
+          },
+          data: {
+            quadraId: Number(quadraIdFinal),
+            usuarioId: usuarioAgendamentoId,
+            modalidadeId: Number(existente.modalidadeId)
+          }
+        });
+      }
+
+      if (datasParaCriar.length > 0) {
+        await tx.agendamento.createMany({
+          data: datasParaCriar.map((dataItem) =>
+            montarPayloadAgendamentoCampeonato(dataItem, {
+              quadraId: quadraIdFinal,
+              usuarioId: usuarioAgendamentoId,
+              modalidadeId: existente.modalidadeId,
+              campeonatoId: id
+            })
+          )
+        });
+      }
+
+      if (quadraAlterada) {
+        await tx.partida.updateMany({
+          where: {
+            campeonatoId: id,
+            status: { notIn: ['CANCELADA', 'DELETADA'] }
+          },
+          data: {
+            quadraId: quadraIdFinal ? Number(quadraIdFinal) : null
+          }
+        });
+      }
+    }
+
+    return tx.campeonato.update({
+      where: { id },
+      data: payload,
+      include: {
+        modalidade: true,
+        quadra: true,
+        times: {
+          where: { ativo: true, deletedAt: null },
+          include: { time: true }
+        },
+        partidas: true,
+        placares: true,
+        agendamentos: {
+          where: { deletedAt: null, status: 'Confirmado' },
+          orderBy: { datahora: 'asc' }
+        }
+      }
+    });
   });
+
+  if (agendamentosRecusadosParaNotificar.length > 0) {
+    const envios = agendamentosRecusadosParaNotificar
+      .filter(item => item?.usuario?.email)
+      .map(item => enviarEmailStatusAgendamento(item));
+
+    const resultados = await Promise.allSettled(envios);
+    resultados.forEach((resultado) => {
+      if (resultado.status === 'rejected') {
+        console.error('Erro ao enviar email de recusa por prioridade de campeonato:', resultado.reason);
+      }
+    });
+  }
 
   return {
     ...atualizado,
+    ordemClassificacao: normalizarOrdemClassificacao(atualizado.ordemClassificacao, atualizado.modalidade?.nome),
     regras: normalizarRegrasCampeonato(atualizado.regras, atualizado.modalidade?.nome)
   };
 }

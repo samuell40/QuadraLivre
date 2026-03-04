@@ -21,8 +21,8 @@ export default {
     }
 
     if (window.opener) {
-      window.opener.postMessage(payload, "http://localhost:8080");
-      //window.opener.postMessage(payload, "https://quadra-livre.vercel.app");
+      //window.opener.postMessage(payload, "https://www.quadraplaysv.com.br");
+      window.opener.postMessage(payload, "https://www.quadraplaysv.com.br");
       window.close(); 
     }
   }

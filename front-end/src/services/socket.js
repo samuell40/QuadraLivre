@@ -10,7 +10,7 @@ function resolverUrlSocket() {
   const baseUrl = String(api?.defaults?.baseURL || '').trim()
   if (baseUrl) return baseUrl.replace(/\/+$/, '')
   if (typeof window !== 'undefined') return window.location.origin
-  return 'http://localhost:3000'
+  return 'https://quadra-livre-backend.onrender.com'
 }
 
 export function obterSocket() {
