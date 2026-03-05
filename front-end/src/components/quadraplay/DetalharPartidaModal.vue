@@ -154,6 +154,7 @@ import Swal from 'sweetalert2'
 import api from '@/axios'
 import LoadingState from '@/components/loading/LoadingState.vue'
 import { obterFotoTime } from '@/utils/timeImagem'
+import logoQuadraPlay from '@/assets/logo.png'
 import {
   isStatusPartidaPendente,
   obterRotuloStatusPartida,
@@ -611,118 +612,191 @@ export default {
         throw new Error('Nao foi possivel iniciar o canvas de compartilhamento')
       }
 
+      const painelX = 46
+      const painelY = 36
+      const painelLargura = largura - 92
+      const painelAltura = altura - 86
+      const centroX = largura / 2
+      const status = this.statusLabel(partida)
+      const tituloPrincipal = this.isPartidaFinalizada
+        ? 'FIM DE JOGO!'
+        : (this.isPartidaEmAndamento ? 'PARTIDA AO VIVO' : 'RESULTADO')
+
       const gradienteFundo = ctx.createLinearGradient(0, 0, largura, altura)
-      gradienteFundo.addColorStop(0, '#0a1f5e')
-      gradienteFundo.addColorStop(0.58, '#2859d6')
-      gradienteFundo.addColorStop(1, '#0f172a')
+      gradienteFundo.addColorStop(0, '#dbeafe')
+      gradienteFundo.addColorStop(0.5, '#bfdbfe')
+      gradienteFundo.addColorStop(1, '#93c5fd')
       ctx.fillStyle = gradienteFundo
       ctx.fillRect(0, 0, largura, altura)
 
-      const brilhoTopo = ctx.createRadialGradient(largura * 0.22, 110, 40, largura * 0.22, 110, 260)
-      brilhoTopo.addColorStop(0, 'rgba(255, 255, 255, 0.16)')
-      brilhoTopo.addColorStop(1, 'rgba(255, 255, 255, 0)')
-      ctx.fillStyle = brilhoTopo
-      ctx.fillRect(0, 0, largura, 360)
+      const faixaTopo = ctx.createLinearGradient(0, 0, largura, 0)
+      faixaTopo.addColorStop(0, '#1d4ed8')
+      faixaTopo.addColorStop(0.5, '#2563eb')
+      faixaTopo.addColorStop(1, '#1e40af')
+      ctx.fillStyle = faixaTopo
+      ctx.fillRect(0, 0, largura, 68)
+      ctx.fillRect(0, altura - 68, largura, 68)
 
-      this.desenharRetanguloArredondado(ctx, 46, 122, largura - 92, altura - 210, 42)
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.28)'
+      this.desenharRetanguloArredondado(ctx, painelX, painelY, painelLargura, painelAltura, 38)
+      ctx.fillStyle = '#f8fbff'
       ctx.fill()
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)'
+      ctx.strokeStyle = 'rgba(37, 99, 235, 0.35)'
       ctx.lineWidth = 2
       ctx.stroke()
 
-      this.desenharRetanguloArredondado(ctx, 86, 168, largura - 172, 80, 24)
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.42)'
+      this.desenharRetanguloArredondado(ctx, painelX + 36, painelY + 34, painelLargura - 72, 72, 22)
+      ctx.fillStyle = '#1d4ed8'
       ctx.fill()
 
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'alphabetic'
-      ctx.fillStyle = '#ffffff'
-      ctx.font = '800 54px Montserrat, Arial, sans-serif'
-      ctx.fillText('Quadra Play', largura / 2, 92)
-      ctx.font = '500 30px Montserrat, Arial, sans-serif'
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.88)'
-      ctx.fillText('Resultado da partida', largura / 2, 126)
-
-      const status = this.statusLabel(partida)
-      this.desenharRetanguloArredondado(ctx, largura / 2 - 210, 182, 420, 54, 999)
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.52)'
-      ctx.fill()
-      ctx.font = '800 24px Montserrat, Arial, sans-serif'
-      ctx.fillStyle = '#ffffff'
-      ctx.fillText(status, largura / 2, 218)
-
+      const campeonatoNome = partida.campeonato?.nome || 'Campeonato'
+      const quadraNome = partida.quadra?.nome || 'Quadra'
+      const dataTexto = this.formatarDataPartida(partida?.data || partida?.createdAt)
       const timeANome = partida.timeA?.nome || 'Time A'
       const timeBNome = partida.timeB?.nome || 'Time B'
       const resultado = this.isPartidaAgendada
         ? 'x'
         : `${partida.pontosTimeA ?? 0} x ${partida.pontosTimeB ?? 0}`
+      const linhasGoleadores = this.obterLinhasGoleadoresCanvas()
 
       const fotoTimeAUrl = this.obterFotoTimeCanvas(partida.timeA?.foto)
       const fotoTimeBUrl = this.obterFotoTimeCanvas(partida.timeB?.foto)
 
-      const [fotoTimeA, fotoTimeB] = await Promise.all([
+      const [fotoTimeA, fotoTimeB, logoMarca] = await Promise.all([
         this.carregarImagemCanvasComFallback(fotoTimeAUrl.principal, fotoTimeAUrl.fallback),
-        this.carregarImagemCanvasComFallback(fotoTimeBUrl.principal, fotoTimeBUrl.fallback)
+        this.carregarImagemCanvasComFallback(fotoTimeBUrl.principal, fotoTimeBUrl.fallback),
+        this.carregarImagemCanvas(logoQuadraPlay)
       ])
 
-      const yCards = 312
-      const larguraCardTime = 270
-      const alturaCardTime = 372
-      const xCardA = 86
-      const xCardB = largura - xCardA - larguraCardTime
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'alphabetic'
+      ctx.font = '700 28px Montserrat, Arial, sans-serif'
+      ctx.fillStyle = '#ffffff'
+      ctx.fillText(status, centroX, painelY + 80)
 
-      this.desenharRetanguloArredondado(ctx, xCardA, yCards, larguraCardTime, alturaCardTime, 36)
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.11)'
-      ctx.fill()
-      this.desenharRetanguloArredondado(ctx, xCardB, yCards, larguraCardTime, alturaCardTime, 36)
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.11)'
-      ctx.fill()
+      ctx.font = '700 22px Montserrat, Arial, sans-serif'
+      ctx.fillStyle = '#1e3a8a'
+      const linhasCampeonatoTopo = this.quebrarTexto(ctx, campeonatoNome, painelLargura - 120).slice(0, 2)
+      linhasCampeonatoTopo.forEach((linha, indice) => {
+        ctx.fillText(linha, centroX, painelY + 148 + indice * 28)
+      })
 
-      const yTimes = yCards + 130
-      const xTimeA = xCardA + larguraCardTime / 2
-      const xTimeB = xCardB + larguraCardTime / 2
-      const raioAvatar = 84
+      ctx.shadowColor = 'rgba(30, 64, 175, 0.25)'
+      ctx.shadowBlur = 10
+      ctx.font = '900 84px Montserrat, Arial, sans-serif'
+      ctx.fillStyle = '#0f172a'
+      ctx.fillText(tituloPrincipal, centroX, painelY + 272)
+      ctx.shadowBlur = 0
+
+      const yTimes = painelY + 396
+      const xTimeA = 220
+      const xTimeB = largura - 220
+      const raioAvatar = 80
 
       this.desenharAvatarTimeCanvas(ctx, fotoTimeA, xTimeA, yTimes, raioAvatar, timeANome, '#dbeafe')
       this.desenharAvatarTimeCanvas(ctx, fotoTimeB, xTimeB, yTimes, raioAvatar, timeBNome, '#fee2e2')
 
-      ctx.fillStyle = '#ffffff'
-      ctx.font = '900 88px Montserrat, Arial, sans-serif'
-      ctx.fillText(resultado, largura / 2, yTimes + 22)
+      ctx.fillStyle = '#111827'
+      ctx.font = '900 100px Montserrat, Arial, sans-serif'
+      ctx.fillText(resultado, centroX, yTimes + 32)
 
-      const larguraTextoTime = 220
-      ctx.fillStyle = '#ffffff'
-      this.desenharNomeCompletoTime(ctx, timeANome, xTimeA, yCards + 294, larguraTextoTime)
-      this.desenharNomeCompletoTime(ctx, timeBNome, xTimeB, yCards + 294, larguraTextoTime)
+      const larguraTextoTime = 240
+      ctx.fillStyle = '#1e3a8a'
+      this.desenharNomeCompletoTime(ctx, timeANome, xTimeA, yTimes + 122, larguraTextoTime)
+      this.desenharNomeCompletoTime(ctx, timeBNome, xTimeB, yTimes + 122, larguraTextoTime)
 
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'
+      const yLinhaSecao = painelY + 640
+      ctx.strokeStyle = 'rgba(37, 99, 235, 0.35)'
       ctx.lineWidth = 2
       ctx.beginPath()
-      ctx.moveTo(120, 760)
-      ctx.lineTo(largura - 120, 760)
+      ctx.moveTo(painelX + 56, yLinhaSecao)
+      ctx.lineTo(largura - (painelX + 56), yLinhaSecao)
       ctx.stroke()
 
-      const campeonatoNome = partida.campeonato?.nome || 'Campeonato'
-      const quadraNome = partida.quadra?.nome || 'Quadra'
-      const dataTexto = this.formatarDataPartida(partida?.data || partida?.createdAt)
+      let yAtual = yLinhaSecao + 52
+      if (linhasGoleadores.length > 0) {
+        ctx.textAlign = 'center'
+        ctx.font = '800 30px Montserrat, Arial, sans-serif'
+        ctx.fillStyle = '#1d4ed8'
+        ctx.fillText('GOLS DA PARTIDA', centroX, yAtual)
+        yAtual += 44
 
-      ctx.font = '700 32px Montserrat, Arial, sans-serif'
-      ctx.fillStyle = '#ffffff'
-      const linhasCampeonato = this.quebrarTexto(ctx, campeonatoNome, largura - 180).slice(0, 3)
-      linhasCampeonato.forEach((linha, indice) => {
-        ctx.fillText(linha, largura / 2, 840 + indice * 42)
-      })
+        ctx.textAlign = 'left'
+        ctx.font = '600 24px Montserrat, Arial, sans-serif'
+        ctx.fillStyle = '#1f2937'
 
-      ctx.font = '700 30px Montserrat, Arial, sans-serif'
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.92)'
-      ctx.fillText(quadraNome, largura / 2, 982)
-      ctx.font = '600 30px Montserrat, Arial, sans-serif'
-      ctx.fillText(dataTexto, largura / 2, 1034)
+        const larguraTexto = painelLargura - 120
+        const xTexto = painelX + 60
+        const yMaximo = painelY + 865
+        let excedeuLimite = false
 
-      ctx.font = '500 22px Montserrat, Arial, sans-serif'
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.78)'
-      ctx.fillText('Gerado por Quadra Play', largura / 2, altura - 58)
+        for (const linha of linhasGoleadores) {
+          const linhasQuebradas = this.quebrarTexto(ctx, linha, larguraTexto)
+          for (const linhaQuebrada of linhasQuebradas) {
+            if (yAtual > yMaximo) {
+              excedeuLimite = true
+              break
+            }
+            ctx.fillText(linhaQuebrada, xTexto, yAtual)
+            yAtual += 34
+          }
+          if (excedeuLimite) break
+          yAtual += 4
+        }
+
+        if (excedeuLimite) {
+          ctx.fillText('...', painelX + 60, Math.min(yAtual, yMaximo))
+          yAtual = yMaximo + 20
+        }
+      } else {
+        ctx.textAlign = 'center'
+        ctx.font = '700 27px Montserrat, Arial, sans-serif'
+        ctx.fillStyle = '#1e3a8a'
+        ctx.fillText('Sem gols registrados por jogadores.', centroX, yAtual)
+        yAtual += 34
+      }
+
+      const yInfo = Math.max(yAtual + 20, painelY + 920)
+      ctx.textAlign = 'center'
+      ctx.font = '700 28px Montserrat, Arial, sans-serif'
+      ctx.fillStyle = '#1d4ed8'
+      ctx.fillText(quadraNome, centroX, yInfo)
+      ctx.font = '600 24px Montserrat, Arial, sans-serif'
+      ctx.fillStyle = '#334155'
+      ctx.fillText(dataTexto, centroX, yInfo + 34)
+
+      const yLinhaRodape = Math.min(yInfo + 56, painelY + painelAltura - 180)
+      ctx.strokeStyle = 'rgba(37, 99, 235, 0.25)'
+      ctx.beginPath()
+      ctx.moveTo(painelX + 56, yLinhaRodape)
+      ctx.lineTo(largura - (painelX + 56), yLinhaRodape)
+      ctx.stroke()
+
+      const yLogo = Math.min(yLinhaRodape + 22, painelY + painelAltura - 150)
+      if (logoMarca) {
+        const maxLogoLargura = 92
+        const maxLogoAltura = 92
+        const proporcaoLogo = logoMarca.width / logoMarca.height || 1
+        let larguraLogo = maxLogoLargura
+        let alturaLogo = Math.round(larguraLogo / proporcaoLogo)
+
+        if (alturaLogo > maxLogoAltura) {
+          alturaLogo = maxLogoAltura
+          larguraLogo = Math.round(alturaLogo * proporcaoLogo)
+        }
+
+        ctx.drawImage(
+          logoMarca,
+          Math.round(centroX - larguraLogo / 2),
+          yLogo,
+          larguraLogo,
+          alturaLogo
+        )
+      }
+
+      ctx.textAlign = 'center'
+      ctx.font = '800 44px Montserrat, Arial, sans-serif'
+      ctx.fillStyle = '#1e40af'
+      ctx.fillText('Quadra Play', centroX, altura - 96)
 
       const blob = await new Promise((resolve, reject) => {
         canvas.toBlob((arquivo) => {
@@ -749,6 +823,49 @@ export default {
         .map(j => String(j?.jogador?.nome || '').trim())
         .filter(Boolean))]
       return nomes.join(' • ')
+    },
+    obterGoleadoresComQuantidade(timeId) {
+      const id = Number(timeId)
+      if (!Number.isFinite(id) || id <= 0) return []
+
+      const mapa = new Map()
+      const jogadores = Array.isArray(this.partidaDetalhada?.jogadoresPartida)
+        ? this.partidaDetalhada.jogadoresPartida
+        : []
+
+      jogadores.forEach((jp) => {
+        if (Number(jp?.timeId) !== id) return
+        const gols = this.valorPositivo(jp?.gols)
+        if (!gols) return
+
+        const nome = String(jp?.jogador?.nome || '').trim()
+        if (!nome) return
+
+        mapa.set(nome, (mapa.get(nome) || 0) + gols)
+      })
+
+      return Array.from(mapa.entries()).map(([nome, gols]) => (
+        gols > 1 ? `${nome} (${gols})` : nome
+      ))
+    },
+    obterLinhasGoleadoresCanvas() {
+      const partida = this.partidaDetalhada || {}
+      const nomeTimeA = String(partida?.timeA?.nome || 'Time A').trim()
+      const nomeTimeB = String(partida?.timeB?.nome || 'Time B').trim()
+
+      const goleadoresA = this.obterGoleadoresComQuantidade(partida?.timeA?.id)
+      const goleadoresB = this.obterGoleadoresComQuantidade(partida?.timeB?.id)
+      const linhas = []
+
+      if (goleadoresA.length > 0) {
+        linhas.push(`${nomeTimeA}: ${goleadoresA.join(', ')}`)
+      }
+
+      if (goleadoresB.length > 0) {
+        linhas.push(`${nomeTimeB}: ${goleadoresB.join(', ')}`)
+      }
+
+      return linhas
     },
     valorPositivo(valor) {
       const numero = Number(valor)
