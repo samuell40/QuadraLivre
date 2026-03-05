@@ -65,7 +65,7 @@
             </span>
 
             <img
-              :src="quadra.foto || require('@/assets/futibinha.png')"
+              :src="quadra.foto || require('@/assets/QuadraLivre.png')"
               :alt="quadra.nome"
               class="imagem-quadra"
             />
