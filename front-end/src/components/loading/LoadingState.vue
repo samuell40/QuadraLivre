@@ -5,11 +5,7 @@
 
       <span class="loading-ball-shadow"></span>
       <div class="loading-ball-wrap">
-        <svg class="loading-ball-art" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="50" cy="50" r="44" fill="#eff6ff" stroke="#2563eb" stroke-width="8" />
-          <polygon points="50,23 63,31 59,46 41,46 37,31" fill="#2563eb" />
-          <path d="M23 44l14 2M77 44l-14 2M34 69l7-11M66 69l-7-11M29 57l10-2M71 57l-10-2" stroke="#2563eb" stroke-width="6" stroke-linecap="round" />
-        </svg>
+        <img class="loading-ball-art" :src="ballArt" alt="" />
       </div>
     </div>
 
@@ -22,12 +18,14 @@
 
 <script>
 import loadingArt from '@/assets/loading/loading.png'
+import ballArt from '@/assets/loading/bola.png'
 
 export default {
   name: 'LoadingState',
   data() {
     return {
-      loadingArt
+      loadingArt,
+      ballArt
     }
   },
   props: {
