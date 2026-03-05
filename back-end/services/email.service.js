@@ -47,7 +47,17 @@ const SMTP_FAMILY = parseNumberEnv(process.env.SMTP_FAMILY, 4);
 const SMTP_CONNECTION_TIMEOUT = parseNumberEnv(process.env.SMTP_CONNECTION_TIMEOUT, 20000);
 const SMTP_GREETING_TIMEOUT = parseNumberEnv(process.env.SMTP_GREETING_TIMEOUT, 15000);
 const SMTP_SOCKET_TIMEOUT = parseNumberEnv(process.env.SMTP_SOCKET_TIMEOUT, 30000);
+const RESEND_API_URL = String(process.env.RESEND_API_URL || 'https://api.resend.com/emails').trim();
+const RESEND_API_KEY = String(process.env.RESEND_API_KEY || '').trim();
+const RESEND_FROM_EMAIL = String(process.env.RESEND_FROM_EMAIL || '').trim();
+const RESEND_FROM_NAME = String(process.env.RESEND_FROM_NAME || '').trim();
+const EMAIL_PROVIDER = String(
+  process.env.EMAIL_PROVIDER ||
+    process.env.EMAIL_TRANSPORT ||
+    (RESEND_API_KEY ? 'resend' : 'smtp')
+).trim().toLowerCase();
 let warnedMissingSmtpPass = false;
+let warnedMissingResendApiKey = false;
 
 const TONE_MAP = {
   brand: {
@@ -390,7 +400,109 @@ function formatarHoraAgendamento(hora) {
   return `${String(hora).padStart(2, '0')}:00`;
 }
 
+function parseJsonSafe(content) {
+  try {
+    return JSON.parse(content);
+  } catch (error) {
+    return null;
+  }
+}
+
+function normalizeRecipients(value) {
+  const list = Array.isArray(value) ? value : [value];
+  return list
+    .map(item => String(item || '').trim())
+    .filter(Boolean);
+}
+
+function resolveResendFrom(from) {
+  if (!RESEND_FROM_EMAIL) return from;
+
+  const fallbackName = `Suporte - ${BRAND_NAME}`;
+  const extractedName = String(from || '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/["']/g, '')
+    .trim();
+  const senderName = (RESEND_FROM_NAME || extractedName || fallbackName).replace(/"/g, '');
+
+  return `"${senderName}" <${RESEND_FROM_EMAIL}>`;
+}
+
+async function sendWithResend({ from, to, bcc, subject, html, text }) {
+  if (!RESEND_API_KEY) {
+    if (!warnedMissingResendApiKey) {
+      warnedMissingResendApiKey = true;
+      console.warn(
+        '[email] RESEND_API_KEY nao configurado. Defina a variavel de ambiente para envio HTTP.'
+      );
+    }
+    throw new Error('RESEND_API_KEY nao configurado.');
+  }
+
+  if (typeof fetch !== 'function') {
+    throw new Error('Runtime sem suporte a fetch para envio HTTP de email.');
+  }
+
+  const toList = normalizeRecipients(to || (bcc ? SUPPORT_EMAIL : undefined));
+  const bccList = normalizeRecipients(bcc);
+
+  if (toList.length === 0 && bccList.length === 0) {
+    throw new Error('Nenhum destinatario valido para envio de email.');
+  }
+
+  const payload = {
+    from: resolveResendFrom(from),
+    to: toList,
+    bcc: bccList.length ? bccList : undefined,
+    subject,
+    html,
+    text: text || htmlToText(html),
+    reply_to: SUPPORT_EMAIL,
+  };
+
+  const response = await fetch(RESEND_API_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const rawBody = await response.text();
+  if (!response.ok) {
+    const parsedBody = parseJsonSafe(rawBody);
+    const detail =
+      parsedBody?.message ||
+      parsedBody?.error ||
+      parsedBody?.name ||
+      rawBody ||
+      'N/A';
+
+    console.error(
+      `[email] Falha RESEND (status=${response.status}) detail=${detail}`
+    );
+
+    const error = new Error(`Falha RESEND (status=${response.status}).`);
+    error.code = 'RESEND_ERROR';
+    error.status = response.status;
+    throw error;
+  }
+
+  return parseJsonSafe(rawBody) || { ok: true };
+}
+
 async function enviarEmail({ from = SUPPORT_FROM, to, bcc, subject, html, text }) {
+  if (EMAIL_PROVIDER === 'resend') {
+    return sendWithResend({ from, to, bcc, subject, html, text });
+  }
+
+  if (EMAIL_PROVIDER !== 'smtp') {
+    console.warn(
+      `[email] EMAIL_PROVIDER "${EMAIL_PROVIDER}" invalido. Usando fallback SMTP.`
+    );
+  }
+
   if (!SMTP_PASS && !warnedMissingSmtpPass) {
     warnedMissingSmtpPass = true;
     console.warn(
