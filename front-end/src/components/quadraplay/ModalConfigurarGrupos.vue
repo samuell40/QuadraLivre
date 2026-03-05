@@ -112,7 +112,7 @@
               class="grupo-time-chip"
             >
               <div class="grupo-time-chip-copy">
-                <img v-if="time.foto" :src="time.foto" :alt="time.nome" />
+                <img :src="obterFotoTimeCard(time.foto)" :alt="time.nome" />
                 <span>{{ time.nome }}</span>
               </div>
 
@@ -151,7 +151,7 @@
               @click="toggleSelecaoTimeGrupo(grupoSelecionadoAtual.grupo.id, time.id)"
             >
               <div class="grupo-multiselect-option-copy">
-                <img v-if="time.foto" :src="time.foto" :alt="time.nome" />
+                <img :src="obterFotoTimeCard(time.foto)" :alt="time.nome" />
                 <div>
                   <strong>{{ time.nome }}</strong>
                   <small>{{ time._count?.jogadores || 0 }} jogador(es)</small>
@@ -194,6 +194,7 @@
 <script>
 import api from '@/axios'
 import Swal from 'sweetalert2'
+import { obterFotoTime } from '@/utils/timeImagem'
 
 export default {
   name: 'ModalConfigurarGrupos',
@@ -250,6 +251,9 @@ export default {
     }
   },
   methods: {
+    obterFotoTimeCard(foto) {
+      return obterFotoTime(foto)
+    },
     gerarNomeGrupoPadrao(indice) {
       const alfabeto = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
       if (indice >= 0 && indice < alfabeto.length) {

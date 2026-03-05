@@ -8,6 +8,8 @@ router.post('/time', [validarJWT], verificarPermissao.devAdmin, controller.criar
 
 router.delete('/time/remover/:id', controller.removerTimeController);
 
+router.put('/time/alterar/foto', [validarJWT], verificarPermissao.devAdmin, controller.atualizarFotoTimeController);
+
 router.get('/times/modalidade/:modalidadeId', controller.listarTimesPorModalidadeController );
 
 router.get('/times', controller.getTodosTimes);

@@ -137,4 +137,28 @@ async function listarTimesPorCampeonato(campeonatoId) {
   return campeonato.times.map(t => t.time);
 }
 
-module.exports = { criarTime, removerTime, listarTimesPorModalidade, listarTodosTimes, listarTimesPorCampeonato};
+async function atualizarFotoTime(timeId, foto) {
+  const id = Number(timeId);
+
+  const time = await prisma.time.findUnique({
+    where: { id }
+  });
+
+  if (!time || time.deletedAt) {
+    throw new Error('Time não encontrado');
+  }
+
+  return prisma.time.update({
+    where: { id },
+    data: { foto }
+  });
+}
+
+module.exports = {
+  criarTime,
+  removerTime,
+  listarTimesPorModalidade,
+  listarTodosTimes,
+  listarTimesPorCampeonato,
+  atualizarFotoTime
+};

@@ -103,4 +103,31 @@ async function listarTimesPorCampeonatoController(req, res) {
   }
 }
 
-module.exports = { criarTimeController, removerTimeController, listarTimesPorModalidadeController, getTodosTimes, listarTimesPorCampeonatoController }
+async function atualizarFotoTimeController(req, res) {
+  try {
+    const { timeId, foto } = req.body;
+
+    if (!timeId) {
+      return res.status(400).json({ message: 'timeId é obrigatório' });
+    }
+
+    if (!foto) {
+      return res.status(400).json({ message: 'foto é obrigatória' });
+    }
+
+    const timeAtualizado = await time.atualizarFotoTime(timeId, foto);
+    return res.status(200).json(timeAtualizado);
+  } catch (error) {
+    console.error('Erro ao atualizar foto do time:', error);
+    return res.status(500).json({ message: error.message });
+  }
+}
+
+module.exports = {
+  criarTimeController,
+  removerTimeController,
+  listarTimesPorModalidadeController,
+  getTodosTimes,
+  listarTimesPorCampeonatoController,
+  atualizarFotoTimeController
+}

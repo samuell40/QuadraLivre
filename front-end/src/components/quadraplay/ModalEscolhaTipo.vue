@@ -100,7 +100,7 @@
 
         <div class="dropdown-custom">
           <div class="dropdown-selected" @click="abrirDropdownTimeA = !abrirDropdownTimeA">
-            <img v-if="timeASelecionadoObj?.foto" :src="timeASelecionadoObj.foto" class="avatar" />
+            <img v-if="timeASelecionadoObj" :src="obterFotoTimeCard(timeASelecionadoObj.foto)" class="avatar" />
             <span>
               {{ timeASelecionadoObj?.nome || 'Selecione o time' }}
             </span>
@@ -112,7 +112,7 @@
 
             <ul>
               <li v-for="time in timesFiltradosA" :key="time.id" @click.stop="selecionarTimeA(time)">
-                <img v-if="time.foto" :src="time.foto" class="avatar" />
+                <img :src="obterFotoTimeCard(time.foto)" class="avatar" />
                 <span>{{ time.nome }}</span>
               </li>
 
@@ -130,7 +130,7 @@
 
         <div class="dropdown-custom">
           <div class="dropdown-selected" @click="abrirDropdownTimeB = !abrirDropdownTimeB">
-            <img v-if="timeBSelecionadoObj?.foto" :src="timeBSelecionadoObj.foto" class="avatar" />
+            <img v-if="timeBSelecionadoObj" :src="obterFotoTimeCard(timeBSelecionadoObj.foto)" class="avatar" />
             <span>
               {{ timeBSelecionadoObj?.nome || 'Selecione o time' }}
             </span>
@@ -142,7 +142,7 @@
 
             <ul>
               <li v-for="time in timesFiltradosB" :key="time.id" @click.stop="selecionarTimeB(time)">
-                <img v-if="time.foto" :src="time.foto" class="avatar" />
+                <img :src="obterFotoTimeCard(time.foto)" class="avatar" />
                 <span>{{ time.nome }}</span>
               </li>
 
@@ -249,6 +249,7 @@
 import api from '@/axios'
 import Swal from 'sweetalert2'
 import SelecionarJogadores from './Partida/SelecionarJogadores.vue'
+import { obterFotoTime } from '@/utils/timeImagem'
 
 export default {
   name: 'ModalEscolherTipo',
@@ -399,6 +400,9 @@ export default {
   },
 
   methods: {
+    obterFotoTimeCard(foto) {
+      return obterFotoTime(foto)
+    },
     obterDataValida(valor) {
       if (!valor) return null
       const data = valor instanceof Date ? new Date(valor.getTime()) : new Date(valor)

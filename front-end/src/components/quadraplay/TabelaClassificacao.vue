@@ -38,7 +38,7 @@
               <tr v-for="(time, index) in grupo.times" :key="`${grupo.id}-${obterIdTime(time)}-${index}`">
                 <td class="time-info time-info-click" @click="onTimeClick(time)">
                   <span class="posicao">{{ index + 1 }}</span>
-                  <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
+                  <img :src="obterFotoTimeCard(time?.time?.foto ?? time?.foto)" class="time-image" />
                   <span class="nome-time">{{ time.time?.nome }}</span>
                 </td>
                 <td
@@ -85,7 +85,7 @@
           <tr v-for="(time, index) in times" :key="`${obterIdTime(time)}-${index}`">
             <td class="time-info time-info-click" @click="onTimeClick(time)">
               <span class="posicao">{{ index + 1 }}º</span>
-              <img v-if="time.time?.foto" :src="time.time.foto" class="time-image" />
+              <img :src="obterFotoTimeCard(time?.time?.foto ?? time?.foto)" class="time-image" />
               <span class="nome-time">{{ time.time?.nome }}</span>
             </td>
             <td
@@ -179,6 +179,7 @@ import {
   getColunasClassificacaoPorModalidade,
   resolverColunasVisiveisClassificacao
 } from '@/utils/classificacaoColunas'
+import { obterFotoTime } from '@/utils/timeImagem'
 
 export default {
   name: 'TabelaClassificacao',
@@ -287,6 +288,9 @@ export default {
     }
   },
   methods: {
+    obterFotoTimeCard(foto) {
+      return obterFotoTime(foto)
+    },
     obterIdTime(time) {
       return Number(time?.timeId ?? time?.time?.id ?? time?.id ?? 0)
     },

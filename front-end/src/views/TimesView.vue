@@ -58,7 +58,7 @@
                             <div v-for="time in times" :key="time.id" class="time-card" @click="abrirModalJogadores(time)">
                             <div class="card-conteudo">
                                 <div class="foto">
-                                    <img :src="time.foto" :alt="time.nome" />
+                                    <img :src="obterFotoTimeCard(time.foto)" :alt="time.nome" />
                                 </div>
 
                                 <div class="info">
@@ -139,6 +139,7 @@
 import NavBarHome from '@/components/NavBarHome.vue'
 import LoadingState from '@/components/loading/LoadingState.vue'
 import api from '@/axios'
+import { obterFotoTime } from '@/utils/timeImagem'
 
 export default {
     name: 'TimesHomeView',
@@ -182,6 +183,9 @@ export default {
             return String(texto)
                 .toLowerCase()
                 .replace(/(^|\s)\S/g, letra => letra.toUpperCase())
+        },
+        obterFotoTimeCard(foto) {
+            return obterFotoTime(foto)
         },
         temNumeroJogador(numero) {
             const numeroNormalizado = Number(numero)

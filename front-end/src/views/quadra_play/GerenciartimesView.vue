@@ -73,9 +73,12 @@
             <div v-else-if="times && times.length" class="lista-times">
               <div v-for="time in times" :key="time.id" class="card">
                 <div class="card-conteudo">
-                  <div class="foto" :class="{ 'foto-sem-imagem': !time.foto }">
-                    <img v-if="time.foto" :src="time.foto" :alt="time.nome" />
-                    <span v-else>{{ obterIniciaisTime(time.nome) }}</span>
+                  <div
+                    class="foto foto-click"
+                    :class="{ 'foto-sem-imagem': !time.foto }"
+                    @click.stop="gerenciarImagemTime(time)"
+                  >
+                    <img :src="obterFotoTimeCard(time.foto)" :alt="time.nome" />
                   </div>
 
                   <div class="info">
@@ -108,6 +111,13 @@
       </div>
     </div>
   </div>
+  <input
+    ref="inputTrocarImagemTime"
+    type="file"
+    accept=".jpg,.jpeg,.png"
+    style="display: none"
+    @change="handleTrocarImagemTime"
+  />
 </template>
 
 <script>
@@ -118,6 +128,7 @@ import AdicionarTimeModal from '@/components/quadraplay/times/AdicionarTimesModa
 import DetalharTimes from '@/components/quadraplay/times/DetalharTimes.vue';
 import Swal from 'sweetalert2';
 import api from '@/axios';
+import { obterFotoTime } from '@/utils/timeImagem';
 
 export default {
   name: 'GerenciartimesView',
@@ -143,6 +154,7 @@ export default {
       timeParaAdicionar: '',
       timeParaRemover: '',
       isLoadingTimes: false,
+      timeImagemAtual: null
     };
   },
   mounted() {
@@ -198,9 +210,71 @@ export default {
 
       return aartes.map(parte => parte.charAt(0).toUpperCase()).join('') || '--';
     },
+    obterFotoTimeCard(foto) {
+      return obterFotoTime(foto);
+    },
     selecionarModalidade(id) {
       if (this.modalidadeSelecionada === id) return;
       this.modalidadeSelecionada = id;
+    },
+    gerenciarImagemTime(time) {
+      Swal.fire({
+        title: 'Imagem do time',
+        text: 'O que voce deseja fazer?',
+        icon: 'question',
+        showDenyButton: true,
+        confirmButtonText: 'Trocar imagem',
+        denyButtonText: 'Ver imagem',
+        cancelButtonText: 'Cancelar',
+        showCancelButton: true
+      }).then(result => {
+        if (result.isConfirmed) {
+          this.timeImagemAtual = time;
+          this.$refs.inputTrocarImagemTime.click();
+        }
+
+        if (result.isDenied) {
+          Swal.fire({
+            imageUrl: this.obterFotoTimeCard(time.foto),
+            imageAlt: time.nome,
+            showConfirmButton: false,
+            width: 400
+          });
+        }
+      });
+    },
+    async handleTrocarImagemTime(event) {
+      const file = event.target.files[0];
+      if (!file || !this.timeImagemAtual) return;
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const uploadRes = await api.post('/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        const fotoUrl = uploadRes.data.fileUrl || uploadRes.data.url;
+        await api.put('/time/alterar/foto', {
+          timeId: this.timeImagemAtual.id,
+          foto: fotoUrl
+        });
+
+        const timeLista = this.times.find(t => Number(t.id) === Number(this.timeImagemAtual.id));
+        if (timeLista) timeLista.foto = fotoUrl;
+        if (this.timeSelecionadoDetalhe && Number(this.timeSelecionadoDetalhe.id) === Number(this.timeImagemAtual.id)) {
+          this.timeSelecionadoDetalhe.foto = fotoUrl;
+        }
+
+        Swal.fire('Sucesso', 'Imagem do time alterada com sucesso!', 'success');
+      } catch (err) {
+        console.error(err);
+        Swal.fire('Erro', 'Nao foi possivel alterar a imagem do time.', 'error');
+      } finally {
+        event.target.value = '';
+        this.timeImagemAtual = null;
+      }
     },
 
     async carregarModalidades() {
@@ -501,6 +575,16 @@ a {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.foto-click {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.foto-click:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.16);
 }
 
 .foto-sem-imagem {

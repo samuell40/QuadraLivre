@@ -1,5 +1,6 @@
 <template>
   <div class="agenda-editor-shell">
+    <fieldset class="agenda-editor-fieldset" :disabled="disabled">
     <div class="agenda-add-row">
       <div class="form-group form-group-agenda-date">
         <label for="novaDataAgendaEditor">Adicionar data</label>
@@ -169,6 +170,7 @@
     <div v-else class="estado-agenda-vazio">
       <p>Adicione ao menos uma data para configurar a agenda do campeonato.</p>
     </div>
+    </fieldset>
   </div>
 </template>
 
@@ -192,6 +194,10 @@ export default {
     minDate: {
       type: String,
       default: ''
+    },
+    disabled: {
+      type: Boolean,
+      default: false
     }
   },
   emits: ['update:modelValue'],
@@ -409,6 +415,13 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.agenda-editor-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
 }
 
 .form-group {

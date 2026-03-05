@@ -41,7 +41,7 @@
 
           <div class="placar-linha">
             <div class="time-lado time-a">
-              <img v-if="partida.timeA?.foto" :src="partida.timeA.foto" class="escudo" alt="Escudo time A" />
+              <img :src="obterFotoTimeCard(partida.timeA?.foto)" class="escudo" alt="Escudo time A" />
               <span class="nome">{{ partida.timeA?.nome }}</span>
             </div>
 
@@ -57,7 +57,7 @@
             </div>
 
             <div class="time-lado time-b">
-              <img v-if="partida.timeB?.foto" :src="partida.timeB.foto" class="escudo" alt="Escudo time B" />
+              <img :src="obterFotoTimeCard(partida.timeB?.foto)" class="escudo" alt="Escudo time B" />
               <span class="nome">{{ partida.timeB?.nome }}</span>
             </div>
           </div>
@@ -83,6 +83,7 @@
 import DetalharPartidaModal from '@/components/quadraplay/DetalharPartidaModal.vue'
 import LoadingState from '@/components/loading/LoadingState.vue'
 import { obterRotuloStatusPartida, obterStatusExibicaoPartida } from '@/utils/partidaStatus'
+import { obterFotoTime } from '@/utils/timeImagem'
 
 const STATUS_CONFIG = {
   FINALIZADA: { label: 'ENCERRADA', cls: 'status-finalizada' },
@@ -146,6 +147,9 @@ export default {
     }
   },
   methods: {
+    obterFotoTimeCard(foto) {
+      return obterFotoTime(foto)
+    },
     fechar() {
       this.$emit('update:modelValue', false)
     },

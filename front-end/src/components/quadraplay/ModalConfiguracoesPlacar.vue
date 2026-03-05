@@ -116,8 +116,8 @@
           @click="toggleTime(time.id)"
         >
           <div class="time-card-top">
-            <div v-if="time.foto" class="time-foto">
-              <img :src="time.foto" :alt="time.nome" />
+            <div class="time-foto">
+              <img :src="obterFotoTimeCard(time.foto)" :alt="time.nome" />
             </div>
 
             <div class="time-card-copy">
@@ -239,6 +239,7 @@ import {
   getChavesPadraoColunasClassificacao,
   resolverColunasVisiveisClassificacao
 } from "@/utils/classificacaoColunas"
+import { obterFotoTime } from "@/utils/timeImagem"
 
 export default {
   name: "ModalConfiguracoesCampeonato",
@@ -282,6 +283,9 @@ export default {
   },
 
   methods: {
+    obterFotoTimeCard(foto) {
+      return obterFotoTime(foto)
+    },
     fechar() {
       this.$emit("update:modelValue", false)
     },

@@ -3,7 +3,7 @@
     <div class="modal-content modal-escolha-tipo-campeonato">
       <div class="modal-header header-escolha-tipo">
         <h2 class="titulo-escolha-tipo">Escolha o Tipo de Campeonato</h2>
-        <button type="button" class="btn-close-x" @click="cancelarCadastro">x</button>
+        <button type="button" class="btn-close-x" :disabled="carregandoModalidades || carregandoQuadras || carregandoTimes || salvandoCadastro" @click="cancelarCadastro">x</button>
       </div>
 
       <div class="tipo-campeonato-lista">
@@ -67,7 +67,7 @@
       </div>
 
       <div class="botoes botoes-escolha-tipo">
-        <button type="button" class="btn-cancelar-escolha-tipo" @click="cancelarCadastro">Cancelar</button>
+        <button type="button" class="btn-cancelar-escolha-tipo" :disabled="carregandoModalidades || carregandoQuadras || carregandoTimes || salvandoCadastro" @click="cancelarCadastro">Cancelar</button>
       </div>
     </div>
   </div>
@@ -76,7 +76,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h2>Adicionar campeonato</h2>
-        <button type="button" class="btn-close-x" @click="cancelarCadastro">x</button>
+        <button type="button" class="btn-close-x" :disabled="carregandoModalidades || carregandoQuadras || carregandoTimes || salvandoCadastro" @click="cancelarCadastro">x</button>
       </div>
 
       <form @submit.prevent="abrirModalTimes">
@@ -87,6 +87,7 @@
             v-model="nomeCampeonato"
             type="text"
             placeholder="Ex: Campeonato de Futebol"
+            :disabled="carregandoTimes || salvandoCadastro"
             required
           />
         </div>
@@ -94,7 +95,8 @@
         <div class="form-row">
           <div class="form-group">
             <label for="modalidade">Modalidade</label>
-            <select id="modalidade" v-model="modalidadeSelecionada" required>
+            <select id="modalidade" v-model="modalidadeSelecionada" :disabled="carregandoModalidades || carregandoTimes || salvandoCadastro" required>
+              <option v-if="carregandoModalidades" value="" disabled>Carregando modalidades...</option>
               <option value="" disabled>Selecione a modalidade</option>
               <option v-for="modalidade in modalidades" :key="modalidade.id" :value="modalidade.id">
                 {{ modalidade.nome }}
@@ -104,8 +106,9 @@
 
           <div class="form-group">
             <label for="quadra">Quadra</label>
-            <select id="quadra" v-model="quadraSelecionada" :disabled="!modalidadeSelecionada" required>
+            <select id="quadra" v-model="quadraSelecionada" :disabled="!modalidadeSelecionada || carregandoQuadras || carregandoTimes || salvandoCadastro" required>
               <option value="" disabled v-if="!modalidadeSelecionada">Selecione uma modalidade primeiro</option>
+              <option value="" disabled v-else-if="carregandoQuadras">Carregando quadras...</option>
               <option value="" disabled v-else>Selecione a quadra</option>
               <option v-for="quadra in quadras" :key="quadra.id" :value="quadra.id">
                 {{ quadra.nome }}
@@ -124,17 +127,22 @@
         </div>
 
         <div class="botoes">
-          <button type="submit" class="btn-save">Continuar</button>
+          <button type="submit" class="btn-save" :disabled="carregandoTimes || carregandoModalidades || carregandoQuadras || salvandoCadastro">
+            <span class="btn-inline-content">
+              <span v-if="carregandoTimes" class="btn-save-spinner" aria-hidden="true"></span>
+              <span>{{ carregandoTimes ? 'Carregando...' : 'Continuar' }}</span>
+            </span>
+          </button>
         </div>
       </form>
     </div>
   </div>
 
-  <div v-if="mostrarModalTimes" class="modal-overlay" @click.self="mostrarModalTimes = false">
+  <div v-if="mostrarModalTimes" class="modal-overlay" @click.self="voltarParaDados">
     <div class="modal-content modal-times">
       <div class="modal-header">
         <h2>Selecione os times</h2>
-        <button type="button" class="btn-close-x" @click="mostrarModalTimes = false">x</button>
+        <button type="button" class="btn-close-x" :disabled="carregandoTimes || salvandoCadastro" @click="voltarParaDados">x</button>
       </div>
 
       <div class="contador">{{ timesSelecionados.length }} selecionado(s)</div>
@@ -148,8 +156,8 @@
           @click="toggleTime(time.id)"
         >
           <div class="time-card-top">
-            <div class="time-foto" v-if="time.foto">
-              <img :src="time.foto" :alt="time.nome">
+            <div class="time-foto">
+              <img :src="obterFotoTimeCard(time.foto)" :alt="time.nome">
             </div>
             <h3 class="time-nome">{{ time.nome }}</h3>
           </div>
@@ -159,28 +167,35 @@
       </div>
 
       <div class="botoes botoes-acao-dupla">
-        <button type="button" class="btn-cancelar-escolha-tipo" @click="voltarParaDados">Voltar</button>
-        <button class="btn-save" @click="abrirModalAgenda">Continuar</button>
+        <button type="button" class="btn-cancelar-escolha-tipo" :disabled="carregandoTimes || salvandoCadastro" @click="voltarParaDados">Voltar</button>
+        <button class="btn-save" :disabled="carregandoTimes || salvandoCadastro || timesSelecionados.length < 2" @click="abrirModalAgenda">Continuar</button>
       </div>
     </div>
   </div>
 
-  <div v-if="mostrarModalAgenda" class="modal-overlay" @click.self="mostrarModalAgenda = false">
+  <div v-if="mostrarModalAgenda" class="modal-overlay" @click.self="voltarParaTimes">
     <div class="modal-content modal-agenda-campeonato">
       <div class="modal-header">
         <div class="agenda-header-copy">
           <h2>Datas e horarios do campeonato</h2>
           <p class="agenda-subtitle">Configure os horarios base da quadra para esta competicao.</p>
         </div>
-        <button type="button" class="btn-close-x" @click="mostrarModalAgenda = false">x</button>
+        <button type="button" class="btn-close-x" :disabled="salvandoCadastro" @click="voltarParaTimes">x</button>
       </div>
 
-      <AgendaCampeonatoEditor v-model="agendaPorData" :min-date="dataMinimaAgenda" />
+      <AgendaCampeonatoEditor
+        v-model="agendaPorData"
+        :min-date="dataMinimaAgenda"
+        :disabled="salvandoCadastro"
+      />
 
       <div class="botoes botoes-acao-dupla">
-        <button type="button" class="btn-cancelar-escolha-tipo" @click="voltarParaTimes">Voltar</button>
+        <button type="button" class="btn-cancelar-escolha-tipo" :disabled="salvandoCadastro" @click="voltarParaTimes">Voltar</button>
         <button class="btn-save" :disabled="salvandoCadastro" @click="finalizarCadastro">
-          {{ salvandoCadastro ? 'Salvando...' : 'Criar campeonato' }}
+          <span class="btn-inline-content">
+            <span v-if="salvandoCadastro" class="btn-save-spinner" aria-hidden="true"></span>
+            <span>{{ salvandoCadastro ? 'Salvando...' : 'Criar campeonato' }}</span>
+          </span>
         </button>
       </div>
     </div>
@@ -191,6 +206,7 @@
 import Swal from 'sweetalert2'
 import api from '@/axios'
 import AgendaCampeonatoEditor from './AgendaCampeonatoEditor.vue'
+import { obterFotoTime } from '@/utils/timeImagem'
 
   export default {
   name: 'AdicionarCampeonatoModal',
@@ -226,6 +242,9 @@ import AgendaCampeonatoEditor from './AgendaCampeonatoEditor.vue'
         fim: '23:00',
         duracao: 60
       },
+      carregandoModalidades: false,
+      carregandoQuadras: false,
+      carregandoTimes: false,
       salvandoCadastro: false
     }
   },
@@ -293,6 +312,9 @@ import AgendaCampeonatoEditor from './AgendaCampeonatoEditor.vue'
   },
 
   methods: {
+    obterFotoTimeCard(foto) {
+      return obterFotoTime(foto)
+    },
     carregarUsuarioLogado() {
       try {
         this.usuarioLogado = JSON.parse(localStorage.getItem('usuario') || 'null')
@@ -320,6 +342,9 @@ import AgendaCampeonatoEditor from './AgendaCampeonatoEditor.vue'
       this.datasParaReplicarAgenda = []
       this.novoHorarioInputAgenda = ''
       this.geradorAgenda = { inicio: '07:00', fim: '23:00', duracao: 60 }
+      this.carregandoModalidades = false
+      this.carregandoQuadras = false
+      this.carregandoTimes = false
       this.salvandoCadastro = false
       this.quadras = []
     },
@@ -330,21 +355,28 @@ import AgendaCampeonatoEditor from './AgendaCampeonatoEditor.vue'
     },
 
     async carregarModalidades() {
+      this.carregandoModalidades = true
       try {
         const { data } = await api.get('/listar/modalidade')
         this.modalidades = Array.isArray(data) ? data : []
       } catch (error) {
+        this.modalidades = []
         Swal.fire('Erro', 'Erro ao carregar modalidades.', 'error')
+      } finally {
+        this.carregandoModalidades = false
       }
     },
 
     async carregarQuadras(modalidadeId) {
+      this.carregandoQuadras = true
       try {
         const { data } = await api.get(`/listar/quadras/${modalidadeId}`)
         this.quadras = Array.isArray(data) ? data : []
       } catch (error) {
         this.quadras = []
         Swal.fire('Erro', 'Erro ao carregar quadras.', 'error')
+      } finally {
+        this.carregandoQuadras = false
       }
     },
 
@@ -354,6 +386,8 @@ import AgendaCampeonatoEditor from './AgendaCampeonatoEditor.vue'
     },
 
     async abrirModalTimes() {
+      if (this.carregandoTimes || this.salvandoCadastro) return
+
       if (!this.tipoSelecionado) {
         Swal.fire('Atencao', 'Selecione o tipo do campeonato.', 'warning')
         return
@@ -364,6 +398,8 @@ import AgendaCampeonatoEditor from './AgendaCampeonatoEditor.vue'
         return
       }
 
+      this.carregandoTimes = true
+
       try {
         const { data } = await api.get(`/times/modalidade/${this.modalidadeSelecionada}`)
         this.times = Array.isArray(data) ? data : []
@@ -371,10 +407,13 @@ import AgendaCampeonatoEditor from './AgendaCampeonatoEditor.vue'
         this.mostrarModalTimes = true
       } catch (error) {
         Swal.fire('Erro', 'Erro ao carregar os times.', 'error')
+      } finally {
+        this.carregandoTimes = false
       }
     },
 
     voltarParaDados() {
+      if (this.carregandoTimes || this.salvandoCadastro) return
       this.mostrarModalTimes = false
     },
 
@@ -402,6 +441,7 @@ import AgendaCampeonatoEditor from './AgendaCampeonatoEditor.vue'
     },
 
     voltarParaTimes() {
+      if (this.salvandoCadastro) return
       this.mostrarModalAgenda = false
       this.mostrarModalTimes = true
     },
@@ -574,6 +614,8 @@ import AgendaCampeonatoEditor from './AgendaCampeonatoEditor.vue'
     },
 
     async finalizarCadastro() {
+      if (this.salvandoCadastro) return
+
       const datasJogos = this.montarDatasJogos()
 
       if (!datasJogos.length) {
@@ -610,6 +652,7 @@ import AgendaCampeonatoEditor from './AgendaCampeonatoEditor.vue'
     },
 
     cancelarCadastro() {
+      if (this.salvandoCadastro) return
       this.limparCampos()
       this.$emit('fechar')
     }
@@ -785,8 +828,30 @@ import AgendaCampeonatoEditor from './AgendaCampeonatoEditor.vue'
   font-weight: 700;
 }
 
+.btn-inline-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-save-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #ffffff;
+  border-radius: 999px;
+  animation: qpSpin 0.8s linear infinite;
+}
+
 .btn-save:disabled {
   opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-close-x:disabled,
+.btn-cancelar-escolha-tipo:disabled {
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
@@ -895,6 +960,12 @@ import AgendaCampeonatoEditor from './AgendaCampeonatoEditor.vue'
   background: rgba(59, 130, 246, 0.06);
   border-color: rgba(59, 130, 246, 0.55);
   transform: translateY(-1px);
+}
+
+.botoes-acao-dupla .btn-cancelar-escolha-tipo:disabled:hover {
+  background: transparent;
+  border-color: rgba(59, 130, 246, 0.35);
+  transform: none;
 }
 
 .contador {
@@ -1167,6 +1238,12 @@ import AgendaCampeonatoEditor from './AgendaCampeonatoEditor.vue'
   margin-top: 12px;
   color: #475569;
   font-size: 14px;
+}
+
+@keyframes qpSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {

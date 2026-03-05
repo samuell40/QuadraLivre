@@ -104,7 +104,7 @@
             </div>
 
             <!-- Rodada desktop -->
-            <div v-if="!isMobile" class="filtro-item">
+            <div v-if="!isMobile || faseAtualEhEliminatoria" class="filtro-item">
               <label class="filtro-titulo">Rodada</label>
               <select v-model="rodadaSelecionada" class="filtro-select" :disabled="!rodadas.length"
                 @change="carregarPartidasPorRodada">
@@ -117,28 +117,41 @@
           </div>
         </div>
 
-        <div class="placar-e-partidas">
+        <div class="placar-e-partidas" :class="{ 'placar-e-partidas-simples': faseAtualEhEliminatoria }">
           <div class="painel-card placar-wrapper">
             <div class="section-head">
               <div>
-                <span class="section-kicker">Classificação</span>
-                <h2>Tabela do {{ nomeCampeonato }}</h2>
-                <a>Toque em um time para abrir o histórico completo de partidas.</a>
+                <span class="section-kicker">{{ faseAtualEhEliminatoria ? 'Eliminatorias' : 'Classificacao' }}</span>
+                <h2>{{ tituloPainelClassificacao }}</h2>
+                <a>{{ subtituloPainelClassificacao }}</a>
               </div>
             </div>
 
-            <TabelaClassificacao v-if="isLoadingPlacar || (Array.isArray(placar) && placar.length > 0)" :times="placar"
+            <TabelaClassificacao v-if="!faseAtualEhEliminatoria && (isLoadingPlacar || (Array.isArray(placar) && placar.length > 0))" :times="placar"
               :loading="isLoadingPlacar" :modalidade="modalidadeNormalizada"
               :colunas-visiveis="colunasClassificacaoVisiveis"
               :grupos-config="gruposClassificacao"
               @time-click="abrirModalPartidasTime" />
+
+            <ListaPartidas
+              v-else-if="faseAtualEhEliminatoria"
+              :partidas="partidas"
+              :loading="isLoadingPartidas"
+              loading-title="Carregando confrontos eliminatorios"
+              loading-description="Buscando confrontos da rodada para montar o mata-mata."
+              empty-title="Nenhum confronto disponivel no momento."
+              empty-subtitle="Assim que as partidas forem criadas, os confrontos aparecerao aqui."
+              quadra-class="nome-quadra-home"
+              empty-align="left"
+              @time-click="abrirModalPartidasTime"
+            />
 
             <div v-else class="sem-dados-centralizado sem-dados-alinhado">
               Nenhuma tabela de classificação disponível no momento.
             </div>
           </div>
 
-          <div class="painel-card partidas-wrapper">
+          <div v-if="!faseAtualEhEliminatoria" class="painel-card partidas-wrapper">
             <div class="section-head">
               <div>
                 <span class="section-kicker">Resultados</span>
@@ -250,6 +263,51 @@ export default {
     },
     nomeRodadaSelecionada() {
       return this.rodadas.find(r => Number(r.id) === Number(this.rodadaSelecionada))?.nome || ''
+    },
+    nomeFaseSelecionadaNormalizada() {
+      return this.normalizarTexto(this.nomeFaseSelecionada)
+    },
+    faseAtualEhEliminatoria() {
+      const tipoCampeonato = this.normalizarTexto(this.campeonatoAtual?.tipo)
+      const faseAtual = this.nomeFaseSelecionadaNormalizada
+      const rodadaAtual = this.normalizarTexto(this.nomeRodadaSelecionada)
+
+      const possuiTermoEliminatoria = /(eliminat|mata ?mata|playoff)/.test(faseAtual)
+      const rodadaEhMataMata = /(dezesseis avos|oitavas|quartas|semi ?final|final|repescagem)/.test(rodadaAtual)
+
+      if (tipoCampeonato === 'eliminatorias') {
+        return true
+      }
+
+      if (tipoCampeonato === 'pontos_corridos_eliminatorias') {
+        return possuiTermoEliminatoria || rodadaEhMataMata
+      }
+
+      return possuiTermoEliminatoria
+    },
+    tituloPainelClassificacao() {
+      if (this.faseAtualEhEliminatoria) {
+        if (this.nomeRodadaSelecionada) {
+          return `Confrontos - ${this.nomeRodadaSelecionada}`
+        }
+
+        return this.nomeFaseSelecionada
+          ? `Confrontos da ${this.nomeFaseSelecionada}`
+          : 'Confrontos eliminatorios'
+      }
+
+      return `Tabela do ${this.nomeCampeonato}`
+    },
+    subtituloPainelClassificacao() {
+      if (this.faseAtualEhEliminatoria) {
+        if (this.nomeFaseSelecionada && this.nomeRodadaSelecionada) {
+          return `Fase ${this.nomeFaseSelecionada}  Rodada ${this.nomeRodadaSelecionada}. Toque em um time para abrir o historico completo de partidas.`
+        }
+
+        return 'Toque em um time para abrir o historico completo de partidas.'
+      }
+
+      return 'Toque em um time para abrir o historico completo de partidas.'
     }
   },
 
@@ -280,6 +338,13 @@ export default {
     abrirModalPartidasTime(time) {
       this.timeSelecionadoPartidas = time
       this.mostrarModalPartidasTime = true
+    },
+    normalizarTexto(valor) {
+      return String(valor || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
     },
     conectarSocket() {
       this.socket = obterSocket()
@@ -1280,6 +1345,10 @@ a {
   grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.95fr);
   gap: 20px;
   align-items: start;
+}
+
+.placar-e-partidas.placar-e-partidas-simples {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .placar-wrapper,

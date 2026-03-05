@@ -107,10 +107,25 @@
 
                   <button
                     class="btn-agendar"
-                    :disabled="quadra.interditada"
-                    @click="!quadra.interditada && abrirAgendamentoDireto(quadra)"
+                    :disabled="quadra.interditada || !!quadraEmAberturaId"
+                    @click="abrirAgendamentoDireto(quadra)"
                   >
-                    {{ quadra.interditada ? "Indisponivel" : "Agendar agora" }}
+                    <span class="btn-agendar-content">
+                      <span
+                        v-if="quadraEmAberturaId === quadra.id"
+                        class="btn-agendar-spinner"
+                        aria-hidden="true"
+                      ></span>
+                      <span>
+                        {{
+                          quadra.interditada
+                            ? "Indisponivel"
+                            : quadraEmAberturaId === quadra.id
+                              ? "Carregando..."
+                              : "Agendar agora"
+                        }}
+                      </span>
+                    </span>
                   </button>
                 </div>
               </div>
@@ -123,6 +138,9 @@
         v-if="mostrarModalAgendamento"
         :quadra="quadraSelecionada"
         :times="times"
+        :usar-dados-precarregados="true"
+        :modalidades-precarregadas="modalidadesPrecarregadasModal"
+        :grade-config-precarregada="gradeConfigPrecarregadaModal"
         @fechar="mostrarModalAgendamento = false"
         @confirmar="confirmarAgendamento"
       />
@@ -150,6 +168,11 @@ export default {
       quadraSelecionada: null,
       avisoDestaque: null,
       times: [],
+      quadraEmAberturaId: null,
+      modalidadesPrecarregadasModal: [],
+      gradeConfigPrecarregadaModal: [],
+      cacheModalidadesPorQuadra: {},
+      cacheGradePorQuadra: {},
     };
   },
 
@@ -213,15 +236,59 @@ export default {
     },
 
     async abrirAgendamentoDireto(quadra) {
+      if (!quadra || quadra.interditada || this.quadraEmAberturaId) return;
+
+      this.quadraEmAberturaId = Number(quadra.id);
       this.quadraSelecionada = quadra;
+      this.modalidadesPrecarregadasModal = [];
+      this.gradeConfigPrecarregadaModal = [];
 
-      if (this.usuario?.id) {
-        if (this.times.length === 0) {
-          await this.carregarTimes(this.usuario.id);
+      try {
+        const promessas = [this.carregarDadosAgendamentoDaQuadra(Number(quadra.id))];
+        if (this.usuario?.id && this.times.length === 0) {
+          promessas.push(this.carregarTimes(this.usuario.id));
         }
-      }
 
-      this.mostrarModalAgendamento = true;
+        const [dadosAgendamento] = await Promise.all(promessas);
+        this.modalidadesPrecarregadasModal = dadosAgendamento.modalidades;
+        this.gradeConfigPrecarregadaModal = dadosAgendamento.gradeConfig;
+        this.mostrarModalAgendamento = true;
+      } catch (error) {
+        console.error("Erro ao preparar agendamento:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Nao foi possivel abrir o agendamento",
+          text: "Tente novamente em alguns segundos.",
+          confirmButtonColor: "#1E3A8A",
+        });
+      } finally {
+        this.quadraEmAberturaId = null;
+      }
+    },
+
+    async carregarDadosAgendamentoDaQuadra(quadraId) {
+      const temModalidadesCache = Object.prototype.hasOwnProperty.call(this.cacheModalidadesPorQuadra, quadraId);
+      const temGradeCache = Object.prototype.hasOwnProperty.call(this.cacheGradePorQuadra, quadraId);
+
+      const promessaModalidades = temModalidadesCache
+        ? Promise.resolve(this.cacheModalidadesPorQuadra[quadraId])
+        : api.get(`/quadra/${quadraId}/modalidades`).then(({ data }) => (Array.isArray(data) ? data : []));
+
+      const promessaGrade = temGradeCache
+        ? Promise.resolve(this.cacheGradePorQuadra[quadraId])
+        : api.get(`/grade-horarios/${quadraId}`)
+          .then(({ data }) => (Array.isArray(data) ? data : []))
+          .catch((error) => {
+            console.warn("Sem grade configurada para a quadra:", error);
+            return [];
+          });
+
+      const [modalidades, gradeConfig] = await Promise.all([promessaModalidades, promessaGrade]);
+
+      this.cacheModalidadesPorQuadra[quadraId] = modalidades;
+      this.cacheGradePorQuadra[quadraId] = gradeConfig;
+
+      return { modalidades, gradeConfig };
     },
 
     async carregarAvisoDestaque() {
@@ -812,6 +879,22 @@ body {
   font-weight: 800;
   transition: background-color 0.2s ease, transform 0.2s ease;
   align-self: flex-start;
+}
+
+.btn-agendar-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-agendar-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.42);
+  border-top-color: #ffffff;
+  border-radius: 999px;
+  animation: spin 0.8s linear infinite;
 }
 
 .btn-agendar:hover:not(:disabled) {

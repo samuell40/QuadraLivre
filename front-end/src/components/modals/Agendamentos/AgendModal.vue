@@ -179,7 +179,10 @@ export default {
   components: { Datepicker },
   props: {
     quadra: Object,
-    times: { type: Array, default: () => [] }
+    times: { type: Array, default: () => [] },
+    usarDadosPrecarregados: { type: Boolean, default: false },
+    modalidadesPrecarregadas: { type: Array, default: () => [] },
+    gradeConfigPrecarregada: { type: Array, default: () => [] }
   },
   emits: ['confirmar', 'fechar'],
 
@@ -250,6 +253,14 @@ export default {
 
   async mounted() {
     document.body.style.overflow = 'hidden';
+
+    if (this.usarDadosPrecarregados) {
+      this.modalidades = Array.isArray(this.modalidadesPrecarregadas) ? this.modalidadesPrecarregadas : [];
+      this.gradeConfig = Array.isArray(this.gradeConfigPrecarregada) ? this.gradeConfigPrecarregada : [];
+      this.isLoadingModalidades = false;
+      return;
+    }
+
     try {
       if (this.quadra?.id) {
         const modRes = await api.get(`/quadra/${this.quadra.id}/modalidades`)

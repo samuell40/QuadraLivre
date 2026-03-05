@@ -53,7 +53,7 @@
               <h2>{{ tituloTabela }}</h2>
 
               <button
-                v-if="temGruposDefinidos"
+                v-if="temGruposDefinidos && !faseAtualEhEliminatoria"
                 type="button"
                 class="grupo-toggle grupo-toggle-mobile-only"
                 :class="{ ativo: exibirClassificacaoPorGrupo }"
@@ -71,7 +71,7 @@
           </div>
 
           <button
-            v-if="temGruposDefinidos"
+            v-if="temGruposDefinidos && !faseAtualEhEliminatoria"
             type="button"
             class="grupo-toggle grupo-toggle-desktop-only"
             :class="{ ativo: exibirClassificacaoPorGrupo }"
@@ -86,6 +86,7 @@
         </div>
 
         <TabelaClassificacao
+          v-if="!faseAtualEhEliminatoria"
           :times="Array.isArray(timesPlacar) ? timesPlacar : []"
           :loading="timesPlacar === null"
           :modalidade="modalidadeNormalizada"
@@ -93,6 +94,19 @@
           :grupos-config="gruposClassificacao"
           :exibir-por-grupos="exibirClassificacaoPorGrupo"
           empty-text="Nenhum placar encontrado para esta fase."
+          @time-click="abrirModalPartidasTime"
+        />
+
+        <ListaPartidas
+          v-else
+          :partidas="partidas"
+          :loading="isLoadingPartidas"
+          loading-title="Carregando confrontos eliminatorios"
+          loading-description="Buscando confrontos da rodada para montar o mata-mata."
+          empty-title="Nenhum confronto cadastrado nesta rodada."
+          empty-subtitle="Crie as partidas desta fase para montar as eliminatorias."
+          :enable-scroll="true"
+          empty-align="left"
           @time-click="abrirModalPartidasTime"
         />
       </div>
@@ -134,6 +148,7 @@ import ModalConfiguracoesPlacar from '@/components/quadraplay/ModalConfiguracoes
 import ModalConfigurarGrupos from '@/components/quadraplay/ModalConfigurarGrupos.vue'
 import PartidasDoTimeModal from '@/components/quadraplay/PartidasDoTimeModal.vue'
 import TabelaClassificacao from '@/components/quadraplay/TabelaClassificacao.vue'
+import ListaPartidas from '@/components/quadraplay/ListaPartidas.vue'
 import api from '@/axios'
 import {
   getColunasClassificacaoPorModalidade,
@@ -154,7 +169,8 @@ export default {
     ModalConfiguracoesPlacar,
     ModalConfigurarGrupos,
     PartidasDoTimeModal,
-    TabelaClassificacao
+    TabelaClassificacao,
+    ListaPartidas
   },
 
   data() {
@@ -247,16 +263,57 @@ export default {
       return this.rodadas.find(r => Number(r.id) === Number(this.rodadaSelecionada))?.nome || ''
     },
 
+    nomeFaseSelecionadaNormalizada() {
+      return this.normalizarTexto(this.nomeFaseSelecionada)
+    },
+
+    faseAtualEhEliminatoria() {
+      const tipoCampeonato = this.normalizarTexto(this.campeonato?.tipo)
+      const faseAtual = this.nomeFaseSelecionadaNormalizada
+      const rodadaAtual = this.normalizarTexto(this.nomeRodadaSelecionada)
+
+      const possuiTermoEliminatoria = /(eliminat|mata ?mata|playoff)/.test(faseAtual)
+      const rodadaEhMataMata = /(dezesseis avos|oitavas|quartas|semi ?final|final|repescagem)/.test(rodadaAtual)
+
+      if (tipoCampeonato === 'eliminatorias') {
+        return true
+      }
+
+      if (tipoCampeonato === 'pontos_corridos_eliminatorias') {
+        return possuiTermoEliminatoria || rodadaEhMataMata
+      }
+
+      return possuiTermoEliminatoria
+    },
+
     tituloTabela() {
+      if (this.faseAtualEhEliminatoria) {
+        if (this.nomeRodadaSelecionada) {
+          return `Confrontos - ${this.nomeRodadaSelecionada}`
+        }
+
+        return this.nomeFaseSelecionada
+          ? `Confrontos da ${this.nomeFaseSelecionada}`
+          : 'Confrontos eliminatorios'
+      }
+
       return this.nomeFaseSelecionada ? `Tabela da ${this.nomeFaseSelecionada}` : 'Tabela do campeonato'
     },
 
     subtituloTabela() {
-      if (this.nomeFaseSelecionada && this.nomeRodadaSelecionada) {
-        return `Fase ${this.nomeFaseSelecionada}  Rodada ${this.nomeRodadaSelecionada}. Toque em um time para abrir o historico comaleto de partidas.`
+      if (this.faseAtualEhEliminatoria) {
+        if (this.nomeFaseSelecionada && this.nomeRodadaSelecionada) {
+          return `Fase ${this.nomeFaseSelecionada}  Rodada ${this.nomeRodadaSelecionada}. Toque em um time para abrir o historico completo de partidas.`
+        }
+
+        return 'Toque em um time para abrir o historico completo de partidas.'
       }
 
-      return 'Toque em um time para abrir o historico comaleto de partidas.'
+      if (this.nomeFaseSelecionada && this.nomeRodadaSelecionada) {
+        return `Fase ${this.nomeFaseSelecionada}  Rodada ${this.nomeRodadaSelecionada}. Toque em um time para abrir o historico completo de partidas.`
+      }
+
+      return 'Toque em um time para abrir o historico completo de partidas.'
     }
   },
 
@@ -382,6 +439,14 @@ export default {
     alternarExibicaoGrupos() {
       if (!this.temGruposDefinidos) return
       this.exibirClassificacaoPorGrupo = !this.exibirClassificacaoPorGrupo
+    },
+
+    normalizarTexto(valor) {
+      return String(valor || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
     },
 
     mostrarColuna(chave) {
