@@ -1,7 +1,13 @@
 const nodemailer = require('nodemailer');
 
 const BRAND_NAME = 'QuadraPlay';
-const SUPPORT_EMAIL = 'quadraplaysv@gmail.com';
+const DEFAULT_SUPPORT_EMAIL = 'quadraplaysv@gmail.com';
+const SUPPORT_EMAIL = String(
+  process.env.SUPPORT_EMAIL ||
+    process.env.SMTP_FROM_EMAIL ||
+    process.env.SMTP_USER ||
+    DEFAULT_SUPPORT_EMAIL
+).trim();
 const SUPPORT_FROM = `"Suporte - ${BRAND_NAME}" <${SUPPORT_EMAIL}>`;
 const NOTICE_FROM = `"Avisos - ${BRAND_NAME}" <${SUPPORT_EMAIL}>`;
 const SITE_URL =
@@ -11,6 +17,37 @@ const SITE_URL =
   'https://quadraplaysv.com.br';
 const BRAND_LOGO_URL =
   'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/logo.png';
+
+function parseBooleanEnv(value, fallback) {
+  const normalized = String(value ?? '').trim().toLowerCase();
+
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+
+  return fallback;
+}
+
+function parseNumberEnv(value, fallback) {
+  const normalized = String(value ?? '').trim();
+  if (!normalized) return fallback;
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+const SMTP_HOST = String(
+  process.env.SMTP_HOST || process.env.MAIL_HOST || 'smtp.gmail.com'
+).trim();
+const SMTP_PORT = parseNumberEnv(process.env.SMTP_PORT || process.env.MAIL_PORT, 465);
+const SMTP_SECURE = parseBooleanEnv(process.env.SMTP_SECURE, SMTP_PORT === 465);
+const SMTP_REQUIRE_TLS = parseBooleanEnv(process.env.SMTP_REQUIRE_TLS, !SMTP_SECURE);
+const SMTP_USER = String(process.env.SMTP_USER || process.env.MAIL_USER || SUPPORT_EMAIL).trim();
+const SMTP_PASS = String(process.env.SMTP_PASS || process.env.MAIL_PASS || '').trim();
+const SMTP_FAMILY = parseNumberEnv(process.env.SMTP_FAMILY, 4);
+const SMTP_CONNECTION_TIMEOUT = parseNumberEnv(process.env.SMTP_CONNECTION_TIMEOUT, 20000);
+const SMTP_GREETING_TIMEOUT = parseNumberEnv(process.env.SMTP_GREETING_TIMEOUT, 15000);
+const SMTP_SOCKET_TIMEOUT = parseNumberEnv(process.env.SMTP_SOCKET_TIMEOUT, 30000);
+let warnedMissingSmtpPass = false;
 
 const TONE_MAP = {
   brand: {
@@ -40,10 +77,17 @@ const TONE_MAP = {
 };
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: SMTP_HOST,
+  port: SMTP_PORT,
+  secure: SMTP_SECURE,
+  requireTLS: SMTP_REQUIRE_TLS,
+  family: SMTP_FAMILY === 6 ? 6 : 4,
+  connectionTimeout: SMTP_CONNECTION_TIMEOUT,
+  greetingTimeout: SMTP_GREETING_TIMEOUT,
+  socketTimeout: SMTP_SOCKET_TIMEOUT,
   auth: {
-    user: SUPPORT_EMAIL,
-    pass: 'peqt dfif ftsa lsgu',
+    user: SMTP_USER,
+    pass: SMTP_PASS,
   },
 });
 
@@ -347,15 +391,29 @@ function formatarHoraAgendamento(hora) {
 }
 
 async function enviarEmail({ from = SUPPORT_FROM, to, bcc, subject, html, text }) {
-  return transporter.sendMail({
-    from,
-    to: to || (bcc ? SUPPORT_EMAIL : undefined),
-    bcc,
-    replyTo: SUPPORT_EMAIL,
-    subject,
-    html,
-    text: text || htmlToText(html),
-  });
+  if (!SMTP_PASS && !warnedMissingSmtpPass) {
+    warnedMissingSmtpPass = true;
+    console.warn(
+      '[email] SMTP_PASS nao configurado. Defina a variavel de ambiente para evitar falha no envio.'
+    );
+  }
+
+  try {
+    return await transporter.sendMail({
+      from,
+      to: to || (bcc ? SUPPORT_EMAIL : undefined),
+      bcc,
+      replyTo: SUPPORT_EMAIL,
+      subject,
+      html,
+      text: text || htmlToText(html),
+    });
+  } catch (error) {
+    console.error(
+      `[email] Falha SMTP (${SMTP_HOST}:${SMTP_PORT}, secure=${SMTP_SECURE}) code=${error?.code || 'N/A'} command=${error?.command || 'N/A'}`
+    );
+    throw error;
+  }
 }
 
 async function enviarEmailNovaModalidade(dev, modalidadeNome) {
