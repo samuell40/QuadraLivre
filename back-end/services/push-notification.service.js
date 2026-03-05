@@ -108,14 +108,12 @@ function montarPayloadNotificacaoPartida(payload = {}) {
     .filter(Boolean)
     .join(' | ');
   const icon = '/ico.png';
-  const image = montarUrlBannerPush(payload);
 
   return {
     title: titulo,
     body,
     icon,
     badge: '/ico.png',
-    image,
     tag: `partida-live-${partidaId}`,
     renotify: true,
     requireInteraction: !encerrada,
@@ -127,7 +125,6 @@ function montarPayloadNotificacaoPartida(payload = {}) {
       quadra,
       timeAFoto,
       timeBFoto,
-      bannerUrl: image,
       url: partidaId
         ? `/visualizarplacarhome?partidaId=${partidaId}`
         : '/visualizarplacarhome'

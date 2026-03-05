@@ -50,32 +50,46 @@ export default {
 
 <style scoped>
 .loading-state {
+  --loading-visual-size: clamp(130px, 34vw, 220px);
+  --loading-min-height: clamp(130px, 36vw, 210px);
+  --loading-title-size: clamp(22px, 6.2vw, 34px);
+  --loading-description-size: clamp(14px, 3.4vw, 17px);
+  --loading-copy-gap: 10px;
+  --loading-padding-y: clamp(18px, 4.6vw, 30px);
+  --loading-padding-x: clamp(14px, 4vw, 24px);
   width: 100%;
-  min-height: 220px;
+  min-height: var(--loading-min-height);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 24px;
-  padding: 40px 28px;
+  gap: clamp(10px, 2.8vw, 20px);
+  padding: var(--loading-padding-y) var(--loading-padding-x);
   text-align: center;
   border-radius: 28px;
   border: 1.5px dashed rgba(148, 163, 184, 0.34);
   background: rgba(248, 250, 252, 0.9);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.76);
+  overflow: hidden;
+  container-type: inline-size;
 }
 
 .loading-state--compact {
-  min-height: 170px;
-  gap: 18px;
-  padding: 28px 22px;
+  --loading-visual-size: clamp(92px, 30vw, 148px);
+  --loading-min-height: clamp(98px, 28vw, 148px);
+  --loading-title-size: clamp(18px, 5.2vw, 24px);
+  --loading-description-size: clamp(12px, 3.2vw, 14px);
+  --loading-copy-gap: 8px;
+  --loading-padding-y: clamp(12px, 3.4vw, 18px);
+  --loading-padding-x: clamp(12px, 3.4vw, 18px);
   border-radius: 22px;
 }
 
 .loading-illustration {
   position: relative;
-  width: min(320px, 84vw);
-  aspect-ratio: 4 / 3;
+  width: min(100%, var(--loading-visual-size));
+  aspect-ratio: 16 / 10;
+  max-height: 138px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -83,7 +97,7 @@ export default {
 }
 
 .loading-state--compact .loading-illustration {
-  width: min(220px, 72vw);
+  max-height: 92px;
 }
 
 .loading-player-art {
@@ -142,39 +156,33 @@ export default {
   width: 20%;
   right: 14%;
   bottom: 18.5%;
-  min-width: 28px;
-  max-width: 48px;
+  min-width: 20px;
+  max-width: 32px;
 }
 
 .loading-copy {
   display: grid;
-  gap: 12px;
+  gap: var(--loading-copy-gap);
+  max-width: min(100%, 560px);
 }
 
 .loading-title {
   margin: 0;
   color: #0f172a;
-  font-size: clamp(26px, 3vw, 38px);
+  font-size: var(--loading-title-size);
   font-weight: 800;
-  line-height: 1.04;
-  letter-spacing: -0.04em;
-}
-
-.loading-state--compact .loading-title {
-  font-size: clamp(22px, 2vw, 28px);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
 }
 
 .loading-description {
   margin: 0;
-  max-width: 620px;
+  max-width: min(100%, 520px);
   color: #64748b;
-  font-size: clamp(15px, 1.5vw, 18px);
-  line-height: 1.6;
-}
-
-.loading-state--compact .loading-description {
-  max-width: 480px;
-  font-size: 14px;
+  font-size: var(--loading-description-size);
+  line-height: 1.45;
+  text-wrap: pretty;
 }
 
 @keyframes ballSpin {
@@ -215,39 +223,51 @@ export default {
   }
 }
 
+@supports (width: 1cqw) {
+  .loading-state {
+    --loading-visual-size: clamp(106px, 40cqw, 196px);
+    --loading-min-height: clamp(118px, 52cqw, 196px);
+    --loading-title-size: clamp(18px, 7cqw, 30px);
+    --loading-description-size: clamp(12px, 3.8cqw, 16px);
+  }
+
+  .loading-state--compact {
+    --loading-visual-size: clamp(76px, 34cqw, 132px);
+    --loading-min-height: clamp(88px, 42cqw, 138px);
+    --loading-title-size: clamp(16px, 5.4cqw, 21px);
+    --loading-description-size: clamp(11px, 3.4cqw, 13px);
+  }
+}
+
+@container (max-width: 360px) {
+  .loading-state--compact .loading-description {
+    display: none;
+  }
+
+  .loading-state--compact .loading-copy {
+    gap: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-ball-shadow,
+  .loading-ball-wrap,
+  .loading-ball-art {
+    animation: none;
+  }
+}
+
 @media (max-width: 768px) {
   .loading-state {
-    min-height: 200px;
-    gap: 18px;
-    padding: 32px 20px;
     border-radius: 24px;
   }
 
   .loading-state--compact {
-    min-height: 150px;
-    gap: 14px;
-    padding: 24px 18px;
     border-radius: 20px;
   }
 
-  .loading-illustration {
-    width: min(240px, 86vw);
-  }
-
-  .loading-state--compact .loading-illustration {
-    width: min(185px, 70vw);
-  }
-
-  .loading-title {
-    font-size: 24px;
-  }
-
-  .loading-state--compact .loading-title {
-    font-size: 20px;
-  }
-
-  .loading-description {
-    font-size: 14px;
+  .loading-state--compact .loading-description {
+    line-height: 1.35;
   }
 }
 </style>
