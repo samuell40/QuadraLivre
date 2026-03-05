@@ -153,6 +153,7 @@
 import Swal from 'sweetalert2'
 import api from '@/axios'
 import LoadingState from '@/components/loading/LoadingState.vue'
+import { obterFotoTime } from '@/utils/timeImagem'
 import {
   isStatusPartidaPendente,
   obterRotuloStatusPartida,
@@ -297,7 +298,8 @@ export default {
           showCancelButton: true,
           confirmButtonText: 'Instagram',
           denyButtonText: 'WhatsApp',
-          cancelButtonText: 'Cancelar'
+          cancelButtonText: 'Cancelar',
+          zIndex: 6000
         })
 
         if (escolha.isConfirmed) {
@@ -309,15 +311,20 @@ export default {
         }
       } catch (error) {
         console.error('Erro ao compartilhar resultado da partida:', error)
-        Swal.fire('Erro', 'Nao foi possivel gerar a imagem para compartilhar.', 'error')
+        Swal.fire({
+          title: 'Erro',
+          text: 'Nao foi possivel gerar a imagem para compartilhar.',
+          icon: 'error',
+          zIndex: 6000
+        })
       } finally {
         this.loadingCompartilhamento = false
       }
     },
     async gerarArquivoCompartilhamento() {
       const blob = await this.gerarImagemResultadoBlob()
-      const arquivoNome = `resultado-partida-${this.partidaIdNormalizado || 'quadraplay'}.png`
-      const arquivo = new File([blob], arquivoNome, { type: 'image/png' })
+      const arquivoNome = `resultado-partida-${this.partidaIdNormalizado || 'quadraplay'}.jpg`
+      const arquivo = new File([blob], arquivoNome, { type: 'image/jpeg' })
       const url = URL.createObjectURL(blob)
       setTimeout(() => URL.revokeObjectURL(url), 60_000)
 
@@ -363,7 +370,12 @@ export default {
         const linkWhatsApp = `https://wa.me/?text=${encodeURIComponent(payload.texto)}`
         window.open(linkWhatsApp, '_blank', 'noopener,noreferrer')
         this.baixarImagemCompartilhamento(payload.url, payload.arquivoNome)
-        await Swal.fire('Imagem pronta', 'Abrimos o WhatsApp e baixamos a imagem para voce anexar.', 'info')
+        await Swal.fire({
+          title: 'Imagem pronta',
+          text: 'Abrimos o WhatsApp e baixamos a imagem para voce anexar.',
+          icon: 'info',
+          zIndex: 6000
+        })
         return
       }
 
@@ -375,17 +387,37 @@ export default {
       } catch (error) {
         console.warn('Nao foi possivel copiar a legenda automaticamente:', error)
       }
-      await Swal.fire('Imagem pronta', 'A imagem foi baixada. Abra o Instagram e selecione na galeria.', 'info')
+      await Swal.fire({
+        title: 'Imagem pronta',
+        text: 'A imagem foi baixada. Abra o Instagram e selecione na galeria.',
+        icon: 'info',
+        zIndex: 6000
+      })
     },
     baixarImagemCompartilhamento(url, arquivoNome) {
       if (!url) return
 
       const link = document.createElement('a')
       link.href = url
-      link.download = arquivoNome || 'resultado-partida.png'
+      link.download = arquivoNome || 'resultado-partida.jpg'
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+    },
+    carregarImagemCanvas(url) {
+      return new Promise((resolve) => {
+        const src = String(url || '').trim()
+        if (!src) {
+          resolve(null)
+          return
+        }
+
+        const imagem = new Image()
+        imagem.crossOrigin = 'anonymous'
+        imagem.onload = () => resolve(imagem)
+        imagem.onerror = () => resolve(null)
+        imagem.src = src
+      })
     },
     desenharRetanguloArredondado(ctx, x, y, largura, altura, raio) {
       const r = Math.min(raio, largura / 2, altura / 2)
@@ -431,10 +463,59 @@ export default {
       if (partes.length === 1) return partes[0].slice(0, 3).toUpperCase()
       return partes.slice(0, 3).map(parte => parte.charAt(0).toUpperCase()).join('')
     },
+    desenharAvatarTimeCanvas(ctx, imagem, x, y, raio, nomeTime, corFallback) {
+      ctx.save()
+      ctx.beginPath()
+      ctx.arc(x, y, raio, 0, Math.PI * 2)
+      ctx.closePath()
+      ctx.clip()
+
+      if (imagem) {
+        ctx.drawImage(imagem, x - raio, y - raio, raio * 2, raio * 2)
+      } else {
+        const gradiente = ctx.createLinearGradient(x - raio, y - raio, x + raio, y + raio)
+        gradiente.addColorStop(0, corFallback)
+        gradiente.addColorStop(1, '#ffffff')
+        ctx.fillStyle = gradiente
+        ctx.fillRect(x - raio, y - raio, raio * 2, raio * 2)
+
+        ctx.fillStyle = '#0f172a'
+        ctx.font = `800 ${Math.max(28, Math.round(raio * 0.7))}px Montserrat, Arial, sans-serif`
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(this.obterSiglaTime(nomeTime), x, y + 2)
+      }
+      ctx.restore()
+
+      ctx.beginPath()
+      ctx.arc(x, y, raio, 0, Math.PI * 2)
+      ctx.lineWidth = 6
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)'
+      ctx.stroke()
+    },
+    desenharNomeCompletoTime(ctx, nome, x, yInicial, larguraMaxima) {
+      const nomeCompleto = String(nome || '').trim() || 'Time'
+      let tamanhoFonte = 40
+      let linhas = []
+
+      while (tamanhoFonte >= 22) {
+        ctx.font = `700 ${tamanhoFonte}px Montserrat, Arial, sans-serif`
+        linhas = this.quebrarTexto(ctx, nomeCompleto, larguraMaxima)
+        if (linhas.length <= 4) break
+        tamanhoFonte -= 2
+      }
+
+      const alturaLinha = Math.round(tamanhoFonte * 1.18)
+      linhas.forEach((linha, indice) => {
+        ctx.fillText(linha, x, yInicial + indice * alturaLinha)
+      })
+
+      return linhas.length
+    },
     async gerarImagemResultadoBlob() {
       const partida = this.partidaDetalhada || {}
-      const largura = 1080
-      const altura = 1350
+      const largura = 900
+      const altura = 1200
       const canvas = document.createElement('canvas')
       canvas.width = largura
       canvas.height = altura
@@ -444,34 +525,44 @@ export default {
         throw new Error('Nao foi possivel iniciar o canvas de compartilhamento')
       }
 
-      const gradienteFundo = ctx.createLinearGradient(0, 0, 0, altura)
-      gradienteFundo.addColorStop(0, '#0f172a')
-      gradienteFundo.addColorStop(1, '#1d4ed8')
+      const gradienteFundo = ctx.createLinearGradient(0, 0, largura, altura)
+      gradienteFundo.addColorStop(0, '#0b132b')
+      gradienteFundo.addColorStop(0.55, '#1d4ed8')
+      gradienteFundo.addColorStop(1, '#0f172a')
       ctx.fillStyle = gradienteFundo
       ctx.fillRect(0, 0, largura, altura)
 
-      this.desenharRetanguloArredondado(ctx, 70, 170, largura - 140, altura - 270, 42)
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.12)'
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.09)'
+      ctx.beginPath()
+      ctx.arc(90, 90, 60, 0, Math.PI * 2)
       ctx.fill()
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'
+      ctx.beginPath()
+      ctx.arc(largura - 80, 180, 90, 0, Math.PI * 2)
+      ctx.fill()
+
+      this.desenharRetanguloArredondado(ctx, 52, 120, largura - 104, altura - 220, 38)
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.14)'
+      ctx.fill()
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.24)'
       ctx.lineWidth = 2
       ctx.stroke()
 
       ctx.textAlign = 'center'
+      ctx.textBaseline = 'alphabetic'
       ctx.fillStyle = '#ffffff'
-      ctx.font = '700 52px Montserrat, Arial, sans-serif'
-      ctx.fillText('Quadra Play', largura / 2, 110)
-      ctx.font = '500 30px Montserrat, Arial, sans-serif'
+      ctx.font = '800 46px Montserrat, Arial, sans-serif'
+      ctx.fillText('Quadra Play', largura / 2, 86)
+      ctx.font = '500 24px Montserrat, Arial, sans-serif'
       ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
-      ctx.fillText('Resultado da partida', largura / 2, 154)
+      ctx.fillText('Resultado da partida', largura / 2, 116)
 
       const status = this.statusLabel(partida)
-      this.desenharRetanguloArredondado(ctx, largura / 2 - 220, 240, 440, 56, 999)
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)'
+      this.desenharRetanguloArredondado(ctx, largura / 2 - 190, 178, 380, 52, 999)
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.48)'
       ctx.fill()
-      ctx.font = '700 26px Montserrat, Arial, sans-serif'
+      ctx.font = '800 22px Montserrat, Arial, sans-serif'
       ctx.fillStyle = '#ffffff'
-      ctx.fillText(status, largura / 2, 277)
+      ctx.fillText(status, largura / 2, 212)
 
       const timeANome = partida.timeA?.nome || 'Time A'
       const timeBNome = partida.timeB?.nome || 'Time B'
@@ -479,75 +570,60 @@ export default {
         ? 'x'
         : `${partida.pontosTimeA ?? 0} x ${partida.pontosTimeB ?? 0}`
 
-      const yTimes = 525
-      const xTimeA = 270
-      const xTimeB = largura - 270
-      const raioAvatar = 90
+      const [fotoTimeA, fotoTimeB] = await Promise.all([
+        this.carregarImagemCanvas(obterFotoTime(partida.timeA?.foto)),
+        this.carregarImagemCanvas(obterFotoTime(partida.timeB?.foto))
+      ])
 
-      ctx.beginPath()
-      ctx.arc(xTimeA, yTimes, raioAvatar, 0, Math.PI * 2)
-      ctx.fillStyle = '#dbeafe'
-      ctx.fill()
-      ctx.beginPath()
-      ctx.arc(xTimeB, yTimes, raioAvatar, 0, Math.PI * 2)
-      ctx.fillStyle = '#fee2e2'
-      ctx.fill()
+      const yTimes = 430
+      const xTimeA = 220
+      const xTimeB = largura - 220
+      const raioAvatar = 82
 
-      ctx.fillStyle = '#1e3a8a'
-      ctx.font = '800 44px Montserrat, Arial, sans-serif'
-      ctx.fillText(this.obterSiglaTime(timeANome), xTimeA, yTimes + 14)
-      ctx.fillStyle = '#b91c1c'
-      ctx.fillText(this.obterSiglaTime(timeBNome), xTimeB, yTimes + 14)
+      this.desenharAvatarTimeCanvas(ctx, fotoTimeA, xTimeA, yTimes, raioAvatar, timeANome, '#dbeafe')
+      this.desenharAvatarTimeCanvas(ctx, fotoTimeB, xTimeB, yTimes, raioAvatar, timeBNome, '#fee2e2')
 
       ctx.fillStyle = '#ffffff'
-      ctx.font = '800 92px Montserrat, Arial, sans-serif'
-      ctx.fillText(resultado, largura / 2, yTimes + 26)
+      ctx.font = '900 86px Montserrat, Arial, sans-serif'
+      ctx.fillText(resultado, largura / 2, yTimes + 22)
 
       const larguraTextoTime = 300
-      ctx.font = '700 40px Montserrat, Arial, sans-serif'
       ctx.fillStyle = '#ffffff'
-      const linhasTimeA = this.quebrarTexto(ctx, timeANome, larguraTextoTime).slice(0, 2)
-      const linhasTimeB = this.quebrarTexto(ctx, timeBNome, larguraTextoTime).slice(0, 2)
-
-      linhasTimeA.forEach((linha, indice) => {
-        ctx.fillText(linha, xTimeA, 700 + indice * 46)
-      })
-      linhasTimeB.forEach((linha, indice) => {
-        ctx.fillText(linha, xTimeB, 700 + indice * 46)
-      })
+      this.desenharNomeCompletoTime(ctx, timeANome, xTimeA, 560, larguraTextoTime)
+      this.desenharNomeCompletoTime(ctx, timeBNome, xTimeB, 560, larguraTextoTime)
 
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'
       ctx.lineWidth = 2
       ctx.beginPath()
-      ctx.moveTo(160, 840)
-      ctx.lineTo(largura - 160, 840)
+      ctx.moveTo(120, 770)
+      ctx.lineTo(largura - 120, 770)
       ctx.stroke()
 
       const campeonatoNome = partida.campeonato?.nome || 'Campeonato'
       const quadraNome = partida.quadra?.nome || 'Quadra'
       const dataTexto = this.formatarDataPartida(partida?.data || partida?.createdAt)
 
-      ctx.font = '600 34px Montserrat, Arial, sans-serif'
+      ctx.font = '700 30px Montserrat, Arial, sans-serif'
       ctx.fillStyle = '#ffffff'
-      const linhasCampeonato = this.quebrarTexto(ctx, campeonatoNome, largura - 240).slice(0, 2)
+      const linhasCampeonato = this.quebrarTexto(ctx, campeonatoNome, largura - 180).slice(0, 3)
       linhasCampeonato.forEach((linha, indice) => {
-        ctx.fillText(linha, largura / 2, 925 + indice * 44)
+        ctx.fillText(linha, largura / 2, 840 + indice * 40)
       })
 
-      ctx.font = '500 30px Montserrat, Arial, sans-serif'
+      ctx.font = '600 28px Montserrat, Arial, sans-serif'
       ctx.fillStyle = 'rgba(255, 255, 255, 0.92)'
-      ctx.fillText(quadraNome, largura / 2, 1038)
-      ctx.fillText(dataTexto, largura / 2, 1090)
+      ctx.fillText(quadraNome, largura / 2, 980)
+      ctx.fillText(dataTexto, largura / 2, 1030)
 
-      ctx.font = '500 22px Montserrat, Arial, sans-serif'
+      ctx.font = '500 20px Montserrat, Arial, sans-serif'
       ctx.fillStyle = 'rgba(255, 255, 255, 0.78)'
-      ctx.fillText('Gerado por Quadra Play', largura / 2, altura - 80)
+      ctx.fillText('Gerado por Quadra Play', largura / 2, altura - 64)
 
       const blob = await new Promise((resolve, reject) => {
         canvas.toBlob((arquivo) => {
           if (arquivo) resolve(arquivo)
           else reject(new Error('Falha ao gerar imagem da partida'))
-        }, 'image/png')
+        }, 'image/jpeg', 0.92)
       })
 
       return blob
