@@ -777,29 +777,25 @@ export default {
 
         const { data } = await api.put(`/partidas/${partidaSelecionada.id}/status`, payload)
         const partidaResposta = data?.partida && typeof data.partida === 'object' ? data.partida : data
-        let partidaAtualizada = partidaSelecionada
 
         if (partidaSelecionada && partidaResposta && typeof partidaResposta === 'object') {
           Object.assign(partidaSelecionada, partidaResposta)
-          partidaAtualizada = partidaSelecionada
-        } else if (partidaResposta && typeof partidaResposta === 'object') {
-          partidaAtualizada = partidaResposta
         }
 
-        const deveAbrirEscalacaoInicial =
+        const iniciouSemEscalacao =
           this.novoStatus === 'EM_ANDAMENTO' &&
           this.isStatusPartidaPendente(statusAnterior)
 
         this.fecharModalStatus()
 
-        if (deveAbrirEscalacaoInicial) {
-          try {
-            await this.abrirEscalacaoInicial(partidaAtualizada)
-          } catch (error) {
-            console.error(error)
-            const mensagem = error?.response?.data?.error || 'O status foi atualizado, mas não foi possível carregar a seleção de jogadores.'
-            Swal.fire('Erro', mensagem, 'error')
-          }
+        if (iniciouSemEscalacao) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Status atualizado',
+            text: 'A partida foi iniciada. A selecao de jogadores e opcional.',
+            timer: 1800,
+            showConfirmButton: false
+          })
           return
         }
 
@@ -927,9 +923,20 @@ export default {
           const regraJogadores = this.obterRegraJogadoresPorPartida(partidaObj)
 
           if (!jogadoresSelecionados.length && !regraJogadores?.opcional) {
-            this.partidaAcessandoId = null
-            await this.abrirEscalacaoInicial(partidaObj)
-            return
+            const resultado = await Swal.fire({
+              title: 'Partida sem jogadores',
+              text: 'Deseja selecionar jogadores agora? Voce pode continuar sem selecao.',
+              icon: 'question',
+              showCancelButton: true,
+              confirmButtonText: 'Selecionar agora',
+              cancelButtonText: 'Continuar sem selecao'
+            })
+
+            if (resultado.isConfirmed) {
+              this.partidaAcessandoId = null
+              await this.abrirEscalacaoInicial(partidaObj)
+              return
+            }
           }
         }
 

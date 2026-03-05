@@ -1,8 +1,17 @@
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import router from './router';
+import { bumpDataVersion } from './services/dataVersion';
 
 const isDev = import.meta.env.DEV;
+const METODOS_MUTACAO = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+function deveInvalidarDados(config = {}) {
+  if (!config || config.skipDataVersionBump) return false;
+
+  const metodo = String(config.method || 'get').toUpperCase();
+  return METODOS_MUTACAO.has(metodo);
+}
 
 const api = axios.create({
   baseURL: 'https://quadra-livre-backend.onrender.com',
@@ -24,7 +33,15 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (deveInvalidarDados(response.config)) {
+      const metodo = String(response.config?.method || '').toUpperCase();
+      const url = String(response.config?.url || '');
+      bumpDataVersion(`${metodo} ${url}`.trim());
+    }
+
+    return response;
+  },
   (error) => {
     const silent = Boolean(error.config?.silent);
 

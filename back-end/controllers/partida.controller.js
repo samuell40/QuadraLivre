@@ -1,5 +1,54 @@
 const partidas = require('../services/partida.service');
-const { emitirAtualizacaoCampeonato, emitirNotificacaoPartidaCriada } = require('../socket');
+const {
+  emitirAtualizacaoCampeonato,
+  emitirNotificacaoPartidaAoVivo
+} = require('../socket');
+
+const STATUS_PARTIDA_ENCERRADA = new Set(['FINALIZADA', 'CANCELADA', 'DELETADA']);
+
+function montarPayloadNotificacaoAoVivo(partida = {}, tipo = 'PARTIDA_ATUALIZADA') {
+  const status = String(partida?.status || '').toUpperCase();
+  const payload = {
+    tipo,
+    partidaId: Number(partida?.id || 0),
+    campeonatoId: Number(partida?.campeonatoId || 0) || null,
+    campeonatoNome: String(partida?.campeonato?.nome || ''),
+    timeA: String(partida?.timeA?.nome || 'Time A'),
+    timeB: String(partida?.timeB?.nome || 'Time B'),
+    pontosTimeA: Number(partida?.pontosTimeA ?? 0),
+    pontosTimeB: Number(partida?.pontosTimeB ?? 0),
+    status,
+    encerrada: STATUS_PARTIDA_ENCERRADA.has(status),
+    quadra: String(partida?.quadra?.nome || '')
+  };
+
+  return payload;
+}
+
+async function emitirNotificacaoAoVivoPartida(partidaId, tipo = 'PARTIDA_ATUALIZADA', partidaSnapshot = null) {
+  const idNum = Number(partidaId || partidaSnapshot?.id || 0);
+  if (!idNum) return;
+
+  let partida = partidaSnapshot;
+
+  try {
+    const temDadosBasicos = Boolean(partida?.timeA?.nome) && Boolean(partida?.timeB?.nome);
+
+    if (!temDadosBasicos) {
+      try {
+        partida = await partidas.retornarPartida(idNum);
+      } catch (errorRetorno) {
+        partida = await partidas.detalharPartida(idNum);
+      }
+    }
+
+    if (!partida) return;
+
+    emitirNotificacaoPartidaAoVivo(montarPayloadNotificacaoAoVivo(partida, tipo));
+  } catch (error) {
+    console.warn('[socket] falha ao emitir notificacao ao vivo da partida:', idNum, error?.message || error);
+  }
+}
 
 async function criarPartidaController(req, res) {
   try {
@@ -19,15 +68,7 @@ async function criarPartidaController(req, res) {
       rodadaId: partida?.rodadaId
     });
 
-    emitirNotificacaoPartidaCriada({
-      partidaId: partida?.id,
-      campeonatoId: partida?.campeonatoId,
-      campeonatoNome: partida?.campeonato?.nome,
-      timeA: partida?.timeA?.nome,
-      timeB: partida?.timeB?.nome,
-      pontosTimeA: Number(partida?.pontosTimeA ?? 0),
-      pontosTimeB: Number(partida?.pontosTimeB ?? 0)
-    });
+    emitirNotificacaoAoVivoPartida(partida?.id, 'PARTIDA_CRIADA', partida);
 
     res.status(201).json(partida);
   } catch (error) {
@@ -51,6 +92,8 @@ async function iniciarPartidaController(req, res) {
       rodadaId: partida?.rodadaId
     });
 
+    emitirNotificacaoAoVivoPartida(partidaId, 'PARTIDA_INICIADA', partida);
+
     res.status(200).json(partida);
 
   } catch (error) {
@@ -71,6 +114,8 @@ async function finalizarPartidaController(req, res) {
       faseId: result?.partida?.faseId,
       rodadaId: result?.partida?.rodadaId
     })
+
+    emitirNotificacaoAoVivoPartida(id, 'PARTIDA_FINALIZADA', result?.partida)
 
     return res.json(result)
   } catch (error) {
@@ -109,6 +154,8 @@ async function atualizarParcialController(req, res) {
         pontosTimeA: pontosDepoisA,
         pontosTimeB: pontosDepoisB
       });
+
+      emitirNotificacaoAoVivoPartida(id, 'PLACAR_ATUALIZADO', partidaAtualizada);
     }
 
     return res.json(partidaAtualizada);
@@ -367,6 +414,14 @@ async function alterarStatusPartidaController(req, res) {
       rodadaId: partida?.rodadaId
     });
 
+    const tipoNotificacaoAoVivo = status === 'FINALIZADA'
+      ? 'PARTIDA_FINALIZADA'
+      : status === 'EM_ANDAMENTO'
+        ? 'PARTIDA_INICIADA'
+        : 'STATUS_PARTIDA_ATUALIZADO';
+
+    emitirNotificacaoAoVivoPartida(id, tipoNotificacaoAoVivo, partida);
+
     return res.json({
       message: 'Status da partida atualizado com sucesso',
       partida
@@ -390,6 +445,8 @@ async function removerPartidaController(req, res) {
       faseId: partida?.faseId,
       rodadaId: partida?.rodadaId
     });
+
+    emitirNotificacaoAoVivoPartida(id, 'PARTIDA_REMOVIDA', partida);
 
     return res.json({
       message: 'Partida removida com sucesso',

@@ -115,15 +115,6 @@
               <span class="nav-text">Gerenciar Usuarios</span>
             </router-link>
 
-            <router-link to="/modalidades" class="nav-link" :class="{ active: isActive('/modalidades') }"
-              @click="closeSidebar">
-              <span class="nav-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <path d="M7 4h10l3 5l-8 11L4 9zM7 4l5 16M17 4l-5 16M4 9h16" />
-                </svg>
-              </span>
-              <span class="nav-text">Gerenciar Modalidades</span>
-            </router-link>
           </div>
         </section>
       </nav>
@@ -149,7 +140,7 @@ import router from "@/router";
 
 const ROTAS_CATEGORIA = {
   agendamentos: ["/agendamentos", "/agendarquadrasadm", "/horarios"],
-  admin: ["/gerenciarquadras", "/usuarios", "/modalidades"],
+  admin: ["/gerenciarquadras", "/usuarios"],
 };
 
 export default {

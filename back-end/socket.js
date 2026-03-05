@@ -67,18 +67,15 @@ function emitirAtualizacaoCampeonato(payload = {}) {
   });
 }
 
-function emitirNotificacaoPartidaCriada(payload = {}) {
+function emitirNotificacaoPartidaAoVivo(payload = {}) {
   if (!io) return;
 
-  if (process.env.NODE_ENV !== 'production') {
-    console.info('[socket] emitindo notificacao de partida criada:', {
-      partidaId: payload?.partidaId,
-      campeonatoId: payload?.campeonatoId
-    });
-  }
+  const partidaId = paraIdValido(payload?.partidaId);
+  if (!partidaId) return;
 
-  io.emit('notificacao:partida-criada', {
+  io.emit('notificacao:partida-ao-vivo', {
     ...payload,
+    partidaId,
     atualizadoEm: new Date().toISOString()
   });
 }
@@ -86,5 +83,5 @@ function emitirNotificacaoPartidaCriada(payload = {}) {
 module.exports = {
   iniciarSocket,
   emitirAtualizacaoCampeonato,
-  emitirNotificacaoPartidaCriada
+  emitirNotificacaoPartidaAoVivo
 };

@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { bumpDataVersion } from './services/dataVersion';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -18,6 +19,7 @@ export const useAuthStore = defineStore('auth', {
       // Salvar no localStorage e nos cookies
       localStorage.setItem('token', token);
       localStorage.setItem('usuario', JSON.stringify(user));
+      bumpDataVersion('auth-login');
 
     },
     clearAuthData() {
@@ -27,6 +29,7 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem('token');
       localStorage.removeItem('usuario');
       localStorage.removeItem('quadraPlayLoginAtivo');
+      bumpDataVersion('auth-logout');
     },
     login(user, token) {
       this.setAuthData(user, token);

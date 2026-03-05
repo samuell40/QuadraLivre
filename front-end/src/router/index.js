@@ -15,7 +15,6 @@ import HorariosView from '@/views/HorariosView.vue';
 import GoogleCallback from '@/views/GoogleCallback.vue';
 import GerenciartimesView from '@/views/quadra_play/GerenciartimesView.vue';
 import TimesHomeView from '@/views/TimesView.vue';
-import GerenciarModalidadesView from '@/views/GerenciarModalidadesView.vue';
 import DetalharCampeonatosView from '@/views/quadra_play/DetalharCampeonatosView.vue';
 import ClassificacaoView from '@/views/quadra_play/ClassificacaoView.vue';
 import MeusAvisosView from '../views/usuario/MeusAvisosView.vue';
@@ -36,7 +35,7 @@ const routes = [
     path: '/dashboard',
     name: 'Dashboard',
     component: DashboardView,
-    meta: { requiresAuth: true, roles: [1, 2] },
+    meta: { requiresAuth: true, roles: [1, 2], keepAlive: false },
   },
   {
     path: '/agendamentos',
@@ -48,13 +47,13 @@ const routes = [
     path: '/agendarquadra',
     name: 'agendar_quadra',
     component: AgendarQuadrasView,
-    meta: { requiresAuth: true, roles: [3, 4, 5] },
+    meta: { requiresAuth: true, roles: [3, 4, 5], keepAlive: false },
   },
   {
     path: '/agendarquadrasadm',
     name: 'agendar_quadra_adm',
     component: AgendarQuadrasAdmView,
-    meta: { requiresAuth: true, roles: [1, 2] },
+    meta: { requiresAuth: true, roles: [1, 2], keepAlive: false },
   },
   {
     path: '/meusagendamentos',
@@ -90,43 +89,43 @@ const routes = [
     path: '/gerenciarpartida',
     name: 'gerenciar_partida',
     component: GerenciarPartidaView,
-    meta: { requiresAuth: true, roles: [1, 2, 4], requiresQuadraPlayLogin: true },
+    meta: { requiresAuth: true, roles: [1, 2, 4], requiresQuadraPlayLogin: true, keepAlive: false },
   },
   {
     path: '/partida',
     name: 'Partida',
     component: () => import('@/views/quadra_play/PartidaView.vue'),
-    meta: { requiresAuth: true, roles: [1, 2, 4], requiresQuadraPlayLogin: true }
+    meta: { requiresAuth: true, roles: [1, 2, 4], requiresQuadraPlayLogin: true, keepAlive: false }
   },
   {
     path: '/visualizarplacarhome',
     name: 'visualizar_placarhome',
     component: VisualizarPlacarHomeView,
-    meta: { public: true },
+    meta: { public: true, keepAlive: false },
   },
   {
     path: '/usuarios',
     name: 'usuarios',
     component: UsuariosView,
-    meta: { requiresAuth: true, roles: [1, 2] },
+    meta: { requiresAuth: true, roles: [1, 2], keepAlive: false },
   },
   {
     path: '/NaoAutorizado',
     name: 'NaoAutorizado',
     component: NaoAutorizado,
-    meta: { public: true },
+    meta: { public: true, keepAlive: false },
   },
   {
     path: '/google-callback',
     name: 'GoogleCallback',
     component: GoogleCallback,
-    meta: { public: true },
+    meta: { public: true, keepAlive: false },
   },
   {
     path: '/cadastro',
     name: 'Cadastro',
     component: CadastroView,
-    meta: { public: true },
+    meta: { public: true, keepAlive: false },
   },
   {
     path: '/horarios',
@@ -135,12 +134,6 @@ const routes = [
     meta: { requiresAuth: true, roles: [1, 2] },
   },
 
-  {
-    path: '/modalidades',
-    name: 'Modalidades',
-    component: GerenciarModalidadesView,
-    meta: { requiresAuth: true, roles: [1, 2] },
-  },
   {
     path: '/telainicial',
     name: 'TelaInicial',
