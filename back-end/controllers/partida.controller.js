@@ -15,6 +15,18 @@ function midiaNormalizada(valor) {
   return String(valor || '').trim();
 }
 
+function formatarHorarioPartida(valorData) {
+  if (!valorData) return '';
+  const data = new Date(valorData);
+  if (Number.isNaN(data.getTime())) return '';
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'America/Fortaleza'
+  }).format(data);
+}
+
 function montarPayloadNotificacaoAoVivo(partida = {}, tipo = 'PARTIDA_ATUALIZADA') {
   const status = String(partida?.status || '').toUpperCase();
   const campeonatoNome = textoNormalizado(partida?.campeonato?.nome || partida?.campeonatoNome, 'Campeonato');
@@ -26,6 +38,7 @@ function montarPayloadNotificacaoAoVivo(partida = {}, tipo = 'PARTIDA_ATUALIZADA
 
   const timeAFoto = midiaNormalizada(partida?.timeA?.foto || partida?.timeAFoto);
   const timeBFoto = midiaNormalizada(partida?.timeB?.foto || partida?.timeBFoto);
+  const horario = formatarHorarioPartida(partida?.data || partida?.horarioPartida);
 
   const payload = {
     tipo,
@@ -38,6 +51,7 @@ function montarPayloadNotificacaoAoVivo(partida = {}, tipo = 'PARTIDA_ATUALIZADA
     timeBFoto,
     pontosTimeA: Number(partida?.pontosTimeA ?? 0),
     pontosTimeB: Number(partida?.pontosTimeB ?? 0),
+    horario,
     status,
     encerrada: STATUS_PARTIDA_ENCERRADA.has(status),
     quadra: quadraNome

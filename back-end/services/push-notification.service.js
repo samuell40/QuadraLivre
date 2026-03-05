@@ -46,6 +46,50 @@ function statusNotificacaoPartida(status) {
   return 'ATUALIZADA';
 }
 
+function normalizarBaseUrl(valor) {
+  const base = String(valor || '').trim().replace(/\/+$/, '');
+  if (!/^https?:\/\//i.test(base)) return '';
+  return base;
+}
+
+function obterBasePublicaBackend() {
+  const candidatas = [
+    process.env.BACKEND_PUBLIC_URL,
+    process.env.BACKEND_URL,
+    process.env.API_URL,
+    process.env.RENDER_EXTERNAL_URL,
+    'https://quadra-livre-backend.onrender.com'
+  ];
+
+  for (const candidata of candidatas) {
+    const normalizada = normalizarBaseUrl(candidata);
+    if (normalizada) return normalizada;
+  }
+
+  return 'https://quadra-livre-backend.onrender.com';
+}
+
+function montarUrlBannerPush(payload = {}) {
+  const statusLabel = statusNotificacaoPartida(payload?.status);
+  const horario = String(payload?.horario || '').trim();
+  const params = new URLSearchParams({
+    provedor: 'Google',
+    horario: horario || '--:--',
+    timeA: String(payload?.timeA || 'Time A'),
+    timeB: String(payload?.timeB || 'Time B'),
+    campeonato: String(payload?.campeonatoNome || 'Campeonato'),
+    quadra: String(payload?.quadra || 'Quadra'),
+    status: String(statusLabel || ''),
+    timeAFoto: String(payload?.timeAFoto || ''),
+    timeBFoto: String(payload?.timeBFoto || '')
+  });
+
+  const atualizadoEm = String(payload?.atualizadoEm || '').trim();
+  if (atualizadoEm) params.set('v', atualizadoEm);
+
+  return `${obterBasePublicaBackend()}/notificacoes/push/banner.svg?${params.toString()}`;
+}
+
 function montarPayloadNotificacaoPartida(payload = {}) {
   const partidaId = Number(payload?.partidaId || 0);
   const pontosTimeA = Number(payload?.pontosTimeA ?? 0);
@@ -63,8 +107,8 @@ function montarPayloadNotificacaoPartida(payload = {}) {
   const body = [statusLabel, campeonatoNome, quadra]
     .filter(Boolean)
     .join(' | ');
-  const icon = timeAFoto || timeBFoto || '/ico.png';
-  const image = timeBFoto || timeAFoto || undefined;
+  const icon = '/ico.png';
+  const image = montarUrlBannerPush(payload);
 
   return {
     title: titulo,
@@ -83,6 +127,7 @@ function montarPayloadNotificacaoPartida(payload = {}) {
       quadra,
       timeAFoto,
       timeBFoto,
+      bannerUrl: image,
       url: partidaId
         ? `/visualizarplacarhome?partidaId=${partidaId}`
         : '/visualizarplacarhome'

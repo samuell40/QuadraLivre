@@ -1082,6 +1082,7 @@ async function retornarPartida(partidaId) {
     },
     select: {
       id: true,
+      data: true,
       tempoSegundos: true,
       pontosTimeA: true,
       pontosTimeB: true,
@@ -1155,6 +1156,7 @@ async function retornarPartida(partidaId) {
 
   return {
     id: partida.id,
+    data: partida.data,
     tempoSegundos: partida.tempoSegundos,
     pontosTimeA: partida.pontosTimeA,
     pontosTimeB: partida.pontosTimeB,
