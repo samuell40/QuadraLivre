@@ -52,20 +52,26 @@ function montarPayloadNotificacaoPartida(payload = {}) {
   const pontosTimeB = Number(payload?.pontosTimeB ?? 0);
   const timeA = String(payload?.timeA || 'Time A');
   const timeB = String(payload?.timeB || 'Time B');
-  const campeonatoNome = String(payload?.campeonatoNome || 'Campeonato');
+  const timeAFoto = String(payload?.timeAFoto || '').trim();
+  const timeBFoto = String(payload?.timeBFoto || '').trim();
+  const campeonatoNome = String(payload?.campeonatoNome || 'Campeonato').trim() || 'Campeonato';
   const status = String(payload?.status || '').toUpperCase();
   const quadra = String(payload?.quadra || '').trim();
   const encerrada = Boolean(payload?.encerrada);
+  const statusLabel = statusNotificacaoPartida(status);
   const titulo = `${timeA} ${pontosTimeA} x ${pontosTimeB} ${timeB}`;
-  const body = [campeonatoNome, statusNotificacaoPartida(status), quadra]
+  const body = [statusLabel, campeonatoNome, quadra]
     .filter(Boolean)
     .join(' | ');
+  const icon = timeAFoto || timeBFoto || '/ico.png';
+  const image = timeBFoto || timeAFoto || undefined;
 
   return {
     title: titulo,
     body,
-    icon: '/ico.png',
+    icon,
     badge: '/ico.png',
+    image,
     tag: `partida-live-${partidaId}`,
     renotify: true,
     requireInteraction: !encerrada,
@@ -73,6 +79,10 @@ function montarPayloadNotificacaoPartida(payload = {}) {
       partidaId,
       campeonatoId: Number(payload?.campeonatoId || 0) || null,
       status,
+      campeonatoNome,
+      quadra,
+      timeAFoto,
+      timeBFoto,
       url: partidaId
         ? `/visualizarplacarhome?partidaId=${partidaId}`
         : '/visualizarplacarhome'

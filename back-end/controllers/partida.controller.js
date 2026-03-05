@@ -6,20 +6,41 @@ const {
 
 const STATUS_PARTIDA_ENCERRADA = new Set(['FINALIZADA', 'CANCELADA', 'DELETADA']);
 
+function textoNormalizado(valor, fallback = '') {
+  const texto = String(valor || '').trim();
+  return texto || String(fallback || '').trim();
+}
+
+function midiaNormalizada(valor) {
+  return String(valor || '').trim();
+}
+
 function montarPayloadNotificacaoAoVivo(partida = {}, tipo = 'PARTIDA_ATUALIZADA') {
   const status = String(partida?.status || '').toUpperCase();
+  const campeonatoNome = textoNormalizado(partida?.campeonato?.nome || partida?.campeonatoNome, 'Campeonato');
+  const quadraNome = textoNormalizado(
+    partida?.quadra?.nome ||
+    partida?.campeonato?.quadra?.nome ||
+    partida?.quadraNome
+  );
+
+  const timeAFoto = midiaNormalizada(partida?.timeA?.foto || partida?.timeAFoto);
+  const timeBFoto = midiaNormalizada(partida?.timeB?.foto || partida?.timeBFoto);
+
   const payload = {
     tipo,
     partidaId: Number(partida?.id || 0),
     campeonatoId: Number(partida?.campeonatoId || 0) || null,
-    campeonatoNome: String(partida?.campeonato?.nome || ''),
+    campeonatoNome,
     timeA: String(partida?.timeA?.nome || 'Time A'),
     timeB: String(partida?.timeB?.nome || 'Time B'),
+    timeAFoto,
+    timeBFoto,
     pontosTimeA: Number(partida?.pontosTimeA ?? 0),
     pontosTimeB: Number(partida?.pontosTimeB ?? 0),
     status,
     encerrada: STATUS_PARTIDA_ENCERRADA.has(status),
-    quadra: String(partida?.quadra?.nome || '')
+    quadra: quadraNome
   };
 
   return payload;
@@ -32,9 +53,10 @@ async function emitirNotificacaoAoVivoPartida(partidaId, tipo = 'PARTIDA_ATUALIZ
   let partida = partidaSnapshot;
 
   try {
-    const temDadosBasicos = Boolean(partida?.timeA?.nome) && Boolean(partida?.timeB?.nome);
+    const temDadosTimes = Boolean(partida?.timeA?.nome) && Boolean(partida?.timeB?.nome);
+    const temCampeonato = Boolean(partida?.campeonato?.nome || partida?.campeonatoNome);
 
-    if (!temDadosBasicos) {
+    if (!temDadosTimes || !temCampeonato) {
       try {
         partida = await partidas.retornarPartida(idNum);
       } catch (errorRetorno) {

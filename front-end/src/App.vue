@@ -283,14 +283,18 @@ export default {
       const status = String(payload?.status || '').toUpperCase()
       const atualizadoEm = String(payload?.atualizadoEm || new Date().toISOString())
       const atualizadoTimestamp = new Date(atualizadoEm).getTime()
+      const timeAFoto = String(payload?.timeAFoto || '').trim()
+      const timeBFoto = String(payload?.timeBFoto || '').trim()
 
       return {
         tipo: String(payload?.tipo || 'PARTIDA_ATUALIZADA'),
         partidaId,
         campeonatoId: Number(payload?.campeonatoId || 0) || null,
-        campeonatoNome: String(payload?.campeonatoNome || '').trim(),
+        campeonatoNome: String(payload?.campeonatoNome || 'Campeonato').trim() || 'Campeonato',
         timeA: String(payload?.timeA || 'Time A'),
         timeB: String(payload?.timeB || 'Time B'),
+        timeAFoto,
+        timeBFoto,
         pontosTimeA: Number(payload?.pontosTimeA ?? 0),
         pontosTimeB: Number(payload?.pontosTimeB ?? 0),
         status,
@@ -310,13 +314,15 @@ export default {
       const titulo = `${partida.timeA} ${partida.pontosTimeA} x ${partida.pontosTimeB} ${partida.timeB}`
       const statusLabel = this.rotuloStatusLive(partida.status)
       const body = [
-        partida.campeonatoNome || 'Campeonato',
         statusLabel,
+        partida.campeonatoNome || 'Campeonato',
         partida.quadra || ''
       ].filter(Boolean).join(' | ')
 
       const tag = `partida-live-${id}`
       const encerrada = Boolean(partida.encerrada)
+      const icon = partida.timeAFoto || partida.timeBFoto || '/ico.png'
+      const image = partida.timeBFoto || partida.timeAFoto || undefined
 
       try {
         const notificacaoAnterior = this.notificacoesNativasPorPartida[id]
@@ -326,6 +332,9 @@ export default {
 
         const notificacao = new Notification(titulo, {
           body,
+          icon,
+          badge: '/ico.png',
+          image,
           tag,
           renotify: true,
           requireInteraction: !encerrada,

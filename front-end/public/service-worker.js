@@ -11,13 +11,19 @@ self.addEventListener('push', (event) => {
   }
 
   const title = String(payload?.title || 'Atualizacao de partida');
+  const icon = String(payload?.icon || '/ico.png');
+  const image = String(payload?.image || '').trim();
   const options = {
     body: String(payload?.body || ''),
-    icon: String(payload?.icon || '/ico.png'),
+    icon,
     badge: String(payload?.badge || '/ico.png'),
+    image: image || undefined,
     tag: String(payload?.tag || 'partida-live'),
     renotify: Boolean(payload?.renotify),
     requireInteraction: Boolean(payload?.requireInteraction),
+    actions: [
+      { action: 'abrir_partida', title: 'Abrir partida' }
+    ],
     data: payload?.data || {}
   };
 

@@ -1111,6 +1111,12 @@ async function retornarPartida(partidaId) {
           id: true,
           nome: true,
           regras: true,
+          quadra: {
+            select: {
+              id: true,
+              nome: true
+            }
+          },
           modalidade: {
             select: { nome: true }
           }
@@ -1403,6 +1409,25 @@ async function atualizarParcial(
   const partidaAtualizada = await prisma.partida.findUnique({
     where: { id: partidaId },
     include: {
+      campeonato: {
+        select: {
+          id: true,
+          nome: true,
+          quadra: {
+            select: {
+              id: true,
+              nome: true
+            }
+          }
+        }
+      },
+      quadra: {
+        select: {
+          id: true,
+          nome: true,
+          endereco: true
+        }
+      },
       timeA: { include: { placares: true } },
       timeB: { include: { placares: true } },
       modalidade: true,
@@ -1863,7 +1888,13 @@ async function detalharPartida(partidaId) {
       campeonato: {
         select: {
           id: true,
-          nome: true
+          nome: true,
+          quadra: {
+            select: {
+              id: true,
+              nome: true
+            }
+          }
         }
       },
       modalidade: {
