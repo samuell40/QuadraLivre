@@ -132,7 +132,19 @@
         </div>
       </div>
 
-      <button class="btn-cancel-placar" @click="fecharModalPartida">Fechar</button>
+      <div class="acoes-modal">
+        <button
+          class="btn-compartilhar"
+          :disabled="loadingDetalhePartida || loadingCompartilhamento || !partidaDetalhada"
+          @click="compartilharResultado"
+        >
+          <span class="btn-compartilhar-content">
+            <span v-if="loadingCompartilhamento" class="btn-compartilhar-spinner" aria-hidden="true"></span>
+            <span>{{ loadingCompartilhamento ? 'Gerando imagem...' : 'Compartilhar' }}</span>
+          </span>
+        </button>
+        <button class="btn-cancel-placar" @click="fecharModalPartida">Fechar</button>
+      </div>
     </div>
   </div>
 </template>
@@ -167,7 +179,8 @@ export default {
   data() {
     return {
       loadingDetalhePartida: false,
-      partidaDetalhada: null
+      partidaDetalhada: null,
+      loadingCompartilhamento: false
     }
   },
   computed: {
@@ -267,6 +280,277 @@ export default {
     },
     statusLabel(partida) {
       return obterRotuloStatusPartida(partida)
+    },
+    async compartilharResultado() {
+      if (!this.partidaDetalhada || this.loadingCompartilhamento) return
+
+      this.loadingCompartilhamento = true
+
+      try {
+        const payload = await this.gerarArquivoCompartilhamento()
+
+        const escolha = await Swal.fire({
+          title: 'Compartilhar resultado',
+          text: 'Onde voce quer compartilhar?',
+          icon: 'question',
+          showDenyButton: true,
+          showCancelButton: true,
+          confirmButtonText: 'Instagram',
+          denyButtonText: 'WhatsApp',
+          cancelButtonText: 'Cancelar'
+        })
+
+        if (escolha.isConfirmed) {
+          await this.compartilharArquivo('instagram', payload)
+        }
+
+        if (escolha.isDenied) {
+          await this.compartilharArquivo('whatsapp', payload)
+        }
+      } catch (error) {
+        console.error('Erro ao compartilhar resultado da partida:', error)
+        Swal.fire('Erro', 'Nao foi possivel gerar a imagem para compartilhar.', 'error')
+      } finally {
+        this.loadingCompartilhamento = false
+      }
+    },
+    async gerarArquivoCompartilhamento() {
+      const blob = await this.gerarImagemResultadoBlob()
+      const arquivoNome = `resultado-partida-${this.partidaIdNormalizado || 'quadraplay'}.png`
+      const arquivo = new File([blob], arquivoNome, { type: 'image/png' })
+      const url = URL.createObjectURL(blob)
+      setTimeout(() => URL.revokeObjectURL(url), 60_000)
+
+      return {
+        arquivo,
+        arquivoNome,
+        url,
+        texto: this.montarTextoCompartilhamento()
+      }
+    },
+    montarTextoCompartilhamento() {
+      const partida = this.partidaDetalhada || {}
+      const timeA = partida.timeA?.nome || 'Time A'
+      const timeB = partida.timeB?.nome || 'Time B'
+      const resultado = this.isPartidaAgendada
+        ? 'x'
+        : `${partida.pontosTimeA ?? 0} x ${partida.pontosTimeB ?? 0}`
+      const status = this.statusLabel(partida)
+      const campeonato = partida.campeonato?.nome || 'Campeonato'
+      const quadra = partida.quadra?.nome || 'Quadra'
+
+      return `${timeA} ${resultado} ${timeB} | ${status} | ${campeonato} | ${quadra}`
+    },
+    async compartilharArquivo(canal, payload) {
+      const shareNativoDisponivel = !!(navigator.share && navigator.canShare && payload?.arquivo)
+      const canShareArquivo = shareNativoDisponivel && navigator.canShare({ files: [payload.arquivo] })
+
+      if (canShareArquivo) {
+        try {
+          await navigator.share({
+            title: 'Resultado da partida',
+            text: payload.texto,
+            files: [payload.arquivo]
+          })
+          return
+        } catch (error) {
+          if (error?.name === 'AbortError') return
+          console.warn('Compartilhamento nativo indisponivel:', error)
+        }
+      }
+
+      if (canal === 'whatsapp') {
+        const linkWhatsApp = `https://wa.me/?text=${encodeURIComponent(payload.texto)}`
+        window.open(linkWhatsApp, '_blank', 'noopener,noreferrer')
+        this.baixarImagemCompartilhamento(payload.url, payload.arquivoNome)
+        await Swal.fire('Imagem pronta', 'Abrimos o WhatsApp e baixamos a imagem para voce anexar.', 'info')
+        return
+      }
+
+      this.baixarImagemCompartilhamento(payload.url, payload.arquivoNome)
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(payload.texto)
+        }
+      } catch (error) {
+        console.warn('Nao foi possivel copiar a legenda automaticamente:', error)
+      }
+      await Swal.fire('Imagem pronta', 'A imagem foi baixada. Abra o Instagram e selecione na galeria.', 'info')
+    },
+    baixarImagemCompartilhamento(url, arquivoNome) {
+      if (!url) return
+
+      const link = document.createElement('a')
+      link.href = url
+      link.download = arquivoNome || 'resultado-partida.png'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    },
+    desenharRetanguloArredondado(ctx, x, y, largura, altura, raio) {
+      const r = Math.min(raio, largura / 2, altura / 2)
+      ctx.beginPath()
+      ctx.moveTo(x + r, y)
+      ctx.lineTo(x + largura - r, y)
+      ctx.quadraticCurveTo(x + largura, y, x + largura, y + r)
+      ctx.lineTo(x + largura, y + altura - r)
+      ctx.quadraticCurveTo(x + largura, y + altura, x + largura - r, y + altura)
+      ctx.lineTo(x + r, y + altura)
+      ctx.quadraticCurveTo(x, y + altura, x, y + altura - r)
+      ctx.lineTo(x, y + r)
+      ctx.quadraticCurveTo(x, y, x + r, y)
+      ctx.closePath()
+    },
+    quebrarTexto(ctx, texto, larguraMaxima) {
+      const palavras = String(texto || '').trim().split(/\s+/).filter(Boolean)
+      if (!palavras.length) return []
+
+      const linhas = []
+      let linhaAtual = palavras[0]
+
+      for (let i = 1; i < palavras.length; i += 1) {
+        const tentativa = `${linhaAtual} ${palavras[i]}`
+        if (ctx.measureText(tentativa).width <= larguraMaxima) {
+          linhaAtual = tentativa
+        } else {
+          linhas.push(linhaAtual)
+          linhaAtual = palavras[i]
+        }
+      }
+
+      linhas.push(linhaAtual)
+      return linhas
+    },
+    obterSiglaTime(nome) {
+      const partes = String(nome || '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+
+      if (!partes.length) return '--'
+      if (partes.length === 1) return partes[0].slice(0, 3).toUpperCase()
+      return partes.slice(0, 3).map(parte => parte.charAt(0).toUpperCase()).join('')
+    },
+    async gerarImagemResultadoBlob() {
+      const partida = this.partidaDetalhada || {}
+      const largura = 1080
+      const altura = 1350
+      const canvas = document.createElement('canvas')
+      canvas.width = largura
+      canvas.height = altura
+      const ctx = canvas.getContext('2d')
+
+      if (!ctx) {
+        throw new Error('Nao foi possivel iniciar o canvas de compartilhamento')
+      }
+
+      const gradienteFundo = ctx.createLinearGradient(0, 0, 0, altura)
+      gradienteFundo.addColorStop(0, '#0f172a')
+      gradienteFundo.addColorStop(1, '#1d4ed8')
+      ctx.fillStyle = gradienteFundo
+      ctx.fillRect(0, 0, largura, altura)
+
+      this.desenharRetanguloArredondado(ctx, 70, 170, largura - 140, altura - 270, 42)
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.12)'
+      ctx.fill()
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'
+      ctx.lineWidth = 2
+      ctx.stroke()
+
+      ctx.textAlign = 'center'
+      ctx.fillStyle = '#ffffff'
+      ctx.font = '700 52px Montserrat, Arial, sans-serif'
+      ctx.fillText('Quadra Play', largura / 2, 110)
+      ctx.font = '500 30px Montserrat, Arial, sans-serif'
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
+      ctx.fillText('Resultado da partida', largura / 2, 154)
+
+      const status = this.statusLabel(partida)
+      this.desenharRetanguloArredondado(ctx, largura / 2 - 220, 240, 440, 56, 999)
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)'
+      ctx.fill()
+      ctx.font = '700 26px Montserrat, Arial, sans-serif'
+      ctx.fillStyle = '#ffffff'
+      ctx.fillText(status, largura / 2, 277)
+
+      const timeANome = partida.timeA?.nome || 'Time A'
+      const timeBNome = partida.timeB?.nome || 'Time B'
+      const resultado = this.isPartidaAgendada
+        ? 'x'
+        : `${partida.pontosTimeA ?? 0} x ${partida.pontosTimeB ?? 0}`
+
+      const yTimes = 525
+      const xTimeA = 270
+      const xTimeB = largura - 270
+      const raioAvatar = 90
+
+      ctx.beginPath()
+      ctx.arc(xTimeA, yTimes, raioAvatar, 0, Math.PI * 2)
+      ctx.fillStyle = '#dbeafe'
+      ctx.fill()
+      ctx.beginPath()
+      ctx.arc(xTimeB, yTimes, raioAvatar, 0, Math.PI * 2)
+      ctx.fillStyle = '#fee2e2'
+      ctx.fill()
+
+      ctx.fillStyle = '#1e3a8a'
+      ctx.font = '800 44px Montserrat, Arial, sans-serif'
+      ctx.fillText(this.obterSiglaTime(timeANome), xTimeA, yTimes + 14)
+      ctx.fillStyle = '#b91c1c'
+      ctx.fillText(this.obterSiglaTime(timeBNome), xTimeB, yTimes + 14)
+
+      ctx.fillStyle = '#ffffff'
+      ctx.font = '800 92px Montserrat, Arial, sans-serif'
+      ctx.fillText(resultado, largura / 2, yTimes + 26)
+
+      const larguraTextoTime = 300
+      ctx.font = '700 40px Montserrat, Arial, sans-serif'
+      ctx.fillStyle = '#ffffff'
+      const linhasTimeA = this.quebrarTexto(ctx, timeANome, larguraTextoTime).slice(0, 2)
+      const linhasTimeB = this.quebrarTexto(ctx, timeBNome, larguraTextoTime).slice(0, 2)
+
+      linhasTimeA.forEach((linha, indice) => {
+        ctx.fillText(linha, xTimeA, 700 + indice * 46)
+      })
+      linhasTimeB.forEach((linha, indice) => {
+        ctx.fillText(linha, xTimeB, 700 + indice * 46)
+      })
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.moveTo(160, 840)
+      ctx.lineTo(largura - 160, 840)
+      ctx.stroke()
+
+      const campeonatoNome = partida.campeonato?.nome || 'Campeonato'
+      const quadraNome = partida.quadra?.nome || 'Quadra'
+      const dataTexto = this.formatarDataPartida(partida?.data || partida?.createdAt)
+
+      ctx.font = '600 34px Montserrat, Arial, sans-serif'
+      ctx.fillStyle = '#ffffff'
+      const linhasCampeonato = this.quebrarTexto(ctx, campeonatoNome, largura - 240).slice(0, 2)
+      linhasCampeonato.forEach((linha, indice) => {
+        ctx.fillText(linha, largura / 2, 925 + indice * 44)
+      })
+
+      ctx.font = '500 30px Montserrat, Arial, sans-serif'
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.92)'
+      ctx.fillText(quadraNome, largura / 2, 1038)
+      ctx.fillText(dataTexto, largura / 2, 1090)
+
+      ctx.font = '500 22px Montserrat, Arial, sans-serif'
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.78)'
+      ctx.fillText('Gerado por Quadra Play', largura / 2, altura - 80)
+
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((arquivo) => {
+          if (arquivo) resolve(arquivo)
+          else reject(new Error('Falha ao gerar imagem da partida'))
+        }, 'image/png')
+      })
+
+      return blob
     },
     formatarDataPartida(data) {
       const dt = new Date(data)
@@ -590,6 +874,46 @@ export default {
   background-color: #2563eb;
 }
 
+.acoes-modal {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.btn-compartilhar {
+  background: #0f172a;
+  color: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.4);
+  border-radius: 20px;
+  cursor: pointer;
+  min-height: 44px;
+  margin-top: 20px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.btn-compartilhar:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-compartilhar-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-compartilhar-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #ffffff;
+  border-radius: 999px;
+  animation: spin 0.8s linear infinite;
+}
+
 .status-badge {
   display: inline-flex;
   align-items: center;
@@ -699,6 +1023,10 @@ export default {
 
   .resultado {
     font-size: 26px;
+  }
+
+  .acoes-modal {
+    grid-template-columns: 1fr;
   }
 
   .jogadores-container {
