@@ -317,13 +317,16 @@ async function listarPartidasDaRodadaDaFaseController(req, res) {
   const cId = Number(campeonatoId)
   const fId = Number(faseId)
   const rId = Number(rodadaId)
+  const detalhes = ['1', 'true', 'sim'].includes(
+    String(req.query?.detalhes || '').toLowerCase()
+  )
 
   if (!cId || !fId || !rId) {
     return res.status(400).json({ message: "IDs inválidos. Envie apenas números." })
   }
 
   try {
-    const partida = await partidas.listarPartidasDaRodadaDaFase(cId, fId, rId)
+    const partida = await partidas.listarPartidasDaRodadaDaFase(cId, fId, rId, { detalhes })
     return res.json(partida)
   } catch (error) {
     console.error(error)

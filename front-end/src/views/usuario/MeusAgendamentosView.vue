@@ -277,39 +277,12 @@ const carregarAgendamentos = async () => {
 const carregarAvisoDestaque = async () => {
   try {
     const usuarioId = getUsuarioId();
-    let todosAvisos = [];
-    const reqGerais = api.get("/quadras/geral/avisos").catch(() => ({ data: [] }));
-    const { data: quadras } = await api.get("/quadra");
+    const { data } = await api.get("/avisos");
+    const avisos = Array.isArray(data) ? data : [];
 
-    const promessasQuadras = Array.isArray(quadras) && quadras.length > 0
-      ? quadras.map((quadra) => api.get(`/quadras/${quadra.id}/avisos`))
-      : [];
-
-    const [resGerais, ...respostasQuadras] = await Promise.all([reqGerais, ...promessasQuadras]);
-
-    if (Array.isArray(resGerais.data)) {
-      const geraisNaoLidos = resGerais.data.filter((aviso) => {
-        if (!aviso.leituras) return true;
-        return !aviso.leituras.some((leitura) => String(leitura.usuarioId) === String(usuarioId));
-      });
-      const geraisFormatados = geraisNaoLidos.map((aviso) => ({ ...aviso, quadra: null }));
-      todosAvisos.push(...geraisFormatados);
-    }
-
-    respostasQuadras.forEach((resposta, index) => {
-      if (!Array.isArray(resposta.data) || !resposta.data.length) return;
-
-      const naoLidos = resposta.data.filter((aviso) => {
-        if (!aviso.leituras) return true;
-        return !aviso.leituras.some((leitura) => String(leitura.usuarioId) === String(usuarioId));
-      });
-
-      const avisosComQuadra = naoLidos.map((aviso) => ({
-        ...aviso,
-        quadra: quadras[index],
-      }));
-
-      todosAvisos.push(...avisosComQuadra);
+    const todosAvisos = avisos.filter((aviso) => {
+      if (!aviso?.leituras) return true;
+      return !aviso.leituras.some((leitura) => String(leitura.usuarioId) === String(usuarioId));
     });
 
     if (todosAvisos.length === 0) {

@@ -10,6 +10,7 @@ router.post('/cadastrar/usuario', controller.cadastrarUsuarioController);
 router.put('/editar/usuario', [validarJWT], verificarPermissao.devAdmin , controller.atualizarUsuarioController);
 
 router.get('/usuarios',  controller.listarUsuariosController);
+router.get('/usuarios/resumo', controller.listarUsuariosResumoController);
 
 router.get('/permissoes',[validarJWT], verificarPermissao.devAdmin, controller.listarPermissoesController);
 

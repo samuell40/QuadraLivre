@@ -85,6 +85,18 @@ async function listarUsuariosController(req, res) {
   }
 }
 
+async function listarUsuariosResumoController(req, res) {
+  try {
+    const usuarios = await Usuario.getUsuariosResumo();
+    return res.status(200).json(usuarios);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      error: 'Erro ao buscar resumo de usuarios.',
+    });
+  }
+}
+
 async function listarPermissoesController(req, res) {
   try {
     const permissoes = await Usuario.listarPermissoes();
@@ -152,6 +164,7 @@ module.exports = {
   cadastrarUsuarioController,
   atualizarUsuarioController,
   listarUsuariosController,
+  listarUsuariosResumoController,
   listarPermissoesController,
   vincularUsuarioTimeController,
   listarUsuarioTimesController,

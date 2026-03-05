@@ -1941,54 +1941,115 @@ async function detalharPartida(partidaId) {
   return partida
 }
 
-async function listarPartidasDaRodadaDaFase(campeonatoId, faseId, rodadaId) {
+async function listarPartidasDaRodadaDaFase(
+  campeonatoId,
+  faseId,
+  rodadaId,
+  { detalhes = false } = {}
+) {
   try {
-    const partidas = await prisma.partida.findMany({
-      where: {
-        campeonatoId: Number(campeonatoId),
-        faseId: Number(faseId),
-        rodadaId: Number(rodadaId),
-        status: { not: 'DELETADA' }
-      },
-      include: {
-        timeA: true,
-        timeB: true,
-        quadra: true,
-        usuarioCriador: true,
-        usuarioUltimaEdicao: {
-          select: {
-            id: true,
-            nome: true
+    const filtros = {
+      campeonatoId: Number(campeonatoId),
+      faseId: Number(faseId),
+      rodadaId: Number(rodadaId),
+      status: { not: 'DELETADA' }
+    };
+
+    let partidas = [];
+
+    if (detalhes) {
+      partidas = await prisma.partida.findMany({
+        where: filtros,
+        include: {
+          timeA: true,
+          timeB: true,
+          quadra: true,
+          usuarioCriador: true,
+          usuarioUltimaEdicao: {
+            select: {
+              id: true,
+              nome: true
+            }
+          },
+          modalidade: true,
+          fase: true,
+          rodada: true,
+          campeonato: true,
+          sets: { orderBy: { numero: 'asc' } },
+          jogadoresPartida: {
+            include: {
+              jogador: {
+                include: {
+                  funcao: true,
+                  times: { include: { time: true } }
+                }
+              },
+              time: true
+            }
+          },
+          participantes: {
+            include: {
+              usuario: true,
+              permissao: true
+            }
           }
         },
-        modalidade: true,
-        fase: true,
-        rodada: true,
-        campeonato: true,
-
-        sets: { orderBy: { numero: 'asc' } },
-
-        jogadoresPartida: {
-          include: {
-            jogador: {
-              include: {
-                funcao: true,
-                times: { include: { time: true } }
-              }
-            },
-            time: true
+        orderBy: { data: 'asc' }
+      });
+    } else {
+      partidas = await prisma.partida.findMany({
+        where: filtros,
+        select: {
+          id: true,
+          data: true,
+          createdAt: true,
+          status: true,
+          pontosTimeA: true,
+          pontosTimeB: true,
+          campeonatoId: true,
+          faseId: true,
+          rodadaId: true,
+          modalidadeId: true,
+          quadraId: true,
+          timeAId: true,
+          timeBId: true,
+          ultimaEdicaoEm: true,
+          timeA: {
+            select: {
+              id: true,
+              nome: true,
+              foto: true
+            }
+          },
+          timeB: {
+            select: {
+              id: true,
+              nome: true,
+              foto: true
+            }
+          },
+          quadra: {
+            select: {
+              id: true,
+              nome: true
+            }
+          },
+          usuarioCriador: {
+            select: {
+              id: true,
+              nome: true
+            }
+          },
+          usuarioUltimaEdicao: {
+            select: {
+              id: true,
+              nome: true
+            }
           }
         },
-
-        participantes: {
-          include: {
-            usuario: true,
-            permissao: true
-          }
-        }
-      },
-      orderBy: { data: 'asc' }
-    })
+        orderBy: { data: 'asc' }
+      });
+    }
 
     return partidas
   } catch (error) {

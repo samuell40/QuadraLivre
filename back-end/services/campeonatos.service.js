@@ -1270,12 +1270,22 @@ async function finalizarCampeonato(campeonatoId) {
   };
 }
 
-async function listarPlacarPorFase(campeonatoId) {
+async function listarPlacarPorFase(campeonatoId, faseId = null) {
   if (!campeonatoId) throw new Error("campeonatoId é obrigatório");
 
-  // Busca todas as fases do campeonato
+  const faseIdNum = Number(faseId);
+  const whereFase = {
+    campeonatoId: Number(campeonatoId),
+    ativo: true
+  };
+
+  if (Number.isFinite(faseIdNum) && faseIdNum > 0) {
+    whereFase.id = faseIdNum;
+  }
+
+  // Busca fases do campeonato (ou apenas a fase solicitada)
   const fases = await prisma.fase.findMany({
-    where: { campeonatoId: Number(campeonatoId), ativo: true },
+    where: whereFase,
     orderBy: { id: 'asc' },
     include: {
       placares: {
@@ -1392,14 +1402,10 @@ function adicionarResultadoNoHistorico(historicoMap, faseId, timeId, resultado) 
 }
 
 async function listarPlacarPorFaseComUltimosJogos(campeonatoId, faseId = null) {
-  const fases = await listarPlacarPorFase(campeonatoId);
+  const fases = await listarPlacarPorFase(campeonatoId, faseId);
   if (!Array.isArray(fases) || !fases.length) return [];
 
-  const faseIdNum = Number(faseId);
-  const fasesFiltradas =
-    Number.isFinite(faseIdNum) && faseIdNum > 0
-      ? fases.filter(fase => Number(fase.faseId) === faseIdNum)
-      : fases;
+  const fasesFiltradas = fases;
 
   if (!fasesFiltradas.length) return [];
 

@@ -588,9 +588,9 @@ export default {
     },
     async carregarUsuariosDisponiveisGerenciar() {
       try {
-        const res = await api.get('/usuarios');
+        const res = await api.get('/usuarios/resumo');
         this.gerenciarUsuariosDisponiveis = res.data.filter(
-          u => (!u.jogador && (!u.times || u.times.length === 0)) && u.permissaoId === 3
+          u => !u.possuiJogador && Number(u.totalTimes || 0) === 0 && u.permissaoId === 3
         );
       } catch (err) {
         console.error(err);

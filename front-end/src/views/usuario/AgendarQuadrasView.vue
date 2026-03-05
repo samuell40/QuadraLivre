@@ -228,34 +228,12 @@ export default {
       try {
         const authStore = useAuthStore();
         const usuarioId = authStore.usuario?.id;
-        let todosAvisos = [];
-        const reqGerais = api.get("/quadras/geral/avisos").catch(() => ({ data: [] }));
+        const { data } = await api.get("/avisos");
+        const avisos = Array.isArray(data) ? data : [];
 
-        let promessasQuadras = [];
-        if (this.quadras.length > 0) {
-          promessasQuadras = this.quadras.map((q) => api.get(`/quadras/${q.id}/avisos`));
-        }
-
-        const [resGerais, ...respostasQuadras] = await Promise.all([reqGerais, ...promessasQuadras]);
-
-        if (Array.isArray(resGerais.data)) {
-          const geraisNaoLidos = resGerais.data.filter((aviso) => {
-            if (!aviso.leituras) return true;
-            return !aviso.leituras.some((leitura) => String(leitura.usuarioId) === String(usuarioId));
-          });
-          const geraisFormatados = geraisNaoLidos.map((a) => ({ ...a, quadra: null }));
-          todosAvisos.push(...geraisFormatados);
-        }
-
-        respostasQuadras.forEach((res, index) => {
-          if (Array.isArray(res.data) && res.data.length > 0) {
-            const naoLidos = res.data.filter((aviso) => {
-              if (!aviso.leituras) return true;
-              return !aviso.leituras.some((leitura) => String(leitura.usuarioId) === String(usuarioId));
-            });
-            const avisosComQuadra = naoLidos.map((aviso) => ({ ...aviso, quadra: this.quadras[index] }));
-            todosAvisos.push(...avisosComQuadra);
-          }
+        const todosAvisos = avisos.filter((aviso) => {
+          if (!aviso?.leituras) return true;
+          return !aviso.leituras.some((leitura) => String(leitura.usuarioId) === String(usuarioId));
         });
 
         if (todosAvisos.length === 0) {

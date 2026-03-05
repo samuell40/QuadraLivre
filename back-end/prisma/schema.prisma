@@ -31,6 +31,9 @@ model Usuario {
   avisosCriados  Aviso[]
   avisosLidos    AvisoLeitura[]
   treinadorTimes TreinadorTime[]
+
+  @@index([ativo, deletedAt])
+  @@index([permissaoId, ativo, deletedAt])
 }
 
 model Permissao {
@@ -87,6 +90,13 @@ model Agendamento {
   time              Time?           @relation("TimeAgendamentos", fields: [timeId], references: [id])
   campeonatoId      Int?
   campeonato        Campeonato?     @relation(fields: [campeonatoId], references: [id])
+
+  @@index([usuarioId, deletedAt, datahora])
+  @@index([quadraId, deletedAt, datahora])
+  @@index([quadraId, status, ano, mes, dia])
+  @@index([timeId, deletedAt, ano, mes, dia])
+  @@index([status, deletedAt, datahora])
+  @@index([campeonatoId, deletedAt, status, datahora])
 }
 
 model Modalidade {
@@ -133,6 +143,10 @@ model Campeonato {
   agendamentos       Agendamento[]
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
+
+  @@index([modalidadeId, ativo, deletedAt, dataInicio])
+  @@index([status, ativo, deletedAt])
+  @@index([quadraId, ativo, deletedAt])
 }
 
 model CampeonatoTime {
@@ -144,6 +158,8 @@ model CampeonatoTime {
   time         Time       @relation(fields: [timeId], references: [id])
 
   @@id([campeonatoId, timeId])
+  @@index([campeonatoId, ativo, deletedAt])
+  @@index([timeId, ativo, deletedAt])
 }
 
 model Fase {
@@ -156,6 +172,8 @@ model Fase {
   rodadas      Rodada[]
   placares     Placar[]
   partidas     Partida[]
+
+  @@index([campeonatoId, ativo])
 }
 
 model Rodada {
@@ -186,6 +204,8 @@ model Time {
   jogadores        JogadorTime[]
   treinador        TreinadorTime?
   jogadoresPartida JogadorPartida[]
+
+  @@index([modalidadeId, deletedAt, nome])
 }
 
 enum StatusPartida {
@@ -239,6 +259,13 @@ model Partida {
   sets                  SetPartida[]
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
+
+  @@index([campeonatoId, faseId, rodadaId, status])
+  @@index([campeonatoId, faseId, status])
+  @@index([campeonatoId, status, data])
+  @@index([faseId, status, data])
+  @@index([timeAId, timeBId, status])
+  @@index([timeBId, timeAId, status])
 }
 
 model SetPartida {
@@ -264,6 +291,7 @@ model TreinadorTime {
   time      Time      @relation(fields: [timeId], references: [id])
 
   @@unique([timeId]) //1 treinador por time
+  @@index([usuarioId, ativo, deletedAt])
 }
 
 model Jogador {
@@ -293,6 +321,8 @@ model JogadorTime {
   modalidade Modalidade @relation(fields: [modalidadeId], references: [id])
 
   @@unique([jogadorId, modalidadeId])
+  @@index([timeId, ativo, deletedAt])
+  @@index([modalidadeId, ativo, deletedAt])
 }
 
 model JogadorPartida {
@@ -365,6 +395,9 @@ model Placar {
   time       Time       @relation(fields: [timeId], references: [id])
 
   @@unique([campeonatoId, faseId, timeId])
+  @@index([campeonatoId, faseId, visivel, deletedAt, posicao])
+  @@index([campeonatoId, visivel, deletedAt, pontuacao])
+  @@index([timeId, deletedAt])
 }
 
 model UsuarioTime {
@@ -376,6 +409,7 @@ model UsuarioTime {
   time      Time      @relation(fields: [timeId], references: [id])
 
   @@id([usuarioId, timeId])
+  @@index([timeId, ativo, deletedAt])
 }
 
 model Aviso {
@@ -393,6 +427,9 @@ model Aviso {
   autor   Usuario @relation(fields: [autorId], references: [id])
 
   leituras AvisoLeitura[]
+
+  @@index([quadraId, fixado, data])
+  @@index([fixado, data])
 }
 
 model AvisoLeitura {

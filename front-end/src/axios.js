@@ -36,10 +36,27 @@ api.interceptors.response.use(
         error.response.data?.error ||
         error.response.data?.detalhes ||
         'Ocorreu um erro inesperado.';
+      const rotaAtualObj = router.currentRoute?.value || {};
+      const ehRotaPublica = Boolean(rotaAtualObj?.meta?.public);
+      const msgNormalizada = String(msg || '').toLowerCase();
+      const erroTokenAusente =
+        (status === 401 || status === 422) &&
+        (
+          msgNormalizada.includes('token nulo') ||
+          msgNormalizada.includes('token ausente') ||
+          msgNormalizada.includes('formato de token')
+        );
 
       if (silent) {
         if (isDev) {
           console.warn('Requisicao silenciosa falhou:', status, msg);
+        }
+        return Promise.reject(error);
+      }
+
+      if (erroTokenAusente && ehRotaPublica) {
+        if (isDev) {
+          console.warn('Rota protegida chamada sem token em tela publica:', error.config?.url);
         }
         return Promise.reject(error);
       }

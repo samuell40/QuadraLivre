@@ -127,7 +127,7 @@ export default {
 
     async carregarTreinadores() {
       try {
-        const res = await api.get('/usuarios');
+        const res = await api.get('/usuarios/resumo');
         this.treinadores = res.data;
       } catch (err) {
         console.error(err);

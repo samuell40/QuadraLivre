@@ -858,7 +858,7 @@ export default {
 
     async carregarUsuarios() {
       try {
-        const res = await api.get('/usuarios');
+        const res = await api.get('/usuarios/resumo');
         const usuarios = Array.isArray(res.data) ? res.data : [];
         this.totalUsuarios = usuarios.filter((usuario) => {
           const dataCadastro =
@@ -938,33 +938,20 @@ export default {
 
     async carregarAvisos() {
       try {
-        let requests = [];
+        const { data } = await api.get('/avisos');
+        const avisos = Array.isArray(data) ? data : [];
+        const permissaoId = Number(this.usuarioLogado?.permissaoId);
+        const quadraIdUsuario = Number(this.usuarioLogado?.quadraId);
 
-        requests.push(
-          api.get(`/quadras/geral/avisos`).catch(() => ({ data: [] }))
-        );
-
-        if (this.usuarioLogado.permissaoId === 1) {
-          if (this.listaQuadras.length === 0) {
-            await this.carregarQuadrasParaSelect();
-          }
-          this.listaQuadras.forEach(q => {
-            requests.push(api.get(`/quadras/${q.id}/avisos`).catch(() => ({ data: [] })));
+        const avisosFiltrados = permissaoId === 1
+          ? avisos
+          : avisos.filter((aviso) => {
+            const quadraAvisoId = Number(aviso?.quadra?.id);
+            if (!quadraAvisoId) return true;
+            return quadraIdUsuario > 0 && quadraAvisoId === quadraIdUsuario;
           });
-        }
-        else if (this.usuarioLogado.quadraId) {
-          requests.push(api.get(`/quadras/${this.usuarioLogado.quadraId}/avisos`).catch(() => ({ data: [] })));
-        }
 
-        const respostas = await Promise.all(requests);
-        let tempAvisos = [];
-        respostas.forEach(res => {
-          if (res && Array.isArray(res.data)) {
-            tempAvisos.push(...res.data);
-          }
-        });
-
-        this.todosAvisos = [...new Map(tempAvisos.map(item => [item.id, item])).values()];
+        this.todosAvisos = [...new Map(avisosFiltrados.map(item => [item.id, item])).values()];
 
       } catch (error) {
         console.error('Erro ao carregar avisos', error);

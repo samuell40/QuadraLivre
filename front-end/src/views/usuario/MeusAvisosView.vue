@@ -230,36 +230,13 @@ export default {
     },
     async carregarTodosAvisos() {
       this.loading = true;
-      const tempAvisos = [];
       try {
-        try {
-          const resGerais = await api.get("/quadras/geral/avisos");
-          if (Array.isArray(resGerais.data)) {
-            const geraisFormatados = resGerais.data.map((a) => ({
-              ...a,
-              quadraNome: "Equipe Quadra Play",
-            }));
-            tempAvisos.push(...geraisFormatados);
-          }
-        } catch (error) {
-          console.warn("Nao foi possivel carregar avisos gerais:", error);
-        }
-
-        const { data: quadras } = await api.get("/quadra");
-        if (quadras.length > 0) {
-          const promessas = quadras.map((q) => api.get(`/quadras/${q.id}/avisos`));
-          const resultados = await Promise.allSettled(promessas);
-
-          resultados.forEach((res, index) => {
-            if (res.status === "fulfilled" && Array.isArray(res.value.data)) {
-              const avisosComNome = res.value.data.map((a) => ({
-                ...a,
-                quadraNome: quadras[index].nome,
-              }));
-              tempAvisos.push(...avisosComNome);
-            }
-          });
-        }
+        const { data } = await api.get("/avisos");
+        const avisos = Array.isArray(data) ? data : [];
+        const tempAvisos = avisos.map((aviso) => ({
+          ...aviso,
+          quadraNome: aviso?.quadra?.nome || "Equipe Quadra Play",
+        }));
 
         tempAvisos.sort((a, b) => new Date(b.data) - new Date(a.data));
         this.todosAvisos = tempAvisos;

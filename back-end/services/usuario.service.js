@@ -271,6 +271,47 @@ async function getUsuarios() {
   });
 }
 
+async function getUsuariosResumo() {
+  const usuarios = await prisma.usuario.findMany({
+    where: {
+      ativo: true,
+      deletedAt: null,
+    },
+    select: {
+      id: true,
+      nome: true,
+      foto: true,
+      permissaoId: true,
+      jogadorId: true,
+      createdAt: true,
+      times: {
+        where: {
+          ativo: true,
+          deletedAt: null,
+          time: {
+            ativo: true,
+            deletedAt: null,
+          },
+        },
+        select: {
+          timeId: true,
+        },
+      },
+    },
+    orderBy: { nome: 'asc' },
+  });
+
+  return usuarios.map((user) => ({
+    id: user.id,
+    nome: user.nome,
+    foto: user.foto,
+    permissaoId: user.permissaoId,
+    createdAt: user.createdAt || null,
+    possuiJogador: Boolean(user.jogadorId),
+    totalTimes: Array.isArray(user.times) ? user.times.length : 0,
+  }));
+}
+
 async function listarPermissoes() {
   return prisma.permissao.findMany({
     orderBy: { id: 'asc' },
@@ -417,6 +458,7 @@ module.exports = {
   cadastrarUsuario,
   atualizarUsuario,
   getUsuarios,
+  getUsuariosResumo,
   getUsuarioTimesService,
   listarPermissoes,
   vincularUsuarioTime,
