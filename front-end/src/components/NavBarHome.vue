@@ -226,6 +226,17 @@ export default {
           return
         }
 
+        if (erro) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Login expirado',
+            text: 'Nao foi possivel concluir o login com Google. Tente novamente.'
+          })
+          window.removeEventListener('message', listener)
+          if (popup) popup.close()
+          return
+        }
+
         if (token && usuario) {
           const authStore = useAuthStore()
           authStore.setAuthData(usuario, token)
@@ -287,6 +298,17 @@ export default {
           }).then(() => {
             window.location.href = `/cadastro?email=${encodeURIComponent(email)}`
           })
+          return
+        }
+
+        if (erro) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Login expirado',
+            text: 'Nao foi possivel concluir o login com Google. Tente novamente.'
+          })
+          window.removeEventListener('message', listener)
+          if (popup) popup.close()
           return
         }
 

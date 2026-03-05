@@ -13,6 +13,41 @@ function montarRedirectGoogleCallback(query = '') {
   return `${String(FRONTEND_CALLBACK_BASE).replace(/\/+$/, '')}/google-callback${query}`;
 }
 
+function montarGoogleCallbackBackend(req) {
+  const forwardedProto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim();
+  const forwardedHost = String(req.headers['x-forwarded-host'] || '').split(',')[0].trim();
+  const protocol = forwardedProto || req.protocol || 'https';
+  const host = forwardedHost || req.get('host');
+
+  if (host) {
+    return `${protocol}://${host}/auth/google/callback`;
+  }
+
+  return process.env.GOOGLE_CALLBACK_URL || 'https://quadra-livre-backend.onrender.com/auth/google/callback';
+}
+
+function redirecionarErroGoogle(res, erro, extras = {}) {
+  const params = new URLSearchParams({ erro: String(erro || 'erro_callback_google') });
+
+  Object.entries(extras).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    const texto = String(value).trim();
+    if (!texto) return;
+    params.set(key, texto);
+  });
+
+  return res.redirect(montarRedirectGoogleCallback(`?${params.toString()}`));
+}
+
+function isAuthCodeInvalido(error) {
+  const message = String(error?.message || '');
+  const code = String(error?.code || '');
+  const oauthData = error?.oauthError?.data ? String(error.oauthError.data) : '';
+  const bruto = `${message} ${code} ${oauthData}`;
+
+  return /invalid_grant|Malformed auth code/i.test(bruto);
+}
+
 async function verificarUsuario(req, accessToken, refreshToken, profile, done) {
   try {
     const email = profile?.emails?.[0]?.value;
@@ -39,6 +74,7 @@ function iniciarLoginGoogle(req, res, next) {
     scope: ['profile', 'email'],
     session: false,
     prompt: 'select_account',
+    callbackURL: montarGoogleCallbackBackend(req),
   })(req, res, next);
 }
 
@@ -47,14 +83,21 @@ function callbackLoginGoogle(req, res, next) {
     return res.send(`<script> window.close(); </script>`);
   }
 
-  passport.authenticate('google', { session: false }, async (err, user, info) => {
+  const code = Array.isArray(req.query.code) ? req.query.code[0] : req.query.code;
+  if (!code) {
+    return redirecionarErroGoogle(res, 'codigo_google_invalido');
+  }
+
+  passport.authenticate('google', {
+    session: false,
+    callbackURL: montarGoogleCallbackBackend(req),
+  }, async (err, user, info) => {
     try {
       if (err) throw err;
 
       if (!user) {
         const email = info?.email || '';
-        const redirectUrl = montarRedirectGoogleCallback(`?erro=usuario_nao_cadastrado&email=${encodeURIComponent(email)}`);
-        return res.redirect(redirectUrl);
+        return redirecionarErroGoogle(res, 'usuario_nao_cadastrado', { email });
       }
 
       if (!user.id || !user.nome || !user.email) {
@@ -79,6 +122,10 @@ function callbackLoginGoogle(req, res, next) {
       return res.redirect(redirectUrl);
 
     } catch (error) {
+      if (isAuthCodeInvalido(error)) {
+        return redirecionarErroGoogle(res, 'codigo_google_invalido');
+      }
+
       console.error('Erro no callbackLoginGoogle:', error);
       return res.status(500).json({ erro: 'erro_callback_google', detalhes: error.message });
     }

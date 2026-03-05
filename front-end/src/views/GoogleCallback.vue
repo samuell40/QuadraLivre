@@ -82,6 +82,12 @@ export default {
       return;
     }
 
+    if (payload.erro === 'codigo_google_invalido') {
+      this.mensagem = 'Codigo de autenticacao expirado. Tente novamente.';
+      setTimeout(() => router.replace({ name: 'Home' }), 1500);
+      return;
+    }
+
     if (payload.token && payload.usuario) {
       const authStore = useAuthStore();
       authStore.setAuthData(payload.usuario, payload.token);
