@@ -1,6 +1,12 @@
 <template>
   <section :class="['loading-state', `loading-state--${size}`]" role="status" aria-live="polite">
-    <div class="loading-spinner" aria-hidden="true"></div>
+    <div class="loading-illustration" aria-hidden="true">
+      <img class="loading-player-art" :src="kickerArt" alt="" />
+
+      <div class="loading-ball-wrap">
+        <img class="loading-ball-art" :src="ballArt" alt="" />
+      </div>
+    </div>
 
     <div class="loading-copy">
       <p class="loading-title">{{ title }}</p>
@@ -10,8 +16,17 @@
 </template>
 
 <script>
+import kickerArt from '@/assets/loading/live-kicker.svg'
+import ballArt from '@/assets/loading/live-ball.svg'
+
 export default {
   name: 'LoadingState',
+  data() {
+    return {
+      kickerArt,
+      ballArt
+    }
+  },
   props: {
     title: {
       type: String,
@@ -56,19 +71,60 @@ export default {
   border-radius: 22px;
 }
 
-.loading-spinner {
-  width: 112px;
-  height: 112px;
-  border: 10px solid #d9e1ec;
-  border-top-color: #3b82f6;
-  border-radius: 50%;
-  animation: loadingSpin 0.9s linear infinite;
+.loading-illustration {
+  position: relative;
+  width: 260px;
+  height: 160px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  isolation: isolate;
 }
 
-.loading-state--compact .loading-spinner {
-  width: 72px;
-  height: 72px;
-  border-width: 8px;
+.loading-state--compact .loading-illustration {
+  width: 180px;
+  height: 118px;
+}
+
+.loading-player-art {
+  position: absolute;
+  left: 8px;
+  bottom: 12px;
+  width: 220px;
+  height: auto;
+  user-select: none;
+  pointer-events: none;
+  animation: playerFloat 1.8s ease-in-out infinite;
+}
+
+.loading-ball-wrap {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  animation: ballKick 1.1s ease-in-out infinite;
+}
+
+.loading-ball-art {
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  pointer-events: none;
+}
+
+.loading-state--compact .loading-player-art {
+  left: 6px;
+  bottom: 12px;
+  width: 154px;
+}
+
+.loading-state--compact .loading-ball-wrap {
+  right: 14px;
+  bottom: 14px;
+  width: 40px;
+  height: 40px;
 }
 
 .loading-copy {
@@ -102,9 +158,24 @@ export default {
   font-size: 14px;
 }
 
-@keyframes loadingSpin {
-  to {
-    transform: rotate(360deg);
+@keyframes playerFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes ballKick {
+  0%,
+  30%,
+  100% {
+    transform: translateX(0) translateY(0) scale(1);
+  }
+  50% {
+    transform: translateX(7px) translateY(-2px) scale(1.03);
   }
 }
 
@@ -123,16 +194,37 @@ export default {
     border-radius: 20px;
   }
 
-  .loading-spinner {
-    width: 86px;
-    height: 86px;
-    border-width: 8px;
+  .loading-illustration {
+    width: 210px;
+    height: 130px;
   }
 
-  .loading-state--compact .loading-spinner {
-    width: 62px;
-    height: 62px;
-    border-width: 7px;
+  .loading-state--compact .loading-illustration {
+    width: 160px;
+    height: 100px;
+  }
+
+  .loading-player-art {
+    left: 8px;
+    bottom: 12px;
+    width: 176px;
+  }
+
+  .loading-ball-wrap {
+    right: 12px;
+    bottom: 12px;
+    width: 48px;
+    height: 48px;
+  }
+
+  .loading-state--compact .loading-player-art {
+    width: 138px;
+  }
+
+  .loading-state--compact .loading-ball-wrap {
+    right: 12px;
+    width: 36px;
+    height: 36px;
   }
 
   .loading-title {

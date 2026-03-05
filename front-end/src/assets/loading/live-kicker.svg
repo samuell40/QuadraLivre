@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 420" fill="none">
+  <defs>
+    <radialGradient id="ambientGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(325 215) rotate(18) scale(290 180)">
+      <stop offset="0" stop-color="#3B82F6" stop-opacity="0.48"/>
+      <stop offset="1" stop-color="#3B82F6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="playerFill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#60A5FA"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+    <filter id="playerBlur" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+  </defs>
+
+  <ellipse cx="325" cy="215" rx="290" ry="180" fill="url(#ambientGlow)"/>
+
+  <g transform="translate(132 50) scale(2.1)">
+    <g fill="#3B82F6" fill-opacity="0.44" filter="url(#playerBlur)">
+      <circle cx="124" cy="26" r="12"/>
+      <path d="M110 42c8-6 20-5 28 2l16 14c3 3 4 7 1 10c-3 3-7 3-10 1l-11-9l-1 26l17 20c3 3 2 8-2 10c-4 2-8 1-10-3l-16-18l-14 14c-3 3-7 3-10 1c-3-3-3-7 0-10l14-14l2-30l-17 8c-4 2-8 1-10-3c-2-4 0-8 4-10z"/>
+      <path d="M128 95l17 21c3 4 2 9-2 11c-4 3-9 2-12-2l-17-22z"/>
+      <path d="M108 96l-22 29c-3 4-8 5-12 2c-4-3-4-8-1-12l23-30z"/>
+    </g>
+
+    <g fill="url(#playerFill)">
+      <circle cx="124" cy="26" r="12"/>
+      <path d="M110 42c8-6 20-5 28 2l16 14c3 3 4 7 1 10c-3 3-7 3-10 1l-11-9l-1 26l17 20c3 3 2 8-2 10c-4 2-8 1-10-3l-16-18l-14 14c-3 3-7 3-10 1c-3-3-3-7 0-10l14-14l2-30l-17 8c-4 2-8 1-10-3c-2-4 0-8 4-10z"/>
+      <path d="M128 95l17 21c3 4 2 9-2 11c-4 3-9 2-12-2l-17-22z"/>
+      <path d="M108 96l-22 29c-3 4-8 5-12 2c-4-3-4-8-1-12l23-30z"/>
+    </g>
+  </g>
+</svg>
