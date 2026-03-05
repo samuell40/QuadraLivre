@@ -90,8 +90,11 @@
       </div>
 
       <div class="botoes">
-        <button class="btn-save1" @click="confirmar">
-          Iniciar Partida
+        <button class="btn-save1" :disabled="salvando" @click="confirmar">
+          <span class="btn-save-content">
+            <span v-if="salvando" class="btn-save-spinner" aria-hidden="true"></span>
+            <span>{{ salvando ? 'Iniciando...' : 'Iniciar Partida' }}</span>
+          </span>
         </button>
       </div>
     </div>
@@ -117,6 +120,10 @@ export default {
     regra: {
       type: Object,
       required: true
+    },
+    salvando: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -166,6 +173,7 @@ export default {
     },
 
     checkboxDesabilitado(jogador, time) {
+      if (this.salvando) return true
       if (this.jogadorSuspenso(jogador)) return true
 
       const selecionados = time === 'time1' ? this.selecionadosTime1 : this.selecionadosTime2
@@ -188,6 +196,8 @@ export default {
     },
 
     confirmar() {
+      if (this.salvando) return
+
       const suspensosSelecionadosTime1 = this.selecionadosTime1.filter(id =>
         this.estaSuspensoPorId(this.jogadoresTime1, id)
       )
@@ -485,6 +495,34 @@ export default {
   color: white;
   font-size: 16px;
   background-color: #3b82f6;
+}
+
+.btn-save1:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.btn-save-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-save-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  animation: btnSaveSpin 0.75s linear infinite;
+  flex: 0 0 14px;
+}
+
+@keyframes btnSaveSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {

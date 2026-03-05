@@ -209,7 +209,8 @@
 
   <SelecionarJogadores :aberto="mostrarModalJogadores" :jogadoresTime1="jogadoresTime1" :jogadoresTime2="jogadoresTime2"
     :time1Nome="timeASelecionadoObj?.nome || 'Time 1'" :time2Nome="timeBSelecionadoObj?.nome || 'Time 2'"
-    :regra="regraJogadores" @fechar="mostrarModalJogadores = false" @confirmar="onConfirmarJogadores" />
+    :regra="regraJogadores" :salvando="criandoPartida" @fechar="mostrarModalJogadores = false"
+    @confirmar="onConfirmarJogadores" />
 
   <div v-if="mostrarModalRodada" class="modal-overlay" @click.self="mostrarModalRodada = false">
     <div class="modal-content modal-times">

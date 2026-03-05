@@ -180,6 +180,7 @@
       <SelecionarJogadores :aberto="mostrarModalJogadores" :jogadoresTime1="jogadoresTime1"
         :jogadoresTime2="jogadoresTime2" :time1Nome="partidaParaEscalacao?.timeA?.nome || 'Time 1'"
         :time2Nome="partidaParaEscalacao?.timeB?.nome || 'Time 2'" :regra="regraJogadoresEscalacao"
+        :salvando="salvandoEscalacaoInicial"
         @fechar="fecharModalJogadores" @confirmar="confirmarJogadoresAntesDeAcessar" />
 
       <div v-if="mostrarModalStatus" class="modal-overlay" @click.self="fecharModalStatus">
@@ -301,6 +302,7 @@ export default {
       dataAdiamento: '',
       horaAdiamento: '',
       partidaEditandoStatus: null,
+      salvandoEscalacaoInicial: false,
       socket: null,
       socketCampeonatoId: null,
       onSocketAtualizacao: null,
@@ -853,6 +855,7 @@ export default {
       this.partidaParaEscalacao = null
       this.jogadoresTime1 = []
       this.jogadoresTime2 = []
+      this.salvandoEscalacaoInicial = false
     },
 
     async abrirEscalacaoInicial(partida) {
@@ -880,6 +883,9 @@ export default {
     },
 
     async confirmarJogadoresAntesDeAcessar(selecao) {
+      if (this.salvandoEscalacaoInicial) return
+      this.salvandoEscalacaoInicial = true
+
       try {
         const partida = this.partidaParaEscalacao
         if (!partida?.id) return
@@ -902,6 +908,8 @@ export default {
         console.error(error)
         const mensagem = error.response?.data?.erro || error.response?.data?.message || 'Nao foi possivel iniciar a partida.'
         Swal.fire('Erro', mensagem, 'error')
+      } finally {
+        this.salvandoEscalacaoInicial = false
       }
     },
 
