@@ -290,7 +290,7 @@ export default {
       try {
         const payload = await this.gerarArquivoCompartilhamento()
 
-        const escolha = await Swal.fire({
+        const escolha = await this.abrirSwalCompartilhamento({
           title: 'Compartilhar resultado',
           text: 'Onde voce quer compartilhar?',
           icon: 'question',
@@ -298,8 +298,7 @@ export default {
           showCancelButton: true,
           confirmButtonText: 'Instagram',
           denyButtonText: 'WhatsApp',
-          cancelButtonText: 'Cancelar',
-          zIndex: 6000
+          cancelButtonText: 'Cancelar'
         })
 
         if (escolha.isConfirmed) {
@@ -311,15 +310,37 @@ export default {
         }
       } catch (error) {
         console.error('Erro ao compartilhar resultado da partida:', error)
-        Swal.fire({
+        this.abrirSwalCompartilhamento({
           title: 'Erro',
           text: 'Nao foi possivel gerar a imagem para compartilhar.',
-          icon: 'error',
-          zIndex: 6000
+          icon: 'error'
         })
       } finally {
         this.loadingCompartilhamento = false
       }
+    },
+    abrirSwalCompartilhamento(opcoes = {}) {
+      const customClassEntrada = opcoes?.customClass || {}
+      const didOpenEntrada = opcoes?.didOpen
+
+      return Swal.fire({
+        ...opcoes,
+        heightAuto: false,
+        backdrop: true,
+        customClass: {
+          ...customClassEntrada,
+          container: `swal-share-modal ${customClassEntrada.container || ''}`.trim()
+        },
+        didOpen: (popup) => {
+          const container = popup?.closest?.('.swal2-container')
+          if (container) {
+            container.style.zIndex = '7000'
+          }
+          if (typeof didOpenEntrada === 'function') {
+            didOpenEntrada(popup)
+          }
+        }
+      })
     },
     async gerarArquivoCompartilhamento() {
       const blob = await this.gerarImagemResultadoBlob()
@@ -370,11 +391,10 @@ export default {
         const linkWhatsApp = `https://wa.me/?text=${encodeURIComponent(payload.texto)}`
         window.open(linkWhatsApp, '_blank', 'noopener,noreferrer')
         this.baixarImagemCompartilhamento(payload.url, payload.arquivoNome)
-        await Swal.fire({
+        await this.abrirSwalCompartilhamento({
           title: 'Imagem pronta',
           text: 'Abrimos o WhatsApp e baixamos a imagem para voce anexar.',
-          icon: 'info',
-          zIndex: 6000
+          icon: 'info'
         })
         return
       }
@@ -387,11 +407,10 @@ export default {
       } catch (error) {
         console.warn('Nao foi possivel copiar a legenda automaticamente:', error)
       }
-      await Swal.fire({
+      await this.abrirSwalCompartilhamento({
         title: 'Imagem pronta',
         text: 'A imagem foi baixada. Abra o Instagram e selecione na galeria.',
-        icon: 'info',
-        zIndex: 6000
+        icon: 'info'
       })
     },
     baixarImagemCompartilhamento(url, arquivoNome) {
@@ -413,11 +432,78 @@ export default {
         }
 
         const imagem = new Image()
-        imagem.crossOrigin = 'anonymous'
-        imagem.onload = () => resolve(imagem)
-        imagem.onerror = () => resolve(null)
+        let finalizado = false
+        const timeoutId = window.setTimeout(() => {
+          if (finalizado) return
+          finalizado = true
+          resolve(null)
+        }, 8000)
+
+        const finalizar = (resultado) => {
+          if (finalizado) return
+          finalizado = true
+          window.clearTimeout(timeoutId)
+          resolve(resultado)
+        }
+
+        if (/^https?:\/\//i.test(src)) {
+          imagem.crossOrigin = 'anonymous'
+        }
+        imagem.decoding = 'async'
+        imagem.onload = () => finalizar(imagem)
+        imagem.onerror = () => finalizar(null)
         imagem.src = src
       })
+    },
+    async carregarImagemCanvasComFallback(urlPrincipal, urlFallback = '') {
+      const imagemPrincipal = await this.carregarImagemCanvas(urlPrincipal)
+      if (imagemPrincipal) return imagemPrincipal
+
+      const fallback = String(urlFallback || '').trim()
+      if (!fallback || fallback === String(urlPrincipal || '').trim()) {
+        return null
+      }
+
+      return this.carregarImagemCanvas(fallback)
+    },
+    normalizarUrlImagemAbsoluta(url) {
+      const src = String(url || '').trim()
+      if (!src) return ''
+      if (/^(data:|blob:)/i.test(src)) return src
+      if (/^https?:\/\//i.test(src)) return src
+      if (/^\/?(assets|img|images)\//i.test(src)) return src
+
+      const baseApi = String(api?.defaults?.baseURL || '').trim().replace(/\/+$/, '')
+      if (!baseApi) return src
+
+      if (/^\/uploads\//i.test(src)) return `${baseApi}${src}`
+      if (/^uploads\//i.test(src)) return `${baseApi}/${src}`
+      return src
+    },
+    obterFotoTimeCanvas(foto) {
+      const fotoNormalizada = obterFotoTime(foto)
+      const urlAbsoluta = this.normalizarUrlImagemAbsoluta(fotoNormalizada)
+
+      if (!/^https?:\/\//i.test(urlAbsoluta)) {
+        return {
+          principal: urlAbsoluta,
+          fallback: urlAbsoluta
+        }
+      }
+
+      const baseApi = String(api?.defaults?.baseURL || '').trim().replace(/\/+$/, '')
+      if (!baseApi) {
+        return {
+          principal: urlAbsoluta,
+          fallback: urlAbsoluta
+        }
+      }
+
+      const proxyUrl = `${baseApi}/media/proxy?url=${encodeURIComponent(urlAbsoluta)}`
+      return {
+        principal: proxyUrl,
+        fallback: urlAbsoluta
+      }
     },
     desenharRetanguloArredondado(ctx, x, y, largura, altura, raio) {
       const r = Math.min(raio, largura / 2, altura / 2)
@@ -526,43 +612,45 @@ export default {
       }
 
       const gradienteFundo = ctx.createLinearGradient(0, 0, largura, altura)
-      gradienteFundo.addColorStop(0, '#0b132b')
-      gradienteFundo.addColorStop(0.55, '#1d4ed8')
+      gradienteFundo.addColorStop(0, '#0a1f5e')
+      gradienteFundo.addColorStop(0.58, '#2859d6')
       gradienteFundo.addColorStop(1, '#0f172a')
       ctx.fillStyle = gradienteFundo
       ctx.fillRect(0, 0, largura, altura)
 
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.09)'
-      ctx.beginPath()
-      ctx.arc(90, 90, 60, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.beginPath()
-      ctx.arc(largura - 80, 180, 90, 0, Math.PI * 2)
-      ctx.fill()
+      const brilhoTopo = ctx.createRadialGradient(largura * 0.22, 110, 40, largura * 0.22, 110, 260)
+      brilhoTopo.addColorStop(0, 'rgba(255, 255, 255, 0.16)')
+      brilhoTopo.addColorStop(1, 'rgba(255, 255, 255, 0)')
+      ctx.fillStyle = brilhoTopo
+      ctx.fillRect(0, 0, largura, 360)
 
-      this.desenharRetanguloArredondado(ctx, 52, 120, largura - 104, altura - 220, 38)
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.14)'
+      this.desenharRetanguloArredondado(ctx, 46, 122, largura - 92, altura - 210, 42)
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.28)'
       ctx.fill()
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.24)'
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)'
       ctx.lineWidth = 2
       ctx.stroke()
+
+      this.desenharRetanguloArredondado(ctx, 86, 168, largura - 172, 80, 24)
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.42)'
+      ctx.fill()
 
       ctx.textAlign = 'center'
       ctx.textBaseline = 'alphabetic'
       ctx.fillStyle = '#ffffff'
-      ctx.font = '800 46px Montserrat, Arial, sans-serif'
-      ctx.fillText('Quadra Play', largura / 2, 86)
-      ctx.font = '500 24px Montserrat, Arial, sans-serif'
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
-      ctx.fillText('Resultado da partida', largura / 2, 116)
+      ctx.font = '800 54px Montserrat, Arial, sans-serif'
+      ctx.fillText('Quadra Play', largura / 2, 92)
+      ctx.font = '500 30px Montserrat, Arial, sans-serif'
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.88)'
+      ctx.fillText('Resultado da partida', largura / 2, 126)
 
       const status = this.statusLabel(partida)
-      this.desenharRetanguloArredondado(ctx, largura / 2 - 190, 178, 380, 52, 999)
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.48)'
+      this.desenharRetanguloArredondado(ctx, largura / 2 - 210, 182, 420, 54, 999)
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.52)'
       ctx.fill()
-      ctx.font = '800 22px Montserrat, Arial, sans-serif'
+      ctx.font = '800 24px Montserrat, Arial, sans-serif'
       ctx.fillStyle = '#ffffff'
-      ctx.fillText(status, largura / 2, 212)
+      ctx.fillText(status, largura / 2, 218)
 
       const timeANome = partida.timeA?.nome || 'Time A'
       const timeBNome = partida.timeB?.nome || 'Time B'
@@ -570,54 +658,71 @@ export default {
         ? 'x'
         : `${partida.pontosTimeA ?? 0} x ${partida.pontosTimeB ?? 0}`
 
+      const fotoTimeAUrl = this.obterFotoTimeCanvas(partida.timeA?.foto)
+      const fotoTimeBUrl = this.obterFotoTimeCanvas(partida.timeB?.foto)
+
       const [fotoTimeA, fotoTimeB] = await Promise.all([
-        this.carregarImagemCanvas(obterFotoTime(partida.timeA?.foto)),
-        this.carregarImagemCanvas(obterFotoTime(partida.timeB?.foto))
+        this.carregarImagemCanvasComFallback(fotoTimeAUrl.principal, fotoTimeAUrl.fallback),
+        this.carregarImagemCanvasComFallback(fotoTimeBUrl.principal, fotoTimeBUrl.fallback)
       ])
 
-      const yTimes = 430
-      const xTimeA = 220
-      const xTimeB = largura - 220
-      const raioAvatar = 82
+      const yCards = 312
+      const larguraCardTime = 270
+      const alturaCardTime = 372
+      const xCardA = 86
+      const xCardB = largura - xCardA - larguraCardTime
+
+      this.desenharRetanguloArredondado(ctx, xCardA, yCards, larguraCardTime, alturaCardTime, 36)
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.11)'
+      ctx.fill()
+      this.desenharRetanguloArredondado(ctx, xCardB, yCards, larguraCardTime, alturaCardTime, 36)
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.11)'
+      ctx.fill()
+
+      const yTimes = yCards + 130
+      const xTimeA = xCardA + larguraCardTime / 2
+      const xTimeB = xCardB + larguraCardTime / 2
+      const raioAvatar = 84
 
       this.desenharAvatarTimeCanvas(ctx, fotoTimeA, xTimeA, yTimes, raioAvatar, timeANome, '#dbeafe')
       this.desenharAvatarTimeCanvas(ctx, fotoTimeB, xTimeB, yTimes, raioAvatar, timeBNome, '#fee2e2')
 
       ctx.fillStyle = '#ffffff'
-      ctx.font = '900 86px Montserrat, Arial, sans-serif'
+      ctx.font = '900 88px Montserrat, Arial, sans-serif'
       ctx.fillText(resultado, largura / 2, yTimes + 22)
 
-      const larguraTextoTime = 300
+      const larguraTextoTime = 220
       ctx.fillStyle = '#ffffff'
-      this.desenharNomeCompletoTime(ctx, timeANome, xTimeA, 560, larguraTextoTime)
-      this.desenharNomeCompletoTime(ctx, timeBNome, xTimeB, 560, larguraTextoTime)
+      this.desenharNomeCompletoTime(ctx, timeANome, xTimeA, yCards + 294, larguraTextoTime)
+      this.desenharNomeCompletoTime(ctx, timeBNome, xTimeB, yCards + 294, larguraTextoTime)
 
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'
       ctx.lineWidth = 2
       ctx.beginPath()
-      ctx.moveTo(120, 770)
-      ctx.lineTo(largura - 120, 770)
+      ctx.moveTo(120, 760)
+      ctx.lineTo(largura - 120, 760)
       ctx.stroke()
 
       const campeonatoNome = partida.campeonato?.nome || 'Campeonato'
       const quadraNome = partida.quadra?.nome || 'Quadra'
       const dataTexto = this.formatarDataPartida(partida?.data || partida?.createdAt)
 
-      ctx.font = '700 30px Montserrat, Arial, sans-serif'
+      ctx.font = '700 32px Montserrat, Arial, sans-serif'
       ctx.fillStyle = '#ffffff'
       const linhasCampeonato = this.quebrarTexto(ctx, campeonatoNome, largura - 180).slice(0, 3)
       linhasCampeonato.forEach((linha, indice) => {
-        ctx.fillText(linha, largura / 2, 840 + indice * 40)
+        ctx.fillText(linha, largura / 2, 840 + indice * 42)
       })
 
-      ctx.font = '600 28px Montserrat, Arial, sans-serif'
+      ctx.font = '700 30px Montserrat, Arial, sans-serif'
       ctx.fillStyle = 'rgba(255, 255, 255, 0.92)'
-      ctx.fillText(quadraNome, largura / 2, 980)
-      ctx.fillText(dataTexto, largura / 2, 1030)
+      ctx.fillText(quadraNome, largura / 2, 982)
+      ctx.font = '600 30px Montserrat, Arial, sans-serif'
+      ctx.fillText(dataTexto, largura / 2, 1034)
 
-      ctx.font = '500 20px Montserrat, Arial, sans-serif'
+      ctx.font = '500 22px Montserrat, Arial, sans-serif'
       ctx.fillStyle = 'rgba(255, 255, 255, 0.78)'
-      ctx.fillText('Gerado por Quadra Play', largura / 2, altura - 64)
+      ctx.fillText('Gerado por Quadra Play', largura / 2, altura - 58)
 
       const blob = await new Promise((resolve, reject) => {
         canvas.toBlob((arquivo) => {
@@ -988,6 +1093,14 @@ export default {
   border-top-color: #ffffff;
   border-radius: 999px;
   animation: spin 0.8s linear infinite;
+}
+
+:deep(.swal2-container.swal-share-modal) {
+  z-index: 7000 !important;
+}
+
+:deep(.swal2-container.swal-share-modal .swal2-popup) {
+  border-radius: 16px;
 }
 
 .status-badge {

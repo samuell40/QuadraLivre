@@ -57,6 +57,81 @@ app.use(cors({
   allowedHeaders: ['Authorization', 'Content-Type'],
 }));
 
+function montarHostsPermitidosProxyMidia() {
+  const hosts = new Set();
+  const urlPublica = String(process.env.URL_PUBLICA || '').trim();
+  const hostsExtra = String(process.env.MEDIA_PROXY_HOSTS || '').trim();
+
+  if (urlPublica) {
+    try {
+      hosts.add(new URL(urlPublica).host.toLowerCase());
+    } catch (error) {
+      console.warn('[media-proxy] URL_PUBLICA invalida:', urlPublica);
+    }
+  }
+
+  if (hostsExtra) {
+    hostsExtra
+      .split(',')
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean)
+      .forEach((host) => hosts.add(host));
+  }
+
+  hosts.add('pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev');
+  return hosts;
+}
+
+const HOSTS_PERMITIDOS_PROXY_MIDIA = montarHostsPermitidosProxyMidia();
+
+function validarUrlImagemProxy(urlImagem) {
+  try {
+    const url = new URL(String(urlImagem || '').trim());
+    const protocoloValido = url.protocol === 'https:' || url.protocol === 'http:';
+    if (!protocoloValido) return null;
+
+    const host = String(url.host || '').toLowerCase();
+    if (!HOSTS_PERMITIDOS_PROXY_MIDIA.has(host)) return null;
+    return url.toString();
+  } catch (error) {
+    return null;
+  }
+}
+
+app.get('/media/proxy', async (req, res) => {
+  const urlImagem = String(req.query?.url || '').trim();
+  const urlValidada = validarUrlImagemProxy(urlImagem);
+
+  if (!urlValidada) {
+    return res.status(400).json({ error: 'URL de imagem invalida ou nao permitida.' });
+  }
+
+  try {
+    const resposta = await fetch(urlValidada);
+    if (!resposta.ok) {
+      return res.status(404).json({ error: 'Nao foi possivel obter a imagem.' });
+    }
+
+    const contentType = String(resposta.headers.get('content-type') || '').toLowerCase();
+    if (!contentType.startsWith('image/')) {
+      return res.status(415).json({ error: 'A URL informada nao retorna uma imagem valida.' });
+    }
+
+    const tamanhoConteudo = Number(resposta.headers.get('content-length') || 0);
+    if (Number.isFinite(tamanhoConteudo) && tamanhoConteudo > 8 * 1024 * 1024) {
+      return res.status(413).json({ error: 'Imagem excede o tamanho maximo permitido.' });
+    }
+
+    const buffer = Buffer.from(await resposta.arrayBuffer());
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+    return res.status(200).send(buffer);
+  } catch (error) {
+    console.error('[media-proxy] erro ao buscar imagem:', error?.message || error);
+    return res.status(502).json({ error: 'Falha ao carregar imagem externa.' });
+  }
+});
+
 app.use(passport.initialize());
 
 // Rotas
