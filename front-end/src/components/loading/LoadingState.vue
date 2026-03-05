@@ -1,10 +1,15 @@
 <template>
   <section :class="['loading-state', `loading-state--${size}`]" role="status" aria-live="polite">
     <div class="loading-illustration" aria-hidden="true">
-      <img class="loading-player-art" :src="kickerArt" alt="" />
+      <img class="loading-player-art" :src="loadingArt" alt="" />
 
+      <span class="loading-ball-shadow"></span>
       <div class="loading-ball-wrap">
-        <img class="loading-ball-art" :src="ballArt" alt="" />
+        <svg class="loading-ball-art" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="44" fill="#eff6ff" stroke="#2563eb" stroke-width="8" />
+          <polygon points="50,23 63,31 59,46 41,46 37,31" fill="#2563eb" />
+          <path d="M23 44l14 2M77 44l-14 2M34 69l7-11M66 69l-7-11M29 57l10-2M71 57l-10-2" stroke="#2563eb" stroke-width="6" stroke-linecap="round" />
+        </svg>
       </div>
     </div>
 
@@ -16,15 +21,13 @@
 </template>
 
 <script>
-import kickerArt from '@/assets/loading/live-kicker.svg'
-import ballArt from '@/assets/loading/live-ball.svg'
+import loadingArt from '@/assets/loading/loading.png'
 
 export default {
   name: 'LoadingState',
   data() {
     return {
-      kickerArt,
-      ballArt
+      loadingArt
     }
   },
   props: {
@@ -73,38 +76,48 @@ export default {
 
 .loading-illustration {
   position: relative;
-  width: 260px;
-  height: 160px;
+  width: min(320px, 84vw);
+  aspect-ratio: 4 / 3;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   isolation: isolate;
 }
 
 .loading-state--compact .loading-illustration {
-  width: 180px;
-  height: 118px;
+  width: min(220px, 72vw);
 }
 
 .loading-player-art {
-  position: absolute;
-  left: 8px;
-  bottom: 12px;
-  width: 220px;
-  height: auto;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   user-select: none;
   pointer-events: none;
-  animation: playerFloat 1.8s ease-in-out infinite;
+  filter: drop-shadow(0 8px 18px rgba(37, 99, 235, 0.24));
+}
+
+.loading-ball-shadow {
+  position: absolute;
+  right: 16%;
+  bottom: 17.5%;
+  width: 17%;
+  height: 9px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(15, 23, 42, 0.34) 0%, rgba(15, 23, 42, 0) 72%);
+  animation: ballShadow 1.25s ease-in-out infinite;
+  transform-origin: center;
 }
 
 .loading-ball-wrap {
   position: absolute;
-  right: 18px;
-  bottom: 18px;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  animation: ballKick 1.1s ease-in-out infinite;
+  right: 15.5%;
+  bottom: 19%;
+  width: 19%;
+  max-width: 66px;
+  min-width: 34px;
+  animation: ballJump 1.25s ease-in-out infinite;
+  will-change: transform;
 }
 
 .loading-ball-art {
@@ -112,19 +125,27 @@ export default {
   height: 100%;
   user-select: none;
   pointer-events: none;
+  filter: drop-shadow(0 0 8px rgba(37, 99, 235, 0.42));
+  animation: ballSpin 0.9s linear infinite;
 }
 
 .loading-state--compact .loading-player-art {
-  left: 6px;
-  bottom: 12px;
-  width: 154px;
+  filter: drop-shadow(0 6px 12px rgba(37, 99, 235, 0.22));
+}
+
+.loading-state--compact .loading-ball-shadow {
+  width: 18%;
+  height: 8px;
+  right: 15%;
+  bottom: 17%;
 }
 
 .loading-state--compact .loading-ball-wrap {
-  right: 14px;
-  bottom: 14px;
-  width: 40px;
-  height: 40px;
+  width: 20%;
+  right: 14%;
+  bottom: 18.5%;
+  min-width: 28px;
+  max-width: 48px;
 }
 
 .loading-copy {
@@ -158,24 +179,41 @@ export default {
   font-size: 14px;
 }
 
-@keyframes playerFloat {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-2px);
+@keyframes ballSpin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
-@keyframes ballKick {
+@keyframes ballJump {
   0%,
-  30%,
   100% {
-    transform: translateX(0) translateY(0) scale(1);
+    transform: translate3d(0, 0, 0);
   }
-  50% {
-    transform: translateX(7px) translateY(-2px) scale(1.03);
+  20% {
+    transform: translate3d(20%, -38%, 0);
+  }
+  40% {
+    transform: translate3d(54%, 0, 0);
+  }
+  62% {
+    transform: translate3d(82%, -26%, 0);
+  }
+  80% {
+    transform: translate3d(112%, 0, 0);
+  }
+}
+
+@keyframes ballShadow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.62;
+  }
+  20%,
+  62% {
+    transform: scale(0.72);
+    opacity: 0.38;
   }
 }
 
@@ -195,36 +233,11 @@ export default {
   }
 
   .loading-illustration {
-    width: 210px;
-    height: 130px;
+    width: min(240px, 86vw);
   }
 
   .loading-state--compact .loading-illustration {
-    width: 160px;
-    height: 100px;
-  }
-
-  .loading-player-art {
-    left: 8px;
-    bottom: 12px;
-    width: 176px;
-  }
-
-  .loading-ball-wrap {
-    right: 12px;
-    bottom: 12px;
-    width: 48px;
-    height: 48px;
-  }
-
-  .loading-state--compact .loading-player-art {
-    width: 138px;
-  }
-
-  .loading-state--compact .loading-ball-wrap {
-    right: 12px;
-    width: 36px;
-    height: 36px;
+    width: min(185px, 70vw);
   }
 
   .loading-title {
