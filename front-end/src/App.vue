@@ -14,42 +14,17 @@
       :key="route.fullPath"
     />
   </router-view>
-
-  <div v-if="partidasAoVivoOrdenadas.length" class="live-feed-stack">
-    <button
-      v-for="partida in partidasAoVivoOrdenadas"
-      :key="`live-feed-${partida.partidaId}`"
-      type="button"
-      class="live-feed-card"
-      @click="abrirPainelPartidasAoVivo(partida)"
-    >
-      <div class="live-feed-header">
-        <span class="live-feed-status" :class="classeStatusLive(partida.status)">
-          {{ rotuloStatusLive(partida.status) }}
-        </span>
-        <span class="live-feed-campeonato">{{ partida.campeonatoNome || 'Campeonato' }}</span>
-      </div>
-
-      <div class="live-feed-placar">
-        <span class="live-team">{{ partida.timeA || 'Time A' }}</span>
-        <strong class="live-score">{{ partida.pontosTimeA }} x {{ partida.pontosTimeB }}</strong>
-        <span class="live-team">{{ partida.timeB || 'Time B' }}</span>
-      </div>
-
-      <div class="live-feed-footer">
-        <span v-if="partida.quadra" class="live-quadra">{{ partida.quadra }}</span>
-        <span class="live-updated">Atualizado agora</span>
-      </div>
-    </button>
-  </div>
 </template>
 
 <script>
-import Swal from 'sweetalert2'
 import {
   EVENTO_NOTIFICACAO_PARTIDA_AO_VIVO,
   obterSocket
 } from '@/services/socket'
+import {
+  inicializarNotificacoesPush,
+  removerAssinaturaPushLocal
+} from '@/services/pushNotifications'
 import {
   getDataVersion,
   subscribeDataVersion
@@ -68,8 +43,8 @@ export default {
       onSocketConnectError: null,
       onSocketDisconnect: null,
       onSocketAny: null,
-      partidasAoVivo: {},
       notificacoesNativasPorPartida: {},
+      pushNotificacoesAtivas: false,
       keepAliveRouteNames: [],
       routeRevisionMap: {},
       routeDirtyMap: {},
@@ -83,7 +58,7 @@ export default {
     this.inicializarCacheRotas()
     this.unsubscribeDataVersion = subscribeDataVersion(this.onDataVersionChange)
     this.conectarSocketNotificacoes()
-    this.garantirPermissaoNotificacao()
+    this.inicializarPushNotificacoes()
   },
 
   beforeUnmount() {
@@ -100,15 +75,6 @@ export default {
       handler(rotaAtual) {
         this.tratarEntradaRota(rotaAtual)
       }
-    }
-  },
-
-  computed: {
-    partidasAoVivoOrdenadas() {
-      return Object.values(this.partidasAoVivo || {})
-        .filter((partida) => Number(partida?.partidaId) > 0)
-        .sort((a, b) => Number(b?.atualizadoTimestamp || 0) - Number(a?.atualizadoTimestamp || 0))
-        .slice(0, 4)
     }
   },
 
@@ -172,6 +138,23 @@ export default {
           this.routeDirtyMap[nomeRota] = true
         }
       })
+
+      const motivo = String(detail?.reason || '').toLowerCase()
+      if (motivo === 'auth-login') {
+        this.inicializarPushNotificacoes()
+      }
+      if (motivo === 'auth-logout') {
+        this.limparAssinaturaPushLocal()
+      }
+    },
+
+    async inicializarPushNotificacoes() {
+      this.pushNotificacoesAtivas = await inicializarNotificacoesPush()
+    },
+
+    async limparAssinaturaPushLocal() {
+      await removerAssinaturaPushLocal()
+      this.pushNotificacoesAtivas = false
     },
 
     conectarSocketNotificacoes() {
@@ -295,13 +278,6 @@ export default {
       return 'EM ACOMPANHAMENTO'
     },
 
-    classeStatusLive(status) {
-      const statusNormalizado = String(status || '').toUpperCase()
-      if (statusNormalizado === 'EM_ANDAMENTO') return 'is-live'
-      if (statusNormalizado === 'ADIADA') return 'is-paused'
-      return 'is-default'
-    },
-
     normalizarPayloadPartidaAoVivo(payload = {}) {
       const partidaId = Number(payload?.partidaId || 0)
       const status = String(payload?.status || '').toUpperCase()
@@ -320,56 +296,8 @@ export default {
         status,
         encerrada: Boolean(payload?.encerrada) || this.ehStatusEncerrado(status),
         quadra: String(payload?.quadra || '').trim(),
-        atualizadoEm,
-        atualizadoTimestamp: Number.isFinite(atualizadoTimestamp) ? atualizadoTimestamp : Date.now()
+        atualizadoEm: Number.isFinite(atualizadoTimestamp) ? atualizadoEm : new Date().toISOString()
       }
-    },
-
-    removerPartidaAoVivo(partidaId) {
-      const id = Number(partidaId || 0)
-      if (!id) return
-
-      const atualizadas = { ...this.partidasAoVivo }
-      delete atualizadas[id]
-      this.partidasAoVivo = atualizadas
-
-      const notificacao = this.notificacoesNativasPorPartida[id]
-      if (notificacao && typeof notificacao.close === 'function') {
-        try {
-          notificacao.close()
-        } catch (error) {
-          if (SOCKET_DEBUG) {
-            console.warn('[notificacao] erro ao fechar notificacao nativa da partida:', id, error)
-          }
-        }
-      }
-
-      const mapaNativas = { ...this.notificacoesNativasPorPartida }
-      delete mapaNativas[id]
-      this.notificacoesNativasPorPartida = mapaNativas
-    },
-
-    exibirToastPartidaAoVivo(partida) {
-      const tipo = String(partida?.tipo || '')
-      if (!['PARTIDA_CRIADA', 'PARTIDA_INICIADA', 'PARTIDA_FINALIZADA'].includes(tipo)) return
-      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
-
-      const titulo = tipo === 'PARTIDA_FINALIZADA'
-        ? 'Partida finalizada'
-        : tipo === 'PARTIDA_INICIADA'
-          ? 'Partida em andamento'
-          : 'Partida criada'
-
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: tipo === 'PARTIDA_FINALIZADA' ? 'success' : 'info',
-        title: titulo,
-        text: `${partida.timeA} ${partida.pontosTimeA} x ${partida.pontosTimeB} ${partida.timeB}`,
-        timer: 5000,
-        timerProgressBar: true,
-        showConfirmButton: false
-      })
     },
 
     notificarPartidaAoVivoNoSistema(partida) {
@@ -399,7 +327,7 @@ export default {
         const notificacao = new Notification(titulo, {
           body,
           tag,
-          renotify: false,
+          renotify: true,
           requireInteraction: !encerrada,
           silent: true
         })
@@ -412,18 +340,6 @@ export default {
 
         const mapa = { ...this.notificacoesNativasPorPartida, [id]: notificacao }
         this.notificacoesNativasPorPartida = mapa
-
-        if (encerrada) {
-          setTimeout(() => {
-            try {
-              notificacao.close()
-            } catch (error) {
-              if (SOCKET_DEBUG) {
-                console.warn('[notificacao] erro ao fechar notificacao encerrada:', error)
-              }
-            }
-          }, 4000)
-        }
       } catch (error) {
         if (SOCKET_DEBUG) {
           console.warn('Falha ao mostrar notificacao nativa:', error)
@@ -450,19 +366,7 @@ export default {
         console.log('[socket] notificacao ao vivo recebida:', partida)
       }
 
-      if (partida.encerrada) {
-        this.removerPartidaAoVivo(partida.partidaId)
-        this.exibirToastPartidaAoVivo(partida)
-        this.notificarPartidaAoVivoNoSistema(partida)
-        return
-      }
-
-      this.partidasAoVivo = {
-        ...this.partidasAoVivo,
-        [partida.partidaId]: partida
-      }
-
-      this.exibirToastPartidaAoVivo(partida)
+      if (this.pushNotificacoesAtivas) return
       this.notificarPartidaAoVivoNoSistema(partida)
     }
   }
@@ -484,123 +388,5 @@ img:focus {
 body {
   margin: 0;
   font-family: 'Montserrat', sans-serif;
-}
-
-.live-feed-stack {
-  position: fixed;
-  right: 14px;
-  bottom: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 9999;
-  max-width: min(420px, calc(100vw - 24px));
-}
-
-.live-feed-card {
-  width: 100%;
-  border: 1px solid rgba(33, 55, 121, 0.24);
-  border-radius: 12px;
-  background: linear-gradient(180deg, #ffffff 0%, #f2f6ff 100%);
-  box-shadow: 0 10px 24px rgba(16, 24, 40, 0.16);
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  text-align: left;
-  cursor: pointer;
-}
-
-.live-feed-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 26px rgba(16, 24, 40, 0.2);
-}
-
-.live-feed-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-
-.live-feed-status {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-}
-
-.live-feed-status.is-live {
-  color: #b42318;
-  background: #fee4e2;
-}
-
-.live-feed-status.is-paused {
-  color: #92400e;
-  background: #fef3c7;
-}
-
-.live-feed-status.is-default {
-  color: #1d4ed8;
-  background: #dbeafe;
-}
-
-.live-feed-campeonato {
-  font-size: 12px;
-  color: #344054;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.live-feed-placar {
-  display: grid;
-  grid-template-columns: minmax(90px, 1fr) auto minmax(90px, 1fr);
-  align-items: center;
-  gap: 8px;
-}
-
-.live-team {
-  font-size: 13px;
-  font-weight: 600;
-  color: #0f172a;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.live-team:last-child {
-  text-align: right;
-}
-
-.live-score {
-  font-size: 18px;
-  color: #0b1f55;
-}
-
-.live-feed-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-
-.live-quadra,
-.live-updated {
-  font-size: 11px;
-  color: #667085;
-}
-
-@media (max-width: 640px) {
-  .live-feed-stack {
-    right: 8px;
-    left: 8px;
-    bottom: 8px;
-    max-width: none;
-  }
 }
 </style>

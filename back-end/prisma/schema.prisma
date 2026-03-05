@@ -31,9 +31,24 @@ model Usuario {
   avisosCriados  Aviso[]
   avisosLidos    AvisoLeitura[]
   treinadorTimes TreinadorTime[]
+  pushSubscriptions PushSubscription[]
 
   @@index([ativo, deletedAt])
   @@index([permissaoId, ativo, deletedAt])
+}
+
+model PushSubscription {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
 }
 
 model Permissao {

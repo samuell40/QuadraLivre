@@ -1,4 +1,5 @@
 ﻿const { Server } = require('socket.io');
+const { enviarNotificacaoPushParaPartidas } = require('./services/push-notification.service');
 
 let io = null;
 
@@ -73,10 +74,15 @@ function emitirNotificacaoPartidaAoVivo(payload = {}) {
   const partidaId = paraIdValido(payload?.partidaId);
   if (!partidaId) return;
 
-  io.emit('notificacao:partida-ao-vivo', {
+  const notificacao = {
     ...payload,
     partidaId,
     atualizadoEm: new Date().toISOString()
+  };
+
+  io.emit('notificacao:partida-ao-vivo', notificacao);
+  enviarNotificacaoPushParaPartidas(notificacao).catch((error) => {
+    console.warn('[push] falha ao processar notificacao de partida:', error?.message || error);
   });
 }
 
