@@ -1437,7 +1437,7 @@ a {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  margin-top: 140px;
+  margin-top: 0;
 }
 
 .loader {
@@ -1584,7 +1584,7 @@ a {
   }
 
   .loader-container-centralizado {
-    margin-top: 90px;
+    margin-top: 0;
   }
 
   .loader {

@@ -189,15 +189,19 @@
 
       <div class="botoes" v-if="modoCriacaoPartida === 'AGENDAR'">
         <button class="btn-save" :disabled="!podeContinuar || criandoPartida" @click="salvarPartidaAgendada">
-          <span v-if="criandoPartida">Aguarde...</span>
-          <span v-else>Salvar partida</span>
+          <span class="btn-save-content">
+            <span v-if="criandoPartida" class="btn-save-spinner" aria-hidden="true"></span>
+            <span>{{ criandoPartida ? 'Salvando...' : 'Salvar partida' }}</span>
+          </span>
         </button>
       </div>
 
       <div class="botoes" v-else>
         <button class="btn-save" :disabled="!podeContinuar || criandoPartida" @click="continuarSelecionarJogadores">
-          <span v-if="criandoPartida">Aguarde...</span>
-          <span v-else>Continuar (selecionar jogadores)</span>
+          <span class="btn-save-content">
+            <span v-if="criandoPartida" class="btn-save-spinner" aria-hidden="true"></span>
+            <span>{{ criandoPartida ? 'Carregando...' : 'Continuar (selecionar jogadores)' }}</span>
+          </span>
         </button>
       </div>
     </div>
@@ -229,7 +233,12 @@
       </div>
 
       <div class="botoes">
-        <button class="btn-save" @click="criarRodada">Criar Rodada</button>
+        <button class="btn-save" :disabled="criandoRodada" @click="criarRodada">
+          <span class="btn-save-content">
+            <span v-if="criandoRodada" class="btn-save-spinner" aria-hidden="true"></span>
+            <span>{{ criandoRodada ? 'Criando...' : 'Criar Rodada' }}</span>
+          </span>
+        </button>
       </div>
     </div>
   </div>
@@ -281,6 +290,7 @@ export default {
       jogadoresTime1: [],
       jogadoresTime2: [],
       criandoPartida: false,
+      criandoRodada: false,
       carregandoAcaoEscolha: false,
       acaoSelecionada: ''
     }
@@ -566,6 +576,7 @@ export default {
     },
 
     async criarRodada() {
+      if (this.criandoRodada) return
       if (this.isMesario) {
         Swal.fire('Atenção', 'Mesaário não pode criar rodada.', 'info')
         return
@@ -580,6 +591,8 @@ export default {
         return
       }
 
+      this.criandoRodada = true
+
       try {
         const { data } = await api.post(`/rodada/${this.campeonatoId}/${this.faseIdSelecionada}`, {
           nome: this.nomeRodada
@@ -592,6 +605,8 @@ export default {
       } catch (err) {
         console.error('Erro ao criar rodada:', err)
         Swal.fire('Erro', 'Não foi possível criar a rodada.', 'error')
+      } finally {
+        this.criandoRodada = false
       }
     },
 
@@ -626,6 +641,7 @@ export default {
       }
 
       try {
+        this.criandoPartida = true
         const [resA, resB] = await Promise.all([
           api.get('/partidas/escalacao/jogadores', {
             params: {
@@ -649,6 +665,8 @@ export default {
       } catch (err) {
         console.error('Erro ao carregar jogadores:', err)
         Swal.fire('Erro', 'Não foi possível carregar os jogadores dos times.', 'error')
+      } finally {
+        this.criandoPartida = false
       }
     },
 
@@ -965,6 +983,23 @@ export default {
   font-weight: 800;
   background-color: #3b82f6;
   ;
+}
+
+.btn-save-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-save-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  animation: acaoSpin 0.75s linear infinite;
+  flex: 0 0 14px;
 }
 
 .btn-cancel {

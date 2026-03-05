@@ -181,8 +181,10 @@
 
       <div class="botoes botoes-salvar-full">
         <button class="btn-save btn-full" :disabled="salvando || !times.length" @click="salvar">
-          <span v-if="salvando">Salvando...</span>
-          <span v-else>Salvar distribuicao</span>
+          <span class="btn-save-content">
+            <span v-if="salvando" class="btn-save-spinner" aria-hidden="true"></span>
+            <span>{{ salvando ? 'Salvando...' : 'Salvar distribuicao' }}</span>
+          </span>
         </button>
       </div>
     </div>
@@ -1273,6 +1275,23 @@ export default {
   color: #fff;
 }
 
+.btn-save-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-save-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  animation: btnSaveSpin 0.75s linear infinite;
+  flex: 0 0 14px;
+}
+
 .btn-cancel {
   background: transparent;
   color: #2563eb;
@@ -1302,6 +1321,12 @@ export default {
 .btn-danger:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+@keyframes btnSaveSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {

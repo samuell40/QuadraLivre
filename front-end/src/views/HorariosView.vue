@@ -81,7 +81,11 @@
 
         <div class="tabela-container">
           <div v-if="isLoading" class="loader-overlay">
-            <div class="loader"></div>
+            <LoadingState
+              size="compact"
+              title="Carregando grade de horarios"
+              description="Montando a disponibilidade e as reservas da semana selecionada."
+            />
           </div>
 
           <div v-else-if="gradeMontada.length === 0" class="state-card">
@@ -155,11 +159,12 @@ import { useAuthStore } from '@/store'
 import SideBar from '@/components/SideBar.vue'
 import NavBarUse from '@/components/NavBarUser.vue'
 import DetalheAgendModal from '@/components/modals/Agendamentos/DetalharAgendModal.vue'
+import LoadingState from '@/components/loading/LoadingState.vue'
 import logoImg from '@/assets/logo.png'
 
 export default {
   name: 'HorariosView',
-  components: { SideBar, NavBarUse, DetalheAgendModal },
+  components: { SideBar, NavBarUse, DetalheAgendModal, LoadingState },
   setup() {
     const authStore = useAuthStore()
     const quadras = ref([])
@@ -1180,15 +1185,6 @@ export default {
   z-index: 2;
 }
 
-.loader {
-  width: 56px;
-  height: 56px;
-  border: 5px solid #e2e8f0;
-  border-top: 5px solid #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
 .state-card {
   display: flex;
   flex-direction: column;
@@ -1205,16 +1201,6 @@ export default {
   font-size: 22px;
   font-weight: 700;
   color: #0f172a;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
 }
 
 @media (max-width: 1200px) {

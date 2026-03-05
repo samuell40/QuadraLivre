@@ -266,6 +266,8 @@ const STATUS_CONFIG = {
   DELETADA: { label: 'DELETAR', card: 'card-cancelada', text: 'status-cancelada' }
 }
 
+const PARTIDA_SEM_JOGADORES_FLAG_PREFIX = 'quadraplay:partidaSemJogadoresIgnorada:'
+
 export default {
   name: 'GerenciarPartidaView',
   components: { SidebarCampeonato, NavBarQuadras, ModalEscolhaTipo, SelecionarJogadores, LoadingState },
@@ -502,6 +504,44 @@ export default {
       }
 
       return { porTime: 11, total: 22 }
+    },
+
+    obterChaveAvisoSemJogadores(partidaId) {
+      const id = Number(partidaId)
+      return id ? `${PARTIDA_SEM_JOGADORES_FLAG_PREFIX}${id}` : ''
+    },
+
+    deveExibirAvisoSemJogadores(partidaId) {
+      const chave = this.obterChaveAvisoSemJogadores(partidaId)
+      if (!chave) return true
+
+      try {
+        return localStorage.getItem(chave) !== '1'
+      } catch (error) {
+        return true
+      }
+    },
+
+    marcarAvisoSemJogadoresIgnorado(partidaId) {
+      const chave = this.obterChaveAvisoSemJogadores(partidaId)
+      if (!chave) return
+
+      try {
+        localStorage.setItem(chave, '1')
+      } catch (error) {
+        // Sem persistencia, mantem comportamento atual.
+      }
+    },
+
+    limparAvisoSemJogadoresIgnorado(partidaId) {
+      const chave = this.obterChaveAvisoSemJogadores(partidaId)
+      if (!chave) return
+
+      try {
+        localStorage.removeItem(chave)
+      } catch (error) {
+        // Sem persistencia, mantem comportamento atual.
+      }
     },
 
     async carregarCampeonatoSelecionado() {
@@ -853,6 +893,7 @@ export default {
         ]
 
         await api.put(`/partidas/${partida.id}/iniciar`, { jogadores: jogadoresPayload })
+        this.limparAvisoSemJogadoresIgnorado(partida.id)
         this.fecharModalJogadores()
         await this.carregarPartidasPorFaseRodada()
         await this.irParaTelaPartida(partida.id)
@@ -922,7 +963,11 @@ export default {
           const jogadoresSelecionados = Array.isArray(data) ? data : []
           const regraJogadores = this.obterRegraJogadoresPorPartida(partidaObj)
 
-          if (!jogadoresSelecionados.length && !regraJogadores?.opcional) {
+          if (jogadoresSelecionados.length) {
+            this.limparAvisoSemJogadoresIgnorado(partidaId)
+          }
+
+          if (!jogadoresSelecionados.length && !regraJogadores?.opcional && this.deveExibirAvisoSemJogadores(partidaId)) {
             const resultado = await Swal.fire({
               title: 'Partida sem jogadores',
               text: 'Deseja selecionar jogadores agora? Voce pode continuar sem selecao.',
@@ -933,10 +978,13 @@ export default {
             })
 
             if (resultado.isConfirmed) {
+              this.limparAvisoSemJogadoresIgnorado(partidaId)
               this.partidaAcessandoId = null
               await this.abrirEscalacaoInicial(partidaObj)
               return
             }
+
+            this.marcarAvisoSemJogadoresIgnorado(partidaId)
           }
         }
 

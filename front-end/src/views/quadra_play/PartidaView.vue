@@ -54,7 +54,10 @@
         <button class="botao-finalizar"
           :class="{ 'botao-finalizar-finalizada': isFinalizada, 'botao-finalizar-andamento': isEmAndamento }"
           :disabled="botaoDesabilitado" @click="finalizarPartida">
-          <span v-if="isFinalizando">Salvando...</span>
+          <span v-if="isFinalizando" class="botao-finalizar-loading">
+            <span class="botao-finalizar-spinner" aria-hidden="true"></span>
+            <span>Salvando...</span>
+          </span>
 
           <template v-else>
             <span v-if="isFinalizada">
@@ -1091,6 +1094,23 @@ a {
   transition: transform 0.15s ease, box-shadow 0.18s ease, opacity 0.18s ease;
 }
 
+.botao-finalizar-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.botao-finalizar-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  animation: botaoFinalizarSpin 0.75s linear infinite;
+  flex: 0 0 14px;
+}
+
 .botao-finalizar.botao-finalizar-andamento {
   background: linear-gradient(135deg, #16a34a, #22c55e);
   box-shadow: 0 12px 22px rgba(34, 197, 94, 0.16);
@@ -1110,6 +1130,12 @@ a {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+@keyframes botaoFinalizarSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .placares {

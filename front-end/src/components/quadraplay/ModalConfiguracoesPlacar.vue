@@ -143,8 +143,11 @@
       </section>
 
       <div class="botoes botoes-modal-times">
-        <button class="btn-save" @click="criarFase">
-          Criar Fase
+        <button class="btn-save" :disabled="salvandoFase" @click="criarFase">
+          <span class="btn-save-content">
+            <span v-if="salvandoFase" class="btn-save-spinner" aria-hidden="true"></span>
+            <span>{{ salvandoFase ? 'Salvando...' : 'Criar Fase' }}</span>
+          </span>
         </button>
       </div>
     </div>
@@ -170,8 +173,11 @@
       </div>
 
       <div class="botoes">
-        <button class="btn-save" @click="salvarOrdem">
-          Salvar ordem
+        <button class="btn-save" :disabled="salvandoOrdem" @click="salvarOrdem">
+          <span class="btn-save-content">
+            <span v-if="salvandoOrdem" class="btn-save-spinner" aria-hidden="true"></span>
+            <span>{{ salvandoOrdem ? 'Salvando...' : 'Salvar ordem' }}</span>
+          </span>
         </button>
       </div>
 
@@ -214,8 +220,11 @@
       </div>
 
       <div class="botoes">
-        <button class="btn-save" @click="salvarColunas">
-          Salvar colunas
+        <button class="btn-save" :disabled="salvandoColunas" @click="salvarColunas">
+          <span class="btn-save-content">
+            <span v-if="salvandoColunas" class="btn-save-spinner" aria-hidden="true"></span>
+            <span>{{ salvandoColunas ? 'Salvando...' : 'Salvar colunas' }}</span>
+          </span>
         </button>
       </div>
     </div>
@@ -255,6 +264,9 @@ export default {
       classificacao: [],
       indiceArraste: null,
       indiceArrasteColuna: null,
+      salvandoFase: false,
+      salvandoOrdem: false,
+      salvandoColunas: false,
       carregandoAcaoEscolha: false,
       acaoSelecionada: ''
     }
@@ -435,6 +447,9 @@ export default {
     },
 
     async salvarOrdem() {
+      if (this.salvandoOrdem) return
+      this.salvandoOrdem = true
+
       try {
         const ordem = this.criterios.map(c => ({ label: c.label, value: c.value }))
         await api.put(`/campeonatos/${this.campeonato.id}/classificacao/ordem`, { ordem })
@@ -455,10 +470,14 @@ export default {
           icon: "error",
           target: ".modal-criterios"
         })
+      } finally {
+        this.salvandoOrdem = false
       }
     },
 
     async salvarColunas() {
+      if (this.salvandoColunas) return
+
       const selecionadas = new Set(this.colunasSelecionadas)
       const ordemSelecionada = this.colunasOrdenadas
         .map(coluna => coluna.key)
@@ -478,6 +497,8 @@ export default {
         })
         return
       }
+
+      this.salvandoColunas = true
 
       try {
         await api.put(`/campeonatos/${this.campeonato.id}/classificacao/ordem`, { colunas })
@@ -501,6 +522,8 @@ export default {
           icon: "error",
           target: ".modal-colunas"
         })
+      } finally {
+        this.salvandoColunas = false
       }
     },
 
@@ -526,6 +549,8 @@ export default {
     },
 
     async criarFase() {
+      if (this.salvandoFase) return
+
       if (!this.nomeFase) {
         Swal.fire("Erro", "Informe o nome da fase.", "error")
         return
@@ -535,6 +560,8 @@ export default {
         Swal.fire("Erro", "Selecione pelo menos um time.", "error")
         return
       }
+
+      this.salvandoFase = true
 
       try {
         const { data } = await api.post(`/campeonatos/${this.campeonato.id}/fases`, {
@@ -548,6 +575,8 @@ export default {
       } catch (err) {
         console.error(err)
         Swal.fire("Erro", "Erro ao criar fase.", "error")
+      } finally {
+        this.salvandoFase = false
       }
     }
   }
@@ -743,6 +772,23 @@ export default {
 
 .btn-save {
   background-color: #3b82f6;
+}
+
+.btn-save-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-save-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  animation: acaoSpin 0.75s linear infinite;
+  flex: 0 0 14px;
 }
 
 .btn-cancel {
