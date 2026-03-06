@@ -253,6 +253,7 @@ export default {
 
   async mounted() {
     document.body.style.overflow = 'hidden';
+    document.body.classList.add('agend-modal-datepicker-open');
 
     if (this.usarDadosPrecarregados) {
       this.modalidades = Array.isArray(this.modalidadesPrecarregadas) ? this.modalidadesPrecarregadas : [];
@@ -288,6 +289,7 @@ export default {
 
   unmounted() {
     document.body.style.overflow = '';
+    document.body.classList.remove('agend-modal-datepicker-open');
   },
 
   methods: {
@@ -947,16 +949,20 @@ label {
   opacity: 0.6;
 }
 
+</style>
+
+<style>
 @media (max-width: 820px) {
-  :deep(.dp--menu-wrapper) {
+  body.agend-modal-datepicker-open .dp--menu-wrapper {
     position: fixed !important;
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
     margin: 0 !important;
+    z-index: 10050 !important;
   }
 
-  :deep(.dp__menu) {
+  body.agend-modal-datepicker-open .dp__menu {
     max-width: calc(100vw - 24px);
   }
 }
