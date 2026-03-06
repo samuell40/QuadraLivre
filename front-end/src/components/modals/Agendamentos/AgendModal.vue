@@ -53,7 +53,7 @@
           <div class="linha-selects">
             <div class="campo">
               <label><strong>Data:</strong></label>
-              <Datepicker v-model="data" teleport="body" teleport-center locale="pt-BR" cancelText="Cancelar" selectText="Selecionar"
+              <Datepicker v-model="data" teleport="body" :teleport-center="true" position="center" locale="pt-BR" cancelText="Cancelar" selectText="Selecionar"
                 :week-start="0" :day-names="['D', 'S', 'T', 'Q', 'Q', 'S', 'S']" :min-date="minDateObj"
                 :max-date="maxDateObj" :allowed-dates="verificarDataPermitida" :day-class="getDayClass"
                 :enable-time-picker="false" auto-apply @update:model-value="gerarHorariosDisponiveis"
@@ -945,5 +945,19 @@ label {
   color: #9ca3af;
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+@media (max-width: 820px) {
+  :deep(.dp--menu-wrapper) {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+  }
+
+  :deep(.dp__menu) {
+    max-width: calc(100vw - 24px);
+  }
 }
 </style>
