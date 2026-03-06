@@ -68,6 +68,7 @@
 <script>
 import Swal from 'sweetalert2';
 import api from '@/axios';
+import fotoTime from '@/assets/foto_time.png';
 
 export default {
   name: 'AdicionarTimeModal',
@@ -142,7 +143,7 @@ export default {
       }
 
       try {
-        let urlImagem = 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/QuadraLivre.png';
+        let urlImagem = fotoTime;
 
         if (this.arquivoFoto) {
           const formData = new FormData();
