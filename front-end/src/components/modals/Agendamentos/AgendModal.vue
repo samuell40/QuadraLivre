@@ -53,11 +53,11 @@
           <div class="linha-selects">
             <div class="campo">
               <label><strong>Data:</strong></label>
-              <Datepicker v-model="data" teleport="body" locale="pt-BR" cancelText="Cancelar" selectText="Selecionar"
+              <Datepicker v-model="data" teleport="body" teleport-center locale="pt-BR" cancelText="Cancelar" selectText="Selecionar"
                 :week-start="0" :day-names="['D', 'S', 'T', 'Q', 'Q', 'S', 'S']" :min-date="minDateObj"
                 :max-date="maxDateObj" :allowed-dates="verificarDataPermitida" :day-class="getDayClass"
                 :enable-time-picker="false" auto-apply @update:model-value="gerarHorariosDisponiveis"
-                :format="formatDate" placeholder="Escolha um dia" :alt-position="calcularPosicao"
+                :format="formatDate" placeholder="Escolha um dia"
                 input-class-name="form-select dp-custom-input" />
             </div>
 
@@ -316,6 +316,34 @@ export default {
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     },
 
+    normalizarHorario(valor) {
+      if (valor === null || valor === undefined || valor === '') return '';
+      if (typeof valor === 'number') {
+        if (!Number.isFinite(valor) || valor < 0 || valor > 23) return '';
+        return `${String(Math.trunc(valor)).padStart(2, '0')}:00`;
+      }
+
+      const texto = String(valor).trim();
+      const match = texto.match(/^(\d{1,2})(?::(\d{1,2}))?$/);
+      if (!match) return '';
+
+      const hora = Number(match[1]);
+      const minuto = Number(match[2] ?? 0);
+      if (!Number.isFinite(hora) || !Number.isFinite(minuto)) return '';
+      if (hora < 0 || hora > 23 || minuto < 0 || minuto > 59) return '';
+
+      return `${String(hora).padStart(2, '0')}:${String(minuto).padStart(2, '0')}`;
+    },
+
+    normalizarListaHorarios(lista) {
+      const unicos = new Set();
+      (Array.isArray(lista) ? lista : []).forEach((item) => {
+        const horario = this.normalizarHorario(item);
+        if (horario) unicos.add(horario);
+      });
+      return Array.from(unicos).sort();
+    },
+
     getGradePadrao() {
       const lista = [];
       for (let h = 7; h <= 23; h++) {
@@ -342,18 +370,18 @@ export default {
       } else {
         const slotsDoDia = this.gradeConfig
           .filter(g => (g.diaSemana != undefined && g.diaSemana == diaSemana) || (g.dia_semana != undefined && g.dia_semana == diaSemana))
-          .map(g => g.horario);
+          .map(g => this.normalizarHorario(g.horario))
+          .filter(Boolean);
 
         if (slotsDoDia.length > 0) {
-          slotsDoDia.sort();
-          horariosDaQuadra = slotsDoDia;
+          horariosDaQuadra = this.normalizarListaHorarios(slotsDoDia);
         } else {
           this.diaFechado = true;
           return;
         }
       }
 
-      this.horariosDisponiveis = [...horariosDaQuadra];
+      this.horariosDisponiveis = this.normalizarListaHorarios(horariosDaQuadra);
 
       try {
         const dataStr = this.formatDateAPI(this.data)
@@ -364,13 +392,19 @@ export default {
           { params: { ano, mes, dia } }
         )
 
+        const indisponiveisSet = new Set();
+
         agendamentos.forEach(a => {
+          const horaBase = Number(a.hora);
+          if (!Number.isFinite(horaBase)) return;
+
           for (let i = 0; i < (a.duracao ?? 1); i++) {
-            const h = a.hora + i
-            const hString = String(h).padStart(2, '0') + ':00'
-            this.horariosIndisponiveis.push(hString)
+            const hString = this.normalizarHorario(horaBase + i);
+            if (hString) indisponiveisSet.add(hString);
           }
-        })
+        });
+
+        this.horariosIndisponiveis = Array.from(indisponiveisSet).sort();
 
         this.horariosDisponiveis = this.horariosDisponiveis.filter(h => !this.horariosIndisponiveis.includes(h));
         this.horariosDisponiveis.sort();
@@ -387,9 +421,10 @@ export default {
 
       const slots = this.gradeConfig
         .filter(g => (g.diaSemana != undefined && g.diaSemana == diaIndex) || (g.dia_semana != undefined && g.dia_semana == diaIndex))
-        .map(g => g.horario);
+        .map(g => this.normalizarHorario(g.horario))
+        .filter(Boolean);
 
-      return slots.sort();
+      return this.normalizarListaHorarios(slots);
     },
 
     validarFormulario() {
@@ -425,8 +460,6 @@ export default {
       const d = new Date(date)
       return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`
     },
-
-    calcularPosicao() { return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }; },
 
     confirmarAvulso() {
       const horaSelecionada = parseInt(this.hora.split(':')[0])
