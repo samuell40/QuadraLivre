@@ -256,7 +256,8 @@ export default {
       jogadoresSelecionados: [],
       feedbackLocalTipo: '',
       feedbackLocalTexto: '',
-      feedbackLocalTimer: null
+      feedbackCampoPendente: '',
+      feedbackValorBase: null
     }
   },
 
@@ -289,9 +290,18 @@ export default {
     }
   },
 
+  watch: {
+    timeData: {
+      handler() {
+        this.verificarConclusaoFeedback()
+      },
+      deep: true
+    }
+  },
+
   methods: {
     emitDelta(campo, delta) {
-      this.mostrarFeedbackLocal(this.tipoFeedbackPorCampo(campo), this.mensagemParcial(campo, delta))
+      this.iniciarFeedbackLocal(campo, this.mensagemParcial(campo, delta))
       this.$emit('parcial-delta', { lado: this.lado, campo, delta })
     },
 
@@ -314,17 +324,38 @@ export default {
       return 'Registrando alteracao...'
     },
 
-    mostrarFeedbackLocal(tipo, mensagem = 'Registrando alteracao...') {
+    valorAtualPorCampo(campo) {
+      if (campo === 'golspro') return Number(this.timeData?.golspro ?? 0)
+      if (campo === 'cartaoamarelo') return Number(this.timeData?.cartaoamarelo ?? 0)
+      if (campo === 'cartaovermelho') return Number(this.timeData?.cartaovermelho ?? 0)
+      if (campo === 'faltas') return Number(this.timeData?.faltas ?? 0)
+      if (campo === 'substituicoes') return Number(this.timeData?.substituicoes ?? 0)
+      return null
+    },
+
+    iniciarFeedbackLocal(campo, mensagem = 'Registrando alteracao...') {
+      const tipo = this.tipoFeedbackPorCampo(campo)
       if (!tipo) return
 
-      clearTimeout(this.feedbackLocalTimer)
+      this.feedbackCampoPendente = campo
+      this.feedbackValorBase = this.valorAtualPorCampo(campo)
       this.feedbackLocalTipo = tipo
       this.feedbackLocalTexto = mensagem
-      this.feedbackLocalTimer = setTimeout(() => {
-        this.feedbackLocalTipo = ''
-        this.feedbackLocalTexto = ''
-        this.feedbackLocalTimer = null
-      }, 1400)
+    },
+
+    verificarConclusaoFeedback() {
+      if (!this.feedbackCampoPendente) return
+      const atual = this.valorAtualPorCampo(this.feedbackCampoPendente)
+      if (atual !== this.feedbackValorBase) {
+        this.limparFeedbackLocal()
+      }
+    },
+
+    limparFeedbackLocal() {
+      this.feedbackLocalTipo = ''
+      this.feedbackLocalTexto = ''
+      this.feedbackCampoPendente = ''
+      this.feedbackValorBase = null
     },
 
     campoPorTipoEvento(tipo) {
@@ -418,7 +449,7 @@ export default {
       if (this.tipoEvento === 'vermelho') payload.cartoesVermelhos = incremento
 
       try {
-        this.mostrarFeedbackLocal(this.tipoEvento, this.mensagemEventoJogador(acao))
+        this.iniciarFeedbackLocal(this.campoPorTipoEvento(this.tipoEvento), this.mensagemEventoJogador(acao))
         const res = await api.post('/atuacao', payload)
 
         if (this.tipoEvento === 'gol') this.emitDelta('golspro', incremento)
@@ -433,6 +464,7 @@ export default {
         this.$emit('refresh')
       } catch (error) {
         Swal.fire('Erro', error.response?.data?.message || 'Erro ao salvar atuação', 'error')
+        this.limparFeedbackLocal()
         await this.carregarJogadores()
       }
     },
@@ -497,7 +529,7 @@ export default {
       }
 
       try {
-        this.mostrarFeedbackLocal('substituicao', 'Registrando substituicoes...')
+        this.iniciarFeedbackLocal('substituicoes', 'Registrando substituicoes...')
         for (const sub of this.substituicoesPendentes) {
           await api.put(`/partidas/${this.partidaIdNum}/substituir`, {
             jogadorSaiId: sub.sai.id,
@@ -512,6 +544,7 @@ export default {
         this.$emit('refresh')
       } catch (error) {
         Swal.fire('Erro', 'Erro ao realizar substituições', 'error')
+        this.limparFeedbackLocal()
       }
     },
 
@@ -556,7 +589,8 @@ export default {
       if (!this.partidaIdNum) return
 
       try {
-        this.mostrarFeedbackLocal('substituicao', 'Removendo jogadores...')
+        this.feedbackLocalTipo = 'substituicao'
+        this.feedbackLocalTexto = 'Removendo jogadores...'
         for (const jogadorId of this.jogadoresSelecionados) {
           await api.put(`/${this.partidaIdNum}/${jogadorId}/remover`)
         }
@@ -566,12 +600,14 @@ export default {
         this.$emit('refresh')
       } catch {
         Swal.fire('Erro', 'Erro ao remover jogadores', 'error')
+      } finally {
+        this.limparFeedbackLocal()
       }
     }
   },
 
   beforeUnmount() {
-    clearTimeout(this.feedbackLocalTimer)
+    this.limparFeedbackLocal()
   }
 }
 </script>

@@ -36,7 +36,7 @@
           :class="{ active: isActive('/visualizarplacarhome') }"
           @click="navegar('/visualizarplacarhome')"
         >
-          Tabelas de Classificacao
+          Placar e Resultados
         </button>
         <button type="button" class="nav-link" :class="{ active: isActive('/') }" @click="navegar('/')">
           Tela Inicial
@@ -100,7 +100,7 @@
           :class="{ active: isActive('/visualizarplacarhome') }"
           @click="navegar('/visualizarplacarhome')"
         >
-          <span class="drawer-link-title">Tabelas de Classificacao</span>
+          <span class="drawer-link-title">Placar e Resultados</span>
           <span class="drawer-link-subtitle">Acompanhe fases, rodadas e placares.</span>
         </button>
       </div>

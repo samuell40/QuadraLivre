@@ -18,34 +18,18 @@
 
           <div class="input-group">
             <label>Nome</label>
-            <input 
-              type="text" 
-              v-model="form.nome" 
-              placeholder="Digite seu nome" 
-              required 
-            />
+            <input type="text" v-model="form.nome" placeholder="Digite seu nome" required />
           </div>
 
           <div class="input-group">
             <label>Telefone</label>
-            <input 
-              type="tel" 
-              v-model="form.telefone" 
-              placeholder="Digite seu telefone" 
-              @input="formatarTelefone" 
-              required
-            />
+            <input type="tel" v-model="form.telefone" placeholder="Digite seu telefone" @input="formatarTelefone"
+              required />
           </div>
 
           <div class="input-group">
             <label>Foto</label>
-            <input 
-              type="file" 
-              id="imagem" 
-              ref="inputImagem"
-              @change="handleFileChange" 
-              accept=".jpg, .jpeg, .png"
-            >
+            <input type="file" id="imagem" ref="inputImagem" @change="handleFileChange" accept=".jpg, .jpeg, .png">
           </div>
 
           <button type="submit" class="cadastro-button">Realizar Cadastro</button>
@@ -59,6 +43,7 @@
 import Swal from 'sweetalert2';
 import api from '@/axios';
 import { useAuthStore } from '@/store';
+import imagem_padrao from '@/assets/imagem_padrao_usuario';
 
 export default {
   data() {
@@ -149,8 +134,9 @@ export default {
 
           const uploadResponse = await api.post('/upload', formData);
           urlImagem = uploadResponse.data.fileUrl;
-        } else {
-          urlImagem = 'https://pub-8c7959cad5c04469b16f4b0706a2e931.r2.dev/uploads/Imagem%20padrao.png';
+        } 
+        else {
+          urlImagem = imagem_padrao;
         }
 
         const { data } = await api.post('/cadastrar/usuario', {

@@ -86,7 +86,8 @@ export default {
     return {
       feedbackLocalTipo: '',
       feedbackLocalTexto: '',
-      feedbackLocalTimer: null
+      feedbackCampoPendente: '',
+      feedbackValorBase: null
     }
   },
 
@@ -175,6 +176,16 @@ export default {
       )
     }
   },
+
+  watch: {
+    timeData: {
+      handler() {
+        this.verificarConclusaoFeedback()
+      },
+      deep: true
+    }
+  },
+
   methods: {
     mensagemParcial(campo, delta) {
       const removendo = Number(delta) < 0
@@ -186,28 +197,45 @@ export default {
       return 'Registrando alteracao...'
     },
 
-    mostrarFeedbackLocal(tipo, mensagem = 'Registrando alteracao...') {
-      if (!tipo) return
+    valorAtualPorCampo(campo) {
+      if (campo === 'setsVencidos') return this.setsVencidosAtual
+      if (campo === 'gamesSet') return this.gamesSetAtual
+      if (campo === 'pontosTieBreak') return this.pontosTieBreakAtual
+      if (campo === 'wo') return this.woAtual
+      return null
+    },
 
-      clearTimeout(this.feedbackLocalTimer)
-      this.feedbackLocalTipo = tipo
+    iniciarFeedbackLocal(campo, mensagem = 'Registrando alteracao...') {
+      this.feedbackCampoPendente = campo
+      this.feedbackValorBase = this.valorAtualPorCampo(campo)
+      this.feedbackLocalTipo = campo
       this.feedbackLocalTexto = mensagem
-      this.feedbackLocalTimer = setTimeout(() => {
-        this.feedbackLocalTipo = ''
-        this.feedbackLocalTexto = ''
-        this.feedbackLocalTimer = null
-      }, 1400)
+    },
+
+    verificarConclusaoFeedback() {
+      if (!this.feedbackCampoPendente) return
+      const atual = this.valorAtualPorCampo(this.feedbackCampoPendente)
+      if (atual !== this.feedbackValorBase) {
+        this.limparFeedbackLocal()
+      }
+    },
+
+    limparFeedbackLocal() {
+      this.feedbackLocalTipo = ''
+      this.feedbackLocalTexto = ''
+      this.feedbackCampoPendente = ''
+      this.feedbackValorBase = null
     },
 
     emitDelta(campo, delta) {
       if (!this.podeEditar || this.partidaEncerradaGlobal) return
-      this.mostrarFeedbackLocal(campo, this.mensagemParcial(campo, delta))
+      this.iniciarFeedbackLocal(campo, this.mensagemParcial(campo, delta))
       this.$emit('parcial-delta', { lado: this.lado, campo, delta })
     }
   },
 
   beforeUnmount() {
-    clearTimeout(this.feedbackLocalTimer)
+    this.limparFeedbackLocal()
   }
 }
 </script>

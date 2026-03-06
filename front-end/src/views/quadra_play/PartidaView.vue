@@ -876,9 +876,9 @@ a {
   display: flex;
   flex-direction: column;
   flex: 1;
-  padding: 24px;
+  padding: 24px 28px 32px;
+  margin-top: 70px;
   margin-left: 250px;
-  padding-top: 70px;
   background: #f8fafc;
   color: #0f172a;
   -webkit-font-smoothing: antialiased;
