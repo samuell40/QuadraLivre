@@ -84,23 +84,8 @@
                     <h3 class="nome-quadra">{{ quadra.nome }}</h3>
 
                     <div class="card-tags">
-                      <span
-                        v-for="mod in (quadra.modalidades || []).slice(0, 3)"
-                        :key="mod.id"
-                        class="tag-modalidade"
-                      >
-                        {{ formatarNomeModalidade(mod.nome) }}
-                      </span>
-
-                      <span
-                        v-if="(quadra.modalidades || []).length > 3"
-                        class="tag-modalidade tag-modalidade-muted"
-                      >
-                        +{{ (quadra.modalidades || []).length - 3 }}
-                      </span>
-
-                      <span v-if="!(quadra.modalidades || []).length" class="tag-modalidade tag-modalidade-muted">
-                        Sem modalidades
+                      <span class="tag-modalidade" :class="{ 'tag-modalidade-muted': !quadra.endereco }">
+                        {{ quadra.endereco || "Endereco nao informado" }}
                       </span>
                     </div>
                   </div>
@@ -489,9 +474,6 @@ export default {
         }
       }
     },
-    formatarNomeModalidade(nome) {
-      return nome.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (letra) => letra.toUpperCase());
-    },
   },
 };
 </script>
@@ -851,6 +833,7 @@ body {
 .tag-modalidade {
   display: inline-flex;
   align-items: center;
+  max-width: 100%;
   min-height: 24px;
   padding: 0 9px;
   border-radius: 999px;
@@ -859,6 +842,9 @@ body {
   color: rgba(255, 255, 255, 0.96);
   font-size: 11px;
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   backdrop-filter: blur(10px);
 }
 

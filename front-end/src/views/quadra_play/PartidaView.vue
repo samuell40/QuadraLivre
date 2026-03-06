@@ -23,13 +23,6 @@
         </span>
       </div>
 
-      <transition name="feedback-fade">
-        <div v-if="mostrarFeedbackRegistro" class="registro-feedback" role="status" aria-live="polite">
-          <span class="registro-feedback-spinner" aria-hidden="true"></span>
-          <span>{{ textoFeedbackRegistro }}</span>
-        </div>
-      </transition>
-
       <div v-if="isLoading" class="loader-container-centralizado">
         <LoadingState
           title="Carregando partida"
@@ -41,14 +34,10 @@
         <div v-if="placarComponent" class="placares"
           :class="{ 'placares-finalizada': isFinalizada, 'placares-andamento': isEmAndamento }">
           <component :is="placarComponent" v-bind="placarPropsTimeA" @parcial-delta="onParcialDelta"
-            @parcial-feedback="sinalizarFeedbackRegistro"
-            @refresh="carregarPartida" @action-feedback-start="iniciarFeedbackRegistro"
-            @action-feedback-end="finalizarFeedbackRegistro" />
+            @refresh="carregarPartida" />
 
           <component :is="placarComponent" v-bind="placarPropsTimeB" @parcial-delta="onParcialDelta"
-            @parcial-feedback="sinalizarFeedbackRegistro"
-            @refresh="carregarPartida" @action-feedback-start="iniciarFeedbackRegistro"
-            @action-feedback-end="finalizarFeedbackRegistro" />
+            @refresh="carregarPartida" />
         </div>
 
         <button class="botao-finalizar"
@@ -472,8 +461,6 @@ export default {
     async onParcialDelta({ lado, campo, delta }) {
       if (!this.partidaId) return
       if (!this.partida) return
-
-      this.sinalizarFeedbackRegistro(this.descreverAcaoRegistro(campo, delta))
 
       if (this.isGrupoFutebol) {
         await this.aplicarDeltaFutebol(lado, campo, delta)

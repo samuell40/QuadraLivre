@@ -43,29 +43,6 @@
         </div>
 
         <template v-if="campeonatoSelecionado">
-          <div class="hero-campeonato">
-            <div class="card-hero">
-              <div class="hero-overlay"></div>
-              <div class="hero-content">
-                <div class="hero-badges">
-                  <span v-if="campeonatoSelecionado?.modalidade?.nome" class="hero-badge">
-                    {{ formatarNomeExibicao(campeonatoSelecionado.modalidade.nome) }}
-                  </span>
-                  <span v-if="campeonatoSelecionado?.quadra?.nome" class="hero-badge hero-badge-soft">
-                    {{ campeonatoSelecionado.quadra.nome }}
-                  </span>
-                  <span v-if="resumoNavegacaoAtual" class="hero-badge hero-badge-soft">
-                    {{ resumoNavegacaoAtual }}
-                  </span>
-                </div>
-                <h2 class="hero-title">{{ campeonatoSelecionado.nome }}</h2>
-                <a class="hero-subtitle">
-                  Veja a classificação da fase atual, os resultados da rodada e o desempenho dos times em destaque.
-                </a>
-              </div>
-            </div>
-          </div>
-
           <div class="painel-card filtros-card">
             <div class="section-head">
               <div>
@@ -613,15 +590,6 @@ export default {
       } finally {
         this.loadingArtilharia = false
       }
-    },
-
-    formatarNomeExibicao(texto) {
-      return String(texto || '')
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean)
-        .map(parte => parte.charAt(0).toUpperCase() + parte.slice(1).toLowerCase())
-        .join(' ')
     }
   },
 
@@ -801,107 +769,6 @@ a {
   background: linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(96, 165, 250, 0.14));
   border-color: rgba(37, 99, 235, 0.52);
   color: #1d4ed8;
-}
-
-.hero-campeonato {
-  margin-bottom: 24px;
-}
-
-.card-hero {
-  position: relative;
-  width: 100%;
-  height: 340px;
-  border-radius: 26px;        /* igual ao detalhar */
-  overflow: hidden;
-  box-shadow: 0 28px 56px rgba(15, 23, 42, 0.18); /* igual ao detalhar */
-  border: 1px solid rgba(148, 163, 184, 0.22);    /* igual ao detalhar */
-}
-
-.card-hero-sem-foto {
-  background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
-}
-
-.foto-campeonato {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  image-rendering: -webkit-optimize-contrast;
-  filter: contrast(1.04) saturate(1.04);
-  transition: transform 0.5s ease;
-  display: block;
-}
-
-/* zoom suave no hover */
-.card-hero:hover .foto-campeonato {
-  transform: scale(1.03);
-}
-
-.hero-overlay {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(15, 23, 42, 0.08) 0%,
-      rgba(15, 23, 42, 0.18) 36%,
-      rgba(15, 23, 42, 0.78) 100%
-    ),
-    linear-gradient(120deg, rgba(37, 99, 235, 0.26), transparent 55%);
-}
-
-.hero-content {
-  position: absolute;
-  left: 28px;
-  right: 28px;
-  bottom: 28px;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  color: #fff;
-}
-
-.hero-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: rgba(37, 99, 235, 0.78);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.hero-badge-soft {
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(8px);
-}
-
-.hero-title {
-  margin: 0;
-  color: #fff;
-  font-size: clamp(34px, 4vw, 52px);
-  line-height: 0.96;
-  letter-spacing: -0.04em;
-  max-width: 720px;
-}
-
-.hero-subtitle {
-  margin: 0;
-  max-width: 620px;
-  color: rgba(255, 255, 255, 0.88);
-  font-size: 16px;
-  line-height: 1.6;
 }
 
 .filtros-topo {
@@ -1168,23 +1035,6 @@ a {
     border-radius: 12px;
     font-size: 11px;
     line-height: 1.2;
-  }
-
-  .card-hero,
-  .foto-campeonato {
-    min-height: 210px;
-  }
-
-  .hero-content {
-    padding: 20px;
-  }
-
-  .hero-title {
-    font-size: 28px;
-  }
-
-  .hero-subtitle {
-    font-size: 14px;
   }
 
   .filtros-topo {

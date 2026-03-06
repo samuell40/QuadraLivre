@@ -6,6 +6,12 @@
     </h2>
 
     <div class="box">
+      <transition name="feedback-local-fade">
+        <div v-if="feedbackLocalTipo === 'gol'" class="acao-feedback-local" role="status" aria-live="polite">
+          <span class="acao-feedback-local-spinner" aria-hidden="true"></span>
+          <span>{{ feedbackLocalTexto }}</span>
+        </div>
+      </transition>
       <p>Gols Marcados</p>
       <div class="controls">
         <button @click="acionarEvento('gol', -1)">-</button>
@@ -17,6 +23,12 @@
     <!-- LINHA: Amarelo + Vermelho -->
     <div class="row-2">
       <div class="box">
+        <transition name="feedback-local-fade">
+          <div v-if="feedbackLocalTipo === 'amarelo'" class="acao-feedback-local" role="status" aria-live="polite">
+            <span class="acao-feedback-local-spinner" aria-hidden="true"></span>
+            <span>{{ feedbackLocalTexto }}</span>
+          </div>
+        </transition>
         <p>Cartão Amarelo</p>
         <div class="controls">
           <button @click="acionarEvento('amarelo', -1)">-</button>
@@ -26,6 +38,12 @@
       </div>
 
       <div class="box">
+        <transition name="feedback-local-fade">
+          <div v-if="feedbackLocalTipo === 'vermelho'" class="acao-feedback-local" role="status" aria-live="polite">
+            <span class="acao-feedback-local-spinner" aria-hidden="true"></span>
+            <span>{{ feedbackLocalTexto }}</span>
+          </div>
+        </transition>
         <p>Cartão Vermelho</p>
         <div class="controls">
           <button @click="acionarEvento('vermelho', -1)">-</button>
@@ -38,6 +56,12 @@
     <!-- LINHA: Faltas + Substituicoes -->
     <div class="row-2">
       <div class="box">
+        <transition name="feedback-local-fade">
+          <div v-if="feedbackLocalTipo === 'faltas'" class="acao-feedback-local" role="status" aria-live="polite">
+            <span class="acao-feedback-local-spinner" aria-hidden="true"></span>
+            <span>{{ feedbackLocalTexto }}</span>
+          </div>
+        </transition>
         <p>Faltas</p>
         <div class="controls">
           <button @click="emitDelta('faltas', -1)">-</button>
@@ -47,6 +71,12 @@
       </div>
 
       <div class="box">
+        <transition name="feedback-local-fade">
+          <div v-if="feedbackLocalTipo === 'substituicao'" class="acao-feedback-local" role="status" aria-live="polite">
+            <span class="acao-feedback-local-spinner" aria-hidden="true"></span>
+            <span>{{ feedbackLocalTexto }}</span>
+          </div>
+        </transition>
         <p>Substituições</p>
         <div class="controls">
           <button @click="acionarSubstituicao(-1)" :disabled="partidaEncerradaGlobal">-</button>
@@ -197,7 +227,7 @@ import Swal from 'sweetalert2'
 export default {
   name: 'PlacarTimeFutebol',
 
-  emits: ['parcial-delta', 'refresh', 'action-feedback-start', 'action-feedback-end'],
+  emits: ['parcial-delta', 'refresh'],
 
   props: {
     timeNome: String,
@@ -223,7 +253,10 @@ export default {
       substituicoesPendentes: [],
 
       modalRemoverAberto: false,
-      jogadoresSelecionados: []
+      jogadoresSelecionados: [],
+      feedbackLocalTipo: '',
+      feedbackLocalTexto: '',
+      feedbackLocalTimer: null
     }
   },
 
@@ -258,7 +291,40 @@ export default {
 
   methods: {
     emitDelta(campo, delta) {
+      this.mostrarFeedbackLocal(this.tipoFeedbackPorCampo(campo), this.mensagemParcial(campo, delta))
       this.$emit('parcial-delta', { lado: this.lado, campo, delta })
+    },
+
+    tipoFeedbackPorCampo(campo) {
+      if (campo === 'golspro') return 'gol'
+      if (campo === 'cartaoamarelo') return 'amarelo'
+      if (campo === 'cartaovermelho') return 'vermelho'
+      if (campo === 'faltas') return 'faltas'
+      if (campo === 'substituicoes') return 'substituicao'
+      return ''
+    },
+
+    mensagemParcial(campo, delta) {
+      const removendo = Number(delta) < 0
+      if (campo === 'golspro') return removendo ? 'Removendo gol...' : 'Registrando gol...'
+      if (campo === 'cartaoamarelo') return removendo ? 'Removendo cartao amarelo...' : 'Registrando cartao amarelo...'
+      if (campo === 'cartaovermelho') return removendo ? 'Removendo cartao vermelho...' : 'Registrando cartao vermelho...'
+      if (campo === 'faltas') return removendo ? 'Removendo falta...' : 'Registrando falta...'
+      if (campo === 'substituicoes') return removendo ? 'Removendo substituicao...' : 'Registrando substituicao...'
+      return 'Registrando alteracao...'
+    },
+
+    mostrarFeedbackLocal(tipo, mensagem = 'Registrando alteracao...') {
+      if (!tipo) return
+
+      clearTimeout(this.feedbackLocalTimer)
+      this.feedbackLocalTipo = tipo
+      this.feedbackLocalTexto = mensagem
+      this.feedbackLocalTimer = setTimeout(() => {
+        this.feedbackLocalTipo = ''
+        this.feedbackLocalTexto = ''
+        this.feedbackLocalTimer = null
+      }, 1400)
     },
 
     campoPorTipoEvento(tipo) {
@@ -352,7 +418,7 @@ export default {
       if (this.tipoEvento === 'vermelho') payload.cartoesVermelhos = incremento
 
       try {
-        this.$emit('action-feedback-start', this.mensagemEventoJogador(acao))
+        this.mostrarFeedbackLocal(this.tipoEvento, this.mensagemEventoJogador(acao))
         const res = await api.post('/atuacao', payload)
 
         if (this.tipoEvento === 'gol') this.emitDelta('golspro', incremento)
@@ -368,8 +434,6 @@ export default {
       } catch (error) {
         Swal.fire('Erro', error.response?.data?.message || 'Erro ao salvar atuação', 'error')
         await this.carregarJogadores()
-      } finally {
-        this.$emit('action-feedback-end')
       }
     },
 
@@ -433,7 +497,7 @@ export default {
       }
 
       try {
-        this.$emit('action-feedback-start', 'Registrando substituicoes...')
+        this.mostrarFeedbackLocal('substituicao', 'Registrando substituicoes...')
         for (const sub of this.substituicoesPendentes) {
           await api.put(`/partidas/${this.partidaIdNum}/substituir`, {
             jogadorSaiId: sub.sai.id,
@@ -448,8 +512,6 @@ export default {
         this.$emit('refresh')
       } catch (error) {
         Swal.fire('Erro', 'Erro ao realizar substituições', 'error')
-      } finally {
-        this.$emit('action-feedback-end')
       }
     },
 
@@ -494,7 +556,7 @@ export default {
       if (!this.partidaIdNum) return
 
       try {
-        this.$emit('action-feedback-start', 'Removendo jogadores...')
+        this.mostrarFeedbackLocal('substituicao', 'Removendo jogadores...')
         for (const jogadorId of this.jogadoresSelecionados) {
           await api.put(`/${this.partidaIdNum}/${jogadorId}/remover`)
         }
@@ -504,10 +566,12 @@ export default {
         this.$emit('refresh')
       } catch {
         Swal.fire('Erro', 'Erro ao remover jogadores', 'error')
-      } finally {
-        this.$emit('action-feedback-end')
       }
     }
+  },
+
+  beforeUnmount() {
+    clearTimeout(this.feedbackLocalTimer)
   }
 }
 </script>
@@ -586,6 +650,49 @@ export default {
   border: 1px solid rgba(148, 163, 184, 0.24);
   flex: 0 0 auto;
 }
+
+.acao-feedback-local {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--accent-border);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.acao-feedback-local-spinner {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 2px solid rgba(59, 130, 246, 0.22);
+  border-top-color: var(--accent);
+  animation: acaoFeedbackSpin 0.75s linear infinite;
+  flex: 0 0 12px;
+}
+
+@keyframes acaoFeedbackSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.feedback-local-fade-enter-active,
+.feedback-local-fade-leave-active {
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.feedback-local-fade-enter-from,
+.feedback-local-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
 .placar > .box:first-of-type,
 .placar > .row-2 > .box {
   background: #fff;

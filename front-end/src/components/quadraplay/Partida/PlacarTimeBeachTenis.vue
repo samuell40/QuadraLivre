@@ -5,6 +5,12 @@
       <span>{{ timeNome }}</span>
     </h2>
     <div class="box destaque-box">
+      <transition name="feedback-local-fade">
+        <div v-if="feedbackLocalTipo === 'setsVencidos'" class="acao-feedback-local" role="status" aria-live="polite">
+          <span class="acao-feedback-local-spinner" aria-hidden="true"></span>
+          <span>{{ feedbackLocalTexto }}</span>
+        </div>
+      </transition>
       <p>Sets Vencidos</p>
       <div class="controls">
         <button @click="emitDelta('setsVencidos', -1)" :disabled="!podeDiminuirSets">-</button>
@@ -13,6 +19,12 @@
       </div>
     </div>
     <div class="box">
+      <transition name="feedback-local-fade">
+        <div v-if="feedbackLocalTipo === 'gamesSet'" class="acao-feedback-local" role="status" aria-live="polite">
+          <span class="acao-feedback-local-spinner" aria-hidden="true"></span>
+          <span>{{ feedbackLocalTexto }}</span>
+        </div>
+      </transition>
       <p>Games do Set</p>
       <div class="controls">
         <button @click="emitDelta('gamesSet', -1)" :disabled="!podeDiminuirGames">-</button>
@@ -21,6 +33,12 @@
       </div>
     </div>
     <div class="box">
+      <transition name="feedback-local-fade">
+        <div v-if="feedbackLocalTipo === 'pontosTieBreak'" class="acao-feedback-local" role="status" aria-live="polite">
+          <span class="acao-feedback-local-spinner" aria-hidden="true"></span>
+          <span>{{ feedbackLocalTexto }}</span>
+        </div>
+      </transition>
       <p>Pontos do Tie-break</p>
       <div class="controls">
         <button @click="emitDelta('pontosTieBreak', -1)" :disabled="!podeDiminuirTieBreak">-</button>
@@ -29,6 +47,12 @@
       </div>
     </div>
     <div class="box">
+      <transition name="feedback-local-fade">
+        <div v-if="feedbackLocalTipo === 'wo'" class="acao-feedback-local" role="status" aria-live="polite">
+          <span class="acao-feedback-local-spinner" aria-hidden="true"></span>
+          <span>{{ feedbackLocalTexto }}</span>
+        </div>
+      </transition>
       <p>W.O</p>
       <div class="controls">
         <button @click="emitDelta('wo', -1)" :disabled="!podeDiminuirWo">-</button>
@@ -42,7 +66,7 @@
 export default {
   name: 'PlacarTimeBeachTenis',
 
-  emits: ['parcial-delta', 'parcial-feedback'],
+  emits: ['parcial-delta'],
   props: {
     timeNome: { type: String, default: 'Time' },
     timeData: { type: Object, required: true },
@@ -57,6 +81,15 @@ export default {
     maxSetsPartida: { type: Number, default: 5 },
     maxPontosSet: { type: Number, default: 25 }
   },
+
+  data() {
+    return {
+      feedbackLocalTipo: '',
+      feedbackLocalTexto: '',
+      feedbackLocalTimer: null
+    }
+  },
+
   computed: {
     setsVencidosAtual() {
       return Number(this.timeData?.setsVencidos ?? 0)
@@ -153,11 +186,28 @@ export default {
       return 'Registrando alteracao...'
     },
 
+    mostrarFeedbackLocal(tipo, mensagem = 'Registrando alteracao...') {
+      if (!tipo) return
+
+      clearTimeout(this.feedbackLocalTimer)
+      this.feedbackLocalTipo = tipo
+      this.feedbackLocalTexto = mensagem
+      this.feedbackLocalTimer = setTimeout(() => {
+        this.feedbackLocalTipo = ''
+        this.feedbackLocalTexto = ''
+        this.feedbackLocalTimer = null
+      }, 1400)
+    },
+
     emitDelta(campo, delta) {
       if (!this.podeEditar || this.partidaEncerradaGlobal) return
-      this.$emit('parcial-feedback', this.mensagemParcial(campo, delta))
+      this.mostrarFeedbackLocal(campo, this.mensagemParcial(campo, delta))
       this.$emit('parcial-delta', { lado: this.lado, campo, delta })
     }
+  },
+
+  beforeUnmount() {
+    clearTimeout(this.feedbackLocalTimer)
   }
 }
 </script>
@@ -235,6 +285,49 @@ export default {
   border: 1px solid rgba(148, 163, 184, 0.24);
   flex: 0 0 auto;
 }
+
+.acao-feedback-local {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--accent-border);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.acao-feedback-local-spinner {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 2px solid rgba(59, 130, 246, 0.22);
+  border-top-color: var(--accent);
+  animation: acaoFeedbackSpin 0.75s linear infinite;
+  flex: 0 0 12px;
+}
+
+@keyframes acaoFeedbackSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.feedback-local-fade-enter-active,
+.feedback-local-fade-leave-active {
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.feedback-local-fade-enter-from,
+.feedback-local-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
 .box {
   background: #fff;
   border: 1px solid rgba(148, 163, 184, 0.18);
