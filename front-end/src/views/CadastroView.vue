@@ -46,7 +46,7 @@
 import Swal from 'sweetalert2';
 import api from '@/axios';
 import { useAuthStore } from '@/store';
-import imagem_padrao from '@/assets/imagem_padrao_usuario';
+import imagem_padrao from '@/assets/imagem_padrao_usuario.png';
 
 export default {
   data() {
