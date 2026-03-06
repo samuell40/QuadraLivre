@@ -30,6 +30,9 @@
           <div class="input-group">
             <label>Foto</label>
             <input type="file" id="imagem" ref="inputImagem" @change="handleFileChange" accept=".jpg, .jpeg, .png">
+            <small class="descricao-foto">
+              Esta foto será utilizada na listagem da artilharia e na escalação das partidas.
+            </small>
           </div>
 
           <button type="submit" class="cadastro-button">Realizar Cadastro</button>
@@ -134,7 +137,7 @@ export default {
 
           const uploadResponse = await api.post('/upload', formData);
           urlImagem = uploadResponse.data.fileUrl;
-        } 
+        }
         else {
           urlImagem = imagem_padrao;
         }
@@ -368,6 +371,13 @@ export default {
 
 .cadastro-button:hover {
   background-color: #2C4FAA;
+}
+
+.descricao-foto {
+  font-size: 12px;
+  color: #93C5FD;
+  margin-top: 6px;
+  line-height: 1.4;
 }
 
 @media (max-width: 768px) {
